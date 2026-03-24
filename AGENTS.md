@@ -44,9 +44,22 @@ backend/app/
 
 ### Frontend (`frontend/`)
 
-- **Angular 20**.
+- **Angular + Ionic** (standalone components).
 - Consume la API del backend mediante los endpoints definidos en los entrypoints de cada dominio.
 - Servido en `http://localhost:4200`.
+
+```
+frontend/src/app/
+├── components/        # Componentes reutilizables (botones, cards, modals...)
+├── pages/             # Páginas de la aplicación
+│   └── core/          # Páginas principales
+├── pipes/             # Pipes personalizados
+├── providers/         # Interceptores y providers (HTTP interceptor)
+└── services/          # Servicios (llamadas API, lógica compartida)
+```
+
+- **Interceptor HTTP** (`providers/interceptor.ts`): prefija la URL base de la API (`environment.apiUrl`) y añade headers por defecto.
+- **Providers registrados en `main.ts`** con `withInterceptorsFromDi()` y `withFetch()`.
 
 ### Docker y servicios
 

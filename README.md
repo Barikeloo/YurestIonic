@@ -1,6 +1,6 @@
 # 2026 Training: Laravel + Angular Starter Kit
 
-Este repositorio sirve como proyecto base para prácticas de desarrollo backend y frontend, con **Laravel 12** en el backend y **Angular 20** en el frontend.  
+Este repositorio sirve como proyecto base para prácticas de desarrollo backend y frontend, con **Laravel 12** en el backend y **Angular + Ionic** en el frontend.
 
 
 ---
@@ -100,7 +100,21 @@ App/
 
 ### Frontend (`frontend/`)
 
-Proyecto **Angular 20**. Cliente mínimo que consume la API del backend (ver [Cómo empezar](#cómo-empezar) para las URLs de acceso).
+Proyecto **Angular + Ionic** (standalone components). Cliente que consume la API del backend.
+
+```text
+frontend/src/app/
+├── components/        # Componentes reutilizables
+├── pages/             # Páginas de la aplicación
+│   └── core/          # Páginas principales
+│       └── home/
+├── pipes/             # Pipes personalizados
+├── providers/         # Interceptores y providers
+│   └── interceptor.ts
+└── services/          # Servicios (llamadas a la API, lógica compartida)
+```
+
+El interceptor HTTP (`providers/interceptor.ts`) prefija automáticamente la URL base de la API y añade los headers por defecto (`Accept`, `Accept-Language`).
 
 ### DbGate (cliente de base de datos)
 

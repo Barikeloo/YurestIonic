@@ -18,8 +18,7 @@ install:
 	docker compose run --rm api php artisan migrate
 
 install-frontend:
-	docker compose run --rm -v $(PWD):/workspace -w /workspace frontend sh -c "npx -y @angular/cli@20 new training-frontend --defaults --directory=frontend"
-	docker compose run --rm -v $(PWD):/workspace -w /workspace/frontend frontend sh -c "npx -y @angular/cli@20 add @angular/material --defaults --skip-confirmation"
+	docker compose run --rm frontend npm install
 
 db-migrate:
 	docker compose exec api php artisan migrate
