@@ -61,13 +61,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->unsignedBigInteger('ticket_number')->nullable()->unique();
-            $table->string('status');
-            $table->foreignId('table_id')->constrained('tables');
-            $table->foreignId('opened_by_user_id')->constrained('users');
-            $table->foreignId('closed_by_user_id')->nullable()->constrained('users');
-            $table->unsignedInteger('diners');
-            $table->timestamp('opened_at');
-            $table->timestamp('closed_at')->nullable();
+            $table->timestamp('value_date');
             $table->unsignedInteger('total')->default(0);
             $table->timestamps();
             $table->softDeletes();
@@ -77,7 +71,6 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('sale_id')->constrained('sales');
-            $table->foreignId('product_id')->constrained('products');
             $table->foreignId('user_id')->constrained('users');
             $table->unsignedInteger('quantity');
             $table->unsignedInteger('price');

@@ -12,6 +12,7 @@ class EloquentZone extends Model
     protected $table = 'zones';
 
     protected $fillable = [
+        'restaurant_id',
         'uuid',
         'name',
     ];

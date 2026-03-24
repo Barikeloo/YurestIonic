@@ -5,6 +5,8 @@ namespace App\Zone\Infrastructure\Persistence\Repositories;
 use App\Zone\Domain\Entity\Zone;
 use App\Zone\Domain\Interfaces\ZoneRepositoryInterface;
 use App\Zone\Infrastructure\Persistence\Models\EloquentZone;
+use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
+use Illuminate\Support\Str;
 
 class EloquentZoneRepository implements ZoneRepositoryInterface
 {
@@ -14,9 +16,12 @@ class EloquentZoneRepository implements ZoneRepositoryInterface
 
     public function save(Zone $zone): void
     {
+        $restaurantId = $this->defaultRestaurantId();
+
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $zone->id()->value()],
             [
+                'restaurant_id' => $restaurantId,
                 'name' => $zone->name(),
                 'created_at' => $zone->createdAt()->value(),
                 'updated_at' => $zone->updatedAt()->value(),
@@ -61,5 +66,23 @@ class EloquentZoneRepository implements ZoneRepositoryInterface
         }
 
         return (bool) $model->delete();
+    }
+
+    private function defaultRestaurantId(): int
+    {
+        $existingId = EloquentRestaurant::query()->value('id');
+
+        if ($existingId !== null) {
+            return (int) $existingId;
+        }
+
+        return (int) EloquentRestaurant::query()->create([
+            'uuid' => (string) Str::uuid(),
+            'name' => 'Default Restaurant',
+            'legal_name' => 'Default Restaurant S.L.',
+            'tax_id' => 'B00000000',
+            'email' => 'default-' . Str::lower(Str::random(8)) . '@local.test',
+            'password' => bcrypt('password123'),
+        ])->id;
     }
 }

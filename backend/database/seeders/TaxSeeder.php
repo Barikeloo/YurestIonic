@@ -11,9 +11,15 @@ class TaxSeeder extends Seeder
     public function run(): void
     {
         $now = now();
+        $restaurantId = DB::table('restaurants')->first()?->id;
+
+        if (!$restaurantId) {
+            return;
+        }
 
         DB::table('taxes')->upsert([
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'name' => 'IVA Superreducido',
                 'percentage' => 4,
@@ -22,6 +28,7 @@ class TaxSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'name' => 'IVA Reducido',
                 'percentage' => 10,
@@ -30,6 +37,7 @@ class TaxSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'name' => 'IVA General',
                 'percentage' => 21,

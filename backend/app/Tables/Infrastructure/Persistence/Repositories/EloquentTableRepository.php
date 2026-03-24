@@ -20,6 +20,7 @@ class EloquentTableRepository implements TableRepositoryInterface
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $table->id()->value()],
             [
+                'restaurant_id' => $zone->restaurant_id,
                 'zone_id' => $zone->id,
                 'name' => $table->name(),
                 'created_at' => $table->createdAt()->value(),

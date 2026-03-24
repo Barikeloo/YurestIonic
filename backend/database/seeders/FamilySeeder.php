@@ -11,9 +11,15 @@ class FamilySeeder extends Seeder
     public function run(): void
     {
         $now = now();
+        $restaurantId = DB::table('restaurants')->first()?->id;
+
+        if (!$restaurantId) {
+            return;
+        }
 
         DB::table('families')->upsert([
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'name' => 'Bebidas',
                 'active' => true,
@@ -22,6 +28,7 @@ class FamilySeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'name' => 'Comida',
                 'active' => true,
@@ -30,6 +37,7 @@ class FamilySeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'name' => 'Postres',
                 'active' => true,

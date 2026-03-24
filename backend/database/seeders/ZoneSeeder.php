@@ -11,9 +11,15 @@ class ZoneSeeder extends Seeder
     public function run(): void
     {
         $now = now();
+        $restaurantId = DB::table('restaurants')->first()?->id;
+
+        if (!$restaurantId) {
+            return;
+        }
 
         DB::table('zones')->upsert([
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'name' => 'Salon',
                 'created_at' => $now,
@@ -21,6 +27,7 @@ class ZoneSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'name' => 'Terraza',
                 'created_at' => $now,

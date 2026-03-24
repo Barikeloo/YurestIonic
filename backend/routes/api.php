@@ -7,6 +7,12 @@ use App\Family\Infrastructure\Entrypoint\Http\GetCollectionController as FamilyG
 use App\Family\Infrastructure\Entrypoint\Http\GetController as FamilyGetController;
 use App\Family\Infrastructure\Entrypoint\Http\PostController as FamilyPostController;
 use App\Family\Infrastructure\Entrypoint\Http\PutController as FamilyPutController;
+use App\Order\Infrastructure\Entrypoint\Http\AddLineController as OrderAddLineController;
+use App\Order\Infrastructure\Entrypoint\Http\GetCollectionController as OrderGetCollectionController;
+use App\Order\Infrastructure\Entrypoint\Http\GetController as OrderGetController;
+use App\Order\Infrastructure\Entrypoint\Http\PutController as OrderPutController;
+use App\Order\Infrastructure\Entrypoint\Http\DeleteController as OrderDeleteController;
+use App\Order\Infrastructure\Entrypoint\Http\PostController as OrderPostController;
 use App\Product\Infrastructure\Entrypoint\Http\ActivateController as ProductActivateController;
 use App\Product\Infrastructure\Entrypoint\Http\DeactivateController as ProductDeactivateController;
 use App\Product\Infrastructure\Entrypoint\Http\DeleteController as ProductDeleteController;
@@ -14,6 +20,17 @@ use App\Product\Infrastructure\Entrypoint\Http\GetCollectionController as Produc
 use App\Product\Infrastructure\Entrypoint\Http\GetController as ProductGetController;
 use App\Product\Infrastructure\Entrypoint\Http\PostController as ProductPostController;
 use App\Product\Infrastructure\Entrypoint\Http\PutController as ProductPutController;
+use App\Restaurant\Infrastructure\Entrypoint\Http\PostController as RestaurantPostController;
+use App\Restaurant\Infrastructure\Entrypoint\Http\GetCollectionController as RestaurantGetCollectionController;
+use App\Restaurant\Infrastructure\Entrypoint\Http\GetController as RestaurantGetController;
+use App\Restaurant\Infrastructure\Entrypoint\Http\PutController as RestaurantPutController;
+use App\Restaurant\Infrastructure\Entrypoint\Http\DeleteController as RestaurantDeleteController;
+use App\Sale\Infrastructure\Entrypoint\Http\AddLineController as SaleAddLineController;
+use App\Sale\Infrastructure\Entrypoint\Http\GetCollectionController as SaleGetCollectionController;
+use App\Sale\Infrastructure\Entrypoint\Http\GetController as SaleGetController;
+use App\Sale\Infrastructure\Entrypoint\Http\PutController as SalePutController;
+use App\Sale\Infrastructure\Entrypoint\Http\DeleteController as SaleDeleteController;
+use App\Sale\Infrastructure\Entrypoint\Http\PostController as SalePostController;
 use App\Tax\Infrastructure\Entrypoint\Http\DeleteController as TaxDeleteController;
 use App\Tax\Infrastructure\Entrypoint\Http\GetCollectionController as TaxGetCollectionController;
 use App\Tax\Infrastructure\Entrypoint\Http\GetController as TaxGetController;
@@ -83,3 +100,28 @@ Route::put('/products/{id}', ProductPutController::class)->whereUuid('id');
 Route::delete('/products/{id}', ProductDeleteController::class)->whereUuid('id');
 Route::patch('/products/{id}/activate', ProductActivateController::class)->whereUuid('id');
 Route::patch('/products/{id}/deactivate', ProductDeactivateController::class)->whereUuid('id');
+
+// Restaurants
+Route::post('/restaurants', RestaurantPostController::class);
+Route::get('/restaurants', RestaurantGetCollectionController::class);
+Route::get('/restaurants/{id}', RestaurantGetController::class)->whereUuid('id');
+Route::put('/restaurants/{id}', RestaurantPutController::class)->whereUuid('id');
+Route::delete('/restaurants/{id}', RestaurantDeleteController::class)->whereUuid('id');
+
+// Orders
+Route::post('/orders', OrderPostController::class);
+Route::post('/orders/lines', OrderAddLineController::class);
+
+Route::get('/orders', OrderGetCollectionController::class);
+Route::get('/orders/{id}', OrderGetController::class)->whereUuid('id');
+Route::put('/orders/{id}', OrderPutController::class)->whereUuid('id');
+Route::delete('/orders/{id}', OrderDeleteController::class)->whereUuid('id');
+
+// Sales
+Route::post('/sales', SalePostController::class);
+Route::post('/sales/lines', SaleAddLineController::class);
+
+Route::get('/sales', SaleGetCollectionController::class);
+Route::get('/sales/{id}', SaleGetController::class)->whereUuid('id');
+Route::put('/sales/{id}', SalePutController::class)->whereUuid('id');
+Route::delete('/sales/{id}', SaleDeleteController::class)->whereUuid('id');

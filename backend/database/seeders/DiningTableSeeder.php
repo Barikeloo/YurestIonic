@@ -10,9 +10,10 @@ class DiningTableSeeder extends Seeder
 {
     public function run(): void
     {
+        $restaurantId = DB::table('restaurants')->first()?->id;
         $zoneIds = DB::table('zones')->pluck('id', 'name');
 
-        if (!$zoneIds->has('Salon') || !$zoneIds->has('Terraza')) {
+        if (!$restaurantId || !$zoneIds->has('Salon') || !$zoneIds->has('Terraza')) {
             return;
         }
 
@@ -20,6 +21,7 @@ class DiningTableSeeder extends Seeder
 
         DB::table('tables')->upsert([
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'zone_id' => $zoneIds['Salon'],
                 'name' => 'S1',
@@ -28,6 +30,7 @@ class DiningTableSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'zone_id' => $zoneIds['Salon'],
                 'name' => 'S2',
@@ -36,6 +39,7 @@ class DiningTableSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'zone_id' => $zoneIds['Terraza'],
                 'name' => 'T1',
@@ -44,6 +48,7 @@ class DiningTableSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'zone_id' => $zoneIds['Terraza'],
                 'name' => 'T2',

@@ -14,6 +14,7 @@ class EloquentTable extends Model
     protected $table = 'tables';
 
     protected $fillable = [
+        'restaurant_id',
         'uuid',
         'zone_id',
         'name',

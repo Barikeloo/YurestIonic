@@ -10,10 +10,11 @@ class ProductSeeder extends Seeder
 {
     public function run(): void
     {
+        $restaurantId = DB::table('restaurants')->first()?->id;
         $familyIds = DB::table('families')->pluck('id', 'name');
         $taxIds = DB::table('taxes')->pluck('id', 'name');
 
-        if (!$familyIds->has('Bebidas') || !$familyIds->has('Comida') || !$familyIds->has('Postres')) {
+        if (!$restaurantId || !$familyIds->has('Bebidas') || !$familyIds->has('Comida') || !$familyIds->has('Postres')) {
             return;
         }
 
@@ -25,6 +26,7 @@ class ProductSeeder extends Seeder
 
         DB::table('products')->upsert([
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'family_id' => $familyIds['Bebidas'],
                 'tax_id' => $taxIds['IVA General'],
@@ -38,6 +40,7 @@ class ProductSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'family_id' => $familyIds['Bebidas'],
                 'tax_id' => $taxIds['IVA General'],
@@ -51,6 +54,7 @@ class ProductSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'family_id' => $familyIds['Comida'],
                 'tax_id' => $taxIds['IVA Reducido'],
@@ -64,6 +68,7 @@ class ProductSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'family_id' => $familyIds['Postres'],
                 'tax_id' => $taxIds['IVA Reducido'],
@@ -77,6 +82,7 @@ class ProductSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'family_id' => $familyIds['Bebidas'],
                 'tax_id' => $taxIds['IVA General'],

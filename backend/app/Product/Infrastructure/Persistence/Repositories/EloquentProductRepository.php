@@ -22,6 +22,7 @@ class EloquentProductRepository implements ProductRepositoryInterface
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $product->id()->value()],
             [
+                'restaurant_id' => $family->restaurant_id,
                 'family_id' => $family->id,
                 'tax_id' => $tax->id,
                 'image_src' => $product->imageSrc(),

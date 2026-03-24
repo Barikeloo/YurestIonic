@@ -13,15 +13,22 @@ class UserSeeder extends Seeder
     {
         $now = now();
         $password = Hash::make('password');
+        $restaurantId = DB::table('restaurants')->first()?->id;
+
+        if (!$restaurantId) {
+            return; // No restaurant to seed users
+        }
 
         DB::table('users')->upsert([
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'role' => 'admin',
                 'image_src' => null,
                 'name' => 'Admin TPV',
                 'email' => 'admin@tpv.local',
                 'password' => $password,
+                'pin' => '1234',
                 'email_verified_at' => $now,
                 'remember_token' => null,
                 'created_at' => $now,
@@ -29,12 +36,14 @@ class UserSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'role' => 'supervisor',
                 'image_src' => null,
                 'name' => 'Supervisor TPV',
                 'email' => 'supervisor@tpv.local',
                 'password' => $password,
+                'pin' => '1235',
                 'email_verified_at' => $now,
                 'remember_token' => null,
                 'created_at' => $now,
@@ -42,12 +51,14 @@ class UserSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'role' => 'operator',
                 'image_src' => null,
                 'name' => 'Ana Camarera',
                 'email' => 'ana@tpv.local',
                 'password' => $password,
+                'pin' => '1236',
                 'email_verified_at' => $now,
                 'remember_token' => null,
                 'created_at' => $now,
@@ -55,16 +66,18 @@ class UserSeeder extends Seeder
                 'deleted_at' => null,
             ],
             [
+                'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
                 'role' => 'operator',
                 'image_src' => null,
                 'name' => 'Luis Camarero',
                 'email' => 'luis@tpv.local',
                 'password' => $password,
+                'pin' => '1237',
                 'email_verified_at' => $now,
                 'remember_token' => null,
                 'created_at' => $now,
-                'updated_at' => $now,
+        'updated_at' => $now,
                 'deleted_at' => null,
             ],
         ], ['email'], ['name', 'password', 'updated_at', 'deleted_at']);
