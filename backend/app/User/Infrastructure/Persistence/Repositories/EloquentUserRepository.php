@@ -43,4 +43,22 @@ class EloquentUserRepository implements UserRepositoryInterface
             $model->updated_at->toDateTimeImmutable(),
         );
     }
+
+    public function findByEmail(string $email): ?User
+    {
+        $model = $this->model->newQuery()->where('email', $email)->first();
+
+        if ($model === null) {
+            return null;
+        }
+
+        return User::fromPersistence(
+            $model->uuid,
+            $model->name,
+            $model->email,
+            $model->password,
+            $model->created_at->toDateTimeImmutable(),
+            $model->updated_at->toDateTimeImmutable(),
+        );
+    }
 }

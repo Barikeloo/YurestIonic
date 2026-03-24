@@ -28,6 +28,8 @@ class UserFactory extends Factory
     {
         return [
             'uuid' => (string) Str::uuid(),
+            'role' => 'operator',
+            'image_src' => null,
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),

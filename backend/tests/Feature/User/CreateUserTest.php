@@ -35,4 +35,22 @@ class CreateUserTest extends TestCase
             $response->json('id')
         );
     }
+
+    public function test_post_users_returns_422_when_email_already_exists(): void
+    {
+        $payload = [
+            'name' => 'Duplicated User',
+            'email' => 'duplicate@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ];
+
+        $this->postJson('/api/users', $payload)->assertStatus(201);
+
+        $response = $this->postJson('/api/users', $payload);
+
+        $response->assertStatus(422);
+        $response->assertJsonValidationErrors(['email']);
+        $this->assertSame('Email is already registered.', $response->json('errors.email.0'));
+    }
 }
