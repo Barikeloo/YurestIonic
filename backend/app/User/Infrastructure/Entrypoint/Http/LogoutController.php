@@ -10,6 +10,7 @@ class LogoutController
     public function __invoke(Request $request): JsonResponse
     {
         $request->session()->forget('auth_user_id');
+        $request->session()->forget('tenant_restaurant_uuid');
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

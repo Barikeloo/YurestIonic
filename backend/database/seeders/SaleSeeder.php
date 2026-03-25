@@ -10,22 +10,29 @@ class SaleSeeder extends Seeder
 {
     public function run(): void
     {
-        $restaurantId = DB::table('restaurants')->first()?->id;
-        $orders = DB::table('orders')->pluck('id')->toArray();
-        $users = DB::table('users')->pluck('id', 'email');
+        $orders = DB::table('orders')->get(['id', 'restaurant_id']);
 
-        if (!$restaurantId || empty($orders)) {
+        if ($orders->isEmpty()) {
             return;
         }
 
         $now = now();
 
         // Create 2 sales from orders
-        foreach (array_slice($orders, 0, min(2, count($orders))) as $orderId) {
+        foreach ($orders->take(2) as $order) {
+            $restaurantId = (int) $order->restaurant_id;
+            $users = DB::table('users')
+                ->where('restaurant_id', $restaurantId)
+                ->pluck('id', 'email');
+
+            if ($users->isEmpty()) {
+                continue;
+            }
+
             $saleId = DB::table('sales')->insertGetId([
                 'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
-                'order_id' => $orderId,
+                'order_id' => $order->id,
                 'user_id' => $users['ana@tpv.local'] ?? null,
                 'ticket_number' => null,
                 'value_date' => now(),
@@ -37,7 +44,8 @@ class SaleSeeder extends Seeder
 
             // Add lines to sale if there are order_lines
             $orderLinesList = DB::table('order_lines')
-                ->where('order_id', $orderId)
+                ->where('restaurant_id', $restaurantId)
+                ->where('order_id', $order->id)
                 ->pluck('id')
                 ->toArray();
 

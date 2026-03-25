@@ -2,11 +2,13 @@
 
 namespace App\Zone\Infrastructure\Persistence\Models;
 
+use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EloquentZone extends Model
 {
+    use HasTenantScope;
     use SoftDeletes;
 
     protected $table = 'zones';

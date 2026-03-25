@@ -62,7 +62,9 @@ final class OrderCrudTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $createResponse = $this->postJson('/api/orders', [
+        $session = ['auth_user_id' => $userUuid];
+
+        $createResponse = $this->withSession($session)->postJson('/api/orders', [
             'restaurant_id' => $restaurantUuid,
             'table_id' => $tableUuid,
             'opened_by_user_id' => $userUuid,
@@ -79,20 +81,20 @@ final class OrderCrudTest extends TestCase
 
         $orderId = $createResponse->json('id');
 
-        $this->getJson('/api/orders')
+        $this->withSession($session)->getJson('/api/orders')
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $orderId,
             ]);
 
-        $this->getJson("/api/orders/{$orderId}")
+        $this->withSession($session)->getJson("/api/orders/{$orderId}")
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $orderId,
                 'restaurant_id' => $restaurantUuid,
             ]);
 
-        $this->putJson("/api/orders/{$orderId}", [
+        $this->withSession($session)->putJson("/api/orders/{$orderId}", [
             'diners' => 6,
         ])
             ->assertStatus(200)
@@ -101,10 +103,10 @@ final class OrderCrudTest extends TestCase
                 'diners' => 6,
             ]);
 
-        $this->deleteJson("/api/orders/{$orderId}")
+        $this->withSession($session)->deleteJson("/api/orders/{$orderId}")
             ->assertStatus(204);
 
-        $this->getJson("/api/orders/{$orderId}")
+        $this->withSession($session)->getJson("/api/orders/{$orderId}")
             ->assertStatus(404);
     }
 }

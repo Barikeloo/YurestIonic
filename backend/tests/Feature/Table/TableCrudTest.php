@@ -11,7 +11,9 @@ class TableCrudTest extends TestCase
 
     public function test_table_full_crud_flow(): void
     {
-        $zoneResponse = $this->postJson('/api/zones', [
+        $tenant = $this->createTenantSession();
+
+        $zoneResponse = $this->withSession($tenant['session'])->postJson('/api/zones', [
             'name' => 'Comedor',
         ]);
 
@@ -19,7 +21,7 @@ class TableCrudTest extends TestCase
 
         $zoneId = $zoneResponse->json('id');
 
-        $createResponse = $this->postJson('/api/tables', [
+        $createResponse = $this->withSession($tenant['session'])->postJson('/api/tables', [
             'zone_id' => $zoneId,
             'name' => 'Mesa 1',
         ]);
@@ -32,7 +34,7 @@ class TableCrudTest extends TestCase
 
         $tableId = $createResponse->json('id');
 
-        $this->getJson('/api/tables')
+        $this->withSession($tenant['session'])->getJson('/api/tables')
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $tableId,
@@ -40,7 +42,7 @@ class TableCrudTest extends TestCase
                 'name' => 'Mesa 1',
             ]);
 
-        $this->getJson("/api/tables/{$tableId}")
+        $this->withSession($tenant['session'])->getJson("/api/tables/{$tableId}")
             ->assertStatus(200)
             ->assertJson([
                 'id' => $tableId,
@@ -48,7 +50,7 @@ class TableCrudTest extends TestCase
                 'name' => 'Mesa 1',
             ]);
 
-        $secondZoneResponse = $this->postJson('/api/zones', [
+        $secondZoneResponse = $this->withSession($tenant['session'])->postJson('/api/zones', [
             'name' => 'Terraza',
         ]);
 
@@ -56,7 +58,7 @@ class TableCrudTest extends TestCase
 
         $secondZoneId = $secondZoneResponse->json('id');
 
-        $this->putJson("/api/tables/{$tableId}", [
+        $this->withSession($tenant['session'])->putJson("/api/tables/{$tableId}", [
             'zone_id' => $secondZoneId,
             'name' => 'Mesa 2',
         ])
@@ -67,10 +69,10 @@ class TableCrudTest extends TestCase
                 'name' => 'Mesa 2',
             ]);
 
-        $this->deleteJson("/api/tables/{$tableId}")
+        $this->withSession($tenant['session'])->deleteJson("/api/tables/{$tableId}")
             ->assertStatus(204);
 
-        $this->getJson("/api/tables/{$tableId}")
+        $this->withSession($tenant['session'])->getJson("/api/tables/{$tableId}")
             ->assertStatus(404);
     }
 }

@@ -11,14 +11,16 @@ class ProductCrudTest extends TestCase
 
     public function test_product_full_crud_flow(): void
     {
-        $familyResponse = $this->postJson('/api/families', [
+        $tenant = $this->createTenantSession();
+
+        $familyResponse = $this->withSession($tenant['session'])->postJson('/api/families', [
             'name' => 'Bebidas',
         ]);
 
         $familyResponse->assertStatus(201);
         $familyId = $familyResponse->json('id');
 
-        $taxResponse = $this->postJson('/api/taxes', [
+        $taxResponse = $this->withSession($tenant['session'])->postJson('/api/taxes', [
             'name' => 'IVA General',
             'percentage' => 21,
         ]);
@@ -26,7 +28,7 @@ class ProductCrudTest extends TestCase
         $taxResponse->assertStatus(201);
         $taxId = $taxResponse->json('id');
 
-        $createResponse = $this->postJson('/api/products', [
+        $createResponse = $this->withSession($tenant['session'])->postJson('/api/products', [
             'family_id' => $familyId,
             'tax_id' => $taxId,
             'image_src' => '/images/coca-cola.png',
@@ -48,14 +50,14 @@ class ProductCrudTest extends TestCase
 
         $productId = $createResponse->json('id');
 
-        $this->getJson('/api/products')
+        $this->withSession($tenant['session'])->getJson('/api/products')
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $productId,
                 'name' => 'Coca Cola',
             ]);
 
-        $this->getJson("/api/products/{$productId}")
+        $this->withSession($tenant['session'])->getJson("/api/products/{$productId}")
             ->assertStatus(200)
             ->assertJson([
                 'id' => $productId,
@@ -67,14 +69,14 @@ class ProductCrudTest extends TestCase
                 'active' => true,
             ]);
 
-        $secondFamilyResponse = $this->postJson('/api/families', [
+        $secondFamilyResponse = $this->withSession($tenant['session'])->postJson('/api/families', [
             'name' => 'Comida',
         ]);
 
         $secondFamilyResponse->assertStatus(201);
         $secondFamilyId = $secondFamilyResponse->json('id');
 
-        $secondTaxResponse = $this->postJson('/api/taxes', [
+        $secondTaxResponse = $this->withSession($tenant['session'])->postJson('/api/taxes', [
             'name' => 'IVA Reducido',
             'percentage' => 10,
         ]);
@@ -82,7 +84,7 @@ class ProductCrudTest extends TestCase
         $secondTaxResponse->assertStatus(201);
         $secondTaxId = $secondTaxResponse->json('id');
 
-        $this->putJson("/api/products/{$productId}", [
+        $this->withSession($tenant['session'])->putJson("/api/products/{$productId}", [
             'family_id' => $secondFamilyId,
             'tax_id' => $secondTaxId,
             'image_src' => null,
@@ -103,24 +105,24 @@ class ProductCrudTest extends TestCase
                 'active' => false,
             ]);
 
-        $this->patchJson("/api/products/{$productId}/activate")
+        $this->withSession($tenant['session'])->patchJson("/api/products/{$productId}/activate")
             ->assertStatus(200)
             ->assertJson([
                 'id' => $productId,
                 'active' => true,
             ]);
 
-        $this->patchJson("/api/products/{$productId}/deactivate")
+        $this->withSession($tenant['session'])->patchJson("/api/products/{$productId}/deactivate")
             ->assertStatus(200)
             ->assertJson([
                 'id' => $productId,
                 'active' => false,
             ]);
 
-        $this->deleteJson("/api/products/{$productId}")
+        $this->withSession($tenant['session'])->deleteJson("/api/products/{$productId}")
             ->assertStatus(204);
 
-        $this->getJson("/api/products/{$productId}")
+        $this->withSession($tenant['session'])->getJson("/api/products/{$productId}")
             ->assertStatus(404);
     }
 }

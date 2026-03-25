@@ -12,18 +12,30 @@ class OrderSeeder extends Seeder
     {
         $now = now();
         $restaurants = DB::table('restaurants')->pluck('id')->toArray();
-        $tables = DB::table('tables')->pluck('id')->toArray();
-        $users = DB::table('users')->pluck('id')->toArray();
 
-        if (empty($restaurants) || empty($tables) || empty($users)) {
+        if (empty($restaurants)) {
             return; // No data to seed
         }
 
         $orders = [];
         for ($i = 0; $i < 3; $i++) {
+            $restaurantId = $restaurants[array_rand($restaurants)];
+            $tables = DB::table('tables')
+                ->where('restaurant_id', $restaurantId)
+                ->pluck('id')
+                ->toArray();
+            $users = DB::table('users')
+                ->where('restaurant_id', $restaurantId)
+                ->pluck('id')
+                ->toArray();
+
+            if (empty($tables) || empty($users)) {
+                continue;
+            }
+
             $orders[] = [
                 'uuid' => (string) Str::uuid(),
-                'restaurant_id' => $restaurants[array_rand($restaurants)],
+                'restaurant_id' => $restaurantId,
                 'status' => 'open',
                 'table_id' => $tables[array_rand($tables)],
                 'opened_by_user_id' => $users[array_rand($users)],
@@ -37,6 +49,8 @@ class OrderSeeder extends Seeder
             ];
         }
 
-        DB::table('orders')->insert($orders);
+        if (! empty($orders)) {
+            DB::table('orders')->insert($orders);
+        }
     }
 }

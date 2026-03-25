@@ -11,7 +11,9 @@ class TaxCrudTest extends TestCase
 
     public function test_tax_full_crud_flow(): void
     {
-        $createResponse = $this->postJson('/api/taxes', [
+        $tenant = $this->createTenantSession();
+
+        $createResponse = $this->withSession($tenant['session'])->postJson('/api/taxes', [
             'name' => 'IVA Intermedio',
             'percentage' => 15,
         ]);
@@ -24,14 +26,14 @@ class TaxCrudTest extends TestCase
 
         $taxId = $createResponse->json('id');
 
-        $this->getJson('/api/taxes')
+        $this->withSession($tenant['session'])->getJson('/api/taxes')
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $taxId,
                 'name' => 'IVA Intermedio',
             ]);
 
-        $this->getJson("/api/taxes/{$taxId}")
+        $this->withSession($tenant['session'])->getJson("/api/taxes/{$taxId}")
             ->assertStatus(200)
             ->assertJson([
                 'id' => $taxId,
@@ -39,7 +41,7 @@ class TaxCrudTest extends TestCase
                 'percentage' => 15,
             ]);
 
-        $this->putJson("/api/taxes/{$taxId}", [
+        $this->withSession($tenant['session'])->putJson("/api/taxes/{$taxId}", [
             'name' => 'IVA Intermedio Revisado',
             'percentage' => 16,
         ])
@@ -50,10 +52,10 @@ class TaxCrudTest extends TestCase
                 'percentage' => 16,
             ]);
 
-        $this->deleteJson("/api/taxes/{$taxId}")
+        $this->withSession($tenant['session'])->deleteJson("/api/taxes/{$taxId}")
             ->assertStatus(204);
 
-        $this->getJson("/api/taxes/{$taxId}")
+        $this->withSession($tenant['session'])->getJson("/api/taxes/{$taxId}")
             ->assertStatus(404);
     }
 }

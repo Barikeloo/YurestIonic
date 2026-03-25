@@ -1,0 +1,21 @@
+meta {
+  name: 03 - Select Restaurant Context
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/admin/context/restaurant
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "restaurant_id": "{{restaurantUuid}}"
+  }
+}

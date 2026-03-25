@@ -11,8 +11,10 @@ class AddLineToOrderTest extends TestCase
 
     public function test_post_orders_lines_returns_422_when_invalid_uuids(): void
     {
-        $response = $this->postJson('/api/orders/lines', [
-            'restaurant_id' => 'not-a-uuid',
+        $tenant = $this->createTenantSession();
+
+        $response = $this->withSession($tenant['session'])->postJson('/api/orders/lines', [
+            'restaurant_id' => $tenant['restaurant_uuid'],
             'order_id' => 'not-a-uuid',
             'product_id' => 'not-a-uuid',
             'user_id' => 'not-a-uuid',
@@ -22,13 +24,15 @@ class AddLineToOrderTest extends TestCase
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['restaurant_id', 'order_id', 'product_id', 'user_id']);
+        $response->assertJsonValidationErrors(['order_id', 'product_id', 'user_id']);
     }
 
     public function test_post_orders_lines_returns_422_when_quantity_is_invalid(): void
     {
-        $response = $this->postJson('/api/orders/lines', [
-            'restaurant_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+        $tenant = $this->createTenantSession();
+
+        $response = $this->withSession($tenant['session'])->postJson('/api/orders/lines', [
+            'restaurant_id' => $tenant['restaurant_uuid'],
             'order_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
             'product_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
             'user_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
@@ -43,8 +47,10 @@ class AddLineToOrderTest extends TestCase
 
     public function test_post_orders_lines_returns_422_when_required_fields_missing(): void
     {
-        $response = $this->postJson('/api/orders/lines', [
-            'restaurant_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+        $tenant = $this->createTenantSession();
+
+        $response = $this->withSession($tenant['session'])->postJson('/api/orders/lines', [
+            'restaurant_id' => $tenant['restaurant_uuid'],
         ]);
 
         $response->assertStatus(422);

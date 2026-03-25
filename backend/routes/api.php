@@ -10,6 +10,7 @@ use App\Family\Infrastructure\Entrypoint\Http\PutController as FamilyPutControll
 use App\Order\Infrastructure\Entrypoint\Http\AddLineController as OrderAddLineController;
 use App\Order\Infrastructure\Entrypoint\Http\GetCollectionController as OrderGetCollectionController;
 use App\Order\Infrastructure\Entrypoint\Http\GetController as OrderGetController;
+use App\Order\Infrastructure\Entrypoint\Http\GetLinesController as OrderGetLinesController;
 use App\Order\Infrastructure\Entrypoint\Http\PutController as OrderPutController;
 use App\Order\Infrastructure\Entrypoint\Http\DeleteController as OrderDeleteController;
 use App\Order\Infrastructure\Entrypoint\Http\PostController as OrderPostController;
@@ -22,9 +23,13 @@ use App\Product\Infrastructure\Entrypoint\Http\PostController as ProductPostCont
 use App\Product\Infrastructure\Entrypoint\Http\PutController as ProductPutController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\PostController as RestaurantPostController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\GetCollectionController as RestaurantGetCollectionController;
+use App\Restaurant\Infrastructure\Entrypoint\Http\AdminGetCollectionController as RestaurantAdminGetCollectionController;
+use App\Restaurant\Infrastructure\Entrypoint\Http\AdminSelectRestaurantContextController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\GetController as RestaurantGetController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\PutController as RestaurantPutController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\DeleteController as RestaurantDeleteController;
+use App\Shared\Infrastructure\Http\Middleware\ResolveTenantContext;
+use App\Shared\Infrastructure\Http\Middleware\RequireAdminSession;
 use App\Sale\Infrastructure\Entrypoint\Http\AddLineController as SaleAddLineController;
 use App\Sale\Infrastructure\Entrypoint\Http\GetCollectionController as SaleGetCollectionController;
 use App\Sale\Infrastructure\Entrypoint\Http\GetController as SaleGetController;
@@ -67,61 +72,78 @@ Route::middleware([
 	Route::post('/auth/logout', LogoutController::class);
 });
 
-Route::get('/families', FamilyGetCollectionController::class);
-Route::get('/families/{id}', FamilyGetController::class)->whereUuid('id');
-Route::post('/families', FamilyPostController::class);
-Route::put('/families/{id}', FamilyPutController::class)->whereUuid('id');
-Route::delete('/families/{id}', FamilyDeleteController::class)->whereUuid('id');
-Route::patch('/families/{id}/activate', FamilyActivateController::class)->whereUuid('id');
-Route::patch('/families/{id}/deactivate', FamilyDeactivateController::class)->whereUuid('id');
+Route::middleware([
+	EncryptCookies::class,
+	AddQueuedCookiesToResponse::class,
+	StartSession::class,
+	ResolveTenantContext::class,
+])->group(function (): void {
+	Route::get('/families', FamilyGetCollectionController::class);
+	Route::get('/families/{id}', FamilyGetController::class)->whereUuid('id');
+	Route::post('/families', FamilyPostController::class);
+	Route::put('/families/{id}', FamilyPutController::class)->whereUuid('id');
+	Route::delete('/families/{id}', FamilyDeleteController::class)->whereUuid('id');
+	Route::patch('/families/{id}/activate', FamilyActivateController::class)->whereUuid('id');
+	Route::patch('/families/{id}/deactivate', FamilyDeactivateController::class)->whereUuid('id');
 
-Route::get('/taxes', TaxGetCollectionController::class);
-Route::get('/taxes/{id}', TaxGetController::class)->whereUuid('id');
-Route::post('/taxes', TaxPostController::class);
-Route::put('/taxes/{id}', TaxPutController::class)->whereUuid('id');
-Route::delete('/taxes/{id}', TaxDeleteController::class)->whereUuid('id');
+	Route::get('/taxes', TaxGetCollectionController::class);
+	Route::get('/taxes/{id}', TaxGetController::class)->whereUuid('id');
+	Route::post('/taxes', TaxPostController::class);
+	Route::put('/taxes/{id}', TaxPutController::class)->whereUuid('id');
+	Route::delete('/taxes/{id}', TaxDeleteController::class)->whereUuid('id');
 
-Route::get('/zones', ZoneGetCollectionController::class);
-Route::get('/zones/{id}', ZoneGetController::class)->whereUuid('id');
-Route::post('/zones', ZonePostController::class);
-Route::put('/zones/{id}', ZonePutController::class)->whereUuid('id');
-Route::delete('/zones/{id}', ZoneDeleteController::class)->whereUuid('id');
+	Route::get('/zones', ZoneGetCollectionController::class);
+	Route::get('/zones/{id}', ZoneGetController::class)->whereUuid('id');
+	Route::post('/zones', ZonePostController::class);
+	Route::put('/zones/{id}', ZonePutController::class)->whereUuid('id');
+	Route::delete('/zones/{id}', ZoneDeleteController::class)->whereUuid('id');
 
-Route::get('/tables', TableGetCollectionController::class);
-Route::get('/tables/{id}', TableGetController::class)->whereUuid('id');
-Route::post('/tables', TablePostController::class);
-Route::put('/tables/{id}', TablePutController::class)->whereUuid('id');
-Route::delete('/tables/{id}', TableDeleteController::class)->whereUuid('id');
+	Route::get('/tables', TableGetCollectionController::class);
+	Route::get('/tables/{id}', TableGetController::class)->whereUuid('id');
+	Route::post('/tables', TablePostController::class);
+	Route::put('/tables/{id}', TablePutController::class)->whereUuid('id');
+	Route::delete('/tables/{id}', TableDeleteController::class)->whereUuid('id');
 
-Route::get('/products', ProductGetCollectionController::class);
-Route::get('/products/{id}', ProductGetController::class)->whereUuid('id');
-Route::post('/products', ProductPostController::class);
-Route::put('/products/{id}', ProductPutController::class)->whereUuid('id');
-Route::delete('/products/{id}', ProductDeleteController::class)->whereUuid('id');
-Route::patch('/products/{id}/activate', ProductActivateController::class)->whereUuid('id');
-Route::patch('/products/{id}/deactivate', ProductDeactivateController::class)->whereUuid('id');
+	Route::get('/products', ProductGetCollectionController::class);
+	Route::get('/products/{id}', ProductGetController::class)->whereUuid('id');
+	Route::post('/products', ProductPostController::class);
+	Route::put('/products/{id}', ProductPutController::class)->whereUuid('id');
+	Route::delete('/products/{id}', ProductDeleteController::class)->whereUuid('id');
+	Route::patch('/products/{id}/activate', ProductActivateController::class)->whereUuid('id');
+	Route::patch('/products/{id}/deactivate', ProductDeactivateController::class)->whereUuid('id');
 
-// Restaurants
-Route::post('/restaurants', RestaurantPostController::class);
-Route::get('/restaurants', RestaurantGetCollectionController::class);
-Route::get('/restaurants/{id}', RestaurantGetController::class)->whereUuid('id');
-Route::put('/restaurants/{id}', RestaurantPutController::class)->whereUuid('id');
-Route::delete('/restaurants/{id}', RestaurantDeleteController::class)->whereUuid('id');
+	// Orders
+	Route::post('/orders', OrderPostController::class);
+	Route::post('/orders/lines', OrderAddLineController::class);
 
-// Orders
-Route::post('/orders', OrderPostController::class);
-Route::post('/orders/lines', OrderAddLineController::class);
+	Route::get('/orders', OrderGetCollectionController::class);
+	Route::get('/orders/{id}', OrderGetController::class)->whereUuid('id');
+	Route::get('/orders/{id}/lines', OrderGetLinesController::class)->whereUuid('id');
+	Route::put('/orders/{id}', OrderPutController::class)->whereUuid('id');
+	Route::delete('/orders/{id}', OrderDeleteController::class)->whereUuid('id');
 
-Route::get('/orders', OrderGetCollectionController::class);
-Route::get('/orders/{id}', OrderGetController::class)->whereUuid('id');
-Route::put('/orders/{id}', OrderPutController::class)->whereUuid('id');
-Route::delete('/orders/{id}', OrderDeleteController::class)->whereUuid('id');
+	// Sales
+	Route::post('/sales', SalePostController::class);
+	Route::post('/sales/lines', SaleAddLineController::class);
 
-// Sales
-Route::post('/sales', SalePostController::class);
-Route::post('/sales/lines', SaleAddLineController::class);
+	Route::get('/sales', SaleGetCollectionController::class);
+	Route::get('/sales/{id}', SaleGetController::class)->whereUuid('id');
+	Route::put('/sales/{id}', SalePutController::class)->whereUuid('id');
+	Route::delete('/sales/{id}', SaleDeleteController::class)->whereUuid('id');
+});
 
-Route::get('/sales', SaleGetCollectionController::class);
-Route::get('/sales/{id}', SaleGetController::class)->whereUuid('id');
-Route::put('/sales/{id}', SalePutController::class)->whereUuid('id');
-Route::delete('/sales/{id}', SaleDeleteController::class)->whereUuid('id');
+Route::middleware([
+	EncryptCookies::class,
+	AddQueuedCookiesToResponse::class,
+	StartSession::class,
+	RequireAdminSession::class,
+])->group(function (): void {
+	Route::get('/admin/restaurants', RestaurantAdminGetCollectionController::class);
+	Route::post('/admin/context/restaurant', AdminSelectRestaurantContextController::class);
+
+	// Restaurant management
+	Route::post('/admin/restaurants', RestaurantPostController::class);
+	Route::get('/admin/restaurants/{id}', RestaurantGetController::class)->whereUuid('id');
+	Route::put('/admin/restaurants/{id}', RestaurantPutController::class)->whereUuid('id');
+	Route::delete('/admin/restaurants/{id}', RestaurantDeleteController::class)->whereUuid('id');
+});

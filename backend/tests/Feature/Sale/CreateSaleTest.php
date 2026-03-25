@@ -11,21 +11,25 @@ class CreateSaleTest extends TestCase
 
     public function test_post_sales_returns_422_when_invalid_uuids(): void
     {
-        $response = $this->postJson('/api/sales', [
-            'restaurant_id' => 'not-a-uuid',
+        $tenant = $this->createTenantSession();
+
+        $response = $this->withSession($tenant['session'])->postJson('/api/sales', [
+            'restaurant_id' => $tenant['restaurant_uuid'],
             'order_id' => 'not-a-uuid',
             'user_id' => 'not-a-uuid',
             'total' => 2000,
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['restaurant_id', 'order_id', 'user_id']);
+        $response->assertJsonValidationErrors(['order_id', 'user_id']);
     }
 
     public function test_post_sales_returns_422_when_total_is_negative(): void
     {
-        $response = $this->postJson('/api/sales', [
-            'restaurant_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+        $tenant = $this->createTenantSession();
+
+        $response = $this->withSession($tenant['session'])->postJson('/api/sales', [
+            'restaurant_id' => $tenant['restaurant_uuid'],
             'order_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
             'user_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
             'total' => -100,
@@ -37,8 +41,10 @@ class CreateSaleTest extends TestCase
 
     public function test_post_sales_returns_422_when_required_fields_missing(): void
     {
-        $response = $this->postJson('/api/sales', [
-            'restaurant_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+        $tenant = $this->createTenantSession();
+
+        $response = $this->withSession($tenant['session'])->postJson('/api/sales', [
+            'restaurant_id' => $tenant['restaurant_uuid'],
         ]);
 
         $response->assertStatus(422);

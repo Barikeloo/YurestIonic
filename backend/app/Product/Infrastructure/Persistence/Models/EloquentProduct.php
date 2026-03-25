@@ -3,6 +3,7 @@
 namespace App\Product\Infrastructure\Persistence\Models;
 
 use App\Family\Infrastructure\Persistence\Models\EloquentFamily;
+use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
 use App\Tax\Infrastructure\Persistence\Models\EloquentTax;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EloquentProduct extends Model
 {
+    use HasTenantScope;
     use SoftDeletes;
 
     protected $table = 'products';

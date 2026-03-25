@@ -10,19 +10,28 @@ class OrderLineSeeder extends Seeder
 {
     public function run(): void
     {
-        $restaurantId = DB::table('restaurants')->first()?->id;
-        $orders = DB::table('orders')->pluck('id')->toArray();
-        $products = DB::table('products')->pluck('id', 'name');
-        $users = DB::table('users')->pluck('id', 'email');
+        $orders = DB::table('orders')->get(['id', 'restaurant_id']);
 
-        if (!$restaurantId || empty($orders) || empty($products) || empty($users)) {
+        if ($orders->isEmpty()) {
             return;
         }
 
         $now = now();
 
         // Agregar líneas a cada orden
-        foreach ($orders as $orderId) {
+        foreach ($orders as $order) {
+            $restaurantId = (int) $order->restaurant_id;
+            $products = DB::table('products')
+                ->where('restaurant_id', $restaurantId)
+                ->pluck('id', 'name');
+            $users = DB::table('users')
+                ->where('restaurant_id', $restaurantId)
+                ->pluck('id', 'email');
+
+            if ($products->isEmpty() || $users->isEmpty()) {
+                continue;
+            }
+
             for ($i = 0; $i < rand(1, 3); $i++) {
                 $productName = array_rand(['Cafe' => 1, 'Cerveza' => 1, 'Bocadillo' => 1]);
                 $productId = $products[$productName] ?? null;
@@ -37,7 +46,7 @@ class OrderLineSeeder extends Seeder
                 DB::table('order_lines')->insert([
                     'restaurant_id' => $restaurantId,
                     'uuid' => (string) Str::uuid(),
-                    'order_id' => $orderId,
+                    'order_id' => $order->id,
                     'product_id' => $productId,
                     'user_id' => $users['ana@tpv.local'] ?? null,
                     'quantity' => rand(1, 3),

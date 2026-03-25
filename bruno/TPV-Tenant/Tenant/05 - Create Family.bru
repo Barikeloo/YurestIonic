@@ -1,0 +1,21 @@
+meta {
+  name: 05 - Create Family
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/families
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "name": "{{familyName}}"
+  }
+}

@@ -11,7 +11,9 @@ class ZoneCrudTest extends TestCase
 
     public function test_zone_full_crud_flow(): void
     {
-        $createResponse = $this->postJson('/api/zones', [
+        $tenant = $this->createTenantSession();
+
+        $createResponse = $this->withSession($tenant['session'])->postJson('/api/zones', [
             'name' => 'Salon principal',
         ]);
 
@@ -22,21 +24,21 @@ class ZoneCrudTest extends TestCase
 
         $zoneId = $createResponse->json('id');
 
-        $this->getJson('/api/zones')
+        $this->withSession($tenant['session'])->getJson('/api/zones')
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $zoneId,
                 'name' => 'Salon principal',
             ]);
 
-        $this->getJson("/api/zones/{$zoneId}")
+        $this->withSession($tenant['session'])->getJson("/api/zones/{$zoneId}")
             ->assertStatus(200)
             ->assertJson([
                 'id' => $zoneId,
                 'name' => 'Salon principal',
             ]);
 
-        $this->putJson("/api/zones/{$zoneId}", [
+        $this->withSession($tenant['session'])->putJson("/api/zones/{$zoneId}", [
             'name' => 'Terraza exterior',
         ])
             ->assertStatus(200)
@@ -45,10 +47,10 @@ class ZoneCrudTest extends TestCase
                 'name' => 'Terraza exterior',
             ]);
 
-        $this->deleteJson("/api/zones/{$zoneId}")
+        $this->withSession($tenant['session'])->deleteJson("/api/zones/{$zoneId}")
             ->assertStatus(204);
 
-        $this->getJson("/api/zones/{$zoneId}")
+        $this->withSession($tenant['session'])->getJson("/api/zones/{$zoneId}")
             ->assertStatus(404);
     }
 }

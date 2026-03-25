@@ -2,6 +2,7 @@
 
 namespace App\Tables\Infrastructure\Persistence\Models;
 
+use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
 use App\Zone\Infrastructure\Persistence\Models\EloquentZone;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EloquentTable extends Model
 {
+    use HasTenantScope;
     use SoftDeletes;
 
     protected $table = 'tables';

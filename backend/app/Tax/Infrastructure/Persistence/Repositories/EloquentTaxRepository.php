@@ -4,19 +4,19 @@ namespace App\Tax\Infrastructure\Persistence\Repositories;
 
 use App\Tax\Domain\Entity\Tax;
 use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
-use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
+use App\Shared\Infrastructure\Tenant\TenantContext;
 use App\Tax\Infrastructure\Persistence\Models\EloquentTax;
-use Illuminate\Support\Str;
 
 class EloquentTaxRepository implements TaxRepositoryInterface
 {
     public function __construct(
         private EloquentTax $model,
+        private TenantContext $tenantContext,
     ) {}
 
     public function save(Tax $tax): void
     {
-        $restaurantId = $this->defaultRestaurantId();
+        $restaurantId = $this->tenantContext->requireRestaurantId();
 
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $tax->id()->value()],
@@ -69,23 +69,5 @@ class EloquentTaxRepository implements TaxRepositoryInterface
         }
 
         return (bool) $model->delete();
-    }
-
-    private function defaultRestaurantId(): int
-    {
-        $existingId = EloquentRestaurant::query()->value('id');
-
-        if ($existingId !== null) {
-            return (int) $existingId;
-        }
-
-        return (int) EloquentRestaurant::query()->create([
-            'uuid' => (string) Str::uuid(),
-            'name' => 'Default Restaurant',
-            'legal_name' => 'Default Restaurant S.L.',
-            'tax_id' => 'B00000000',
-            'email' => 'default-' . Str::lower(Str::random(8)) . '@local.test',
-            'password' => bcrypt('password123'),
-        ])->id;
     }
 }

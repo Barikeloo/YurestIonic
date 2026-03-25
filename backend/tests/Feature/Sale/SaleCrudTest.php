@@ -77,7 +77,9 @@ final class SaleCrudTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $createResponse = $this->postJson('/api/sales', [
+        $session = ['auth_user_id' => $userUuid];
+
+        $createResponse = $this->withSession($session)->postJson('/api/sales', [
             'restaurant_id' => $restaurantUuid,
             'order_id' => $orderUuid,
             'user_id' => $userUuid,
@@ -94,20 +96,20 @@ final class SaleCrudTest extends TestCase
 
         $saleId = $createResponse->json('id');
 
-        $this->getJson('/api/sales')
+        $this->withSession($session)->getJson('/api/sales')
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $saleId,
             ]);
 
-        $this->getJson("/api/sales/{$saleId}")
+        $this->withSession($session)->getJson("/api/sales/{$saleId}")
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $saleId,
                 'restaurant_id' => $restaurantUuid,
             ]);
 
-        $this->putJson("/api/sales/{$saleId}", [
+        $this->withSession($session)->putJson("/api/sales/{$saleId}", [
             'ticket_number' => 1001,
             'total' => 1900,
         ])
@@ -118,10 +120,10 @@ final class SaleCrudTest extends TestCase
                 'total' => 1900,
             ]);
 
-        $this->deleteJson("/api/sales/{$saleId}")
+        $this->withSession($session)->deleteJson("/api/sales/{$saleId}")
             ->assertStatus(204);
 
-        $this->getJson("/api/sales/{$saleId}")
+        $this->withSession($session)->getJson("/api/sales/{$saleId}")
             ->assertStatus(404);
     }
 }
