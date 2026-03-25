@@ -12,6 +12,92 @@ final class SaleCrudTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_sale_cannot_be_closed_without_lines(): void
+    {
+        $restaurantUuid = (string) Str::uuid();
+        $zoneUuid = (string) Str::uuid();
+        $tableUuid = (string) Str::uuid();
+        $userUuid = (string) Str::uuid();
+        $orderUuid = (string) Str::uuid();
+
+        $restaurantId = DB::table('restaurants')->insertGetId([
+            'uuid' => $restaurantUuid,
+            'name' => 'R Sale Close Test',
+            'legal_name' => 'R Sale Close Test S.L.',
+            'tax_id' => 'B77777777',
+            'email' => 'rsale-close@local.dev',
+            'password' => Hash::make('password123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $zoneId = DB::table('zones')->insertGetId([
+            'uuid' => $zoneUuid,
+            'restaurant_id' => $restaurantId,
+            'name' => 'Zona Close',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $tableId = DB::table('tables')->insertGetId([
+            'uuid' => $tableUuid,
+            'restaurant_id' => $restaurantId,
+            'zone_id' => $zoneId,
+            'name' => 'Mesa Close',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $userId = DB::table('users')->insertGetId([
+            'uuid' => $userUuid,
+            'restaurant_id' => $restaurantId,
+            'role' => 'operator',
+            'image_src' => null,
+            'name' => 'User Close',
+            'email' => 'user.close@test.dev',
+            'pin' => '1234',
+            'password' => Hash::make('password123'),
+            'email_verified_at' => now(),
+            'remember_token' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('orders')->insert([
+            'uuid' => $orderUuid,
+            'restaurant_id' => $restaurantId,
+            'status' => 'open',
+            'table_id' => $tableId,
+            'opened_by_user_id' => $userId,
+            'closed_by_user_id' => null,
+            'diners' => 2,
+            'opened_at' => now(),
+            'closed_at' => null,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $session = ['auth_user_id' => $userUuid];
+
+        $createResponse = $this->withSession($session)->postJson('/api/sales', [
+            'restaurant_id' => $restaurantUuid,
+            'order_id' => $orderUuid,
+            'opened_by_user_id' => $userUuid,
+        ]);
+
+        $createResponse->assertStatus(201);
+        $saleId = $createResponse->json('id');
+
+        $this->withSession($session)->putJson("/api/sales/{$saleId}", [
+            'closed_by_user_id' => $userUuid,
+            'ticket_number' => 1001,
+        ])
+            ->assertStatus(422)
+            ->assertJson([
+                'message' => 'A sale must have at least one line before closing.',
+            ]);
+    }
+
     public function test_sale_full_crud_flow(): void
     {
         $restaurantUuid = (string) Str::uuid();
