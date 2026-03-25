@@ -17,15 +17,13 @@ final class PostController
         $validated = $request->validate([
             'restaurant_id' => ['required', 'string', 'uuid'],
             'order_id' => ['required', 'string', 'uuid'],
-            'user_id' => ['required', 'string', 'uuid'],
-            'total' => ['required', 'integer', 'min:0'],
+            'opened_by_user_id' => ['required', 'string', 'uuid'],
         ]);
 
         $response = ($this->createSale)(
             restaurantId: $validated['restaurant_id'],
             orderId: $validated['order_id'],
-            userId: $validated['user_id'],
-            total: $validated['total'],
+            openedByUserId: $validated['opened_by_user_id'],
         );
 
         return new JsonResponse($response->toArray(), 201);

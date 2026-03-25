@@ -11,15 +11,17 @@ class CreateRestaurantTest extends TestCase
 
     public function test_post_restaurants_returns_422_when_email_already_exists(): void
     {
+        $admin = $this->createTenantSession('admin');
+
         $payload = [
             'name' => 'Duplicated Restaurant',
             'email' => 'duplicate@restaurant.com',
             'password' => 'password123',
         ];
 
-        $this->postJson('/api/restaurants', $payload)->assertStatus(201);
+        $this->withSession($admin['session'])->postJson('/api/admin/restaurants', $payload)->assertStatus(201);
 
-        $response = $this->postJson('/api/restaurants', $payload);
+        $response = $this->withSession($admin['session'])->postJson('/api/admin/restaurants', $payload);
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['email']);
@@ -27,7 +29,9 @@ class CreateRestaurantTest extends TestCase
 
     public function test_post_restaurants_returns_422_when_required_fields_missing(): void
     {
-        $response = $this->postJson('/api/restaurants', [
+        $admin = $this->createTenantSession('admin');
+
+        $response = $this->withSession($admin['session'])->postJson('/api/admin/restaurants', [
             'name' => 'Incomplete Restaurant',
         ]);
 
@@ -37,7 +41,9 @@ class CreateRestaurantTest extends TestCase
 
     public function test_post_restaurants_returns_422_when_email_is_invalid(): void
     {
-        $response = $this->postJson('/api/restaurants', [
+        $admin = $this->createTenantSession('admin');
+
+        $response = $this->withSession($admin['session'])->postJson('/api/admin/restaurants', [
             'name' => 'Test Restaurant',
             'legal_name' => 'Test Restaurant S.L.',
             'tax_id' => 'B12345678',

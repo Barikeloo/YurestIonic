@@ -12,7 +12,8 @@ final class Sale
         private readonly Uuid $restaurantId,
         private readonly Uuid $uuid,
         private readonly Uuid $orderId,
-        private readonly Uuid $userId,
+        private readonly Uuid $openedByUserId,
+        private ?Uuid $closedByUserId,
         private ?int $ticketNumber,
         private readonly DomainDateTime $valueDate,
         private int $total,
@@ -26,18 +27,18 @@ final class Sale
         Uuid $id,
         Uuid $restaurantId,
         Uuid $orderId,
-        Uuid $userId,
-        int $total,
+        Uuid $openedByUserId,
     ): self {
         return new self(
             id: $id,
             restaurantId: $restaurantId,
             uuid: $id,
             orderId: $orderId,
-            userId: $userId,
+            openedByUserId: $openedByUserId,
+            closedByUserId: null,
             ticketNumber: null,
             valueDate: DomainDateTime::now(),
-            total: $total,
+            total: 0,
             createdAt: DomainDateTime::now(),
             updatedAt: DomainDateTime::now(),
         );
@@ -48,7 +49,8 @@ final class Sale
         Uuid $restaurantId,
         Uuid $uuid,
         Uuid $orderId,
-        Uuid $userId,
+        Uuid $openedByUserId,
+        ?Uuid $closedByUserId,
         ?int $ticketNumber,
         DomainDateTime $valueDate,
         int $total,
@@ -61,7 +63,8 @@ final class Sale
             restaurantId: $restaurantId,
             uuid: $uuid,
             orderId: $orderId,
-            userId: $userId,
+            openedByUserId: $openedByUserId,
+            closedByUserId: $closedByUserId,
             ticketNumber: $ticketNumber,
             valueDate: $valueDate,
             total: $total,
@@ -71,14 +74,10 @@ final class Sale
         );
     }
 
-    public function updateTicketNumber(int $ticketNumber): void
+    public function close(Uuid $closedByUserId, int $ticketNumber, int $total): void
     {
+        $this->closedByUserId = $closedByUserId;
         $this->ticketNumber = $ticketNumber;
-        $this->updatedAt = DomainDateTime::now();
-    }
-
-    public function updateTotal(int $total): void
-    {
         $this->total = $total;
         $this->updatedAt = DomainDateTime::now();
     }
@@ -103,9 +102,14 @@ final class Sale
         return $this->orderId;
     }
 
-    public function getUserId(): Uuid
+    public function getOpenedByUserId(): Uuid
     {
-        return $this->userId;
+        return $this->openedByUserId;
+    }
+
+    public function getClosedByUserId(): ?Uuid
+    {
+        return $this->closedByUserId;
     }
 
     public function getTicketNumber(): ?int

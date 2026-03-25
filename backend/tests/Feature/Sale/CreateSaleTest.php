@@ -16,27 +16,25 @@ class CreateSaleTest extends TestCase
         $response = $this->withSession($tenant['session'])->postJson('/api/sales', [
             'restaurant_id' => $tenant['restaurant_uuid'],
             'order_id' => 'not-a-uuid',
-            'user_id' => 'not-a-uuid',
-            'total' => 2000,
+            'opened_by_user_id' => 'not-a-uuid',
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['order_id', 'user_id']);
+        $response->assertJsonValidationErrors(['order_id', 'opened_by_user_id']);
     }
 
-    public function test_post_sales_returns_422_when_total_is_negative(): void
+    public function test_post_sales_returns_422_when_opened_by_user_is_invalid(): void
     {
         $tenant = $this->createTenantSession();
 
         $response = $this->withSession($tenant['session'])->postJson('/api/sales', [
             'restaurant_id' => $tenant['restaurant_uuid'],
             'order_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
-            'user_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
-            'total' => -100,
+            'opened_by_user_id' => 'invalid-uuid',
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['total']);
+        $response->assertJsonValidationErrors(['opened_by_user_id']);
     }
 
     public function test_post_sales_returns_422_when_required_fields_missing(): void
@@ -48,6 +46,6 @@ class CreateSaleTest extends TestCase
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['order_id', 'user_id', 'total']);
+        $response->assertJsonValidationErrors(['order_id', 'opened_by_user_id']);
     }
 }

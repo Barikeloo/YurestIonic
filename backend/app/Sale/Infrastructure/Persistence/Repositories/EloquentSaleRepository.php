@@ -17,14 +17,19 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
     {
         $restaurantId = EloquentRestaurant::query()->where('uuid', $sale->getRestaurantId()->value())->value('id');
         $orderId = EloquentOrder::query()->where('uuid', $sale->getOrderId()->value())->value('id');
-        $userId = EloquentUser::query()->where('uuid', $sale->getUserId()->value())->value('id');
+        $openedByUserId = EloquentUser::query()->where('uuid', $sale->getOpenedByUserId()->value())->value('id');
+        $closedByUserId = $sale->getClosedByUserId() !== null
+            ? EloquentUser::query()->where('uuid', $sale->getClosedByUserId()?->value())->value('id')
+            : null;
 
         EloquentSale::updateOrCreate(
             ['uuid' => $sale->getId()->value()],
             [
                 'restaurant_id' => $restaurantId,
                 'order_id' => $orderId,
-                'user_id' => $userId,
+                'user_id' => $openedByUserId,
+                'opened_by_user_id' => $openedByUserId,
+                'closed_by_user_id' => $closedByUserId,
                 'ticket_number' => $sale->getTicketNumber(),
                 'value_date' => $sale->getValueDate()->value(),
                 'total' => $sale->getTotal(),
@@ -80,14 +85,18 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
     {
         $restaurantUuid = EloquentRestaurant::query()->where('id', $model->restaurant_id)->value('uuid');
         $orderUuid = EloquentOrder::query()->where('id', $model->order_id)->value('uuid');
-        $userUuid = EloquentUser::query()->where('id', $model->user_id)->value('uuid');
+        $openedByUserUuid = EloquentUser::query()->where('id', $model->opened_by_user_id ?? $model->user_id)->value('uuid');
+        $closedByUserUuid = $model->closed_by_user_id !== null
+            ? EloquentUser::query()->where('id', $model->closed_by_user_id)->value('uuid')
+            : null;
 
         return Sale::hydrate(
             id: Uuid::create($model->uuid),
             restaurantId: Uuid::create($restaurantUuid),
             uuid: Uuid::create($model->uuid),
             orderId: Uuid::create($orderUuid),
-            userId: Uuid::create($userUuid),
+            openedByUserId: Uuid::create($openedByUserUuid),
+            closedByUserId: $closedByUserUuid !== null ? Uuid::create($closedByUserUuid) : null,
             ticketNumber: $model->ticket_number,
             valueDate: DomainDateTime::create($model->value_date->toDateTimeImmutable()),
             total: $model->total,

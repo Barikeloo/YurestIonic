@@ -82,19 +82,79 @@ final class SaleCrudTest extends TestCase
         $createResponse = $this->withSession($session)->postJson('/api/sales', [
             'restaurant_id' => $restaurantUuid,
             'order_id' => $orderUuid,
-            'user_id' => $userUuid,
-            'total' => 1500,
+            'opened_by_user_id' => $userUuid,
         ]);
 
         $createResponse->assertStatus(201);
         $createResponse->assertJsonFragment([
             'restaurant_id' => $restaurantUuid,
             'order_id' => $orderUuid,
-            'user_id' => $userUuid,
-            'total' => 1500,
+            'opened_by_user_id' => $userUuid,
+            'total' => 0,
         ]);
 
         $saleId = $createResponse->json('id');
+
+        $taxId = DB::table('taxes')->insertGetId([
+            'restaurant_id' => $restaurantId,
+            'uuid' => (string) Str::uuid(),
+            'name' => 'IVA 10',
+            'percentage' => 10,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $familyId = DB::table('families')->insertGetId([
+            'restaurant_id' => $restaurantId,
+            'uuid' => (string) Str::uuid(),
+            'name' => 'Bebidas',
+            'active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $productId = DB::table('products')->insertGetId([
+            'restaurant_id' => $restaurantId,
+            'uuid' => (string) Str::uuid(),
+            'family_id' => $familyId,
+            'tax_id' => $taxId,
+            'name' => 'Cafe',
+            'price' => 1000,
+            'stock' => 50,
+            'active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $orderId = (int) DB::table('orders')->where('uuid', $orderUuid)->value('id');
+        $saleInternalId = (int) DB::table('sales')->where('uuid', $saleId)->value('id');
+
+        $orderLineId = DB::table('order_lines')->insertGetId([
+            'restaurant_id' => $restaurantId,
+            'uuid' => (string) Str::uuid(),
+            'order_id' => $orderId,
+            'product_id' => $productId,
+            'user_id' => $userId,
+            'quantity' => 2,
+            'price' => 1000,
+            'tax_percentage' => 10,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('sales_lines')->insert([
+            'restaurant_id' => $restaurantId,
+            'uuid' => (string) Str::uuid(),
+            'sale_id' => $saleInternalId,
+            'order_line_id' => $orderLineId,
+            'product_id' => $productId,
+            'user_id' => $userId,
+            'quantity' => 2,
+            'price' => 1000,
+            'tax_percentage' => 10,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $this->withSession($session)->getJson('/api/sales')
             ->assertStatus(200)
@@ -110,14 +170,15 @@ final class SaleCrudTest extends TestCase
             ]);
 
         $this->withSession($session)->putJson("/api/sales/{$saleId}", [
+            'closed_by_user_id' => $userUuid,
             'ticket_number' => 1001,
-            'total' => 1900,
         ])
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $saleId,
                 'ticket_number' => 1001,
-                'total' => 1900,
+                'closed_by_user_id' => $userUuid,
+                'total' => 2200,
             ]);
 
         $this->withSession($session)->deleteJson("/api/sales/{$saleId}")

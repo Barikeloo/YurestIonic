@@ -3,6 +3,7 @@
 namespace App\Order\Infrastructure\Entrypoint\Http;
 
 use App\Order\Application\AddLineToOrder\AddLineToOrder;
+use InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -24,15 +25,21 @@ final class AddLineController
             'tax_percentage' => ['required', 'integer', 'min:0', 'max:100'],
         ]);
 
-        $response = ($this->addLineToOrder)(
-            restaurantId: $validated['restaurant_id'],
-            orderId: $validated['order_id'],
-            productId: $validated['product_id'],
-            userId: $validated['user_id'],
-            quantity: $validated['quantity'],
-            price: $validated['price'],
-            taxPercentage: $validated['tax_percentage'],
-        );
+        try {
+            $response = ($this->addLineToOrder)(
+                restaurantId: $validated['restaurant_id'],
+                orderId: $validated['order_id'],
+                productId: $validated['product_id'],
+                userId: $validated['user_id'],
+                quantity: $validated['quantity'],
+                price: $validated['price'],
+                taxPercentage: $validated['tax_percentage'],
+            );
+        } catch (InvalidArgumentException $exception) {
+            return new JsonResponse([
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
 
         return new JsonResponse($response->toArray(), 201);
     }

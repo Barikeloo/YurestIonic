@@ -14,22 +14,21 @@ class SaleEntityTest extends TestCase
         $restaurantId = Uuid::generate();
         $orderId = Uuid::generate();
         $userId = Uuid::generate();
-        $total = 2000;
 
         $sale = Sale::dddCreate(
             $uuid,
             $restaurantId,
             $orderId,
             $userId,
-            $total
         );
 
         $this->assertInstanceOf(Sale::class, $sale);
         $this->assertSame($uuid->value(), $sale->getId()->value());
         $this->assertSame($restaurantId->value(), $sale->getRestaurantId()->value());
         $this->assertSame($orderId->value(), $sale->getOrderId()->value());
-        $this->assertSame($userId->value(), $sale->getUserId()->value());
-        $this->assertSame($total, $sale->getTotal());
+        $this->assertSame($userId->value(), $sale->getOpenedByUserId()->value());
+        $this->assertNull($sale->getClosedByUserId());
+        $this->assertSame(0, $sale->getTotal());
     }
 
     public function test_ddd_create_generates_timestamps(): void
@@ -40,7 +39,7 @@ class SaleEntityTest extends TestCase
         $userId = Uuid::generate();
         $beforeCreation = now();
 
-        $sale = Sale::dddCreate($uuid, $restaurantId, $orderId, $userId, 2000);
+        $sale = Sale::dddCreate($uuid, $restaurantId, $orderId, $userId);
 
         $afterCreation = now();
 
@@ -52,16 +51,19 @@ class SaleEntityTest extends TestCase
         );
     }
 
-    public function test_ddd_create_with_monetary_values(): void
+    public function test_close_sets_ticket_total_and_closer_user(): void
     {
         $uuid = Uuid::generate();
         $restaurantId = Uuid::generate();
         $orderId = Uuid::generate();
-        $userId = Uuid::generate();
-        $total = 5500;
+        $openedBy = Uuid::generate();
+        $closedBy = Uuid::generate();
 
-        $sale = Sale::dddCreate($uuid, $restaurantId, $orderId, $userId, $total);
+        $sale = Sale::dddCreate($uuid, $restaurantId, $orderId, $openedBy);
+        $sale->close($closedBy, 1001, 5500);
 
+        $this->assertSame(1001, $sale->getTicketNumber());
+        $this->assertSame($closedBy->value(), $sale->getClosedByUserId()?->value());
         $this->assertSame(5500, $sale->getTotal());
     }
 }

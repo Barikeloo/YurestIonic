@@ -11,7 +11,9 @@ final class RestaurantCrudTest extends TestCase
 
     public function test_restaurant_full_crud_flow(): void
     {
-        $createResponse = $this->postJson('/api/restaurants', [
+        $admin = $this->createTenantSession('admin');
+
+        $createResponse = $this->withSession($admin['session'])->postJson('/api/admin/restaurants', [
             'name' => 'Nuevo Restaurante',
             'legal_name' => 'Nuevo Restaurante S.L.',
             'tax_id' => 'B11223344',
@@ -27,21 +29,21 @@ final class RestaurantCrudTest extends TestCase
 
         $restaurantId = $createResponse->json('id');
 
-        $this->getJson('/api/restaurants')
+        $this->withSession($admin['session'])->getJson('/api/admin/restaurants')
+            ->assertStatus(200)
+            ->assertJsonFragment([
+                'uuid' => $restaurantId,
+                'name' => 'Nuevo Restaurante',
+            ]);
+
+        $this->withSession($admin['session'])->getJson("/api/admin/restaurants/{$restaurantId}")
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $restaurantId,
                 'name' => 'Nuevo Restaurante',
             ]);
 
-        $this->getJson("/api/restaurants/{$restaurantId}")
-            ->assertStatus(200)
-            ->assertJsonFragment([
-                'id' => $restaurantId,
-                'name' => 'Nuevo Restaurante',
-            ]);
-
-        $this->putJson("/api/restaurants/{$restaurantId}", [
+        $this->withSession($admin['session'])->putJson("/api/admin/restaurants/{$restaurantId}", [
             'name' => 'Restaurante Actualizado',
             'legal_name' => 'Restaurante Actualizado S.L.',
         ])
@@ -51,10 +53,10 @@ final class RestaurantCrudTest extends TestCase
                 'name' => 'Restaurante Actualizado',
             ]);
 
-        $this->deleteJson("/api/restaurants/{$restaurantId}")
+        $this->withSession($admin['session'])->deleteJson("/api/admin/restaurants/{$restaurantId}")
             ->assertStatus(204);
 
-        $this->getJson("/api/restaurants/{$restaurantId}")
+        $this->withSession($admin['session'])->getJson("/api/admin/restaurants/{$restaurantId}")
             ->assertStatus(404);
     }
 }

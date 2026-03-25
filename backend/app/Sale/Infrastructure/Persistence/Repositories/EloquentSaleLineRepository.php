@@ -7,6 +7,7 @@ use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
 use App\Sale\Infrastructure\Persistence\Models\EloquentSaleLine;
 use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrderLine;
+use App\Product\Infrastructure\Persistence\Models\EloquentProduct;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -19,6 +20,7 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
         $restaurantId = EloquentRestaurant::query()->where('uuid', $saleLine->getRestaurantId()->value())->value('id');
         $saleId = EloquentSale::query()->where('uuid', $saleLine->getSaleId()->value())->value('id');
         $orderLineId = EloquentOrderLine::query()->where('uuid', $saleLine->getOrderLineId()->value())->value('id');
+        $productId = EloquentProduct::query()->where('uuid', $saleLine->getProductId()->value())->value('id');
         $userId = EloquentUser::query()->where('uuid', $saleLine->getUserId()->value())->value('id');
 
         EloquentSaleLine::updateOrCreate(
@@ -27,6 +29,7 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
                 'restaurant_id' => $restaurantId,
                 'sale_id' => $saleId,
                 'order_line_id' => $orderLineId,
+                'product_id' => $productId,
                 'user_id' => $userId,
                 'quantity' => $saleLine->getQuantity(),
                 'price' => $saleLine->getPrice(),
@@ -72,6 +75,7 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
         $restaurantUuid = EloquentRestaurant::query()->where('id', $model->restaurant_id)->value('uuid');
         $saleUuid = EloquentSale::query()->where('id', $model->sale_id)->value('uuid');
         $orderLineUuid = EloquentOrderLine::query()->where('id', $model->order_line_id)->value('uuid');
+        $productUuid = EloquentProduct::query()->where('id', $model->product_id)->value('uuid');
         $userUuid = EloquentUser::query()->where('id', $model->user_id)->value('uuid');
 
         return SaleLine::hydrate(
@@ -80,6 +84,7 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
             uuid: Uuid::create($model->uuid),
             saleId: Uuid::create($saleUuid),
             orderLineId: Uuid::create($orderLineUuid),
+            productId: Uuid::create($productUuid),
             userId: Uuid::create($userUuid),
             quantity: $model->quantity,
             price: $model->price,

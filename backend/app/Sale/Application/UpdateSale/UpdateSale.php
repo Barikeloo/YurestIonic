@@ -2,18 +2,22 @@
 
 namespace App\Sale\Application\UpdateSale;
 
+use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
+use App\Shared\Domain\ValueObject\Uuid;
+use InvalidArgumentException;
 
 final class UpdateSale
 {
     public function __construct(
         private readonly SaleRepositoryInterface $saleRepository,
+        private readonly SaleLineRepositoryInterface $saleLineRepository,
     ) {}
 
     public function __invoke(
         string $id,
-        ?int $ticketNumber = null,
-        ?int $total = null,
+        string $closedByUserId,
+        int $ticketNumber,
     ): ?UpdateSaleResponse {
         $sale = $this->saleRepository->getById($id);
 
@@ -21,13 +25,28 @@ final class UpdateSale
             return null;
         }
 
-        if ($ticketNumber !== null) {
-            $sale->updateTicketNumber($ticketNumber);
+        if ($sale->getClosedByUserId() !== null) {
+            throw new InvalidArgumentException('Sale is already closed.');
         }
 
-        if ($total !== null) {
-            $sale->updateTotal($total);
+        $saleLines = $this->saleLineRepository->findBySaleId($sale->getId());
+
+        if ($saleLines === []) {
+            throw new InvalidArgumentException('A sale must have at least one line before closing.');
         }
+
+        $total = 0;
+        foreach ($saleLines as $saleLine) {
+            $lineBase = $saleLine->getPrice() * $saleLine->getQuantity();
+            $lineWithTax = intdiv($lineBase * (100 + $saleLine->getTaxPercentage()), 100);
+            $total += $lineWithTax;
+        }
+
+        $sale->close(
+            closedByUserId: Uuid::create($closedByUserId),
+            ticketNumber: $ticketNumber,
+            total: $total,
+        );
 
         $this->saleRepository->save($sale);
 

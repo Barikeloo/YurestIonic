@@ -15,15 +15,13 @@ final class CreateSale
     public function __invoke(
         string $restaurantId,
         string $orderId,
-        string $userId,
-        int $total,
+        string $openedByUserId,
     ): CreateSaleResponse {
         $sale = Sale::dddCreate(
             id: Uuid::generate(),
             restaurantId: Uuid::create($restaurantId),
             orderId: Uuid::create($orderId),
-            userId: Uuid::create($userId),
-            total: $total,
+            openedByUserId: Uuid::create($openedByUserId),
         );
 
         $this->saleRepository->save($sale);
