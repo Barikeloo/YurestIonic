@@ -1,0 +1,4498 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>TPV — Sistema de Punto de Venta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --accent: #FF4D4D;
+      --accent-light: #FF7070;
+      --accent-soft: #FFECEC;
+      --black: #0D0D0D;
+      --gray-900: #1A1A1A;
+      --gray-800: #2C2C2C;
+      --gray-700: #3D3D3D;
+      --gray-500: #7A7A7A;
+      --gray-400: #A0A0A0;
+      --gray-200: #E8E8E8;
+      --gray-100: #F4F4F4;
+      --gray-50: #FAFAFA;
+      --white: #FFFFFF;
+      --green: #1A9E5A;
+      --green-soft: #E8F7EF;
+      --blue: #1A6FE8;
+      --blue-soft: #EBF2FE;
+      --font: 'DM Sans', sans-serif;
+      --mono: 'DM Mono', monospace;
+      --radius-sm: 8px;
+      --radius: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.10);
+      --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.16);
+    }
+
+    html,
+    body {
+      font-family: var(--font);
+      background: #111;
+      height: 100%;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── TABLET FRAME ── */
+    .tablet-frame {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #111;
+    }
+
+    .tablet {
+      width: min(1180px, 98vw);
+      height: min(820px, 97vh);
+      background: var(--white);
+      border-radius: 32px;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 0 0 2px #333, 0 32px 80px rgba(0, 0, 0, 0.7);
+    }
+
+    /* ── SCREEN SYSTEM ── */
+    .screen {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.28s ease;
+    }
+
+    .screen.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    /* ════════════════════════════════
+     SCREEN 1: HOME / LANDING
+  ════════════════════════════════ */
+    #screen-home {
+      background: var(--black);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .home-inner {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      height: 100%;
+    }
+
+    .home-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 64px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .home-left::before {
+      content: '';
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(232, 68, 10, 0.2) 0%, transparent 70%);
+      top: -100px;
+      left: -100px;
+      pointer-events: none;
+    }
+
+    .home-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 56px;
+    }
+
+    .home-logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .home-logo-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .home-logo-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--white);
+      letter-spacing: -0.3px;
+    }
+
+    .home-tagline {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .home-title {
+      font-size: 46px;
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 20px;
+    }
+
+    .home-title strong {
+      font-weight: 600;
+      color: var(--white);
+    }
+
+    .home-subtitle {
+      font-size: 15px;
+      color: var(--gray-500);
+      line-height: 1.6;
+      margin-bottom: 48px;
+      max-width: 340px;
+    }
+
+    .home-cta-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-width: 280px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--white);
+      border: none;
+      padding: 16px 28px;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.18s, transform 0.12s;
+      text-align: center;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-light);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--gray-400);
+      border: 1px solid var(--gray-800);
+      padding: 15px 28px;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: border-color 0.18s, color 0.18s;
+      text-align: center;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--gray-600);
+      color: var(--white);
+    }
+
+    .home-right {
+      background: var(--gray-900);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .home-right::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg,
+          transparent,
+          transparent 39px,
+          rgba(255, 255, 255, 0.03) 39px,
+          rgba(255, 255, 255, 0.03) 40px),
+        repeating-linear-gradient(90deg,
+          transparent,
+          transparent 39px,
+          rgba(255, 255, 255, 0.03) 39px,
+          rgba(255, 255, 255, 0.03) 40px);
+    }
+
+    .home-preview-card {
+      background: var(--gray-800);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      z-index: 1;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .preview-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .preview-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-400);
+    }
+
+    .preview-badge {
+      background: var(--green-soft);
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .preview-stat-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .preview-stat {
+      background: var(--gray-700);
+      border-radius: 10px;
+      padding: 14px 12px;
+      text-align: center;
+    }
+
+    .preview-stat-val {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--white);
+      font-family: var(--mono);
+    }
+
+    .preview-stat-label {
+      font-size: 10px;
+      color: var(--gray-500);
+      margin-top: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .preview-mesa-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+
+    .preview-mesa {
+      background: var(--gray-700);
+      border-radius: 8px;
+      padding: 10px 6px;
+      text-align: center;
+    }
+
+    .preview-mesa.active-m {
+      background: var(--black);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .preview-mesa.cobrar-m {
+      background: var(--blue);
+    }
+
+    .preview-mesa-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--white);
+      font-family: var(--mono);
+    }
+
+    .preview-mesa-amount {
+      font-size: 9px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .preview-mesa.active-m .preview-mesa-amount {
+      color: var(--gray-400);
+    }
+
+    .preview-mesa.cobrar-m .preview-mesa-amount {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .home-stats-strip {
+      display: flex;
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .stat-val {
+      font-size: 28px;
+      font-weight: 300;
+      color: var(--white);
+      letter-spacing: -1px;
+      font-family: var(--mono);
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--white);
+      margin-top: 2px;
+    }
+
+    /* ════════════════════════════════
+     SCREEN 2: LOGIN
+  ════════════════════════════════ */
+    #screen-login {
+      background: var(--gray-50);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .login-topbar {
+      padding: 20px 28px;
+      display: flex;
+      align-items: center;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .login-logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .login-logo-icon {
+      width: 30px;
+      height: 30px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-logo-text {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .login-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* PIN panel */
+    .pin-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 40px;
+      background: var(--white);
+      border-right: 1px solid var(--gray-200);
+    }
+
+    .pin-section-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 24px;
+    }
+
+    .user-select-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 32px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .user-chip {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 12px 8px;
+      background: var(--gray-100);
+      border: 2px solid transparent;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .user-chip.selected {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--white);
+    }
+
+    .user-chip-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--gray-700);
+      text-align: center;
+    }
+
+    .pin-dots {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .pin-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 2px solid var(--gray-300);
+      background: transparent;
+      transition: all 0.15s;
+    }
+
+    .pin-dot.filled {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .pin-keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 72px);
+      gap: 8px;
+    }
+
+    .key {
+      width: 72px;
+      height: 60px;
+      border: 1px solid var(--gray-200);
+      background: var(--white);
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 20px;
+      font-weight: 400;
+      color: var(--black);
+      cursor: pointer;
+      transition: background 0.1s, transform 0.08s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .key:hover {
+      background: var(--gray-100);
+    }
+
+    .key:active {
+      transform: scale(0.95);
+    }
+
+    .key.key-del {
+      font-size: 14px;
+      color: var(--gray-500);
+    }
+
+    .key.key-enter {
+      background: var(--accent);
+      color: var(--white);
+      border-color: var(--accent);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .key.key-enter:hover {
+      background: var(--accent-light);
+    }
+
+    /* Email panel */
+    .email-panel {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 48px;
+      background: var(--gray-50);
+    }
+
+    .login-form-title {
+      font-size: 24px;
+      font-weight: 500;
+      color: var(--black);
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .login-form-sub {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-bottom: 36px;
+    }
+
+    .form-field {
+      width: 100%;
+      max-width: 320px;
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      color: var(--black);
+      background: var(--white);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-login {
+      width: 100%;
+      max-width: 320px;
+      background: var(--accent);
+      color: var(--white);
+      border: none;
+      padding: 15px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-top: 6px;
+      transition: background 0.15s;
+    }
+
+    .btn-login:hover {
+      background: var(--accent-light);
+    }
+
+    .login-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 320px;
+      margin: 20px 0;
+    }
+
+    .divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--gray-200);
+    }
+
+    .divider-text {
+      font-size: 12px;
+      color: var(--gray-400);
+    }
+
+    .btn-register {
+      width: 100%;
+      max-width: 320px;
+      background: transparent;
+      color: var(--gray-700);
+      border: 1.5px solid var(--gray-200);
+      padding: 14px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+
+    .btn-register:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    /* ════════════════════════════════
+     SCREEN 3: MESAS (Main TPV)
+  ════════════════════════════════ */
+    #screen-mesas {
+      background: var(--gray-50);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    /* Top bar */
+    .topbar {
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      height: 60px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .topbar-brand {
+      display: flex;
+      flex-direction: column;
+      margin-right: 20px;
+    }
+
+    .topbar-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+      line-height: 1;
+    }
+
+    .topbar-date {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-top: 2px;
+    }
+
+    .topbar-nav {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-500);
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      background: transparent;
+      font-family: var(--font);
+    }
+
+    .nav-item:hover {
+      background: var(--gray-100);
+      color: var(--black);
+    }
+
+    .nav-item.active {
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .nav-dot {
+      width: 7px;
+      height: 7px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-caja {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--black);
+      color: var(--white);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-caja:hover {
+      background: var(--gray-800);
+    }
+
+    .btn-icon {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: var(--gray-600);
+    }
+
+    .btn-icon:hover {
+      background: var(--gray-100);
+    }
+
+    .user-avatar-sm {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--white);
+      cursor: pointer;
+    }
+
+    /* Main layout */
+    .main-layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      overflow: hidden;
+    }
+
+    /* Left: zones + tables */
+    .tables-area {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .zone-tabs {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      padding: 0 20px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      flex-shrink: 0;
+    }
+
+    .zone-tab {
+      padding: 14px 18px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-500);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: var(--font);
+    }
+
+    .zone-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .zone-tab:hover {
+      color: var(--black);
+    }
+
+    .tables-grid-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .tables-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+
+    /* Mesa card */
+    .mesa {
+      background: var(--white);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-height: 84px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .mesa:hover {
+      border-color: var(--gray-400);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .mesa.occupied {
+      background: var(--black);
+      border-color: var(--black);
+    }
+
+    .mesa.selected {
+      border-color: var(--accent);
+      border-width: 2px;
+      box-shadow: 0 0 0 3px rgba(232, 68, 10, 0.12);
+    }
+
+    .mesa.cobrar {
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+
+    .mesa-zone-label {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--gray-400);
+      margin-bottom: 4px;
+    }
+
+    .mesa.occupied .mesa-zone-label,
+    .mesa.cobrar .mesa-zone-label {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .mesa.selected .mesa-zone-label {
+      color: var(--accent);
+    }
+
+    .mesa-name {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--black);
+      font-family: var(--mono);
+      line-height: 1;
+    }
+
+    .mesa.occupied .mesa-name,
+    .mesa.cobrar .mesa-name {
+      color: var(--white);
+    }
+
+    .mesa-amount {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-top: 4px;
+      font-family: var(--mono);
+    }
+
+    .mesa.occupied .mesa-amount,
+    .mesa.cobrar .mesa-amount {
+      color: rgba(255, 255, 255, 0.65);
+    }
+
+    .mesa-cobrar-tag {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--white);
+      margin-top: 3px;
+    }
+
+    .mesa-badge {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 18px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      font-size: 9px;
+      color: var(--white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Right panel: order detail */
+    .order-panel {
+      border-left: 1px solid var(--gray-200);
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .order-panel-header {
+      padding: 16px 18px 12px;
+      border-bottom: 1px solid var(--gray-100);
+      flex-shrink: 0;
+    }
+
+    .order-table-info {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+    }
+
+    .order-table-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .order-table-sub {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-top: 2px;
+    }
+
+    .order-total-big {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--black);
+      font-family: var(--mono);
+    }
+
+    .order-lines {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .order-line {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      align-items: start;
+      gap: 8px;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    .order-line:hover {
+      background: var(--gray-50);
+    }
+
+    .order-line-qty {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+      font-family: var(--mono);
+      text-align: right;
+      padding-top: 1px;
+    }
+
+    .order-line-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--black);
+      line-height: 1.2;
+    }
+
+    .order-line-note {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-top: 2px;
+    }
+
+    .order-line-price {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--black);
+      font-family: var(--mono);
+      white-space: nowrap;
+    }
+
+    .order-summary {
+      padding: 12px 18px;
+      border-top: 1px solid var(--gray-100);
+      flex-shrink: 0;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-bottom: 4px;
+    }
+
+    .summary-row.total {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--black);
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .order-actions {
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+      border-top: 1px solid var(--gray-100);
+    }
+
+    .btn-comanda {
+      background: var(--accent);
+      color: var(--white);
+      border: none;
+      padding: 14px;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-comanda:hover {
+      background: var(--accent-light);
+    }
+
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--gray-700);
+      border: 1.5px solid var(--gray-200);
+      padding: 11px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .panel-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      color: var(--gray-400);
+    }
+
+    .panel-empty-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--gray-100);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+
+    .panel-empty-text {
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* ════════════════════════════════
+     SCREEN 4: NUEVA COMANDA
+  ════════════════════════════════ */
+    #screen-comanda {
+      background: var(--gray-50);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .comanda-topbar {
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      height: 60px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .btn-back {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      font-family: var(--font);
+      font-size: 13px;
+      color: var(--gray-700);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .btn-back:hover {
+      background: var(--gray-100);
+    }
+
+    .comanda-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .comanda-sub {
+      font-size: 12px;
+      color: var(--gray-400);
+      margin-left: 4px;
+    }
+
+    .comanda-layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      overflow: hidden;
+    }
+
+    /* Products area */
+    .products-area {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .family-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 14px 20px;
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      overflow-x: auto;
+      flex-shrink: 0;
+    }
+
+    .family-tab {
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--gray-600);
+      cursor: pointer;
+      background: var(--gray-100);
+      border: none;
+      font-family: var(--font);
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .family-tab.active {
+      background: var(--accent);
+      color: var(--white);
+    }
+
+    .family-tab:hover:not(.active) {
+      background: var(--gray-200);
+    }
+
+    .products-search {
+      padding: 12px 20px;
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 10px 16px 10px 40px;
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      font-family: var(--font);
+      font-size: 13px;
+      background: var(--white);
+      outline: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23A0A0A0' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: 12px center;
+      transition: border-color 0.15s;
+    }
+
+    .search-input:focus {
+      border-color: var(--accent);
+    }
+
+    .products-grid-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 20px 20px;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .product-card {
+      background: var(--white);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 14px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+    }
+
+    .product-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 12px rgba(232, 68, 10, 0.1);
+      transform: translateY(-1px);
+    }
+
+    .product-card:active {
+      transform: translateY(0);
+    }
+
+    .product-card.out-of-stock {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    .product-emoji {
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .product-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--black);
+      line-height: 1.3;
+    }
+
+    .product-price {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      font-family: var(--mono);
+    }
+
+    .product-tax {
+      font-size: 10px;
+      color: var(--gray-400);
+      margin-top: -4px;
+    }
+
+    /* Comanda sidebar */
+    .comanda-sidebar {
+      border-left: 1px solid var(--gray-200);
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── REGISTER MODAL ── */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .modal-box {
+      background: var(--white);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      width: 440px;
+      box-shadow: var(--shadow-lg);
+      transform: translateY(10px);
+      transition: transform 0.2s;
+    }
+
+    .modal-overlay.open .modal-box {
+      transform: translateY(0);
+    }
+
+    .modal-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--black);
+      letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+
+    .modal-sub {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-bottom: 28px;
+    }
+
+    .modal-field {
+      margin-bottom: 14px;
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--gray-100);
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-600);
+    }
+
+    .modal-box {
+      position: relative;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--gray-200);
+      border-radius: 4px;
+    }
+
+    /* No order selected state */
+    .no-order-selected {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-400);
+      gap: 8px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .no-order-icon {
+      font-size: 32px;
+      margin-bottom: 4px;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .screen.active .products-grid .product-card {
+      animation: fadeIn 0.2s ease both;
+    }
+
+    /* ════════════════════════════════
+   SHARED PAGES
+════════════════════════════════ */
+    .page-container {
+      padding: 20px;
+      height: 100%;
+      overflow-y: auto;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* ════════════════════════════════
+   CARDS GENERALES
+════════════════════════════════ */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    /* ════════════════════════════════
+   PEDIDOS
+════════════════════════════════ */
+    .pedido-card {
+      background: var(--white);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 14px;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+
+    .pedido-card:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .pedido-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .pedido-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .pedido-sub {
+      font-size: 11px;
+      color: var(--gray-400);
+      margin-top: 2px;
+    }
+
+    .pedido-price {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .pedido-footer {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+
+    .pedidos-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 16px;
+      height: 100%;
+    }
+
+    .pedidos-left {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+    }
+
+    .pedidos-tabs {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .pedidos-tab {
+      border: 1.5px solid var(--gray-200);
+      background: var(--white);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      color: var(--gray-600);
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .pedidos-tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .kpi-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      padding: 12px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .kpi-value {
+      margin-top: 6px;
+      font-size: 23px;
+      line-height: 1;
+      color: var(--black);
+      font-family: var(--mono);
+    }
+
+    .pedidos-toolbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.4fr) 42px;
+      gap: 10px;
+      align-items: center;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      padding: 10px;
+    }
+
+    .pedidos-toolbar > * {
+      min-width: 0;
+    }
+
+    .pedidos-input {
+      border: 1.5px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-family: var(--font);
+      font-size: 13px;
+      color: var(--gray-700);
+      outline: none;
+      background: var(--white);
+    }
+
+    .pedidos-input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-icon {
+      border: 1.5px solid var(--gray-200);
+      border-radius: 10px;
+      height: 34px;
+      width: 100%;
+      background: var(--white);
+      color: var(--gray-700);
+      cursor: pointer;
+      font-size: 16px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .btn-icon:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pedidos-list-wrap {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--white);
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pedidos-list-head {
+      display: grid;
+      grid-template-columns: 1.5fr 0.7fr 0.8fr 0.8fr;
+      gap: 10px;
+      padding: 10px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gray-500);
+      border-bottom: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+
+    .pedidos-list {
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .pedido-row {
+      display: grid;
+      grid-template-columns: 1.5fr 0.7fr 0.8fr 0.8fr;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .pedido-row:hover {
+      background: var(--gray-50);
+    }
+
+    .pedido-row.active {
+      background: var(--accent-soft);
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+
+    .pedido-main {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .pedido-main-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .pedido-main-sub {
+      font-size: 11px;
+      color: var(--gray-500);
+    }
+
+    .pedido-meta {
+      font-size: 12px;
+      color: var(--gray-600);
+    }
+
+    .pedido-amount {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .status-pill {
+      justify-self: start;
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    .status-open {
+      background: var(--blue-soft);
+      color: var(--blue);
+    }
+
+    .status-invoiced {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .status-cancelled {
+      background: #FBECEC;
+      color: #B64040;
+    }
+
+    .pedidos-empty {
+      display: none;
+      padding: 24px;
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 13px;
+    }
+
+    .pedido-detail {
+      border-left: 1px solid var(--gray-200);
+      background: var(--white);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      min-height: 0;
+    }
+
+    #screen-pedidos {
+      background: var(--gray-50);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    #screen-pedidos .page-container {
+      flex: 1;
+      height: auto;
+      overflow: hidden;
+    }
+
+    #pedido-detail-content,
+    #autos-detail-content {
+      min-height: 0;
+    }
+
+    .pedido-detail-head {
+      border-bottom: 1px solid var(--gray-100);
+      padding: 16px 18px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .pedido-detail-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .pedido-detail-sub {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-top: 3px;
+      overflow-wrap: anywhere;
+    }
+
+    .pedido-detail-total {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .pedido-detail-lines {
+      padding: 8px 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .pedido-detail-head > div:first-child,
+    .autos-detail-head > div:first-child {
+      min-width: 0;
+    }
+
+    .pedido-detail-line {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 18px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .pedido-line-qty {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--gray-100);
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-700);
+    }
+
+    .pedido-line-name {
+      font-size: 13px;
+      color: var(--gray-900);
+      font-weight: 500;
+    }
+
+    .pedido-line-meta {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .pedido-line-price {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .pedido-detail-summary {
+      border-top: 1px solid var(--gray-100);
+      padding: 12px 18px;
+      font-size: 13px;
+      flex-shrink: 0;
+    }
+
+    .pedido-summary-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+      color: var(--gray-600);
+    }
+
+    .pedido-summary-row.total {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--gray-200);
+      color: var(--black);
+      font-weight: 600;
+    }
+
+    .pedido-detail-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--gray-100);
+      flex-shrink: 0;
+    }
+
+    .timeline-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gray-500);
+      margin-bottom: 8px;
+    }
+
+    .timeline-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--gray-600);
+      margin-bottom: 5px;
+    }
+
+    .btn-small {
+      border: 1.5px solid var(--gray-200);
+      background: var(--white);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .btn-small.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--white);
+    }
+
+    .btn-small:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .pedido-detail-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 13px;
+      height: 100%;
+      padding: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      .pedidos-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .pedido-detail {
+        min-height: 420px;
+      }
+
+      .summary-strip {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .pedidos-toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .pedidos-list-head,
+      .pedido-row {
+        grid-template-columns: 1.5fr 0.7fr 0.8fr 0.8fr;
+      }
+
+      #screen-pedidos .page-container,
+      #screen-autoservicio .page-container {
+        overflow-y: auto;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .summary-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .pedidos-toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .pedidos-list-head,
+      .pedido-row {
+        grid-template-columns: 1fr;
+      }
+
+      .pedidos-list-head {
+        display: none;
+      }
+
+      .pedido-row {
+        gap: 6px;
+      }
+
+      .pedido-detail-actions {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ════════════════════════════════
+   AUTOSERVICIO
+════════════════════════════════ */
+    #screen-autoservicio {
+      background: var(--gray-50);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    #screen-autoservicio .page-container {
+      flex: 1;
+      height: auto;
+      overflow: hidden;
+    }
+
+    .autos-layout {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 16px;
+      height: 100%;
+    }
+
+    .autos-left {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .autos-kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .autos-tabs {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .autos-tab {
+      border: 1.5px solid var(--gray-200);
+      border-radius: 999px;
+      background: var(--white);
+      color: var(--gray-600);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 7px 12px;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .autos-tab.active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    .autos-toolbar {
+      display: grid;
+      grid-template-columns: 170px 190px 1fr 42px;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      background: var(--white);
+      padding: 10px;
+    }
+
+    .autos-list-wrap {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      background: var(--white);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .autos-list-head {
+      display: grid;
+      grid-template-columns: 1.5fr 0.7fr 0.8fr 0.8fr;
+      gap: 10px;
+      padding: 10px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--gray-500);
+      border-bottom: 1px solid var(--gray-200);
+      background: var(--gray-50);
+    }
+
+    .autos-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .autos-row {
+      display: grid;
+      grid-template-columns: 1.5fr 0.7fr 0.8fr 0.8fr;
+      gap: 10px;
+      align-items: center;
+      border-bottom: 1px solid var(--gray-100);
+      padding: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .autos-row:hover {
+      background: var(--gray-50);
+    }
+
+    .autos-row.active {
+      background: var(--accent-soft);
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+
+    .autos-main-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .autos-main-sub {
+      font-size: 11px;
+      margin-top: 2px;
+      color: var(--gray-500);
+    }
+
+    .prep-pill {
+      justify-self: start;
+      font-size: 11px;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    .prep-new {
+      color: #8A6400;
+      background: #FFF5D9;
+    }
+
+    .prep-preparing {
+      color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .prep-ready {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .prep-delivered {
+      color: #355B8C;
+      background: #E8EEFA;
+    }
+
+    .prep-cancelled {
+      color: #B64040;
+      background: #FBECEC;
+    }
+
+    .autos-empty {
+      display: none;
+      padding: 24px;
+      text-align: center;
+      color: var(--gray-500);
+      font-size: 13px;
+    }
+
+    .autos-detail {
+      border-left: 1px solid var(--gray-200);
+      background: var(--white);
+      height: 100%;
+      min-height: 0;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .autos-detail-head {
+      border-bottom: 1px solid var(--gray-100);
+      padding: 16px 18px 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .autos-detail-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .autos-detail-sub {
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+
+    .autos-detail-total {
+      font-family: var(--mono);
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .autos-lines {
+      min-height: 0;
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+
+    .autos-line {
+      display: grid;
+      grid-template-columns: 28px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      border-bottom: 1px solid var(--gray-100);
+      padding: 10px 18px;
+    }
+
+    .autos-actions {
+      border-top: 1px solid var(--gray-100);
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .autos-detail-empty {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-size: 13px;
+      color: var(--gray-500);
+      padding: 24px;
+    }
+
+    @media (max-width: 1024px) {
+      #screen-autoservicio .page-container {
+        overflow-y: auto;
+        overflow-x: hidden;
+      }
+
+      .autos-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .autos-kpis {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .autos-toolbar {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .autos-detail {
+        min-height: 420px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .autos-kpis,
+      .autos-toolbar,
+      .autos-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .autos-list-head {
+        display: none;
+      }
+
+      .autos-row {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+    }
+
+    /* ════════════════════════════════
+   PANEL
+════════════════════════════════ */
+    .panel {
+      background: var(--white);
+      border-radius: var(--radius);
+      border: 1px solid var(--gray-200);
+      padding: 16px;
+    }
+
+    .panel-title {
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+
+    .status-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--gray-600);
+    }
+
+    /* ════════════════════════════════
+   GESTIÓN
+════════════════════════════════ */
+    .gestion-card {
+      background: var(--white);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius);
+      height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .gestion-card:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="tablet-frame">
+    <div class="tablet">
+
+      <!-- ══ SCREEN 1: HOME ══ -->
+      <div id="screen-home" class="screen active">
+        <div class="home-inner">
+          <div class="home-left">
+            <div class="home-logo">
+              <div class="home-logo-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                  <line x1="3" y1="6" x2="21" y2="6" />
+                  <path d="M16 10a4 4 0 01-8 0" />
+                </svg>
+              </div>
+              <span class="home-logo-text">TPV Sistema</span>
+            </div>
+
+            <div class="home-tagline">Punto de venta</div>
+            <h1 class="home-title">Gestión de<br><strong>tu restaurante</strong><br>al instante</h1>
+            <p class="home-subtitle">Mesas, pedidos y cobros desde una sola pantalla. Diseñado para trabajar rápido en
+              sala.</p>
+
+            <div class="home-cta-group">
+              <button class="btn-primary" onclick="showScreen('screen-login')">Entrar al sistema</button>
+              <button class="btn-secondary" onclick="showModal('modal-register')">Crear cuenta nueva</button>
+            </div>
+
+            <div class="home-stats-strip">
+              <div class="stat-item">
+                <div class="stat-val">12</div>
+                <div class="stat-label">Zonas activas</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-val">48</div>
+                <div class="stat-label">Mesas</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-val">IVA</div>
+                <div class="stat-label">Automático</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-right">
+            <div class="home-preview-card">
+              <div class="preview-header">
+                <span class="preview-title">Restaurante Voraz · Hoy</span>
+                <span class="preview-badge">● En vivo</span>
+              </div>
+              <div class="preview-stat-row">
+                <div class="preview-stat">
+                  <div class="preview-stat-val">8</div>
+                  <div class="preview-stat-label">Mesas abiertas</div>
+                </div>
+                <div class="preview-stat">
+                  <div class="preview-stat-val">34</div>
+                  <div class="preview-stat-label">Comensales</div>
+                </div>
+                <div class="preview-stat">
+                  <div class="preview-stat-val">1.2k</div>
+                  <div class="preview-stat-label">Total €</div>
+                </div>
+              </div>
+              <div class="preview-mesa-grid">
+                <div class="preview-mesa active-m">
+                  <div class="preview-mesa-name">B1</div>
+                  <div class="preview-mesa-amount">4,00€</div>
+                </div>
+                <div class="preview-mesa active-m">
+                  <div class="preview-mesa-name">B2</div>
+                  <div class="preview-mesa-amount">7,00€</div>
+                </div>
+                <div class="preview-mesa">
+                  <div class="preview-mesa-name">T1</div>
+                  <div class="preview-mesa-amount">—</div>
+                </div>
+                <div class="preview-mesa active-m">
+                  <div class="preview-mesa-name">T2</div>
+                  <div class="preview-mesa-amount">24,50€</div>
+                </div>
+                <div class="preview-mesa active-m">
+                  <div class="preview-mesa-name">T4</div>
+                  <div class="preview-mesa-amount">70,80€</div>
+                </div>
+                <div class="preview-mesa">
+                  <div class="preview-mesa-name">T5</div>
+                  <div class="preview-mesa-amount">—</div>
+                </div>
+                <div class="preview-mesa active-m">
+                  <div class="preview-mesa-name">T6</div>
+                  <div class="preview-mesa-amount">50,70€</div>
+                </div>
+                <div class="preview-mesa active-m" style="border:2px solid #E8440A">
+                  <div class="preview-mesa-name">T7</div>
+                  <div class="preview-mesa-amount">113,10€</div>
+                </div>
+                <div class="preview-mesa cobrar-m">
+                  <div class="preview-mesa-name">T8</div>
+                  <div class="preview-mesa-amount">COBRAR</div>
+                </div>
+                <div class="preview-mesa">
+                  <div class="preview-mesa-name">T9</div>
+                  <div class="preview-mesa-amount">—</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN 2: LOGIN ══ -->
+      <div id="screen-login" class="screen">
+        <div class="login-topbar">
+          <div class="login-logo">
+            <div class="login-logo-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"
+                stroke-linecap="round">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+              </svg>
+            </div>
+            <span class="login-logo-text">TPV Sistema</span>
+          </div>
+        </div>
+
+        <div class="login-body">
+          <!-- PIN -->
+          <div class="pin-panel">
+            <div class="pin-section-label">Acceso rápido por PIN</div>
+            <div class="user-select-grid">
+              <div class="user-chip selected" onclick="selectUser(this, 'MA')">
+                <div class="user-avatar" style="background:#E8440A">MA</div>
+                <span class="user-chip-name">María</span>
+              </div>
+              <div class="user-chip" onclick="selectUser(this, 'CR')">
+                <div class="user-avatar" style="background:#1A6FE8">CR</div>
+                <span class="user-chip-name">Carlos</span>
+              </div>
+              <div class="user-chip" onclick="selectUser(this, 'LU')">
+                <div class="user-avatar" style="background:#1A9E5A">LU</div>
+                <span class="user-chip-name">Lucía</span>
+              </div>
+            </div>
+
+            <div class="pin-dots" id="pin-dots">
+              <div class="pin-dot" id="d0"></div>
+              <div class="pin-dot" id="d1"></div>
+              <div class="pin-dot" id="d2"></div>
+              <div class="pin-dot" id="d3"></div>
+            </div>
+
+            <div class="pin-keypad">
+              <button class="key" onclick="pinKey('1')">1</button>
+              <button class="key" onclick="pinKey('2')">2</button>
+              <button class="key" onclick="pinKey('3')">3</button>
+              <button class="key" onclick="pinKey('4')">4</button>
+              <button class="key" onclick="pinKey('5')">5</button>
+              <button class="key" onclick="pinKey('6')">6</button>
+              <button class="key" onclick="pinKey('7')">7</button>
+              <button class="key" onclick="pinKey('8')">8</button>
+              <button class="key" onclick="pinKey('9')">9</button>
+              <button class="key key-del" onclick="pinDel()">⌫</button>
+              <button class="key" onclick="pinKey('0')">0</button>
+              <button class="key key-enter" id="key-enter" onclick="pinEnter()">Entrar</button>
+            </div>
+          </div>
+
+          <!-- Email form -->
+          <div class="email-panel">
+            <div class="login-form-title">Iniciar sesión</div>
+            <div class="login-form-sub">Accede con tu cuenta del restaurante</div>
+            <div class="form-field">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" placeholder="restaurante@ejemplo.com">
+            </div>
+            <div class="form-field">
+              <label class="form-label">Contraseña</label>
+              <input type="password" class="form-input" placeholder="••••••••">
+            </div>
+            <button class="btn-login" onclick="showScreen('screen-mesas')">Entrar</button>
+            <div class="login-divider">
+              <div class="divider-line"></div>
+              <span class="divider-text">o</span>
+              <div class="divider-line"></div>
+            </div>
+            <button class="btn-register" onclick="showModal('modal-register')">Crear cuenta nueva</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN 3: MESAS ══ -->
+      <div id="screen-mesas" class="screen">
+        <div class="topbar">
+          <div class="topbar-brand">
+            <span class="topbar-name">Restaurante Voraz</span>
+            <span class="topbar-date">Lunes, 27 May</span>
+          </div>
+          <div class="topbar-nav">
+            <button class="nav-item active" onclick="navigateTo('screen-mesas', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+              </svg>
+              Mesas
+            </button>
+
+            <button class="nav-item" onclick="navigateTo('screen-pedidos', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+              </svg>
+              Pedidos
+            </button>
+
+            <button class="nav-item" onclick="navigateTo('screen-autoservicio', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+              </svg>
+              Autoservicio
+            </button>
+
+            <button class="nav-item" onclick="navigateTo('screen-gestion', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+              Gestión
+            </button>
+          </div>
+          <div class="topbar-actions">
+            <button class="btn-caja" onclick="navigateTo('screen-caja', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="6" width="20" height="14" rx="2" />
+                <line x1="12" y1="10" x2="12" y2="16" />
+                <line x1="9" y1="13" x2="15" y2="13" />
+              </svg>
+              Abrir Caja
+            </button>
+            <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
+          </div>
+        </div>
+
+        <div class="main-layout">
+          <div class="tables-area">
+            <div class="zone-tabs">
+              <button class="zone-tab active" onclick="setZone(this)">Terraza</button>
+              <button class="zone-tab" onclick="setZone(this)">Salón</button>
+              <button class="zone-tab" onclick="setZone(this)">Sin Impresión</button>
+              <button class="zone-tab" onclick="setZone(this)">Cuenta Rápida</button>
+            </div>
+            <div class="tables-grid-wrap">
+              <div class="tables-grid" id="tables-grid">
+                <!-- Generated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Order panel -->
+          <div class="order-panel" id="order-panel">
+            <div id="order-empty" class="no-order-selected">
+              <div class="no-order-icon">🍽️</div>
+              <div style="font-size:14px;font-weight:500;color:var(--gray-600)">Sin mesa seleccionada</div>
+              <div style="font-size:12px;color:var(--gray-400);margin-top:4px">Toca una mesa para ver su pedido</div>
+            </div>
+            <div id="order-content" style="display:none;flex-direction:column;height:100%">
+              <div class="order-panel-header">
+                <div class="order-table-info">
+                  <div>
+                    <div class="order-table-name" id="order-panel-name">Mesa T7 · Terraza</div>
+                    <div class="order-table-sub" id="order-panel-sub">hace 5 días · 4 comensales</div>
+                  </div>
+                  <div class="order-total-big" id="order-panel-total">113,10€</div>
+                </div>
+              </div>
+              <div class="order-lines" id="order-lines-list"></div>
+              <div class="order-summary">
+                <div class="summary-row"><span>Subtotal</span><span id="sum-sub">98,44€</span></div>
+                <div class="summary-row"><span>IVA (10%)</span><span id="sum-tax">9,84€</span></div>
+                <div class="summary-row"><span>IVA (21%)</span><span id="sum-tax2">4,82€</span></div>
+                <div class="summary-row total"><span>Total</span><span id="sum-total">113,10€</span></div>
+              </div>
+              <div class="order-actions">
+                <button class="btn-comanda" onclick="showScreen('screen-comanda')">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Nueva comanda
+                </button>
+                <div class="btn-row">
+                  <button class="btn-outline">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                    Imprimir ticket
+                  </button>
+                  <button class="btn-outline">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    Cerrar cuenta
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN 4: NUEVA COMANDA ══ -->
+      <div id="screen-comanda" class="screen">
+        <div class="comanda-topbar">
+          <button class="btn-back" onclick="showScreen('screen-mesas')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Volver
+          </button>
+          <span class="comanda-title">Nueva comanda</span>
+          <span class="comanda-sub">— Mesa T7 · Terraza</span>
+        </div>
+
+        <div class="comanda-layout">
+          <div class="products-area">
+            <div class="family-tabs">
+              <button class="family-tab active" onclick="setFamily(this)">Todo</button>
+              <button class="family-tab" onclick="setFamily(this)">Entrantes</button>
+              <button class="family-tab" onclick="setFamily(this)">Principales</button>
+              <button class="family-tab" onclick="setFamily(this)">Bebidas</button>
+              <button class="family-tab" onclick="setFamily(this)">Postres</button>
+              <button class="family-tab" onclick="setFamily(this)">Café</button>
+            </div>
+            <div class="products-search">
+              <input type="text" class="search-input" placeholder="Buscar producto..."
+                oninput="filterProducts(this.value)">
+            </div>
+            <div class="products-grid-wrap">
+              <div class="products-grid" id="products-grid">
+                <!-- Generated by JS -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Comanda order panel -->
+          <div class="comanda-sidebar order-panel">
+            <div class="order-panel-header">
+              <div class="order-table-info">
+                <div>
+                  <div class="order-table-name">Comanda actual</div>
+                  <div class="order-table-sub" id="comanda-count">0 productos añadidos</div>
+                </div>
+                <div class="order-total-big" id="comanda-total">0,00€</div>
+              </div>
+            </div>
+            <div class="order-lines" id="comanda-lines">
+              <div style="padding:24px;text-align:center;color:var(--gray-400);font-size:13px">
+                Toca un producto para añadirlo
+              </div>
+            </div>
+            <div class="order-actions">
+              <button class="btn-comanda" id="btn-send-comanda" onclick="sendComanda()"
+                style="opacity:0.5;pointer-events:none">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+                Enviar comanda
+              </button>
+              <button class="btn-outline" style="width:100%" onclick="clearComanda()">Limpiar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN 5: PEDIDOS ══ -->
+<div id="screen-pedidos" class="screen">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-name">Restaurante Voraz</span>
+      <span class="topbar-date">Histórico de pedidos</span>
+    </div>
+    <div class="topbar-nav">
+      <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+        </svg>
+        Mesas
+      </button>
+
+      <button class="nav-item active" onclick="navigateTo('screen-pedidos', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+        </svg>
+        Pedidos
+      </button>
+
+      <button class="nav-item" onclick="navigateTo('screen-autoservicio', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+        </svg>
+        Autoservicio
+      </button>
+
+      <button class="nav-item" onclick="navigateTo('screen-gestion', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="3.01" y2="6" />
+          <line x1="3" y1="12" x2="3.01" y2="12" />
+          <line x1="3" y1="18" x2="3.01" y2="18" />
+        </svg>
+        Gestión
+      </button>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn-caja" onclick="navigateTo('screen-caja', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="6" width="20" height="14" rx="2" />
+          <line x1="12" y1="10" x2="12" y2="16" />
+          <line x1="9" y1="13" x2="15" y2="13" />
+        </svg>
+        Abrir Caja
+      </button>
+      <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
+    </div>
+  </div>
+
+  <div class="page-container">
+    <div class="pedidos-layout">
+      <section class="pedidos-left">
+        <div class="pedidos-tabs" id="pedidos-tabs">
+          <button class="pedidos-tab active" data-tab="all">Todo el turno</button>
+          <button class="pedidos-tab" data-tab="open">Activos</button>
+          <button class="pedidos-tab" data-tab="to-charge">Para cobrar</button>
+          <button class="pedidos-tab" data-tab="invoiced">Cerrados hoy</button>
+          <button class="pedidos-tab" data-tab="cancelled">Cancelados</button>
+        </div>
+
+        <div class="summary-strip">
+          <div class="kpi-card">
+            <div class="kpi-label">Abiertos</div>
+            <div class="kpi-value" id="kpi-open">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Para Cobrar</div>
+            <div class="kpi-value" id="kpi-para-cobrar">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Cerrados</div>
+            <div class="kpi-value" id="kpi-invoiced">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Ticket Medio</div>
+            <div class="kpi-value" id="kpi-ticket">0,00€</div>
+          </div>
+        </div>
+
+        <div class="pedidos-toolbar">
+          <select class="pedidos-input" id="filter-status">
+            <option value="all">Todos los estados</option>
+            <option value="open">Abiertos</option>
+            <option value="invoiced">Cerrados</option>
+            <option value="cancelled">Cancelados</option>
+          </select>
+
+          <select class="pedidos-input" id="filter-zone">
+            <option value="all">Todas las zonas</option>
+          </select>
+
+          <select class="pedidos-input" id="filter-user">
+            <option value="all">Todos los camareros</option>
+          </select>
+
+          <input class="pedidos-input" id="filter-date" type="date">
+
+          <input class="pedidos-input" id="filter-search" type="text" placeholder="Buscar por mesa, UUID o nº ticket">
+
+          <button class="btn-icon" id="filter-reset" title="Reset filtros">↺</button>
+        </div>
+
+        <div class="pedidos-list-wrap">
+          <div class="pedidos-list-head">
+            <div>Pedido</div>
+            <div>Apertura</div>
+            <div>Total</div>
+            <div>Estado</div>
+          </div>
+          <div class="pedidos-list" id="pedidos-list"></div>
+          <div class="pedidos-empty" id="pedidos-empty">No hay pedidos con los filtros actuales.</div>
+        </div>
+      </section>
+
+      <aside class="pedido-detail autos-detail">
+        <div id="pedido-detail-empty" class="pedido-detail-empty">
+          Selecciona un pedido para ver su detalle.
+        </div>
+
+        <div id="pedido-detail-content" style="display:none;flex-direction:column;height:100%">
+          <div class="pedido-detail-head autos-detail-head">
+            <div>
+              <div class="pedido-detail-title autos-detail-title" id="pedido-detail-title">Mesa T7</div>
+              <div class="pedido-detail-sub autos-detail-sub" id="pedido-detail-sub">Abierto hace 5 min · 4 comensales</div>
+            </div>
+            <div class="pedido-detail-total autos-detail-total" id="pedido-detail-total">0,00€</div>
+          </div>
+
+          <div class="pedido-detail-lines autos-lines" id="pedido-detail-lines"></div>
+
+          <div class="pedido-detail-summary">
+            <div class="pedido-summary-row"><span>Subtotal</span><span id="pedido-sum-sub">0,00€</span></div>
+            <div class="pedido-summary-row"><span>Impuestos</span><span id="pedido-sum-tax">0,00€</span></div>
+            <div class="pedido-summary-row total"><span>Total</span><span id="pedido-sum-total">0,00€</span></div>
+          </div>
+
+          <div class="pedido-detail-actions autos-actions">
+            <button class="btn-small" id="pedido-action-openmesa">Abrir en mesa</button>
+            <button class="btn-small" id="pedido-action-print">Imprimir ticket</button>
+            <button class="btn-small primary" id="pedido-action-cobrar">Marcar cobrado</button>
+            <button class="btn-small" id="pedido-action-cancel">Cancelar pedido</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 6: AUTOSERVICIO ══ -->
+<div id="screen-autoservicio" class="screen">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-name">Autoservicio</span>
+      <span class="topbar-date">Pedidos desde QR / App</span>
+    </div>
+    <div class="topbar-nav">
+      <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+        </svg>
+        Mesas
+      </button>
+
+      <button class="nav-item" onclick="navigateTo('screen-pedidos', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+        </svg>
+        Pedidos
+      </button>
+
+      <button class="nav-item active" onclick="navigateTo('screen-autoservicio', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+        </svg>
+        Autoservicio
+      </button>
+
+      <button class="nav-item" onclick="navigateTo('screen-gestion', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="3.01" y2="6" />
+          <line x1="3" y1="12" x2="3.01" y2="12" />
+          <line x1="3" y1="18" x2="3.01" y2="18" />
+        </svg>
+        Gestión
+      </button>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn-caja" onclick="navigateTo('screen-caja', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="6" width="20" height="14" rx="2" />
+          <line x1="12" y1="10" x2="12" y2="16" />
+          <line x1="9" y1="13" x2="15" y2="13" />
+        </svg>
+        Abrir Caja
+      </button>
+      <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
+    </div>
+  </div>
+
+  <div class="page-container">
+    <div class="autos-layout">
+      <section class="autos-left">
+        <div class="autos-tabs" id="autos-tabs">
+          <button class="autos-tab active" data-tab="all">Todo</button>
+          <button class="autos-tab" data-tab="new">Nuevos</button>
+          <button class="autos-tab" data-tab="preparing">Preparando</button>
+          <button class="autos-tab" data-tab="ready">Listos</button>
+          <button class="autos-tab" data-tab="closed">Cerrados</button>
+        </div>
+
+        <div class="autos-kpis">
+          <div class="kpi-card">
+            <div class="kpi-label">Conectados</div>
+            <div class="kpi-value" id="autos-kpi-connected">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">En Cola</div>
+            <div class="kpi-value" id="autos-kpi-queue">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Listos</div>
+            <div class="kpi-value" id="autos-kpi-ready">0</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-label">Facturado</div>
+            <div class="kpi-value" id="autos-kpi-revenue">0,00€</div>
+          </div>
+        </div>
+
+        <div class="autos-toolbar">
+          <select class="pedidos-input" id="autos-filter-status">
+            <option value="all">Todos los estados</option>
+            <option value="open">Abiertos</option>
+            <option value="invoiced">Cerrados</option>
+            <option value="cancelled">Cancelados</option>
+          </select>
+
+          <select class="pedidos-input" id="autos-filter-prep">
+            <option value="all">Todas las fases</option>
+            <option value="new">Nuevo</option>
+            <option value="preparing">Preparando</option>
+            <option value="ready">Listo</option>
+            <option value="delivered">Entregado</option>
+          </select>
+
+          <input class="pedidos-input" id="autos-filter-search" type="text" placeholder="Buscar por pedido, cliente o ticket">
+
+          <button class="btn-icon" id="autos-filter-reset" title="Reset filtros">↺</button>
+        </div>
+
+        <div class="autos-list-wrap">
+          <div class="autos-list-head">
+            <div>Pedido</div>
+            <div>Canal</div>
+            <div>Total</div>
+            <div>Fase</div>
+          </div>
+          <div class="autos-list" id="autos-list"></div>
+          <div class="autos-empty" id="autos-empty">No hay pedidos de autoservicio con esos filtros.</div>
+        </div>
+      </section>
+
+      <aside class="autos-detail">
+        <div class="autos-detail-empty" id="autos-detail-empty">Selecciona un pedido de autoservicio para ver detalle.</div>
+
+        <div id="autos-detail-content" style="display:none;flex-direction:column;height:100%">
+          <div class="autos-detail-head">
+            <div>
+              <div class="autos-detail-title" id="autos-detail-title">#QR-1021</div>
+              <div class="autos-detail-sub" id="autos-detail-sub">Nuevo · Hace 4 min</div>
+            </div>
+            <div class="autos-detail-total" id="autos-detail-total">0,00€</div>
+          </div>
+
+          <div class="autos-lines" id="autos-lines"></div>
+
+          <div class="pedido-detail-summary">
+            <div class="pedido-summary-row"><span>Subtotal</span><span id="autos-sum-sub">0,00€</span></div>
+            <div class="pedido-summary-row"><span>Impuestos</span><span id="autos-sum-tax">0,00€</span></div>
+            <div class="pedido-summary-row total"><span>Total</span><span id="autos-sum-total">0,00€</span></div>
+          </div>
+
+          <div class="autos-actions">
+            <button class="btn-small" id="autos-action-accept">Aceptar pedido</button>
+            <button class="btn-small" id="autos-action-ready">Marcar listo</button>
+            <button class="btn-small primary" id="autos-action-deliver">Entregar y cobrar</button>
+            <button class="btn-small" id="autos-action-cancel">Cancelar</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 7: GESTIÓN ══ -->
+<div id="screen-gestion" class="screen">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-name">Gestión</span>
+      <span class="topbar-date">Configuración del sistema</span>
+    </div>
+    <div class="topbar-nav">
+      <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+        </svg>
+        Mesas
+      </button>
+
+      <button class="nav-item" onclick="navigateTo('screen-pedidos', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+        </svg>
+        Pedidos
+      </button>
+
+      <button class="nav-item" onclick="navigateTo('screen-autoservicio', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+        </svg>
+        Autoservicio
+      </button>
+
+      <button class="nav-item active" onclick="navigateTo('screen-gestion', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="3.01" y2="6" />
+          <line x1="3" y1="12" x2="3.01" y2="12" />
+          <line x1="3" y1="18" x2="3.01" y2="18" />
+        </svg>
+        Gestión
+      </button>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn-caja" onclick="navigateTo('screen-caja', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="6" width="20" height="14" rx="2" />
+          <line x1="12" y1="10" x2="12" y2="16" />
+          <line x1="9" y1="13" x2="15" y2="13" />
+        </svg>
+        Abrir Caja
+      </button>
+      <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
+    </div>
+  </div>
+
+  <div class="page-container">
+    <div class="card-grid">
+      <div class="gestion-card">Productos</div>
+      <div class="gestion-card">Categorías</div>
+      <div class="gestion-card">Usuarios</div>
+      <div class="gestion-card">Zonas / Mesas</div>
+      <div class="gestion-card">Impresoras</div>
+      <div class="gestion-card">Impuestos</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCREEN 8: ABRIR CAJA ══ -->
+<div id="screen-caja" class="screen">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-name">Apertura de Caja</span>
+      <span class="topbar-date">Nueva sesión</span>
+    </div>
+    <div class="topbar-nav">
+      <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+        </svg>
+        Mesas
+      </button>
+
+      <button class="nav-item" onclick="navigateTo('screen-pedidos', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+        </svg>
+        Pedidos
+      </button>
+
+      <button class="nav-item" onclick="navigateTo('screen-autoservicio', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+        </svg>
+        Autoservicio
+      </button>
+
+      <button class="nav-item" onclick="navigateTo('screen-gestion', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="3.01" y2="6" />
+          <line x1="3" y1="12" x2="3.01" y2="12" />
+          <line x1="3" y1="18" x2="3.01" y2="18" />
+        </svg>
+        Gestión
+      </button>
+    </div>
+    <div class="topbar-actions">
+      <button class="btn-caja active" onclick="navigateTo('screen-caja', this)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="6" width="20" height="14" rx="2" />
+          <line x1="12" y1="10" x2="12" y2="16" />
+          <line x1="9" y1="13" x2="15" y2="13" />
+        </svg>
+        Abrir Caja
+      </button>
+      <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
+    </div>
+  </div>
+
+  <div class="page-container">
+    <div style="max-width:500px;margin:0 auto">
+      <div class="panel">
+        <div class="panel-title">Información de apertura</div>
+        <div class="form-field">
+          <label class="form-label">Cajero/a</label>
+          <input type="text" class="form-input" value="María" readonly>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Fecha y hora</label>
+          <input type="text" class="form-input" id="fecha-hora" readonly>
+        </div>
+        <div class="form-field">
+          <label class="form-label">Fondo inicial de caja (€)</label>
+          <input type="number" class="form-input" id="fondo-inicial" placeholder="0,00" step="0.01">
+        </div>
+        <div class="form-field">
+          <label class="form-label">Observaciones</label>
+          <textarea class="form-input" rows="3" placeholder="Notas sobre la apertura..."></textarea>
+        </div>
+        <button class="btn-login" onclick="abrirCaja()" style="margin-top:20px">
+          Abrir Caja
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <!-- ══ REGISTER MODAL ══ -->
+      <div class="modal-overlay" id="modal-register" onclick="closeModalOutside(event, 'modal-register')">
+        <div class="modal-box">
+          <button class="modal-close-btn" onclick="closeModal('modal-register')">✕</button>
+          <div class="modal-title">Crear cuenta</div>
+          <div class="modal-sub">Registra tu restaurante en el sistema</div>
+          <div class="modal-field">
+            <label class="form-label">Nombre del restaurante</label>
+            <input type="text" class="form-input" placeholder="Restaurante Voraz">
+          </div>
+          <div class="modal-field">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" placeholder="info@restaurante.com">
+          </div>
+          <div class="modal-field">
+            <label class="form-label">NIF / CIF</label>
+            <input type="text" class="form-input" placeholder="B12345678">
+          </div>
+          <div class="modal-field">
+            <label class="form-label">Contraseña</label>
+            <input type="password" class="form-input" placeholder="••••••••">
+          </div>
+          <button class="btn-login" style="margin-top:8px"
+            onclick="closeModal('modal-register');showScreen('screen-login')">Crear cuenta</button>
+        </div>
+      </div>
+
+    </div><!-- tablet -->
+  </div><!-- frame -->
+
+  <script>
+    // ── DATA ──
+    const tables = [
+      { name: 'B1', zone: 'Barril', status: 'occupied', amount: '4,00€' },
+      { name: 'B2', zone: 'Barril', status: 'occupied', amount: '7,00€' },
+      { name: 'T1', zone: 'Mesa Baja', status: 'free', amount: '' },
+      { name: 'T2', zone: 'Mesa Baja', status: 'occupied', amount: '24,50€' },
+      { name: 'T3', zone: 'Mesa Baja', status: 'occupied', amount: '70,80€', badge: '⟳' },
+      { name: 'T4', zone: 'Mesa Baja', status: 'occupied', amount: '70,80€' },
+      { name: 'T5', zone: 'Mesa Baja', status: 'free', amount: '' },
+      { name: 'T6', zone: 'Mesa Baja', status: 'occupied', amount: '50,70€' },
+      { name: 'T7', zone: 'Mesa Baja', status: 'selected', amount: '113,10€' },
+      { name: 'T8', zone: 'Mesa Baja', status: 'cobrar', amount: 'COBRAR' },
+      { name: 'T9', zone: 'Mesa Baja', status: 'free', amount: '' },
+      { name: 'H1', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H2', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H3', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H4', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H5', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H6', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H7', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H8', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H9', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H10', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H11', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H12', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H13', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H14', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'H15', zone: 'Hamaca', status: 'free', amount: '' },
+      { name: 'P1', zone: 'Puff', status: 'free', amount: '' },
+      { name: 'P2', zone: 'Puff', status: 'free', amount: '' },
+      { name: 'P3', zone: 'Puff', status: 'free', amount: '' },
+      { name: 'P4', zone: 'Puff', status: 'free', amount: '' },
+    ];
+
+    const orderLines = [
+      { qty: 1, name: 'Tostada Entera + Café', note: 'Con leche, Pavo, Viena', price: '3,00€', cents: 300 },
+      { qty: 1, name: 'Paulaner', note: '', price: '3,00€', cents: 300 },
+      { qty: 2, name: 'Tyskie', note: '', price: '12,00€', cents: 1200 },
+      { qty: 8, name: 'Coca Cola Zero', note: '', price: '17,60€', cents: 1760 },
+      { qty: 4, name: 'Aquarius Limón', note: '', price: '10,00€', cents: 1000 },
+      { qty: 4, name: 'Ensaladilla de Gambas', note: '', price: '24,00€', cents: 2400 },
+      { qty: 3, name: 'Burger de Retinto', note: 'Poco hecha, Extra de Salsa', price: '43,50€', cents: 4350 },
+    ];
+
+    const products = [
+      { emoji: '🥗', name: 'Ensaladilla Gambas', price: '6,00€', cents: 600, tax: 'IVA 10%', family: 'Entrantes' },
+      { emoji: '🍺', name: 'Paulaner', price: '3,00€', cents: 300, tax: 'IVA 10%', family: 'Bebidas' },
+      { emoji: '🍺', name: 'Tyskie', price: '3,00€', cents: 300, tax: 'IVA 10%', family: 'Bebidas' },
+      { emoji: '🥤', name: 'Coca Cola Zero', price: '2,20€', cents: 220, tax: 'IVA 10%', family: 'Bebidas' },
+      { emoji: '🍊', name: 'Aquarius Limón', price: '2,50€', cents: 250, tax: 'IVA 10%', family: 'Bebidas' },
+      { emoji: '🍔', name: 'Burger de Retinto', price: '14,50€', cents: 1450, tax: 'IVA 10%', family: 'Principales' },
+      { emoji: '☕', name: 'Café con Leche', price: '1,80€', cents: 180, tax: 'IVA 10%', family: 'Café' },
+      { emoji: '🥐', name: 'Tostada Entera', price: '3,00€', cents: 300, tax: 'IVA 10%', family: 'Entrantes' },
+      { emoji: '🍷', name: 'Vino de la Casa', price: '2,50€', cents: 250, tax: 'IVA 10%', family: 'Bebidas' },
+      { emoji: '🥩', name: 'Entrecot a la Brasa', price: '22,00€', cents: 2200, tax: 'IVA 10%', family: 'Principales' },
+      { emoji: '🍰', name: 'Tarta de Queso', price: '5,50€', cents: 550, tax: 'IVA 10%', family: 'Postres' },
+      { emoji: '🧃', name: 'Zumo Natural', price: '3,50€', cents: 350, tax: 'IVA 10%', family: 'Bebidas', stock: 0 },
+    ];
+
+    let selectedTable = 'T7';
+    let pinValue = '';
+    let comandaItems = {};
+
+    const users = [
+      { id: 1, name: 'María' },
+      { id: 2, name: 'Carlos' },
+      { id: 3, name: 'Lucía' },
+    ];
+
+    const tableRecords = tables.map((table, index) => ({
+      id: index + 1,
+      name: table.name,
+      zone: table.zone,
+    }));
+
+    const mockOrders = [
+      {
+        id: 101,
+        uuid: 'ord-101-a2',
+        restaurant_id: 1,
+        status: 'open',
+        table_id: 9,
+        opened_by_user_id: 1,
+        closed_by_user_id: null,
+        diners: 4,
+        opened_at: '2026-03-25T13:20:00',
+        closed_at: null,
+        ticket_number: null,
+        order_lines: [
+          { id: 1, product_id: 21, user_id: 1, name: 'Coca Cola Zero', quantity: 4, price: 220, tax_percentage: 10 },
+          { id: 2, product_id: 31, user_id: 1, name: 'Burger de Retinto', quantity: 3, price: 1450, tax_percentage: 10 },
+          { id: 3, product_id: 11, user_id: 2, name: 'Ensaladilla de Gambas', quantity: 2, price: 600, tax_percentage: 10 },
+        ],
+      },
+      {
+        id: 102,
+        uuid: 'ord-102-b1',
+        restaurant_id: 1,
+        status: 'open',
+        table_id: 2,
+        opened_by_user_id: 2,
+        closed_by_user_id: null,
+        diners: 2,
+        opened_at: '2026-03-25T13:35:00',
+        closed_at: null,
+        ticket_number: null,
+        order_lines: [
+          { id: 4, product_id: 19, user_id: 2, name: 'Paulaner', quantity: 2, price: 300, tax_percentage: 10 },
+          { id: 5, product_id: 22, user_id: 2, name: 'Tyskie', quantity: 2, price: 300, tax_percentage: 10 },
+        ],
+      },
+      {
+        id: 103,
+        uuid: 'ord-103-c4',
+        restaurant_id: 1,
+        status: 'invoiced',
+        table_id: 4,
+        opened_by_user_id: 3,
+        closed_by_user_id: 1,
+        diners: 3,
+        opened_at: '2026-03-25T12:50:00',
+        closed_at: '2026-03-25T13:25:00',
+        ticket_number: 3802,
+        order_lines: [
+          { id: 6, product_id: 8, user_id: 3, name: 'Tostada Entera', quantity: 3, price: 300, tax_percentage: 10 },
+          { id: 7, product_id: 7, user_id: 3, name: 'Café con Leche', quantity: 3, price: 180, tax_percentage: 10 },
+        ],
+      },
+      {
+        id: 104,
+        uuid: 'ord-104-d5',
+        restaurant_id: 1,
+        status: 'cancelled',
+        table_id: 11,
+        opened_by_user_id: 1,
+        closed_by_user_id: 1,
+        diners: 1,
+        opened_at: '2026-03-25T11:15:00',
+        closed_at: '2026-03-25T11:30:00',
+        ticket_number: null,
+        order_lines: [
+          { id: 8, product_id: 51, user_id: 1, name: 'Zumo Natural', quantity: 1, price: 350, tax_percentage: 10 },
+        ],
+      },
+      {
+        id: 105,
+        uuid: 'ord-105-e8',
+        restaurant_id: 1,
+        status: 'open',
+        table_id: 8,
+        opened_by_user_id: 2,
+        closed_by_user_id: null,
+        diners: 5,
+        opened_at: '2026-03-25T13:05:00',
+        closed_at: null,
+        ticket_number: null,
+        order_lines: [
+          { id: 9, product_id: 22, user_id: 2, name: 'Aquarius Limón', quantity: 5, price: 250, tax_percentage: 10 },
+          { id: 10, product_id: 32, user_id: 2, name: 'Entrecot a la Brasa', quantity: 2, price: 2200, tax_percentage: 10 },
+        ],
+      },
+      {
+        id: 106,
+        uuid: 'ord-106-f2',
+        restaurant_id: 1,
+        status: 'invoiced',
+        table_id: 1,
+        opened_by_user_id: 3,
+        closed_by_user_id: 3,
+        diners: 2,
+        opened_at: '2026-03-25T10:40:00',
+        closed_at: '2026-03-25T11:05:00',
+        ticket_number: 3800,
+        order_lines: [
+          { id: 11, product_id: 19, user_id: 3, name: 'Paulaner', quantity: 2, price: 300, tax_percentage: 10 },
+          { id: 12, product_id: 1, user_id: 3, name: 'Ensaladilla Gambas', quantity: 1, price: 600, tax_percentage: 10 },
+        ],
+      },
+    ];
+
+    const pedidosState = {
+      tab: 'all',
+      status: 'all',
+      zone: 'all',
+      user: 'all',
+      date: '',
+      search: '',
+      selectedOrderId: null,
+    };
+
+    const mockAutoservicioOrders = [
+      {
+        id: 301,
+        uuid: 'as-ord-301',
+        restaurant_id: 1,
+        status: 'open',
+        table_id: 30,
+        opened_by_user_id: 2,
+        closed_by_user_id: null,
+        diners: 2,
+        opened_at: '2026-03-25T13:46:00',
+        closed_at: null,
+        ticket_number: null,
+        prep_status: 'new',
+        channel: 'QR mesa',
+        customer_alias: 'Cliente QR #1021',
+        active_users: 12,
+        order_lines: [
+          { id: 21, product_id: 4, user_id: 2, name: 'Coca Cola Zero', quantity: 2, price: 220, tax_percentage: 10 },
+          { id: 22, product_id: 11, user_id: 2, name: 'Ensaladilla de Gambas', quantity: 1, price: 600, tax_percentage: 10 },
+        ],
+      },
+      {
+        id: 302,
+        uuid: 'as-ord-302',
+        restaurant_id: 1,
+        status: 'open',
+        table_id: 29,
+        opened_by_user_id: 3,
+        closed_by_user_id: null,
+        diners: 1,
+        opened_at: '2026-03-25T13:31:00',
+        closed_at: null,
+        ticket_number: null,
+        prep_status: 'preparing',
+        channel: 'Web app',
+        customer_alias: 'Takeaway móvil',
+        active_users: 12,
+        order_lines: [
+          { id: 23, product_id: 31, user_id: 3, name: 'Burger de Retinto', quantity: 1, price: 1450, tax_percentage: 10 },
+          { id: 24, product_id: 2, user_id: 3, name: 'Paulaner', quantity: 1, price: 300, tax_percentage: 10 },
+        ],
+      },
+      {
+        id: 303,
+        uuid: 'as-ord-303',
+        restaurant_id: 1,
+        status: 'open',
+        table_id: 28,
+        opened_by_user_id: 1,
+        closed_by_user_id: null,
+        diners: 3,
+        opened_at: '2026-03-25T13:12:00',
+        closed_at: null,
+        ticket_number: null,
+        prep_status: 'ready',
+        channel: 'QR terraza',
+        customer_alias: 'Cliente QR #1045',
+        active_users: 12,
+        order_lines: [
+          { id: 25, product_id: 10, user_id: 1, name: 'Entrecot a la Brasa', quantity: 1, price: 2200, tax_percentage: 10 },
+          { id: 26, product_id: 5, user_id: 1, name: 'Aquarius Limón', quantity: 2, price: 250, tax_percentage: 10 },
+        ],
+      },
+      {
+        id: 304,
+        uuid: 'as-ord-304',
+        restaurant_id: 1,
+        status: 'invoiced',
+        table_id: 27,
+        opened_by_user_id: 2,
+        closed_by_user_id: 2,
+        diners: 2,
+        opened_at: '2026-03-25T12:20:00',
+        closed_at: '2026-03-25T12:55:00',
+        ticket_number: 3901,
+        prep_status: 'delivered',
+        channel: 'Web app',
+        customer_alias: 'Recogida local',
+        active_users: 12,
+        order_lines: [
+          { id: 27, product_id: 8, user_id: 2, name: 'Tostada Entera', quantity: 2, price: 300, tax_percentage: 10 },
+          { id: 28, product_id: 7, user_id: 2, name: 'Café con Leche', quantity: 2, price: 180, tax_percentage: 10 },
+        ],
+      },
+      {
+        id: 305,
+        uuid: 'as-ord-305',
+        restaurant_id: 1,
+        status: 'cancelled',
+        table_id: 26,
+        opened_by_user_id: 1,
+        closed_by_user_id: 1,
+        diners: 1,
+        opened_at: '2026-03-25T12:40:00',
+        closed_at: '2026-03-25T12:45:00',
+        ticket_number: null,
+        prep_status: 'cancelled',
+        channel: 'QR barra',
+        customer_alias: 'Cliente QR #1088',
+        active_users: 12,
+        order_lines: [
+          { id: 29, product_id: 12, user_id: 1, name: 'Zumo Natural', quantity: 1, price: 350, tax_percentage: 10 },
+        ],
+      },
+    ];
+
+    const autoservicioState = {
+      tab: 'all',
+      status: 'all',
+      prep: 'all',
+      search: '',
+      selectedOrderId: null,
+    };
+
+    // ── NAVEGACIÓN MEJORADA ──
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      syncActiveNav(id);
+    }
+
+    function syncActiveNav(screenId) {
+      document.querySelectorAll('.topbar-nav .nav-item').forEach(btn => {
+        const action = btn.getAttribute('onclick') || '';
+        const isTarget = action.includes(`navigateTo('${screenId}'`);
+        btn.classList.toggle('active', isTarget);
+      });
+    }
+
+    function navigateTo(screenId, buttonElement) {
+      showScreen(screenId);
+
+      if (screenId === 'screen-pedidos') {
+        renderPedidosScreen();
+      }
+
+      if (screenId === 'screen-autoservicio') {
+        renderAutoservicioScreen();
+      }
+    }
+
+    // ── MODAL ──
+    function showModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    function closeModalOutside(e, id) {
+      if (e.target.classList.contains('modal-overlay')) closeModal(id);
+    }
+
+    // ── PIN ──
+    function pinKey(k) {
+      if (pinValue.length >= 4) return;
+      pinValue += k;
+      updateDots();
+      if (pinValue.length === 4) setTimeout(() => pinEnter(), 300);
+    }
+
+    function pinDel() {
+      pinValue = pinValue.slice(0, -1);
+      updateDots();
+    }
+
+    function updateDots() {
+      for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById('d' + i);
+        if (dot) dot.classList.toggle('filled', i < pinValue.length);
+      }
+    }
+
+    function pinEnter() {
+      if (pinValue.length > 0) {
+        showScreen('screen-mesas');
+        pinValue = '';
+        updateDots();
+      }
+    }
+
+    function selectUser(el, initials) {
+      document.querySelectorAll('.user-chip').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      pinValue = '';
+      updateDots();
+    }
+
+    // ── ZONE TABS ──
+    function setZone(el) {
+      document.querySelectorAll('.zone-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    // ── TABLES ──
+    function renderTables() {
+      const grid = document.getElementById('tables-grid');
+      if (!grid) return;
+      grid.innerHTML = tables.map((t, i) => {
+        let cls = 'mesa';
+        if (t.status === 'occupied') cls += ' occupied';
+        if (t.status === 'selected') cls += ' occupied selected';
+        if (t.status === 'cobrar') cls += ' cobrar';
+        return `<div class="${cls}" onclick="selectTable(${i}, '${t.name}', '${t.zone}')">
+          <div class="mesa-zone-label">${t.zone}</div>
+          <div class="mesa-name">${t.name}</div>
+          ${t.amount && t.status !== 'cobrar' ? `<div class="mesa-amount">${t.amount}</div>` : ''}
+          ${t.status === 'cobrar' ? `<div class="mesa-cobrar-tag">COBRAR</div>` : ''}
+          ${t.badge ? `<div class="mesa-badge">⟳</div>` : ''}
+        </div>`;
+      }).join('');
+    }
+
+    function selectTable(idx, name, zone) {
+      // Update visual selection
+      document.querySelectorAll('.mesa').forEach((m, i) => {
+        m.classList.remove('selected');
+      });
+      const cards = document.querySelectorAll('.mesa');
+      if (cards[idx]) {
+        if (!cards[idx].classList.contains('cobrar')) cards[idx].classList.add('selected');
+      }
+
+      selectedTable = name;
+      showOrderPanel(name, zone, tables[idx]);
+    }
+
+    function showOrderPanel(name, zone, table) {
+      const orderEmpty = document.getElementById('order-empty');
+      const orderContent = document.getElementById('order-content');
+      
+      if (!orderEmpty || !orderContent) return;
+      
+      orderEmpty.style.display = 'none';
+      orderContent.style.display = 'flex';
+
+      if (table.status === 'free') {
+        document.getElementById('order-panel-name').textContent = `${name} · ${zone}`;
+        document.getElementById('order-panel-sub').textContent = 'Mesa libre';
+        document.getElementById('order-panel-total').textContent = '0,00€';
+        document.getElementById('order-lines-list').innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray-400);font-size:13px">Mesa vacía</div>`;
+        document.getElementById('sum-sub').textContent = '0,00€';
+        document.getElementById('sum-tax').textContent = '0,00€';
+        document.getElementById('sum-tax2').textContent = '0,00€';
+        document.getElementById('sum-total').textContent = '0,00€';
+        return;
+      }
+
+      document.getElementById('order-panel-name').textContent = `${name} · ${zone}`;
+      document.getElementById('order-panel-sub').textContent = 'hace 5 días · 4 comensales';
+      document.getElementById('order-panel-total').textContent = table.amount || '0,00€';
+
+      const lines = document.getElementById('order-lines-list');
+      lines.innerHTML = orderLines.map(l => `
+        <div class="order-line">
+          <div class="order-line-qty">${l.qty}</div>
+          <div class="order-line-info">
+            <div class="order-line-name">${l.name}</div>
+            ${l.note ? `<div class="order-line-note">${l.note}</div>` : ''}
+          </div>
+          <div class="order-line-price">${l.price}</div>
+        </div>
+      `).join('');
+
+      const total = orderLines.reduce((s, l) => s + l.cents, 0);
+      const sub = Math.round(total / 1.1);
+      const tax1 = Math.round(sub * 0.1);
+      const tax2 = total - sub - tax1;
+      document.getElementById('sum-sub').textContent = fmt(sub);
+      document.getElementById('sum-tax').textContent = fmt(tax1);
+      document.getElementById('sum-tax2').textContent = fmt(tax2);
+      document.getElementById('sum-total').textContent = fmt(total);
+    }
+
+    function fmt(cents) {
+      return (cents / 100).toFixed(2).replace('.', ',') + '€';
+    }
+
+    function getTableRecordById(tableId) {
+      return tableRecords.find(t => t.id === tableId) || { name: 'Mesa ?', zone: 'Zona' };
+    }
+
+    function getUserName(userId) {
+      const user = users.find(u => u.id === userId);
+      return user ? user.name : 'Usuario';
+    }
+
+    function getOrderTotals(order) {
+      const subtotal = order.order_lines.reduce((acc, line) => acc + (line.price * line.quantity), 0);
+      const tax = order.order_lines.reduce((acc, line) => {
+        const lineSubtotal = line.price * line.quantity;
+        return acc + Math.round(lineSubtotal * (line.tax_percentage / 100));
+      }, 0);
+
+      return {
+        subtotal,
+        tax,
+        total: subtotal + tax,
+      };
+    }
+
+    function statusLabel(status) {
+      if (status === 'open') return 'Abierto';
+      if (status === 'invoiced') return 'Cerrado';
+      return 'Cancelado';
+    }
+
+    function timeAgo(dateString) {
+      const now = new Date('2026-03-25T14:00:00');
+      const then = new Date(dateString);
+      const diffMinutes = Math.max(1, Math.floor((now - then) / 60000));
+
+      if (diffMinutes < 60) return `Hace ${diffMinutes} min`;
+
+      const diffHours = Math.floor(diffMinutes / 60);
+      if (diffHours < 24) return `Hace ${diffHours} h`;
+
+      const diffDays = Math.floor(diffHours / 24);
+      return `Hace ${diffDays} d`;
+    }
+
+    function filteredOrders() {
+      return mockOrders.filter(order => {
+        const table = getTableRecordById(order.table_id);
+        const openerName = getUserName(order.opened_by_user_id);
+        const ticketText = order.ticket_number ? String(order.ticket_number) : '';
+        const q = pedidosState.search.trim().toLowerCase();
+        const totals = getOrderTotals(order);
+
+        let matchTab = true;
+        if (pedidosState.tab === 'open') matchTab = order.status === 'open';
+        if (pedidosState.tab === 'invoiced') matchTab = order.status === 'invoiced';
+        if (pedidosState.tab === 'cancelled') matchTab = order.status === 'cancelled';
+        if (pedidosState.tab === 'to-charge') matchTab = order.status === 'open' && totals.total >= 3000;
+
+        const matchStatus = pedidosState.status === 'all' || order.status === pedidosState.status;
+        const matchZone = pedidosState.zone === 'all' || table.zone === pedidosState.zone;
+        const matchUser = pedidosState.user === 'all' || String(order.opened_by_user_id) === pedidosState.user;
+        const matchDate = !pedidosState.date || order.opened_at.startsWith(pedidosState.date);
+        const matchSearch = !q
+          || table.name.toLowerCase().includes(q)
+          || order.uuid.toLowerCase().includes(q)
+          || ticketText.includes(q)
+          || openerName.toLowerCase().includes(q);
+
+        return matchTab && matchStatus && matchZone && matchUser && matchDate && matchSearch;
+      });
+    }
+
+    function renderPedidosKpis() {
+      const openCount = mockOrders.filter(o => o.status === 'open').length;
+      const invoicedCount = mockOrders.filter(o => o.status === 'invoiced').length;
+      const paraCobrar = mockOrders.filter(o => o.status === 'open').filter(o => getOrderTotals(o).total >= 3000).length;
+      const invoicedOrders = mockOrders.filter(o => o.status === 'invoiced');
+      const totalInvoiced = invoicedOrders.reduce((acc, order) => acc + getOrderTotals(order).total, 0);
+      const avgTicket = invoicedOrders.length ? Math.round(totalInvoiced / invoicedOrders.length) : 0;
+
+      document.getElementById('kpi-open').textContent = String(openCount);
+      document.getElementById('kpi-invoiced').textContent = String(invoicedCount);
+      document.getElementById('kpi-para-cobrar').textContent = String(paraCobrar);
+      document.getElementById('kpi-ticket').textContent = fmt(avgTicket);
+    }
+
+    function renderPedidosList() {
+      const container = document.getElementById('pedidos-list');
+      const empty = document.getElementById('pedidos-empty');
+      if (!container || !empty) return;
+
+      const orders = filteredOrders();
+      if (!orders.length) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        showPedidoDetail(null);
+        return;
+      }
+
+      empty.style.display = 'none';
+      container.innerHTML = orders.map(order => {
+        const table = getTableRecordById(order.table_id);
+        const opener = getUserName(order.opened_by_user_id);
+        const totals = getOrderTotals(order);
+        const activeClass = pedidosState.selectedOrderId === order.id ? 'active' : '';
+
+        return `<div class="pedido-row ${activeClass}" onclick="selectPedido(${order.id})">
+          <div class="pedido-main">
+            <div class="pedido-main-title">Mesa ${table.name} · ${table.zone}</div>
+            <div class="pedido-main-sub">${opener} · ${order.diners} comensales · ${order.uuid}</div>
+          </div>
+          <div class="pedido-meta">${timeAgo(order.opened_at)}</div>
+          <div class="pedido-amount">${fmt(totals.total)}</div>
+          <div class="status-pill status-${order.status}">${statusLabel(order.status)}</div>
+        </div>`;
+      }).join('');
+
+      const selectedVisible = orders.some(o => o.id === pedidosState.selectedOrderId);
+      if (!selectedVisible) {
+        pedidosState.selectedOrderId = orders[0].id;
+      }
+
+      showPedidoDetail(mockOrders.find(order => order.id === pedidosState.selectedOrderId) || null);
+      container.querySelectorAll('.pedido-row').forEach(row => {
+        if (Number(row.getAttribute('onclick')?.match(/\d+/)?.[0]) === pedidosState.selectedOrderId) {
+          row.classList.add('active');
+        }
+      });
+    }
+
+    function showPedidoDetail(order) {
+      const empty = document.getElementById('pedido-detail-empty');
+      const content = document.getElementById('pedido-detail-content');
+      if (!empty || !content) return;
+
+      if (!order) {
+        empty.style.display = 'flex';
+        content.style.display = 'none';
+        return;
+      }
+
+      empty.style.display = 'none';
+      content.style.display = 'flex';
+
+      const table = getTableRecordById(order.table_id);
+      const opener = getUserName(order.opened_by_user_id);
+      const totals = getOrderTotals(order);
+
+      document.getElementById('pedido-detail-title').textContent = `Mesa ${table.name} · ${table.zone}`;
+      document.getElementById('pedido-detail-sub').textContent = `${statusLabel(order.status)} · ${timeAgo(order.opened_at)} · ${opener} · ${order.diners} comensales · ${order.uuid}${order.ticket_number ? ` · #${order.ticket_number}` : ''}`;
+      document.getElementById('pedido-detail-total').textContent = fmt(totals.total);
+
+      const linesContainer = document.getElementById('pedido-detail-lines');
+      linesContainer.innerHTML = order.order_lines.map(line => {
+        const lineSubtotal = line.price * line.quantity;
+        const lineTotal = lineSubtotal + Math.round(lineSubtotal * (line.tax_percentage / 100));
+
+        return `<div class="pedido-detail-line">
+          <div class="pedido-line-qty">${line.quantity}</div>
+          <div>
+            <div class="pedido-line-name">${line.name}</div>
+            <div class="pedido-line-meta">IVA ${line.tax_percentage}% · Añadido por ${getUserName(line.user_id)}</div>
+          </div>
+          <div class="pedido-line-price">${fmt(lineTotal)}</div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('pedido-sum-sub').textContent = fmt(totals.subtotal);
+      document.getElementById('pedido-sum-tax').textContent = fmt(totals.tax);
+      document.getElementById('pedido-sum-total').textContent = fmt(totals.total);
+
+      const canOperate = order.status === 'open';
+      const btnCobrar = document.getElementById('pedido-action-cobrar');
+      const btnCancel = document.getElementById('pedido-action-cancel');
+      const btnPrint = document.getElementById('pedido-action-print');
+      btnCobrar.disabled = !canOperate;
+      btnCancel.disabled = !canOperate;
+      btnPrint.disabled = !order.ticket_number && !canOperate;
+    }
+
+    function selectPedido(orderId) {
+      pedidosState.selectedOrderId = orderId;
+      renderPedidosList();
+    }
+
+    function populatePedidosFilters() {
+      const zoneSelect = document.getElementById('filter-zone');
+      const userSelect = document.getElementById('filter-user');
+      if (!zoneSelect || !userSelect) return;
+
+      const uniqueZones = Array.from(new Set(tableRecords.map(t => t.zone)));
+      zoneSelect.innerHTML = '<option value="all">Todas las zonas</option>'
+        + uniqueZones.map(zone => `<option value="${zone}">${zone}</option>`).join('');
+
+      userSelect.innerHTML = '<option value="all">Todos los camareros</option>'
+        + users.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+    }
+
+    function bindPedidosEvents() {
+      const tabsEl = document.getElementById('pedidos-tabs');
+      const statusEl = document.getElementById('filter-status');
+      const zoneEl = document.getElementById('filter-zone');
+      const userEl = document.getElementById('filter-user');
+      const dateEl = document.getElementById('filter-date');
+      const searchEl = document.getElementById('filter-search');
+      const resetEl = document.getElementById('filter-reset');
+      const openMesaEl = document.getElementById('pedido-action-openmesa');
+      const printEl = document.getElementById('pedido-action-print');
+      const cobrarEl = document.getElementById('pedido-action-cobrar');
+      const cancelEl = document.getElementById('pedido-action-cancel');
+
+      if (tabsEl && !tabsEl.dataset.bound) {
+        tabsEl.dataset.bound = '1';
+        tabsEl.addEventListener('click', (event) => {
+          const btn = event.target.closest('.pedidos-tab');
+          if (!btn) return;
+
+          pedidosState.tab = btn.dataset.tab || 'all';
+          tabsEl.querySelectorAll('.pedidos-tab').forEach(tab => tab.classList.remove('active'));
+          btn.classList.add('active');
+          renderPedidosList();
+        });
+      }
+
+      if (statusEl && !statusEl.dataset.bound) {
+        statusEl.dataset.bound = '1';
+        statusEl.addEventListener('change', () => {
+          pedidosState.status = statusEl.value;
+          renderPedidosList();
+        });
+      }
+
+      if (zoneEl && !zoneEl.dataset.bound) {
+        zoneEl.dataset.bound = '1';
+        zoneEl.addEventListener('change', () => {
+          pedidosState.zone = zoneEl.value;
+          renderPedidosList();
+        });
+      }
+
+      if (userEl && !userEl.dataset.bound) {
+        userEl.dataset.bound = '1';
+        userEl.addEventListener('change', () => {
+          pedidosState.user = userEl.value;
+          renderPedidosList();
+        });
+      }
+
+      if (dateEl && !dateEl.dataset.bound) {
+        dateEl.dataset.bound = '1';
+        dateEl.addEventListener('change', () => {
+          pedidosState.date = dateEl.value;
+          renderPedidosList();
+        });
+      }
+
+      if (searchEl && !searchEl.dataset.bound) {
+        searchEl.dataset.bound = '1';
+        searchEl.addEventListener('input', () => {
+          pedidosState.search = searchEl.value;
+          renderPedidosList();
+        });
+      }
+
+      if (resetEl && !resetEl.dataset.bound) {
+        resetEl.dataset.bound = '1';
+        resetEl.addEventListener('click', () => {
+          pedidosState.tab = 'all';
+          pedidosState.status = 'all';
+          pedidosState.zone = 'all';
+          pedidosState.user = 'all';
+          pedidosState.date = '';
+          pedidosState.search = '';
+
+          statusEl.value = 'all';
+          zoneEl.value = 'all';
+          userEl.value = 'all';
+          dateEl.value = '';
+          searchEl.value = '';
+
+          document.querySelectorAll('.pedidos-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === 'all');
+          });
+
+          renderPedidosList();
+        });
+      }
+
+      if (openMesaEl && !openMesaEl.dataset.bound) {
+        openMesaEl.dataset.bound = '1';
+        openMesaEl.addEventListener('click', () => {
+          showScreen('screen-mesas');
+        });
+      }
+
+      if (printEl && !printEl.dataset.bound) {
+        printEl.dataset.bound = '1';
+        printEl.addEventListener('click', () => {
+          const order = mockOrders.find(o => o.id === pedidosState.selectedOrderId);
+          if (!order) return;
+          alert(`🧾 Ticket enviado a impresora (${order.uuid})`);
+        });
+      }
+
+      if (cobrarEl && !cobrarEl.dataset.bound) {
+        cobrarEl.dataset.bound = '1';
+        cobrarEl.addEventListener('click', () => {
+          const order = mockOrders.find(o => o.id === pedidosState.selectedOrderId);
+          if (!order || order.status !== 'open') return;
+          order.status = 'invoiced';
+          order.closed_by_user_id = 1;
+          order.closed_at = '2026-03-25T14:00:00';
+          order.ticket_number = 3810 + (order.id % 10);
+          renderPedidosScreen();
+        });
+      }
+
+      if (cancelEl && !cancelEl.dataset.bound) {
+        cancelEl.dataset.bound = '1';
+        cancelEl.addEventListener('click', () => {
+          const order = mockOrders.find(o => o.id === pedidosState.selectedOrderId);
+          if (!order || order.status !== 'open') return;
+          order.status = 'cancelled';
+          order.closed_by_user_id = 1;
+          order.closed_at = '2026-03-25T14:00:00';
+          order.ticket_number = null;
+          renderPedidosScreen();
+        });
+      }
+    }
+
+    function renderPedidosScreen() {
+      populatePedidosFilters();
+      bindPedidosEvents();
+
+      const tabsEl = document.getElementById('pedidos-tabs');
+      if (tabsEl) {
+        tabsEl.querySelectorAll('.pedidos-tab').forEach(tab => {
+          tab.classList.toggle('active', tab.dataset.tab === pedidosState.tab);
+        });
+      }
+
+      const dateEl = document.getElementById('filter-date');
+      if (dateEl) dateEl.value = pedidosState.date;
+
+      renderPedidosKpis();
+      renderPedidosList();
+    }
+
+    function prepLabel(status) {
+      if (status === 'new') return 'Nuevo';
+      if (status === 'preparing') return 'Preparando';
+      if (status === 'ready') return 'Listo';
+      if (status === 'delivered') return 'Entregado';
+      return 'Cancelado';
+    }
+
+    function filteredAutosOrders() {
+      return mockAutoservicioOrders.filter(order => {
+        const totals = getOrderTotals(order);
+        const q = autoservicioState.search.trim().toLowerCase();
+        const ticketText = order.ticket_number ? String(order.ticket_number) : '';
+
+        let matchTab = true;
+        if (autoservicioState.tab === 'new') matchTab = order.prep_status === 'new' && order.status === 'open';
+        if (autoservicioState.tab === 'preparing') matchTab = order.prep_status === 'preparing' && order.status === 'open';
+        if (autoservicioState.tab === 'ready') matchTab = order.prep_status === 'ready' && order.status === 'open';
+        if (autoservicioState.tab === 'closed') matchTab = order.status === 'invoiced';
+
+        const matchStatus = autoservicioState.status === 'all' || order.status === autoservicioState.status;
+        const matchPrep = autoservicioState.prep === 'all' || order.prep_status === autoservicioState.prep;
+        const matchSearch = !q
+          || order.uuid.toLowerCase().includes(q)
+          || order.customer_alias.toLowerCase().includes(q)
+          || order.channel.toLowerCase().includes(q)
+          || ticketText.includes(q)
+          || fmt(totals.total).toLowerCase().includes(q);
+
+        return matchTab && matchStatus && matchPrep && matchSearch;
+      });
+    }
+
+    function renderAutoservicioKpis() {
+      const connected = mockAutoservicioOrders[0]?.active_users || 0;
+      const queueCount = mockAutoservicioOrders.filter(o => o.status === 'open' && ['new', 'preparing'].includes(o.prep_status)).length;
+      const readyCount = mockAutoservicioOrders.filter(o => o.status === 'open' && o.prep_status === 'ready').length;
+      const billed = mockAutoservicioOrders
+        .filter(o => o.status === 'invoiced')
+        .reduce((acc, order) => acc + getOrderTotals(order).total, 0);
+
+      document.getElementById('autos-kpi-connected').textContent = String(connected);
+      document.getElementById('autos-kpi-queue').textContent = String(queueCount);
+      document.getElementById('autos-kpi-ready').textContent = String(readyCount);
+      document.getElementById('autos-kpi-revenue').textContent = fmt(billed);
+    }
+
+    function renderAutoservicioList() {
+      const container = document.getElementById('autos-list');
+      const empty = document.getElementById('autos-empty');
+      if (!container || !empty) return;
+
+      const rows = filteredAutosOrders();
+      if (!rows.length) {
+        container.innerHTML = '';
+        empty.style.display = 'block';
+        showAutoservicioDetail(null);
+        return;
+      }
+
+      empty.style.display = 'none';
+      container.innerHTML = rows.map(order => {
+        const totals = getOrderTotals(order);
+        const active = order.id === autoservicioState.selectedOrderId ? 'active' : '';
+        return `<div class="autos-row ${active}" onclick="selectAutosPedido(${order.id})">
+          <div>
+            <div class="autos-main-title">${order.customer_alias}</div>
+            <div class="autos-main-sub">${order.uuid} · ${timeAgo(order.opened_at)}</div>
+          </div>
+          <div class="pedido-meta">${order.channel}</div>
+          <div class="pedido-amount">${fmt(totals.total)}</div>
+          <div class="prep-pill prep-${order.prep_status}">${prepLabel(order.prep_status)}</div>
+        </div>`;
+      }).join('');
+
+      if (!rows.some(row => row.id === autoservicioState.selectedOrderId)) {
+        autoservicioState.selectedOrderId = rows[0].id;
+      }
+
+      showAutoservicioDetail(mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId) || null);
+    }
+
+    function showAutoservicioDetail(order) {
+      const empty = document.getElementById('autos-detail-empty');
+      const content = document.getElementById('autos-detail-content');
+      if (!empty || !content) return;
+
+      if (!order) {
+        empty.style.display = 'flex';
+        content.style.display = 'none';
+        return;
+      }
+
+      empty.style.display = 'none';
+      content.style.display = 'flex';
+
+      const totals = getOrderTotals(order);
+      document.getElementById('autos-detail-title').textContent = order.customer_alias;
+      document.getElementById('autos-detail-sub').textContent = `${prepLabel(order.prep_status)} · ${statusLabel(order.status)} · ${timeAgo(order.opened_at)} · ${order.channel} · ${order.uuid}${order.ticket_number ? ` · #${order.ticket_number}` : ''}`;
+      document.getElementById('autos-detail-total').textContent = fmt(totals.total);
+
+      const linesContainer = document.getElementById('autos-lines');
+      linesContainer.innerHTML = order.order_lines.map(line => {
+        const subtotal = line.price * line.quantity;
+        const total = subtotal + Math.round(subtotal * line.tax_percentage / 100);
+        return `<div class="autos-line">
+          <div class="pedido-line-qty">${line.quantity}</div>
+          <div>
+            <div class="pedido-line-name">${line.name}</div>
+            <div class="pedido-line-meta">IVA ${line.tax_percentage}% · Gestionado por ${getUserName(line.user_id)}</div>
+          </div>
+          <div class="pedido-line-price">${fmt(total)}</div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('autos-sum-sub').textContent = fmt(totals.subtotal);
+      document.getElementById('autos-sum-tax').textContent = fmt(totals.tax);
+      document.getElementById('autos-sum-total').textContent = fmt(totals.total);
+
+      const btnAccept = document.getElementById('autos-action-accept');
+      const btnReady = document.getElementById('autos-action-ready');
+      const btnDeliver = document.getElementById('autos-action-deliver');
+      const btnCancel = document.getElementById('autos-action-cancel');
+
+      const open = order.status === 'open';
+      btnAccept.disabled = !open || order.prep_status !== 'new';
+      btnReady.disabled = !open || !['new', 'preparing'].includes(order.prep_status);
+      btnDeliver.disabled = !open || order.prep_status !== 'ready';
+      btnCancel.disabled = !open;
+    }
+
+    function selectAutosPedido(orderId) {
+      autoservicioState.selectedOrderId = orderId;
+      renderAutoservicioList();
+    }
+
+    function bindAutoservicioEvents() {
+      const tabsEl = document.getElementById('autos-tabs');
+      const statusEl = document.getElementById('autos-filter-status');
+      const prepEl = document.getElementById('autos-filter-prep');
+      const searchEl = document.getElementById('autos-filter-search');
+      const resetEl = document.getElementById('autos-filter-reset');
+
+      const acceptEl = document.getElementById('autos-action-accept');
+      const readyEl = document.getElementById('autos-action-ready');
+      const deliverEl = document.getElementById('autos-action-deliver');
+      const cancelEl = document.getElementById('autos-action-cancel');
+
+      if (tabsEl && !tabsEl.dataset.bound) {
+        tabsEl.dataset.bound = '1';
+        tabsEl.addEventListener('click', (event) => {
+          const btn = event.target.closest('.autos-tab');
+          if (!btn) return;
+          autoservicioState.tab = btn.dataset.tab || 'all';
+          tabsEl.querySelectorAll('.autos-tab').forEach(tab => tab.classList.remove('active'));
+          btn.classList.add('active');
+          renderAutoservicioList();
+        });
+      }
+
+      if (statusEl && !statusEl.dataset.bound) {
+        statusEl.dataset.bound = '1';
+        statusEl.addEventListener('change', () => {
+          autoservicioState.status = statusEl.value;
+          renderAutoservicioList();
+        });
+      }
+
+      if (prepEl && !prepEl.dataset.bound) {
+        prepEl.dataset.bound = '1';
+        prepEl.addEventListener('change', () => {
+          autoservicioState.prep = prepEl.value;
+          renderAutoservicioList();
+        });
+      }
+
+      if (searchEl && !searchEl.dataset.bound) {
+        searchEl.dataset.bound = '1';
+        searchEl.addEventListener('input', () => {
+          autoservicioState.search = searchEl.value;
+          renderAutoservicioList();
+        });
+      }
+
+      if (resetEl && !resetEl.dataset.bound) {
+        resetEl.dataset.bound = '1';
+        resetEl.addEventListener('click', () => {
+          autoservicioState.tab = 'all';
+          autoservicioState.status = 'all';
+          autoservicioState.prep = 'all';
+          autoservicioState.search = '';
+          statusEl.value = 'all';
+          prepEl.value = 'all';
+          searchEl.value = '';
+          document.querySelectorAll('.autos-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === 'all');
+          });
+          renderAutoservicioList();
+        });
+      }
+
+      if (acceptEl && !acceptEl.dataset.bound) {
+        acceptEl.dataset.bound = '1';
+        acceptEl.addEventListener('click', () => {
+          const order = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
+          if (!order || order.status !== 'open' || order.prep_status !== 'new') return;
+          order.prep_status = 'preparing';
+          renderAutoservicioScreen();
+        });
+      }
+
+      if (readyEl && !readyEl.dataset.bound) {
+        readyEl.dataset.bound = '1';
+        readyEl.addEventListener('click', () => {
+          const order = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
+          if (!order || order.status !== 'open') return;
+          order.prep_status = 'ready';
+          renderAutoservicioScreen();
+        });
+      }
+
+      if (deliverEl && !deliverEl.dataset.bound) {
+        deliverEl.dataset.bound = '1';
+        deliverEl.addEventListener('click', () => {
+          const order = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
+          if (!order || order.status !== 'open' || order.prep_status !== 'ready') return;
+          order.prep_status = 'delivered';
+          order.status = 'invoiced';
+          order.closed_by_user_id = 1;
+          order.closed_at = '2026-03-25T14:00:00';
+          order.ticket_number = 3950 + (order.id % 20);
+          renderAutoservicioScreen();
+        });
+      }
+
+      if (cancelEl && !cancelEl.dataset.bound) {
+        cancelEl.dataset.bound = '1';
+        cancelEl.addEventListener('click', () => {
+          const order = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
+          if (!order || order.status !== 'open') return;
+          order.prep_status = 'cancelled';
+          order.status = 'cancelled';
+          order.closed_by_user_id = 1;
+          order.closed_at = '2026-03-25T14:00:00';
+          order.ticket_number = null;
+          renderAutoservicioScreen();
+        });
+      }
+    }
+
+    function renderAutoservicioScreen() {
+      bindAutoservicioEvents();
+
+      const tabsEl = document.getElementById('autos-tabs');
+      if (tabsEl) {
+        tabsEl.querySelectorAll('.autos-tab').forEach(tab => {
+          tab.classList.toggle('active', tab.dataset.tab === autoservicioState.tab);
+        });
+      }
+
+      renderAutoservicioKpis();
+      renderAutoservicioList();
+    }
+
+    // ── PRODUCTS ──
+    function renderProducts(filter = '') {
+      const grid = document.getElementById('products-grid');
+      if (!grid) return;
+      const f = filter.toLowerCase();
+      grid.innerHTML = products
+        .filter(p => !f || p.name.toLowerCase().includes(f))
+        .map((p, i) => `
+          <div class="product-card ${p.stock === 0 ? 'out-of-stock' : ''}" onclick="addToComanda(${i})" style="animation-delay:${i * 0.03}s">
+            <div class="product-emoji">${p.emoji}</div>
+            <div class="product-name">${p.name}</div>
+            <div class="product-price">${p.price}</div>
+            <div class="product-tax">${p.tax}</div>
+          </div>
+        `).join('');
+    }
+
+    function filterProducts(val) {
+      renderProducts(val);
+    }
+
+    function setFamily(el) {
+      document.querySelectorAll('.family-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      const fam = el.textContent.trim();
+      renderProducts(fam === 'Todo' ? '' : fam);
+    }
+
+    // ── COMANDA ──
+    function addToComanda(idx) {
+      const p = products[idx];
+      if (p.stock === 0) return;
+      if (!comandaItems[idx]) {
+        comandaItems[idx] = { product: p, qty: 0 };
+      }
+      comandaItems[idx].qty++;
+      renderComanda();
+    }
+
+    function removeFromComanda(idx) {
+      if (comandaItems[idx]) {
+        comandaItems[idx].qty--;
+        if (comandaItems[idx].qty <= 0) delete comandaItems[idx];
+      }
+      renderComanda();
+    }
+
+    function renderComanda() {
+      const keys = Object.keys(comandaItems);
+      const list = document.getElementById('comanda-lines');
+      const totalEl = document.getElementById('comanda-total');
+      const countEl = document.getElementById('comanda-count');
+      const btn = document.getElementById('btn-send-comanda');
+
+      if (!list || !totalEl || !countEl || !btn) return;
+
+      if (keys.length === 0) {
+        list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray-400);font-size:13px">Toca un producto para añadirlo</div>`;
+        totalEl.textContent = '0,00€';
+        countEl.textContent = '0 productos añadidos';
+        btn.style.opacity = '0.5';
+        btn.style.pointerEvents = 'none';
+        return;
+      }
+
+      let total = 0;
+      let count = 0;
+      list.innerHTML = keys.map(k => {
+        const item = comandaItems[k];
+        const lineTotal = item.product.cents * item.qty;
+        total += lineTotal;
+        count += item.qty;
+        return `<div class="order-line">
+          <div class="order-line-qty">${item.qty}</div>
+          <div class="order-line-info">
+            <div class="order-line-name">${item.product.name}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="order-line-price">${fmt(lineTotal)}</div>
+            <button onclick="removeFromComanda(${k})" style="border:none;background:var(--gray-200);border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:14px;color:var(--gray-600);display:flex;align-items:center;justify-content:center">−</button>
+          </div>
+        </div>`;
+      }).join('');
+
+      totalEl.textContent = fmt(total);
+      countEl.textContent = `${count} producto${count !== 1 ? 's' : ''} añadido${count !== 1 ? 's' : ''}`;
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+    }
+
+    function clearComanda() {
+      comandaItems = {};
+      renderComanda();
+    }
+
+    function sendComanda() {
+      alert('✅ Comanda enviada a cocina');
+      clearComanda();
+      showScreen('screen-mesas');
+    }
+
+    // ── CAJA ──
+    function abrirCaja() {
+      const fondo = document.getElementById('fondo-inicial').value;
+      if (!fondo || fondo <= 0) {
+        alert('Por favor, introduce un fondo inicial válido');
+        return;
+      }
+      alert(`✅ Caja abierta correctamente con fondo inicial de ${fondo}€`);
+      showScreen('screen-mesas');
+    }
+
+    // Actualizar fecha y hora en pantalla de caja
+    function actualizarFechaHora() {
+      const fechaHoraInput = document.getElementById('fecha-hora');
+      if (fechaHoraInput) {
+        const ahora = new Date();
+        const fechaFormateada = ahora.toLocaleString('es-ES');
+        fechaHoraInput.value = fechaFormateada;
+      }
+    }
+
+    // ── INIT ──
+    renderTables();
+    renderProducts();
+    renderPedidosScreen();
+    renderAutoservicioScreen();
+    actualizarFechaHora();
+
+    // Pre-select T7
+    setTimeout(() => {
+      const t7 = document.querySelectorAll('.mesa')[7];
+      if (t7) selectTable(7, 'T7', 'Terraza');
+    }, 50);
+  </script>
+</body>
+
+</html>
