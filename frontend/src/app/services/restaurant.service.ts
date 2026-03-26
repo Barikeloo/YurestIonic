@@ -12,8 +12,19 @@ export interface AdminRestaurantItem {
   email: string;
 }
 
+export interface AdminRestaurantUser {
+  uuid: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
 interface AdminRestaurantsResponse {
   data: AdminRestaurantItem[];
+}
+
+interface AdminRestaurantUsersResponse {
+  users: AdminRestaurantUser[];
 }
 
 interface SelectRestaurantContextResponse {
@@ -27,6 +38,18 @@ interface UpdateAdminRestaurantPayload {
   legal_name: string;
   tax_id: string;
   email: string;
+  password?: string;
+}
+
+interface CreateRestaurantUserPayload {
+  name: string;
+  email: string;
+  password: string;
+}
+
+interface UpdateRestaurantUserPayload {
+  name?: string;
+  email?: string;
   password?: string;
 }
 
@@ -57,6 +80,30 @@ export class RestaurantService {
   public updateAdminRestaurant(restaurantId: string, payload: UpdateAdminRestaurantPayload): Observable<unknown> {
     return this.http
       .put(`${this.baseUrl}/admin/restaurants/${restaurantId}`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public getRestaurantUsers(restaurantUuid: string): Observable<AdminRestaurantUsersResponse> {
+    return this.http
+      .get<AdminRestaurantUsersResponse>(`${this.baseUrl}/admin/restaurants/${restaurantUuid}/users`, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public createRestaurantUser(restaurantUuid: string, payload: CreateRestaurantUserPayload): Observable<AdminRestaurantUser> {
+    return this.http
+      .post<AdminRestaurantUser>(`${this.baseUrl}/admin/restaurants/${restaurantUuid}/users`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public updateRestaurantUser(restaurantUuid: string, userUuid: string, payload: UpdateRestaurantUserPayload): Observable<unknown> {
+    return this.http
+      .put(`${this.baseUrl}/admin/restaurants/${restaurantUuid}/users/${userUuid}`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public deleteRestaurantUser(restaurantUuid: string, userUuid: string): Observable<unknown> {
+    return this.http
+      .delete(`${this.baseUrl}/admin/restaurants/${restaurantUuid}/users/${userUuid}`, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 

@@ -51,6 +51,10 @@ use App\User\Infrastructure\Entrypoint\Http\GetMeController;
 use App\User\Infrastructure\Entrypoint\Http\LogoutController;
 use App\User\Infrastructure\Entrypoint\Http\PostController;
 use App\User\Infrastructure\Entrypoint\Http\LoginController;
+use App\User\Infrastructure\Entrypoint\Http\Admin\AdminGetCollectionController as UserAdminGetCollectionController;
+use App\User\Infrastructure\Entrypoint\Http\Admin\AdminPostController as UserAdminPostController;
+use App\User\Infrastructure\Entrypoint\Http\Admin\AdminPutController as UserAdminPutController;
+use App\User\Infrastructure\Entrypoint\Http\Admin\AdminDeleteController as UserAdminDeleteController;
 use App\Zone\Infrastructure\Entrypoint\Http\DeleteController as ZoneDeleteController;
 use App\Zone\Infrastructure\Entrypoint\Http\GetCollectionController as ZoneGetCollectionController;
 use App\Zone\Infrastructure\Entrypoint\Http\GetController as ZoneGetController;
@@ -148,4 +152,10 @@ Route::middleware([
 	Route::get('/admin/restaurants/{id}', RestaurantGetController::class)->whereUuid('id');
 	Route::put('/admin/restaurants/{id}', RestaurantPutController::class)->whereUuid('id');
 	Route::delete('/admin/restaurants/{id}', RestaurantDeleteController::class)->whereUuid('id');
+
+	// User management for restaurant
+	Route::get('/admin/restaurants/{uuid}/users', UserAdminGetCollectionController::class)->whereUuid('uuid');
+	Route::post('/admin/restaurants/{uuid}/users', UserAdminPostController::class)->whereUuid('uuid');
+	Route::put('/admin/restaurants/{uuid}/users/{userUuid}', UserAdminPutController::class)->whereUuid('uuid')->whereUuid('userUuid');
+	Route::delete('/admin/restaurants/{uuid}/users/{userUuid}', UserAdminDeleteController::class)->whereUuid('uuid')->whereUuid('userUuid');
 });

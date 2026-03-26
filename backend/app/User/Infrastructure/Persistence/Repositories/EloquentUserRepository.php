@@ -125,4 +125,72 @@ class EloquentUserRepository implements UserRepositoryInterface
             $model->updated_at->toDateTimeImmutable(),
         );
     }
+
+    /**
+     * @return array<array{uuid: string, name: string, email: string, role: string}>
+     */
+    public function getByRestaurantUuid(string $restaurantUuid): array
+    {
+        $restaurant = EloquentRestaurant::query()->where('uuid', $restaurantUuid)->first();
+
+        if ($restaurant === null) {
+            return [];
+        }
+
+        return $this->model
+            ->newQuery()
+            ->where('restaurant_id', $restaurant->id)
+            ->select('uuid', 'name', 'email', 'role')
+            ->get()
+            ->map(fn ($user) => [
+                'uuid' => $user->uuid,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * @param array<string, string> $updates
+     */
+    public function updatePartial(string $uuid, array $updates): void
+    {
+        $this->model
+            ->newQuery()
+            ->where('uuid', $uuid)
+            ->update([...$updates, 'updated_at' => now()]);
+    }
+
+    public function delete(string $uuid): void
+    {
+        $this->model->newQuery()->where('uuid', $uuid)->delete();
+    }
+
+    public function saveWithRestaurant(
+        string $uuid,
+        string $name,
+        string $email,
+        string $passwordHash,
+        string $restaurantUuid,
+    ): void {
+        $restaurant = EloquentRestaurant::query()->where('uuid', $restaurantUuid)->first();
+
+        if ($restaurant === null) {
+            return;
+        }
+
+        $this->model->newQuery()->updateOrCreate(
+            ['uuid' => $uuid],
+            [
+                'restaurant_id' => $restaurant->id,
+                'name' => $name,
+                'email' => $email,
+                'password' => $passwordHash,
+                'role' => 'staff',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+    }
 }

@@ -22,10 +22,12 @@ interface ManagementRestaurant {
 }
 
 interface UserRow {
+  uuid?: string;
   name: string;
   role: string;
   email: string;
-  pin: string;
+  pin?: string;
+  password?: string;
 }
 
 interface FamilyRow {
@@ -73,6 +75,7 @@ interface ManagementDataRow {
 export class GestionPage {
   public apiErrorMessage: string | null = null;
   public isSavingRestaurant: boolean = false;
+  public isSavingUser: boolean = false;
 
   public readonly managementRestaurants: ManagementRestaurant[] = [
     {
@@ -219,6 +222,7 @@ export class GestionPage {
     email: '',
     role: 'manager',
     pin: '',
+    password: '',
   };
 
   public familyForm = {
@@ -324,6 +328,9 @@ export class GestionPage {
           .selectAdminRestaurantContext(this.selectedRestaurant.uuid)
           .pipe(take(1))
           .subscribe({
+            next: () => {
+              this.loadRestaurantUsers(this.selectedRestaurant!.uuid!);
+            },
             error: (error: unknown) => {
               const message = error instanceof Error ? error.message : 'No se pudo seleccionar el restaurante.';
 
@@ -370,6 +377,34 @@ export class GestionPage {
 
     if (!rows.length || idx < 0 || idx >= rows.length) {
       window.alert('No hay un registro seleccionado para eliminar.');
+
+      return;
+    }
+
+    if (entityKey === 'users') {
+      const user = rows[idx] as UserRow;
+      if (!user.uuid || !this.selectedRestaurant?.uuid) {
+        window.alert('No se puede eliminar: usuario sin identificador.');
+
+        return;
+      }
+
+      this.restaurantService
+        .deleteRestaurantUser(this.selectedRestaurant.uuid, user.uuid)
+        .pipe(take(1))
+        .subscribe({
+          next: () => {
+            rows.splice(idx, 1);
+            this.managementState.selectedIndex[entityKey] = rows.length ? Math.min(idx, rows.length - 1) : -1;
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            window.alert('Usuario eliminado.');
+          },
+          error: (error: unknown) => {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo eliminar el usuario.';
+          },
+        });
 
       return;
     }
@@ -463,16 +498,90 @@ export class GestionPage {
       const name = this.userForm.name.trim();
       const email = this.userForm.email.trim();
       const role = this.userForm.role.trim();
-      const pin = this.userForm.pin.trim();
+      const password = this.userForm.password.trim();
 
-      if (!name || !email || !role || !pin) {
-        window.alert('Completa los campos de usuario.');
+      if (!name || !email || !role) {
+        window.alert('Completa los campos requeridos (nombre, email, rol).');
 
         return;
       }
 
-      const payload: UserRow = { name, email, role, pin };
-      this.upsertRow(rows, idx, payload, entityKey);
+      const selectedUser = idx >= 0 && idx < rows.length ? (rows[idx] as UserRow) : null;
+
+      // New user requires password
+      if (!selectedUser && !password) {
+        window.alert('Contraseña requerida para nuevos usuarios.');
+
+        return;
+      }
+
+      if (!this.selectedRestaurant?.uuid) {
+        window.alert('No se puede guardar: restaurante sin identificador.');
+
+        return;
+      }
+
+      if (selectedUser?.uuid) {
+        // Update existing user
+        this.isSavingUser = true;
+        this.restaurantService
+          .updateRestaurantUser(this.selectedRestaurant.uuid, selectedUser.uuid, {
+            name,
+            email,
+            ...(password ? { password } : {}),
+          })
+          .pipe(take(1))
+          .subscribe({
+            next: () => {
+              selectedUser.name = name;
+              selectedUser.email = email;
+              selectedUser.role = role;
+              this.userForm.password = '';
+              this.apiErrorMessage = null;
+              this.isSavingUser = false;
+              this.syncForms();
+              window.alert('Usuario actualizado.');
+            },
+            error: (error: unknown) => {
+              this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo actualizar el usuario.';
+              this.isSavingUser = false;
+            },
+          });
+      } else {
+        // Create new user
+        this.isSavingUser = true;
+        this.restaurantService
+          .createRestaurantUser(this.selectedRestaurant.uuid, {
+            name,
+            email,
+            password,
+          })
+          .pipe(take(1))
+          .subscribe({
+            next: (response) => {
+              const newUser: UserRow = {
+                uuid: response.uuid,
+                name: response.name,
+                email: response.email,
+                role,
+              };
+
+              (rows as UserRow[]).push(newUser);
+              this.managementState.selectedIndex[entityKey] = rows.length - 1;
+              this.userForm.password = '';
+              this.apiErrorMessage = null;
+              this.updateRestaurantKpis(this.managementState.restaurantId);
+              this.syncForms();
+              window.alert('Usuario creado.');
+              this.isSavingUser = false;
+            },
+            error: (error: unknown) => {
+              this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo crear el usuario.';
+              this.isSavingUser = false;
+            },
+          });
+      }
+
       return;
     }
 
@@ -681,7 +790,8 @@ export class GestionPage {
       name: selectedUser?.name ?? '',
       email: selectedUser?.email ?? '',
       role: selectedUser?.role ?? 'manager',
-      pin: selectedUser?.pin ?? '',
+      pin: '',
+      password: '',
     };
 
     const selectedFamily = this.selectedItem('families', this.selectedData.families);
@@ -766,6 +876,35 @@ export class GestionPage {
         },
         error: (error: unknown) => {
           this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar restaurantes.';
+        },
+      });
+  }
+
+  private loadRestaurantUsers(restaurantUuid: string): void {
+    this.restaurantService
+      .getRestaurantUsers(restaurantUuid)
+      .pipe(take(1))
+      .subscribe({
+        next: (response) => {
+          const restaurant = this.managementRestaurants.find((r) => r.uuid === restaurantUuid);
+          if (!restaurant) {
+            return;
+          }
+
+          const users: UserRow[] = response.users.map((user) => ({
+            uuid: user.uuid,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          }));
+
+          this.managementData[restaurant.id].users = users;
+          this.updateRestaurantKpis(restaurant.id);
+          this.syncForms();
+          this.apiErrorMessage = null;
+        },
+        error: (error: unknown) => {
+          this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar los usuarios.';
         },
       });
   }

@@ -24,4 +24,24 @@ interface UserRepositoryInterface
     public function findById(string $id): ?User;
 
     public function findByEmail(string $email): ?User;
+
+    /**
+     * @return array<array{uuid: string, name: string, email: string, role: string}>
+     */
+    public function getByRestaurantUuid(string $restaurantUuid): array;
+
+    /**
+     * @param array<string, string> $updates
+     */
+    public function updatePartial(string $uuid, array $updates): void;
+
+    public function delete(string $uuid): void;
+
+    public function saveWithRestaurant(
+        string $uuid,
+        string $name,
+        string $email,
+        string $passwordHash,
+        string $restaurantUuid,
+    ): void;
 }
