@@ -34,6 +34,9 @@ class LoginUserTest extends TestCase
             'id',
             'name',
             'email',
+            'role',
+            'restaurant_id',
+            'restaurant_name',
         ]);
     }
 
@@ -104,6 +107,15 @@ class LoginUserTest extends TestCase
             'success' => true,
             'name' => 'Session User',
             'email' => 'session@example.com',
+        ]);
+        $response->assertJsonStructure([
+            'success',
+            'id',
+            'name',
+            'email',
+            'role',
+            'restaurant_id',
+            'restaurant_name',
         ]);
     }
 

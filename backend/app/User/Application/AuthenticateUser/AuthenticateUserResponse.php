@@ -83,3 +83,4 @@ final readonly class AuthenticateUserResponse
             'restaurant_name' => $this->restaurant_name,
         ];
     }
+}
