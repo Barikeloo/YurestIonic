@@ -40,7 +40,21 @@ interface CreateUserResponse {
   restaurant_name: string;
   admin_email: string;
   admin_name: string;
+  admin_pin?: string;
   message: string;
+}
+
+interface QuickAccessUserResponse {
+  user_uuid: string;
+  name: string;
+  role: string;
+  restaurant_uuid: string;
+  restaurant_name: string;
+  last_login_at: string;
+}
+
+interface QuickAccessResponse {
+  users: QuickAccessUserResponse[];
 }
 
 @Injectable({
@@ -86,6 +100,49 @@ export class AuthService {
       );
   }
 
+  public loginWithPin(userUuid: string, pin: string, deviceId: string): Observable<AuthUser> {
+    return this.http
+      .post<LoginResponse>(
+        `${this.authBaseUrl}/login-pin`,
+        { user_uuid: userUuid, pin, device_id: deviceId },
+        { withCredentials: true },
+      )
+      .pipe(
+        map((response: LoginResponse) => {
+          if (!response.success || !response.id || !response.name || !response.email) {
+            const message: string = response.message ?? 'No se pudo iniciar sesion con PIN.';
+
+            throw new Error(message);
+          }
+
+          return {
+            id: response.id,
+            name: response.name,
+            email: response.email,
+            role: response.role,
+            restaurantId: response.restaurant_id,
+            restaurantName: response.restaurant_name,
+          };
+        }),
+        tap((user: AuthUser) => {
+          this.currentUserSubject.next(user);
+        }),
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
+  public getQuickUsers(deviceId: string): Observable<QuickAccessUserResponse[]> {
+    return this.http
+      .get<QuickAccessResponse>(`${this.authBaseUrl}/quick-users`, {
+        withCredentials: true,
+        params: { device_id: deviceId },
+      })
+      .pipe(
+        map((response: QuickAccessResponse) => response.users ?? []),
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
   public getMe(): Observable<AuthUser> {
     return this.http.get<GetMeResponse>(`${this.authBaseUrl}/me`, { withCredentials: true }).pipe(
       map((response: GetMeResponse) => {
@@ -117,6 +174,7 @@ export class AuthService {
     password: string,
     taxId?: string,
     legalName?: string,
+    pin?: string,
   ): Observable<CreateUserResponse> {
     return this.http
       .post<CreateUserResponse>(
@@ -127,6 +185,7 @@ export class AuthService {
           admin_name: `Admin ${restaurantName}`,
           email,
           tax_id: taxId,
+          pin,
           password,
           password_confirmation: password,
         },

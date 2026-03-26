@@ -17,7 +17,7 @@
       <section class="pin-panel">
         <div class="pin-section-label">Acceso rapido por PIN</div>
 
-        <div class="user-select-grid">
+        <div class="user-select-grid" *ngIf="quickUsers.length; else noQuickUsersTpl">
           <button
             *ngFor="let user of quickUsers"
             type="button"
@@ -30,6 +30,10 @@
           </button>
         </div>
 
+        <ng-template #noQuickUsersTpl>
+          <div class="quick-users-empty">No hay usuarios recientes para este dispositivo. Inicia sesion con email y contraseña para habilitar acceso rápido por PIN.</div>
+        </ng-template>
+
         <div class="pin-dots">
           <div class="pin-dot" [class.filled]="isPinDotFilled(0)"></div>
           <div class="pin-dot" [class.filled]="isPinDotFilled(1)"></div>
@@ -38,18 +42,18 @@
         </div>
 
         <div class="pin-keypad">
-          <button class="key" type="button" (click)="pinKey('1')">1</button>
-          <button class="key" type="button" (click)="pinKey('2')">2</button>
-          <button class="key" type="button" (click)="pinKey('3')">3</button>
-          <button class="key" type="button" (click)="pinKey('4')">4</button>
-          <button class="key" type="button" (click)="pinKey('5')">5</button>
-          <button class="key" type="button" (click)="pinKey('6')">6</button>
-          <button class="key" type="button" (click)="pinKey('7')">7</button>
-          <button class="key" type="button" (click)="pinKey('8')">8</button>
-          <button class="key" type="button" (click)="pinKey('9')">9</button>
-          <button class="key key-del" type="button" (click)="pinDel()">⌫</button>
-          <button class="key" type="button" (click)="pinKey('0')">0</button>
-          <button class="key key-enter" type="button" (click)="pinEnter()">
+          <button class="key" type="button" (click)="pinKey('1')" [disabled]="!selectedQuickUser">1</button>
+          <button class="key" type="button" (click)="pinKey('2')" [disabled]="!selectedQuickUser">2</button>
+          <button class="key" type="button" (click)="pinKey('3')" [disabled]="!selectedQuickUser">3</button>
+          <button class="key" type="button" (click)="pinKey('4')" [disabled]="!selectedQuickUser">4</button>
+          <button class="key" type="button" (click)="pinKey('5')" [disabled]="!selectedQuickUser">5</button>
+          <button class="key" type="button" (click)="pinKey('6')" [disabled]="!selectedQuickUser">6</button>
+          <button class="key" type="button" (click)="pinKey('7')" [disabled]="!selectedQuickUser">7</button>
+          <button class="key" type="button" (click)="pinKey('8')" [disabled]="!selectedQuickUser">8</button>
+          <button class="key" type="button" (click)="pinKey('9')" [disabled]="!selectedQuickUser">9</button>
+          <button class="key key-del" type="button" (click)="pinDel()" [disabled]="!selectedQuickUser">⌫</button>
+          <button class="key" type="button" (click)="pinKey('0')" [disabled]="!selectedQuickUser">0</button>
+          <button class="key key-enter" type="button" (click)="pinEnter()" [disabled]="!selectedQuickUser">
             {{ isSubmitting ? '...' : 'Entrar' }}
           </button>
         </div>
@@ -57,7 +61,6 @@
 
       <section class="email-panel">
         <form class="email-form" [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
-          <div class="ready-banner">Listo: autenticacion real con API + DB + sesion</div>
           <div class="login-form-title">Iniciar sesion</div>
           <div class="login-form-sub">Accede con tu cuenta del restaurante</div>
 

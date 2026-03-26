@@ -28,6 +28,7 @@ class AdminPostController
             'email' => ['required', 'string', 'email', 'max:255'],
             'password' => ['required', 'string', 'min:8'],
             'role' => ['sometimes', 'string', 'in:operator,supervisor,admin'],
+            'pin' => ['sometimes', 'nullable', 'digits:4'],
         ]);
 
         $response = ($this->createRestaurantUser)(
@@ -36,6 +37,7 @@ class AdminPostController
             $validated['password'],
             $uuid,
             $validated['role'] ?? 'operator',
+            $validated['pin'] ?? null,
         );
 
         return new JsonResponse($response->toArray(), 201);

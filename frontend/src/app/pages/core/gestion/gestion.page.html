@@ -157,6 +157,10 @@
                         <label class="form-label" for="mg-user-password">Contraseña</label>
                         <input id="mg-user-password" type="password" class="form-input" [(ngModel)]="userForm.password" name="mg-user-password" placeholder="Dejar vacio para mantener la actual" />
                       </div>
+                      <div>
+                        <label class="form-label" for="mg-user-pin">PIN (4 digitos)</label>
+                        <input id="mg-user-pin" type="text" maxlength="4" class="form-input" [(ngModel)]="userForm.pin" name="mg-user-pin" placeholder="1234" />
+                      </div>
                     </div>
                     <div class="gestion-form-actions">
                       <button class="btn-login btn-login-inline" type="submit" [disabled]="isSavingUser">

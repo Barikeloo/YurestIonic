@@ -3,6 +3,7 @@
 namespace Tests\Feature\Restaurant;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class CreateRestaurantTest extends TestCase
@@ -53,5 +54,49 @@ class CreateRestaurantTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['email']);
+    }
+
+    public function test_post_restaurants_generates_admin_pin_and_allows_pin_login(): void
+    {
+        $admin = $this->createTenantSession('admin');
+
+        $response = $this->withSession($admin['session'])->postJson('/api/admin/restaurants', [
+            'name' => 'Pin Ready Restaurant',
+            'legal_name' => 'Pin Ready Restaurant S.L.',
+            'tax_id' => 'B77112233',
+            'email' => 'pin-ready@restaurant.local',
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(201);
+        $response->assertJsonStructure([
+            'id',
+            'uuid',
+            'name',
+            'legal_name',
+            'tax_id',
+            'email',
+            'admin_pin',
+        ]);
+
+        $generatedPin = (string) $response->json('admin_pin');
+        $this->assertMatchesRegularExpression('/^\d{4}$/', $generatedPin);
+
+        $adminUserUuid = (string) DB::table('users')
+            ->where('email', 'pin-ready@restaurant.local')
+            ->value('uuid');
+
+        $this->assertNotSame('', $adminUserUuid);
+
+        $this->postJson('/api/auth/login-pin', [
+            'user_uuid' => $adminUserUuid,
+            'pin' => $generatedPin,
+            'device_id' => 'test-device-pin-ready',
+        ])->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'email' => 'pin-ready@restaurant.local',
+                'role' => 'admin',
+            ]);
     }
 }

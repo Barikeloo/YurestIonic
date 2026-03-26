@@ -506,9 +506,16 @@ export class GestionPage {
       const email = this.userForm.email.trim();
       const role = this.normalizeRole(this.userForm.role);
       const password = this.userForm.password.trim();
+      const pin = this.userForm.pin.trim();
 
       if (!name || !email || !role) {
         window.alert('Completa los campos requeridos (nombre, email, rol).');
+
+        return;
+      }
+
+      if (pin !== '' && !/^\d{4}$/.test(pin)) {
+        window.alert('El PIN debe tener 4 digitos.');
 
         return;
       }
@@ -537,6 +544,7 @@ export class GestionPage {
             email,
             role,
             ...(password ? { password } : {}),
+            ...(pin ? { pin } : {}),
           })
           .pipe(take(1))
           .subscribe({
@@ -545,6 +553,7 @@ export class GestionPage {
               selectedUser.email = email;
               selectedUser.role = role;
               this.userForm.password = '';
+              this.userForm.pin = '';
               this.apiErrorMessage = null;
               this.isSavingUser = false;
               this.syncForms();
@@ -564,6 +573,7 @@ export class GestionPage {
             email,
             password,
             role,
+            ...(pin ? { pin } : {}),
           })
           .pipe(take(1))
           .subscribe({
@@ -578,6 +588,7 @@ export class GestionPage {
               (rows as UserRow[]).push(newUser);
               this.managementState.selectedIndex[entityKey] = rows.length - 1;
               this.userForm.password = '';
+              this.userForm.pin = '';
               this.apiErrorMessage = null;
               this.updateRestaurantKpis(this.managementState.restaurantId);
               this.syncForms();

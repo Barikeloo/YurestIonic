@@ -2,35 +2,36 @@
 
 namespace App\User\Infrastructure\Entrypoint\Http;
 
-use App\User\Application\AuthenticateUser\AuthenticateUser;
+use App\User\Application\AuthenticateUserByPin\AuthenticateUserByPin;
 use App\User\Infrastructure\Services\QuickAccessRecorder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class LoginController
+final class LoginByPinController
 {
     public function __construct(
-        private AuthenticateUser $authenticateUser,
-        private QuickAccessRecorder $quickAccessRecorder,
+        private readonly AuthenticateUserByPin $authenticateUserByPin,
+        private readonly QuickAccessRecorder $quickAccessRecorder,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'email' => ['required', 'string', 'email', 'max:255'],
-            'password' => ['required', 'string'],
+            'user_uuid' => ['required', 'string', 'uuid'],
+            'pin' => ['required', 'string', 'size:4'],
+            'device_id' => ['sometimes', 'string', 'max:100'],
         ]);
 
-        $response = ($this->authenticateUser)(
-            $validated['email'],
-            $validated['password'],
+        $response = ($this->authenticateUserByPin)(
+            $validated['user_uuid'],
+            $validated['pin'],
         );
 
         if ($response->success) {
             $request->session()->regenerate();
             $request->session()->put('auth_user_id', $response->id);
 
-            $deviceId = $request->input('device_id', $request->header('X-Device-Id'));
+            $deviceId = $validated['device_id'] ?? $request->header('X-Device-Id');
             if (is_string($deviceId) && $deviceId !== '') {
                 $this->quickAccessRecorder->record($response->id, $deviceId);
             }

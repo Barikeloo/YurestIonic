@@ -21,12 +21,14 @@ export class RegisterModalComponent {
     legalName: ['', [Validators.maxLength(255)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(255)]],
     nif: [''],
+    pin: ['', [Validators.pattern(/^\d{4}$/)]],
     password: ['', [Validators.required, Validators.minLength(8)]],
   });
 
   public isSubmitting: boolean = false;
   public errorMessage: string | null = null;
   public successMessage: string | null = null;
+  public generatedPinMessage: string | null = null;
 
   constructor(
     private readonly formBuilder: FormBuilder,
@@ -57,11 +59,12 @@ export class RegisterModalComponent {
     this.isSubmitting = true;
     this.errorMessage = null;
     this.successMessage = null;
+    this.generatedPinMessage = null;
 
-    const { restaurantName, legalName, email, nif, password } = this.registerForm.getRawValue();
+    const { restaurantName, legalName, email, nif, pin, password } = this.registerForm.getRawValue();
 
     this.authService
-      .register(restaurantName, email, password, nif, legalName)
+      .register(restaurantName, email, password, nif, legalName, pin || undefined)
       .pipe(
         take(1),
         finalize(() => {
@@ -69,13 +72,17 @@ export class RegisterModalComponent {
         }),
       )
       .subscribe({
-        next: () => {
+        next: (response) => {
           this.successMessage = 'Cuenta creada correctamente. Ya puedes iniciar sesion.';
+          if (response.admin_pin) {
+            this.generatedPinMessage = `PIN de administrador: ${response.admin_pin}`;
+          }
           this.registerForm.patchValue({
             restaurantName: '',
             legalName: '',
             email: '',
             nif: '',
+            pin: '',
             password: '',
           });
           this.created.emit(email);

@@ -19,13 +19,33 @@ export class InterceptorProvider implements HttpInterceptor {
    * 
    */
   private setHeader(request: HttpRequest<any>): HttpRequest<any> {
+    const deviceId = this.getOrCreateDeviceId();
+
     return request.clone({
       withCredentials: true,
       setHeaders: {
         Accept: 'application/json',
         'Accept-Language': 'es',
+        'X-Device-Id': deviceId,
       }
     });
+  }
+
+  private getOrCreateDeviceId(): string {
+    const storageKey = 'tpv_device_id';
+    const existing = localStorage.getItem(storageKey);
+
+    if (existing && existing.trim() !== '') {
+      return existing;
+    }
+
+    const generated = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `dev-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+    localStorage.setItem(storageKey, generated);
+
+    return generated;
   }
 
 }

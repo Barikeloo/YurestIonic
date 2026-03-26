@@ -24,7 +24,10 @@ final class PostController
             'tax_id' => ['nullable', 'string', 'max:50'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:restaurants,email'],
             'password' => ['required', 'string', 'min:8'],
+            'pin' => ['sometimes', 'nullable', 'digits:4'],
         ]);
+
+        $adminPin = $validated['pin'] ?? str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
         // If creating user is an admin, use their restaurant's tax_id
         $finalTaxId = $validated['tax_id'] ?? null;
@@ -54,8 +57,12 @@ final class PostController
             plainPassword: $validated['password'],
             restaurantUuid: $response->uuid,
             role: 'admin',
+            plainPin: $adminPin,
         );
 
-        return new JsonResponse($response->toArray(), 201);
+        return new JsonResponse([
+            ...$response->toArray(),
+            'admin_pin' => $adminPin,
+        ], 201);
     }
 }

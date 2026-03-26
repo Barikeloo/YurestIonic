@@ -10,8 +10,9 @@ import { RegisterModalComponent } from '../../../components/register-modal/regis
 interface QuickUser {
   name: string;
   initials: string;
-  email: string;
-  pin: string;
+  userUuid: string;
+  role: string;
+  restaurantName: string;
   color: string;
 }
 
@@ -33,38 +34,8 @@ export class LoginPage {
 
   public pinValue: string = '';
 
-  public readonly quickUsers: QuickUser[] = [
-    {
-      name: 'Admin',
-      initials: 'AD',
-      email: 'admin@tpv.local',
-      pin: '1234',
-      color: '#E8440A',
-    },
-    {
-      name: 'Supervisor',
-      initials: 'SU',
-      email: 'supervisor@tpv.local',
-      pin: '1235',
-      color: '#1A6FE8',
-    },
-    {
-      name: 'Ana',
-      initials: 'AN',
-      email: 'ana@tpv.local',
-      pin: '1236',
-      color: '#1A9E5A',
-    },
-    {
-      name: 'Luis',
-      initials: 'LU',
-      email: 'luis@tpv.local',
-      pin: '1237',
-      color: '#5A36E2',
-    },
-  ];
-
-  public selectedQuickUser: QuickUser = this.quickUsers[0];
+  public quickUsers: QuickUser[] = [];
+  public selectedQuickUser: QuickUser | null = null;
 
   constructor(
     private readonly formBuilder: FormBuilder,
@@ -77,6 +48,8 @@ export class LoginPage {
         this.isRegisterModalOpen = true;
       }
     });
+
+    this.loadQuickUsers();
   }
 
   public selectUser(user: QuickUser): void {
@@ -86,7 +59,7 @@ export class LoginPage {
   }
 
   public isSelectedQuickUser(user: QuickUser): boolean {
-    return this.selectedQuickUser.email === user.email;
+    return this.selectedQuickUser?.userUuid === user.userUuid;
   }
 
   public isPinDotFilled(index: number): boolean {
@@ -94,7 +67,7 @@ export class LoginPage {
   }
 
   public pinKey(value: string): void {
-    if (this.isSubmitting || this.pinValue.length >= 4) {
+    if (this.isSubmitting || this.pinValue.length >= 4 || !this.selectedQuickUser) {
       return;
     }
 
@@ -118,20 +91,19 @@ export class LoginPage {
       return;
     }
 
+    if (!this.selectedQuickUser) {
+      this.errorMessage = 'Selecciona un usuario para acceder con PIN.';
+
+      return;
+    }
+
     if (this.pinValue.length !== 4) {
       this.errorMessage = 'El PIN debe tener 4 digitos.';
 
       return;
     }
 
-    if (this.pinValue !== this.selectedQuickUser.pin) {
-      this.errorMessage = 'PIN incorrecto para el usuario seleccionado.';
-      this.pinValue = '';
-
-      return;
-    }
-
-    this.loginWithApi(this.selectedQuickUser.email, 'password', true);
+    this.loginWithPinApi(this.selectedQuickUser.userUuid, this.pinValue, true);
   }
 
   public submit(): void {
@@ -186,6 +158,97 @@ export class LoginPage {
           }
         },
       });
+  }
+
+  private loginWithPinApi(userUuid: string, pin: string, fromPin: boolean): void {
+    this.isSubmitting = true;
+    this.errorMessage = null;
+
+    this.authService
+      .loginWithPin(userUuid, pin, this.getDeviceId())
+      .pipe(
+        take(1),
+        finalize(() => {
+          this.isSubmitting = false;
+        }),
+      )
+      .subscribe({
+        next: () => {
+          if (fromPin) {
+            this.pinValue = '';
+          }
+
+          this.router.navigateByUrl('/app/gestion');
+        },
+        error: (error: unknown) => {
+          this.errorMessage = error instanceof Error ? error.message : 'No se pudo iniciar sesion con PIN.';
+
+          if (fromPin) {
+            this.pinValue = '';
+          }
+        },
+      });
+  }
+
+  private loadQuickUsers(): void {
+    this.authService
+      .getQuickUsers(this.getDeviceId())
+      .pipe(take(1))
+      .subscribe({
+        next: (users) => {
+          this.quickUsers = users.map((user) => ({
+            name: user.name,
+            initials: this.buildInitials(user.name),
+            userUuid: user.user_uuid,
+            role: user.role,
+            restaurantName: user.restaurant_name,
+            color: this.roleColor(user.role),
+          }));
+
+          this.selectedQuickUser = this.quickUsers[0] ?? null;
+        },
+        error: () => {
+          this.quickUsers = [];
+          this.selectedQuickUser = null;
+        },
+      });
+  }
+
+  private buildInitials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    const first = parts[0]?.charAt(0) ?? 'U';
+    const second = parts[1]?.charAt(0) ?? parts[0]?.charAt(1) ?? 'S';
+
+    return `${first}${second}`.toUpperCase();
+  }
+
+  private roleColor(role: string): string {
+    if (role === 'admin') {
+      return '#E8440A';
+    }
+
+    if (role === 'supervisor') {
+      return '#1A6FE8';
+    }
+
+    return '#1A9E5A';
+  }
+
+  private getDeviceId(): string {
+    const storageKey = 'tpv_device_id';
+    const fromStorage = localStorage.getItem(storageKey);
+
+    if (fromStorage && fromStorage.trim() !== '') {
+      return fromStorage;
+    }
+
+    const generated = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `dev-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+    localStorage.setItem(storageKey, generated);
+
+    return generated;
   }
 
   public goBack(): void {

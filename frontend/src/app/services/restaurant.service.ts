@@ -46,6 +46,7 @@ interface CreateRestaurantUserPayload {
   email: string;
   password: string;
   role: string;
+  pin?: string;
 }
 
 interface UpdateRestaurantUserPayload {
@@ -53,6 +54,7 @@ interface UpdateRestaurantUserPayload {
   email?: string;
   password?: string;
   role?: string;
+  pin?: string;
 }
 
 @Injectable({

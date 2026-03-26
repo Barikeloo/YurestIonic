@@ -28,6 +28,7 @@ class AdminPutController
             'email' => ['sometimes', 'string', 'email', 'max:255'],
             'password' => ['sometimes', 'string', 'min:8'],
             'role' => ['sometimes', 'string', 'in:operator,supervisor,admin'],
+            'pin' => ['sometimes', 'nullable', 'digits:4'],
         ]);
 
         $response = ($this->updateRestaurantUser)(
@@ -36,6 +37,7 @@ class AdminPutController
             $validated['email'] ?? null,
             $validated['password'] ?? null,
             $validated['role'] ?? null,
+            $validated['pin'] ?? null,
         );
 
         if (! $response->found()) {

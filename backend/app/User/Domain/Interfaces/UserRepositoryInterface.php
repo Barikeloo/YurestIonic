@@ -13,6 +13,7 @@ interface UserRepositoryInterface
         string $name,
         string $email,
         string $passwordHash,
+        ?string $pinHash = null,
     ): void;
 
     public function syncAdminCredentialsForRestaurant(
@@ -44,5 +45,6 @@ interface UserRepositoryInterface
         string $passwordHash,
         string $restaurantUuid,
         string $role = 'operator',
+        ?string $pinHash = null,
     ): void;
 }

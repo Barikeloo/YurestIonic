@@ -3,6 +3,9 @@
 namespace Tests\Feature\User;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class LoginUserTest extends TestCase
@@ -146,5 +149,88 @@ class LoginUserTest extends TestCase
                 'success' => false,
                 'message' => 'Not authenticated.',
             ]);
+    }
+
+    public function test_login_pin_returns_200_when_pin_is_valid(): void
+    {
+        $restaurantUuid = (string) Str::uuid();
+        $restaurantId = DB::table('restaurants')->insertGetId([
+            'uuid' => $restaurantUuid,
+            'name' => 'Pin Restaurant',
+            'legal_name' => 'Pin Restaurant S.L.',
+            'tax_id' => 'B12312312',
+            'email' => 'pin-restaurant@local.test',
+            'password' => Hash::make('password123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $userUuid = (string) Str::uuid();
+        DB::table('users')->insert([
+            'restaurant_id' => $restaurantId,
+            'uuid' => $userUuid,
+            'role' => 'operator',
+            'name' => 'Pin User',
+            'email' => 'pin-user@local.test',
+            'pin' => Hash::make('1234'),
+            'password' => Hash::make('password123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->postJson('/api/auth/login-pin', [
+            'user_uuid' => $userUuid,
+            'pin' => '1234',
+            'device_id' => 'device-test-1',
+        ])->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'name' => 'Pin User',
+                'role' => 'operator',
+                'restaurant_name' => 'Pin Restaurant',
+            ]);
+    }
+
+    public function test_quick_users_returns_last_logins_for_device(): void
+    {
+        $restaurantUuid = (string) Str::uuid();
+        $restaurantId = DB::table('restaurants')->insertGetId([
+            'uuid' => $restaurantUuid,
+            'name' => 'Quick Access Restaurant',
+            'legal_name' => 'Quick Access Restaurant S.L.',
+            'tax_id' => 'B99112233',
+            'email' => 'quick-restaurant@local.test',
+            'password' => Hash::make('password123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $userUuid = (string) Str::uuid();
+        $userId = DB::table('users')->insertGetId([
+            'restaurant_id' => $restaurantId,
+            'uuid' => $userUuid,
+            'role' => 'operator',
+            'name' => 'Quick User',
+            'email' => 'quick-user@local.test',
+            'pin' => Hash::make('1234'),
+            'password' => Hash::make('password123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('user_quick_accesses')->insert([
+            'restaurant_id' => $restaurantId,
+            'user_id' => $userId,
+            'device_id' => 'device-test-2',
+            'last_login_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->getJson('/api/auth/quick-users?device_id=device-test-2')
+            ->assertStatus(200)
+            ->assertJsonPath('users.0.user_uuid', $userUuid)
+            ->assertJsonPath('users.0.name', 'Quick User')
+            ->assertJsonPath('users.0.restaurant_name', 'Quick Access Restaurant');
     }
 }

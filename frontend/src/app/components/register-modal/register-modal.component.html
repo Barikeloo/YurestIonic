@@ -32,6 +32,14 @@
       </div>
 
       <div class="modal-field">
+        <label class="form-label" for="register-pin">PIN admin (4 digitos, opcional)</label>
+        <input id="register-pin" type="text" maxlength="4" class="form-input" formControlName="pin" placeholder="1234" />
+        <p class="field-error" *ngIf="registerForm.controls.pin.touched && registerForm.controls.pin.invalid">
+          El PIN debe tener exactamente 4 digitos.
+        </p>
+      </div>
+
+      <div class="modal-field">
         <label class="form-label" for="register-password">Contrasena</label>
         <input id="register-password" type="password" class="form-input" formControlName="password" placeholder="••••••••" />
         <p class="field-error" *ngIf="registerForm.controls.password.touched && registerForm.controls.password.invalid">
@@ -41,6 +49,7 @@
 
       <p class="server-error" *ngIf="errorMessage">{{ errorMessage }}</p>
       <p class="success-message" *ngIf="successMessage">{{ successMessage }}</p>
+      <p class="success-message" *ngIf="generatedPinMessage">{{ generatedPinMessage }}</p>
 
       <button class="btn-login" style="margin-top:8px" type="submit" [disabled]="isSubmitting">
         {{ isSubmitting ? 'Creando...' : 'Crear cuenta' }}

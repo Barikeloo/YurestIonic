@@ -25,9 +25,17 @@ final class RegisterRestaurantWithAdmin
         string $email,
         string $plainPassword,
         ?string $adminName = null,
+        ?string $adminPin = null,
     ): RegisterRestaurantWithAdminResponse {
         $emailVO = Email::create($email);
         $hashedPassword = $this->passwordHasher->hash($plainPassword);
+        $effectiveAdminPin = $adminPin;
+
+        if ($effectiveAdminPin === null || trim($effectiveAdminPin) === '') {
+            $effectiveAdminPin = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        }
+
+        $hashedPin = $this->passwordHasher->hash($effectiveAdminPin);
 
         $restaurant = Restaurant::dddCreate(
             id: Uuid::generate(),
@@ -44,13 +52,14 @@ final class RegisterRestaurantWithAdmin
             $effectiveAdminName = sprintf('Admin %s', $restaurantName);
         }
 
-        DB::transaction(function () use ($restaurant, $effectiveAdminName, $emailVO, $hashedPassword): void {
+        DB::transaction(function () use ($restaurant, $effectiveAdminName, $emailVO, $hashedPassword, $hashedPin): void {
             $this->restaurantRepository->save($restaurant);
             $this->userRepository->saveAdminForRestaurant(
                 restaurantUuid: $restaurant->getUuid()->value(),
                 name: $effectiveAdminName,
                 email: $emailVO->value(),
                 passwordHash: $hashedPassword,
+                pinHash: $hashedPin,
             );
         });
 
@@ -59,6 +68,7 @@ final class RegisterRestaurantWithAdmin
             restaurantName: $restaurant->getName(),
             adminEmail: $emailVO->value(),
             adminName: $effectiveAdminName,
+            adminPin: $effectiveAdminPin,
         );
     }
 }

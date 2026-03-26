@@ -21,6 +21,7 @@ final class RegisterWithAdminController
             'admin_name' => ['nullable', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email', 'unique:restaurants,email'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'pin' => ['sometimes', 'nullable', 'digits:4'],
         ], [
             'email.unique' => 'Email is already registered.',
         ]);
@@ -32,6 +33,7 @@ final class RegisterWithAdminController
             email: $validated['email'],
             plainPassword: $validated['password'],
             adminName: $validated['admin_name'] ?? null,
+            adminPin: $validated['pin'] ?? null,
         );
 
         return new JsonResponse($response->toArray(), 201);

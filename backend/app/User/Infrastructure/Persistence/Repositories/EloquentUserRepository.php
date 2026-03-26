@@ -33,6 +33,7 @@ class EloquentUserRepository implements UserRepositoryInterface
         string $name,
         string $email,
         string $passwordHash,
+        ?string $pinHash = null,
     ): void {
         $restaurant = EloquentRestaurant::query()->where('uuid', $restaurantUuid)->first();
 
@@ -49,7 +50,7 @@ class EloquentUserRepository implements UserRepositoryInterface
                 'name' => $name,
                 'email' => $email,
                 'password' => $passwordHash,
-                'pin' => null,
+                'pin' => $pinHash,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]
@@ -174,6 +175,7 @@ class EloquentUserRepository implements UserRepositoryInterface
         string $passwordHash,
         string $restaurantUuid,
         string $role = 'operator',
+        ?string $pinHash = null,
     ): void {
         $restaurant = EloquentRestaurant::query()->where('uuid', $restaurantUuid)->first();
 
@@ -189,6 +191,7 @@ class EloquentUserRepository implements UserRepositoryInterface
                 'email' => $email,
                 'password' => $passwordHash,
                 'role' => $role,
+                'pin' => $pinHash,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]

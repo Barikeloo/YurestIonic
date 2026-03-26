@@ -19,9 +19,13 @@ class CreateRestaurantUser
         string $plainPassword,
         string $restaurantUuid,
         string $role = 'operator',
+        ?string $plainPin = null,
     ): CreateRestaurantUserResponse {
         $userUuid = Uuid::generate()->value();
         $passwordHash = $this->passwordHasher->hash($plainPassword);
+        $pinHash = is_string($plainPin) && $plainPin !== ''
+            ? $this->passwordHasher->hash($plainPin)
+            : null;
 
         $this->userRepository->saveWithRestaurant(
             $userUuid,
@@ -30,6 +34,7 @@ class CreateRestaurantUser
             $passwordHash,
             $restaurantUuid,
             $role,
+            $pinHash,
         );
 
         return CreateRestaurantUserResponse::create($userUuid, $name, $email, $role);

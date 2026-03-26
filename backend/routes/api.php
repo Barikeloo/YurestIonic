@@ -48,6 +48,8 @@ use App\Tables\Infrastructure\Entrypoint\Http\GetController as TableGetControlle
 use App\Tables\Infrastructure\Entrypoint\Http\PostController as TablePostController;
 use App\Tables\Infrastructure\Entrypoint\Http\PutController as TablePutController;
 use App\User\Infrastructure\Entrypoint\Http\GetMeController;
+use App\User\Infrastructure\Entrypoint\Http\GetQuickUsersController;
+use App\User\Infrastructure\Entrypoint\Http\LoginByPinController;
 use App\User\Infrastructure\Entrypoint\Http\LogoutController;
 use App\User\Infrastructure\Entrypoint\Http\PostController;
 use App\User\Infrastructure\Entrypoint\Http\LoginController;
@@ -74,6 +76,8 @@ Route::middleware([
 ])->group(function (): void {
 	Route::post('/auth/register', RegisterWithAdminController::class);
 	Route::post('/auth/login', LoginController::class);
+	Route::post('/auth/login-pin', LoginByPinController::class);
+	Route::get('/auth/quick-users', GetQuickUsersController::class);
 	Route::get('/auth/me', GetMeController::class);
 	Route::post('/auth/logout', LogoutController::class);
 });
