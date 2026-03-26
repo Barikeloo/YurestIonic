@@ -33,14 +33,38 @@ final class AdminGetCollectionController
             ], 403);
         }
 
+        if (! is_numeric($user->restaurant_id)) {
+            return new JsonResponse([
+                'message' => 'Admin user has no linked restaurant.',
+            ], 403);
+        }
+
+        $userRestaurant = EloquentRestaurant::query()->find((int) $user->restaurant_id);
+
+        if ($userRestaurant === null) {
+            return new JsonResponse([
+                'message' => 'Linked restaurant not found.',
+            ], 404);
+        }
+
+        $taxId = $userRestaurant->tax_id;
+
+        if (! is_string($taxId) || $taxId === '') {
+            return new JsonResponse([
+                'message' => 'Linked restaurant has no tax id.',
+            ], 422);
+        }
+
         $restaurants = EloquentRestaurant::query()
+            ->where('tax_id', $taxId)
             ->orderBy('name')
-            ->get(['uuid', 'name', 'legal_name', 'tax_id'])
+            ->get(['uuid', 'name', 'legal_name', 'tax_id', 'email'])
             ->map(static fn (EloquentRestaurant $restaurant): array => [
                 'uuid' => $restaurant->uuid,
                 'name' => $restaurant->name,
                 'legal_name' => $restaurant->legal_name,
                 'tax_id' => $restaurant->tax_id,
+                'email' => $restaurant->email,
             ])
             ->all();
 

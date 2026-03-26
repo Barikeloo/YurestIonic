@@ -2,9 +2,11 @@
 
 namespace App\User\Infrastructure\Persistence\Repositories;
 
+use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\User\Domain\Entity\User;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
+use Illuminate\Support\Str;
 
 class EloquentUserRepository implements UserRepositoryInterface
 {
@@ -24,6 +26,68 @@ class EloquentUserRepository implements UserRepositoryInterface
                 'updated_at' => $user->updatedAt()->value(),
             ]
         );
+    }
+
+    public function saveAdminForRestaurant(
+        string $restaurantUuid,
+        string $name,
+        string $email,
+        string $passwordHash,
+    ): void {
+        $restaurant = EloquentRestaurant::query()->where('uuid', $restaurantUuid)->first();
+
+        if ($restaurant === null) {
+            return;
+        }
+
+        $this->model->newQuery()->updateOrCreate(
+            ['email' => $email],
+            [
+                'restaurant_id' => $restaurant->id,
+                'uuid' => (string) Str::uuid(),
+                'role' => 'admin',
+                'name' => $name,
+                'email' => $email,
+                'password' => $passwordHash,
+                'pin' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+    }
+
+    public function syncAdminCredentialsForRestaurant(
+        string $restaurantUuid,
+        ?string $email,
+        ?string $passwordHash,
+    ): void {
+        if ($email === null && $passwordHash === null) {
+            return;
+        }
+
+        $restaurant = EloquentRestaurant::query()->where('uuid', $restaurantUuid)->first();
+
+        if ($restaurant === null) {
+            return;
+        }
+
+        $updates = [
+            'updated_at' => now(),
+        ];
+
+        if ($email !== null) {
+            $updates['email'] = $email;
+        }
+
+        if ($passwordHash !== null) {
+            $updates['password'] = $passwordHash;
+        }
+
+        $this->model
+            ->newQuery()
+            ->where('restaurant_id', $restaurant->id)
+            ->where('role', 'admin')
+            ->update($updates);
     }
 
     public function findById(string $id): ?User

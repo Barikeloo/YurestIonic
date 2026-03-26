@@ -19,6 +19,7 @@ final class PutController
             'legal_name' => ['sometimes', 'nullable', 'string', 'min:1', 'max:255'],
             'tax_id' => ['sometimes', 'nullable', 'string', 'min:1', 'max:255'],
             'email' => ['sometimes', 'string', 'email'],
+            'password' => ['sometimes', 'string', 'min:8'],
         ]);
 
         $response = ($this->updateRestaurant)(
@@ -27,6 +28,7 @@ final class PutController
             legalName: $validated['legal_name'] ?? null,
             taxId: $validated['tax_id'] ?? null,
             email: $validated['email'] ?? null,
+            plainPassword: $validated['password'] ?? null,
         );
 
         if ($response === null) {

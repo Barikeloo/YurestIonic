@@ -20,6 +20,7 @@ export class InterceptorProvider implements HttpInterceptor {
    */
   private setHeader(request: HttpRequest<any>): HttpRequest<any> {
     return request.clone({
+      withCredentials: true,
       setHeaders: {
         Accept: 'application/json',
         'Accept-Language': 'es',

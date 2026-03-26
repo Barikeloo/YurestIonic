@@ -33,6 +33,28 @@ final class AdminSelectRestaurantContextController
             ], 403);
         }
 
+        if (! is_numeric($user->restaurant_id)) {
+            return new JsonResponse([
+                'message' => 'Admin user has no linked restaurant.',
+            ], 403);
+        }
+
+        $userRestaurant = EloquentRestaurant::query()->find((int) $user->restaurant_id);
+
+        if ($userRestaurant === null) {
+            return new JsonResponse([
+                'message' => 'Linked restaurant not found.',
+            ], 404);
+        }
+
+        $userTaxId = $userRestaurant->tax_id;
+
+        if (! is_string($userTaxId) || $userTaxId === '') {
+            return new JsonResponse([
+                'message' => 'Linked restaurant has no tax id.',
+            ], 422);
+        }
+
         $validated = $request->validate([
             'restaurant_id' => ['required', 'string', 'uuid'],
         ]);
@@ -43,6 +65,12 @@ final class AdminSelectRestaurantContextController
             return new JsonResponse([
                 'message' => 'Restaurant not found.',
             ], 404);
+        }
+
+        if ($restaurant->tax_id !== $userTaxId) {
+            return new JsonResponse([
+                'message' => 'Forbidden for this tax id.',
+            ], 403);
         }
 
         $request->session()->put('tenant_restaurant_uuid', $restaurant->uuid);

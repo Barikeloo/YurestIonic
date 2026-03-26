@@ -1,8 +1,63 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>TPV - Yurest</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="home-page">
+  <div class="home-wrap">
+    <section class="home-left">
+      <div class="home-logo-row">
+        <div class="home-logo-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+            <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <path d="M16 10a4 4 0 01-8 0" />
+          </svg>
+        </div>
+        <img src="assets/images/yurest-logo.png" alt="Yurest" class="home-logo-text" />
+      </div>
 
-<ion-content [fullscreen]="true">
+      <div class="home-tagline">Punto de venta</div>
+      <h1 class="home-title">Gestion de<br /><strong>tu restaurante</strong><br />al instante</h1>
+      <p class="home-subtitle">
+        Mesas, pedidos y cobros desde una sola pantalla. Disenado para trabajar rapido en sala.
+      </p>
+
+      <div class="home-cta-group">
+        <button class="btn-primary" type="button" (click)="goToLogin()">Entrar al sistema</button>
+        <button class="btn-secondary" type="button" (click)="goToRegister()">Crear cuenta nueva</button>
+      </div>
+
+      <div class="home-stats-strip">
+        <div class="stat-item">
+          <div class="stat-val">12</div>
+          <div class="stat-label">Zonas activas</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">48</div>
+          <div class="stat-label">Mesas</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-val">IVA</div>
+          <div class="stat-label">Automatico</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-right">
+      <div class="welcome-card">
+        <div class="welcome-badge">
+          <span class="welcome-dot"></span>
+          Sistema TPV
+        </div>
+
+
+        <h2 class="welcome-title">Bienvenido a <strong>Yurest TPV</strong></h2>
+        <p class="welcome-text">
+          Control total del servicio en una interfaz clara, elegante y pensada para trabajar fluido durante todo el turno.
+        </p>
+
+        <div class="welcome-mini-stats">
+          <span class="welcome-pill">Operativo</span>
+          <span class="welcome-pill">Rapido</span>
+          <span class="welcome-pill">Sin friccion</span>
+        </div>
+      </div>
+    </section>
+  </div>
 </ion-content>

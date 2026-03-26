@@ -56,7 +56,6 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* ── TABLET FRAME ── */
     .tablet-frame {
       width: 100vw;
       height: 100vh;
@@ -76,7 +75,6 @@
       box-shadow: 0 0 0 2px #333, 0 32px 80px rgba(0, 0, 0, 0.7);
     }
 
-    /* ── SCREEN SYSTEM ── */
     .screen {
       position: absolute;
       inset: 0;
@@ -91,8 +89,8 @@
     }
 
     /* ════════════════════════════════
-     SCREEN 1: HOME / LANDING
-  ════════════════════════════════ */
+       SCREEN 1: HOME
+    ════════════════════════════════ */
     #screen-home {
       background: var(--black);
       display: flex;
@@ -150,10 +148,10 @@
     }
 
     .home-logo-text {
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--white);
-      letter-spacing: -0.3px;
+      display: block;
+      height: 22px;
+      width: auto;
+      object-fit: contain;
     }
 
     .home-tagline {
@@ -236,138 +234,6 @@
       color: var(--white);
     }
 
-    .home-right {
-      background: var(--gray-900);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 40px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .home-right::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(0deg,
-          transparent,
-          transparent 39px,
-          rgba(255, 255, 255, 0.03) 39px,
-          rgba(255, 255, 255, 0.03) 40px),
-        repeating-linear-gradient(90deg,
-          transparent,
-          transparent 39px,
-          rgba(255, 255, 255, 0.03) 39px,
-          rgba(255, 255, 255, 0.03) 40px);
-    }
-
-    .home-preview-card {
-      background: var(--gray-800);
-      border-radius: var(--radius-lg);
-      padding: 24px;
-      width: 100%;
-      max-width: 380px;
-      box-shadow: var(--shadow-lg);
-      position: relative;
-      z-index: 1;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    .preview-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-
-    .preview-title {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--gray-400);
-    }
-
-    .preview-badge {
-      background: var(--green-soft);
-      color: var(--green);
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 20px;
-    }
-
-    .preview-stat-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    .preview-stat {
-      background: var(--gray-700);
-      border-radius: 10px;
-      padding: 14px 12px;
-      text-align: center;
-    }
-
-    .preview-stat-val {
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--white);
-      font-family: var(--mono);
-    }
-
-    .preview-stat-label {
-      font-size: 10px;
-      color: var(--gray-500);
-      margin-top: 3px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .preview-mesa-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 8px;
-    }
-
-    .preview-mesa {
-      background: var(--gray-700);
-      border-radius: 8px;
-      padding: 10px 6px;
-      text-align: center;
-    }
-
-    .preview-mesa.active-m {
-      background: var(--black);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .preview-mesa.cobrar-m {
-      background: var(--blue);
-    }
-
-    .preview-mesa-name {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--white);
-      font-family: var(--mono);
-    }
-
-    .preview-mesa-amount {
-      font-size: 9px;
-      color: var(--gray-500);
-      margin-top: 2px;
-    }
-
-    .preview-mesa.active-m .preview-mesa-amount {
-      color: var(--gray-400);
-    }
-
-    .preview-mesa.cobrar-m .preview-mesa-amount {
-      color: rgba(255, 255, 255, 0.7);
-    }
-
     .home-stats-strip {
       display: flex;
       gap: 24px;
@@ -388,9 +254,117 @@
       margin-top: 2px;
     }
 
+    /* ── HOME RIGHT: BIENVENIDA BRANDING ── */
+    .home-right {
+      background: var(--gray-900);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .home-right::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(0deg,
+          transparent, transparent 39px,
+          rgba(255, 255, 255, 0.03) 39px, rgba(255, 255, 255, 0.03) 40px),
+        repeating-linear-gradient(90deg,
+          transparent, transparent 39px,
+          rgba(255, 255, 255, 0.03) 39px, rgba(255, 255, 255, 0.03) 40px);
+      pointer-events: none;
+    }
+
+    .welcome-card {
+      width: 100%;
+      max-width: 430px;
+      background: linear-gradient(160deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 24px;
+      padding: 34px 30px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      position: relative;
+      z-index: 1;
+      backdrop-filter: blur(2px);
+    }
+
+    .welcome-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 77, 77, 0.14);
+      border: 1px solid rgba(255, 77, 77, 0.28);
+      border-radius: 999px;
+      color: var(--accent-light);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 6px 12px;
+    }
+
+    .welcome-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 5px rgba(255, 77, 77, 0.15);
+    }
+
+    .welcome-logo {
+      height: 54px;
+      width: auto;
+      object-fit: contain;
+      margin-top: 26px;
+    }
+
+    .welcome-title {
+      margin-top: 22px;
+      font-size: 36px;
+      line-height: 1.08;
+      letter-spacing: -1px;
+      font-weight: 300;
+      color: var(--white);
+    }
+
+    .welcome-title strong {
+      font-weight: 600;
+      color: var(--accent-light);
+    }
+
+    .welcome-text {
+      margin-top: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--gray-400);
+      max-width: 36ch;
+    }
+
+    .welcome-mini-stats {
+      margin-top: 24px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .welcome-pill {
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--gray-200);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
     /* ════════════════════════════════
-     SCREEN 2: LOGIN
-  ════════════════════════════════ */
+       SCREEN 2: LOGIN
+    ════════════════════════════════ */
     #screen-login {
       background: var(--gray-50);
       display: flex;
@@ -433,7 +407,6 @@
       grid-template-columns: 1fr 1fr;
     }
 
-    /* PIN panel */
     .pin-panel {
       display: flex;
       flex-direction: column;
@@ -568,7 +541,6 @@
       background: var(--accent-light);
     }
 
-    /* Email panel */
     .email-panel {
       display: flex;
       flex-direction: column;
@@ -636,11 +608,18 @@
       font-weight: 500;
       cursor: pointer;
       margin-top: 6px;
-      transition: background 0.15s;
+      transition: background 0.15s, transform 0.12s, box-shadow 0.15s;
     }
 
     .btn-login:hover {
       background: var(--accent-light);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(255, 77, 77, 0.22);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+      box-shadow: none;
     }
 
     .login-divider {
@@ -685,8 +664,8 @@
     }
 
     /* ════════════════════════════════
-     SCREEN 3: MESAS (Main TPV)
-  ════════════════════════════════ */
+       SCREEN 3: MESAS
+    ════════════════════════════════ */
     #screen-mesas {
       background: var(--gray-50);
       display: flex;
@@ -694,7 +673,6 @@
       height: 100%;
     }
 
-    /* Top bar */
     .topbar {
       display: flex;
       align-items: center;
@@ -759,13 +737,6 @@
       background: var(--accent-soft);
     }
 
-    .nav-dot {
-      width: 7px;
-      height: 7px;
-      background: var(--accent);
-      border-radius: 50%;
-    }
-
     .topbar-actions {
       display: flex;
       align-items: center;
@@ -824,7 +795,6 @@
       cursor: pointer;
     }
 
-    /* Main layout */
     .main-layout {
       flex: 1;
       display: grid;
@@ -832,7 +802,6 @@
       overflow: hidden;
     }
 
-    /* Left: zones + tables */
     .tables-area {
       display: flex;
       flex-direction: column;
@@ -885,7 +854,6 @@
       gap: 10px;
     }
 
-    /* Mesa card */
     .mesa {
       background: var(--white);
       border: 1.5px solid var(--gray-200);
@@ -989,7 +957,6 @@
       justify-content: center;
     }
 
-    /* Right panel: order detail */
     .order-panel {
       border-left: 1px solid var(--gray-200);
       background: var(--white);
@@ -1161,36 +1128,26 @@
       color: var(--accent);
     }
 
-    .panel-empty {
+    .no-order-selected {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 32px;
       color: var(--gray-400);
-    }
-
-    .panel-empty-icon {
-      width: 48px;
-      height: 48px;
-      background: var(--gray-100);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 12px;
-    }
-
-    .panel-empty-text {
-      font-size: 13px;
+      gap: 8px;
+      padding: 24px;
       text-align: center;
-      line-height: 1.5;
+    }
+
+    .no-order-icon {
+      font-size: 32px;
+      margin-bottom: 4px;
     }
 
     /* ════════════════════════════════
-     SCREEN 4: NUEVA COMANDA
-  ════════════════════════════════ */
+       SCREEN 4: NUEVA COMANDA
+    ════════════════════════════════ */
     #screen-comanda {
       background: var(--gray-50);
       display: flex;
@@ -1247,7 +1204,6 @@
       overflow: hidden;
     }
 
-    /* Products area */
     .products-area {
       display: flex;
       flex-direction: column;
@@ -1377,7 +1333,6 @@
       margin-top: -4px;
     }
 
-    /* Comanda sidebar */
     .comanda-sidebar {
       border-left: 1px solid var(--gray-200);
       background: var(--white);
@@ -1386,7 +1341,7 @@
       overflow: hidden;
     }
 
-    /* ── REGISTER MODAL ── */
+    /* ── MODAL ── */
     .modal-overlay {
       position: absolute;
       inset: 0;
@@ -1413,6 +1368,7 @@
       box-shadow: var(--shadow-lg);
       transform: translateY(10px);
       transition: transform 0.2s;
+      position: relative;
     }
 
     .modal-overlay.open .modal-box {
@@ -1454,11 +1410,6 @@
       color: var(--gray-600);
     }
 
-    .modal-box {
-      position: relative;
-    }
-
-    /* Scrollbar styling */
     ::-webkit-scrollbar {
       width: 4px;
     }
@@ -1472,25 +1423,6 @@
       border-radius: 4px;
     }
 
-    /* No order selected state */
-    .no-order-selected {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: var(--gray-400);
-      gap: 8px;
-      padding: 24px;
-      text-align: center;
-    }
-
-    .no-order-icon {
-      font-size: 32px;
-      margin-bottom: 4px;
-    }
-
-    /* Animations */
     @keyframes fadeIn {
       from {
         opacity: 0;
@@ -1508,8 +1440,8 @@
     }
 
     /* ════════════════════════════════
-   SHARED PAGES
-════════════════════════════════ */
+       SHARED PAGES
+    ════════════════════════════════ */
     .page-container {
       padding: 20px;
       height: 100%;
@@ -1522,18 +1454,13 @@
       gap: 16px;
     }
 
-    /* ════════════════════════════════
-   CARDS GENERALES
-════════════════════════════════ */
     .card-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 14px;
     }
 
-    /* ════════════════════════════════
-   PEDIDOS
-════════════════════════════════ */
+    /* PEDIDOS */
     .pedido-card {
       background: var(--white);
       border: 1.5px solid var(--gray-200);
@@ -1660,7 +1587,7 @@
       padding: 10px;
     }
 
-    .pedidos-toolbar > * {
+    .pedidos-toolbar>* {
       min-width: 0;
     }
 
@@ -1677,23 +1604,6 @@
 
     .pedidos-input:focus {
       border-color: var(--accent);
-    }
-
-    .btn-icon {
-      border: 1.5px solid var(--gray-200);
-      border-radius: 10px;
-      height: 34px;
-      width: 100%;
-      background: var(--white);
-      color: var(--gray-700);
-      cursor: pointer;
-      font-size: 16px;
-      transition: border-color 0.15s, color 0.15s;
-    }
-
-    .btn-icon:hover {
-      border-color: var(--accent);
-      color: var(--accent);
     }
 
     .pedidos-list-wrap {
@@ -1870,8 +1780,8 @@
       flex: 1;
     }
 
-    .pedido-detail-head > div:first-child,
-    .autos-detail-head > div:first-child {
+    .pedido-detail-head>div:first-child,
+    .autos-detail-head>div:first-child {
       min-width: 0;
     }
 
@@ -1947,22 +1857,6 @@
       flex-shrink: 0;
     }
 
-    .timeline-title {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--gray-500);
-      margin-bottom: 8px;
-    }
-
-    .timeline-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: var(--gray-600);
-      margin-bottom: 5px;
-    }
-
     .btn-small {
       border: 1.5px solid var(--gray-200);
       background: var(--white);
@@ -1971,12 +1865,33 @@
       font-size: 12px;
       font-weight: 500;
       cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.1s, box-shadow 0.15s;
+    }
+
+    .btn-small:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-soft);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-small:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: none;
     }
 
     .btn-small.primary {
       background: var(--accent);
       border-color: var(--accent);
       color: var(--white);
+    }
+
+    .btn-small.primary:hover:not(:disabled) {
+      background: var(--accent-light);
+      border-color: var(--accent-light);
+      color: var(--white);
+      box-shadow: 0 8px 16px rgba(255, 77, 77, 0.22);
     }
 
     .btn-small:disabled {
@@ -1995,65 +1910,7 @@
       padding: 24px;
     }
 
-    @media (max-width: 1024px) {
-      .pedidos-layout {
-        grid-template-columns: 1fr;
-        height: auto;
-      }
-
-      .pedido-detail {
-        min-height: 420px;
-      }
-
-      .summary-strip {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .pedidos-toolbar {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .pedidos-list-head,
-      .pedido-row {
-        grid-template-columns: 1.5fr 0.7fr 0.8fr 0.8fr;
-      }
-
-      #screen-pedidos .page-container,
-      #screen-autoservicio .page-container {
-        overflow-y: auto;
-      }
-    }
-
-    @media (max-width: 640px) {
-      .summary-strip {
-        grid-template-columns: 1fr;
-      }
-
-      .pedidos-toolbar {
-        grid-template-columns: 1fr;
-      }
-
-      .pedidos-list-head,
-      .pedido-row {
-        grid-template-columns: 1fr;
-      }
-
-      .pedidos-list-head {
-        display: none;
-      }
-
-      .pedido-row {
-        gap: 6px;
-      }
-
-      .pedido-detail-actions {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    /* ════════════════════════════════
-   AUTOSERVICIO
-════════════════════════════════ */
+    /* AUTOSERVICIO */
     #screen-autoservicio {
       background: var(--gray-50);
       display: flex;
@@ -2301,50 +2158,301 @@
       padding: 24px;
     }
 
-    @media (max-width: 1024px) {
-      #screen-autoservicio .page-container {
-        overflow-y: auto;
-        overflow-x: hidden;
-      }
+    /* GESTIÓN */
+    .gestion-layout {
+      display: grid;
+      grid-template-columns: 330px minmax(0, 1fr);
+      gap: 16px;
+      height: 100%;
+      min-height: 0;
+    }
 
-      .autos-layout {
+    .gestion-restaurants,
+    .gestion-workspace {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius);
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .gestion-panel-head {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .gestion-panel-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .gestion-panel-sub {
+      margin-top: 4px;
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+
+    .gestion-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .gestion-restaurant-item {
+      border: 1.5px solid var(--gray-200);
+      border-radius: 12px;
+      padding: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: var(--white);
+    }
+
+    .gestion-restaurant-item:hover {
+      border-color: var(--accent);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .gestion-restaurant-item.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+
+    .gestion-restaurant-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .gestion-restaurant-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .gestion-restaurant-meta {
+      margin-top: 2px;
+      font-size: 11px;
+      color: var(--gray-500);
+      line-height: 1.4;
+    }
+
+    .gestion-status-pill {
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 4px 9px;
+      white-space: nowrap;
+    }
+
+    .gestion-status-pill.live {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .gestion-restaurant-kpis {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .gestion-kpi-mini {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 6px;
+      text-align: center;
+    }
+
+    .gestion-kpi-mini-val {
+      font-size: 14px;
+      color: var(--gray-900);
+      font-family: var(--mono);
+      line-height: 1;
+    }
+
+    .gestion-kpi-mini-label {
+      margin-top: 2px;
+      font-size: 9px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: var(--gray-500);
+    }
+
+    .gestion-workspace-top {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .gestion-workspace-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--black);
+    }
+
+    .gestion-workspace-sub {
+      margin-top: 3px;
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+
+    .gestion-entity-tabs {
+      margin-top: 10px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+
+    .gestion-entity-tab {
+      border: 1.5px solid var(--gray-200);
+      background: var(--white);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 12px;
+      color: var(--gray-600);
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+      font-family: var(--font);
+    }
+
+    .gestion-entity-tab.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .gestion-workspace-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px 18px;
+      min-height: 0;
+    }
+
+    .gestion-section-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .gestion-card {
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-sm);
+      background: var(--white);
+      padding: 12px;
+      min-width: 0;
+    }
+
+    .gestion-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--black);
+      margin-bottom: 10px;
+    }
+
+    .gestion-row-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+
+    .gestion-row-item {
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      padding: 9px 10px;
+      font-size: 12px;
+      color: var(--gray-700);
+      background: var(--gray-50);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .gestion-row-item:hover {
+      border-color: var(--accent);
+    }
+
+    .gestion-row-item.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: inset 2px 0 0 var(--accent);
+    }
+
+    .gestion-row-item strong {
+      color: var(--black);
+      font-weight: 600;
+    }
+
+    .gestion-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .gestion-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .gestion-form-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 2px;
+    }
+
+    .gestion-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 260px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--gray-500);
+      border: 1px dashed var(--gray-200);
+      border-radius: var(--radius-sm);
+      background: var(--gray-50);
+      padding: 20px;
+    }
+
+    @media (max-width: 1024px) {
+      .gestion-layout {
         grid-template-columns: 1fr;
         height: auto;
       }
 
-      .autos-kpis {
-        grid-template-columns: repeat(2, 1fr);
+      .gestion-restaurants {
+        min-height: 320px;
       }
 
-      .autos-toolbar {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .autos-detail {
-        min-height: 420px;
+      .gestion-section-grid {
+        grid-template-columns: 1fr;
       }
     }
 
     @media (max-width: 640px) {
-      .autos-kpis,
-      .autos-toolbar,
-      .autos-actions {
+      .gestion-form-grid {
         grid-template-columns: 1fr;
       }
 
-      .autos-list-head {
-        display: none;
-      }
-
-      .autos-row {
+      .gestion-restaurant-kpis {
         grid-template-columns: 1fr;
-        gap: 6px;
       }
     }
 
-    /* ════════════════════════════════
-   PANEL
-════════════════════════════════ */
+    /* PANEL */
     .panel {
       background: var(--white);
       border-radius: var(--radius);
@@ -2366,25 +2474,18 @@
       color: var(--gray-600);
     }
 
-    /* ════════════════════════════════
-   GESTIÓN
-════════════════════════════════ */
-    .gestion-card {
-      background: var(--white);
-      border: 1.5px solid var(--gray-200);
-      border-radius: var(--radius);
-      height: 90px;
+    #screen-gestion {
+      background: var(--gray-50);
       display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s;
+      flex-direction: column;
+      height: 100%;
     }
 
-    .gestion-card:hover {
-      border-color: var(--accent);
-      color: var(--accent);
+    #screen-caja {
+      background: var(--gray-50);
+      display: flex;
+      flex-direction: column;
+      height: 100%;
     }
   </style>
 </head>
@@ -2406,7 +2507,7 @@
                   <path d="M16 10a4 4 0 01-8 0" />
                 </svg>
               </div>
-              <span class="home-logo-text">Yurest TPV</span>
+              <img src="frontend/src/assets/images/yurest-logo.png" alt="Yurest TPV" class="home-logo-text">
             </div>
 
             <div class="home-tagline">Punto de venta</div>
@@ -2435,67 +2536,23 @@
             </div>
           </div>
 
+          <!-- ══ HOME RIGHT: BIENVENIDA ══ -->
           <div class="home-right">
-            <div class="home-preview-card">
-              <div class="preview-header">
-                <span class="preview-title">Restaurante Voraz · Hoy</span>
-                <span class="preview-badge">● En vivo</span>
+            <div class="welcome-card">
+              <div class="welcome-badge">
+                <span class="welcome-dot"></span>
+                Sistema TPV
               </div>
-              <div class="preview-stat-row">
-                <div class="preview-stat">
-                  <div class="preview-stat-val">8</div>
-                  <div class="preview-stat-label">Mesas abiertas</div>
-                </div>
-                <div class="preview-stat">
-                  <div class="preview-stat-val">34</div>
-                  <div class="preview-stat-label">Comensales</div>
-                </div>
-                <div class="preview-stat">
-                  <div class="preview-stat-val">1.2k</div>
-                  <div class="preview-stat-label">Total €</div>
-                </div>
-              </div>
-              <div class="preview-mesa-grid">
-                <div class="preview-mesa active-m">
-                  <div class="preview-mesa-name">B1</div>
-                  <div class="preview-mesa-amount">4,00€</div>
-                </div>
-                <div class="preview-mesa active-m">
-                  <div class="preview-mesa-name">B2</div>
-                  <div class="preview-mesa-amount">7,00€</div>
-                </div>
-                <div class="preview-mesa">
-                  <div class="preview-mesa-name">T1</div>
-                  <div class="preview-mesa-amount">—</div>
-                </div>
-                <div class="preview-mesa active-m">
-                  <div class="preview-mesa-name">T2</div>
-                  <div class="preview-mesa-amount">24,50€</div>
-                </div>
-                <div class="preview-mesa active-m">
-                  <div class="preview-mesa-name">T4</div>
-                  <div class="preview-mesa-amount">70,80€</div>
-                </div>
-                <div class="preview-mesa">
-                  <div class="preview-mesa-name">T5</div>
-                  <div class="preview-mesa-amount">—</div>
-                </div>
-                <div class="preview-mesa active-m">
-                  <div class="preview-mesa-name">T6</div>
-                  <div class="preview-mesa-amount">50,70€</div>
-                </div>
-                <div class="preview-mesa active-m" style="border:2px solid #E8440A">
-                  <div class="preview-mesa-name">T7</div>
-                  <div class="preview-mesa-amount">113,10€</div>
-                </div>
-                <div class="preview-mesa cobrar-m">
-                  <div class="preview-mesa-name">T8</div>
-                  <div class="preview-mesa-amount">COBRAR</div>
-                </div>
-                <div class="preview-mesa">
-                  <div class="preview-mesa-name">T9</div>
-                  <div class="preview-mesa-amount">—</div>
-                </div>
+
+              <h2 class="welcome-title">Bienvenido a <strong>Yurest TPV</strong></h2>
+              <p class="welcome-text">
+                Control total del servicio en una interfaz clara, elegante y pensada para trabajar fluido durante todo el turno.
+              </p>
+
+              <div class="welcome-mini-stats">
+                <span class="welcome-pill">Operativo</span>
+                <span class="welcome-pill">Rápido</span>
+                <span class="welcome-pill">Sin fricción</span>
               </div>
             </div>
           </div>
@@ -2518,7 +2575,6 @@
         </div>
 
         <div class="login-body">
-          <!-- PIN -->
           <div class="pin-panel">
             <div class="pin-section-label">Acceso rápido por PIN</div>
             <div class="user-select-grid">
@@ -2559,7 +2615,6 @@
             </div>
           </div>
 
-          <!-- Email form -->
           <div class="email-panel">
             <div class="login-form-title">Iniciar sesión</div>
             <div class="login-form-sub">Accede con tu cuenta del restaurante</div>
@@ -2599,7 +2654,6 @@
               </svg>
               Mesas
             </button>
-
             <button class="nav-item" onclick="navigateTo('screen-pedidos', this)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
@@ -2607,7 +2661,6 @@
               </svg>
               Pedidos
             </button>
-
             <button class="nav-item" onclick="navigateTo('screen-autoservicio', this)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3" />
@@ -2615,7 +2668,6 @@
               </svg>
               Autoservicio
             </button>
-
             <button class="nav-item" onclick="navigateTo('screen-gestion', this)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="8" y1="6" x2="21" y2="6" />
@@ -2650,13 +2702,10 @@
               <button class="zone-tab" onclick="setZone(this)">Cuenta Rápida</button>
             </div>
             <div class="tables-grid-wrap">
-              <div class="tables-grid" id="tables-grid">
-                <!-- Generated by JS -->
-              </div>
+              <div class="tables-grid" id="tables-grid"></div>
             </div>
           </div>
 
-          <!-- Order panel -->
           <div class="order-panel" id="order-panel">
             <div id="order-empty" class="no-order-selected">
               <div class="no-order-icon">🍽️</div>
@@ -2738,13 +2787,10 @@
                 oninput="filterProducts(this.value)">
             </div>
             <div class="products-grid-wrap">
-              <div class="products-grid" id="products-grid">
-                <!-- Generated by JS -->
-              </div>
+              <div class="products-grid" id="products-grid"></div>
             </div>
           </div>
 
-          <!-- Comanda order panel -->
           <div class="comanda-sidebar order-panel">
             <div class="order-panel-header">
               <div class="order-table-info">
@@ -2776,474 +2822,451 @@
       </div>
 
       <!-- ══ SCREEN 5: PEDIDOS ══ -->
-<div id="screen-pedidos" class="screen">
-  <div class="topbar">
-    <div class="topbar-brand">
-      <span class="topbar-name">Restaurante Voraz</span>
-      <span class="topbar-date">Histórico de pedidos</span>
-    </div>
-    <div class="topbar-nav">
-      <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7" />
-          <rect x="14" y="3" width="7" height="7" />
-          <rect x="3" y="14" width="7" height="7" />
-          <rect x="14" y="14" width="7" height="7" />
-        </svg>
-        Mesas
-      </button>
-
-      <button class="nav-item active" onclick="navigateTo('screen-pedidos', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-        </svg>
-        Pedidos
-      </button>
-
-      <button class="nav-item" onclick="navigateTo('screen-autoservicio', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
-        </svg>
-        Autoservicio
-      </button>
-
-      <button class="nav-item" onclick="navigateTo('screen-gestion', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="8" y1="6" x2="21" y2="6" />
-          <line x1="8" y1="12" x2="21" y2="12" />
-          <line x1="8" y1="18" x2="21" y2="18" />
-          <line x1="3" y1="6" x2="3.01" y2="6" />
-          <line x1="3" y1="12" x2="3.01" y2="12" />
-          <line x1="3" y1="18" x2="3.01" y2="18" />
-        </svg>
-        Gestión
-      </button>
-    </div>
-    <div class="topbar-actions">
-      <button class="btn-caja" onclick="navigateTo('screen-caja', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="6" width="20" height="14" rx="2" />
-          <line x1="12" y1="10" x2="12" y2="16" />
-          <line x1="9" y1="13" x2="15" y2="13" />
-        </svg>
-        Abrir Caja
-      </button>
-      <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
-    </div>
-  </div>
-
-  <div class="page-container">
-    <div class="pedidos-layout">
-      <section class="pedidos-left">
-        <div class="pedidos-tabs" id="pedidos-tabs">
-          <button class="pedidos-tab active" data-tab="all">Todo el turno</button>
-          <button class="pedidos-tab" data-tab="open">Activos</button>
-          <button class="pedidos-tab" data-tab="to-charge">Para cobrar</button>
-          <button class="pedidos-tab" data-tab="invoiced">Cerrados hoy</button>
-          <button class="pedidos-tab" data-tab="cancelled">Cancelados</button>
-        </div>
-
-        <div class="summary-strip">
-          <div class="kpi-card">
-            <div class="kpi-label">Abiertos</div>
-            <div class="kpi-value" id="kpi-open">0</div>
+      <div id="screen-pedidos" class="screen">
+        <div class="topbar">
+          <div class="topbar-brand">
+            <span class="topbar-name">Restaurante Voraz</span>
+            <span class="topbar-date">Histórico de pedidos</span>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Para Cobrar</div>
-            <div class="kpi-value" id="kpi-para-cobrar">0</div>
+          <div class="topbar-nav">
+            <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+              </svg>
+              Mesas
+            </button>
+            <button class="nav-item active" onclick="navigateTo('screen-pedidos', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+              </svg>
+              Pedidos
+            </button>
+            <button class="nav-item" onclick="navigateTo('screen-autoservicio', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+              </svg>
+              Autoservicio
+            </button>
+            <button class="nav-item" onclick="navigateTo('screen-gestion', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+              Gestión
+            </button>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Cerrados</div>
-            <div class="kpi-value" id="kpi-invoiced">0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Ticket Medio</div>
-            <div class="kpi-value" id="kpi-ticket">0,00€</div>
+          <div class="topbar-actions">
+            <button class="btn-caja" onclick="navigateTo('screen-caja', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="6" width="20" height="14" rx="2" />
+                <line x1="12" y1="10" x2="12" y2="16" />
+                <line x1="9" y1="13" x2="15" y2="13" />
+              </svg>
+              Abrir Caja
+            </button>
+            <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
           </div>
         </div>
 
-        <div class="pedidos-toolbar">
-          <select class="pedidos-input" id="filter-status">
-            <option value="all">Todos los estados</option>
-            <option value="open">Abiertos</option>
-            <option value="invoiced">Cerrados</option>
-            <option value="cancelled">Cancelados</option>
-          </select>
+        <div class="page-container">
+          <div class="pedidos-layout">
+            <section class="pedidos-left">
+              <div class="pedidos-tabs" id="pedidos-tabs">
+                <button class="pedidos-tab active" data-tab="all">Todo el turno</button>
+                <button class="pedidos-tab" data-tab="open">Activos</button>
+                <button class="pedidos-tab" data-tab="to-charge">Para cobrar</button>
+                <button class="pedidos-tab" data-tab="invoiced">Cerrados hoy</button>
+                <button class="pedidos-tab" data-tab="cancelled">Cancelados</button>
+              </div>
 
-          <select class="pedidos-input" id="filter-zone">
-            <option value="all">Todas las zonas</option>
-          </select>
+              <div class="summary-strip">
+                <div class="kpi-card">
+                  <div class="kpi-label">Abiertos</div>
+                  <div class="kpi-value" id="kpi-open">0</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">Para Cobrar</div>
+                  <div class="kpi-value" id="kpi-para-cobrar">0</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">Cerrados</div>
+                  <div class="kpi-value" id="kpi-invoiced">0</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">Ticket Medio</div>
+                  <div class="kpi-value" id="kpi-ticket">0,00€</div>
+                </div>
+              </div>
 
-          <select class="pedidos-input" id="filter-user">
-            <option value="all">Todos los camareros</option>
-          </select>
+              <div class="pedidos-toolbar">
+                <select class="pedidos-input" id="filter-status">
+                  <option value="all">Todos los estados</option>
+                  <option value="open">Abiertos</option>
+                  <option value="invoiced">Cerrados</option>
+                  <option value="cancelled">Cancelados</option>
+                </select>
+                <select class="pedidos-input" id="filter-zone">
+                  <option value="all">Todas las zonas</option>
+                </select>
+                <select class="pedidos-input" id="filter-user">
+                  <option value="all">Todos los camareros</option>
+                </select>
+                <input class="pedidos-input" id="filter-date" type="date">
+                <input class="pedidos-input" id="filter-search" type="text"
+                  placeholder="Buscar por mesa, UUID o nº ticket">
+                <button class="btn-icon" id="filter-reset" title="Reset filtros">↺</button>
+              </div>
 
-          <input class="pedidos-input" id="filter-date" type="date">
+              <div class="pedidos-list-wrap">
+                <div class="pedidos-list-head">
+                  <div>Pedido</div>
+                  <div>Apertura</div>
+                  <div>Total</div>
+                  <div>Estado</div>
+                </div>
+                <div class="pedidos-list" id="pedidos-list"></div>
+                <div class="pedidos-empty" id="pedidos-empty">No hay pedidos con los filtros actuales.</div>
+              </div>
+            </section>
 
-          <input class="pedidos-input" id="filter-search" type="text" placeholder="Buscar por mesa, UUID o nº ticket">
-
-          <button class="btn-icon" id="filter-reset" title="Reset filtros">↺</button>
-        </div>
-
-        <div class="pedidos-list-wrap">
-          <div class="pedidos-list-head">
-            <div>Pedido</div>
-            <div>Apertura</div>
-            <div>Total</div>
-            <div>Estado</div>
-          </div>
-          <div class="pedidos-list" id="pedidos-list"></div>
-          <div class="pedidos-empty" id="pedidos-empty">No hay pedidos con los filtros actuales.</div>
-        </div>
-      </section>
-
-      <aside class="pedido-detail autos-detail">
-        <div id="pedido-detail-empty" class="pedido-detail-empty">
-          Selecciona un pedido para ver su detalle.
-        </div>
-
-        <div id="pedido-detail-content" style="display:none;flex-direction:column;height:100%">
-          <div class="pedido-detail-head autos-detail-head">
-            <div>
-              <div class="pedido-detail-title autos-detail-title" id="pedido-detail-title">Mesa T7</div>
-              <div class="pedido-detail-sub autos-detail-sub" id="pedido-detail-sub">Abierto hace 5 min · 4 comensales</div>
-            </div>
-            <div class="pedido-detail-total autos-detail-total" id="pedido-detail-total">0,00€</div>
-          </div>
-
-          <div class="pedido-detail-lines autos-lines" id="pedido-detail-lines"></div>
-
-          <div class="pedido-detail-summary">
-            <div class="pedido-summary-row"><span>Subtotal</span><span id="pedido-sum-sub">0,00€</span></div>
-            <div class="pedido-summary-row"><span>Impuestos</span><span id="pedido-sum-tax">0,00€</span></div>
-            <div class="pedido-summary-row total"><span>Total</span><span id="pedido-sum-total">0,00€</span></div>
-          </div>
-
-          <div class="pedido-detail-actions autos-actions">
-            <button class="btn-small" id="pedido-action-openmesa">Abrir en mesa</button>
-            <button class="btn-small" id="pedido-action-print">Imprimir ticket</button>
-            <button class="btn-small primary" id="pedido-action-cobrar">Marcar cobrado</button>
-            <button class="btn-small" id="pedido-action-cancel">Cancelar pedido</button>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-</div>
-
-<!-- ══ SCREEN 6: AUTOSERVICIO ══ -->
-<div id="screen-autoservicio" class="screen">
-  <div class="topbar">
-    <div class="topbar-brand">
-      <span class="topbar-name">Autoservicio</span>
-      <span class="topbar-date">Pedidos desde QR / App</span>
-    </div>
-    <div class="topbar-nav">
-      <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7" />
-          <rect x="14" y="3" width="7" height="7" />
-          <rect x="3" y="14" width="7" height="7" />
-          <rect x="14" y="14" width="7" height="7" />
-        </svg>
-        Mesas
-      </button>
-
-      <button class="nav-item" onclick="navigateTo('screen-pedidos', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-        </svg>
-        Pedidos
-      </button>
-
-      <button class="nav-item active" onclick="navigateTo('screen-autoservicio', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
-        </svg>
-        Autoservicio
-      </button>
-
-      <button class="nav-item" onclick="navigateTo('screen-gestion', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="8" y1="6" x2="21" y2="6" />
-          <line x1="8" y1="12" x2="21" y2="12" />
-          <line x1="8" y1="18" x2="21" y2="18" />
-          <line x1="3" y1="6" x2="3.01" y2="6" />
-          <line x1="3" y1="12" x2="3.01" y2="12" />
-          <line x1="3" y1="18" x2="3.01" y2="18" />
-        </svg>
-        Gestión
-      </button>
-    </div>
-    <div class="topbar-actions">
-      <button class="btn-caja" onclick="navigateTo('screen-caja', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="6" width="20" height="14" rx="2" />
-          <line x1="12" y1="10" x2="12" y2="16" />
-          <line x1="9" y1="13" x2="15" y2="13" />
-        </svg>
-        Abrir Caja
-      </button>
-      <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
-    </div>
-  </div>
-
-  <div class="page-container">
-    <div class="autos-layout">
-      <section class="autos-left">
-        <div class="autos-tabs" id="autos-tabs">
-          <button class="autos-tab active" data-tab="all">Todo</button>
-          <button class="autos-tab" data-tab="new">Nuevos</button>
-          <button class="autos-tab" data-tab="preparing">Preparando</button>
-          <button class="autos-tab" data-tab="ready">Listos</button>
-          <button class="autos-tab" data-tab="closed">Cerrados</button>
-        </div>
-
-        <div class="autos-kpis">
-          <div class="kpi-card">
-            <div class="kpi-label">Conectados</div>
-            <div class="kpi-value" id="autos-kpi-connected">0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">En Cola</div>
-            <div class="kpi-value" id="autos-kpi-queue">0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Listos</div>
-            <div class="kpi-value" id="autos-kpi-ready">0</div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-label">Facturado</div>
-            <div class="kpi-value" id="autos-kpi-revenue">0,00€</div>
+            <aside class="pedido-detail autos-detail">
+              <div id="pedido-detail-empty" class="pedido-detail-empty">Selecciona un pedido para ver su detalle.</div>
+              <div id="pedido-detail-content" style="display:none;flex-direction:column;height:100%">
+                <div class="pedido-detail-head autos-detail-head">
+                  <div>
+                    <div class="pedido-detail-title autos-detail-title" id="pedido-detail-title">Mesa T7</div>
+                    <div class="pedido-detail-sub autos-detail-sub" id="pedido-detail-sub">Abierto hace 5 min · 4
+                      comensales</div>
+                  </div>
+                  <div class="pedido-detail-total autos-detail-total" id="pedido-detail-total">0,00€</div>
+                </div>
+                <div class="pedido-detail-lines autos-lines" id="pedido-detail-lines"></div>
+                <div class="pedido-detail-summary">
+                  <div class="pedido-summary-row"><span>Subtotal</span><span id="pedido-sum-sub">0,00€</span></div>
+                  <div class="pedido-summary-row"><span>Impuestos</span><span id="pedido-sum-tax">0,00€</span></div>
+                  <div class="pedido-summary-row total"><span>Total</span><span id="pedido-sum-total">0,00€</span></div>
+                </div>
+                <div class="pedido-detail-actions autos-actions">
+                  <button class="btn-small" id="pedido-action-openmesa">Abrir en mesa</button>
+                  <button class="btn-small" id="pedido-action-print">Imprimir ticket</button>
+                  <button class="btn-small primary" id="pedido-action-cobrar">Marcar cobrado</button>
+                  <button class="btn-small" id="pedido-action-cancel">Cancelar pedido</button>
+                </div>
+              </div>
+            </aside>
           </div>
         </div>
-
-        <div class="autos-toolbar">
-          <select class="pedidos-input" id="autos-filter-status">
-            <option value="all">Todos los estados</option>
-            <option value="open">Abiertos</option>
-            <option value="invoiced">Cerrados</option>
-            <option value="cancelled">Cancelados</option>
-          </select>
-
-          <select class="pedidos-input" id="autos-filter-prep">
-            <option value="all">Todas las fases</option>
-            <option value="new">Nuevo</option>
-            <option value="preparing">Preparando</option>
-            <option value="ready">Listo</option>
-            <option value="delivered">Entregado</option>
-          </select>
-
-          <input class="pedidos-input" id="autos-filter-search" type="text" placeholder="Buscar por pedido, cliente o ticket">
-
-          <button class="btn-icon" id="autos-filter-reset" title="Reset filtros">↺</button>
-        </div>
-
-        <div class="autos-list-wrap">
-          <div class="autos-list-head">
-            <div>Pedido</div>
-            <div>Canal</div>
-            <div>Total</div>
-            <div>Fase</div>
-          </div>
-          <div class="autos-list" id="autos-list"></div>
-          <div class="autos-empty" id="autos-empty">No hay pedidos de autoservicio con esos filtros.</div>
-        </div>
-      </section>
-
-      <aside class="autos-detail">
-        <div class="autos-detail-empty" id="autos-detail-empty">Selecciona un pedido de autoservicio para ver detalle.</div>
-
-        <div id="autos-detail-content" style="display:none;flex-direction:column;height:100%">
-          <div class="autos-detail-head">
-            <div>
-              <div class="autos-detail-title" id="autos-detail-title">#QR-1021</div>
-              <div class="autos-detail-sub" id="autos-detail-sub">Nuevo · Hace 4 min</div>
-            </div>
-            <div class="autos-detail-total" id="autos-detail-total">0,00€</div>
-          </div>
-
-          <div class="autos-lines" id="autos-lines"></div>
-
-          <div class="pedido-detail-summary">
-            <div class="pedido-summary-row"><span>Subtotal</span><span id="autos-sum-sub">0,00€</span></div>
-            <div class="pedido-summary-row"><span>Impuestos</span><span id="autos-sum-tax">0,00€</span></div>
-            <div class="pedido-summary-row total"><span>Total</span><span id="autos-sum-total">0,00€</span></div>
-          </div>
-
-          <div class="autos-actions">
-            <button class="btn-small" id="autos-action-accept">Aceptar pedido</button>
-            <button class="btn-small" id="autos-action-ready">Marcar listo</button>
-            <button class="btn-small primary" id="autos-action-deliver">Entregar y cobrar</button>
-            <button class="btn-small" id="autos-action-cancel">Cancelar</button>
-          </div>
-        </div>
-      </aside>
-    </div>
-  </div>
-</div>
-
-<!-- ══ SCREEN 7: GESTIÓN ══ -->
-<div id="screen-gestion" class="screen">
-  <div class="topbar">
-    <div class="topbar-brand">
-      <span class="topbar-name">Gestión</span>
-      <span class="topbar-date">Configuración del sistema</span>
-    </div>
-    <div class="topbar-nav">
-      <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7" />
-          <rect x="14" y="3" width="7" height="7" />
-          <rect x="3" y="14" width="7" height="7" />
-          <rect x="14" y="14" width="7" height="7" />
-        </svg>
-        Mesas
-      </button>
-
-      <button class="nav-item" onclick="navigateTo('screen-pedidos', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-        </svg>
-        Pedidos
-      </button>
-
-      <button class="nav-item" onclick="navigateTo('screen-autoservicio', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
-        </svg>
-        Autoservicio
-      </button>
-
-      <button class="nav-item active" onclick="navigateTo('screen-gestion', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="8" y1="6" x2="21" y2="6" />
-          <line x1="8" y1="12" x2="21" y2="12" />
-          <line x1="8" y1="18" x2="21" y2="18" />
-          <line x1="3" y1="6" x2="3.01" y2="6" />
-          <line x1="3" y1="12" x2="3.01" y2="12" />
-          <line x1="3" y1="18" x2="3.01" y2="18" />
-        </svg>
-        Gestión
-      </button>
-    </div>
-    <div class="topbar-actions">
-      <button class="btn-caja" onclick="navigateTo('screen-caja', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="6" width="20" height="14" rx="2" />
-          <line x1="12" y1="10" x2="12" y2="16" />
-          <line x1="9" y1="13" x2="15" y2="13" />
-        </svg>
-        Abrir Caja
-      </button>
-      <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
-    </div>
-  </div>
-
-  <div class="page-container">
-    <div class="card-grid">
-      <div class="gestion-card">Productos</div>
-      <div class="gestion-card">Categorías</div>
-      <div class="gestion-card">Usuarios</div>
-      <div class="gestion-card">Zonas / Mesas</div>
-      <div class="gestion-card">Impresoras</div>
-      <div class="gestion-card">Impuestos</div>
-    </div>
-  </div>
-</div>
-
-<!-- ══ SCREEN 8: ABRIR CAJA ══ -->
-<div id="screen-caja" class="screen">
-  <div class="topbar">
-    <div class="topbar-brand">
-      <span class="topbar-name">Apertura de Caja</span>
-      <span class="topbar-date">Nueva sesión</span>
-    </div>
-    <div class="topbar-nav">
-      <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="7" height="7" />
-          <rect x="14" y="3" width="7" height="7" />
-          <rect x="3" y="14" width="7" height="7" />
-          <rect x="14" y="14" width="7" height="7" />
-        </svg>
-        Mesas
-      </button>
-
-      <button class="nav-item" onclick="navigateTo('screen-pedidos', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-        </svg>
-        Pedidos
-      </button>
-
-      <button class="nav-item" onclick="navigateTo('screen-autoservicio', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
-        </svg>
-        Autoservicio
-      </button>
-
-      <button class="nav-item" onclick="navigateTo('screen-gestion', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="8" y1="6" x2="21" y2="6" />
-          <line x1="8" y1="12" x2="21" y2="12" />
-          <line x1="8" y1="18" x2="21" y2="18" />
-          <line x1="3" y1="6" x2="3.01" y2="6" />
-          <line x1="3" y1="12" x2="3.01" y2="12" />
-          <line x1="3" y1="18" x2="3.01" y2="18" />
-        </svg>
-        Gestión
-      </button>
-    </div>
-    <div class="topbar-actions">
-      <button class="btn-caja active" onclick="navigateTo('screen-caja', this)">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="6" width="20" height="14" rx="2" />
-          <line x1="12" y1="10" x2="12" y2="16" />
-          <line x1="9" y1="13" x2="15" y2="13" />
-        </svg>
-        Abrir Caja
-      </button>
-      <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
-    </div>
-  </div>
-
-  <div class="page-container">
-    <div style="max-width:500px;margin:0 auto">
-      <div class="panel">
-        <div class="panel-title">Información de apertura</div>
-        <div class="form-field">
-          <label class="form-label">Cajero/a</label>
-          <input type="text" class="form-input" value="María" readonly>
-        </div>
-        <div class="form-field">
-          <label class="form-label">Fecha y hora</label>
-          <input type="text" class="form-input" id="fecha-hora" readonly>
-        </div>
-        <div class="form-field">
-          <label class="form-label">Fondo inicial de caja (€)</label>
-          <input type="number" class="form-input" id="fondo-inicial" placeholder="0,00" step="0.01">
-        </div>
-        <div class="form-field">
-          <label class="form-label">Observaciones</label>
-          <textarea class="form-input" rows="3" placeholder="Notas sobre la apertura..."></textarea>
-        </div>
-        <button class="btn-login" onclick="abrirCaja()" style="margin-top:20px">
-          Abrir Caja
-        </button>
       </div>
-    </div>
-  </div>
-</div>
+
+      <!-- ══ SCREEN 6: AUTOSERVICIO ══ -->
+      <div id="screen-autoservicio" class="screen">
+        <div class="topbar">
+          <div class="topbar-brand">
+            <span class="topbar-name">Autoservicio</span>
+            <span class="topbar-date">Pedidos desde QR / App</span>
+          </div>
+          <div class="topbar-nav">
+            <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+              </svg>
+              Mesas
+            </button>
+            <button class="nav-item" onclick="navigateTo('screen-pedidos', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+              </svg>
+              Pedidos
+            </button>
+            <button class="nav-item active" onclick="navigateTo('screen-autoservicio', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+              </svg>
+              Autoservicio
+            </button>
+            <button class="nav-item" onclick="navigateTo('screen-gestion', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+              Gestión
+            </button>
+          </div>
+          <div class="topbar-actions">
+            <button class="btn-caja" onclick="navigateTo('screen-caja', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="6" width="20" height="14" rx="2" />
+                <line x1="12" y1="10" x2="12" y2="16" />
+                <line x1="9" y1="13" x2="15" y2="13" />
+              </svg>
+              Abrir Caja
+            </button>
+            <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
+          </div>
+        </div>
+
+        <div class="page-container">
+          <div class="autos-layout">
+            <section class="autos-left">
+              <div class="autos-tabs" id="autos-tabs">
+                <button class="autos-tab active" data-tab="all">Todo</button>
+                <button class="autos-tab" data-tab="new">Nuevos</button>
+                <button class="autos-tab" data-tab="preparing">Preparando</button>
+                <button class="autos-tab" data-tab="ready">Listos</button>
+                <button class="autos-tab" data-tab="closed">Cerrados</button>
+              </div>
+              <div class="autos-kpis">
+                <div class="kpi-card">
+                  <div class="kpi-label">Conectados</div>
+                  <div class="kpi-value" id="autos-kpi-connected">0</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">En Cola</div>
+                  <div class="kpi-value" id="autos-kpi-queue">0</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">Listos</div>
+                  <div class="kpi-value" id="autos-kpi-ready">0</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">Facturado</div>
+                  <div class="kpi-value" id="autos-kpi-revenue">0,00€</div>
+                </div>
+              </div>
+              <div class="autos-toolbar">
+                <select class="pedidos-input" id="autos-filter-status">
+                  <option value="all">Todos los estados</option>
+                  <option value="open">Abiertos</option>
+                  <option value="invoiced">Cerrados</option>
+                  <option value="cancelled">Cancelados</option>
+                </select>
+                <select class="pedidos-input" id="autos-filter-prep">
+                  <option value="all">Todas las fases</option>
+                  <option value="new">Nuevo</option>
+                  <option value="preparing">Preparando</option>
+                  <option value="ready">Listo</option>
+                  <option value="delivered">Entregado</option>
+                </select>
+                <input class="pedidos-input" id="autos-filter-search" type="text"
+                  placeholder="Buscar por pedido, cliente o ticket">
+                <button class="btn-icon" id="autos-filter-reset" title="Reset filtros">↺</button>
+              </div>
+              <div class="autos-list-wrap">
+                <div class="autos-list-head">
+                  <div>Pedido</div>
+                  <div>Canal</div>
+                  <div>Total</div>
+                  <div>Fase</div>
+                </div>
+                <div class="autos-list" id="autos-list"></div>
+                <div class="autos-empty" id="autos-empty">No hay pedidos de autoservicio con esos filtros.</div>
+              </div>
+            </section>
+
+            <aside class="autos-detail">
+              <div class="autos-detail-empty" id="autos-detail-empty">Selecciona un pedido de autoservicio para ver
+                detalle.</div>
+              <div id="autos-detail-content" style="display:none;flex-direction:column;height:100%">
+                <div class="autos-detail-head">
+                  <div>
+                    <div class="autos-detail-title" id="autos-detail-title">#QR-1021</div>
+                    <div class="autos-detail-sub" id="autos-detail-sub">Nuevo · Hace 4 min</div>
+                  </div>
+                  <div class="autos-detail-total" id="autos-detail-total">0,00€</div>
+                </div>
+                <div class="autos-lines" id="autos-lines"></div>
+                <div class="pedido-detail-summary">
+                  <div class="pedido-summary-row"><span>Subtotal</span><span id="autos-sum-sub">0,00€</span></div>
+                  <div class="pedido-summary-row"><span>Impuestos</span><span id="autos-sum-tax">0,00€</span></div>
+                  <div class="pedido-summary-row total"><span>Total</span><span id="autos-sum-total">0,00€</span></div>
+                </div>
+                <div class="autos-actions">
+                  <button class="btn-small" id="autos-action-accept">Aceptar pedido</button>
+                  <button class="btn-small" id="autos-action-ready">Marcar listo</button>
+                  <button class="btn-small primary" id="autos-action-deliver">Entregar y cobrar</button>
+                  <button class="btn-small" id="autos-action-cancel">Cancelar</button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN 7: GESTIÓN ══ -->
+      <div id="screen-gestion" class="screen">
+        <div class="topbar">
+          <div class="topbar-brand">
+            <span class="topbar-name">Gestión</span>
+            <span class="topbar-date">Configuración del sistema</span>
+          </div>
+          <div class="topbar-nav">
+            <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+              </svg>
+              Mesas
+            </button>
+            <button class="nav-item" onclick="navigateTo('screen-pedidos', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+              </svg>
+              Pedidos
+            </button>
+            <button class="nav-item" onclick="navigateTo('screen-autoservicio', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+              </svg>
+              Autoservicio
+            </button>
+            <button class="nav-item active" onclick="navigateTo('screen-gestion', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+              Gestión
+            </button>
+          </div>
+          <div class="topbar-actions">
+            <button class="btn-caja" onclick="navigateTo('screen-caja', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="6" width="20" height="14" rx="2" />
+                <line x1="12" y1="10" x2="12" y2="16" />
+                <line x1="9" y1="13" x2="15" y2="13" />
+              </svg>
+              Abrir Caja
+            </button>
+            <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
+          </div>
+        </div>
+        <div class="page-container">
+          <div class="gestion-layout">
+            <aside class="gestion-restaurants">
+              <div class="gestion-panel-head">
+                <div class="gestion-panel-title">Restaurantes registrados</div>
+                <div class="gestion-panel-sub">Selecciona un restaurante para gestionar su configuración.</div>
+              </div>
+              <div class="gestion-list" id="gestion-restaurants-list"></div>
+            </aside>
+
+            <section class="gestion-workspace">
+              <div class="gestion-workspace-top">
+                <div class="gestion-workspace-title" id="gestion-selected-title">Selecciona un restaurante</div>
+                <div class="gestion-workspace-sub" id="gestion-selected-sub">Aquí aparecerán las entidades disponibles para su gestión.</div>
+                <div class="gestion-entity-tabs" id="gestion-entity-tabs"></div>
+              </div>
+              <div class="gestion-workspace-body" id="gestion-workspace-body"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ SCREEN 8: ABRIR CAJA ══ -->
+      <div id="screen-caja" class="screen">
+        <div class="topbar">
+          <div class="topbar-brand">
+            <span class="topbar-name">Apertura de Caja</span>
+            <span class="topbar-date">Nueva sesión</span>
+          </div>
+          <div class="topbar-nav">
+            <button class="nav-item" onclick="navigateTo('screen-mesas', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+              </svg>
+              Mesas
+            </button>
+            <button class="nav-item" onclick="navigateTo('screen-pedidos', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+                <line x1="3" y1="6" x2="21" y2="6" />
+              </svg>
+              Pedidos
+            </button>
+            <button class="nav-item" onclick="navigateTo('screen-autoservicio', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+              </svg>
+              Autoservicio
+            </button>
+            <button class="nav-item" onclick="navigateTo('screen-gestion', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
+              </svg>
+              Gestión
+            </button>
+          </div>
+          <div class="topbar-actions">
+            <button class="btn-caja" onclick="navigateTo('screen-caja', this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="6" width="20" height="14" rx="2" />
+                <line x1="12" y1="10" x2="12" y2="16" />
+                <line x1="9" y1="13" x2="15" y2="13" />
+              </svg>
+              Abrir Caja
+            </button>
+            <div class="user-avatar-sm" onclick="showScreen('screen-login')">MA</div>
+          </div>
+        </div>
+        <div class="page-container">
+          <div style="max-width:500px;margin:0 auto">
+            <div class="panel">
+              <div class="panel-title">Información de apertura</div>
+              <div class="form-field">
+                <label class="form-label">Cajero/a</label>
+                <input type="text" class="form-input" value="María" readonly>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Fecha y hora</label>
+                <input type="text" class="form-input" id="fecha-hora" readonly>
+              </div>
+              <div class="form-field">
+                <label class="form-label">Fondo inicial de caja (€)</label>
+                <input type="number" class="form-input" id="fondo-inicial" placeholder="0,00" step="0.01">
+              </div>
+              <div class="form-field">
+                <label class="form-label">Observaciones</label>
+                <textarea class="form-input" rows="3" placeholder="Notas sobre la apertura..."></textarea>
+              </div>
+              <button class="btn-login" onclick="abrirCaja()" style="margin-top:20px">Abrir Caja</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <!-- ══ REGISTER MODAL ══ -->
       <div class="modal-overlay" id="modal-register" onclick="closeModalOutside(event, 'modal-register')">
@@ -3272,8 +3295,8 @@
         </div>
       </div>
 
-    </div><!-- tablet -->
-  </div><!-- frame -->
+    </div>
+  </div>
 
   <script>
     // ── DATA ──
@@ -3353,17 +3376,9 @@
 
     const mockOrders = [
       {
-        id: 101,
-        uuid: 'ord-101-a2',
-        restaurant_id: 1,
-        status: 'open',
-        table_id: 9,
-        opened_by_user_id: 1,
-        closed_by_user_id: null,
-        diners: 4,
-        opened_at: '2026-03-25T13:20:00',
-        closed_at: null,
-        ticket_number: null,
+        id: 101, uuid: 'ord-101-a2', restaurant_id: 1, status: 'open',
+        table_id: 9, opened_by_user_id: 1, closed_by_user_id: null, diners: 4,
+        opened_at: '2026-03-25T13:20:00', closed_at: null, ticket_number: null,
         order_lines: [
           { id: 1, product_id: 21, user_id: 1, name: 'Coca Cola Zero', quantity: 4, price: 220, tax_percentage: 10 },
           { id: 2, product_id: 31, user_id: 1, name: 'Burger de Retinto', quantity: 3, price: 1450, tax_percentage: 10 },
@@ -3371,84 +3386,44 @@
         ],
       },
       {
-        id: 102,
-        uuid: 'ord-102-b1',
-        restaurant_id: 1,
-        status: 'open',
-        table_id: 2,
-        opened_by_user_id: 2,
-        closed_by_user_id: null,
-        diners: 2,
-        opened_at: '2026-03-25T13:35:00',
-        closed_at: null,
-        ticket_number: null,
+        id: 102, uuid: 'ord-102-b1', restaurant_id: 1, status: 'open',
+        table_id: 2, opened_by_user_id: 2, closed_by_user_id: null, diners: 2,
+        opened_at: '2026-03-25T13:35:00', closed_at: null, ticket_number: null,
         order_lines: [
           { id: 4, product_id: 19, user_id: 2, name: 'Paulaner', quantity: 2, price: 300, tax_percentage: 10 },
           { id: 5, product_id: 22, user_id: 2, name: 'Tyskie', quantity: 2, price: 300, tax_percentage: 10 },
         ],
       },
       {
-        id: 103,
-        uuid: 'ord-103-c4',
-        restaurant_id: 1,
-        status: 'invoiced',
-        table_id: 4,
-        opened_by_user_id: 3,
-        closed_by_user_id: 1,
-        diners: 3,
-        opened_at: '2026-03-25T12:50:00',
-        closed_at: '2026-03-25T13:25:00',
-        ticket_number: 3802,
+        id: 103, uuid: 'ord-103-c4', restaurant_id: 1, status: 'invoiced',
+        table_id: 4, opened_by_user_id: 3, closed_by_user_id: 1, diners: 3,
+        opened_at: '2026-03-25T12:50:00', closed_at: '2026-03-25T13:25:00', ticket_number: 3802,
         order_lines: [
           { id: 6, product_id: 8, user_id: 3, name: 'Tostada Entera', quantity: 3, price: 300, tax_percentage: 10 },
           { id: 7, product_id: 7, user_id: 3, name: 'Café con Leche', quantity: 3, price: 180, tax_percentage: 10 },
         ],
       },
       {
-        id: 104,
-        uuid: 'ord-104-d5',
-        restaurant_id: 1,
-        status: 'cancelled',
-        table_id: 11,
-        opened_by_user_id: 1,
-        closed_by_user_id: 1,
-        diners: 1,
-        opened_at: '2026-03-25T11:15:00',
-        closed_at: '2026-03-25T11:30:00',
-        ticket_number: null,
+        id: 104, uuid: 'ord-104-d5', restaurant_id: 1, status: 'cancelled',
+        table_id: 11, opened_by_user_id: 1, closed_by_user_id: 1, diners: 1,
+        opened_at: '2026-03-25T11:15:00', closed_at: '2026-03-25T11:30:00', ticket_number: null,
         order_lines: [
           { id: 8, product_id: 51, user_id: 1, name: 'Zumo Natural', quantity: 1, price: 350, tax_percentage: 10 },
         ],
       },
       {
-        id: 105,
-        uuid: 'ord-105-e8',
-        restaurant_id: 1,
-        status: 'open',
-        table_id: 8,
-        opened_by_user_id: 2,
-        closed_by_user_id: null,
-        diners: 5,
-        opened_at: '2026-03-25T13:05:00',
-        closed_at: null,
-        ticket_number: null,
+        id: 105, uuid: 'ord-105-e8', restaurant_id: 1, status: 'open',
+        table_id: 8, opened_by_user_id: 2, closed_by_user_id: null, diners: 5,
+        opened_at: '2026-03-25T13:05:00', closed_at: null, ticket_number: null,
         order_lines: [
           { id: 9, product_id: 22, user_id: 2, name: 'Aquarius Limón', quantity: 5, price: 250, tax_percentage: 10 },
           { id: 10, product_id: 32, user_id: 2, name: 'Entrecot a la Brasa', quantity: 2, price: 2200, tax_percentage: 10 },
         ],
       },
       {
-        id: 106,
-        uuid: 'ord-106-f2',
-        restaurant_id: 1,
-        status: 'invoiced',
-        table_id: 1,
-        opened_by_user_id: 3,
-        closed_by_user_id: 3,
-        diners: 2,
-        opened_at: '2026-03-25T10:40:00',
-        closed_at: '2026-03-25T11:05:00',
-        ticket_number: 3800,
+        id: 106, uuid: 'ord-106-f2', restaurant_id: 1, status: 'invoiced',
+        table_id: 1, opened_by_user_id: 3, closed_by_user_id: 3, diners: 2,
+        opened_at: '2026-03-25T10:40:00', closed_at: '2026-03-25T11:05:00', ticket_number: 3800,
         order_lines: [
           { id: 11, product_id: 19, user_id: 3, name: 'Paulaner', quantity: 2, price: 300, tax_percentage: 10 },
           { id: 12, product_id: 1, user_id: 3, name: 'Ensaladilla Gambas', quantity: 1, price: 600, tax_percentage: 10 },
@@ -3457,116 +3432,55 @@
     ];
 
     const pedidosState = {
-      tab: 'all',
-      status: 'all',
-      zone: 'all',
-      user: 'all',
-      date: '',
-      search: '',
-      selectedOrderId: null,
+      tab: 'all', status: 'all', zone: 'all', user: 'all', date: '', search: '', selectedOrderId: null,
     };
 
     const mockAutoservicioOrders = [
       {
-        id: 301,
-        uuid: 'as-ord-301',
-        restaurant_id: 1,
-        status: 'open',
-        table_id: 30,
-        opened_by_user_id: 2,
-        closed_by_user_id: null,
-        diners: 2,
-        opened_at: '2026-03-25T13:46:00',
-        closed_at: null,
-        ticket_number: null,
-        prep_status: 'new',
-        channel: 'QR mesa',
-        customer_alias: 'Cliente QR #1021',
-        active_users: 12,
+        id: 301, uuid: 'as-ord-301', restaurant_id: 1, status: 'open',
+        table_id: 30, opened_by_user_id: 2, closed_by_user_id: null, diners: 2,
+        opened_at: '2026-03-25T13:46:00', closed_at: null, ticket_number: null,
+        prep_status: 'new', channel: 'QR mesa', customer_alias: 'Cliente QR #1021', active_users: 12,
         order_lines: [
           { id: 21, product_id: 4, user_id: 2, name: 'Coca Cola Zero', quantity: 2, price: 220, tax_percentage: 10 },
           { id: 22, product_id: 11, user_id: 2, name: 'Ensaladilla de Gambas', quantity: 1, price: 600, tax_percentage: 10 },
         ],
       },
       {
-        id: 302,
-        uuid: 'as-ord-302',
-        restaurant_id: 1,
-        status: 'open',
-        table_id: 29,
-        opened_by_user_id: 3,
-        closed_by_user_id: null,
-        diners: 1,
-        opened_at: '2026-03-25T13:31:00',
-        closed_at: null,
-        ticket_number: null,
-        prep_status: 'preparing',
-        channel: 'Web app',
-        customer_alias: 'Takeaway móvil',
-        active_users: 12,
+        id: 302, uuid: 'as-ord-302', restaurant_id: 1, status: 'open',
+        table_id: 29, opened_by_user_id: 3, closed_by_user_id: null, diners: 1,
+        opened_at: '2026-03-25T13:31:00', closed_at: null, ticket_number: null,
+        prep_status: 'preparing', channel: 'Web app', customer_alias: 'Takeaway móvil', active_users: 12,
         order_lines: [
           { id: 23, product_id: 31, user_id: 3, name: 'Burger de Retinto', quantity: 1, price: 1450, tax_percentage: 10 },
           { id: 24, product_id: 2, user_id: 3, name: 'Paulaner', quantity: 1, price: 300, tax_percentage: 10 },
         ],
       },
       {
-        id: 303,
-        uuid: 'as-ord-303',
-        restaurant_id: 1,
-        status: 'open',
-        table_id: 28,
-        opened_by_user_id: 1,
-        closed_by_user_id: null,
-        diners: 3,
-        opened_at: '2026-03-25T13:12:00',
-        closed_at: null,
-        ticket_number: null,
-        prep_status: 'ready',
-        channel: 'QR terraza',
-        customer_alias: 'Cliente QR #1045',
-        active_users: 12,
+        id: 303, uuid: 'as-ord-303', restaurant_id: 1, status: 'open',
+        table_id: 28, opened_by_user_id: 1, closed_by_user_id: null, diners: 3,
+        opened_at: '2026-03-25T13:12:00', closed_at: null, ticket_number: null,
+        prep_status: 'ready', channel: 'QR terraza', customer_alias: 'Cliente QR #1045', active_users: 12,
         order_lines: [
           { id: 25, product_id: 10, user_id: 1, name: 'Entrecot a la Brasa', quantity: 1, price: 2200, tax_percentage: 10 },
           { id: 26, product_id: 5, user_id: 1, name: 'Aquarius Limón', quantity: 2, price: 250, tax_percentage: 10 },
         ],
       },
       {
-        id: 304,
-        uuid: 'as-ord-304',
-        restaurant_id: 1,
-        status: 'invoiced',
-        table_id: 27,
-        opened_by_user_id: 2,
-        closed_by_user_id: 2,
-        diners: 2,
-        opened_at: '2026-03-25T12:20:00',
-        closed_at: '2026-03-25T12:55:00',
-        ticket_number: 3901,
-        prep_status: 'delivered',
-        channel: 'Web app',
-        customer_alias: 'Recogida local',
-        active_users: 12,
+        id: 304, uuid: 'as-ord-304', restaurant_id: 1, status: 'invoiced',
+        table_id: 27, opened_by_user_id: 2, closed_by_user_id: 2, diners: 2,
+        opened_at: '2026-03-25T12:20:00', closed_at: '2026-03-25T12:55:00', ticket_number: 3901,
+        prep_status: 'delivered', channel: 'Web app', customer_alias: 'Recogida local', active_users: 12,
         order_lines: [
           { id: 27, product_id: 8, user_id: 2, name: 'Tostada Entera', quantity: 2, price: 300, tax_percentage: 10 },
           { id: 28, product_id: 7, user_id: 2, name: 'Café con Leche', quantity: 2, price: 180, tax_percentage: 10 },
         ],
       },
       {
-        id: 305,
-        uuid: 'as-ord-305',
-        restaurant_id: 1,
-        status: 'cancelled',
-        table_id: 26,
-        opened_by_user_id: 1,
-        closed_by_user_id: 1,
-        diners: 1,
-        opened_at: '2026-03-25T12:40:00',
-        closed_at: '2026-03-25T12:45:00',
-        ticket_number: null,
-        prep_status: 'cancelled',
-        channel: 'QR barra',
-        customer_alias: 'Cliente QR #1088',
-        active_users: 12,
+        id: 305, uuid: 'as-ord-305', restaurant_id: 1, status: 'cancelled',
+        table_id: 26, opened_by_user_id: 1, closed_by_user_id: 1, diners: 1,
+        opened_at: '2026-03-25T12:40:00', closed_at: '2026-03-25T12:45:00', ticket_number: null,
+        prep_status: 'cancelled', channel: 'QR barra', customer_alias: 'Cliente QR #1088', active_users: 12,
         order_lines: [
           { id: 29, product_id: 12, user_id: 1, name: 'Zumo Natural', quantity: 1, price: 350, tax_percentage: 10 },
         ],
@@ -3574,14 +3488,55 @@
     ];
 
     const autoservicioState = {
-      tab: 'all',
-      status: 'all',
-      prep: 'all',
-      search: '',
-      selectedOrderId: null,
+      tab: 'all', status: 'all', prep: 'all', search: '', selectedOrderId: null,
     };
 
-    // ── NAVEGACIÓN MEJORADA ──
+    // ── DASHBOARD HOME ──
+    function renderDashboard() {
+      // Barras por hora
+      const hourData = [
+        { h: '09h', v: 42 }, { h: '10h', v: 88 }, { h: '11h', v: 130 },
+        { h: '12h', v: 210 }, { h: '13h', v: 280 }, { h: '14h', v: 195, current: true },
+        { h: '15h', v: 0 }, { h: '16h', v: 0 }, { h: '17h', v: 0 },
+      ];
+      const maxV = Math.max(...hourData.map(d => d.v), 1);
+      const barsEl = document.getElementById('dash-bars');
+      if (barsEl) {
+        barsEl.innerHTML = hourData.map(d => {
+          const pct = Math.round((d.v / maxV) * 100);
+          const cls = d.current ? 'current' : (d.v > 0 ? 'past' : '');
+          return `<div class="dash-bar-wrap">
+            <div class="dash-bar ${cls}" style="height:${pct}%"></div>
+            <div class="dash-bar-label">${d.h}</div>
+          </div>`;
+        }).join('');
+      }
+
+      // Últimos tickets
+      const recentTickets = [
+        { mesa: 'T4', items: 'Entrecot × 2 + Vino', amount: '49,50€', time: 'hace 8 min', bg: 'rgba(26,158,90,0.15)', icon: '✓' },
+        { mesa: 'B2', items: 'Paulaner × 4', amount: '13,20€', time: 'hace 22 min', bg: 'rgba(26,111,232,0.15)', icon: '🍺' },
+        { mesa: 'T2', items: 'Tostada + Café × 3', amount: '14,40€', time: 'hace 35 min', bg: 'rgba(255,77,77,0.15)', icon: '☕' },
+      ];
+
+      const ticketsEl = document.getElementById('dash-tickets');
+      if (ticketsEl) {
+        ticketsEl.innerHTML = recentTickets.map(t => `
+          <div class="dash-ticket-row">
+            <div class="dash-ticket-left">
+              <div class="dash-ticket-icon" style="background:${t.bg}">${t.icon}</div>
+              <div>
+                <div class="dash-ticket-name">Mesa ${t.mesa} · ${t.items}</div>
+                <div class="dash-ticket-time">${t.time}</div>
+              </div>
+            </div>
+            <div class="dash-ticket-amount">${t.amount}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // ── NAVEGACIÓN ──
     function showScreen(id) {
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(id).classList.add('active');
@@ -3591,35 +3546,21 @@
     function syncActiveNav(screenId) {
       document.querySelectorAll('.topbar-nav .nav-item').forEach(btn => {
         const action = btn.getAttribute('onclick') || '';
-        const isTarget = action.includes(`navigateTo('${screenId}'`);
-        btn.classList.toggle('active', isTarget);
+        btn.classList.toggle('active', action.includes(`navigateTo('${screenId}'`));
       });
     }
 
     function navigateTo(screenId, buttonElement) {
       showScreen(screenId);
-
-      if (screenId === 'screen-pedidos') {
-        renderPedidosScreen();
-      }
-
-      if (screenId === 'screen-autoservicio') {
-        renderAutoservicioScreen();
-      }
+      if (screenId === 'screen-pedidos') renderPedidosScreen();
+      if (screenId === 'screen-autoservicio') renderAutoservicioScreen();
+      if (screenId === 'screen-gestion') renderGestionScreen();
     }
 
     // ── MODAL ──
-    function showModal(id) {
-      document.getElementById(id).classList.add('open');
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).classList.remove('open');
-    }
-
-    function closeModalOutside(e, id) {
-      if (e.target.classList.contains('modal-overlay')) closeModal(id);
-    }
+    function showModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    function closeModalOutside(e, id) { if (e.target.classList.contains('modal-overlay')) closeModal(id); }
 
     // ── PIN ──
     function pinKey(k) {
@@ -3629,10 +3570,7 @@
       if (pinValue.length === 4) setTimeout(() => pinEnter(), 300);
     }
 
-    function pinDel() {
-      pinValue = pinValue.slice(0, -1);
-      updateDots();
-    }
+    function pinDel() { pinValue = pinValue.slice(0, -1); updateDots(); }
 
     function updateDots() {
       for (let i = 0; i < 4; i++) {
@@ -3642,11 +3580,7 @@
     }
 
     function pinEnter() {
-      if (pinValue.length > 0) {
-        showScreen('screen-mesas');
-        pinValue = '';
-        updateDots();
-      }
+      if (pinValue.length > 0) { showScreen('screen-mesas'); pinValue = ''; updateDots(); }
     }
 
     function selectUser(el, initials) {
@@ -3682,15 +3616,9 @@
     }
 
     function selectTable(idx, name, zone) {
-      // Update visual selection
-      document.querySelectorAll('.mesa').forEach((m, i) => {
-        m.classList.remove('selected');
-      });
+      document.querySelectorAll('.mesa').forEach(m => m.classList.remove('selected'));
       const cards = document.querySelectorAll('.mesa');
-      if (cards[idx]) {
-        if (!cards[idx].classList.contains('cobrar')) cards[idx].classList.add('selected');
-      }
-
+      if (cards[idx] && !cards[idx].classList.contains('cobrar')) cards[idx].classList.add('selected');
       selectedTable = name;
       showOrderPanel(name, zone, tables[idx]);
     }
@@ -3698,9 +3626,7 @@
     function showOrderPanel(name, zone, table) {
       const orderEmpty = document.getElementById('order-empty');
       const orderContent = document.getElementById('order-content');
-      
       if (!orderEmpty || !orderContent) return;
-      
       orderEmpty.style.display = 'none';
       orderContent.style.display = 'flex';
 
@@ -3709,10 +3635,7 @@
         document.getElementById('order-panel-sub').textContent = 'Mesa libre';
         document.getElementById('order-panel-total').textContent = '0,00€';
         document.getElementById('order-lines-list').innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray-400);font-size:13px">Mesa vacía</div>`;
-        document.getElementById('sum-sub').textContent = '0,00€';
-        document.getElementById('sum-tax').textContent = '0,00€';
-        document.getElementById('sum-tax2').textContent = '0,00€';
-        document.getElementById('sum-total').textContent = '0,00€';
+        ['sum-sub', 'sum-tax', 'sum-tax2', 'sum-total'].forEach(id => document.getElementById(id).textContent = '0,00€');
         return;
       }
 
@@ -3720,8 +3643,7 @@
       document.getElementById('order-panel-sub').textContent = 'hace 5 días · 4 comensales';
       document.getElementById('order-panel-total').textContent = table.amount || '0,00€';
 
-      const lines = document.getElementById('order-lines-list');
-      lines.innerHTML = orderLines.map(l => `
+      document.getElementById('order-lines-list').innerHTML = orderLines.map(l => `
         <div class="order-line">
           <div class="order-line-qty">${l.qty}</div>
           <div class="order-line-info">
@@ -3758,15 +3680,9 @@
     function getOrderTotals(order) {
       const subtotal = order.order_lines.reduce((acc, line) => acc + (line.price * line.quantity), 0);
       const tax = order.order_lines.reduce((acc, line) => {
-        const lineSubtotal = line.price * line.quantity;
-        return acc + Math.round(lineSubtotal * (line.tax_percentage / 100));
+        return acc + Math.round(line.price * line.quantity * (line.tax_percentage / 100));
       }, 0);
-
-      return {
-        subtotal,
-        tax,
-        total: subtotal + tax,
-      };
+      return { subtotal, tax, total: subtotal + tax };
     }
 
     function statusLabel(status) {
@@ -3779,14 +3695,10 @@
       const now = new Date('2026-03-25T14:00:00');
       const then = new Date(dateString);
       const diffMinutes = Math.max(1, Math.floor((now - then) / 60000));
-
       if (diffMinutes < 60) return `Hace ${diffMinutes} min`;
-
       const diffHours = Math.floor(diffMinutes / 60);
       if (diffHours < 24) return `Hace ${diffHours} h`;
-
-      const diffDays = Math.floor(diffHours / 24);
-      return `Hace ${diffDays} d`;
+      return `Hace ${Math.floor(diffHours / 24)} d`;
     }
 
     function filteredOrders() {
@@ -3803,28 +3715,23 @@
         if (pedidosState.tab === 'cancelled') matchTab = order.status === 'cancelled';
         if (pedidosState.tab === 'to-charge') matchTab = order.status === 'open' && totals.total >= 3000;
 
-        const matchStatus = pedidosState.status === 'all' || order.status === pedidosState.status;
-        const matchZone = pedidosState.zone === 'all' || table.zone === pedidosState.zone;
-        const matchUser = pedidosState.user === 'all' || String(order.opened_by_user_id) === pedidosState.user;
-        const matchDate = !pedidosState.date || order.opened_at.startsWith(pedidosState.date);
-        const matchSearch = !q
-          || table.name.toLowerCase().includes(q)
-          || order.uuid.toLowerCase().includes(q)
-          || ticketText.includes(q)
-          || openerName.toLowerCase().includes(q);
-
-        return matchTab && matchStatus && matchZone && matchUser && matchDate && matchSearch;
+        return matchTab
+          && (pedidosState.status === 'all' || order.status === pedidosState.status)
+          && (pedidosState.zone === 'all' || table.zone === pedidosState.zone)
+          && (pedidosState.user === 'all' || String(order.opened_by_user_id) === pedidosState.user)
+          && (!pedidosState.date || order.opened_at.startsWith(pedidosState.date))
+          && (!q || table.name.toLowerCase().includes(q) || order.uuid.toLowerCase().includes(q)
+            || ticketText.includes(q) || openerName.toLowerCase().includes(q));
       });
     }
 
     function renderPedidosKpis() {
       const openCount = mockOrders.filter(o => o.status === 'open').length;
       const invoicedCount = mockOrders.filter(o => o.status === 'invoiced').length;
-      const paraCobrar = mockOrders.filter(o => o.status === 'open').filter(o => getOrderTotals(o).total >= 3000).length;
+      const paraCobrar = mockOrders.filter(o => o.status === 'open' && getOrderTotals(o).total >= 3000).length;
       const invoicedOrders = mockOrders.filter(o => o.status === 'invoiced');
-      const totalInvoiced = invoicedOrders.reduce((acc, order) => acc + getOrderTotals(order).total, 0);
+      const totalInvoiced = invoicedOrders.reduce((acc, o) => acc + getOrderTotals(o).total, 0);
       const avgTicket = invoicedOrders.length ? Math.round(totalInvoiced / invoicedOrders.length) : 0;
-
       document.getElementById('kpi-open').textContent = String(openCount);
       document.getElementById('kpi-invoiced').textContent = String(invoicedCount);
       document.getElementById('kpi-para-cobrar').textContent = String(paraCobrar);
@@ -3835,7 +3742,6 @@
       const container = document.getElementById('pedidos-list');
       const empty = document.getElementById('pedidos-empty');
       if (!container || !empty) return;
-
       const orders = filteredOrders();
       if (!orders.length) {
         container.innerHTML = '';
@@ -3843,14 +3749,12 @@
         showPedidoDetail(null);
         return;
       }
-
       empty.style.display = 'none';
       container.innerHTML = orders.map(order => {
         const table = getTableRecordById(order.table_id);
         const opener = getUserName(order.opened_by_user_id);
         const totals = getOrderTotals(order);
         const activeClass = pedidosState.selectedOrderId === order.id ? 'active' : '';
-
         return `<div class="pedido-row ${activeClass}" onclick="selectPedido(${order.id})">
           <div class="pedido-main">
             <div class="pedido-main-title">Mesa ${table.name} · ${table.zone}</div>
@@ -3862,244 +3766,119 @@
         </div>`;
       }).join('');
 
-      const selectedVisible = orders.some(o => o.id === pedidosState.selectedOrderId);
-      if (!selectedVisible) {
+      if (!orders.some(o => o.id === pedidosState.selectedOrderId)) {
         pedidosState.selectedOrderId = orders[0].id;
       }
-
-      showPedidoDetail(mockOrders.find(order => order.id === pedidosState.selectedOrderId) || null);
-      container.querySelectorAll('.pedido-row').forEach(row => {
-        if (Number(row.getAttribute('onclick')?.match(/\d+/)?.[0]) === pedidosState.selectedOrderId) {
-          row.classList.add('active');
-        }
-      });
+      showPedidoDetail(mockOrders.find(o => o.id === pedidosState.selectedOrderId) || null);
     }
 
     function showPedidoDetail(order) {
       const empty = document.getElementById('pedido-detail-empty');
       const content = document.getElementById('pedido-detail-content');
       if (!empty || !content) return;
-
-      if (!order) {
-        empty.style.display = 'flex';
-        content.style.display = 'none';
-        return;
-      }
-
+      if (!order) { empty.style.display = 'flex'; content.style.display = 'none'; return; }
       empty.style.display = 'none';
       content.style.display = 'flex';
-
       const table = getTableRecordById(order.table_id);
       const opener = getUserName(order.opened_by_user_id);
       const totals = getOrderTotals(order);
-
       document.getElementById('pedido-detail-title').textContent = `Mesa ${table.name} · ${table.zone}`;
       document.getElementById('pedido-detail-sub').textContent = `${statusLabel(order.status)} · ${timeAgo(order.opened_at)} · ${opener} · ${order.diners} comensales · ${order.uuid}${order.ticket_number ? ` · #${order.ticket_number}` : ''}`;
       document.getElementById('pedido-detail-total').textContent = fmt(totals.total);
-
-      const linesContainer = document.getElementById('pedido-detail-lines');
-      linesContainer.innerHTML = order.order_lines.map(line => {
-        const lineSubtotal = line.price * line.quantity;
-        const lineTotal = lineSubtotal + Math.round(lineSubtotal * (line.tax_percentage / 100));
-
+      document.getElementById('pedido-detail-lines').innerHTML = order.order_lines.map(line => {
+        const lineTotal = line.price * line.quantity + Math.round(line.price * line.quantity * line.tax_percentage / 100);
         return `<div class="pedido-detail-line">
           <div class="pedido-line-qty">${line.quantity}</div>
           <div>
             <div class="pedido-line-name">${line.name}</div>
-            <div class="pedido-line-meta">IVA ${line.tax_percentage}% · Añadido por ${getUserName(line.user_id)}</div>
+            <div class="pedido-line-meta">IVA ${line.tax_percentage}% · ${getUserName(line.user_id)}</div>
           </div>
           <div class="pedido-line-price">${fmt(lineTotal)}</div>
         </div>`;
       }).join('');
-
       document.getElementById('pedido-sum-sub').textContent = fmt(totals.subtotal);
       document.getElementById('pedido-sum-tax').textContent = fmt(totals.tax);
       document.getElementById('pedido-sum-total').textContent = fmt(totals.total);
-
       const canOperate = order.status === 'open';
-      const btnCobrar = document.getElementById('pedido-action-cobrar');
-      const btnCancel = document.getElementById('pedido-action-cancel');
-      const btnPrint = document.getElementById('pedido-action-print');
-      btnCobrar.disabled = !canOperate;
-      btnCancel.disabled = !canOperate;
-      btnPrint.disabled = !order.ticket_number && !canOperate;
+      document.getElementById('pedido-action-cobrar').disabled = !canOperate;
+      document.getElementById('pedido-action-cancel').disabled = !canOperate;
+      document.getElementById('pedido-action-print').disabled = !order.ticket_number && !canOperate;
     }
 
-    function selectPedido(orderId) {
-      pedidosState.selectedOrderId = orderId;
-      renderPedidosList();
-    }
+    function selectPedido(orderId) { pedidosState.selectedOrderId = orderId; renderPedidosList(); }
 
     function populatePedidosFilters() {
       const zoneSelect = document.getElementById('filter-zone');
       const userSelect = document.getElementById('filter-user');
       if (!zoneSelect || !userSelect) return;
-
       const uniqueZones = Array.from(new Set(tableRecords.map(t => t.zone)));
-      zoneSelect.innerHTML = '<option value="all">Todas las zonas</option>'
-        + uniqueZones.map(zone => `<option value="${zone}">${zone}</option>`).join('');
-
-      userSelect.innerHTML = '<option value="all">Todos los camareros</option>'
-        + users.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+      zoneSelect.innerHTML = '<option value="all">Todas las zonas</option>' + uniqueZones.map(z => `<option value="${z}">${z}</option>`).join('');
+      userSelect.innerHTML = '<option value="all">Todos los camareros</option>' + users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
     }
 
     function bindPedidosEvents() {
+      const bind = (id, event, fn) => {
+        const el = document.getElementById(id);
+        if (el && !el.dataset.bound) { el.dataset.bound = '1'; el.addEventListener(event, fn); }
+      };
       const tabsEl = document.getElementById('pedidos-tabs');
-      const statusEl = document.getElementById('filter-status');
-      const zoneEl = document.getElementById('filter-zone');
-      const userEl = document.getElementById('filter-user');
-      const dateEl = document.getElementById('filter-date');
-      const searchEl = document.getElementById('filter-search');
-      const resetEl = document.getElementById('filter-reset');
-      const openMesaEl = document.getElementById('pedido-action-openmesa');
-      const printEl = document.getElementById('pedido-action-print');
-      const cobrarEl = document.getElementById('pedido-action-cobrar');
-      const cancelEl = document.getElementById('pedido-action-cancel');
-
       if (tabsEl && !tabsEl.dataset.bound) {
         tabsEl.dataset.bound = '1';
-        tabsEl.addEventListener('click', (event) => {
-          const btn = event.target.closest('.pedidos-tab');
+        tabsEl.addEventListener('click', e => {
+          const btn = e.target.closest('.pedidos-tab');
           if (!btn) return;
-
           pedidosState.tab = btn.dataset.tab || 'all';
-          tabsEl.querySelectorAll('.pedidos-tab').forEach(tab => tab.classList.remove('active'));
+          tabsEl.querySelectorAll('.pedidos-tab').forEach(t => t.classList.remove('active'));
           btn.classList.add('active');
           renderPedidosList();
         });
       }
-
-      if (statusEl && !statusEl.dataset.bound) {
-        statusEl.dataset.bound = '1';
-        statusEl.addEventListener('change', () => {
-          pedidosState.status = statusEl.value;
-          renderPedidosList();
-        });
-      }
-
-      if (zoneEl && !zoneEl.dataset.bound) {
-        zoneEl.dataset.bound = '1';
-        zoneEl.addEventListener('change', () => {
-          pedidosState.zone = zoneEl.value;
-          renderPedidosList();
-        });
-      }
-
-      if (userEl && !userEl.dataset.bound) {
-        userEl.dataset.bound = '1';
-        userEl.addEventListener('change', () => {
-          pedidosState.user = userEl.value;
-          renderPedidosList();
-        });
-      }
-
-      if (dateEl && !dateEl.dataset.bound) {
-        dateEl.dataset.bound = '1';
-        dateEl.addEventListener('change', () => {
-          pedidosState.date = dateEl.value;
-          renderPedidosList();
-        });
-      }
-
-      if (searchEl && !searchEl.dataset.bound) {
-        searchEl.dataset.bound = '1';
-        searchEl.addEventListener('input', () => {
-          pedidosState.search = searchEl.value;
-          renderPedidosList();
-        });
-      }
-
-      if (resetEl && !resetEl.dataset.bound) {
-        resetEl.dataset.bound = '1';
-        resetEl.addEventListener('click', () => {
-          pedidosState.tab = 'all';
-          pedidosState.status = 'all';
-          pedidosState.zone = 'all';
-          pedidosState.user = 'all';
-          pedidosState.date = '';
-          pedidosState.search = '';
-
-          statusEl.value = 'all';
-          zoneEl.value = 'all';
-          userEl.value = 'all';
-          dateEl.value = '';
-          searchEl.value = '';
-
-          document.querySelectorAll('.pedidos-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.tab === 'all');
-          });
-
-          renderPedidosList();
-        });
-      }
-
-      if (openMesaEl && !openMesaEl.dataset.bound) {
-        openMesaEl.dataset.bound = '1';
-        openMesaEl.addEventListener('click', () => {
-          showScreen('screen-mesas');
-        });
-      }
-
-      if (printEl && !printEl.dataset.bound) {
-        printEl.dataset.bound = '1';
-        printEl.addEventListener('click', () => {
-          const order = mockOrders.find(o => o.id === pedidosState.selectedOrderId);
-          if (!order) return;
-          alert(`🧾 Ticket enviado a impresora (${order.uuid})`);
-        });
-      }
-
-      if (cobrarEl && !cobrarEl.dataset.bound) {
-        cobrarEl.dataset.bound = '1';
-        cobrarEl.addEventListener('click', () => {
-          const order = mockOrders.find(o => o.id === pedidosState.selectedOrderId);
-          if (!order || order.status !== 'open') return;
-          order.status = 'invoiced';
-          order.closed_by_user_id = 1;
-          order.closed_at = '2026-03-25T14:00:00';
-          order.ticket_number = 3810 + (order.id % 10);
-          renderPedidosScreen();
-        });
-      }
-
-      if (cancelEl && !cancelEl.dataset.bound) {
-        cancelEl.dataset.bound = '1';
-        cancelEl.addEventListener('click', () => {
-          const order = mockOrders.find(o => o.id === pedidosState.selectedOrderId);
-          if (!order || order.status !== 'open') return;
-          order.status = 'cancelled';
-          order.closed_by_user_id = 1;
-          order.closed_at = '2026-03-25T14:00:00';
-          order.ticket_number = null;
-          renderPedidosScreen();
-        });
-      }
+      bind('filter-status', 'change', e => { pedidosState.status = e.target.value; renderPedidosList(); });
+      bind('filter-zone', 'change', e => { pedidosState.zone = e.target.value; renderPedidosList(); });
+      bind('filter-user', 'change', e => { pedidosState.user = e.target.value; renderPedidosList(); });
+      bind('filter-date', 'change', e => { pedidosState.date = e.target.value; renderPedidosList(); });
+      bind('filter-search', 'input', e => { pedidosState.search = e.target.value; renderPedidosList(); });
+      bind('filter-reset', 'click', () => {
+        Object.assign(pedidosState, { tab: 'all', status: 'all', zone: 'all', user: 'all', date: '', search: '' });
+        ['filter-status', 'filter-zone', 'filter-user'].forEach(id => document.getElementById(id).value = 'all');
+        document.getElementById('filter-date').value = '';
+        document.getElementById('filter-search').value = '';
+        document.querySelectorAll('.pedidos-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'all'));
+        renderPedidosList();
+      });
+      bind('pedido-action-openmesa', 'click', () => showScreen('screen-mesas'));
+      bind('pedido-action-print', 'click', () => {
+        const order = mockOrders.find(o => o.id === pedidosState.selectedOrderId);
+        if (order) alert(`🧾 Ticket enviado (${order.uuid})`);
+      });
+      bind('pedido-action-cobrar', 'click', () => {
+        const order = mockOrders.find(o => o.id === pedidosState.selectedOrderId);
+        if (!order || order.status !== 'open') return;
+        order.status = 'invoiced'; order.closed_by_user_id = 1;
+        order.closed_at = '2026-03-25T14:00:00'; order.ticket_number = 3810 + (order.id % 10);
+        renderPedidosScreen();
+      });
+      bind('pedido-action-cancel', 'click', () => {
+        const order = mockOrders.find(o => o.id === pedidosState.selectedOrderId);
+        if (!order || order.status !== 'open') return;
+        order.status = 'cancelled'; order.closed_by_user_id = 1; order.closed_at = '2026-03-25T14:00:00';
+        renderPedidosScreen();
+      });
     }
 
     function renderPedidosScreen() {
       populatePedidosFilters();
       bindPedidosEvents();
-
       const tabsEl = document.getElementById('pedidos-tabs');
-      if (tabsEl) {
-        tabsEl.querySelectorAll('.pedidos-tab').forEach(tab => {
-          tab.classList.toggle('active', tab.dataset.tab === pedidosState.tab);
-        });
-      }
-
+      if (tabsEl) tabsEl.querySelectorAll('.pedidos-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === pedidosState.tab));
       const dateEl = document.getElementById('filter-date');
       if (dateEl) dateEl.value = pedidosState.date;
-
       renderPedidosKpis();
       renderPedidosList();
     }
 
-    function prepLabel(status) {
-      if (status === 'new') return 'Nuevo';
-      if (status === 'preparing') return 'Preparando';
-      if (status === 'ready') return 'Listo';
-      if (status === 'delivered') return 'Entregado';
-      return 'Cancelado';
+    function prepLabel(s) {
+      return { new: 'Nuevo', preparing: 'Preparando', ready: 'Listo', delivered: 'Entregado', cancelled: 'Cancelado' }[s] || s;
     }
 
     function filteredAutosOrders() {
@@ -4107,23 +3886,16 @@
         const totals = getOrderTotals(order);
         const q = autoservicioState.search.trim().toLowerCase();
         const ticketText = order.ticket_number ? String(order.ticket_number) : '';
-
         let matchTab = true;
         if (autoservicioState.tab === 'new') matchTab = order.prep_status === 'new' && order.status === 'open';
         if (autoservicioState.tab === 'preparing') matchTab = order.prep_status === 'preparing' && order.status === 'open';
         if (autoservicioState.tab === 'ready') matchTab = order.prep_status === 'ready' && order.status === 'open';
         if (autoservicioState.tab === 'closed') matchTab = order.status === 'invoiced';
-
-        const matchStatus = autoservicioState.status === 'all' || order.status === autoservicioState.status;
-        const matchPrep = autoservicioState.prep === 'all' || order.prep_status === autoservicioState.prep;
-        const matchSearch = !q
-          || order.uuid.toLowerCase().includes(q)
-          || order.customer_alias.toLowerCase().includes(q)
-          || order.channel.toLowerCase().includes(q)
-          || ticketText.includes(q)
-          || fmt(totals.total).toLowerCase().includes(q);
-
-        return matchTab && matchStatus && matchPrep && matchSearch;
+        return matchTab
+          && (autoservicioState.status === 'all' || order.status === autoservicioState.status)
+          && (autoservicioState.prep === 'all' || order.prep_status === autoservicioState.prep)
+          && (!q || order.uuid.toLowerCase().includes(q) || order.customer_alias.toLowerCase().includes(q)
+            || order.channel.toLowerCase().includes(q) || ticketText.includes(q));
       });
     }
 
@@ -4131,10 +3903,7 @@
       const connected = mockAutoservicioOrders[0]?.active_users || 0;
       const queueCount = mockAutoservicioOrders.filter(o => o.status === 'open' && ['new', 'preparing'].includes(o.prep_status)).length;
       const readyCount = mockAutoservicioOrders.filter(o => o.status === 'open' && o.prep_status === 'ready').length;
-      const billed = mockAutoservicioOrders
-        .filter(o => o.status === 'invoiced')
-        .reduce((acc, order) => acc + getOrderTotals(order).total, 0);
-
+      const billed = mockAutoservicioOrders.filter(o => o.status === 'invoiced').reduce((acc, o) => acc + getOrderTotals(o).total, 0);
       document.getElementById('autos-kpi-connected').textContent = String(connected);
       document.getElementById('autos-kpi-queue').textContent = String(queueCount);
       document.getElementById('autos-kpi-ready').textContent = String(readyCount);
@@ -4145,20 +3914,12 @@
       const container = document.getElementById('autos-list');
       const empty = document.getElementById('autos-empty');
       if (!container || !empty) return;
-
       const rows = filteredAutosOrders();
-      if (!rows.length) {
-        container.innerHTML = '';
-        empty.style.display = 'block';
-        showAutoservicioDetail(null);
-        return;
-      }
-
+      if (!rows.length) { container.innerHTML = ''; empty.style.display = 'block'; showAutoservicioDetail(null); return; }
       empty.style.display = 'none';
       container.innerHTML = rows.map(order => {
         const totals = getOrderTotals(order);
-        const active = order.id === autoservicioState.selectedOrderId ? 'active' : '';
-        return `<div class="autos-row ${active}" onclick="selectAutosPedido(${order.id})">
+        return `<div class="autos-row ${order.id === autoservicioState.selectedOrderId ? 'active' : ''}" onclick="selectAutosPedido(${order.id})">
           <div>
             <div class="autos-main-title">${order.customer_alias}</div>
             <div class="autos-main-sub">${order.uuid} · ${timeAgo(order.opened_at)}</div>
@@ -4168,11 +3929,7 @@
           <div class="prep-pill prep-${order.prep_status}">${prepLabel(order.prep_status)}</div>
         </div>`;
       }).join('');
-
-      if (!rows.some(row => row.id === autoservicioState.selectedOrderId)) {
-        autoservicioState.selectedOrderId = rows[0].id;
-      }
-
+      if (!rows.some(r => r.id === autoservicioState.selectedOrderId)) autoservicioState.selectedOrderId = rows[0].id;
       showAutoservicioDetail(mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId) || null);
     }
 
@@ -4180,182 +3937,869 @@
       const empty = document.getElementById('autos-detail-empty');
       const content = document.getElementById('autos-detail-content');
       if (!empty || !content) return;
-
-      if (!order) {
-        empty.style.display = 'flex';
-        content.style.display = 'none';
-        return;
-      }
-
+      if (!order) { empty.style.display = 'flex'; content.style.display = 'none'; return; }
       empty.style.display = 'none';
       content.style.display = 'flex';
-
       const totals = getOrderTotals(order);
       document.getElementById('autos-detail-title').textContent = order.customer_alias;
       document.getElementById('autos-detail-sub').textContent = `${prepLabel(order.prep_status)} · ${statusLabel(order.status)} · ${timeAgo(order.opened_at)} · ${order.channel} · ${order.uuid}${order.ticket_number ? ` · #${order.ticket_number}` : ''}`;
       document.getElementById('autos-detail-total').textContent = fmt(totals.total);
-
-      const linesContainer = document.getElementById('autos-lines');
-      linesContainer.innerHTML = order.order_lines.map(line => {
-        const subtotal = line.price * line.quantity;
-        const total = subtotal + Math.round(subtotal * line.tax_percentage / 100);
+      document.getElementById('autos-lines').innerHTML = order.order_lines.map(line => {
+        const total = line.price * line.quantity + Math.round(line.price * line.quantity * line.tax_percentage / 100);
         return `<div class="autos-line">
           <div class="pedido-line-qty">${line.quantity}</div>
           <div>
             <div class="pedido-line-name">${line.name}</div>
-            <div class="pedido-line-meta">IVA ${line.tax_percentage}% · Gestionado por ${getUserName(line.user_id)}</div>
+            <div class="pedido-line-meta">IVA ${line.tax_percentage}% · ${getUserName(line.user_id)}</div>
           </div>
           <div class="pedido-line-price">${fmt(total)}</div>
         </div>`;
       }).join('');
-
       document.getElementById('autos-sum-sub').textContent = fmt(totals.subtotal);
       document.getElementById('autos-sum-tax').textContent = fmt(totals.tax);
       document.getElementById('autos-sum-total').textContent = fmt(totals.total);
-
-      const btnAccept = document.getElementById('autos-action-accept');
-      const btnReady = document.getElementById('autos-action-ready');
-      const btnDeliver = document.getElementById('autos-action-deliver');
-      const btnCancel = document.getElementById('autos-action-cancel');
-
       const open = order.status === 'open';
-      btnAccept.disabled = !open || order.prep_status !== 'new';
-      btnReady.disabled = !open || !['new', 'preparing'].includes(order.prep_status);
-      btnDeliver.disabled = !open || order.prep_status !== 'ready';
-      btnCancel.disabled = !open;
+      document.getElementById('autos-action-accept').disabled = !open || order.prep_status !== 'new';
+      document.getElementById('autos-action-ready').disabled = !open || !['new', 'preparing'].includes(order.prep_status);
+      document.getElementById('autos-action-deliver').disabled = !open || order.prep_status !== 'ready';
+      document.getElementById('autos-action-cancel').disabled = !open;
     }
 
-    function selectAutosPedido(orderId) {
-      autoservicioState.selectedOrderId = orderId;
-      renderAutoservicioList();
-    }
+    function selectAutosPedido(orderId) { autoservicioState.selectedOrderId = orderId; renderAutoservicioList(); }
 
     function bindAutoservicioEvents() {
+      const bind = (id, event, fn) => {
+        const el = document.getElementById(id);
+        if (el && !el.dataset.bound) { el.dataset.bound = '1'; el.addEventListener(event, fn); }
+      };
       const tabsEl = document.getElementById('autos-tabs');
-      const statusEl = document.getElementById('autos-filter-status');
-      const prepEl = document.getElementById('autos-filter-prep');
-      const searchEl = document.getElementById('autos-filter-search');
-      const resetEl = document.getElementById('autos-filter-reset');
-
-      const acceptEl = document.getElementById('autos-action-accept');
-      const readyEl = document.getElementById('autos-action-ready');
-      const deliverEl = document.getElementById('autos-action-deliver');
-      const cancelEl = document.getElementById('autos-action-cancel');
-
       if (tabsEl && !tabsEl.dataset.bound) {
         tabsEl.dataset.bound = '1';
-        tabsEl.addEventListener('click', (event) => {
-          const btn = event.target.closest('.autos-tab');
+        tabsEl.addEventListener('click', e => {
+          const btn = e.target.closest('.autos-tab');
           if (!btn) return;
           autoservicioState.tab = btn.dataset.tab || 'all';
-          tabsEl.querySelectorAll('.autos-tab').forEach(tab => tab.classList.remove('active'));
+          tabsEl.querySelectorAll('.autos-tab').forEach(t => t.classList.remove('active'));
           btn.classList.add('active');
           renderAutoservicioList();
         });
       }
-
-      if (statusEl && !statusEl.dataset.bound) {
-        statusEl.dataset.bound = '1';
-        statusEl.addEventListener('change', () => {
-          autoservicioState.status = statusEl.value;
-          renderAutoservicioList();
-        });
-      }
-
-      if (prepEl && !prepEl.dataset.bound) {
-        prepEl.dataset.bound = '1';
-        prepEl.addEventListener('change', () => {
-          autoservicioState.prep = prepEl.value;
-          renderAutoservicioList();
-        });
-      }
-
-      if (searchEl && !searchEl.dataset.bound) {
-        searchEl.dataset.bound = '1';
-        searchEl.addEventListener('input', () => {
-          autoservicioState.search = searchEl.value;
-          renderAutoservicioList();
-        });
-      }
-
-      if (resetEl && !resetEl.dataset.bound) {
-        resetEl.dataset.bound = '1';
-        resetEl.addEventListener('click', () => {
-          autoservicioState.tab = 'all';
-          autoservicioState.status = 'all';
-          autoservicioState.prep = 'all';
-          autoservicioState.search = '';
-          statusEl.value = 'all';
-          prepEl.value = 'all';
-          searchEl.value = '';
-          document.querySelectorAll('.autos-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.tab === 'all');
-          });
-          renderAutoservicioList();
-        });
-      }
-
-      if (acceptEl && !acceptEl.dataset.bound) {
-        acceptEl.dataset.bound = '1';
-        acceptEl.addEventListener('click', () => {
-          const order = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
-          if (!order || order.status !== 'open' || order.prep_status !== 'new') return;
-          order.prep_status = 'preparing';
-          renderAutoservicioScreen();
-        });
-      }
-
-      if (readyEl && !readyEl.dataset.bound) {
-        readyEl.dataset.bound = '1';
-        readyEl.addEventListener('click', () => {
-          const order = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
-          if (!order || order.status !== 'open') return;
-          order.prep_status = 'ready';
-          renderAutoservicioScreen();
-        });
-      }
-
-      if (deliverEl && !deliverEl.dataset.bound) {
-        deliverEl.dataset.bound = '1';
-        deliverEl.addEventListener('click', () => {
-          const order = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
-          if (!order || order.status !== 'open' || order.prep_status !== 'ready') return;
-          order.prep_status = 'delivered';
-          order.status = 'invoiced';
-          order.closed_by_user_id = 1;
-          order.closed_at = '2026-03-25T14:00:00';
-          order.ticket_number = 3950 + (order.id % 20);
-          renderAutoservicioScreen();
-        });
-      }
-
-      if (cancelEl && !cancelEl.dataset.bound) {
-        cancelEl.dataset.bound = '1';
-        cancelEl.addEventListener('click', () => {
-          const order = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
-          if (!order || order.status !== 'open') return;
-          order.prep_status = 'cancelled';
-          order.status = 'cancelled';
-          order.closed_by_user_id = 1;
-          order.closed_at = '2026-03-25T14:00:00';
-          order.ticket_number = null;
-          renderAutoservicioScreen();
-        });
-      }
+      bind('autos-filter-status', 'change', e => { autoservicioState.status = e.target.value; renderAutoservicioList(); });
+      bind('autos-filter-prep', 'change', e => { autoservicioState.prep = e.target.value; renderAutoservicioList(); });
+      bind('autos-filter-search', 'input', e => { autoservicioState.search = e.target.value; renderAutoservicioList(); });
+      bind('autos-filter-reset', 'click', () => {
+        Object.assign(autoservicioState, { tab: 'all', status: 'all', prep: 'all', search: '' });
+        ['autos-filter-status', 'autos-filter-prep'].forEach(id => document.getElementById(id).value = 'all');
+        document.getElementById('autos-filter-search').value = '';
+        document.querySelectorAll('.autos-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === 'all'));
+        renderAutoservicioList();
+      });
+      bind('autos-action-accept', 'click', () => {
+        const o = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
+        if (!o || o.status !== 'open' || o.prep_status !== 'new') return;
+        o.prep_status = 'preparing'; renderAutoservicioScreen();
+      });
+      bind('autos-action-ready', 'click', () => {
+        const o = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
+        if (!o || o.status !== 'open') return;
+        o.prep_status = 'ready'; renderAutoservicioScreen();
+      });
+      bind('autos-action-deliver', 'click', () => {
+        const o = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
+        if (!o || o.status !== 'open' || o.prep_status !== 'ready') return;
+        o.prep_status = 'delivered'; o.status = 'invoiced'; o.closed_by_user_id = 1;
+        o.closed_at = '2026-03-25T14:00:00'; o.ticket_number = 3950 + (o.id % 20);
+        renderAutoservicioScreen();
+      });
+      bind('autos-action-cancel', 'click', () => {
+        const o = mockAutoservicioOrders.find(o => o.id === autoservicioState.selectedOrderId);
+        if (!o || o.status !== 'open') return;
+        o.prep_status = 'cancelled'; o.status = 'cancelled'; o.closed_by_user_id = 1;
+        o.closed_at = '2026-03-25T14:00:00'; o.ticket_number = null;
+        renderAutoservicioScreen();
+      });
     }
 
     function renderAutoservicioScreen() {
       bindAutoservicioEvents();
-
       const tabsEl = document.getElementById('autos-tabs');
-      if (tabsEl) {
-        tabsEl.querySelectorAll('.autos-tab').forEach(tab => {
-          tab.classList.toggle('active', tab.dataset.tab === autoservicioState.tab);
-        });
-      }
-
+      if (tabsEl) tabsEl.querySelectorAll('.autos-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === autoservicioState.tab));
       renderAutoservicioKpis();
       renderAutoservicioList();
+    }
+
+    // ── GESTIÓN ──
+    const managementRestaurants = [
+      {
+        id: 1,
+        name: 'Restaurante Voraz',
+        legalName: 'Voraz Food S.L.',
+        taxId: 'B12345678',
+        email: 'admin@voraz.es',
+        status: 'active',
+        users: 6,
+        zones: 4,
+        products: 78,
+      },
+      {
+        id: 2,
+        name: 'Bahia 21',
+        legalName: 'Bahia 21 Hosteleria S.L.',
+        taxId: 'B84533122',
+        email: 'direccion@bahia21.es',
+        status: 'active',
+        users: 4,
+        zones: 3,
+        products: 54,
+      },
+      {
+        id: 3,
+        name: 'La Terraza Azul',
+        legalName: 'Grupo Terraza Azul S.L.',
+        taxId: 'B78451235',
+        email: 'admin@terrazaazul.es',
+        status: 'active',
+        users: 5,
+        zones: 5,
+        products: 92,
+      },
+    ];
+
+    const managementData = {
+      1: {
+        users: [
+          { name: 'Maria Gomez', role: 'manager', email: 'maria@voraz.es', pin: '1234' },
+          { name: 'Carlos Ruiz', role: 'waiter', email: 'carlos@voraz.es', pin: '2580' },
+        ],
+        families: [
+          { name: 'Entrantes', active: true },
+          { name: 'Principales', active: true },
+          { name: 'Bebidas', active: true },
+        ],
+        taxes: [
+          { name: 'IVA reducido', percentage: 10 },
+          { name: 'IVA general', percentage: 21 },
+        ],
+        zones: [
+          { name: 'Terraza', tables: [{ name: 'T1' }, { name: 'T2' }, { name: 'T3' }, { name: 'T4' }] },
+          { name: 'Salon', tables: [{ name: 'S1' }, { name: 'S2' }, { name: 'S3' }] },
+          { name: 'Barra', tables: [{ name: 'B1' }, { name: 'B2' }] },
+        ],
+        products: [
+          { name: 'Burger de Retinto', family: 'Principales', price: 1450, tax: 10, stock: 27, active: true },
+          { name: 'Paulaner', family: 'Bebidas', price: 300, tax: 10, stock: 80, active: true },
+        ],
+      },
+      2: {
+        users: [
+          { name: 'Eva Luna', role: 'manager', email: 'eva@bahia21.es', pin: '4455' },
+          { name: 'Joel Nunez', role: 'waiter', email: 'joel@bahia21.es', pin: '2211' },
+        ],
+        families: [
+          { name: 'Tapas', active: true },
+          { name: 'Bebidas', active: true },
+        ],
+        taxes: [
+          { name: 'IVA hosteleria', percentage: 10 },
+        ],
+        zones: [
+          { name: 'Principal', tables: [{ name: 'P1' }, { name: 'P2' }, { name: 'P3' }] },
+          { name: 'Terraza', tables: [{ name: 'T1' }, { name: 'T2' }, { name: 'T3' }, { name: 'T4' }] },
+        ],
+        products: [
+          { name: 'Croqueta casera', family: 'Tapas', price: 250, tax: 10, stock: 120, active: true },
+          { name: 'Tinto de verano', family: 'Bebidas', price: 320, tax: 10, stock: 75, active: true },
+        ],
+      },
+      3: {
+        users: [
+          { name: 'Paula Sanz', role: 'manager', email: 'paula@terrazaazul.es', pin: '4451' },
+          { name: 'Leo Martin', role: 'waiter', email: 'leo@terrazaazul.es', pin: '7854' },
+        ],
+        families: [
+          { name: 'Desayunos', active: true },
+          { name: 'Cafeteria', active: true },
+          { name: 'Postres', active: true },
+        ],
+        taxes: [
+          { name: 'IVA reducido', percentage: 10 },
+          { name: 'IVA general', percentage: 21 },
+        ],
+        zones: [
+          { name: 'Mirador', tables: [{ name: 'M1' }, { name: 'M2' }, { name: 'M3' }] },
+          { name: 'Interior', tables: [{ name: 'I1' }, { name: 'I2' }] },
+          { name: 'Lounge', tables: [{ name: 'L1' }, { name: 'L2' }] },
+        ],
+        products: [
+          { name: 'Brunch premium', family: 'Desayunos', price: 1890, tax: 10, stock: 20, active: true },
+          { name: 'Cafe flat white', family: 'Cafeteria', price: 290, tax: 10, stock: 200, active: true },
+        ],
+      },
+    };
+
+    const managementEntities = [
+      { key: 'restaurant', label: 'Restaurante' },
+      { key: 'users', label: 'Usuarios' },
+      { key: 'families', label: 'Familias' },
+      { key: 'products', label: 'Productos' },
+      { key: 'zones', label: 'Zonas y Mesas' },
+      { key: 'taxes', label: 'Impuestos' },
+    ];
+
+    const managementState = {
+      restaurantId: 1,
+      entity: 'restaurant',
+      selectedIndex: {
+        users: 0,
+        families: 0,
+        products: 0,
+        zones: 0,
+        tables: 0,
+        taxes: 0,
+      },
+    };
+
+    function selectedManagementRestaurant() {
+      return managementRestaurants.find(r => r.id === managementState.restaurantId) || null;
+    }
+
+    function selectedManagementData() {
+      return managementData[managementState.restaurantId] || { users: [], families: [], taxes: [], zones: [], products: [] };
+    }
+
+    function toEuroFromCents(cents) {
+      return ((cents || 0) / 100).toFixed(2).replace('.', ',') + '€';
+    }
+
+    function euroToCents(value) {
+      const normalized = String(value || '').replace(',', '.');
+      const amount = Number.parseFloat(normalized);
+
+      return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
+    }
+
+    function updateRestaurantKpis(restaurantId) {
+      const restaurant = managementRestaurants.find(r => r.id === restaurantId);
+      const data = managementData[restaurantId];
+      if (!restaurant || !data) return;
+
+      restaurant.users = data.users.length;
+      restaurant.zones = data.zones.length;
+      restaurant.products = data.products.length;
+    }
+
+    function selectedManagementItem(entityKey, items) {
+      if (!Array.isArray(items) || !items.length) return null;
+      const idx = managementState.selectedIndex[entityKey];
+      if (idx === -1) return null;
+      if (typeof idx !== 'number' || idx < 0 || idx >= items.length) {
+        managementState.selectedIndex[entityKey] = 0;
+
+        return items[0];
+      }
+
+      return items[idx];
+    }
+
+    function startCreateManagementItem(entityKey) {
+      managementState.selectedIndex[entityKey] = -1;
+      renderGestionScreen();
+    }
+
+    function deleteSelectedManagementItem(entityKey) {
+      const data = selectedManagementData();
+      const rows = data[entityKey] || [];
+      const idx = managementState.selectedIndex[entityKey];
+      if (!rows.length || typeof idx !== 'number' || idx < 0 || idx >= rows.length) {
+        alert('No hay un registro seleccionado para eliminar.');
+
+        return;
+      }
+
+      if (entityKey === 'zones' && Array.isArray(rows[idx].tables) && rows[idx].tables.length > 0) {
+        alert('No puedes eliminar una zona con mesas. Elimina o reasigna primero sus mesas.');
+
+        return;
+      }
+
+      rows.splice(idx, 1);
+      managementState.selectedIndex[entityKey] = rows.length ? Math.min(idx, rows.length - 1) : -1;
+      if (entityKey === 'zones') managementState.selectedIndex.tables = 0;
+      updateRestaurantKpis(managementState.restaurantId);
+      renderGestionScreen();
+      alert('✅ Registro eliminado.');
+    }
+
+    function saveRestaurantChanges(event) {
+      event.preventDefault();
+      const restaurant = selectedManagementRestaurant();
+      if (!restaurant) return;
+      const name = (document.getElementById('mg-rest-name')?.value || '').trim();
+      const legalName = (document.getElementById('mg-rest-legal')?.value || '').trim();
+      const taxId = (document.getElementById('mg-rest-tax')?.value || '').trim();
+      const email = (document.getElementById('mg-rest-email')?.value || '').trim();
+      if (!name || !legalName || !taxId || !email) {
+        alert('Completa todos los campos obligatorios.');
+
+        return;
+      }
+
+      restaurant.name = name;
+      restaurant.legalName = legalName;
+      restaurant.taxId = taxId;
+      restaurant.email = email;
+      renderGestionScreen();
+      alert('✅ Restaurante actualizado.');
+    }
+
+    function saveManagementEntity(event, entityKey) {
+      event.preventDefault();
+      const data = selectedManagementData();
+      const rows = data[entityKey] || [];
+      const idx = managementState.selectedIndex[entityKey];
+      let payload = null;
+
+      if (entityKey === 'users') {
+        const name = (document.getElementById('mg-user-name')?.value || '').trim();
+        const email = (document.getElementById('mg-user-email')?.value || '').trim();
+        const role = (document.getElementById('mg-user-role')?.value || '').trim();
+        const pin = (document.getElementById('mg-user-pin')?.value || '').trim();
+        if (!name || !email || !role || !pin) {
+          alert('Completa los campos de usuario.');
+
+          return;
+        }
+        payload = { name, email, role, pin };
+      }
+
+      if (entityKey === 'families') {
+        const name = (document.getElementById('mg-family-name')?.value || '').trim();
+        const active = (document.getElementById('mg-family-active')?.value || 'true') === 'true';
+        if (!name) {
+          alert('Indica el nombre de la familia.');
+
+          return;
+        }
+        payload = { name, active };
+      }
+
+      if (entityKey === 'products') {
+        const name = (document.getElementById('mg-product-name')?.value || '').trim();
+        const family = (document.getElementById('mg-product-family')?.value || '').trim();
+        const tax = Number.parseInt(document.getElementById('mg-product-tax')?.value || '0', 10);
+        const price = euroToCents(document.getElementById('mg-product-price')?.value || '0');
+        const stock = Number.parseInt(document.getElementById('mg-product-stock')?.value || '0', 10);
+        const active = (document.getElementById('mg-product-active')?.value || 'true') === 'true';
+        if (!name || !family || !tax || price <= 0 || !Number.isFinite(stock) || stock < 0) {
+          alert('Revisa los datos del producto.');
+
+          return;
+        }
+        payload = { name, family, tax, price, stock, active };
+      }
+
+      if (entityKey === 'zones') {
+        const name = (document.getElementById('mg-zone-name')?.value || '').trim();
+        if (!name) {
+          alert('Revisa los datos de la zona.');
+
+          return;
+        }
+        const currentTables = (typeof idx === 'number' && idx >= 0 && idx < rows.length && Array.isArray(rows[idx].tables))
+          ? rows[idx].tables
+          : [];
+        payload = { name, tables: currentTables };
+      }
+
+      if (entityKey === 'taxes') {
+        const name = (document.getElementById('mg-tax-name')?.value || '').trim();
+        const percentage = Number.parseInt(document.getElementById('mg-tax-percentage')?.value || '0', 10);
+        if (!name || !Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
+          alert('Revisa los datos del impuesto.');
+
+          return;
+        }
+        payload = { name, percentage };
+      }
+
+      if (!payload) return;
+      if (typeof idx === 'number' && idx >= 0 && idx < rows.length) {
+        rows[idx] = payload;
+      } else {
+        rows.push(payload);
+        managementState.selectedIndex[entityKey] = rows.length - 1;
+      }
+      updateRestaurantKpis(managementState.restaurantId);
+      renderGestionScreen();
+      alert('✅ Cambios guardados.');
+    }
+
+    function renderGestionRestaurants() {
+      const container = document.getElementById('gestion-restaurants-list');
+      if (!container) return;
+      container.innerHTML = managementRestaurants.map(r => `
+        <div class="gestion-restaurant-item ${r.id === managementState.restaurantId ? 'active' : ''}" onclick="selectManagementRestaurant(${r.id})">
+          <div class="gestion-restaurant-top">
+            <div>
+              <div class="gestion-restaurant-name">${r.name}</div>
+              <div class="gestion-restaurant-meta">${r.legalName}<br>${r.taxId} · ${r.email}</div>
+            </div>
+            <span class="gestion-status-pill live">Activo</span>
+          </div>
+          <div class="gestion-restaurant-kpis">
+            <div class="gestion-kpi-mini">
+              <div class="gestion-kpi-mini-val">${r.users}</div>
+              <div class="gestion-kpi-mini-label">Usuarios</div>
+            </div>
+            <div class="gestion-kpi-mini">
+              <div class="gestion-kpi-mini-val">${r.zones}</div>
+              <div class="gestion-kpi-mini-label">Zonas</div>
+            </div>
+            <div class="gestion-kpi-mini">
+              <div class="gestion-kpi-mini-val">${r.products}</div>
+              <div class="gestion-kpi-mini-label">Productos</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderGestionTabs() {
+      const tabsEl = document.getElementById('gestion-entity-tabs');
+      if (!tabsEl) return;
+      tabsEl.innerHTML = managementEntities.map(e => `
+        <button class="gestion-entity-tab ${managementState.entity === e.key ? 'active' : ''}" onclick="selectManagementEntity('${e.key}')">${e.label}</button>
+      `).join('');
+    }
+
+    function renderManagementEntityBody() {
+      const body = document.getElementById('gestion-workspace-body');
+      const title = document.getElementById('gestion-selected-title');
+      const sub = document.getElementById('gestion-selected-sub');
+      const restaurant = selectedManagementRestaurant();
+      const data = selectedManagementData();
+      if (!body || !title || !sub) return;
+      if (!restaurant) {
+        body.innerHTML = '<div class="gestion-empty">No hay restaurante seleccionado.</div>';
+        return;
+      }
+
+      title.textContent = `Gestion de ${restaurant.name}`;
+      sub.textContent = `${restaurant.legalName} · ${restaurant.taxId} · ${restaurant.email}`;
+
+      if (managementState.entity === 'restaurant') {
+        body.innerHTML = `
+          <div class="gestion-section-grid">
+            <div class="gestion-card">
+              <div class="gestion-card-title">Resumen del restaurante</div>
+              <div class="gestion-row-list">
+                <div class="gestion-row-item active"><strong>Nombre comercial:</strong> ${restaurant.name}</div>
+                <div class="gestion-row-item active"><strong>Razon social:</strong> ${restaurant.legalName}</div>
+                <div class="gestion-row-item active"><strong>NIF/CIF:</strong> ${restaurant.taxId}</div>
+                <div class="gestion-row-item active"><strong>Email:</strong> ${restaurant.email}</div>
+                <div class="gestion-row-item active"><strong>Usuarios activos:</strong> ${restaurant.users}</div>
+              </div>
+            </div>
+            <div class="gestion-card">
+              <div class="gestion-card-title">Editar datos del restaurante</div>
+              <form class="gestion-form" onsubmit="saveRestaurantChanges(event)">
+                <div>
+                  <label class="form-label">Nombre comercial</label>
+                  <input id="mg-rest-name" class="form-input" value="${restaurant.name}" required>
+                </div>
+                <div>
+                  <label class="form-label">Razon social</label>
+                  <input id="mg-rest-legal" class="form-input" value="${restaurant.legalName}" required>
+                </div>
+                <div class="gestion-form-grid">
+                  <div>
+                    <label class="form-label">NIF/CIF</label>
+                    <input id="mg-rest-tax" class="form-input" value="${restaurant.taxId}" required>
+                  </div>
+                  <div>
+                    <label class="form-label">Email</label>
+                    <input id="mg-rest-email" type="email" class="form-input" value="${restaurant.email}" required>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Contrasena de acceso</label>
+                  <input type="password" class="form-input" placeholder="Nueva contrasena">
+                </div>
+                <div class="gestion-form-actions"><button class="btn-login" style="width:auto;padding:11px 16px;margin-top:0">Guardar cambios</button></div>
+              </form>
+            </div>
+          </div>
+        `;
+
+        return;
+      }
+
+      if (managementState.entity === 'users') {
+        const selectedUser = selectedManagementItem('users', data.users);
+
+        body.innerHTML = `
+          <div class="gestion-section-grid">
+            <div class="gestion-card">
+              <div class="gestion-card-title">Usuarios del restaurante</div>
+              <div class="gestion-row-list">
+                ${data.users.map((u, idx) => `
+                  <div class="gestion-row-item ${selectedUser === u ? 'active' : ''}" onclick="selectManagementItem('users', ${idx})">
+                    <strong>${u.name}</strong><br>${u.email} · ${u.role} · PIN ${u.pin}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="gestion-card">
+              <div class="gestion-card-title">Editar usuario seleccionado</div>
+              <form class="gestion-form" onsubmit="saveManagementEntity(event, 'users')">
+                <div class="gestion-form-actions" style="justify-content:flex-start;gap:8px;margin-bottom:2px">
+                  <button type="button" class="btn-small" onclick="startCreateManagementItem('users')">Nuevo usuario</button>
+                  <button type="button" class="btn-small" onclick="deleteSelectedManagementItem('users')">Eliminar</button>
+                </div>
+                <div>
+                  <label class="form-label">Nombre</label>
+                  <input id="mg-user-name" class="form-input" value="${selectedUser ? selectedUser.name : ''}" placeholder="Nombre y apellidos" required>
+                </div>
+                <div class="gestion-form-grid">
+                  <div>
+                    <label class="form-label">Email</label>
+                    <input id="mg-user-email" type="email" class="form-input" value="${selectedUser ? selectedUser.email : ''}" placeholder="usuario@restaurante.com" required>
+                  </div>
+                  <div>
+                    <label class="form-label">Rol</label>
+                    <select id="mg-user-role" class="form-input" required>
+                      <option ${selectedUser && selectedUser.role === 'manager' ? 'selected' : ''}>manager</option>
+                      <option ${selectedUser && selectedUser.role === 'waiter' ? 'selected' : ''}>waiter</option>
+                      <option ${selectedUser && selectedUser.role === 'kitchen' ? 'selected' : ''}>kitchen</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="gestion-form-grid">
+                  <div>
+                    <label class="form-label">PIN</label>
+                    <input id="mg-user-pin" class="form-input" maxlength="4" value="${selectedUser ? selectedUser.pin : ''}" placeholder="4 digitos" required>
+                  </div>
+                  <div>
+                    <label class="form-label">Contrasena</label>
+                    <input type="password" class="form-input" placeholder="Nueva contrasena">
+                  </div>
+                </div>
+                <div class="gestion-form-actions"><button class="btn-login" style="width:auto;padding:11px 16px;margin-top:0">Guardar cambios</button></div>
+              </form>
+            </div>
+          </div>
+        `;
+
+        return;
+      }
+
+      if (managementState.entity === 'families') {
+        const selectedFamily = selectedManagementItem('families', data.families);
+
+        body.innerHTML = `
+          <div class="gestion-section-grid">
+            <div class="gestion-card">
+              <div class="gestion-card-title">Familias disponibles</div>
+              <div class="gestion-row-list">
+                ${data.families.map((f, idx) => `
+                  <div class="gestion-row-item ${selectedFamily === f ? 'active' : ''}" onclick="selectManagementItem('families', ${idx})">
+                    <strong>${f.name}</strong><br>Estado: ${f.active ? 'Activa' : 'Inactiva'}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="gestion-card">
+              <div class="gestion-card-title">Editar familia seleccionada</div>
+              <form class="gestion-form" onsubmit="saveManagementEntity(event, 'families')">
+                <div class="gestion-form-actions" style="justify-content:flex-start;gap:8px;margin-bottom:2px">
+                  <button type="button" class="btn-small" onclick="startCreateManagementItem('families')">Nueva familia</button>
+                  <button type="button" class="btn-small" onclick="deleteSelectedManagementItem('families')">Eliminar</button>
+                </div>
+                <div>
+                  <label class="form-label">Nombre de la familia</label>
+                  <input id="mg-family-name" class="form-input" value="${selectedFamily ? selectedFamily.name : ''}" placeholder="Ej. Entrantes" required>
+                </div>
+                <div>
+                  <label class="form-label">Estado</label>
+                  <select id="mg-family-active" class="form-input" required>
+                    <option value="true" ${selectedFamily && selectedFamily.active ? 'selected' : ''}>Activa</option>
+                    <option value="false" ${selectedFamily && !selectedFamily.active ? 'selected' : ''}>Inactiva</option>
+                  </select>
+                </div>
+                <div class="gestion-form-actions"><button class="btn-login" style="width:auto;padding:11px 16px;margin-top:0">Guardar cambios</button></div>
+              </form>
+            </div>
+          </div>
+        `;
+
+        return;
+      }
+
+      if (managementState.entity === 'products') {
+        const selectedProduct = selectedManagementItem('products', data.products);
+
+        body.innerHTML = `
+          <div class="gestion-section-grid">
+            <div class="gestion-card">
+              <div class="gestion-card-title">Catalogo actual</div>
+              <div class="gestion-row-list">
+                ${data.products.map((p, idx) => `
+                  <div class="gestion-row-item ${selectedProduct === p ? 'active' : ''}" onclick="selectManagementItem('products', ${idx})">
+                    <strong>${p.name}</strong><br>${p.family} · ${toEuroFromCents(p.price)} · IVA ${p.tax}% · Stock ${p.stock} · ${p.active ? 'Activo' : 'Inactivo'}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="gestion-card">
+              <div class="gestion-card-title">Editar producto seleccionado</div>
+              <form class="gestion-form" onsubmit="saveManagementEntity(event, 'products')">
+                <div class="gestion-form-actions" style="justify-content:flex-start;gap:8px;margin-bottom:2px">
+                  <button type="button" class="btn-small" onclick="startCreateManagementItem('products')">Nuevo producto</button>
+                  <button type="button" class="btn-small" onclick="deleteSelectedManagementItem('products')">Eliminar</button>
+                </div>
+                <div>
+                  <label class="form-label">Nombre del producto</label>
+                  <input id="mg-product-name" class="form-input" value="${selectedProduct ? selectedProduct.name : ''}" placeholder="Ej. Tarta de queso" required>
+                </div>
+                <div class="gestion-form-grid">
+                  <div>
+                    <label class="form-label">Familia</label>
+                    <select id="mg-product-family" class="form-input" required>
+                      ${data.families.map(f => `<option ${selectedProduct && selectedProduct.family === f.name ? 'selected' : ''}>${f.name}</option>`).join('')}
+                    </select>
+                  </div>
+                  <div>
+                    <label class="form-label">IVA (%)</label>
+                    <select id="mg-product-tax" class="form-input" required>
+                      ${data.taxes.map(t => `<option ${selectedProduct && selectedProduct.tax === t.percentage ? 'selected' : ''}>${t.percentage}</option>`).join('')}
+                    </select>
+                  </div>
+                </div>
+                <div class="gestion-form-grid">
+                  <div>
+                    <label class="form-label">Precio (€)</label>
+                    <input id="mg-product-price" type="number" step="0.01" class="form-input" value="${selectedProduct ? (selectedProduct.price / 100).toFixed(2) : ''}" placeholder="0,00" required>
+                  </div>
+                  <div>
+                    <label class="form-label">Stock</label>
+                    <input id="mg-product-stock" type="number" class="form-input" value="${selectedProduct ? selectedProduct.stock : ''}" placeholder="0" required>
+                  </div>
+                </div>
+                <div>
+                  <label class="form-label">Estado</label>
+                  <select id="mg-product-active" class="form-input" required>
+                    <option value="true" ${selectedProduct && selectedProduct.active ? 'selected' : ''}>Activo</option>
+                    <option value="false" ${selectedProduct && !selectedProduct.active ? 'selected' : ''}>Inactivo</option>
+                  </select>
+                </div>
+                <div class="gestion-form-actions"><button class="btn-login" style="width:auto;padding:11px 16px;margin-top:0">Guardar cambios</button></div>
+              </form>
+            </div>
+          </div>
+        `;
+
+        return;
+      }
+
+      if (managementState.entity === 'zones') {
+        const selectedZone = selectedManagementItem('zones', data.zones);
+        const selectedTable = selectedTableInManagement();
+
+        body.innerHTML = `
+          <div class="gestion-section-grid">
+            <div class="gestion-card">
+              <div class="gestion-card-title">Zonas y capacidad</div>
+              <div class="gestion-row-list">
+                ${data.zones.map((z, idx) => `
+                  <div class="gestion-row-item ${selectedZone === z ? 'active' : ''}" onclick="selectManagementItem('zones', ${idx})">
+                    <strong>${z.name}</strong><br>Mesas registradas: ${Array.isArray(z.tables) ? z.tables.length : 0}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="gestion-card">
+              <div class="gestion-card-title">Editar zona seleccionada</div>
+              <form class="gestion-form" onsubmit="saveManagementEntity(event, 'zones')">
+                <div class="gestion-form-actions" style="justify-content:flex-start;gap:8px;margin-bottom:2px">
+                  <button type="button" class="btn-small" onclick="startCreateManagementItem('zones')">Nueva zona</button>
+                  <button type="button" class="btn-small" onclick="deleteSelectedManagementItem('zones')">Eliminar</button>
+                </div>
+                <div>
+                  <label class="form-label">Nombre de zona</label>
+                  <input id="mg-zone-name" class="form-input" value="${selectedZone ? selectedZone.name : ''}" placeholder="Ej. Terraza" required>
+                </div>
+                <div class="gestion-form-actions"><button class="btn-login" style="width:auto;padding:11px 16px;margin-top:0">Guardar cambios zona</button></div>
+              </form>
+
+              <div style="height:1px;background:var(--gray-200);margin:14px 0"></div>
+
+              <div class="gestion-card-title" style="margin-bottom:8px">Mesas de ${selectedZone ? selectedZone.name : 'la zona'}</div>
+              <div class="gestion-row-list" style="max-height:130px;margin-bottom:10px">
+                ${selectedZone && Array.isArray(selectedZone.tables) && selectedZone.tables.length
+                  ? selectedZone.tables.map((table, tableIdx) => `
+                    <div class="gestion-row-item ${selectedTable === table ? 'active' : ''}" onclick="selectManagementTable(${tableIdx})">
+                      <strong>${table.name}</strong>
+                    </div>
+                  `).join('')
+                  : '<div class="gestion-row-item">No hay mesas registradas.</div>'}
+              </div>
+
+              <form class="gestion-form" onsubmit="saveManagementTable(event)">
+                <div class="gestion-form-actions" style="justify-content:flex-start;gap:8px;margin-bottom:2px">
+                  <button type="button" class="btn-small" onclick="startCreateManagementTable()">Nueva mesa</button>
+                  <button type="button" class="btn-small" onclick="deleteSelectedManagementTable()">Eliminar mesa</button>
+                </div>
+                <div>
+                  <label class="form-label">Nombre de mesa</label>
+                  <input id="mg-table-name" class="form-input" value="${selectedTable ? selectedTable.name : ''}" placeholder="Ej. T12" required>
+                </div>
+                <div class="gestion-form-actions"><button class="btn-login" style="width:auto;padding:11px 16px;margin-top:0">Guardar mesa</button></div>
+              </form>
+            </div>
+          </div>
+        `;
+
+        return;
+      }
+
+      if (managementState.entity === 'taxes') {
+        const selectedTax = selectedManagementItem('taxes', data.taxes);
+
+        body.innerHTML = `
+          <div class="gestion-section-grid">
+            <div class="gestion-card">
+              <div class="gestion-card-title">Impuestos configurados</div>
+              <div class="gestion-row-list">
+                ${data.taxes.map((t, idx) => `
+                  <div class="gestion-row-item ${selectedTax === t ? 'active' : ''}" onclick="selectManagementItem('taxes', ${idx})">
+                    <strong>${t.name}</strong><br>${t.percentage}%
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            <div class="gestion-card">
+              <div class="gestion-card-title">Editar impuesto seleccionado</div>
+              <form class="gestion-form" onsubmit="saveManagementEntity(event, 'taxes')">
+                <div class="gestion-form-actions" style="justify-content:flex-start;gap:8px;margin-bottom:2px">
+                  <button type="button" class="btn-small" onclick="startCreateManagementItem('taxes')">Nuevo impuesto</button>
+                  <button type="button" class="btn-small" onclick="deleteSelectedManagementItem('taxes')">Eliminar</button>
+                </div>
+                <div>
+                  <label class="form-label">Nombre</label>
+                  <input id="mg-tax-name" class="form-input" value="${selectedTax ? selectedTax.name : ''}" placeholder="Ej. IVA reducido" required>
+                </div>
+                <div>
+                  <label class="form-label">Porcentaje (%)</label>
+                  <input id="mg-tax-percentage" type="number" min="0" max="100" class="form-input" value="${selectedTax ? selectedTax.percentage : ''}" placeholder="10" required>
+                </div>
+                <div class="gestion-form-actions"><button class="btn-login" style="width:auto;padding:11px 16px;margin-top:0">Guardar cambios</button></div>
+              </form>
+            </div>
+          </div>
+        `;
+
+        return;
+      }
+
+      body.innerHTML = '<div class="gestion-empty">Selecciona una entidad para comenzar.</div>';
+    }
+
+    function selectManagementRestaurant(restaurantId) {
+      managementState.restaurantId = restaurantId;
+      renderGestionScreen();
+    }
+
+    function selectManagementEntity(entityKey) {
+      managementState.entity = entityKey;
+      renderGestionScreen();
+    }
+
+    function selectManagementItem(entityKey, index) {
+      managementState.selectedIndex[entityKey] = index;
+      if (entityKey === 'zones') managementState.selectedIndex.tables = 0;
+      renderGestionScreen();
+    }
+
+    function selectedZoneInManagement() {
+      const data = selectedManagementData();
+
+      return selectedManagementItem('zones', data.zones);
+    }
+
+    function selectedTableInManagement() {
+      const zone = selectedZoneInManagement();
+      if (!zone || !Array.isArray(zone.tables) || !zone.tables.length) return null;
+      const idx = managementState.selectedIndex.tables;
+      if (idx === -1) return null;
+      if (typeof idx !== 'number' || idx < 0 || idx >= zone.tables.length) {
+        managementState.selectedIndex.tables = 0;
+
+        return zone.tables[0];
+      }
+
+      return zone.tables[idx];
+    }
+
+    function startCreateManagementTable() {
+      managementState.selectedIndex.tables = -1;
+      renderGestionScreen();
+    }
+
+    function selectManagementTable(index) {
+      managementState.selectedIndex.tables = index;
+      renderGestionScreen();
+    }
+
+    function saveManagementTable(event) {
+      event.preventDefault();
+      const zone = selectedZoneInManagement();
+      if (!zone) {
+        alert('Selecciona una zona antes de gestionar mesas.');
+
+        return;
+      }
+      const name = (document.getElementById('mg-table-name')?.value || '').trim();
+      if (!name) {
+        alert('Indica el nombre de la mesa.');
+
+        return;
+      }
+      if (!Array.isArray(zone.tables)) zone.tables = [];
+      const idx = managementState.selectedIndex.tables;
+      const payload = { name };
+      if (typeof idx === 'number' && idx >= 0 && idx < zone.tables.length) {
+        zone.tables[idx] = payload;
+      } else {
+        zone.tables.push(payload);
+        managementState.selectedIndex.tables = zone.tables.length - 1;
+      }
+      renderGestionScreen();
+      alert('✅ Mesa guardada.');
+    }
+
+    function deleteSelectedManagementTable() {
+      const zone = selectedZoneInManagement();
+      if (!zone || !Array.isArray(zone.tables)) {
+        alert('No hay zona seleccionada.');
+
+        return;
+      }
+      const idx = managementState.selectedIndex.tables;
+      if (typeof idx !== 'number' || idx < 0 || idx >= zone.tables.length) {
+        alert('No hay mesa seleccionada para eliminar.');
+
+        return;
+      }
+      zone.tables.splice(idx, 1);
+      managementState.selectedIndex.tables = zone.tables.length ? Math.min(idx, zone.tables.length - 1) : -1;
+      renderGestionScreen();
+      alert('✅ Mesa eliminada.');
+    }
+
+    function renderGestionScreen() {
+      renderGestionRestaurants();
+      renderGestionTabs();
+      renderManagementEntityBody();
     }
 
     // ── PRODUCTS ──
@@ -4364,7 +4808,7 @@
       if (!grid) return;
       const f = filter.toLowerCase();
       grid.innerHTML = products
-        .filter(p => !f || p.name.toLowerCase().includes(f))
+        .filter(p => !f || p.name.toLowerCase().includes(f) || p.family.toLowerCase().includes(f))
         .map((p, i) => `
           <div class="product-card ${p.stock === 0 ? 'out-of-stock' : ''}" onclick="addToComanda(${i})" style="animation-delay:${i * 0.03}s">
             <div class="product-emoji">${p.emoji}</div>
@@ -4375,9 +4819,7 @@
         `).join('');
     }
 
-    function filterProducts(val) {
-      renderProducts(val);
-    }
+    function filterProducts(val) { renderProducts(val); }
 
     function setFamily(el) {
       document.querySelectorAll('.family-tab').forEach(t => t.classList.remove('active'));
@@ -4390,9 +4832,7 @@
     function addToComanda(idx) {
       const p = products[idx];
       if (p.stock === 0) return;
-      if (!comandaItems[idx]) {
-        comandaItems[idx] = { product: p, qty: 0 };
-      }
+      if (!comandaItems[idx]) comandaItems[idx] = { product: p, qty: 0 };
       comandaItems[idx].qty++;
       renderComanda();
     }
@@ -4411,47 +4851,32 @@
       const totalEl = document.getElementById('comanda-total');
       const countEl = document.getElementById('comanda-count');
       const btn = document.getElementById('btn-send-comanda');
-
       if (!list || !totalEl || !countEl || !btn) return;
-
-      if (keys.length === 0) {
+      if (!keys.length) {
         list.innerHTML = `<div style="padding:24px;text-align:center;color:var(--gray-400);font-size:13px">Toca un producto para añadirlo</div>`;
-        totalEl.textContent = '0,00€';
-        countEl.textContent = '0 productos añadidos';
-        btn.style.opacity = '0.5';
-        btn.style.pointerEvents = 'none';
-        return;
+        totalEl.textContent = '0,00€'; countEl.textContent = '0 productos añadidos';
+        btn.style.opacity = '0.5'; btn.style.pointerEvents = 'none'; return;
       }
-
-      let total = 0;
-      let count = 0;
+      let total = 0, count = 0;
       list.innerHTML = keys.map(k => {
         const item = comandaItems[k];
         const lineTotal = item.product.cents * item.qty;
-        total += lineTotal;
-        count += item.qty;
+        total += lineTotal; count += item.qty;
         return `<div class="order-line">
           <div class="order-line-qty">${item.qty}</div>
-          <div class="order-line-info">
-            <div class="order-line-name">${item.product.name}</div>
-          </div>
+          <div class="order-line-info"><div class="order-line-name">${item.product.name}</div></div>
           <div style="display:flex;align-items:center;gap:6px">
             <div class="order-line-price">${fmt(lineTotal)}</div>
             <button onclick="removeFromComanda(${k})" style="border:none;background:var(--gray-200);border-radius:50%;width:20px;height:20px;cursor:pointer;font-size:14px;color:var(--gray-600);display:flex;align-items:center;justify-content:center">−</button>
           </div>
         </div>`;
       }).join('');
-
       totalEl.textContent = fmt(total);
       countEl.textContent = `${count} producto${count !== 1 ? 's' : ''} añadido${count !== 1 ? 's' : ''}`;
-      btn.style.opacity = '1';
-      btn.style.pointerEvents = 'auto';
+      btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
     }
 
-    function clearComanda() {
-      comandaItems = {};
-      renderComanda();
-    }
+    function clearComanda() { comandaItems = {}; renderComanda(); }
 
     function sendComanda() {
       alert('✅ Comanda enviada a cocina');
@@ -4462,22 +4887,14 @@
     // ── CAJA ──
     function abrirCaja() {
       const fondo = document.getElementById('fondo-inicial').value;
-      if (!fondo || fondo <= 0) {
-        alert('Por favor, introduce un fondo inicial válido');
-        return;
-      }
-      alert(`✅ Caja abierta correctamente con fondo inicial de ${fondo}€`);
+      if (!fondo || fondo <= 0) { alert('Por favor, introduce un fondo inicial válido'); return; }
+      alert(`✅ Caja abierta con fondo inicial de ${fondo}€`);
       showScreen('screen-mesas');
     }
 
-    // Actualizar fecha y hora en pantalla de caja
     function actualizarFechaHora() {
-      const fechaHoraInput = document.getElementById('fecha-hora');
-      if (fechaHoraInput) {
-        const ahora = new Date();
-        const fechaFormateada = ahora.toLocaleString('es-ES');
-        fechaHoraInput.value = fechaFormateada;
-      }
+      const el = document.getElementById('fecha-hora');
+      if (el) el.value = new Date().toLocaleString('es-ES');
     }
 
     // ── INIT ──
@@ -4485,9 +4902,9 @@
     renderProducts();
     renderPedidosScreen();
     renderAutoservicioScreen();
+    renderGestionScreen();
     actualizarFechaHora();
 
-    // Pre-select T7
     setTimeout(() => {
       const t7 = document.querySelectorAll('.mesa')[7];
       if (t7) selectTable(7, 'T7', 'Terraza');

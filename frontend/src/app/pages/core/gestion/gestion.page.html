@@ -1,0 +1,388 @@
+<div class="gestion-page">
+  <div class="screen-gestion">
+    <div class="page-container">
+      <div class="gestion-api-warning" *ngIf="apiErrorMessage">{{ apiErrorMessage }}</div>
+      <div class="gestion-layout">
+        <aside class="gestion-restaurants">
+          <div class="gestion-panel-head">
+            <div class="gestion-panel-title">Restaurantes registrados</div>
+            <div class="gestion-panel-sub">Selecciona un restaurante para gestionar su configuracion.</div>
+          </div>
+          <div class="gestion-list">
+            <div
+              *ngFor="let restaurant of managementRestaurants"
+              class="gestion-restaurant-item"
+              [class.active]="isRestaurantActive(restaurant.id)"
+              (click)="selectRestaurant(restaurant.id)"
+            >
+              <div class="gestion-restaurant-top">
+                <div>
+                  <div class="gestion-restaurant-name">{{ restaurant.name }}</div>
+                  <div class="gestion-restaurant-meta">{{ restaurant.legalName }}<br />{{ restaurant.taxId }} · {{ restaurant.email }}</div>
+                </div>
+                <span class="gestion-status-pill live">Activo</span>
+              </div>
+              <div class="gestion-restaurant-kpis">
+                <div class="gestion-kpi-mini">
+                  <div class="gestion-kpi-mini-val">{{ restaurant.users }}</div>
+                  <div class="gestion-kpi-mini-label">Usuarios</div>
+                </div>
+                <div class="gestion-kpi-mini">
+                  <div class="gestion-kpi-mini-val">{{ restaurant.zones }}</div>
+                  <div class="gestion-kpi-mini-label">Zonas</div>
+                </div>
+                <div class="gestion-kpi-mini">
+                  <div class="gestion-kpi-mini-val">{{ restaurant.products }}</div>
+                  <div class="gestion-kpi-mini-label">Productos</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="gestion-workspace">
+          <div class="gestion-workspace-top">
+            <div class="gestion-workspace-title">{{ selectedRestaurant ? 'Gestion de ' + selectedRestaurant.name : 'Selecciona un restaurante' }}</div>
+            <div class="gestion-workspace-sub">
+              {{ selectedRestaurant ? selectedRestaurant.legalName + ' · ' + selectedRestaurant.taxId + ' · ' + selectedRestaurant.email : 'Aqui apareceran las entidades disponibles para su gestion.' }}
+            </div>
+            <div class="gestion-entity-tabs">
+              <button
+                *ngFor="let entity of managementEntities"
+                class="gestion-entity-tab"
+                [class.active]="isEntityActive(entity.key)"
+                (click)="selectEntity(entity.key)"
+                type="button"
+              >
+                {{ entity.label }}
+              </button>
+            </div>
+          </div>
+
+          <div class="gestion-workspace-body" *ngIf="selectedRestaurant; else noRestaurantTpl">
+            <div [ngSwitch]="managementState.entity">
+              <div *ngSwitchCase="'restaurant'" class="gestion-section-grid">
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Resumen del restaurante</div>
+                  <div class="gestion-row-list">
+                    <div class="gestion-row-item active"><strong>Nombre comercial:</strong> {{ selectedRestaurant.name }}</div>
+                    <div class="gestion-row-item active"><strong>Razon social:</strong> {{ selectedRestaurant.legalName }}</div>
+                    <div class="gestion-row-item active"><strong>NIF/CIF:</strong> {{ selectedRestaurant.taxId }}</div>
+                    <div class="gestion-row-item active"><strong>Email:</strong> {{ selectedRestaurant.email }}</div>
+                    <div class="gestion-row-item active"><strong>Usuarios activos:</strong> {{ selectedRestaurant.users }}</div>
+                  </div>
+                </div>
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Editar datos del restaurante</div>
+                  <form class="gestion-form" (ngSubmit)="saveRestaurantChanges()">
+                    <div>
+                      <label class="form-label" for="mg-rest-name">Nombre comercial</label>
+                      <input id="mg-rest-name" class="form-input" [(ngModel)]="restaurantForm.name" name="mg-rest-name" required />
+                    </div>
+                    <div>
+                      <label class="form-label" for="mg-rest-legal">Razon social</label>
+                      <input id="mg-rest-legal" class="form-input" [(ngModel)]="restaurantForm.legalName" name="mg-rest-legal" required />
+                    </div>
+                    <div class="gestion-form-grid">
+                      <div>
+                        <label class="form-label" for="mg-rest-tax">NIF/CIF</label>
+                        <input id="mg-rest-tax" class="form-input" [(ngModel)]="restaurantForm.taxId" name="mg-rest-tax" required />
+                      </div>
+                      <div>
+                        <label class="form-label" for="mg-rest-email">Email</label>
+                        <input id="mg-rest-email" type="email" class="form-input" [(ngModel)]="restaurantForm.email" name="mg-rest-email" required />
+                      </div>
+                    </div>
+                    <div>
+                      <label class="form-label" for="mg-rest-password">Contrasena de acceso</label>
+                      <input
+                        id="mg-rest-password"
+                        type="password"
+                        class="form-input"
+                        [(ngModel)]="restaurantForm.password"
+                        name="mg-rest-password"
+                        placeholder="Dejar vacio para mantener la actual"
+                      />
+                    </div>
+                    <div class="gestion-form-actions">
+                      <button class="btn-login btn-login-inline" type="submit" [disabled]="isSavingRestaurant">
+                        {{ isSavingRestaurant ? 'Guardando...' : 'Guardar cambios' }}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div *ngSwitchCase="'users'" class="gestion-section-grid">
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Usuarios del restaurante</div>
+                  <div class="gestion-row-list">
+                    <div
+                      *ngFor="let user of selectedData.users; let i = index"
+                      class="gestion-row-item"
+                      [class.active]="isSelectedRow('users', i)"
+                      (click)="selectManagementItem('users', i)"
+                    >
+                      <strong>{{ user.name }}</strong><br />{{ user.email }} · {{ user.role }} · PIN {{ user.pin }}
+                    </div>
+                  </div>
+                </div>
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Editar usuario seleccionado</div>
+                  <form class="gestion-form" (ngSubmit)="saveManagementEntity('users')">
+                    <div class="gestion-form-actions form-actions-start">
+                      <button type="button" class="btn-small" (click)="startCreateManagementItem('users')">Nuevo usuario</button>
+                      <button type="button" class="btn-small" (click)="deleteSelectedManagementItem('users')">Eliminar</button>
+                    </div>
+                    <div>
+                      <label class="form-label" for="mg-user-name">Nombre</label>
+                      <input id="mg-user-name" class="form-input" [(ngModel)]="userForm.name" name="mg-user-name" placeholder="Nombre y apellidos" required />
+                    </div>
+                    <div class="gestion-form-grid">
+                      <div>
+                        <label class="form-label" for="mg-user-email">Email</label>
+                        <input id="mg-user-email" type="email" class="form-input" [(ngModel)]="userForm.email" name="mg-user-email" placeholder="usuario@restaurante.com" required />
+                      </div>
+                      <div>
+                        <label class="form-label" for="mg-user-role">Rol</label>
+                        <select id="mg-user-role" class="form-input" [(ngModel)]="userForm.role" name="mg-user-role" required>
+                          <option value="manager">manager</option>
+                          <option value="waiter">waiter</option>
+                          <option value="kitchen">kitchen</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="gestion-form-grid">
+                      <div>
+                        <label class="form-label" for="mg-user-pin">PIN</label>
+                        <input id="mg-user-pin" class="form-input" maxlength="4" [(ngModel)]="userForm.pin" name="mg-user-pin" placeholder="4 digitos" required />
+                      </div>
+                      <div>
+                        <label class="form-label" for="mg-user-password">Contrasena</label>
+                        <input id="mg-user-password" type="password" class="form-input" placeholder="Nueva contrasena" />
+                      </div>
+                    </div>
+                    <div class="gestion-form-actions">
+                      <button class="btn-login btn-login-inline" type="submit">Guardar cambios</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div *ngSwitchCase="'families'" class="gestion-section-grid">
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Familias disponibles</div>
+                  <div class="gestion-row-list">
+                    <div
+                      *ngFor="let family of selectedData.families; let i = index"
+                      class="gestion-row-item"
+                      [class.active]="isSelectedRow('families', i)"
+                      (click)="selectManagementItem('families', i)"
+                    >
+                      <strong>{{ family.name }}</strong><br />Estado: {{ family.active ? 'Activa' : 'Inactiva' }}
+                    </div>
+                  </div>
+                </div>
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Editar familia seleccionada</div>
+                  <form class="gestion-form" (ngSubmit)="saveManagementEntity('families')">
+                    <div class="gestion-form-actions form-actions-start">
+                      <button type="button" class="btn-small" (click)="startCreateManagementItem('families')">Nueva familia</button>
+                      <button type="button" class="btn-small" (click)="deleteSelectedManagementItem('families')">Eliminar</button>
+                    </div>
+                    <div>
+                      <label class="form-label" for="mg-family-name">Nombre de la familia</label>
+                      <input id="mg-family-name" class="form-input" [(ngModel)]="familyForm.name" name="mg-family-name" placeholder="Ej. Entrantes" required />
+                    </div>
+                    <div>
+                      <label class="form-label" for="mg-family-active">Estado</label>
+                      <select id="mg-family-active" class="form-input" [(ngModel)]="familyForm.active" name="mg-family-active" required>
+                        <option [ngValue]="true">Activa</option>
+                        <option [ngValue]="false">Inactiva</option>
+                      </select>
+                    </div>
+                    <div class="gestion-form-actions">
+                      <button class="btn-login btn-login-inline" type="submit">Guardar cambios</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div *ngSwitchCase="'products'" class="gestion-section-grid">
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Catalogo actual</div>
+                  <div class="gestion-row-list">
+                    <div
+                      *ngFor="let product of selectedData.products; let i = index"
+                      class="gestion-row-item"
+                      [class.active]="isSelectedRow('products', i)"
+                      (click)="selectManagementItem('products', i)"
+                    >
+                      <strong>{{ product.name }}</strong><br />{{ product.family }} · {{ toEuroFromCents(product.price) }} · IVA {{ product.tax }}% · Stock {{ product.stock }} · {{ product.active ? 'Activo' : 'Inactivo' }}
+                    </div>
+                  </div>
+                </div>
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Editar producto seleccionado</div>
+                  <form class="gestion-form" (ngSubmit)="saveManagementEntity('products')">
+                    <div class="gestion-form-actions form-actions-start">
+                      <button type="button" class="btn-small" (click)="startCreateManagementItem('products')">Nuevo producto</button>
+                      <button type="button" class="btn-small" (click)="deleteSelectedManagementItem('products')">Eliminar</button>
+                    </div>
+                    <div>
+                      <label class="form-label" for="mg-product-name">Nombre del producto</label>
+                      <input id="mg-product-name" class="form-input" [(ngModel)]="productForm.name" name="mg-product-name" placeholder="Ej. Tarta de queso" required />
+                    </div>
+                    <div class="gestion-form-grid">
+                      <div>
+                        <label class="form-label" for="mg-product-family">Familia</label>
+                        <select id="mg-product-family" class="form-input" [(ngModel)]="productForm.family" name="mg-product-family" required>
+                          <option *ngFor="let family of selectedData.families" [value]="family.name">{{ family.name }}</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="form-label" for="mg-product-tax">IVA (%)</label>
+                        <select id="mg-product-tax" class="form-input" [(ngModel)]="productForm.tax" name="mg-product-tax" required>
+                          <option *ngFor="let tax of selectedData.taxes" [ngValue]="tax.percentage">{{ tax.percentage }}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="gestion-form-grid">
+                      <div>
+                        <label class="form-label" for="mg-product-price">Precio (€)</label>
+                        <input id="mg-product-price" type="number" step="0.01" class="form-input" [(ngModel)]="productForm.price" name="mg-product-price" placeholder="0,00" required />
+                      </div>
+                      <div>
+                        <label class="form-label" for="mg-product-stock">Stock</label>
+                        <input id="mg-product-stock" type="number" class="form-input" [(ngModel)]="productForm.stock" name="mg-product-stock" placeholder="0" required />
+                      </div>
+                    </div>
+                    <div>
+                      <label class="form-label" for="mg-product-active">Estado</label>
+                      <select id="mg-product-active" class="form-input" [(ngModel)]="productForm.active" name="mg-product-active" required>
+                        <option [ngValue]="true">Activo</option>
+                        <option [ngValue]="false">Inactivo</option>
+                      </select>
+                    </div>
+                    <div class="gestion-form-actions">
+                      <button class="btn-login btn-login-inline" type="submit">Guardar cambios</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div *ngSwitchCase="'zones'" class="gestion-section-grid">
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Zonas y capacidad</div>
+                  <div class="gestion-row-list">
+                    <div
+                      *ngFor="let zone of selectedData.zones; let i = index"
+                      class="gestion-row-item"
+                      [class.active]="isSelectedRow('zones', i)"
+                      (click)="selectManagementItem('zones', i)"
+                    >
+                      <strong>{{ zone.name }}</strong><br />Mesas registradas: {{ zone.tables.length }}
+                    </div>
+                  </div>
+                </div>
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Editar zona seleccionada</div>
+                  <form class="gestion-form" (ngSubmit)="saveManagementEntity('zones')">
+                    <div class="gestion-form-actions form-actions-start">
+                      <button type="button" class="btn-small" (click)="startCreateManagementItem('zones')">Nueva zona</button>
+                      <button type="button" class="btn-small" (click)="deleteSelectedManagementItem('zones')">Eliminar</button>
+                    </div>
+                    <div>
+                      <label class="form-label" for="mg-zone-name">Nombre de zona</label>
+                      <input id="mg-zone-name" class="form-input" [(ngModel)]="zoneForm.name" name="mg-zone-name" placeholder="Ej. Terraza" required />
+                    </div>
+                    <div class="gestion-form-actions">
+                      <button class="btn-login btn-login-inline" type="submit">Guardar cambios zona</button>
+                    </div>
+                  </form>
+
+                  <div class="section-divider"></div>
+
+                  <div class="gestion-card-title mg-small-gap">Mesas de {{ selectedZone ? selectedZone.name : 'la zona' }}</div>
+                  <div class="gestion-row-list mg-table-list">
+                    <ng-container *ngIf="selectedZone && selectedZone.tables.length; else noTablesTpl">
+                      <div
+                        *ngFor="let table of selectedZone.tables; let i = index"
+                        class="gestion-row-item"
+                        [class.active]="isSelectedTableRow(i)"
+                        (click)="selectManagementTable(i)"
+                      >
+                        <strong>{{ table.name }}</strong>
+                      </div>
+                    </ng-container>
+                    <ng-template #noTablesTpl>
+                      <div class="gestion-row-item">No hay mesas registradas.</div>
+                    </ng-template>
+                  </div>
+
+                  <form class="gestion-form" (ngSubmit)="saveManagementTable()">
+                    <div class="gestion-form-actions form-actions-start">
+                      <button type="button" class="btn-small" (click)="startCreateManagementTable()">Nueva mesa</button>
+                      <button type="button" class="btn-small" (click)="deleteSelectedManagementTable()">Eliminar mesa</button>
+                    </div>
+                    <div>
+                      <label class="form-label" for="mg-table-name">Nombre de mesa</label>
+                      <input id="mg-table-name" class="form-input" [(ngModel)]="tableForm.name" name="mg-table-name" placeholder="Ej. T12" required />
+                    </div>
+                    <div class="gestion-form-actions">
+                      <button class="btn-login btn-login-inline" type="submit">Guardar mesa</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div *ngSwitchCase="'taxes'" class="gestion-section-grid">
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Impuestos configurados</div>
+                  <div class="gestion-row-list">
+                    <div
+                      *ngFor="let tax of selectedData.taxes; let i = index"
+                      class="gestion-row-item"
+                      [class.active]="isSelectedRow('taxes', i)"
+                      (click)="selectManagementItem('taxes', i)"
+                    >
+                      <strong>{{ tax.name }}</strong><br />{{ tax.percentage }}%
+                    </div>
+                  </div>
+                </div>
+                <div class="gestion-card">
+                  <div class="gestion-card-title">Editar impuesto seleccionado</div>
+                  <form class="gestion-form" (ngSubmit)="saveManagementEntity('taxes')">
+                    <div class="gestion-form-actions form-actions-start">
+                      <button type="button" class="btn-small" (click)="startCreateManagementItem('taxes')">Nuevo impuesto</button>
+                      <button type="button" class="btn-small" (click)="deleteSelectedManagementItem('taxes')">Eliminar</button>
+                    </div>
+                    <div>
+                      <label class="form-label" for="mg-tax-name">Nombre</label>
+                      <input id="mg-tax-name" class="form-input" [(ngModel)]="taxForm.name" name="mg-tax-name" placeholder="Ej. IVA reducido" required />
+                    </div>
+                    <div>
+                      <label class="form-label" for="mg-tax-percentage">Porcentaje (%)</label>
+                      <input id="mg-tax-percentage" type="number" min="0" max="100" class="form-input" [(ngModel)]="taxForm.percentage" name="mg-tax-percentage" placeholder="10" required />
+                    </div>
+                    <div class="gestion-form-actions">
+                      <button class="btn-login btn-login-inline" type="submit">Guardar cambios</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+
+              <div *ngSwitchDefault class="gestion-empty">Selecciona una entidad para comenzar.</div>
+            </div>
+          </div>
+
+          <ng-template #noRestaurantTpl>
+            <div class="gestion-workspace-body">
+              <div class="gestion-empty">No hay restaurante seleccionado.</div>
+            </div>
+          </ng-template>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>

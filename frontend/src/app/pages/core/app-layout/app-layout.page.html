@@ -1,0 +1,63 @@
+<div class="app-shell">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="topbar-name">{{ activeRestaurantName }}</span>
+      <span class="topbar-date">{{ topbarDateText }}</span>
+    </div>
+
+    <div class="topbar-nav">
+      <a class="nav-item" routerLink="/app/mesas" routerLinkActive="active">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+        </svg>
+        Mesas
+      </a>
+      <a class="nav-item" routerLink="/app/pedidos" routerLinkActive="active">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+        </svg>
+        Pedidos
+      </a>
+      <a class="nav-item" routerLink="/app/autoservicio" routerLinkActive="active">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14" />
+        </svg>
+        Autoservicio
+      </a>
+      <a class="nav-item" routerLink="/app/gestion" routerLinkActive="active" *ngIf="isAdminUser">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="8" y1="6" x2="21" y2="6" />
+          <line x1="8" y1="12" x2="21" y2="12" />
+          <line x1="8" y1="18" x2="21" y2="18" />
+          <line x1="3" y1="6" x2="3.01" y2="6" />
+          <line x1="3" y1="12" x2="3.01" y2="12" />
+          <line x1="3" y1="18" x2="3.01" y2="18" />
+        </svg>
+        Gestion
+      </a>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="btn-caja" type="button" (click)="goToCaja()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="6" width="20" height="14" rx="2" />
+          <line x1="12" y1="10" x2="12" y2="16" />
+          <line x1="9" y1="13" x2="15" y2="13" />
+        </svg>
+        Abrir Caja
+      </button>
+      <button class="user-avatar-sm" type="button" (click)="logout()" [title]="currentUser?.email || 'Cerrar sesion'">
+        {{ currentUserInitials }}
+      </button>
+    </div>
+  </div>
+
+  <div class="app-shell-content">
+    <router-outlet></router-outlet>
+  </div>
+</div>

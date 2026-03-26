@@ -2,6 +2,41 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
+    path: 'app',
+    loadComponent: () => import('./pages/core/app-layout/app-layout.page').then((m) => m.AppLayoutPage),
+    children: [
+      {
+        path: 'gestion',
+        loadComponent: () => import('./pages/core/gestion/gestion.page').then((m) => m.GestionPage),
+      },
+      {
+        path: 'mesas',
+        loadComponent: () => import('./pages/core/mesas/mesas.page').then((m) => m.MesasPage),
+      },
+      {
+        path: 'pedidos',
+        loadComponent: () => import('./pages/core/pedidos/pedidos.page').then((m) => m.PedidosPage),
+      },
+      {
+        path: 'autoservicio',
+        loadComponent: () => import('./pages/core/autoservicio/autoservicio.page').then((m) => m.AutoservicioPage),
+      },
+      {
+        path: 'caja',
+        loadComponent: () => import('./pages/core/caja/caja.page').then((m) => m.CajaPage),
+      },
+      {
+        path: '',
+        redirectTo: 'gestion',
+        pathMatch: 'full',
+      },
+    ],
+  },
+  {
+    path: 'login',
+    loadComponent: () => import('./pages/core/login/login.page').then((m) => m.LoginPage),
+  },
+  {
     path: 'home',
     loadComponent: () => import('./pages/core/home/home.page').then((m) => m.HomePage),
   },
@@ -9,5 +44,9 @@ export const routes: Routes = [
     path: '',
     redirectTo: 'home',
     pathMatch: 'full',
+  },
+  {
+    path: '**',
+    redirectTo: 'home',
   },
 ];

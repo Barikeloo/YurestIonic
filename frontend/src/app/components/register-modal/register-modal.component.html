@@ -1,0 +1,50 @@
+<div class="modal-overlay" [class.open]="isOpen" (click)="closeOutside($event)">
+  <div class="modal-box">
+    <button class="modal-close-btn" type="button" (click)="close()">x</button>
+    <div class="modal-title">Crear cuenta</div>
+    <div class="modal-sub">Registra tu restaurante en el sistema</div>
+
+    <form [formGroup]="registerForm" (ngSubmit)="submit()" novalidate>
+      <div class="modal-field">
+        <label class="form-label" for="register-name">Nombre del restaurante</label>
+        <input id="register-name" type="text" class="form-input" formControlName="restaurantName" placeholder="Restaurante Voraz" />
+        <p class="field-error" *ngIf="registerForm.controls.restaurantName.touched && registerForm.controls.restaurantName.invalid">
+          El nombre es obligatorio.
+        </p>
+      </div>
+
+      <div class="modal-field">
+        <label class="form-label" for="register-legal-name">Nombre legal</label>
+        <input id="register-legal-name" type="text" class="form-input" formControlName="legalName" placeholder="Voraz Hosteleria SL" />
+      </div>
+
+      <div class="modal-field">
+        <label class="form-label" for="register-email">Email</label>
+        <input id="register-email" type="email" class="form-input" formControlName="email" placeholder="info@restaurante.com" />
+        <p class="field-error" *ngIf="registerForm.controls.email.touched && registerForm.controls.email.invalid">
+          Introduce un email valido.
+        </p>
+      </div>
+
+      <div class="modal-field">
+        <label class="form-label" for="register-nif">NIF / CIF</label>
+        <input id="register-nif" type="text" class="form-input" formControlName="nif" placeholder="B12345678" />
+      </div>
+
+      <div class="modal-field">
+        <label class="form-label" for="register-password">Contrasena</label>
+        <input id="register-password" type="password" class="form-input" formControlName="password" placeholder="••••••••" />
+        <p class="field-error" *ngIf="registerForm.controls.password.touched && registerForm.controls.password.invalid">
+          Minimo 8 caracteres.
+        </p>
+      </div>
+
+      <p class="server-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+      <p class="success-message" *ngIf="successMessage">{{ successMessage }}</p>
+
+      <button class="btn-login" style="margin-top:8px" type="submit" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Creando...' : 'Crear cuenta' }}
+      </button>
+    </form>
+  </div>
+</div>

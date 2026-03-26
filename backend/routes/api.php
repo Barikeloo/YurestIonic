@@ -22,6 +22,7 @@ use App\Product\Infrastructure\Entrypoint\Http\GetController as ProductGetContro
 use App\Product\Infrastructure\Entrypoint\Http\PostController as ProductPostController;
 use App\Product\Infrastructure\Entrypoint\Http\PutController as ProductPutController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\PostController as RestaurantPostController;
+use App\Restaurant\Infrastructure\Entrypoint\Http\RegisterWithAdminController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\GetCollectionController as RestaurantGetCollectionController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\AdminGetCollectionController as RestaurantAdminGetCollectionController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\AdminSelectRestaurantContextController;
@@ -67,6 +68,7 @@ Route::middleware([
 	AddQueuedCookiesToResponse::class,
 	StartSession::class,
 ])->group(function (): void {
+	Route::post('/auth/register', RegisterWithAdminController::class);
 	Route::post('/auth/login', LoginController::class);
 	Route::get('/auth/me', GetMeController::class);
 	Route::post('/auth/logout', LogoutController::class);
