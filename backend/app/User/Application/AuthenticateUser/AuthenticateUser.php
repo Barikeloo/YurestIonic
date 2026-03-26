@@ -2,9 +2,11 @@
 
 namespace App\User\Application\AuthenticateUser;
 
+use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Shared\Domain\ValueObject\Email;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
+use App\User\Infrastructure\Persistence\Models\EloquentUser;
 
 class AuthenticateUser
 {
@@ -28,6 +30,33 @@ class AuthenticateUser
             return AuthenticateUserResponse::invalidCredentials();
         }
 
-        return AuthenticateUserResponse::authenticated($user);
+        // Get additional data from EloquentUser
+        $persistedUser = EloquentUser::query()
+            ->select('role', 'restaurant_id')
+            ->where('uuid', $user->id()->value())
+            ->first();
+
+        $role = $persistedUser?->role;
+        $restaurantId = null;
+        $restaurantName = null;
+
+        if ($persistedUser !== null && is_numeric($persistedUser->restaurant_id)) {
+            $restaurant = EloquentRestaurant::query()
+                ->select('uuid', 'name')
+                ->find((int) $persistedUser->restaurant_id);
+
+            if ($restaurant !== null) {
+                $restaurantId = $restaurant->uuid;
+                $restaurantName = $restaurant->name;
+            }
+        }
+
+        return AuthenticateUserResponse::authenticated(
+            $user,
+            $role,
+            $restaurantId,
+            $restaurantName,
+        );
     }
 }
+

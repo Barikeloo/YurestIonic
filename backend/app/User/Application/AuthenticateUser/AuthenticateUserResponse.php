@@ -13,10 +13,17 @@ final readonly class AuthenticateUserResponse
         public ?string $id,
         public ?string $name,
         public ?string $email,
+        public ?string $role = null,
+        public ?string $restaurant_id = null,
+        public ?string $restaurant_name = null,
     ) {}
 
-    public static function authenticated(User $user): self
-    {
+    public static function authenticated(
+        User $user,
+        ?string $role = null,
+        ?string $restaurantId = null,
+        ?string $restaurantName = null,
+    ): self {
         return new self(
             success: true,
             statusCode: 200,
@@ -24,6 +31,9 @@ final readonly class AuthenticateUserResponse
             id: $user->id()->value(),
             name: $user->name(),
             email: $user->email()->value(),
+            role: $role,
+            restaurant_id: $restaurantId,
+            restaurant_name: $restaurantName,
         );
     }
 
@@ -52,7 +62,7 @@ final readonly class AuthenticateUserResponse
     }
 
     /**
-     * @return array<string, bool|string>
+     * @return array<string, bool|string|null>
      */
     public function toArray(): array
     {
@@ -68,6 +78,8 @@ final readonly class AuthenticateUserResponse
             'id' => (string) $this->id,
             'name' => (string) $this->name,
             'email' => (string) $this->email,
+            'role' => $this->role,
+            'restaurant_id' => $this->restaurant_id,
+            'restaurant_name' => $this->restaurant_name,
         ];
     }
-}
