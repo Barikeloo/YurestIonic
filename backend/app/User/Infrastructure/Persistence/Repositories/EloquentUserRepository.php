@@ -173,6 +173,7 @@ class EloquentUserRepository implements UserRepositoryInterface
         string $email,
         string $passwordHash,
         string $restaurantUuid,
+        string $role = 'operator',
     ): void {
         $restaurant = EloquentRestaurant::query()->where('uuid', $restaurantUuid)->first();
 
@@ -187,7 +188,7 @@ class EloquentUserRepository implements UserRepositoryInterface
                 'name' => $name,
                 'email' => $email,
                 'password' => $passwordHash,
-                'role' => 'staff',
+                'role' => $role,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]

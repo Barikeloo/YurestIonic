@@ -286,6 +286,40 @@
   font-weight: 600;
 }
 
+.user-meta-email {
+  color: var(--gray-600);
+}
+
+.user-role-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  border: 1px solid transparent;
+}
+
+.role-badge-admin {
+  background: #fdebec;
+  color: #b4232a;
+  border-color: #f4c8cb;
+}
+
+.role-badge-supervisor {
+  background: #eef6ff;
+  color: #1f5fa8;
+  border-color: #c7dcf7;
+}
+
+.role-badge-operator {
+  background: #edf8f2;
+  color: #1f7f4d;
+  border-color: #c8e9d8;
+}
+
 .gestion-form {
   display: flex;
   flex-direction: column;

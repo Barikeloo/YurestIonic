@@ -33,12 +33,30 @@ final class AdminSelectRestaurantContextController
             ], 403);
         }
 
-        if (! is_numeric($user->restaurant_id)) {
+        $validated = $request->validate([
+            'restaurant_id' => ['required', 'string', 'uuid'],
+        ]);
+
+        $restaurant = EloquentRestaurant::query()->where('uuid', $validated['restaurant_id'])->first();
+
+        if ($restaurant === null) {
             return new JsonResponse([
-                'message' => 'Admin user has no linked restaurant.',
-            ], 403);
+                'message' => 'Restaurant not found.',
+            ], 404);
         }
 
+        // Case 1: Platform admin (no restaurant assigned) - can select any restaurant
+        if (! is_numeric($user->restaurant_id)) {
+            $request->session()->put('tenant_restaurant_uuid', $restaurant->uuid);
+
+            return new JsonResponse([
+                'success' => true,
+                'restaurant_id' => $restaurant->uuid,
+                'name' => $restaurant->name,
+            ]);
+        }
+
+        // Case 2: Restaurant admin - can only select restaurants with same tax_id
         $userRestaurant = EloquentRestaurant::query()->find((int) $user->restaurant_id);
 
         if ($userRestaurant === null) {
@@ -53,18 +71,6 @@ final class AdminSelectRestaurantContextController
             return new JsonResponse([
                 'message' => 'Linked restaurant has no tax id.',
             ], 422);
-        }
-
-        $validated = $request->validate([
-            'restaurant_id' => ['required', 'string', 'uuid'],
-        ]);
-
-        $restaurant = EloquentRestaurant::query()->where('uuid', $validated['restaurant_id'])->first();
-
-        if ($restaurant === null) {
-            return new JsonResponse([
-                'message' => 'Restaurant not found.',
-            ], 404);
         }
 
         if ($restaurant->tax_id !== $userTaxId) {

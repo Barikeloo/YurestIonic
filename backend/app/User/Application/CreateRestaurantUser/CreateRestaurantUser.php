@@ -18,6 +18,7 @@ class CreateRestaurantUser
         string $email,
         string $plainPassword,
         string $restaurantUuid,
+        string $role = 'operator',
     ): CreateRestaurantUserResponse {
         $userUuid = Uuid::generate()->value();
         $passwordHash = $this->passwordHasher->hash($plainPassword);
@@ -28,9 +29,10 @@ class CreateRestaurantUser
             $email,
             $passwordHash,
             $restaurantUuid,
+            $role,
         );
 
-        return CreateRestaurantUserResponse::create($userUuid, $name, $email);
+        return CreateRestaurantUserResponse::create($userUuid, $name, $email, $role);
     }
 }
 

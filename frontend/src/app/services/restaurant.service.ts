@@ -45,12 +45,14 @@ interface CreateRestaurantUserPayload {
   name: string;
   email: string;
   password: string;
+  role: string;
 }
 
 interface UpdateRestaurantUserPayload {
   name?: string;
   email?: string;
   password?: string;
+  role?: string;
 }
 
 @Injectable({

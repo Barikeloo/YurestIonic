@@ -7,6 +7,7 @@ import { AppContextService } from '../../../services/app-context.service';
 import { RestaurantService } from '../../../services/restaurant.service';
 
 type ManagementEntityKey = 'restaurant' | 'users' | 'families' | 'products' | 'zones' | 'taxes';
+type UserRole = 'operator' | 'supervisor' | 'admin';
 
 interface ManagementRestaurant {
   id: number;
@@ -24,7 +25,7 @@ interface ManagementRestaurant {
 interface UserRow {
   uuid?: string;
   name: string;
-  role: string;
+  role: UserRole;
   email: string;
   pin?: string;
   password?: string;
@@ -116,8 +117,8 @@ export class GestionPage {
   public readonly managementData: Record<number, ManagementDataRow> = {
     1: {
       users: [
-        { name: 'Maria Gomez', role: 'manager', email: 'maria@voraz.es', pin: '1234' },
-        { name: 'Carlos Ruiz', role: 'waiter', email: 'carlos@voraz.es', pin: '2580' },
+        { name: 'Maria Gomez', role: 'admin', email: 'maria@voraz.es', pin: '1234' },
+        { name: 'Carlos Ruiz', role: 'operator', email: 'carlos@voraz.es', pin: '2580' },
       ],
       families: [
         { name: 'Entrantes', active: true },
@@ -140,8 +141,8 @@ export class GestionPage {
     },
     2: {
       users: [
-        { name: 'Eva Luna', role: 'manager', email: 'eva@bahia21.es', pin: '4455' },
-        { name: 'Joel Nunez', role: 'waiter', email: 'joel@bahia21.es', pin: '2211' },
+        { name: 'Eva Luna', role: 'admin', email: 'eva@bahia21.es', pin: '4455' },
+        { name: 'Joel Nunez', role: 'operator', email: 'joel@bahia21.es', pin: '2211' },
       ],
       families: [
         { name: 'Tapas', active: true },
@@ -159,8 +160,8 @@ export class GestionPage {
     },
     3: {
       users: [
-        { name: 'Paula Sanz', role: 'manager', email: 'paula@terrazaazul.es', pin: '4451' },
-        { name: 'Leo Martin', role: 'waiter', email: 'leo@terrazaazul.es', pin: '7854' },
+        { name: 'Paula Sanz', role: 'admin', email: 'paula@terrazaazul.es', pin: '4451' },
+        { name: 'Leo Martin', role: 'operator', email: 'leo@terrazaazul.es', pin: '7854' },
       ],
       families: [
         { name: 'Desayunos', active: true },
@@ -220,10 +221,16 @@ export class GestionPage {
   public userForm = {
     name: '',
     email: '',
-    role: 'manager',
+    role: 'operator' as UserRole,
     pin: '',
     password: '',
   };
+
+  public readonly roleOptions: Array<{ value: UserRole; label: string }> = [
+    { value: 'operator', label: 'Operario' },
+    { value: 'supervisor', label: 'Supervisor' },
+    { value: 'admin', label: 'Administrador' },
+  ];
 
   public familyForm = {
     name: '',
@@ -497,7 +504,7 @@ export class GestionPage {
     if (entityKey === 'users') {
       const name = this.userForm.name.trim();
       const email = this.userForm.email.trim();
-      const role = this.userForm.role.trim();
+      const role = this.normalizeRole(this.userForm.role);
       const password = this.userForm.password.trim();
 
       if (!name || !email || !role) {
@@ -528,6 +535,7 @@ export class GestionPage {
           .updateRestaurantUser(this.selectedRestaurant.uuid, selectedUser.uuid, {
             name,
             email,
+            role,
             ...(password ? { password } : {}),
           })
           .pipe(take(1))
@@ -555,6 +563,7 @@ export class GestionPage {
             name,
             email,
             password,
+            role,
           })
           .pipe(take(1))
           .subscribe({
@@ -563,7 +572,7 @@ export class GestionPage {
                 uuid: response.uuid,
                 name: response.name,
                 email: response.email,
-                role,
+                role: this.normalizeRole(response.role ?? role),
               };
 
               (rows as UserRow[]).push(newUser);
@@ -789,7 +798,7 @@ export class GestionPage {
     this.userForm = {
       name: selectedUser?.name ?? '',
       email: selectedUser?.email ?? '',
-      role: selectedUser?.role ?? 'manager',
+      role: selectedUser?.role ?? 'operator',
       pin: '',
       password: '',
     };
@@ -869,6 +878,13 @@ export class GestionPage {
                 products: [],
               };
             }
+
+            // Keep KPI cards in sync even before selecting a restaurant.
+            this.updateRestaurantKpis(restaurant.id);
+
+            if (restaurant.uuid) {
+              this.loadRestaurantUsers(restaurant.uuid, true);
+            }
           }
 
           this.managementState.restaurantId = this.managementRestaurants[0].id;
@@ -880,7 +896,7 @@ export class GestionPage {
       });
   }
 
-  private loadRestaurantUsers(restaurantUuid: string): void {
+  private loadRestaurantUsers(restaurantUuid: string, silent: boolean = false): void {
     this.restaurantService
       .getRestaurantUsers(restaurantUuid)
       .pipe(take(1))
@@ -895,17 +911,62 @@ export class GestionPage {
             uuid: user.uuid,
             name: user.name,
             email: user.email,
-            role: user.role,
+            role: this.normalizeRole(user.role),
           }));
 
           this.managementData[restaurant.id].users = users;
           this.updateRestaurantKpis(restaurant.id);
           this.syncForms();
-          this.apiErrorMessage = null;
+
+          if (!silent) {
+            this.apiErrorMessage = null;
+          }
         },
         error: (error: unknown) => {
-          this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar los usuarios.';
+          if (!silent) {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar los usuarios.';
+          }
         },
       });
+  }
+
+  public getRoleLabel(role: string): string {
+    const normalizedRole = this.normalizeRole(role);
+
+    if (normalizedRole === 'admin') {
+      return 'Administrador';
+    }
+
+    if (normalizedRole === 'supervisor') {
+      return 'Supervisor';
+    }
+
+    return 'Operario';
+  }
+
+  public getRoleBadgeClass(role: string): string {
+    const normalizedRole = this.normalizeRole(role);
+
+    if (normalizedRole === 'admin') {
+      return 'role-badge-admin';
+    }
+
+    if (normalizedRole === 'supervisor') {
+      return 'role-badge-supervisor';
+    }
+
+    return 'role-badge-operator';
+  }
+
+  private normalizeRole(role: string | null | undefined): UserRole {
+    if (role === 'admin' || role === 'manager') {
+      return 'admin';
+    }
+
+    if (role === 'supervisor' || role === 'kitchen') {
+      return 'supervisor';
+    }
+
+    return 'operator';
   }
 }

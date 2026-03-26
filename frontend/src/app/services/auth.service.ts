@@ -8,6 +8,9 @@ export interface AuthUser {
   id: string;
   name: string;
   email: string;
+  role?: string;
+  restaurantId?: string;
+  restaurantName?: string;
 }
 
 interface LoginResponse {
@@ -16,6 +19,9 @@ interface LoginResponse {
   id?: string;
   name?: string;
   email?: string;
+  role?: string;
+  restaurant_id?: string;
+  restaurant_name?: string;
 }
 
 interface GetMeResponse {
@@ -24,6 +30,9 @@ interface GetMeResponse {
   id?: string;
   name?: string;
   email?: string;
+  role?: string;
+  restaurant_id?: string;
+  restaurant_name?: string;
 }
 
 interface CreateUserResponse {
@@ -65,6 +74,9 @@ export class AuthService {
             id: response.id,
             name: response.name,
             email: response.email,
+            role: response.role,
+            restaurantId: response.restaurant_id,
+            restaurantName: response.restaurant_name,
           };
         }),
         tap((user: AuthUser) => {
@@ -87,6 +99,9 @@ export class AuthService {
           id: response.id,
           name: response.name,
           email: response.email,
+          role: response.role,
+          restaurantId: response.restaurant_id,
+          restaurantName: response.restaurant_name,
         };
       }),
       tap((user: AuthUser) => {

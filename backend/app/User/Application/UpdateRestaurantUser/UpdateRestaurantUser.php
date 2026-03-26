@@ -17,6 +17,7 @@ class UpdateRestaurantUser
         ?string $name = null,
         ?string $email = null,
         ?string $plainPassword = null,
+        ?string $role = null,
     ): UpdateRestaurantUserResponse {
         $user = $this->userRepository->findById($uuid);
 
@@ -36,6 +37,10 @@ class UpdateRestaurantUser
 
         if ($plainPassword !== null) {
             $updates['password'] = $this->passwordHasher->hash($plainPassword);
+        }
+
+        if ($role !== null) {
+            $updates['role'] = $role;
         }
 
         if (empty($updates)) {

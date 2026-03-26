@@ -43,5 +43,6 @@ interface UserRepositoryInterface
         string $email,
         string $passwordHash,
         string $restaurantUuid,
+        string $role = 'operator',
     ): void;
 }

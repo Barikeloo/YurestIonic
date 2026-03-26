@@ -37,6 +37,13 @@ export class AppLayoutPage implements OnInit, OnDestroy {
 
     this.userSubscription = this.authService.currentUser$.subscribe((user) => {
       this.currentUser = user;
+
+      if (user?.restaurantName) {
+        this.contextService.setActiveRestaurant({
+          id: user.restaurantId,
+          name: user.restaurantName,
+        });
+      }
     });
 
     this.contextSubscription = this.contextService.activeRestaurant$.subscribe((context) => {

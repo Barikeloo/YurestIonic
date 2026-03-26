@@ -33,12 +33,26 @@ final class AdminGetCollectionController
             ], 403);
         }
 
+        // Case 1: Platform admin (no restaurant assigned) - can see all restaurants
         if (! is_numeric($user->restaurant_id)) {
+            $restaurants = EloquentRestaurant::query()
+                ->orderBy('name')
+                ->get(['uuid', 'name', 'legal_name', 'tax_id', 'email'])
+                ->map(static fn (EloquentRestaurant $restaurant): array => [
+                    'uuid' => $restaurant->uuid,
+                    'name' => $restaurant->name,
+                    'legal_name' => $restaurant->legal_name,
+                    'tax_id' => $restaurant->tax_id,
+                    'email' => $restaurant->email,
+                ])
+                ->all();
+
             return new JsonResponse([
-                'message' => 'Admin user has no linked restaurant.',
-            ], 403);
+                'data' => $restaurants,
+            ]);
         }
 
+        // Case 2: Restaurant admin (assigned to a restaurant) - can see restaurants with same tax_id
         $userRestaurant = EloquentRestaurant::query()->find((int) $user->restaurant_id);
 
         if ($userRestaurant === null) {
