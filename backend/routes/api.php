@@ -169,3 +169,22 @@ Route::middleware([
 	Route::put('/admin/restaurants/{uuid}/users/{userUuid}', UserAdminPutController::class)->whereUuid('uuid')->whereUuid('userUuid');
 	Route::delete('/admin/restaurants/{uuid}/users/{userUuid}', UserAdminDeleteController::class)->whereUuid('uuid')->whereUuid('userUuid');
 });
+
+Route::middleware([
+	EncryptCookies::class,
+	AddQueuedCookiesToResponse::class,
+	StartSession::class,
+	RequireSuperAdminSession::class,
+])->group(function (): void {
+	// Superadmin restaurant management
+	Route::post('/superadmin/restaurants', RestaurantPostController::class);
+	Route::get('/superadmin/restaurants/{id}', RestaurantGetController::class)->whereUuid('id');
+	Route::put('/superadmin/restaurants/{id}', RestaurantPutController::class)->whereUuid('id');
+	Route::delete('/superadmin/restaurants/{id}', RestaurantDeleteController::class)->whereUuid('id');
+
+	// Superadmin user management for restaurant
+	Route::get('/superadmin/restaurants/{uuid}/users', UserAdminGetCollectionController::class)->whereUuid('uuid');
+	Route::post('/superadmin/restaurants/{uuid}/users', UserAdminPostController::class)->whereUuid('uuid');
+	Route::put('/superadmin/restaurants/{uuid}/users/{userUuid}', UserAdminPutController::class)->whereUuid('uuid')->whereUuid('userUuid');
+	Route::delete('/superadmin/restaurants/{uuid}/users/{userUuid}', UserAdminDeleteController::class)->whereUuid('uuid')->whereUuid('userUuid');
+});

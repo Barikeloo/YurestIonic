@@ -12,7 +12,7 @@ final class SuperAdminTestSeeder extends Seeder
     {
         // Create test superadmin with known credentials for testing
         DB::table('super_admins')->insert([
-            'uuid' => 'a0000000-0000-0000-0000-000000000001',
+            'uuid' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
             'name' => 'Developer (Test)',
             'email' => 'dev@tpv.local',
             'password' => Hash::make('dev123456'),
@@ -23,7 +23,7 @@ final class SuperAdminTestSeeder extends Seeder
         // Create some test restaurants with different companies (tax_ids)
         $restaurants = [
             [
-                'uuid' => 'r0000000-0000-0000-0000-000000000001',
+                'uuid' => '11111111-1111-4111-8111-111111111111',
                 'name' => 'Restaurant Zentral',
                 'legal_name' => 'Restaurant Zentral SL',
                 'tax_id' => 'B12345678',
@@ -33,7 +33,7 @@ final class SuperAdminTestSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'uuid' => 'r0000000-0000-0000-0000-000000000002',
+                'uuid' => '22222222-2222-4222-8222-222222222222',
                 'name' => 'Restaurant Zentral Sucursal',
                 'legal_name' => 'Restaurant Zentral SL',
                 'tax_id' => 'B12345678',
@@ -43,7 +43,7 @@ final class SuperAdminTestSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'uuid' => 'r0000000-0000-0000-0000-000000000003',
+                'uuid' => '33333333-3333-4333-8333-333333333333',
                 'name' => 'Pizzería Italia',
                 'legal_name' => 'Pizzería Italia SL',
                 'tax_id' => 'A87654321',
@@ -59,7 +59,7 @@ final class SuperAdminTestSeeder extends Seeder
         // Create test admin user for the first restaurant
         DB::table('users')->insert([
             'restaurant_id' => 1, // ID of first restaurant
-            'uuid' => 'u0000000-0000-0000-0000-000000000001',
+            'uuid' => 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1',
             'name' => 'Admin Zentral',
             'email' => 'admin@zentral.tpv.local',
             'password' => Hash::make('admin123'),

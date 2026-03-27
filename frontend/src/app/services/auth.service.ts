@@ -9,6 +9,7 @@ export interface AuthUser {
   name: string;
   email: string;
   role?: string;
+  pin?: string;
   restaurantId?: string;
   restaurantName?: string;
 }
@@ -53,6 +54,18 @@ interface Restaurant {
 
 interface GetRestaurantsResponse {
   data: Restaurant[];
+}
+
+interface RestaurantUserApi {
+  uuid: string;
+  name: string;
+  email: string;
+  role?: string;
+  pin?: string;
+}
+
+interface GetRestaurantUsersResponse {
+  users: RestaurantUserApi[];
 }
 
 interface CreateUserResponse {
@@ -329,5 +342,127 @@ export class AuthService {
     }
 
     return 'No se pudo completar la peticion.';
+  }
+
+  // Restaurant Management (Superadmin)
+  public createRestaurant(data: {
+    name: string;
+    legal_name: string;
+    tax_id: string;
+    email: string;
+    password: string;
+  }): Observable<Restaurant> {
+    return this.http
+      .post<{ data: Restaurant }>(
+        `${environment.apiUrl}/superadmin/restaurants`,
+        data,
+        { withCredentials: true },
+      )
+      .pipe(
+        map((response) => response.data ?? {}),
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
+  public updateRestaurant(uuid: string, data: {
+    name?: string;
+    legal_name?: string;
+    email?: string;
+  }): Observable<Restaurant> {
+    return this.http
+      .put<{ data: Restaurant }>(
+        `${environment.apiUrl}/superadmin/restaurants/${uuid}`,
+        data,
+        { withCredentials: true },
+      )
+      .pipe(
+        map((response) => response.data ?? {}),
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
+  public deleteRestaurant(uuid: string): Observable<void> {
+    return this.http
+      .delete<void>(
+        `${environment.apiUrl}/superadmin/restaurants/${uuid}`,
+        { withCredentials: true },
+      )
+      .pipe(
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
+  // User Management for Restaurants (Superadmin)
+  public getRestaurantUsers(restaurantUuid: string): Observable<AuthUser[]> {
+    return this.http
+      .get<GetRestaurantUsersResponse>(
+        `${environment.apiUrl}/superadmin/restaurants/${restaurantUuid}/users`,
+        { withCredentials: true },
+      )
+      .pipe(
+        map((response) =>
+          (response.users ?? []).map((user) => ({
+            id: user.uuid,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            pin: user.pin,
+          })),
+        ),
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
+  public createRestaurantUser(restaurantUuid: string, data: {
+    name: string;
+    email: string;
+    password: string;
+    role: string;
+    pin?: string;
+  }): Observable<AuthUser> {
+    return this.http
+      .post<RestaurantUserApi>(
+        `${environment.apiUrl}/superadmin/restaurants/${restaurantUuid}/users`,
+        data,
+        { withCredentials: true },
+      )
+      .pipe(
+        map((response) => ({
+          id: response.uuid,
+          name: response.name,
+          email: response.email,
+          role: response.role,
+        })),
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
+  public updateRestaurantUser(restaurantUuid: string, userUuid: string, data: {
+    name?: string;
+    email?: string;
+    role?: string;
+    pin?: string;
+  }): Observable<void> {
+    return this.http
+      .put<{ uuid: string; found: boolean }>(
+        `${environment.apiUrl}/superadmin/restaurants/${restaurantUuid}/users/${userUuid}`,
+        data,
+        { withCredentials: true },
+      )
+      .pipe(
+        map(() => undefined),
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
+  public deleteRestaurantUser(restaurantUuid: string, userUuid: string): Observable<void> {
+    return this.http
+      .delete<void>(
+        `${environment.apiUrl}/superadmin/restaurants/${restaurantUuid}/users/${userUuid}`,
+        { withCredentials: true },
+      )
+      .pipe(
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
   }
 }
