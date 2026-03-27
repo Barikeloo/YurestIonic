@@ -22,7 +22,6 @@ use App\Product\Infrastructure\Entrypoint\Http\GetController as ProductGetContro
 use App\Product\Infrastructure\Entrypoint\Http\PostController as ProductPostController;
 use App\Product\Infrastructure\Entrypoint\Http\PutController as ProductPutController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\PostController as RestaurantPostController;
-use App\Restaurant\Infrastructure\Entrypoint\Http\RegisterWithAdminController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\GetCollectionController as RestaurantGetCollectionController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\AdminGetCollectionController as RestaurantAdminGetCollectionController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\AdminSelectRestaurantContextController;
@@ -30,7 +29,10 @@ use App\Restaurant\Infrastructure\Entrypoint\Http\GetController as RestaurantGet
 use App\Restaurant\Infrastructure\Entrypoint\Http\PutController as RestaurantPutController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\DeleteController as RestaurantDeleteController;
 use App\Shared\Infrastructure\Http\Middleware\ResolveTenantContext;
-use App\Shared\Infrastructure\Http\Middleware\RequireAdminSession;
+use App\Shared\Infrastructure\Http\Middleware\RequireSuperAdminSession;
+use App\SuperAdmin\Infrastructure\Entrypoint\Http\GetMeController as SuperAdminGetMeController;
+use App\SuperAdmin\Infrastructure\Entrypoint\Http\LoginController as SuperAdminLoginController;
+use App\SuperAdmin\Infrastructure\Entrypoint\Http\LogoutController as SuperAdminLogoutController;
 use App\Sale\Infrastructure\Entrypoint\Http\AddLineController as SaleAddLineController;
 use App\Sale\Infrastructure\Entrypoint\Http\GetCollectionController as SaleGetCollectionController;
 use App\Sale\Infrastructure\Entrypoint\Http\GetController as SaleGetController;
@@ -74,12 +76,15 @@ Route::middleware([
 	AddQueuedCookiesToResponse::class,
 	StartSession::class,
 ])->group(function (): void {
-	Route::post('/auth/register', RegisterWithAdminController::class);
 	Route::post('/auth/login', LoginController::class);
 	Route::post('/auth/login-pin', LoginByPinController::class);
 	Route::get('/auth/quick-users', GetQuickUsersController::class);
 	Route::get('/auth/me', GetMeController::class);
 	Route::post('/auth/logout', LogoutController::class);
+
+	Route::post('/superadmin/auth/login', SuperAdminLoginController::class);
+	Route::get('/superadmin/auth/me', SuperAdminGetMeController::class);
+	Route::post('/superadmin/auth/logout', SuperAdminLogoutController::class);
 });
 
 Route::middleware([
@@ -146,7 +151,7 @@ Route::middleware([
 	EncryptCookies::class,
 	AddQueuedCookiesToResponse::class,
 	StartSession::class,
-	RequireAdminSession::class,
+	RequireSuperAdminSession::class,
 ])->group(function (): void {
 	Route::get('/admin/restaurants', RestaurantAdminGetCollectionController::class);
 	Route::post('/admin/context/restaurant', AdminSelectRestaurantContextController::class);

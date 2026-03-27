@@ -12,7 +12,7 @@ class CreateRestaurantTest extends TestCase
 
     public function test_post_restaurants_returns_422_when_email_already_exists(): void
     {
-        $admin = $this->createTenantSession('admin');
+        $admin = $this->createSuperAdminSession();
 
         $payload = [
             'name' => 'Duplicated Restaurant',
@@ -30,7 +30,7 @@ class CreateRestaurantTest extends TestCase
 
     public function test_post_restaurants_returns_422_when_required_fields_missing(): void
     {
-        $admin = $this->createTenantSession('admin');
+        $admin = $this->createSuperAdminSession();
 
         $response = $this->withSession($admin['session'])->postJson('/api/admin/restaurants', [
             'name' => 'Incomplete Restaurant',
@@ -42,7 +42,7 @@ class CreateRestaurantTest extends TestCase
 
     public function test_post_restaurants_returns_422_when_email_is_invalid(): void
     {
-        $admin = $this->createTenantSession('admin');
+        $admin = $this->createSuperAdminSession();
 
         $response = $this->withSession($admin['session'])->postJson('/api/admin/restaurants', [
             'name' => 'Test Restaurant',
@@ -58,7 +58,7 @@ class CreateRestaurantTest extends TestCase
 
     public function test_post_restaurants_generates_admin_pin_and_allows_pin_login(): void
     {
-        $admin = $this->createTenantSession('admin');
+        $admin = $this->createSuperAdminSession();
 
         $response = $this->withSession($admin['session'])->postJson('/api/admin/restaurants', [
             'name' => 'Pin Ready Restaurant',

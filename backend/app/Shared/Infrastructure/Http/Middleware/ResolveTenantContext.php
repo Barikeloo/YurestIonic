@@ -3,6 +3,7 @@
 namespace App\Shared\Infrastructure\Http\Middleware;
 
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
+use App\SuperAdmin\Infrastructure\Persistence\Models\EloquentSuperAdmin;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
 use Closure;
@@ -26,25 +27,19 @@ final class ResolveTenantContext
             ], 500);
         }
 
-        $authUserUuid = $request->session()->get('auth_user_id');
+        $superAdminUuid = $request->session()->get('super_admin_id');
 
-        if (! is_string($authUserUuid) || $authUserUuid === '') {
-            return new JsonResponse([
-                'message' => 'Not authenticated.',
-            ], 401);
-        }
+        if (is_string($superAdminUuid) && $superAdminUuid !== '') {
+            $superAdmin = EloquentSuperAdmin::query()->where('uuid', $superAdminUuid)->first();
 
-        $user = EloquentUser::query()->where('uuid', $authUserUuid)->first();
+            if ($superAdmin === null) {
+                $request->session()->forget('super_admin_id');
 
-        if ($user === null) {
-            return new JsonResponse([
-                'message' => 'Not authenticated.',
-            ], 401);
-        }
+                return new JsonResponse([
+                    'message' => 'Not authenticated as superadmin.',
+                ], 401);
+            }
 
-        $isAdmin = $user->role === 'admin';
-
-        if ($isAdmin) {
             $selectedRestaurantUuid = $request->header('X-Restaurant-Id');
 
             if (! is_string($selectedRestaurantUuid) || $selectedRestaurantUuid === '') {
@@ -53,7 +48,7 @@ final class ResolveTenantContext
 
             if (! is_string($selectedRestaurantUuid) || $selectedRestaurantUuid === '') {
                 return new JsonResponse([
-                    'message' => 'Admin must select a restaurant context before operating tenant modules.',
+                    'message' => 'Superadmin must select a restaurant context before operating tenant modules.',
                 ], 400);
             }
 
@@ -69,6 +64,22 @@ final class ResolveTenantContext
             $request->merge(['restaurant_id' => (string) $restaurant->uuid]);
 
             return $next($request);
+        }
+
+        $authUserUuid = $request->session()->get('auth_user_id');
+
+        if (! is_string($authUserUuid) || $authUserUuid === '') {
+            return new JsonResponse([
+                'message' => 'Not authenticated.',
+            ], 401);
+        }
+
+        $user = EloquentUser::query()->where('uuid', $authUserUuid)->first();
+
+        if ($user === null) {
+            return new JsonResponse([
+                'message' => 'Not authenticated.',
+            ], 401);
         }
 
         if ($user->restaurant_id === null) {

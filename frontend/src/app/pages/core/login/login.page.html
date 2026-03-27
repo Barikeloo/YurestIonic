@@ -106,15 +106,9 @@
             <div class="divider-line"></div>
           </div>
 
-          <button class="btn-register" type="button" (click)="onCreateAccount()">Crear cuenta nueva</button>
+          <p class="login-form-sub">Si necesitas acceso, solicita alta al superadmin de la plataforma.</p>
         </form>
       </section>
     </div>
-
-    <app-register-modal
-      [isOpen]="isRegisterModalOpen"
-      (closed)="closeRegisterModal()"
-      (created)="onUserCreated($event)"
-    ></app-register-modal>
   </div>
 </ion-content>

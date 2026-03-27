@@ -3,9 +3,7 @@
 namespace App\Restaurant\Infrastructure\Entrypoint\Http;
 
 use App\Restaurant\Application\CreateRestaurant\CreateRestaurant;
-use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\User\Application\CreateRestaurantUser\CreateRestaurantUser;
-use App\User\Infrastructure\Persistence\Models\EloquentUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -29,23 +27,10 @@ final class PostController
 
         $adminPin = $validated['pin'] ?? str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
-        // If creating user is an admin, use their restaurant's tax_id
-        $finalTaxId = $validated['tax_id'] ?? null;
-        $authUserId = $request->session()->get('auth_user_id');
-        if (is_string($authUserId)) {
-            $authUser = EloquentUser::query()->where('uuid', $authUserId)->first();
-            if ($authUser?->role === 'admin' && is_numeric($authUser?->restaurant_id)) {
-                $authUserRestaurant = EloquentRestaurant::query()->find((int) $authUser->restaurant_id);
-                if ($authUserRestaurant?->tax_id) {
-                    $finalTaxId = $authUserRestaurant->tax_id;
-                }
-            }
-        }
-
         $response = ($this->createRestaurant)(
             name: $validated['name'],
             legalName: $validated['legal_name'] ?? null,
-            taxId: $finalTaxId,
+            taxId: $validated['tax_id'] ?? null,
             email: $validated['email'],
             password: $validated['password'],
         );

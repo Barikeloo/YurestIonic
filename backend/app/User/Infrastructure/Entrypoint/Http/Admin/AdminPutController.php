@@ -14,15 +14,6 @@ class AdminPutController
 
     public function __invoke(Request $request, string $uuid, string $userUuid): JsonResponse
     {
-        $userId = $request->session()->get('auth_user_id');
-
-        if (! is_string($userId) || $userId === '') {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Not authenticated.',
-            ], 401);
-        }
-
         $validated = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
             'email' => ['sometimes', 'string', 'email', 'max:255'],

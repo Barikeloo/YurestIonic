@@ -1,11 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { finalize, take } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
-import { RegisterModalComponent } from '../../../components/register-modal/register-modal.component';
 
 interface QuickUser {
   name: string;
@@ -20,7 +19,7 @@ interface QuickUser {
   selector: 'app-login',
   templateUrl: './login.page.html',
   styleUrls: ['./login.page.scss'],
-  imports: [CommonModule, ReactiveFormsModule, IonContent, RegisterModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, IonContent],
 })
 export class LoginPage {
   public readonly loginForm = this.formBuilder.nonNullable.group({
@@ -30,7 +29,6 @@ export class LoginPage {
 
   public isSubmitting: boolean = false;
   public errorMessage: string | null = null;
-  public isRegisterModalOpen: boolean = false;
 
   public pinValue: string = '';
 
@@ -40,15 +38,8 @@ export class LoginPage {
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly authService: AuthService,
-    private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {
-    this.route.queryParamMap.pipe(take(1)).subscribe((params) => {
-      if (params.get('register') === '1') {
-        this.isRegisterModalOpen = true;
-      }
-    });
-
     this.loadQuickUsers();
   }
 
@@ -120,18 +111,6 @@ export class LoginPage {
     const { email, password } = this.loginForm.getRawValue();
 
     this.loginWithApi(email, password, false);
-  }
-
-  public onCreateAccount(): void {
-    this.isRegisterModalOpen = true;
-  }
-
-  public closeRegisterModal(): void {
-    this.isRegisterModalOpen = false;
-  }
-
-  public onUserCreated(email: string): void {
-    this.loginForm.patchValue({ email, password: '' });
   }
 
   private loginWithApi(email: string, password: string, fromPin: boolean): void {

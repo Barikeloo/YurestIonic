@@ -14,10 +14,4 @@ export class HomePage {
   public goToLogin(): void {
     this.router.navigateByUrl('/login');
   }
-
-  public goToRegister(): void {
-    this.router.navigate(['/login'], {
-      queryParams: { register: '1' },
-    });
-  }
 }

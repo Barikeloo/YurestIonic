@@ -11,7 +11,7 @@ final class RestaurantCrudTest extends TestCase
 
     public function test_restaurant_full_crud_flow(): void
     {
-        $admin = $this->createTenantSession('admin');
+        $admin = $this->createSuperAdminSession();
 
         $createResponse = $this->withSession($admin['session'])->postJson('/api/admin/restaurants', [
             'name' => 'Nuevo Restaurante',

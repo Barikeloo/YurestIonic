@@ -14,15 +14,6 @@ class AdminPostController
 
     public function __invoke(Request $request, string $uuid): JsonResponse
     {
-        $userId = $request->session()->get('auth_user_id');
-
-        if (! is_string($userId) || $userId === '') {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Not authenticated.',
-            ], 401);
-        }
-
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255'],

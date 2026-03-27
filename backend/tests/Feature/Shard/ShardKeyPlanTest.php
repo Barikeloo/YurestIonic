@@ -52,26 +52,24 @@ final class ShardKeyPlanTest extends TestCase
         ]);
     }
 
-    public function test_admin_can_list_restaurants_with_minimal_fields(): void
+    public function test_superadmin_can_list_restaurants_with_minimal_fields(): void
     {
         $this->createRestaurant('Admin Test A', 'admin-a@local.test');
         $this->createRestaurant('Admin Test B', 'admin-b@local.test');
 
-        $adminUuid = (string) Str::uuid();
+        $superAdminUuid = (string) Str::uuid();
 
-        DB::table('users')->insert([
-            'restaurant_id' => null,
-            'uuid' => $adminUuid,
-            'role' => 'admin',
-            'name' => 'Platform Admin',
-            'email' => 'platform-admin@local.test',
+        DB::table('super_admins')->insert([
+            'uuid' => $superAdminUuid,
+            'name' => 'Platform Superadmin',
+            'email' => 'platform-superadmin@local.test',
             'password' => Hash::make('password123'),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         $response = $this->withSession([
-            'auth_user_id' => $adminUuid,
+            'super_admin_id' => $superAdminUuid,
         ])->getJson('/api/admin/restaurants');
 
         $response->assertStatus(200);
@@ -88,7 +86,7 @@ final class ShardKeyPlanTest extends TestCase
         ]);
     }
 
-    public function test_non_admin_cannot_list_restaurants_from_admin_endpoint(): void
+    public function test_non_superadmin_cannot_list_restaurants_from_admin_endpoint(): void
     {
         $operatorUuid = (string) Str::uuid();
 
@@ -106,55 +104,51 @@ final class ShardKeyPlanTest extends TestCase
         $this->withSession([
             'auth_user_id' => $operatorUuid,
         ])->getJson('/api/admin/restaurants')
-            ->assertStatus(403)
+            ->assertStatus(401)
             ->assertJson([
-                'message' => 'Forbidden.',
+                'message' => 'Not authenticated as superadmin.',
             ]);
     }
 
-    public function test_admin_must_select_restaurant_context_before_accessing_tenant_modules(): void
+    public function test_superadmin_must_select_restaurant_context_before_accessing_tenant_modules(): void
     {
-        $adminUuid = (string) Str::uuid();
+        $superAdminUuid = (string) Str::uuid();
 
-        DB::table('users')->insert([
-            'restaurant_id' => null,
-            'uuid' => $adminUuid,
-            'role' => 'admin',
-            'name' => 'Platform Admin',
-            'email' => 'admin-context-required@local.test',
+        DB::table('super_admins')->insert([
+            'uuid' => $superAdminUuid,
+            'name' => 'Platform Superadmin',
+            'email' => 'superadmin-context-required@local.test',
             'password' => Hash::make('password123'),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         $this->withSession([
-            'auth_user_id' => $adminUuid,
+            'super_admin_id' => $superAdminUuid,
         ])->getJson('/api/families')
             ->assertStatus(400)
             ->assertJson([
-                'message' => 'Admin must select a restaurant context before operating tenant modules.',
+                'message' => 'Superadmin must select a restaurant context before operating tenant modules.',
             ]);
     }
 
-    public function test_admin_can_select_restaurant_context_and_then_use_tenant_modules(): void
+    public function test_superadmin_can_select_restaurant_context_and_then_use_tenant_modules(): void
     {
         $restaurantId = $this->createRestaurant('Context Restaurant', 'context@local.test');
         $restaurantUuid = (string) DB::table('restaurants')->where('id', $restaurantId)->value('uuid');
-        $adminUuid = (string) Str::uuid();
+        $superAdminUuid = (string) Str::uuid();
 
-        DB::table('users')->insert([
-            'restaurant_id' => null,
-            'uuid' => $adminUuid,
-            'role' => 'admin',
-            'name' => 'Platform Admin',
-            'email' => 'admin-context-select@local.test',
+        DB::table('super_admins')->insert([
+            'uuid' => $superAdminUuid,
+            'name' => 'Platform Superadmin',
+            'email' => 'superadmin-context-select@local.test',
             'password' => Hash::make('password123'),
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
         $this->withSession([
-            'auth_user_id' => $adminUuid,
+            'super_admin_id' => $superAdminUuid,
         ])->postJson('/api/admin/context/restaurant', [
             'restaurant_id' => $restaurantUuid,
         ])->assertStatus(200)
@@ -164,7 +158,7 @@ final class ShardKeyPlanTest extends TestCase
             ]);
 
         $this->withSession([
-            'auth_user_id' => $adminUuid,
+            'super_admin_id' => $superAdminUuid,
             'tenant_restaurant_uuid' => $restaurantUuid,
         ])->getJson('/api/families')
             ->assertStatus(200);
@@ -275,7 +269,7 @@ final class ShardKeyPlanTest extends TestCase
             ->assertJsonPath('0.quantity', 2);
     }
 
-    public function test_admin_restaurants_routes_require_admin_role(): void
+    public function test_admin_restaurants_routes_require_superadmin_session(): void
     {
         $restaurantId = $this->createRestaurant('Protected Restaurants', 'protected-restaurants@local.test');
         $restaurantUuid = (string) DB::table('restaurants')->where('id', $restaurantId)->value('uuid');
@@ -297,16 +291,33 @@ final class ShardKeyPlanTest extends TestCase
         $this->withSession([
             'auth_user_id' => $operatorUuid,
         ])->getJson('/api/admin/restaurants')
-            ->assertStatus(403)
+            ->assertStatus(401)
             ->assertJson([
-                'message' => 'Forbidden.',
+                'message' => 'Not authenticated as superadmin.',
             ]);
 
         $this->withSession([
             'auth_user_id' => $operatorUuid,
         ])->putJson('/api/admin/restaurants/' . $restaurantUuid, [
             'name' => 'Should Not Update',
-        ])->assertStatus(403);
+        ])->assertStatus(401);
+
+        $superAdminUuid = (string) Str::uuid();
+
+        DB::table('super_admins')->insert([
+            'uuid' => $superAdminUuid,
+            'name' => 'Platform Superadmin',
+            'email' => 'superadmin-protected@local.test',
+            'password' => Hash::make('password123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->withSession([
+            'super_admin_id' => $superAdminUuid,
+        ])->putJson('/api/admin/restaurants/' . $restaurantUuid, [
+            'name' => 'Now Allowed',
+        ])->assertStatus(200);
     }
 
     private function createRestaurant(string $name, string $email): int
