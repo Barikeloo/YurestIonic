@@ -52,6 +52,10 @@ export class LoginPage {
     this.loadQuickUsers();
   }
 
+  public ionViewWillEnter(): void {
+    this.loadQuickUsers();
+  }
+
   public selectUser(user: QuickUser): void {
     this.selectedQuickUser = user;
     this.pinValue = '';
@@ -235,20 +239,7 @@ export class LoginPage {
   }
 
   private getDeviceId(): string {
-    const storageKey = 'tpv_device_id';
-    const fromStorage = localStorage.getItem(storageKey);
-
-    if (fromStorage && fromStorage.trim() !== '') {
-      return fromStorage;
-    }
-
-    const generated = typeof crypto !== 'undefined' && 'randomUUID' in crypto
-      ? crypto.randomUUID()
-      : `dev-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-
-    localStorage.setItem(storageKey, generated);
-
-    return generated;
+    return this.authService.getDeviceId();
   }
 
   public goBack(): void {

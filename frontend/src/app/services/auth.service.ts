@@ -70,10 +70,12 @@ export class AuthService {
   constructor(private readonly http: HttpClient) {}
 
   public login(email: string, password: string): Observable<AuthUser> {
+    const deviceId = this.getOrCreateDeviceId();
+
     return this.http
       .post<LoginResponse>(
         `${this.authBaseUrl}/login`,
-        { email, password },
+        { email, password, device_id: deviceId },
         { withCredentials: true },
       )
       .pipe(
@@ -101,10 +103,12 @@ export class AuthService {
   }
 
   public loginWithPin(userUuid: string, pin: string, deviceId: string): Observable<AuthUser> {
+    const resolvedDeviceId = deviceId.trim() !== '' ? deviceId : this.getOrCreateDeviceId();
+
     return this.http
       .post<LoginResponse>(
         `${this.authBaseUrl}/login-pin`,
-        { user_uuid: userUuid, pin, device_id: deviceId },
+        { user_uuid: userUuid, pin, device_id: resolvedDeviceId },
         { withCredentials: true },
       )
       .pipe(
@@ -132,10 +136,12 @@ export class AuthService {
   }
 
   public getQuickUsers(deviceId: string): Observable<QuickAccessUserResponse[]> {
+    const resolvedDeviceId = deviceId.trim() !== '' ? deviceId : this.getOrCreateDeviceId();
+
     return this.http
       .get<QuickAccessResponse>(`${this.authBaseUrl}/quick-users`, {
         withCredentials: true,
-        params: { device_id: deviceId },
+        params: { device_id: resolvedDeviceId },
       })
       .pipe(
         map((response: QuickAccessResponse) => response.users ?? []),
@@ -220,6 +226,27 @@ export class AuthService {
 
   public hasAuthenticatedUser(): boolean {
     return this.currentUserSubject.value !== null;
+  }
+
+  public getDeviceId(): string {
+    return this.getOrCreateDeviceId();
+  }
+
+  private getOrCreateDeviceId(): string {
+    const storageKey = 'tpv_device_id';
+    const fromStorage = localStorage.getItem(storageKey);
+
+    if (fromStorage && fromStorage.trim() !== '') {
+      return fromStorage;
+    }
+
+    const generated = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `dev-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
+    localStorage.setItem(storageKey, generated);
+
+    return generated;
   }
 
   private extractErrorMessage(error: HttpErrorResponse): string {
