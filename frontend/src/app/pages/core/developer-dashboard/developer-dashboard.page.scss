@@ -39,6 +39,20 @@
     margin-bottom: 16px;
   }
 
+  .header-logo-section {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .header-logo-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
   .header-actions {
     display: flex;
     align-items: center;
