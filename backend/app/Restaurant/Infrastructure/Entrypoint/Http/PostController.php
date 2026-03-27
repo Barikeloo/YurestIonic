@@ -3,6 +3,7 @@
 namespace App\Restaurant\Infrastructure\Entrypoint\Http;
 
 use App\Restaurant\Application\CreateRestaurant\CreateRestaurant;
+use App\SuperAdmin\Infrastructure\Persistence\Models\EloquentSuperAdmin;
 use App\User\Application\CreateRestaurantUser\CreateRestaurantUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,6 +17,22 @@ final class PostController
 
     public function __invoke(Request $request): JsonResponse
     {
+        $superAdminUuid = $request->session()->get('super_admin_id');
+
+        if (! is_string($superAdminUuid) || $superAdminUuid === '') {
+            return new JsonResponse([
+                'message' => 'Forbidden. Only superadmins can create restaurants.',
+            ], 403);
+        }
+
+        $superAdmin = EloquentSuperAdmin::query()->where('uuid', $superAdminUuid)->first();
+
+        if ($superAdmin === null) {
+            return new JsonResponse([
+                'message' => 'Forbidden. Only superadmins can create restaurants.',
+            ], 403);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'legal_name' => ['nullable', 'string', 'max:255'],

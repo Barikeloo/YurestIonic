@@ -104,10 +104,56 @@ final class ShardKeyPlanTest extends TestCase
         $this->withSession([
             'auth_user_id' => $operatorUuid,
         ])->getJson('/api/admin/restaurants')
-            ->assertStatus(401)
+            ->assertStatus(403)
             ->assertJson([
-                'message' => 'Not authenticated as superadmin.',
+                'message' => 'Forbidden.',
             ]);
+    }
+
+    public function test_tenant_admin_can_list_associated_restaurants_from_admin_endpoint(): void
+    {
+        $sharedTaxId = 'B44556677';
+
+        $restaurantId = (int) DB::table('restaurants')->insertGetId([
+            'uuid' => (string) Str::uuid(),
+            'name' => 'Tenant Admin Restaurant A',
+            'legal_name' => 'Tenant Admin Restaurant A S.L.',
+            'tax_id' => $sharedTaxId,
+            'email' => 'tenant-admin-a@local.test',
+            'password' => Hash::make('password123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        DB::table('restaurants')->insert([
+            'uuid' => (string) Str::uuid(),
+            'name' => 'Tenant Admin Restaurant B',
+            'legal_name' => 'Tenant Admin Restaurant B S.L.',
+            'tax_id' => $sharedTaxId,
+            'email' => 'tenant-admin-b@local.test',
+            'password' => Hash::make('password123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $adminUuid = (string) Str::uuid();
+        DB::table('users')->insert([
+            'restaurant_id' => $restaurantId,
+            'uuid' => $adminUuid,
+            'role' => 'admin',
+            'name' => 'Tenant Admin',
+            'email' => 'tenant-admin-user@local.test',
+            'password' => Hash::make('password123'),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $response = $this->withSession([
+            'auth_user_id' => $adminUuid,
+        ])->getJson('/api/admin/restaurants');
+
+        $response->assertStatus(200);
+        $response->assertJsonCount(2, 'data');
     }
 
     public function test_superadmin_must_select_restaurant_context_before_accessing_tenant_modules(): void
@@ -291,16 +337,16 @@ final class ShardKeyPlanTest extends TestCase
         $this->withSession([
             'auth_user_id' => $operatorUuid,
         ])->getJson('/api/admin/restaurants')
-            ->assertStatus(401)
+            ->assertStatus(403)
             ->assertJson([
-                'message' => 'Not authenticated as superadmin.',
+                'message' => 'Forbidden.',
             ]);
 
         $this->withSession([
             'auth_user_id' => $operatorUuid,
         ])->putJson('/api/admin/restaurants/' . $restaurantUuid, [
             'name' => 'Should Not Update',
-        ])->assertStatus(401);
+        ])->assertStatus(403);
 
         $superAdminUuid = (string) Str::uuid();
 

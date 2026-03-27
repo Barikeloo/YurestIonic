@@ -28,6 +28,7 @@ use App\Restaurant\Infrastructure\Entrypoint\Http\AdminSelectRestaurantContextCo
 use App\Restaurant\Infrastructure\Entrypoint\Http\GetController as RestaurantGetController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\PutController as RestaurantPutController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\DeleteController as RestaurantDeleteController;
+use App\Shared\Infrastructure\Http\Middleware\RequireManagementSession;
 use App\Shared\Infrastructure\Http\Middleware\ResolveTenantContext;
 use App\Shared\Infrastructure\Http\Middleware\RequireSuperAdminSession;
 use App\SuperAdmin\Infrastructure\Entrypoint\Http\GetMeController as SuperAdminGetMeController;
@@ -151,7 +152,7 @@ Route::middleware([
 	EncryptCookies::class,
 	AddQueuedCookiesToResponse::class,
 	StartSession::class,
-	RequireSuperAdminSession::class,
+	RequireManagementSession::class,
 ])->group(function (): void {
 	Route::get('/admin/restaurants', RestaurantAdminGetCollectionController::class);
 	Route::post('/admin/context/restaurant', AdminSelectRestaurantContextController::class);
