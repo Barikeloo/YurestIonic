@@ -26,6 +26,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/core/caja/caja.page').then((m) => m.CajaPage),
       },
       {
+        path: 'developer-dashboard',
+        loadComponent: () => import('./pages/core/developer-dashboard/developer-dashboard.page').then((m) => m.DeveloperDashboardPage),
+      },
+      {
         path: '',
         redirectTo: 'gestion',
         pathMatch: 'full',
@@ -35,6 +39,10 @@ export const routes: Routes = [
   {
     path: 'login',
     loadComponent: () => import('./pages/core/login/login.page').then((m) => m.LoginPage),
+  },
+  {
+    path: 'developer-login',
+    loadComponent: () => import('./pages/core/developer-login/developer-login.page').then((m) => m.DeveloperLoginPage),
   },
   {
     path: 'home',

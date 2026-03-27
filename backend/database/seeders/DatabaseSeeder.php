@@ -27,6 +27,7 @@ class DatabaseSeeder extends Seeder
             OrderLineSeeder::class,
             SaleSeeder::class,
             UserQuickAccessSeeder::class,
+            SuperAdminTestSeeder::class,
         ]);
     }
 }

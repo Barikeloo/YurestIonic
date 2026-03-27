@@ -35,6 +35,26 @@ interface GetMeResponse {
   restaurant_name?: string;
 }
 
+interface SuperAdminLoginResponse {
+  success: boolean;
+  message?: string;
+  id?: string;
+  name?: string;
+  email?: string;
+}
+
+interface Restaurant {
+  uuid: string;
+  name: string;
+  legal_name: string;
+  tax_id: string;
+  email: string;
+}
+
+interface GetRestaurantsResponse {
+  data: Restaurant[];
+}
+
 interface CreateUserResponse {
   restaurant_id: string;
   restaurant_name: string;
@@ -208,6 +228,43 @@ export class AuthService {
         return of(null);
       }),
     );
+  }
+
+  public superAdminLogin(email: string, password: string): Observable<void> {
+    return this.http
+      .post<SuperAdminLoginResponse>(
+        `${environment.apiUrl}/superadmin/login`,
+        { email, password },
+        { withCredentials: true },
+      )
+      .pipe(
+        map((response: SuperAdminLoginResponse) => {
+          if (!response.success || !response.id) {
+            const message: string = response.message ?? 'No se pudo iniciar sesion.';
+
+            throw new Error(message);
+          }
+        }),
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
+  public superAdminLogout(): Observable<void> {
+    return this.http.post(`${environment.apiUrl}/superadmin/logout`, {}, { withCredentials: true }).pipe(
+      map(() => undefined),
+      catchError((error: unknown) => {
+        return throwError(() => error);
+      }),
+    );
+  }
+
+  public getSuperAdminRestaurants(): Observable<Restaurant[]> {
+    return this.http
+      .get<GetRestaurantsResponse>(`${environment.apiUrl}/admin/restaurants`, { withCredentials: true })
+      .pipe(
+        map((response: GetRestaurantsResponse) => response.data ?? []),
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
   }
 
   public logout(): Observable<void> {

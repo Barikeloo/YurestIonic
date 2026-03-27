@@ -14,4 +14,8 @@ export class HomePage {
   public goToLogin(): void {
     this.router.navigateByUrl('/login');
   }
+
+  public goToDeveloperLogin(): void {
+    this.router.navigateByUrl('/developer-login');
+  }
 }

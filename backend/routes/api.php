@@ -83,9 +83,9 @@ Route::middleware([
 	Route::get('/auth/me', GetMeController::class);
 	Route::post('/auth/logout', LogoutController::class);
 
-	Route::post('/superadmin/auth/login', SuperAdminLoginController::class);
-	Route::get('/superadmin/auth/me', SuperAdminGetMeController::class);
-	Route::post('/superadmin/auth/logout', SuperAdminLogoutController::class);
+	Route::post('/superadmin/login', SuperAdminLoginController::class);
+	Route::get('/superadmin/me', SuperAdminGetMeController::class);
+	Route::post('/superadmin/logout', SuperAdminLogoutController::class);
 });
 
 Route::middleware([
