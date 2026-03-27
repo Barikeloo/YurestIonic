@@ -35,8 +35,8 @@ interface SelectRestaurantContextResponse {
 
 interface UpdateAdminRestaurantPayload {
   name: string;
-  legal_name: string;
-  tax_id: string;
+  legal_name?: string;
+  tax_id?: string;
   email: string;
   password?: string;
 }

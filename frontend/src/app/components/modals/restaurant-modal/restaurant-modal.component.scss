@@ -36,14 +36,10 @@
 }
 
 .modal-header {
+  position: relative;
   background: var(--gray-900);
   border-bottom: 1px solid var(--gray-800);
-}
-
-.modal-toolbar {
-  --background: transparent;
-  --border-color: transparent;
-  padding: 16px 24px;
+  padding: 18px 64px 18px 24px;
 }
 
 .modal-title {
@@ -55,23 +51,39 @@
 }
 
 .btn-close {
-  --background: transparent;
-  --color: var(--white);
-  width: 36px;
-  height: 36px;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: 1px solid var(--gray-700);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--gray-200);
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: 0.15s;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
 
   &:hover {
-    background: var(--gray-800);
+    background: rgba(255, 77, 77, 0.12);
+    border-color: rgba(255, 77, 77, 0.5);
+    color: var(--accent);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(255, 77, 77, 0.6);
+    outline-offset: 2px;
   }
 
   svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
   }
 }
 
@@ -174,6 +186,31 @@
   color: var(--gray-200);
   border-color: rgba(255, 77, 77, 0.35);
   background: rgba(255, 77, 77, 0.08);
+}
+
+.pin-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .pin-hint {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin: 0;
+    border-width: 0;
+    overflow: hidden;
+    transition: opacity 0.15s ease, max-height 0.15s ease, padding 0.15s ease, border-width 0.15s ease;
+    pointer-events: none;
+  }
+
+  &:focus-within .pin-hint {
+    opacity: 1;
+    max-height: 64px;
+    padding: 8px 10px;
+    border-width: 1px;
+  }
 }
 
 .form-actions {

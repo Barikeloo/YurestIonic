@@ -1,17 +1,15 @@
 <div *ngIf="isOpen" class="modal-overlay" (click)="onClose()">
   <div class="modal-shell" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <div class="modal-toolbar">
-        <h3 class="modal-title">
-          {{ modalData.mode === 'create' ? 'Crear Restaurante' : 'Editar Restaurante' }}
-        </h3>
-        <button type="button" (click)="onClose()" class="btn-close" aria-label="Cerrar modal">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </button>
-      </div>
+      <h3 class="modal-title">
+        {{ modalData.mode === 'create' ? 'Crear Restaurante' : 'Editar Restaurante' }}
+      </h3>
+      <button type="button" (click)="onClose()" class="btn-close" aria-label="Cerrar modal">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
     </div>
 
     <div class="modal-content">
@@ -105,16 +103,18 @@
 
       <div *ngIf="modalData.mode === 'create'" class="form-group">
         <label class="form-label">PIN del Admin</label>
-        <input
-          type="text"
-          inputmode="numeric"
-          maxlength="4"
-          formControlName="pin"
-          class="form-input"
-          placeholder="Ej: 1234"
-          [disabled]="isSubmitting"
-        />
-        <div class="field-hint pin-hint">Este PIN sera el acceso rapido del admin.</div>
+        <div class="pin-input-wrapper">
+          <input
+            type="text"
+            inputmode="numeric"
+            maxlength="4"
+            formControlName="pin"
+            class="form-input"
+            placeholder="Ej: 1234"
+            [disabled]="isSubmitting"
+          />
+          <div class="field-hint pin-hint">Este PIN sera el acceso rapido del admin.</div>
+        </div>
         <ion-text *ngIf="form.get('pin')?.hasError('required') && form.get('pin')?.touched" class="error-text">
           PIN requerido
         </ion-text>

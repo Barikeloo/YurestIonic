@@ -18,6 +18,7 @@ class AdminPutController
     public function __invoke(Request $request, string $uuid, string $userUuid): JsonResponse
     {
         $superAdminUuid = $request->session()->get('super_admin_id');
+        $authUserUuid = null;
 
         if (! (is_string($superAdminUuid) && $superAdminUuid !== '' && EloquentSuperAdmin::query()->where('uuid', $superAdminUuid)->exists())) {
             $authUserUuid = $request->session()->get('auth_user_id');
@@ -63,6 +64,18 @@ class AdminPutController
             'role' => ['sometimes', 'string', 'in:operator,supervisor,admin'],
             'pin' => ['sometimes', 'nullable', 'digits:4'],
         ]);
+
+        if (
+            is_string($authUserUuid)
+            && $authUserUuid === $userUuid
+            && isset($validated['role'])
+            && $validated['role'] !== 'admin'
+        ) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'No puedes cambiar tu propio rol de administrador.',
+            ], 422);
+        }
 
         $response = ($this->updateRestaurantUser)(
             $userUuid,

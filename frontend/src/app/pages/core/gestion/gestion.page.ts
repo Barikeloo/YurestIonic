@@ -310,6 +310,17 @@ export class GestionPage {
     return zone.tables[idx];
   }
 
+  public canDeleteSelectedUser(): boolean {
+    const users = this.selectedData.users;
+    const idx = this.managementState.selectedIndex.users;
+
+    if (idx < 0 || idx >= users.length) {
+      return true;
+    }
+
+    return users[idx].role !== 'admin';
+  }
+
   public isRestaurantActive(restaurantId: number): boolean {
     return this.managementState.restaurantId === restaurantId;
   }
@@ -439,15 +450,11 @@ export class GestionPage {
       return;
     }
 
-    const previousTaxId = restaurant.taxId;
-
     const name = this.restaurantForm.name.trim();
-    const legalName = this.restaurantForm.legalName.trim();
-    const taxId = this.restaurantForm.taxId.trim();
     const email = this.restaurantForm.email.trim();
     const password = this.restaurantForm.password.trim();
 
-    if (!name || !legalName || !taxId || !email) {
+    if (!name || !email) {
       window.alert('Completa todos los campos obligatorios.');
 
       return;
@@ -464,8 +471,6 @@ export class GestionPage {
     this.restaurantService
       .updateAdminRestaurant(restaurant.uuid, {
         name,
-        legal_name: legalName,
-        tax_id: taxId,
         email,
         ...(password ? { password } : {}),
       })
@@ -473,18 +478,9 @@ export class GestionPage {
       .subscribe({
         next: () => {
           restaurant.name = name;
-          restaurant.legalName = legalName;
-          restaurant.taxId = taxId;
           restaurant.email = email;
           this.restaurantForm.password = '';
           this.apiErrorMessage = null;
-
-          if (previousTaxId !== taxId) {
-            this.loadRestaurantsFromApi();
-            this.isSavingRestaurant = false;
-
-            return;
-          }
 
           this.syncForms();
           this.isSavingRestaurant = false;

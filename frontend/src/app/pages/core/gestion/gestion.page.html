@@ -81,12 +81,12 @@
                     </div>
                     <div>
                       <label class="form-label" for="mg-rest-legal">Razon social</label>
-                      <input id="mg-rest-legal" class="form-input" [(ngModel)]="restaurantForm.legalName" name="mg-rest-legal" required />
+                      <input id="mg-rest-legal" class="form-input" [(ngModel)]="restaurantForm.legalName" name="mg-rest-legal" disabled />
                     </div>
                     <div class="gestion-form-grid">
                       <div>
                         <label class="form-label" for="mg-rest-tax">NIF/CIF</label>
-                        <input id="mg-rest-tax" class="form-input" [(ngModel)]="restaurantForm.taxId" name="mg-rest-tax" required />
+                        <input id="mg-rest-tax" class="form-input" [(ngModel)]="restaurantForm.taxId" name="mg-rest-tax" disabled />
                       </div>
                       <div>
                         <label class="form-label" for="mg-rest-email">Email</label>
@@ -134,7 +134,7 @@
                   <form class="gestion-form" (ngSubmit)="saveManagementEntity('users')">
                     <div class="gestion-form-actions form-actions-start">
                       <button type="button" class="btn-small" (click)="startCreateManagementItem('users')">Nuevo usuario</button>
-                      <button type="button" class="btn-small" (click)="deleteSelectedManagementItem('users')">Eliminar</button>
+                      <button *ngIf="canDeleteSelectedUser()" type="button" class="btn-small" (click)="deleteSelectedManagementItem('users')">Eliminar</button>
                     </div>
                     <div>
                       <label class="form-label" for="mg-user-name">Nombre</label>

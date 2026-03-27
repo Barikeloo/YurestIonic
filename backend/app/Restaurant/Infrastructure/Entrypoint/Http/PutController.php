@@ -69,6 +69,12 @@ final class PutController
             'password' => ['sometimes', 'string', 'min:8'],
         ]);
 
+        if (! $isSuperAdmin && (array_key_exists('legal_name', $validated) || array_key_exists('tax_id', $validated))) {
+            return new JsonResponse([
+                'message' => 'Forbidden. Only superadmins can update legal data.',
+            ], 403);
+        }
+
         $response = ($this->updateRestaurant)(
             id: $id,
             name: $validated['name'] ?? null,
