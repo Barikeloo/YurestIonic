@@ -49,10 +49,11 @@ export class DeveloperDashboardPage implements OnInit {
         this.loadRestaurants();
     }
 
-    public openRestaurantModal(mode: 'create' | 'edit', restaurant?: any): void {
+      public openRestaurantModal(mode: 'create' | 'edit', restaurant?: any, presetTaxId?: string): void {
         this.restaurantModalData = {
             mode,
             restaurant: restaurant ? { ...restaurant } : undefined,
+                presetTaxId,
         };
         this.restaurantModalOpen = true;
     }
@@ -68,6 +69,23 @@ export class DeveloperDashboardPage implements OnInit {
     public openUserModal(restaurantUuid: string, restaurantName: string): void {
         this.userModalData = { mode: 'list', restaurantUuid, restaurantName };
         this.userModalOpen = true;
+    }
+
+    public deleteRestaurant(restaurant: Restaurant): void {
+        const confirmed = confirm(`Vas a eliminar "${restaurant.name}". Esta accion no se puede deshacer. ¿Continuar?`);
+
+        if (!confirmed) {
+            return;
+        }
+
+        this.authService.deleteRestaurant(restaurant.uuid).pipe(take(1)).subscribe({
+            next: () => {
+                this.loadRestaurants();
+            },
+            error: (error) => {
+                this.error = error instanceof Error ? error.message : 'Error al eliminar restaurante';
+            },
+        });
     }
 
     public closeUserModal(): void {

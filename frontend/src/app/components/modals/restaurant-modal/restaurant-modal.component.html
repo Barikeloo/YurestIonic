@@ -54,7 +54,9 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">CIF/NIF</label>
+        <label class="form-label">
+          {{ modalData.mode === 'create' && modalData.presetTaxId ? 'CIF/NIF de la compañía' : 'CIF/NIF' }}
+        </label>
         <input
           type="text"
           formControlName="tax_id"
@@ -62,6 +64,9 @@
           placeholder="Ej: B12345678"
           [disabled]="isSubmitting || modalData.mode === 'edit'"
         />
+        <div *ngIf="modalData.mode === 'create' && modalData.presetTaxId" class="field-hint">
+          Compañía detectada: {{ modalData.presetTaxId }}. Este CIF/NIF está bloqueado para mantener la consistencia de la compañía.
+        </div>
         <ion-text *ngIf="form.get('tax_id')?.hasError('required') && form.get('tax_id')?.touched" class="error-text">
           CIF/NIF requerido
         </ion-text>
@@ -95,6 +100,26 @@
         />
         <ion-text *ngIf="form.get('password')?.hasError('required') && form.get('password')?.touched" class="error-text">
           Contraseña requerida
+        </ion-text>
+      </div>
+
+      <div *ngIf="modalData.mode === 'create'" class="form-group">
+        <label class="form-label">PIN del Admin</label>
+        <input
+          type="text"
+          inputmode="numeric"
+          maxlength="4"
+          formControlName="pin"
+          class="form-input"
+          placeholder="Ej: 1234"
+          [disabled]="isSubmitting"
+        />
+        <div class="field-hint pin-hint">Este PIN sera el acceso rapido del admin.</div>
+        <ion-text *ngIf="form.get('pin')?.hasError('required') && form.get('pin')?.touched" class="error-text">
+          PIN requerido
+        </ion-text>
+        <ion-text *ngIf="form.get('pin')?.hasError('pattern') && form.get('pin')?.touched" class="error-text">
+          El PIN debe tener exactamente 4 dígitos
         </ion-text>
       </div>
 

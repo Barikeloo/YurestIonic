@@ -351,6 +351,8 @@ export class AuthService {
     tax_id: string;
     email: string;
     password: string;
+    pin?: string;
+    company_mode?: 'existing' | 'new';
   }): Observable<Restaurant> {
     return this.http
       .post<{ data: Restaurant }>(

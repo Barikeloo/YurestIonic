@@ -10,43 +10,43 @@ return new class extends Migration
     {
         // Agregar restaurant_id a users
         Schema::table('users', function (Blueprint $table) {
-            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants');
+            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants')->cascadeOnDelete();
             $table->string('pin')->nullable()->after('email');
         });
 
         // Agregar restaurant_id a families
         Schema::table('families', function (Blueprint $table) {
-            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants');
+            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants')->cascadeOnDelete();
         });
 
         // Agregar restaurant_id a taxes
         Schema::table('taxes', function (Blueprint $table) {
-            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants');
+            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants')->cascadeOnDelete();
         });
 
         // Agregar restaurant_id a products
         Schema::table('products', function (Blueprint $table) {
-            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants');
+            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants')->cascadeOnDelete();
         });
 
         // Agregar restaurant_id a zones
         Schema::table('zones', function (Blueprint $table) {
-            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants');
+            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants')->cascadeOnDelete();
         });
 
         // Agregar restaurant_id a tables
         Schema::table('tables', function (Blueprint $table) {
-            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants');
+            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants')->cascadeOnDelete();
         });
 
         // Agregar restaurant_id a sales
         Schema::table('sales', function (Blueprint $table) {
-            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants');
+            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants')->cascadeOnDelete();
         });
 
         // Agregar restaurant_id a sales_lines
         Schema::table('sales_lines', function (Blueprint $table) {
-            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants');
+            $table->foreignId('restaurant_id')->after('id')->constrained('restaurants')->cascadeOnDelete();
         });
     }
 

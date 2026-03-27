@@ -3,14 +3,29 @@
     <div class="dashboard-header">
       <div class="header-top">
         <h1 class="dashboard-title">Panel de Control</h1>
-        <button class="btn-logout" type="button" (click)="logout()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-            <polyline points="16 17 21 12 16 7"></polyline>
-            <line x1="21" y1="12" x2="9" y2="12"></line>
-          </svg>
-          Salir
-        </button>
+        <div class="header-actions">
+          <button
+            class="btn-new-company"
+            type="button"
+            title="Crear nueva compañía y su primer restaurante"
+            (click)="openRestaurantModal('create')"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Nueva Compañía
+          </button>
+
+          <button class="btn-logout" type="button" (click)="logout()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Salir
+          </button>
+        </div>
       </div>
       <p class="dashboard-subtitle">Gestiona tus restaurantes por compañía</p>
     </div>
@@ -46,8 +61,8 @@
             <button
               class="btn-add-restaurant"
               type="button"
-              title="Crear nuevo restaurante"
-              (click)="openRestaurantModal('create')"
+              title="Añadir sucursal a esta compañía"
+              (click)="openRestaurantModal('create', undefined, company.tax_id)"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -83,6 +98,20 @@
                       <circle cx="9" cy="7" r="4"></circle>
                       <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                       <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                  </button>
+                  <button
+                    class="btn-action btn-delete"
+                    type="button"
+                    title="Eliminar restaurante"
+                    (click)="deleteRestaurant(restaurant)"
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
+                      <path d="M10 11v6"></path>
+                      <path d="M14 11v6"></path>
+                      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path>
                     </svg>
                   </button>
                 </div>

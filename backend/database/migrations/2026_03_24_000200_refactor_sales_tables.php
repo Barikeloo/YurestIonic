@@ -10,13 +10,13 @@ return new class extends Migration
     {
         // Actualizar tabla sales para agregar order_id y user_id
         Schema::table('sales', function (Blueprint $table) {
-            $table->foreignId('order_id')->nullable()->after('uuid')->constrained('orders');
-            $table->foreignId('user_id')->nullable()->after('order_id')->constrained('users');
+            $table->foreignId('order_id')->nullable()->after('uuid')->constrained('orders')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->after('order_id')->constrained('users')->cascadeOnDelete();
         });
 
         // Actualizar tabla sales_lines para agregar order_line_id
         Schema::table('sales_lines', function (Blueprint $table) {
-            $table->foreignId('order_line_id')->nullable()->after('sale_id')->constrained('order_lines');
+            $table->foreignId('order_line_id')->nullable()->after('sale_id')->constrained('order_lines')->cascadeOnDelete();
         });
     }
 

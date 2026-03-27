@@ -141,10 +141,12 @@ return new class extends Migration
 
             $table->foreign(['restaurant_id', 'family_id'], 'products_restaurant_family_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('families');
+                ->on('families')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'tax_id'], 'products_restaurant_tax_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('taxes');
+                ->on('taxes')
+                ->cascadeOnDelete();
         });
 
         Schema::table('tables', function (Blueprint $table) {
@@ -152,7 +154,8 @@ return new class extends Migration
 
             $table->foreign(['restaurant_id', 'zone_id'], 'tables_restaurant_zone_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('zones');
+                ->on('zones')
+                ->cascadeOnDelete();
         });
 
         Schema::table('orders', function (Blueprint $table) {
@@ -162,13 +165,16 @@ return new class extends Migration
 
             $table->foreign(['restaurant_id', 'table_id'], 'orders_restaurant_table_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('tables');
+                ->on('tables')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'opened_by_user_id'], 'orders_restaurant_opened_user_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('users');
+                ->on('users')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'closed_by_user_id'], 'orders_restaurant_closed_user_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('users');
+                ->on('users')
+                ->cascadeOnDelete();
         });
 
         Schema::table('order_lines', function (Blueprint $table) {
@@ -178,13 +184,16 @@ return new class extends Migration
 
             $table->foreign(['restaurant_id', 'order_id'], 'order_lines_restaurant_order_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('orders');
+                ->on('orders')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'product_id'], 'order_lines_restaurant_product_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('products');
+                ->on('products')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'user_id'], 'order_lines_restaurant_user_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('users');
+                ->on('users')
+                ->cascadeOnDelete();
         });
 
         Schema::table('sales', function (Blueprint $table) {
@@ -193,19 +202,24 @@ return new class extends Migration
 
             $table->foreign(['restaurant_id', 'order_id'], 'sales_restaurant_order_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('orders');
+                ->on('orders')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'user_id'], 'sales_restaurant_user_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('users');
+                ->on('users')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'table_id'], 'sales_restaurant_table_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('tables');
+                ->on('tables')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'opened_by_user_id'], 'sales_restaurant_opened_user_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('users');
+                ->on('users')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'closed_by_user_id'], 'sales_restaurant_closed_user_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('users');
+                ->on('users')
+                ->cascadeOnDelete();
         });
 
         Schema::table('sales_lines', function (Blueprint $table) {
@@ -215,16 +229,20 @@ return new class extends Migration
 
             $table->foreign(['restaurant_id', 'sale_id'], 'sales_lines_restaurant_sale_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('sales');
+                ->on('sales')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'order_line_id'], 'sales_lines_restaurant_order_line_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('order_lines');
+                ->on('order_lines')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'user_id'], 'sales_lines_restaurant_user_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('users');
+                ->on('users')
+                ->cascadeOnDelete();
             $table->foreign(['restaurant_id', 'product_id'], 'sales_lines_restaurant_product_fk')
                 ->references(['restaurant_id', 'id'])
-                ->on('products');
+                ->on('products')
+                ->cascadeOnDelete();
         });
     }
 

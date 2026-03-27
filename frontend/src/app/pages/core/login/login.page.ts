@@ -131,7 +131,7 @@ export class LoginPage {
             this.pinValue = '';
           }
 
-          this.router.navigateByUrl('/app/gestion');
+          this.router.navigateByUrl('/app/mesas');
         },
         error: (error: unknown) => {
           this.errorMessage = error instanceof Error ? error.message : 'No se pudo iniciar sesion.';
@@ -161,7 +161,7 @@ export class LoginPage {
             this.pinValue = '';
           }
 
-          this.router.navigateByUrl('/app/gestion');
+          this.router.navigateByUrl('/app/mesas');
         },
         error: (error: unknown) => {
           this.errorMessage = error instanceof Error ? error.message : 'No se pudo iniciar sesion con PIN.';

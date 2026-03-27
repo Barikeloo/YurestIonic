@@ -31,7 +31,7 @@ export const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: 'gestion',
+        redirectTo: 'mesas',
         pathMatch: 'full',
       },
     ],

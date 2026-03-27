@@ -6,6 +6,7 @@ import { AuthService } from '../../../services/auth.service';
 
 export interface RestaurantModalData {
     mode: 'create' | 'edit';
+    presetTaxId?: string;
     restaurant?: {
         uuid: string;
         name: string;
@@ -80,6 +81,7 @@ export class RestaurantModalComponent implements OnChanges {
             tax_id: restaurant.tax_id,
             email: restaurant.email,
             password: '',
+            pin: '',
         });
 
         // Desactivar campos
@@ -87,6 +89,8 @@ export class RestaurantModalComponent implements OnChanges {
         this.form.get('email')?.disable();
         this.form.get('password')?.clearValidators();
         this.form.get('password')?.updateValueAndValidity();
+        this.form.get('pin')?.clearValidators();
+        this.form.get('pin')?.updateValueAndValidity();
     }
 
     private setupCreateMode(): void {
@@ -95,6 +99,13 @@ export class RestaurantModalComponent implements OnChanges {
         this.form.get('email')?.enable();
         this.form.get('password')?.setValidators([Validators.required, Validators.minLength(8)]);
         this.form.get('password')?.updateValueAndValidity();
+        this.form.get('pin')?.setValidators([Validators.required, Validators.pattern(/^\d{4}$/)]);
+        this.form.get('pin')?.updateValueAndValidity();
+
+        if (this.modalData.presetTaxId) {
+            this.form.patchValue({ tax_id: this.modalData.presetTaxId });
+            this.form.get('tax_id')?.disable();
+        }
     }
 
     public onClose(): void {
@@ -122,12 +133,16 @@ export class RestaurantModalComponent implements OnChanges {
     }
 
     private createRestaurant(formValue: any): void {
+        const companyMode: 'existing' | 'new' = this.modalData.presetTaxId ? 'existing' : 'new';
+
         const createData = {
             name: formValue.name,
             legal_name: formValue.legal_name,
             tax_id: formValue.tax_id,
             email: formValue.email,
             password: formValue.password,
+            pin: formValue.pin,
+            company_mode: companyMode,
         };
 
         console.log('Creando restaurante con:', createData);
@@ -181,6 +196,7 @@ export class RestaurantModalComponent implements OnChanges {
             tax_id: ['', [Validators.required, Validators.pattern(/^[A-Z0-9]+$/i)]],
             email: ['', [Validators.required, Validators.email]],
             password: ['', [Validators.required, Validators.minLength(8)]],
+            pin: ['', [Validators.required, Validators.pattern(/^\d{4}$/)]],
         });
     }
 }

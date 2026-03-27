@@ -5,7 +5,6 @@ import { Subscription, interval } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { AppContextService } from '../../../services/app-context.service';
 import { AuthService, AuthUser } from '../../../services/auth.service';
-import { RestaurantService } from '../../../services/restaurant.service';
 
 @Component({
   selector: 'app-layout-page',
@@ -26,7 +25,6 @@ export class AppLayoutPage implements OnInit, OnDestroy {
   constructor(
     private readonly authService: AuthService,
     private readonly contextService: AppContextService,
-    private readonly restaurantService: RestaurantService,
     private readonly router: Router,
   ) {}
 
@@ -37,12 +35,17 @@ export class AppLayoutPage implements OnInit, OnDestroy {
 
     this.userSubscription = this.authService.currentUser$.subscribe((user) => {
       this.currentUser = user;
+      this.isAdminUser = user?.role === 'admin';
 
       if (user?.restaurantName) {
         this.contextService.setActiveRestaurant({
           id: user.restaurantId,
           name: user.restaurantName,
         });
+      }
+
+      if (!this.isAdminUser && this.router.url.startsWith('/app/gestion')) {
+        this.router.navigateByUrl('/app/mesas');
       }
     });
 
@@ -51,9 +54,7 @@ export class AppLayoutPage implements OnInit, OnDestroy {
     });
 
     this.authService.restoreSession().pipe(take(1)).subscribe({
-      next: () => {
-        this.checkAdminAccess();
-      },
+      next: () => undefined,
       error: () => {
         this.currentUser = null;
         this.isAdminUser = false;
@@ -114,20 +115,4 @@ export class AppLayoutPage implements OnInit, OnDestroy {
     });
   }
 
-  private checkAdminAccess(): void {
-    this.restaurantService
-      .getAdminRestaurants()
-      .pipe(take(1))
-      .subscribe({
-        next: () => {
-          this.isAdminUser = true;
-        },
-        error: () => {
-          this.isAdminUser = false;
-          if (this.router.url.startsWith('/app/gestion')) {
-            this.router.navigateByUrl('/app/mesas');
-          }
-        },
-      });
-  }
 }

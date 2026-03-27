@@ -12,7 +12,7 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->foreignId('restaurant_id')->constrained('restaurants');
+            $table->foreignId('restaurant_id')->constrained('restaurants')->cascadeOnDelete();
             $table->enum('status', ['open', 'cancelled', 'invoiced'])->default('open');
             $table->foreignId('table_id')->constrained('tables');
             $table->foreignId('opened_by_user_id')->constrained('users');
@@ -28,7 +28,7 @@ return new class extends Migration
         Schema::create('order_lines', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->foreignId('restaurant_id')->constrained('restaurants');
+            $table->foreignId('restaurant_id')->constrained('restaurants')->cascadeOnDelete();
             $table->foreignId('order_id')->constrained('orders');
             $table->foreignId('product_id')->constrained('products');
             $table->foreignId('user_id')->constrained('users');

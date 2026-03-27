@@ -39,6 +39,12 @@
     margin-bottom: 16px;
   }
 
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   .dashboard-title {
     font-size: 32px;
     font-weight: 600;
@@ -68,6 +74,33 @@
     svg {
       width: 16px;
       height: 16px;
+    }
+  }
+
+  .btn-new-company {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: var(--accent);
+    color: var(--white);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+
+    svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    &:hover {
+      background: var(--accent-light);
+      box-shadow: 0 4px 14px rgba(255, 77, 77, 0.2);
     }
   }
 
@@ -276,6 +309,11 @@
     &.btn-edit:hover {
       background: rgba(255, 77, 77, 0.2);
       color: var(--accent-light);
+    }
+
+    &.btn-delete:hover {
+      background: rgba(255, 77, 77, 0.25);
+      color: #ff8f8f;
     }
   }
 
