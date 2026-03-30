@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { take } from 'rxjs/operators';
 import { AppContextService } from '../../../services/app-context.service';
+import { FamilyItem, FamilyService } from '../../../services/family.service';
 import { RestaurantService } from '../../../services/restaurant.service';
 
 type ManagementEntityKey = 'restaurant' | 'users' | 'families' | 'products' | 'zones' | 'taxes';
@@ -32,6 +33,7 @@ interface UserRow {
 }
 
 interface FamilyRow {
+  uuid?: string;
   name: string;
   active: boolean;
 }
@@ -77,6 +79,7 @@ export class GestionPage {
   public apiErrorMessage: string | null = null;
   public isSavingRestaurant: boolean = false;
   public isSavingUser: boolean = false;
+  public isSavingFamily: boolean = false;
 
   public readonly managementRestaurants: ManagementRestaurant[] = [
     {
@@ -261,6 +264,7 @@ export class GestionPage {
 
   constructor(
     private readonly contextService: AppContextService,
+    private readonly familyService: FamilyService,
     private readonly restaurantService: RestaurantService,
   ) {
     this.syncForms();
@@ -268,6 +272,37 @@ export class GestionPage {
       this.contextService.setActiveRestaurant({ name: this.selectedRestaurant.name });
     }
     this.loadRestaurantsFromApi();
+  }
+
+  private loadFamilies(silent: boolean = false): void {
+    this.familyService
+      .listFamilies()
+      .pipe(take(1))
+      .subscribe({
+        next: (families) => {
+          const restaurant = this.selectedRestaurant;
+          if (!restaurant) {
+            return;
+          }
+
+          this.managementData[restaurant.id].families = families.map((family: FamilyItem): FamilyRow => ({
+            uuid: family.id,
+            name: family.name,
+            active: family.active,
+          }));
+
+          this.syncForms();
+
+          if (!silent) {
+            this.apiErrorMessage = null;
+          }
+        },
+        error: (error: unknown) => {
+          if (!silent) {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar las familias.';
+          }
+        },
+      });
   }
 
   public get selectedRestaurant(): ManagementRestaurant | null {
@@ -348,6 +383,7 @@ export class GestionPage {
           .subscribe({
             next: () => {
               this.loadRestaurantUsers(this.selectedRestaurant!.uuid!);
+              this.loadFamilies();
             },
             error: (error: unknown) => {
               const message = error instanceof Error ? error.message : 'No se pudo seleccionar el restaurante.';
@@ -395,6 +431,34 @@ export class GestionPage {
 
     if (!rows.length || idx < 0 || idx >= rows.length) {
       window.alert('No hay un registro seleccionado para eliminar.');
+
+      return;
+    }
+
+    if (entityKey === 'families') {
+      const family = rows[idx] as FamilyRow;
+      if (!family.uuid) {
+        window.alert('No se puede eliminar: familia sin identificador.');
+
+        return;
+      }
+
+      this.familyService
+        .deleteFamily(family.uuid)
+        .pipe(take(1))
+        .subscribe({
+          next: () => {
+            rows.splice(idx, 1);
+            this.managementState.selectedIndex[entityKey] = rows.length ? Math.min(idx, rows.length - 1) : -1;
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            window.alert('Familia eliminada.');
+          },
+          error: (error: unknown) => {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo eliminar la familia.';
+          },
+        });
 
       return;
     }
@@ -609,8 +673,81 @@ export class GestionPage {
         return;
       }
 
-      const payload: FamilyRow = { name, active: this.familyForm.active };
-      this.upsertRow(rows, idx, payload, entityKey);
+      const desiredActive = this.familyForm.active;
+      const selectedFamily = idx >= 0 && idx < rows.length ? (rows[idx] as FamilyRow) : null;
+
+      this.isSavingFamily = true;
+
+      if (selectedFamily?.uuid) {
+        this.familyService
+          .updateFamily(selectedFamily.uuid, { name })
+          .pipe(take(1))
+          .subscribe({
+            next: (updated) => {
+              const applyActivation$ = desiredActive
+                ? this.familyService.activateFamily(updated.id)
+                : this.familyService.deactivateFamily(updated.id);
+
+              applyActivation$.pipe(take(1)).subscribe({
+                next: (finalFamily) => {
+                  selectedFamily.uuid = finalFamily.id;
+                  selectedFamily.name = finalFamily.name;
+                  selectedFamily.active = finalFamily.active;
+                  this.apiErrorMessage = null;
+                  this.isSavingFamily = false;
+                  this.syncForms();
+                  window.alert('Familia actualizada.');
+                },
+                error: (error: unknown) => {
+                  this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo actualizar el estado de la familia.';
+                  this.isSavingFamily = false;
+                },
+              });
+            },
+            error: (error: unknown) => {
+              this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo actualizar la familia.';
+              this.isSavingFamily = false;
+            },
+          });
+      } else {
+        this.familyService
+          .createFamily({ name })
+          .pipe(take(1))
+          .subscribe({
+            next: (created) => {
+              const applyActivation$ = desiredActive
+                ? this.familyService.activateFamily(created.id)
+                : this.familyService.deactivateFamily(created.id);
+
+              applyActivation$.pipe(take(1)).subscribe({
+                next: (finalFamily) => {
+                  const newFamily: FamilyRow = {
+                    uuid: finalFamily.id,
+                    name: finalFamily.name,
+                    active: finalFamily.active,
+                  };
+
+                  (rows as FamilyRow[]).push(newFamily);
+                  this.managementState.selectedIndex[entityKey] = rows.length - 1;
+                  this.apiErrorMessage = null;
+                  this.isSavingFamily = false;
+                  this.updateRestaurantKpis(this.managementState.restaurantId);
+                  this.syncForms();
+                  window.alert('Familia creada.');
+                },
+                error: (error: unknown) => {
+                  this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo actualizar el estado de la familia.';
+                  this.isSavingFamily = false;
+                },
+              });
+            },
+            error: (error: unknown) => {
+              this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo crear la familia.';
+              this.isSavingFamily = false;
+            },
+          });
+      }
+
       return;
     }
 
@@ -896,6 +1033,21 @@ export class GestionPage {
 
           this.managementState.restaurantId = this.managementRestaurants[0].id;
           this.syncForms();
+
+          const firstRestaurant = this.managementRestaurants[0];
+          if (firstRestaurant?.uuid) {
+            this.restaurantService
+              .selectAdminRestaurantContext(firstRestaurant.uuid)
+              .pipe(take(1))
+              .subscribe({
+                next: () => {
+                  this.loadFamilies(true);
+                },
+                error: (error: unknown) => {
+                  this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo seleccionar el restaurante.';
+                },
+              });
+          }
         },
         error: (error: unknown) => {
           this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar restaurantes.';
