@@ -13,9 +13,9 @@ class ListTables
     /**
      * @return array<int, array<string, string>>
      */
-    public function __invoke(): array
+    public function __invoke(bool $includeDeleted = false): array
     {
-        $tables = $this->tableRepository->findAll();
+        $tables = $this->tableRepository->findAll($includeDeleted);
 
         return array_map(
             static fn ($table): array => ListTablesItemResponse::create($table)->toArray(),

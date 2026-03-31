@@ -13,7 +13,7 @@ interface ZoneRepositoryInterface
     /**
      * @return array<int, Zone>
      */
-    public function findAll(): array;
+    public function findAll(bool $includeDeleted = false): array;
 
     public function deleteById(string $id): bool;
 }

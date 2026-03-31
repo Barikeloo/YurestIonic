@@ -13,7 +13,7 @@ interface TableRepositoryInterface
     /**
      * @return array<int, Table>
      */
-    public function findAll(): array;
+    public function findAll(bool $includeDeleted = false): array;
 
     public function deleteById(string $id): bool;
 }

@@ -13,9 +13,9 @@ class ListProducts
     /**
      * @return array<int, array<string, bool|int|string|null>>
      */
-    public function __invoke(): array
+    public function __invoke(bool $includeDeleted = false): array
     {
-        $products = $this->productRepository->findAll();
+        $products = $this->productRepository->findAll($includeDeleted);
 
         return array_map(
             static fn ($product): array => ListProductsItemResponse::create($product)->toArray(),

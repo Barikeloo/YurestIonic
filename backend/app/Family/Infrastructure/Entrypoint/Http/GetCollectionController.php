@@ -4,6 +4,7 @@ namespace App\Family\Infrastructure\Entrypoint\Http;
 
 use App\Family\Application\ListFamilies\ListFamilies;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class GetCollectionController
 {
@@ -11,8 +12,10 @@ class GetCollectionController
         private ListFamilies $listFamilies,
     ) {}
 
-    public function __invoke(): JsonResponse
+    public function __invoke(Request $request): JsonResponse
     {
-        return new JsonResponse(($this->listFamilies)());
+        $includeDeleted = $request->query('all') === 'true';
+
+        return new JsonResponse(($this->listFamilies)($includeDeleted));
     }
 }

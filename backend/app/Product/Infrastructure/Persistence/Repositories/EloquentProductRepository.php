@@ -58,9 +58,15 @@ class EloquentProductRepository implements ProductRepositoryInterface
         );
     }
 
-    public function findAll(): array
+    public function findAll(bool $includeDeleted = false): array
     {
-        $models = $this->model->newQuery()->with(['family', 'tax'])->orderBy('name')->get();
+        $query = $this->model->newQuery()->with(['family', 'tax'])->orderBy('name');
+
+        if ($includeDeleted) {
+            $query->withTrashed();
+        }
+
+        $models = $query->get();
 
         return $models
             ->filter(static fn (EloquentProduct $model): bool => $model->family !== null && $model->tax !== null)

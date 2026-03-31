@@ -13,9 +13,9 @@ class ListZones
     /**
      * @return array<int, array<string, string>>
      */
-    public function __invoke(): array
+    public function __invoke(bool $includeDeleted = false): array
     {
-        $zones = $this->zoneRepository->findAll();
+        $zones = $this->zoneRepository->findAll($includeDeleted);
 
         return array_map(
             static fn ($zone): array => ListZonesItemResponse::create($zone)->toArray(),

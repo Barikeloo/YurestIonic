@@ -47,9 +47,15 @@ class EloquentFamilyRepository implements FamilyRepositoryInterface
         );
     }
 
-    public function findAll(): array
+    public function findAll(bool $includeDeleted = false): array
     {
-        $models = $this->model->newQuery()->orderBy('name')->get();
+        $query = $this->model->newQuery()->orderBy('name');
+
+        if ($includeDeleted) {
+            $query->withTrashed();
+        }
+
+        $models = $query->get();
 
         return $models->map(static fn (EloquentFamily $model): Family => Family::fromPersistence(
             id: $model->uuid,

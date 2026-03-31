@@ -13,9 +13,9 @@ class ListTaxes
     /**
      * @return array<int, array<string, int|string>>
      */
-    public function __invoke(): array
+    public function __invoke(bool $includeDeleted = false): array
     {
-        $taxes = $this->taxRepository->findAll();
+        $taxes = $this->taxRepository->findAll($includeDeleted);
 
         return array_map(
             static fn ($tax): array => ListTaxesItemResponse::create($tax)->toArray(),

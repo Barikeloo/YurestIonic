@@ -45,9 +45,15 @@ class EloquentZoneRepository implements ZoneRepositoryInterface
         );
     }
 
-    public function findAll(): array
+    public function findAll(bool $includeDeleted = false): array
     {
-        $models = $this->model->newQuery()->orderBy('name')->get();
+        $query = $this->model->newQuery()->orderBy('name');
+
+        if ($includeDeleted) {
+            $query->withTrashed();
+        }
+
+        $models = $query->get();
 
         return $models->map(static fn (EloquentZone $model): Zone => Zone::fromPersistence(
             id: $model->uuid,
