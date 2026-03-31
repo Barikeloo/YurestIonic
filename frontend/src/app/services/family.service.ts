@@ -30,37 +30,37 @@ export class FamilyService {
 
   public listFamilies(): Observable<FamilyItem[]> {
     return this.http
-      .get<FamilyItem[]>(`${this.baseUrl}/families`, { withCredentials: true })
+      .get<FamilyItem[]>(`${this.baseUrl}/admin/families`, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
   public createFamily(payload: CreateFamilyPayload): Observable<FamilyItem> {
     return this.http
-      .post<FamilyItem>(`${this.baseUrl}/families`, payload, { withCredentials: true })
+      .post<FamilyItem>(`${this.baseUrl}/admin/families`, payload, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
   public updateFamily(id: string, payload: UpdateFamilyPayload): Observable<FamilyItem> {
     return this.http
-      .put<FamilyItem>(`${this.baseUrl}/families/${id}`, payload, { withCredentials: true })
+      .put<FamilyItem>(`${this.baseUrl}/admin/families/${id}`, payload, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
   public activateFamily(id: string): Observable<FamilyItem> {
     return this.http
-      .patch<FamilyItem>(`${this.baseUrl}/families/${id}/activate`, {}, { withCredentials: true })
+      .patch<FamilyItem>(`${this.baseUrl}/admin/families/${id}/activate`, {}, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
   public deactivateFamily(id: string): Observable<FamilyItem> {
     return this.http
-      .patch<FamilyItem>(`${this.baseUrl}/families/${id}/deactivate`, {}, { withCredentials: true })
+      .patch<FamilyItem>(`${this.baseUrl}/admin/families/${id}/deactivate`, {}, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
   public deleteFamily(id: string): Observable<unknown> {
     return this.http
-      .delete(`${this.baseUrl}/families/${id}`, { withCredentials: true })
+      .delete(`${this.baseUrl}/admin/families/${id}`, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 

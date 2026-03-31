@@ -94,58 +94,75 @@ Route::middleware([
 	StartSession::class,
 	ResolveTenantContext::class,
 ])->group(function (): void {
-	Route::get('/families', FamilyGetCollectionController::class);
-	Route::get('/families/{id}', FamilyGetController::class)->whereUuid('id');
-	Route::post('/families', FamilyPostController::class);
-	Route::put('/families/{id}', FamilyPutController::class)->whereUuid('id');
-	Route::delete('/families/{id}', FamilyDeleteController::class)->whereUuid('id');
-	Route::patch('/families/{id}/activate', FamilyActivateController::class)->whereUuid('id');
-	Route::patch('/families/{id}/deactivate', FamilyDeactivateController::class)->whereUuid('id');
+	// ============================================
+	// TPV - Front de Venta (transaccional, rápido)
+	// ============================================
 
-	Route::get('/taxes', TaxGetCollectionController::class);
-	Route::get('/taxes/{id}', TaxGetController::class)->whereUuid('id');
-	Route::post('/taxes', TaxPostController::class);
-	Route::put('/taxes/{id}', TaxPutController::class)->whereUuid('id');
-	Route::delete('/taxes/{id}', TaxDeleteController::class)->whereUuid('id');
+	// Catálogo para TPV (solo lectura, listados ligeros)
+	Route::get('/tpv/families', FamilyGetCollectionController::class);
+	Route::get('/tpv/products', ProductGetCollectionController::class);
+	Route::get('/tpv/zones', ZoneGetCollectionController::class);
+	Route::get('/tpv/tables', TableGetCollectionController::class);
+	Route::get('/tpv/taxes', TaxGetCollectionController::class);
 
-	Route::get('/zones', ZoneGetCollectionController::class);
-	Route::get('/zones/{id}', ZoneGetController::class)->whereUuid('id');
-	Route::post('/zones', ZonePostController::class);
-	Route::put('/zones/{id}', ZonePutController::class)->whereUuid('id');
-	Route::delete('/zones/{id}', ZoneDeleteController::class)->whereUuid('id');
+	// Ventas y órdenes (operaciones transaccionales del TPV)
+	Route::post('/tpv/orders', OrderPostController::class);
+	Route::post('/tpv/orders/lines', OrderAddLineController::class);
+	Route::get('/tpv/orders', OrderGetCollectionController::class);
+	Route::get('/tpv/orders/{id}', OrderGetController::class)->whereUuid('id');
+	Route::get('/tpv/orders/{id}/lines', OrderGetLinesController::class)->whereUuid('id');
+	Route::put('/tpv/orders/{id}', OrderPutController::class)->whereUuid('id');
+	Route::delete('/tpv/orders/{id}', OrderDeleteController::class)->whereUuid('id');
 
-	Route::get('/tables', TableGetCollectionController::class);
-	Route::get('/tables/{id}', TableGetController::class)->whereUuid('id');
-	Route::post('/tables', TablePostController::class);
-	Route::put('/tables/{id}', TablePutController::class)->whereUuid('id');
-	Route::delete('/tables/{id}', TableDeleteController::class)->whereUuid('id');
+	Route::post('/tpv/sales', SalePostController::class);
+	Route::post('/tpv/sales/lines', SaleAddLineController::class);
+	Route::get('/tpv/sales', SaleGetCollectionController::class);
+	Route::get('/tpv/sales/{id}', SaleGetController::class)->whereUuid('id');
+	Route::put('/tpv/sales/{id}', SalePutController::class)->whereUuid('id');
+	Route::delete('/tpv/sales/{id}', SaleDeleteController::class)->whereUuid('id');
 
-	Route::get('/products', ProductGetCollectionController::class);
-	Route::get('/products/{id}', ProductGetController::class)->whereUuid('id');
-	Route::post('/products', ProductPostController::class);
-	Route::put('/products/{id}', ProductPutController::class)->whereUuid('id');
-	Route::delete('/products/{id}', ProductDeleteController::class)->whereUuid('id');
-	Route::patch('/products/{id}/activate', ProductActivateController::class)->whereUuid('id');
-	Route::patch('/products/{id}/deactivate', ProductDeactivateController::class)->whereUuid('id');
+	// ============================================
+	// Admin - Backoffice (CRUD completo)
+	// ============================================
 
-	// Orders
-	Route::post('/orders', OrderPostController::class);
-	Route::post('/orders/lines', OrderAddLineController::class);
+	// Familias
+	Route::get('/admin/families', FamilyGetCollectionController::class);
+	Route::get('/admin/families/{id}', FamilyGetController::class)->whereUuid('id');
+	Route::post('/admin/families', FamilyPostController::class);
+	Route::put('/admin/families/{id}', FamilyPutController::class)->whereUuid('id');
+	Route::delete('/admin/families/{id}', FamilyDeleteController::class)->whereUuid('id');
+	Route::patch('/admin/families/{id}/activate', FamilyActivateController::class)->whereUuid('id');
+	Route::patch('/admin/families/{id}/deactivate', FamilyDeactivateController::class)->whereUuid('id');
 
-	Route::get('/orders', OrderGetCollectionController::class);
-	Route::get('/orders/{id}', OrderGetController::class)->whereUuid('id');
-	Route::get('/orders/{id}/lines', OrderGetLinesController::class)->whereUuid('id');
-	Route::put('/orders/{id}', OrderPutController::class)->whereUuid('id');
-	Route::delete('/orders/{id}', OrderDeleteController::class)->whereUuid('id');
+	// Impuestos
+	Route::get('/admin/taxes', TaxGetCollectionController::class);
+	Route::get('/admin/taxes/{id}', TaxGetController::class)->whereUuid('id');
+	Route::post('/admin/taxes', TaxPostController::class);
+	Route::put('/admin/taxes/{id}', TaxPutController::class)->whereUuid('id');
+	Route::delete('/admin/taxes/{id}', TaxDeleteController::class)->whereUuid('id');
 
-	// Sales
-	Route::post('/sales', SalePostController::class);
-	Route::post('/sales/lines', SaleAddLineController::class);
+	// Zonas
+	Route::get('/admin/zones', ZoneGetCollectionController::class);
+	Route::get('/admin/zones/{id}', ZoneGetController::class)->whereUuid('id');
+	Route::post('/admin/zones', ZonePostController::class);
+	Route::put('/admin/zones/{id}', ZonePutController::class)->whereUuid('id');
+	Route::delete('/admin/zones/{id}', ZoneDeleteController::class)->whereUuid('id');
 
-	Route::get('/sales', SaleGetCollectionController::class);
-	Route::get('/sales/{id}', SaleGetController::class)->whereUuid('id');
-	Route::put('/sales/{id}', SalePutController::class)->whereUuid('id');
-	Route::delete('/sales/{id}', SaleDeleteController::class)->whereUuid('id');
+	// Mesas
+	Route::get('/admin/tables', TableGetCollectionController::class);
+	Route::get('/admin/tables/{id}', TableGetController::class)->whereUuid('id');
+	Route::post('/admin/tables', TablePostController::class);
+	Route::put('/admin/tables/{id}', TablePutController::class)->whereUuid('id');
+	Route::delete('/admin/tables/{id}', TableDeleteController::class)->whereUuid('id');
+
+	// Productos
+	Route::get('/admin/products', ProductGetCollectionController::class);
+	Route::get('/admin/products/{id}', ProductGetController::class)->whereUuid('id');
+	Route::post('/admin/products', ProductPostController::class);
+	Route::put('/admin/products/{id}', ProductPutController::class)->whereUuid('id');
+	Route::delete('/admin/products/{id}', ProductDeleteController::class)->whereUuid('id');
+	Route::patch('/admin/products/{id}/activate', ProductActivateController::class)->whereUuid('id');
+	Route::patch('/admin/products/{id}/deactivate', ProductDeactivateController::class)->whereUuid('id');
 });
 
 Route::middleware([
