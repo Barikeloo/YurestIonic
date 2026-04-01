@@ -1,0 +1,64 @@
+<div class="gestion-section-grid">
+  <div class="gestion-card">
+    <div class="gestion-card-title">Zonas y capacidad</div>
+    <div class="gestion-row-list">
+      <div
+        *ngFor="let zone of zones; let i = index"
+        class="gestion-row-item"
+        [class.active]="isZoneSelected(i)"
+        (click)="onSelectZone(i)"
+      >
+        <strong>{{ zone.name }}</strong><br />Mesas registradas: {{ zone.tables.length }}
+      </div>
+    </div>
+  </div>
+  <div class="gestion-card">
+    <div class="gestion-card-title">Editar zona seleccionada</div>
+    <form class="gestion-form" (ngSubmit)="onSubmitZone()">
+      <div class="gestion-form-actions form-actions-start">
+        <button type="button" class="btn-small" (click)="onCreateZone()">Nueva zona</button>
+        <button type="button" class="btn-small" (click)="onDeleteZone()">Eliminar</button>
+      </div>
+      <div>
+        <label class="form-label" for="mg-zone-name">Nombre de zona</label>
+        <input id="mg-zone-name" class="form-input" [(ngModel)]="zoneFormData.name" name="mg-zone-name" placeholder="Ej. Terraza" required />
+      </div>
+      <div class="gestion-form-actions">
+        <button class="btn-login btn-login-inline" type="submit">Guardar cambios zona</button>
+      </div>
+    </form>
+
+    <div class="section-divider"></div>
+
+    <div class="gestion-card-title mg-small-gap">Mesas de {{ selectedZone ? selectedZone.name : 'la zona' }}</div>
+    <div class="gestion-row-list mg-table-list">
+      <ng-container *ngIf="selectedZone && selectedZone.tables.length; else noTablesTpl">
+        <div
+          *ngFor="let table of selectedZone.tables; let i = index"
+          class="gestion-row-item"
+          [class.active]="isTableSelected(i)"
+          (click)="onSelectTable(i)"
+        >
+          <strong>{{ table.name }}</strong>
+        </div>
+      </ng-container>
+      <ng-template #noTablesTpl>
+        <div class="gestion-row-item">No hay mesas registradas.</div>
+      </ng-template>
+    </div>
+
+    <form class="gestion-form" (ngSubmit)="onSubmitTable()">
+      <div class="gestion-form-actions form-actions-start">
+        <button type="button" class="btn-small" (click)="onCreateTable()">Nueva mesa</button>
+        <button type="button" class="btn-small" (click)="onDeleteTable()">Eliminar mesa</button>
+      </div>
+      <div>
+        <label class="form-label" for="mg-table-name">Nombre de mesa</label>
+        <input id="mg-table-name" class="form-input" [(ngModel)]="tableFormData.name" name="mg-table-name" placeholder="Ej. T12" required />
+      </div>
+      <div class="gestion-form-actions">
+        <button class="btn-login btn-login-inline" type="submit">Guardar mesa</button>
+      </div>
+    </form>
+  </div>
+</div>

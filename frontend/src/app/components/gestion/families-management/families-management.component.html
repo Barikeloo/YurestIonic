@@ -1,0 +1,40 @@
+<div class="gestion-section-grid">
+  <div class="gestion-card">
+    <div class="gestion-card-title">Familias disponibles</div>
+    <div class="gestion-row-list">
+      <div
+        *ngFor="let family of families; let i = index"
+        class="gestion-row-item"
+        [class.active]="isSelected(i)"
+        (click)="onSelect(i)"
+      >
+        <strong>{{ family.name }}</strong><br />Estado: {{ family.active ? 'Activa' : 'Inactiva' }}
+      </div>
+    </div>
+  </div>
+  <div class="gestion-card">
+    <div class="gestion-card-title">Editar familia seleccionada</div>
+    <form class="gestion-form" (ngSubmit)="onSubmit()">
+      <div class="gestion-form-actions form-actions-start">
+        <button type="button" class="btn-small" (click)="onCreate()">Nueva familia</button>
+        <button type="button" class="btn-small" (click)="onDelete()">Eliminar</button>
+      </div>
+      <div>
+        <label class="form-label" for="mg-family-name">Nombre de la familia</label>
+        <input id="mg-family-name" class="form-input" [(ngModel)]="formData.name" name="mg-family-name" placeholder="Ej. Entrantes" required />
+      </div>
+      <div>
+        <label class="form-label" for="mg-family-active">Estado</label>
+        <select id="mg-family-active" class="form-input" [(ngModel)]="formData.active" name="mg-family-active" required>
+          <option [ngValue]="true">Activa</option>
+          <option [ngValue]="false">Inactiva</option>
+        </select>
+      </div>
+      <div class="gestion-form-actions">
+        <button class="btn-login btn-login-inline" type="submit" [disabled]="isSaving">
+          {{ isSaving ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,36 @@
+<aside class="gestion-restaurants">
+  <div class="gestion-panel-head">
+    <div class="gestion-panel-title">Restaurantes registrados</div>
+    <div class="gestion-panel-sub">Selecciona un restaurante para gestionar su configuracion.</div>
+  </div>
+  <div class="gestion-list">
+    <div
+      *ngFor="let restaurant of restaurants"
+      class="gestion-restaurant-item"
+      [class.active]="isActive(restaurant.id)"
+      (click)="onSelect(restaurant.id)"
+    >
+      <div class="gestion-restaurant-top">
+        <div>
+          <div class="gestion-restaurant-name">{{ restaurant.name }}</div>
+          <div class="gestion-restaurant-meta">{{ restaurant.legalName }}<br />{{ restaurant.taxId }} · {{ restaurant.email }}</div>
+        </div>
+        <span class="gestion-status-pill live">Activo</span>
+      </div>
+      <div class="gestion-restaurant-kpis">
+        <div class="gestion-kpi-mini">
+          <div class="gestion-kpi-mini-val">{{ restaurant.users }}</div>
+          <div class="gestion-kpi-mini-label">Usuarios</div>
+        </div>
+        <div class="gestion-kpi-mini">
+          <div class="gestion-kpi-mini-val">{{ restaurant.zones }}</div>
+          <div class="gestion-kpi-mini-label">Zonas</div>
+        </div>
+        <div class="gestion-kpi-mini">
+          <div class="gestion-kpi-mini-val">{{ restaurant.products }}</div>
+          <div class="gestion-kpi-mini-label">Productos</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>

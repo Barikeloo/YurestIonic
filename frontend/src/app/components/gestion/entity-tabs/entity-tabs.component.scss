@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:host {
+  --accent: #ff4d4d;
+  --accent-light: #ff7070;
+  --accent-soft: #ffecec;
+  --black: #0d0d0d;
+  --gray-900: #1a1a1a;
+  --gray-800: #2c2c2c;
+  --gray-700: #3d3d3d;
+  --gray-600: #5a5a5a;
+  --gray-500: #7a7a7a;
+  --gray-400: #a0a0a0;
+  --gray-300: #d3d3d3;
+  --gray-200: #e8e8e8;
+  --gray-100: #f4f4f4;
+  --gray-50: #fafafa;
+  --white: #ffffff;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --radius-sm: 8px;
+  --radius: 14px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  display: block;
+}
+
+.gestion-entity-tabs {
+  margin-top: 10px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.gestion-entity-tab {
+  border: 1.5px solid var(--gray-200);
+  background: var(--white);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  color: var(--gray-600);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+  font-family: var(--font);
+}
+
+.gestion-entity-tab.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}

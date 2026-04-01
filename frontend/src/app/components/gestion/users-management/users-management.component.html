@@ -1,0 +1,57 @@
+<div class="gestion-section-grid">
+  <div class="gestion-card">
+    <div class="gestion-card-title">Usuarios del restaurante</div>
+    <div class="gestion-row-list">
+      <div
+        *ngFor="let user of users; let i = index"
+        class="gestion-row-item"
+        [class.active]="isSelected(i)"
+        (click)="onSelect(i)"
+      >
+        <strong>{{ user.name }}</strong><br />
+        <span class="user-meta-email">{{ user.email }}</span>
+        <span class="user-role-badge" [ngClass]="getRoleBadgeClass(user.role)">{{ getRoleLabel(user.role) }}</span>
+      </div>
+    </div>
+  </div>
+  <div class="gestion-card">
+    <div class="gestion-card-title">Editar usuario seleccionado</div>
+    <form class="gestion-form" (ngSubmit)="onSubmit()">
+      <div class="gestion-form-actions form-actions-start">
+        <button type="button" class="btn-small" (click)="onCreate()">Nuevo usuario</button>
+        <button *ngIf="canDelete()" type="button" class="btn-small" (click)="onDelete()">Eliminar</button>
+      </div>
+      <div>
+        <label class="form-label" for="mg-user-name">Nombre</label>
+        <input id="mg-user-name" class="form-input" [(ngModel)]="formData.name" name="mg-user-name" placeholder="Nombre y apellidos" required />
+      </div>
+      <div class="gestion-form-grid">
+        <div>
+          <label class="form-label" for="mg-user-email">Email</label>
+          <input id="mg-user-email" type="email" class="form-input" [(ngModel)]="formData.email" name="mg-user-email" placeholder="usuario@restaurante.com" required />
+        </div>
+        <div>
+          <label class="form-label" for="mg-user-role">Rol</label>
+          <select id="mg-user-role" class="form-input" [(ngModel)]="formData.role" name="mg-user-role" required>
+            <option *ngFor="let option of roleOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="gestion-form-grid">
+        <div>
+          <label class="form-label" for="mg-user-password">Contraseña</label>
+          <input id="mg-user-password" type="password" class="form-input" [(ngModel)]="formData.password" name="mg-user-password" placeholder="Dejar vacio para mantener la actual" />
+        </div>
+        <div>
+          <label class="form-label" for="mg-user-pin">PIN (4 digitos)</label>
+          <input id="mg-user-pin" type="text" maxlength="4" class="form-input" [(ngModel)]="formData.pin" name="mg-user-pin" placeholder="1234" />
+        </div>
+      </div>
+      <div class="gestion-form-actions">
+        <button class="btn-login btn-login-inline" type="submit" [disabled]="isSaving">
+          {{ isSaving ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

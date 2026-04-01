@@ -5,7 +5,17 @@ import { RouterModule } from '@angular/router';
 import { take } from 'rxjs/operators';
 import { AppContextService } from '../../../services/app-context.service';
 import { FamilyItem, FamilyService } from '../../../services/family.service';
+import { ProductItem, ProductService } from '../../../services/product.service';
 import { RestaurantService } from '../../../services/restaurant.service';
+import { TaxItem, TaxService } from '../../../services/tax.service';
+import { RestaurantListComponent } from '../../../components/gestion/restaurant-list/restaurant-list.component';
+import { EntityTabsComponent } from '../../../components/gestion/entity-tabs/entity-tabs.component';
+import { RestaurantDetailComponent } from '../../../components/gestion/restaurant-detail/restaurant-detail.component';
+import { UsersManagementComponent } from '../../../components/gestion/users-management/users-management.component';
+import { FamiliesManagementComponent } from '../../../components/gestion/families-management/families-management.component';
+import { ProductsManagementComponent } from '../../../components/gestion/products-management/products-management.component';
+import { ZonesManagementComponent } from '../../../components/gestion/zones-management/zones-management.component';
+import { TaxesManagementComponent } from '../../../components/gestion/taxes-management/taxes-management.component';
 
 type ManagementEntityKey = 'restaurant' | 'users' | 'families' | 'products' | 'zones' | 'taxes';
 type UserRole = 'operator' | 'supervisor' | 'admin';
@@ -39,6 +49,7 @@ interface FamilyRow {
 }
 
 interface TaxRow {
+  uuid?: string;
   name: string;
   percentage: number;
 }
@@ -53,10 +64,11 @@ interface ZoneRow {
 }
 
 interface ProductRow {
+  uuid?: string;
+  family_id: string;
+  tax_id: string;
   name: string;
-  family: string;
   price: number;
-  tax: number;
   stock: number;
   active: boolean;
 }
@@ -73,13 +85,27 @@ interface ManagementDataRow {
   selector: 'app-gestion',
   templateUrl: './gestion.page.html',
   styleUrls: ['./gestion.page.scss'],
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    RestaurantListComponent,
+    EntityTabsComponent,
+    RestaurantDetailComponent,
+    UsersManagementComponent,
+    FamiliesManagementComponent,
+    ProductsManagementComponent,
+    ZonesManagementComponent,
+    TaxesManagementComponent,
+  ],
 })
 export class GestionPage {
   public apiErrorMessage: string | null = null;
   public isSavingRestaurant: boolean = false;
   public isSavingUser: boolean = false;
   public isSavingFamily: boolean = false;
+  public isSavingTax: boolean = false;
+  public isSavingProduct: boolean = false;
 
   public readonly managementRestaurants: ManagementRestaurant[] = [
     {
@@ -137,10 +163,7 @@ export class GestionPage {
         { name: 'Salon', tables: [{ name: 'S1' }, { name: 'S2' }, { name: 'S3' }] },
         { name: 'Barra', tables: [{ name: 'B1' }, { name: 'B2' }] },
       ],
-      products: [
-        { name: 'Burger de Retinto', family: 'Principales', price: 1450, tax: 10, stock: 27, active: true },
-        { name: 'Paulaner', family: 'Bebidas', price: 300, tax: 10, stock: 80, active: true },
-      ],
+      products: [],
     },
     2: {
       users: [
@@ -156,10 +179,7 @@ export class GestionPage {
         { name: 'Principal', tables: [{ name: 'P1' }, { name: 'P2' }, { name: 'P3' }] },
         { name: 'Terraza', tables: [{ name: 'T1' }, { name: 'T2' }, { name: 'T3' }, { name: 'T4' }] },
       ],
-      products: [
-        { name: 'Croqueta casera', family: 'Tapas', price: 250, tax: 10, stock: 120, active: true },
-        { name: 'Tinto de verano', family: 'Bebidas', price: 320, tax: 10, stock: 75, active: true },
-      ],
+      products: [],
     },
     3: {
       users: [
@@ -180,10 +200,7 @@ export class GestionPage {
         { name: 'Interior', tables: [{ name: 'I1' }, { name: 'I2' }] },
         { name: 'Lounge', tables: [{ name: 'L1' }, { name: 'L2' }] },
       ],
-      products: [
-        { name: 'Brunch premium', family: 'Desayunos', price: 1890, tax: 10, stock: 20, active: true },
-        { name: 'Cafe flat white', family: 'Cafeteria', price: 290, tax: 10, stock: 200, active: true },
-      ],
+      products: [],
     },
   };
 
@@ -242,8 +259,8 @@ export class GestionPage {
 
   public productForm = {
     name: '',
-    family: '',
-    tax: 10,
+    family_id: '',
+    tax_id: '',
     price: '',
     stock: 0,
     active: true,
@@ -265,7 +282,9 @@ export class GestionPage {
   constructor(
     private readonly contextService: AppContextService,
     private readonly familyService: FamilyService,
+    private readonly productService: ProductService,
     private readonly restaurantService: RestaurantService,
+    private readonly taxService: TaxService,
   ) {
     this.syncForms();
     if (this.selectedRestaurant) {
@@ -300,6 +319,72 @@ export class GestionPage {
         error: (error: unknown) => {
           if (!silent) {
             this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar las familias.';
+          }
+        },
+      });
+  }
+
+  private loadTaxes(silent: boolean = false): void {
+    this.taxService
+      .listTaxes()
+      .pipe(take(1))
+      .subscribe({
+        next: (taxes) => {
+          const restaurant = this.selectedRestaurant;
+          if (!restaurant) {
+            return;
+          }
+
+          this.managementData[restaurant.id].taxes = taxes.map((tax: TaxItem): TaxRow => ({
+            uuid: tax.id,
+            name: tax.name,
+            percentage: tax.percentage,
+          }));
+
+          this.syncForms();
+
+          if (!silent) {
+            this.apiErrorMessage = null;
+          }
+        },
+        error: (error: unknown) => {
+          if (!silent) {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar los impuestos.';
+          }
+        },
+      });
+  }
+
+  private loadProducts(silent: boolean = false): void {
+    this.productService
+      .listProducts()
+      .pipe(take(1))
+      .subscribe({
+        next: (products) => {
+          const restaurant = this.selectedRestaurant;
+          if (!restaurant) {
+            return;
+          }
+
+          this.managementData[restaurant.id].products = products.map((product: ProductItem): ProductRow => ({
+            uuid: product.id,
+            name: product.name,
+            family_id: product.family_id,
+            tax_id: product.tax_id,
+            price: product.price,
+            stock: product.stock,
+            active: product.active,
+          }));
+
+          this.syncForms();
+
+          if (!silent) {
+            this.apiErrorMessage = null;
+          }
+        },
+        error: (error: unknown) => {
+          if (!silent) {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar los productos.';
           }
         },
       });
@@ -384,6 +469,8 @@ export class GestionPage {
             next: () => {
               this.loadRestaurantUsers(this.selectedRestaurant!.uuid!);
               this.loadFamilies();
+              this.loadTaxes();
+              this.loadProducts();
             },
             error: (error: unknown) => {
               const message = error instanceof Error ? error.message : 'No se pudo seleccionar el restaurante.';
@@ -499,13 +586,71 @@ export class GestionPage {
         return;
       }
       this.managementState.selectedIndex.tables = 0;
+
+      rows.splice(idx, 1);
+      this.managementState.selectedIndex[entityKey] = rows.length ? Math.min(idx, rows.length - 1) : -1;
+      this.updateRestaurantKpis(this.managementState.restaurantId);
+      this.syncForms();
+      window.alert('Registro eliminado.');
+      return;
     }
 
-    rows.splice(idx, 1);
-    this.managementState.selectedIndex[entityKey] = rows.length ? Math.min(idx, rows.length - 1) : -1;
-    this.updateRestaurantKpis(this.managementState.restaurantId);
-    this.syncForms();
-    window.alert('Registro eliminado.');
+    if (entityKey === 'taxes') {
+      const tax = rows[idx] as TaxRow;
+      if (!tax.uuid) {
+        window.alert('No se puede eliminar: impuesto sin identificador.');
+
+        return;
+      }
+
+      this.taxService
+        .deleteTax(tax.uuid)
+        .pipe(take(1))
+        .subscribe({
+          next: () => {
+            rows.splice(idx, 1);
+            this.managementState.selectedIndex[entityKey] = rows.length ? Math.min(idx, rows.length - 1) : -1;
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            window.alert('Impuesto eliminado.');
+          },
+          error: (error: unknown) => {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo eliminar el impuesto.';
+          },
+        });
+
+      return;
+    }
+
+    // Productos
+    if (entityKey === 'products') {
+      const product = rows[idx] as ProductRow;
+      if (!product.uuid) {
+        window.alert('No se puede eliminar: producto sin identificador.');
+
+        return;
+      }
+
+      this.productService
+        .deleteProduct(product.uuid)
+        .pipe(take(1))
+        .subscribe({
+          next: () => {
+            rows.splice(idx, 1);
+            this.managementState.selectedIndex[entityKey] = rows.length ? Math.min(idx, rows.length - 1) : -1;
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            window.alert('Producto eliminado.');
+          },
+          error: (error: unknown) => {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo eliminar el producto.';
+          },
+        });
+
+      return;
+    }
   }
 
   public saveRestaurantChanges(): void {
@@ -753,26 +898,77 @@ export class GestionPage {
 
     if (entityKey === 'products') {
       const name = this.productForm.name.trim();
-      const family = this.productForm.family.trim();
-      const tax = Number(this.productForm.tax);
+      const familyId = this.productForm.family_id;
+      const taxId = this.productForm.tax_id;
       const price = this.euroToCents(this.productForm.price);
       const stock = Number(this.productForm.stock);
+      const active = this.productForm.active;
 
-      if (!name || !family || !tax || price <= 0 || !Number.isFinite(stock) || stock < 0) {
+      if (!name || !familyId || !taxId || price <= 0 || !Number.isFinite(stock) || stock < 0) {
         window.alert('Revisa los datos del producto.');
 
         return;
       }
 
-      const payload: ProductRow = {
-        name,
-        family,
-        tax,
-        price,
-        stock,
-        active: this.productForm.active,
-      };
-      this.upsertRow(rows, idx, payload, entityKey);
+      const selectedProduct = idx >= 0 && idx < rows.length ? (rows[idx] as ProductRow) : null;
+
+      this.isSavingProduct = true;
+
+      if (selectedProduct?.uuid) {
+        // Update existing product
+        this.productService
+          .updateProduct(selectedProduct.uuid, { name, family_id: familyId, tax_id: taxId, price, stock, active })
+          .pipe(take(1))
+          .subscribe({
+            next: (updated) => {
+              selectedProduct.uuid = updated.id;
+              selectedProduct.name = updated.name;
+              selectedProduct.family_id = updated.family_id;
+              selectedProduct.tax_id = updated.tax_id;
+              selectedProduct.price = updated.price;
+              selectedProduct.stock = updated.stock;
+              selectedProduct.active = updated.active;
+              this.apiErrorMessage = null;
+              this.isSavingProduct = false;
+              this.syncForms();
+              window.alert('Producto actualizado.');
+            },
+            error: (error: unknown) => {
+              this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo actualizar el producto.';
+              this.isSavingProduct = false;
+            },
+          });
+      } else {
+        // Create new product
+        this.productService
+          .createProduct({ name, family_id: familyId, tax_id: taxId, price, stock, active })
+          .pipe(take(1))
+          .subscribe({
+            next: (created) => {
+              const newProduct: ProductRow = {
+                uuid: created.id,
+                name: created.name,
+                family_id: created.family_id,
+                tax_id: created.tax_id,
+                price: created.price,
+                stock: created.stock,
+                active: created.active,
+              };
+              (rows as ProductRow[]).push(newProduct);
+              this.managementState.selectedIndex[entityKey] = rows.length - 1;
+              this.apiErrorMessage = null;
+              this.isSavingProduct = false;
+              this.updateRestaurantKpis(this.managementState.restaurantId);
+              this.syncForms();
+              window.alert('Producto creado.');
+            },
+            error: (error: unknown) => {
+              this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo crear el producto.';
+              this.isSavingProduct = false;
+            },
+          });
+      }
+
       return;
     }
 
@@ -800,8 +996,58 @@ export class GestionPage {
         return;
       }
 
-      const payload: TaxRow = { name, percentage };
-      this.upsertRow(rows, idx, payload, entityKey);
+      const selectedTax = idx >= 0 && idx < rows.length ? (rows[idx] as TaxRow) : null;
+
+      this.isSavingTax = true;
+
+      if (selectedTax?.uuid) {
+        // Update existing tax
+        this.taxService
+          .updateTax(selectedTax.uuid, { name, percentage })
+          .pipe(take(1))
+          .subscribe({
+            next: (updated) => {
+              selectedTax.uuid = updated.id;
+              selectedTax.name = updated.name;
+              selectedTax.percentage = updated.percentage;
+              this.apiErrorMessage = null;
+              this.isSavingTax = false;
+              this.syncForms();
+              window.alert('Impuesto actualizado.');
+            },
+            error: (error: unknown) => {
+              this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo actualizar el impuesto.';
+              this.isSavingTax = false;
+            },
+          });
+      } else {
+        // Create new tax
+        this.taxService
+          .createTax({ name, percentage })
+          .pipe(take(1))
+          .subscribe({
+            next: (created) => {
+              const newTax: TaxRow = {
+                uuid: created.id,
+                name: created.name,
+                percentage: created.percentage,
+              };
+              (rows as TaxRow[]).push(newTax);
+              this.managementState.selectedIndex[entityKey] = rows.length - 1;
+              this.apiErrorMessage = null;
+              this.isSavingTax = false;
+              this.updateRestaurantKpis(this.managementState.restaurantId);
+              this.syncForms();
+              window.alert('Impuesto creado.');
+            },
+            error: (error: unknown) => {
+              this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo crear el impuesto.';
+              this.isSavingTax = false;
+            },
+          });
+      }
+
+      return;
     }
   }
 
@@ -889,8 +1135,9 @@ export class GestionPage {
     return items[idx];
   }
 
-  private euroToCents(value: string): number {
-    const normalized = value.replace(',', '.');
+  private euroToCents(value: string | number): number {
+    const strValue = typeof value === 'number' ? value.toString() : value;
+    const normalized = strValue.replace(',', '.');
     const amount = Number.parseFloat(normalized);
 
     return Number.isFinite(amount) ? Math.round(amount * 100) : 0;
@@ -956,8 +1203,8 @@ export class GestionPage {
     const selectedProduct = this.selectedItem('products', this.selectedData.products);
     this.productForm = {
       name: selectedProduct?.name ?? '',
-      family: selectedProduct?.family ?? this.selectedData.families[0]?.name ?? '',
-      tax: selectedProduct?.tax ?? this.selectedData.taxes[0]?.percentage ?? 10,
+      family_id: selectedProduct?.family_id ?? this.selectedData.families[0]?.uuid ?? '',
+      tax_id: selectedProduct?.tax_id ?? this.selectedData.taxes[0]?.uuid ?? '',
       price: selectedProduct ? (selectedProduct.price / 100).toFixed(2) : '',
       stock: selectedProduct?.stock ?? 0,
       active: selectedProduct?.active ?? true,
@@ -1042,6 +1289,8 @@ export class GestionPage {
               .subscribe({
                 next: () => {
                   this.loadFamilies(true);
+                  this.loadTaxes();
+                  this.loadProducts();
                 },
                 error: (error: unknown) => {
                   this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo seleccionar el restaurante.';

@@ -1,0 +1,68 @@
+<div class="gestion-section-grid">
+  <div class="gestion-card">
+    <div class="gestion-card-title">Catalogo actual</div>
+    <div class="gestion-row-list">
+      <div
+        *ngFor="let product of products; let i = index"
+        class="gestion-row-item"
+        [class.active]="isSelected(i)"
+        (click)="onSelect(i)"
+      >
+        <strong>{{ product.name }}</strong><br />
+        {{ getFamilyName(product.family_id) }} · {{ toEuroFromCents(product.price) }} · IVA {{ getTaxPercentage(product.tax_id) }}% · Stock {{ product.stock }} · {{ product.active ? 'Activo' : 'Inactivo' }}
+      </div>
+      <div *ngIf="products.length === 0" class="gestion-empty" style="padding: 20px; text-align: center; color: var(--gray-500);">
+        No hay productos. Crea uno nuevo para comenzar.
+      </div>
+    </div>
+  </div>
+  <div class="gestion-card">
+    <div class="gestion-card-title">Editar producto seleccionado</div>
+    <form class="gestion-form" (ngSubmit)="onSubmit()">
+      <div class="gestion-form-actions form-actions-start">
+        <button type="button" class="btn-small" (click)="onCreate()">Nuevo producto</button>
+        <button type="button" class="btn-small" (click)="onDelete()">Eliminar</button>
+      </div>
+      <div>
+        <label class="form-label" for="mg-product-name">Nombre del producto</label>
+        <input id="mg-product-name" class="form-input" [(ngModel)]="formData.name" name="mg-product-name" placeholder="Ej. Tarta de queso" required />
+      </div>
+      <div class="gestion-form-grid">
+        <div>
+          <label class="form-label" for="mg-product-family">Familia</label>
+          <select id="mg-product-family" class="form-input" [(ngModel)]="formData.family_id" name="mg-product-family" required>
+            <option *ngFor="let family of families" [value]="family.uuid">{{ family.name }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="mg-product-tax">IVA (%)</label>
+          <select id="mg-product-tax" class="form-input" [(ngModel)]="formData.tax_id" name="mg-product-tax" required>
+            <option *ngFor="let tax of taxes" [value]="tax.uuid">{{ tax.name }} ({{ tax.percentage }}%)</option>
+          </select>
+        </div>
+      </div>
+      <div class="gestion-form-grid">
+        <div>
+          <label class="form-label" for="mg-product-price">Precio (€)</label>
+          <input id="mg-product-price" type="number" step="0.01" class="form-input" [(ngModel)]="formData.price" name="mg-product-price" placeholder="0,00" required />
+        </div>
+        <div>
+          <label class="form-label" for="mg-product-stock">Stock</label>
+          <input id="mg-product-stock" type="number" class="form-input" [(ngModel)]="formData.stock" name="mg-product-stock" placeholder="0" required />
+        </div>
+      </div>
+      <div>
+        <label class="form-label" for="mg-product-active">Estado</label>
+        <select id="mg-product-active" class="form-input" [(ngModel)]="formData.active" name="mg-product-active" required>
+          <option [ngValue]="true">Activo</option>
+          <option [ngValue]="false">Inactivo</option>
+        </select>
+      </div>
+      <div class="gestion-form-actions">
+        <button class="btn-login btn-login-inline" type="submit" [disabled]="isSaving">
+          {{ isSaving ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

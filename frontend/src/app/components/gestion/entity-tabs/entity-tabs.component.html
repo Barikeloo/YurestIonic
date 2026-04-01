@@ -1,0 +1,11 @@
+<div class="gestion-entity-tabs">
+  <button
+    *ngFor="let entity of entities"
+    class="gestion-entity-tab"
+    [class.active]="isActive(entity.key)"
+    (click)="onSelect(entity.key)"
+    type="button"
+  >
+    {{ entity.label }}
+  </button>
+</div>

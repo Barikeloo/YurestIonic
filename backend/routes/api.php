@@ -94,11 +94,6 @@ Route::middleware([
 	StartSession::class,
 	ResolveTenantContext::class,
 ])->group(function (): void {
-	// ============================================
-	// TPV - Front de Venta (transaccional, rápido)
-	// ============================================
-
-	// Catálogo para TPV (solo lectura, listados ligeros)
 	Route::get('/tpv/families', FamilyGetCollectionController::class);
 	Route::get('/tpv/products', ProductGetCollectionController::class);
 	Route::get('/tpv/zones', ZoneGetCollectionController::class);

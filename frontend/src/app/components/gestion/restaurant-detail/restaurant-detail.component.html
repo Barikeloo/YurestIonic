@@ -1,0 +1,51 @@
+<div class="gestion-section-grid">
+  <div class="gestion-card">
+    <div class="gestion-card-title">Resumen del restaurante</div>
+    <div class="gestion-row-list">
+      <div class="gestion-row-item active"><strong>Nombre comercial:</strong> {{ restaurant?.name }}</div>
+      <div class="gestion-row-item active"><strong>Razon social:</strong> {{ restaurant?.legalName }}</div>
+      <div class="gestion-row-item active"><strong>NIF/CIF:</strong> {{ restaurant?.taxId }}</div>
+      <div class="gestion-row-item active"><strong>Email:</strong> {{ restaurant?.email }}</div>
+      <div class="gestion-row-item active"><strong>Usuarios activos:</strong> {{ restaurant?.users }}</div>
+    </div>
+  </div>
+  <div class="gestion-card">
+    <div class="gestion-card-title">Editar datos del restaurante</div>
+    <form class="gestion-form" (ngSubmit)="onSubmit()">
+      <div>
+        <label class="form-label" for="mg-rest-name">Nombre comercial</label>
+        <input id="mg-rest-name" class="form-input" [(ngModel)]="formData.name" name="mg-rest-name" required />
+      </div>
+      <div>
+        <label class="form-label" for="mg-rest-legal">Razon social</label>
+        <input id="mg-rest-legal" class="form-input" [(ngModel)]="formData.legalName" name="mg-rest-legal" disabled />
+      </div>
+      <div class="gestion-form-grid">
+        <div>
+          <label class="form-label" for="mg-rest-tax">NIF/CIF</label>
+          <input id="mg-rest-tax" class="form-input" [(ngModel)]="formData.taxId" name="mg-rest-tax" disabled />
+        </div>
+        <div>
+          <label class="form-label" for="mg-rest-email">Email</label>
+          <input id="mg-rest-email" type="email" class="form-input" [(ngModel)]="formData.email" name="mg-rest-email" required />
+        </div>
+      </div>
+      <div>
+        <label class="form-label" for="mg-rest-password">Contrasena de acceso</label>
+        <input
+          id="mg-rest-password"
+          type="password"
+          class="form-input"
+          [(ngModel)]="formData.password"
+          name="mg-rest-password"
+          placeholder="Dejar vacio para mantener la actual"
+        />
+      </div>
+      <div class="gestion-form-actions">
+        <button class="btn-login btn-login-inline" type="submit" [disabled]="isSaving">
+          {{ isSaving ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

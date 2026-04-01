@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+:host {
+  --accent: #ff4d4d;
+  --accent-light: #ff7070;
+  --accent-soft: #ffecec;
+  --black: #0d0d0d;
+  --gray-900: #1a1a1a;
+  --gray-800: #2c2c2c;
+  --gray-700: #3d3d3d;
+  --gray-600: #5a5a5a;
+  --gray-500: #7a7a7a;
+  --gray-400: #a0a0a0;
+  --gray-300: #d3d3d3;
+  --gray-200: #e8e8e8;
+  --gray-100: #f4f4f4;
+  --gray-50: #fafafa;
+  --white: #ffffff;
+  --green: #1a9e5a;
+  --green-soft: #e8f7ef;
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --radius-sm: 8px;
+  --radius: 14px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  display: block;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.gestion-panel-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.gestion-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.gestion-panel-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.gestion-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gestion-restaurant-item {
+  border: 1.5px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--white);
+}
+
+.gestion-restaurant-item:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.gestion-restaurant-item.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.gestion-restaurant-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.gestion-restaurant-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.gestion-restaurant-meta {
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--gray-500);
+  line-height: 1.4;
+}
+
+.gestion-status-pill {
+  font-size: 10px;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 4px 9px;
+  white-space: nowrap;
+}
+
+.gestion-status-pill.live {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.gestion-restaurant-kpis {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.gestion-kpi-mini {
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  padding: 6px;
+  text-align: center;
+}
+
+.gestion-kpi-mini-val {
+  font-size: 14px;
+  color: var(--gray-900);
+  font-family: var(--mono);
+  line-height: 1;
+}
+
+.gestion-kpi-mini-label {
+  margin-top: 2px;
+  font-size: 9px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--gray-500);
+}
+
+@media (max-width: 640px) {
+  .gestion-restaurant-kpis {
+    grid-template-columns: 1fr;
+  }
+}

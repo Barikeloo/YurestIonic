@@ -1,0 +1,37 @@
+<div class="gestion-section-grid">
+  <div class="gestion-card">
+    <div class="gestion-card-title">Impuestos configurados</div>
+    <div class="gestion-row-list">
+      <div
+        *ngFor="let tax of taxes; let i = index"
+        class="gestion-row-item"
+        [class.active]="isSelected(i)"
+        (click)="onSelect(i)"
+      >
+        <strong>{{ tax.name }}</strong><br />{{ tax.percentage }}%
+      </div>
+    </div>
+  </div>
+  <div class="gestion-card">
+    <div class="gestion-card-title">Editar impuesto seleccionado</div>
+    <form class="gestion-form" (ngSubmit)="onSubmit()">
+      <div class="gestion-form-actions form-actions-start">
+        <button type="button" class="btn-small" (click)="onCreate()">Nuevo impuesto</button>
+        <button type="button" class="btn-small" (click)="onDelete()">Eliminar</button>
+      </div>
+      <div>
+        <label class="form-label" for="mg-tax-name">Nombre</label>
+        <input id="mg-tax-name" class="form-input" [(ngModel)]="formData.name" name="mg-tax-name" placeholder="Ej. IVA reducido" required />
+      </div>
+      <div>
+        <label class="form-label" for="mg-tax-percentage">Porcentaje (%)</label>
+        <input id="mg-tax-percentage" type="number" min="0" max="100" class="form-input" [(ngModel)]="formData.percentage" name="mg-tax-percentage" placeholder="10" required />
+      </div>
+      <div class="gestion-form-actions">
+        <button class="btn-login btn-login-inline" type="submit" [disabled]="isSaving">
+          {{ isSaving ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -11,7 +11,6 @@
     </div>
 
     <div class="modal-content">
-    <!-- List Mode -->
     <div *ngIf="currentMode === 'list'" class="list-wrapper">
       <div *ngIf="isLoading" class="loading-container">
         <div class="spinner"></div>
@@ -73,7 +72,6 @@
       </div>
     </div>
 
-    <!-- Form Mode -->
     <form *ngIf="currentMode === 'form'" [formGroup]="form" (ngSubmit)="onSubmit()" class="form-wrapper">
       <div *ngIf="error" class="error-banner">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
