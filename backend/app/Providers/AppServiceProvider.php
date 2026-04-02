@@ -10,12 +10,18 @@ use App\Order\Infrastructure\Persistence\Repositories\EloquentOrderLineRepositor
 use App\Order\Infrastructure\Persistence\Repositories\EloquentOrderRepository;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Product\Infrastructure\Persistence\Repositories\EloquentProductRepository;
+use App\Restaurant\Domain\Interfaces\RestaurantCascadeDeleteInterface;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Restaurant\Infrastructure\Persistence\Repositories\EloquentRestaurantRepository;
+use App\Restaurant\Infrastructure\Services\EloquentRestaurantCascadeDeleteService;
 use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Sale\Infrastructure\Persistence\Repositories\EloquentSaleLineRepository;
 use App\Sale\Infrastructure\Persistence\Repositories\EloquentSaleRepository;
+use App\Shared\Domain\Interfaces\TransactionManagerInterface;
+use App\Shared\Infrastructure\Persistence\LaravelTransactionManager;
+use App\SuperAdmin\Domain\Interfaces\SuperAdminRepositoryInterface;
+use App\SuperAdmin\Infrastructure\Persistence\Repositories\EloquentSuperAdminRepository;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
 use App\Tables\Infrastructure\Persistence\Repositories\EloquentTableRepository;
 use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
@@ -46,11 +52,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(UserRepositoryInterface::class, EloquentUserRepository::class);
         $this->app->bind(PasswordHasherInterface::class, LaravelPasswordHasher::class);
         $this->app->bind(RestaurantRepositoryInterface::class, EloquentRestaurantRepository::class);
+        $this->app->bind(RestaurantCascadeDeleteInterface::class, EloquentRestaurantCascadeDeleteService::class);
+        $this->app->bind(SuperAdminRepositoryInterface::class, EloquentSuperAdminRepository::class);
         $this->app->bind(OrderRepositoryInterface::class, EloquentOrderRepository::class);
         $this->app->bind(OrderLineRepositoryInterface::class, EloquentOrderLineRepository::class);
         $this->app->bind(SaleRepositoryInterface::class, EloquentSaleRepository::class);
         $this->app->bind(SaleLineRepositoryInterface::class, EloquentSaleLineRepository::class);
         $this->app->bind(UserQuickAccessRepositoryInterface::class,EloquentUserQuickAccessRepository::class);
+        $this->app->bind(TransactionManagerInterface::class, LaravelTransactionManager::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext());
     }
 

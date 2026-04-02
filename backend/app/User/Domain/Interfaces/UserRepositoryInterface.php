@@ -26,6 +26,10 @@ interface UserRepositoryInterface
 
     public function findByEmail(string $email): ?User;
 
+    public function findPinByUuid(string $uuid): ?string;
+
+    public function updatePinHash(string $uuid, string $pinHash): void;
+
     /**
      * @return array<array{uuid: string, name: string, email: string, role: string}>
      */
@@ -47,5 +51,5 @@ interface UserRepositoryInterface
         string $role = 'operator',
         ?string $pinHash = null,
     ): void;
-    
+
 }

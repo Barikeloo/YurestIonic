@@ -46,7 +46,7 @@ class EloquentUserRepository implements UserRepositoryInterface
         $this->model->newQuery()->updateOrCreate(
             ['email' => $email],
             [
-                'restaurant_id' => $restaurant->uuid,
+                'restaurant_id' => $restaurant->id,
                 'uuid' => (string) Str::uuid(),
                 'role' => 'admin',
                 'name' => $name,
@@ -88,7 +88,7 @@ class EloquentUserRepository implements UserRepositoryInterface
 
         $this->model
             ->newQuery()
-            ->where('restaurant_id', $restaurant->uuid)
+            ->where('restaurant_id', $restaurant->id)
             ->where('role', 'admin')
             ->update($updates);
     }
@@ -133,6 +133,30 @@ class EloquentUserRepository implements UserRepositoryInterface
         );
     }
 
+    public function findPinByUuid(string $uuid): ?string
+    {
+        $model = $this->model->newQuery()
+            ->select('pin')
+            ->where('uuid', $uuid)
+            ->first();
+
+        if ($model === null || ! is_string($model->pin) || $model->pin === '') {
+            return null;
+        }
+
+        return $model->pin;
+    }
+
+    public function updatePinHash(string $uuid, string $pinHash): void
+    {
+        $this->model->newQuery()
+            ->where('uuid', $uuid)
+            ->update([
+                'pin' => $pinHash,
+                'updated_at' => now(),
+            ]);
+    }
+
     /**
      * @return array<array{uuid: string, name: string, email: string, role: string}>
      */
@@ -146,7 +170,7 @@ class EloquentUserRepository implements UserRepositoryInterface
 
         return $this->model
             ->newQuery()
-            ->where('restaurant_id', $restaurant->uuid)
+            ->where('restaurant_id', $restaurant->id)
             ->select('uuid', 'name', 'email', 'role')
             ->get()
             ->map(fn ($user) => [
@@ -192,7 +216,7 @@ class EloquentUserRepository implements UserRepositoryInterface
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $uuid],
             [
-                'restaurant_id' => $restaurant->uuid,
+                'restaurant_id' => $restaurant->id,
                 'name' => $name,
                 'email' => $email,
                 'password' => $passwordHash,

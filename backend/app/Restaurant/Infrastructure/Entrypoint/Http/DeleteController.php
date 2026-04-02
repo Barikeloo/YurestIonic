@@ -3,7 +3,6 @@
 namespace App\Restaurant\Infrastructure\Entrypoint\Http;
 
 use App\Restaurant\Application\DeleteRestaurant\DeleteRestaurant;
-use App\SuperAdmin\Infrastructure\Persistence\Models\EloquentSuperAdmin;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -23,17 +22,9 @@ final class DeleteController
             ], 403);
         }
 
-        $superAdmin = EloquentSuperAdmin::query()->where('uuid', $superAdminUuid)->first();
-
-        if ($superAdmin === null) {
-            return new JsonResponse([
-                'message' => 'Forbidden. Only superadmins can delete restaurants.',
-            ], 403);
-        }
-
         $deleted = ($this->deleteRestaurant)($id);
 
-        if (!$deleted) {
+        if (! $deleted) {
             return new JsonResponse(['message' => 'Restaurant not found.'], 404);
         }
 

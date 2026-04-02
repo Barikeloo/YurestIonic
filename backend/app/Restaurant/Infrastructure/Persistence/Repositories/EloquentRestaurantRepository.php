@@ -61,7 +61,17 @@ final class EloquentRestaurantRepository implements RestaurantRepositoryInterfac
     public function findByInternalId(int $internalId): ?Restaurant
     {
         $model = EloquentRestaurant::where('id', $internalId)->first();
+
         return $model ? $this->toDomain($model) : null;
+    }
+
+    public function findByTaxId(string $taxId): array
+    {
+        return EloquentRestaurant::query()
+            ->where('tax_id', $taxId)
+            ->get()
+            ->map(fn ($model) => $this->toDomain($model))
+            ->all();
     }
 
     public function delete(Uuid $id): void

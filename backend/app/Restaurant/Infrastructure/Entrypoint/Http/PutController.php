@@ -2,16 +2,16 @@
 
 namespace App\Restaurant\Infrastructure\Entrypoint\Http;
 
+use App\Restaurant\Application\AuthorizeRestaurantUpdate\AuthorizeRestaurantUpdate;
+use App\Restaurant\Application\AuthorizeRestaurantUpdate\AuthorizeRestaurantUpdateResponse;
 use App\Restaurant\Application\UpdateRestaurant\UpdateRestaurant;
-use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
-use App\SuperAdmin\Infrastructure\Persistence\Models\EloquentSuperAdmin;
-use App\User\Infrastructure\Persistence\Models\EloquentUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class PutController
 {
     public function __construct(
+        private readonly AuthorizeRestaurantUpdate $authorizeRestaurantUpdate,
         private readonly UpdateRestaurant $updateRestaurant,
     ) {}
 
@@ -19,45 +19,38 @@ final class PutController
     {
         $superAdminUuid = $request->session()->get('super_admin_id');
         $isSuperAdmin = is_string($superAdminUuid)
-            && $superAdminUuid !== ''
-            && EloquentSuperAdmin::query()->where('uuid', $superAdminUuid)->exists();
+            && $superAdminUuid !== '';
 
         if (! $isSuperAdmin) {
             $authUserUuid = $request->session()->get('auth_user_id');
 
-            if (! is_string($authUserUuid) || $authUserUuid === '') {
+            $authorization = $this->authorizeRestaurantUpdate->__invoke(
+                is_string($authUserUuid) ? $authUserUuid : null,
+                $id,
+            );
+
+            if ($authorization->status() === AuthorizeRestaurantUpdateResponse::NOT_AUTHENTICATED) {
                 return new JsonResponse([
                     'message' => 'Not authenticated.',
                 ], 401);
             }
 
-            $user = EloquentUser::query()->where('uuid', $authUserUuid)->first();
-
-            if ($user === null || $user->role !== 'admin' || ! is_numeric($user->restaurant_id)) {
+            if ($authorization->status() === AuthorizeRestaurantUpdateResponse::FORBIDDEN) {
                 return new JsonResponse([
                     'message' => 'Forbidden.',
                 ], 403);
             }
 
-            $linkedRestaurant = EloquentRestaurant::query()->where('id', (int) $user->restaurant_id)->first();
-            $targetRestaurant = EloquentRestaurant::query()->where('uuid', $id)->first();
-
-            if ($linkedRestaurant === null || $targetRestaurant === null) {
+            if ($authorization->status() === AuthorizeRestaurantUpdateResponse::RESTAURANT_NOT_FOUND) {
                 return new JsonResponse([
                     'message' => 'Restaurant not found.',
                 ], 404);
             }
 
-            if (! is_string($linkedRestaurant->tax_id) || $linkedRestaurant->tax_id === '') {
+            if ($authorization->status() === AuthorizeRestaurantUpdateResponse::LINKED_RESTAURANT_WITHOUT_TAX_ID) {
                 return new JsonResponse([
                     'message' => 'Linked restaurant has no tax id.',
                 ], 422);
-            }
-
-            if ($targetRestaurant->tax_id !== $linkedRestaurant->tax_id) {
-                return new JsonResponse([
-                    'message' => 'Forbidden for this restaurant.',
-                ], 403);
             }
         }
 

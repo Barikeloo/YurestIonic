@@ -2,16 +2,16 @@
 
 namespace App\User\Application\AuthenticateUser;
 
-use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
+use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Shared\Domain\ValueObject\Email;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
-use App\User\Infrastructure\Persistence\Models\EloquentUser;
 
 class AuthenticateUser
 {
     public function __construct(
         private UserRepositoryInterface $userRepository,
+        private RestaurantRepositoryInterface $restaurantRepository,
         private PasswordHasherInterface $passwordHasher,
     ) {}
 
@@ -30,24 +30,16 @@ class AuthenticateUser
             return AuthenticateUserResponse::invalidCredentials();
         }
 
-        // Get additional data from EloquentUser
-        $persistedUser = EloquentUser::query()
-            ->select('role', 'restaurant_id')
-            ->where('uuid', $user->id()->value())
-            ->first();
-
-        $role = $persistedUser?->role;
+        $role = $user->role();
         $restaurantId = null;
         $restaurantName = null;
 
-        if ($persistedUser !== null && is_numeric($persistedUser->restaurant_id)) {
-            $restaurant = EloquentRestaurant::query()
-                ->select('uuid', 'name')
-                ->find((int) $persistedUser->restaurant_id);
+        if (is_numeric($user->restaurantId())) {
+            $restaurant = $this->restaurantRepository->findByInternalId((int) $user->restaurantId());
 
             if ($restaurant !== null) {
-                $restaurantId = $restaurant->uuid;
-                $restaurantName = $restaurant->name;
+                $restaurantId = $restaurant->getUuid()->value();
+                $restaurantName = $restaurant->getName();
             }
         }
 

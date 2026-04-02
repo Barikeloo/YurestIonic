@@ -4,11 +4,11 @@ namespace App\Restaurant\Application\RegisterRestaurantWithAdmin;
 
 use App\Restaurant\Domain\Entity\Restaurant;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
+use App\Shared\Domain\Interfaces\TransactionManagerInterface;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
-use Illuminate\Support\Facades\DB;
 
 final class RegisterRestaurantWithAdmin
 {
@@ -16,6 +16,7 @@ final class RegisterRestaurantWithAdmin
         private readonly RestaurantRepositoryInterface $restaurantRepository,
         private readonly UserRepositoryInterface $userRepository,
         private readonly PasswordHasherInterface $passwordHasher,
+        private readonly TransactionManagerInterface $transactionManager,
     ) {}
 
     public function __invoke(
@@ -52,7 +53,7 @@ final class RegisterRestaurantWithAdmin
             $effectiveAdminName = sprintf('Admin %s', $restaurantName);
         }
 
-        DB::transaction(function () use ($restaurant, $effectiveAdminName, $emailVO, $hashedPassword, $hashedPin): void {
+        $this->transactionManager->run(function () use ($restaurant, $effectiveAdminName, $emailVO, $hashedPassword, $hashedPin): void {
             $this->restaurantRepository->save($restaurant);
             $this->userRepository->saveAdminForRestaurant(
                 restaurantUuid: $restaurant->getUuid()->value(),

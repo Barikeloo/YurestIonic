@@ -2,26 +2,23 @@
 
 namespace App\SuperAdmin\Infrastructure\Entrypoint\Http;
 
-use App\SuperAdmin\Infrastructure\Persistence\Models\EloquentSuperAdmin;
+use App\SuperAdmin\Application\GetSuperAdminMe\GetSuperAdminMe;
+use App\SuperAdmin\Application\GetSuperAdminMe\GetSuperAdminMeResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 final class GetMeController
 {
+    public function __construct(
+        private GetSuperAdminMe $getSuperAdminMe,
+    ) {}
+
     public function __invoke(Request $request): JsonResponse
     {
         $superAdminUuid = $request->session()->get('super_admin_id');
+        $response = $this->getSuperAdminMe->__invoke(is_string($superAdminUuid) ? $superAdminUuid : null);
 
-        if (! is_string($superAdminUuid) || $superAdminUuid === '') {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Not authenticated as superadmin.',
-            ], 401);
-        }
-
-        $superAdmin = EloquentSuperAdmin::query()->where('uuid', $superAdminUuid)->first();
-
-        if ($superAdmin === null) {
+        if ($response->status() === GetSuperAdminMeResponse::NOT_AUTHENTICATED) {
             $request->session()->forget('super_admin_id');
 
             return new JsonResponse([
@@ -32,9 +29,9 @@ final class GetMeController
 
         return new JsonResponse([
             'success' => true,
-            'id' => $superAdmin->uuid,
-            'name' => $superAdmin->name,
-            'email' => $superAdmin->email,
+            'id' => $response->id(),
+            'name' => $response->name(),
+            'email' => $response->email(),
         ]);
     }
 }

@@ -9,6 +9,10 @@ use App\Shared\Domain\ValueObject\Uuid;
 interface RestaurantRepositoryInterface
 {
     public function save(Restaurant $restaurant): void;
+
+    /**
+     * @return array<Restaurant>
+     */
     public function all(): array;
 
     public function getById(string $id): ?Restaurant;
@@ -23,6 +27,11 @@ interface RestaurantRepositoryInterface
      * Busca un restaurante por su id interno (BIGINT).
      */
     public function findByInternalId(int $internalId): ?Restaurant;
+
+    /**
+     * @return array<Restaurant>
+     */
+    public function findByTaxId(string $taxId): array;
 
     public function delete(Uuid $id): void;
 }

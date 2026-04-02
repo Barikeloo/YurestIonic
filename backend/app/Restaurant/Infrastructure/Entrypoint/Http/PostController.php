@@ -3,8 +3,8 @@
 namespace App\Restaurant\Infrastructure\Entrypoint\Http;
 
 use App\Restaurant\Application\CreateRestaurant\CreateRestaurant;
-use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
-use App\SuperAdmin\Infrastructure\Persistence\Models\EloquentSuperAdmin;
+use App\Restaurant\Application\ValidateRestaurantCompanyMode\ValidateRestaurantCompanyMode;
+use App\Restaurant\Application\ValidateRestaurantCompanyMode\ValidateRestaurantCompanyModeResponse;
 use App\User\Application\CreateRestaurantUser\CreateRestaurantUser;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +14,7 @@ final class PostController
     public function __construct(
         private readonly CreateRestaurant $createRestaurant,
         private readonly CreateRestaurantUser $createRestaurantUser,
+        private readonly ValidateRestaurantCompanyMode $validateRestaurantCompanyMode,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -21,14 +22,6 @@ final class PostController
         $superAdminUuid = $request->session()->get('super_admin_id');
 
         if (! is_string($superAdminUuid) || $superAdminUuid === '') {
-            return new JsonResponse([
-                'message' => 'Forbidden. Only superadmins can create restaurants.',
-            ], 403);
-        }
-
-        $superAdmin = EloquentSuperAdmin::query()->where('uuid', $superAdminUuid)->first();
-
-        if ($superAdmin === null) {
             return new JsonResponse([
                 'message' => 'Forbidden. Only superadmins can create restaurants.',
             ], 403);
@@ -46,15 +39,15 @@ final class PostController
 
         $companyMode = $validated['company_mode'] ?? 'new';
         $taxId = trim($validated['tax_id']);
-        $companyExists = EloquentRestaurant::query()->where('tax_id', $taxId)->exists();
+        $companyModeValidation = $this->validateRestaurantCompanyMode->__invoke($taxId, $companyMode);
 
-        if ($companyMode === 'new' && $companyExists) {
+        if ($companyModeValidation->status() === ValidateRestaurantCompanyModeResponse::TAX_ID_ALREADY_EXISTS) {
             return new JsonResponse([
                 'message' => 'The tax_id already exists. Use the existing company action to add a branch.',
             ], 422);
         }
 
-        if ($companyMode === 'existing' && ! $companyExists) {
+        if ($companyModeValidation->status() === ValidateRestaurantCompanyModeResponse::TAX_ID_DOES_NOT_EXIST) {
             return new JsonResponse([
                 'message' => 'The tax_id does not exist yet. Use New Company to create the first restaurant.',
             ], 422);
