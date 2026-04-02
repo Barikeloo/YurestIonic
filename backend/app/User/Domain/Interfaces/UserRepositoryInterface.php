@@ -47,4 +47,5 @@ interface UserRepositoryInterface
         string $role = 'operator',
         ?string $pinHash = null,
     ): void;
+    
 }

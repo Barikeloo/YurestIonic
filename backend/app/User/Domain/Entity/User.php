@@ -15,11 +15,14 @@ class User
         private UserName $name,
         private Email $email,
         private PasswordHash $passwordHash,
+        private ?string $role,
+        private ?string $restaurantId,
         private DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
     ) {}
 
-    public static function dddCreate(Email $email, UserName $name, PasswordHash $passwordHash): self
+
+    public static function dddCreate(Email $email, UserName $name, PasswordHash $passwordHash, ?string $role = null, ?string $restaurantId = null): self
     {
         $now = DomainDateTime::now();
 
@@ -28,6 +31,8 @@ class User
             $name,
             $email,
             $passwordHash,
+            $role,
+            $restaurantId,
             $now,
             $now,
         );
@@ -38,6 +43,8 @@ class User
         string $name,
         string $email,
         string $passwordHash,
+        ?string $role,
+        ?string $restaurantId,
         \DateTimeImmutable $createdAt,
         \DateTimeImmutable $updatedAt,
     ): self {
@@ -46,9 +53,20 @@ class User
             UserName::create($name),
             Email::create($email),
             PasswordHash::create($passwordHash),
+            $role,
+            $restaurantId,
             DomainDateTime::create($createdAt),
             DomainDateTime::create($updatedAt),
         );
+    }
+    public function role(): ?string
+    {
+        return $this->role;
+    }
+
+    public function restaurantId(): ?string
+    {
+        return $this->restaurantId;
     }
 
     public function id(): Uuid

@@ -13,12 +13,16 @@ interface RestaurantRepositoryInterface
 
     public function getById(string $id): ?Restaurant;
 
-
     public function findById(Uuid $id): ?Restaurant;
 
     public function findByEmail(Email $email): ?Restaurant;
 
     public function findByUuid(Uuid $uuid): ?Restaurant;
+
+    /**
+     * Busca un restaurante por su id interno (BIGINT).
+     */
+    public function findByInternalId(int $internalId): ?Restaurant;
 
     public function delete(Uuid $id): void;
 }

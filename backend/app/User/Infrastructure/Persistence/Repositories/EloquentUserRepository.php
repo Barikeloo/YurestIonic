@@ -21,6 +21,8 @@ class EloquentUserRepository implements UserRepositoryInterface
             [
                 'name' => $user->name(),
                 'email' => $user->email()->value(),
+                'role' => $user->role(),
+                'restaurant_id' => $user->restaurantId(),
                 'password' => $user->passwordHash(),
                 'created_at' => $user->createdAt()->value(),
                 'updated_at' => $user->updatedAt()->value(),
@@ -44,7 +46,7 @@ class EloquentUserRepository implements UserRepositoryInterface
         $this->model->newQuery()->updateOrCreate(
             ['email' => $email],
             [
-                'restaurant_id' => $restaurant->id,
+                'restaurant_id' => $restaurant->uuid,
                 'uuid' => (string) Str::uuid(),
                 'role' => 'admin',
                 'name' => $name,
@@ -86,7 +88,7 @@ class EloquentUserRepository implements UserRepositoryInterface
 
         $this->model
             ->newQuery()
-            ->where('restaurant_id', $restaurant->id)
+            ->where('restaurant_id', $restaurant->uuid)
             ->where('role', 'admin')
             ->update($updates);
     }
@@ -104,6 +106,8 @@ class EloquentUserRepository implements UserRepositoryInterface
             $model->name,
             $model->email,
             $model->password,
+            $model->role ?? null,
+            $model->restaurant_id ? (string)$model->restaurant_id : null, // Asegúrate que aquí ya es uuid en la base
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),
         );
@@ -122,6 +126,8 @@ class EloquentUserRepository implements UserRepositoryInterface
             $model->name,
             $model->email,
             $model->password,
+            $model->role ?? null,
+            $model->restaurant_id ? (string)$model->restaurant_id : null,
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),
         );
@@ -140,7 +146,7 @@ class EloquentUserRepository implements UserRepositoryInterface
 
         return $this->model
             ->newQuery()
-            ->where('restaurant_id', $restaurant->id)
+            ->where('restaurant_id', $restaurant->uuid)
             ->select('uuid', 'name', 'email', 'role')
             ->get()
             ->map(fn ($user) => [
@@ -186,7 +192,7 @@ class EloquentUserRepository implements UserRepositoryInterface
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $uuid],
             [
-                'restaurant_id' => $restaurant->id,
+                'restaurant_id' => $restaurant->uuid,
                 'name' => $name,
                 'email' => $email,
                 'password' => $passwordHash,

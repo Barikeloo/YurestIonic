@@ -57,7 +57,7 @@ class UserSeeder extends Seeder
             [
                 'restaurant_id' => $restaurantId,
                 'uuid' => (string) Str::uuid(),
-                'role' => 'operator',
+                'role' => 'admin',
                 'image_src' => null,
                 'name' => 'Ana Camarera',
                 'email' => 'ana@tpv.local',

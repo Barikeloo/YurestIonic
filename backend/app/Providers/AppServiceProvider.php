@@ -27,6 +27,8 @@ use App\User\Infrastructure\Services\LaravelPasswordHasher;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 use App\Zone\Domain\Interfaces\ZoneRepositoryInterface;
 use App\Zone\Infrastructure\Persistence\Repositories\EloquentZoneRepository;
+use \App\User\Domain\Interfaces\UserQuickAccessRepositoryInterface;
+use \App\User\Infrastructure\Persistence\Repositories\EloquentUserQuickAccessRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -48,6 +50,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(OrderLineRepositoryInterface::class, EloquentOrderLineRepository::class);
         $this->app->bind(SaleRepositoryInterface::class, EloquentSaleRepository::class);
         $this->app->bind(SaleLineRepositoryInterface::class, EloquentSaleLineRepository::class);
+        $this->app->bind(UserQuickAccessRepositoryInterface::class,EloquentUserQuickAccessRepository::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext());
     }
 

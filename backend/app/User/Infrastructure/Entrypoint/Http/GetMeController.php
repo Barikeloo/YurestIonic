@@ -2,16 +2,16 @@
 
 namespace App\User\Infrastructure\Entrypoint\Http;
 
-use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
-use App\User\Domain\Interfaces\UserRepositoryInterface;
-use App\User\Infrastructure\Persistence\Models\EloquentUser;
+use App\User\Application\GetMe\GetMe;
+use App\User\Application\GetMe\GetMeResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
 
 class GetMeController
 {
     public function __construct(
-        private UserRepositoryInterface $userRepository,
+        private GetMe $getMe,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -25,46 +25,15 @@ class GetMeController
             ], 401);
         }
 
-        $user = $this->userRepository->findById($userId);
-
-        if ($user === null) {
+        $response = $this->getMe->__invoke($userId);
+        if ($response === null) {
             $request->session()->forget('auth_user_id');
-
             return new JsonResponse([
                 'success' => false,
                 'message' => 'Not authenticated.',
             ], 401);
         }
 
-        // Get additional data from EloquentUser
-        $persistedUser = EloquentUser::query()
-            ->select('role', 'restaurant_id')
-            ->where('uuid', $userId)
-            ->first();
-
-        $role = $persistedUser?->role;
-        $restaurantId = null;
-        $restaurantName = null;
-
-        if ($persistedUser !== null && is_numeric($persistedUser->restaurant_id)) {
-            $restaurant = EloquentRestaurant::query()
-                ->select('uuid', 'name')
-                ->find((int) $persistedUser->restaurant_id);
-
-            if ($restaurant !== null) {
-                $restaurantId = $restaurant->uuid;
-                $restaurantName = $restaurant->name;
-            }
-        }
-
-        return new JsonResponse([
-            'success' => true,
-            'id' => $user->id()->value(),
-            'name' => $user->name(),
-            'email' => $user->email()->value(),
-            'role' => $role,
-            'restaurant_id' => $restaurantId,
-            'restaurant_name' => $restaurantName,
-        ]);
+        return new JsonResponse($response->toArray());
     }
 }
