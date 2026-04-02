@@ -7,7 +7,9 @@ import { AppContextService } from '../../../services/app-context.service';
 import { FamilyItem, FamilyService } from '../../../services/family.service';
 import { ProductItem, ProductService } from '../../../services/product.service';
 import { RestaurantService } from '../../../services/restaurant.service';
+import { TableItem, TableService } from '../../../services/table.service';
 import { TaxItem, TaxService } from '../../../services/tax.service';
+import { ZoneItem, ZoneService } from '../../../services/zone.service';
 import { RestaurantListComponent } from '../../../components/gestion/restaurant-list/restaurant-list.component';
 import { EntityTabsComponent } from '../../../components/gestion/entity-tabs/entity-tabs.component';
 import { RestaurantDetailComponent } from '../../../components/gestion/restaurant-detail/restaurant-detail.component';
@@ -55,10 +57,12 @@ interface TaxRow {
 }
 
 interface TableRow {
+  uuid?: string;
   name: string;
 }
 
 interface ZoneRow {
+  uuid?: string;
   name: string;
   tables: TableRow[];
 }
@@ -158,11 +162,7 @@ export class GestionPage {
         { name: 'IVA reducido', percentage: 10 },
         { name: 'IVA general', percentage: 21 },
       ],
-      zones: [
-        { name: 'Terraza', tables: [{ name: 'T1' }, { name: 'T2' }, { name: 'T3' }, { name: 'T4' }] },
-        { name: 'Salon', tables: [{ name: 'S1' }, { name: 'S2' }, { name: 'S3' }] },
-        { name: 'Barra', tables: [{ name: 'B1' }, { name: 'B2' }] },
-      ],
+      zones: [],
       products: [],
     },
     2: {
@@ -175,10 +175,7 @@ export class GestionPage {
         { name: 'Bebidas', active: true },
       ],
       taxes: [{ name: 'IVA hosteleria', percentage: 10 }],
-      zones: [
-        { name: 'Principal', tables: [{ name: 'P1' }, { name: 'P2' }, { name: 'P3' }] },
-        { name: 'Terraza', tables: [{ name: 'T1' }, { name: 'T2' }, { name: 'T3' }, { name: 'T4' }] },
-      ],
+      zones: [],
       products: [],
     },
     3: {
@@ -195,11 +192,7 @@ export class GestionPage {
         { name: 'IVA reducido', percentage: 10 },
         { name: 'IVA general', percentage: 21 },
       ],
-      zones: [
-        { name: 'Mirador', tables: [{ name: 'M1' }, { name: 'M2' }, { name: 'M3' }] },
-        { name: 'Interior', tables: [{ name: 'I1' }, { name: 'I2' }] },
-        { name: 'Lounge', tables: [{ name: 'L1' }, { name: 'L2' }] },
-      ],
+      zones: [],
       products: [],
     },
   };
@@ -284,7 +277,9 @@ export class GestionPage {
     private readonly familyService: FamilyService,
     private readonly productService: ProductService,
     private readonly restaurantService: RestaurantService,
+    private readonly tableService: TableService,
     private readonly taxService: TaxService,
+    private readonly zoneService: ZoneService,
   ) {
     this.syncForms();
     if (this.selectedRestaurant) {
@@ -390,6 +385,65 @@ export class GestionPage {
       });
   }
 
+  private loadZonesAndTables(silent: boolean = false): void {
+    this.zoneService
+      .listZones()
+      .pipe(take(1))
+      .subscribe({
+        next: (zones: ZoneItem[]) => {
+          this.tableService
+            .listTables()
+            .pipe(take(1))
+            .subscribe({
+              next: (tables: TableItem[]) => {
+                const restaurant = this.selectedRestaurant;
+                if (!restaurant) {
+                  return;
+                }
+
+                const zoneRows: ZoneRow[] = zones.map((zone) => ({
+                  uuid: zone.id,
+                  name: zone.name,
+                  tables: [],
+                }));
+
+                const zoneById = new Map(zoneRows.map((zone) => [zone.uuid, zone]));
+
+                tables.forEach((table) => {
+                  const zone = zoneById.get(table.zone_id);
+                  if (!zone) {
+                    return;
+                  }
+
+                  zone.tables.push({
+                    uuid: table.id,
+                    name: table.name,
+                  });
+                });
+
+                this.managementData[restaurant.id].zones = zoneRows;
+                this.updateRestaurantKpis(restaurant.id);
+                this.syncForms();
+
+                if (!silent) {
+                  this.apiErrorMessage = null;
+                }
+              },
+              error: (error: unknown) => {
+                if (!silent) {
+                  this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar las mesas.';
+                }
+              },
+            });
+        },
+        error: (error: unknown) => {
+          if (!silent) {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar las zonas.';
+          }
+        },
+      });
+  }
+
   public get selectedRestaurant(): ManagementRestaurant | null {
     return this.managementRestaurants.find((restaurant) => restaurant.id === this.managementState.restaurantId) ?? null;
   }
@@ -471,6 +525,7 @@ export class GestionPage {
               this.loadFamilies();
               this.loadTaxes();
               this.loadProducts();
+              this.loadZonesAndTables();
             },
             error: (error: unknown) => {
               const message = error instanceof Error ? error.message : 'No se pudo seleccionar el restaurante.';
@@ -585,13 +640,31 @@ export class GestionPage {
 
         return;
       }
-      this.managementState.selectedIndex.tables = 0;
 
-      rows.splice(idx, 1);
-      this.managementState.selectedIndex[entityKey] = rows.length ? Math.min(idx, rows.length - 1) : -1;
-      this.updateRestaurantKpis(this.managementState.restaurantId);
-      this.syncForms();
-      window.alert('Registro eliminado.');
+      if (!selectedZone.uuid) {
+        window.alert('No se puede eliminar: zona sin identificador.');
+
+        return;
+      }
+
+      this.zoneService
+        .deleteZone(selectedZone.uuid)
+        .pipe(take(1))
+        .subscribe({
+          next: () => {
+            this.managementState.selectedIndex.tables = 0;
+            rows.splice(idx, 1);
+            this.managementState.selectedIndex[entityKey] = rows.length ? Math.min(idx, rows.length - 1) : -1;
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            window.alert('Zona eliminada.');
+          },
+          error: (error: unknown) => {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo eliminar la zona.';
+          },
+        });
+
       return;
     }
 
@@ -980,10 +1053,45 @@ export class GestionPage {
         return;
       }
 
-      const currentTables = idx >= 0 && idx < rows.length ? (rows[idx] as ZoneRow).tables : [];
-      const payload: ZoneRow = { name, tables: currentTables };
-      this.upsertRow(rows, idx, payload, entityKey);
-      this.managementState.selectedIndex.tables = 0;
+      const selectedZone = idx >= 0 && idx < rows.length ? (rows[idx] as ZoneRow) : null;
+
+      if (selectedZone?.uuid) {
+        this.zoneService
+          .updateZone(selectedZone.uuid, { name })
+          .pipe(take(1))
+          .subscribe({
+            next: (updated) => {
+              selectedZone.uuid = updated.id;
+              selectedZone.name = updated.name;
+              this.managementState.selectedIndex.tables = 0;
+              this.apiErrorMessage = null;
+              this.syncForms();
+              window.alert('Zona actualizada.');
+            },
+            error: (error: unknown) => {
+              this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo actualizar la zona.';
+            },
+          });
+      } else {
+        this.zoneService
+          .createZone({ name })
+          .pipe(take(1))
+          .subscribe({
+            next: (created) => {
+              const payload: ZoneRow = { uuid: created.id, name: created.name, tables: [] };
+              this.upsertRow(rows, idx, payload, entityKey);
+              this.managementState.selectedIndex.tables = 0;
+              this.updateRestaurantKpis(this.managementState.restaurantId);
+              this.apiErrorMessage = null;
+              this.syncForms();
+              window.alert('Zona creada.');
+            },
+            error: (error: unknown) => {
+              this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo crear la zona.';
+            },
+          });
+      }
+
       return;
     }
 
@@ -1077,18 +1185,49 @@ export class GestionPage {
       return;
     }
 
-    const idx = this.managementState.selectedIndex.tables;
-    const payload: TableRow = { name };
+    if (!zone.uuid) {
+      window.alert('Guarda primero la zona antes de crear mesas.');
 
-    if (idx >= 0 && idx < zone.tables.length) {
-      zone.tables[idx] = payload;
-    } else {
-      zone.tables.push(payload);
-      this.managementState.selectedIndex.tables = zone.tables.length - 1;
+      return;
     }
 
-    this.tableForm = { name };
-    window.alert('Mesa guardada.');
+    const idx = this.managementState.selectedIndex.tables;
+    const selectedTable = idx >= 0 && idx < zone.tables.length ? zone.tables[idx] : null;
+
+    if (selectedTable?.uuid) {
+      this.tableService
+        .updateTable(selectedTable.uuid, { zone_id: zone.uuid, name })
+        .pipe(take(1))
+        .subscribe({
+          next: (updated) => {
+            zone.tables[idx] = { uuid: updated.id, name: updated.name };
+            this.tableForm = { name: updated.name };
+            this.apiErrorMessage = null;
+            this.syncForms();
+            window.alert('Mesa actualizada.');
+          },
+          error: (error: unknown) => {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo actualizar la mesa.';
+          },
+        });
+    } else {
+      this.tableService
+        .createTable({ zone_id: zone.uuid, name })
+        .pipe(take(1))
+        .subscribe({
+          next: (created) => {
+            zone.tables.push({ uuid: created.id, name: created.name });
+            this.managementState.selectedIndex.tables = zone.tables.length - 1;
+            this.tableForm = { name: created.name };
+            this.apiErrorMessage = null;
+            this.syncForms();
+            window.alert('Mesa creada.');
+          },
+          error: (error: unknown) => {
+            this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo crear la mesa.';
+          },
+        });
+    }
   }
 
   public deleteSelectedManagementTable(): void {
@@ -1106,10 +1245,29 @@ export class GestionPage {
       return;
     }
 
-    zone.tables.splice(idx, 1);
-    this.managementState.selectedIndex.tables = zone.tables.length ? Math.min(idx, zone.tables.length - 1) : -1;
-    this.tableForm = { name: this.selectedTable?.name ?? '' };
-    window.alert('Mesa eliminada.');
+    const selectedTable = zone.tables[idx];
+    if (!selectedTable.uuid) {
+      window.alert('No se puede eliminar: mesa sin identificador.');
+
+      return;
+    }
+
+    this.tableService
+      .deleteTable(selectedTable.uuid)
+      .pipe(take(1))
+      .subscribe({
+        next: () => {
+          zone.tables.splice(idx, 1);
+          this.managementState.selectedIndex.tables = zone.tables.length ? Math.min(idx, zone.tables.length - 1) : -1;
+          this.tableForm = { name: this.selectedTable?.name ?? '' };
+          this.apiErrorMessage = null;
+          this.syncForms();
+          window.alert('Mesa eliminada.');
+        },
+        error: (error: unknown) => {
+          this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo eliminar la mesa.';
+        },
+      });
   }
 
   public toEuroFromCents(cents: number): string {
@@ -1291,6 +1449,7 @@ export class GestionPage {
                   this.loadFamilies(true);
                   this.loadTaxes();
                   this.loadProducts();
+                  this.loadZonesAndTables();
                 },
                 error: (error: unknown) => {
                   this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo seleccionar el restaurante.';
