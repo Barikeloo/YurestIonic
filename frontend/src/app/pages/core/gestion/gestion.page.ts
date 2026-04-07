@@ -288,6 +288,10 @@ export class GestionPage {
     this.loadRestaurantsFromApi();
   }
 
+  public clearApiError(): void {
+    this.apiErrorMessage = null;
+  }
+
   private loadFamilies(silent: boolean = false): void {
     this.familyService
       .listFamilies()
@@ -1193,6 +1197,16 @@ export class GestionPage {
 
     const idx = this.managementState.selectedIndex.tables;
     const selectedTable = idx >= 0 && idx < zone.tables.length ? zone.tables[idx] : null;
+
+    // Validar que no exista otra mesa con el mismo nombre en esta zona
+    const existingTableWithSameName = zone.tables.find(
+      (table, tableIdx) => table.name.toLowerCase() === name.toLowerCase() && tableIdx !== idx
+    );
+    if (existingTableWithSameName) {
+      window.alert('Ya existe una mesa con ese nombre en esta zona.');
+
+      return;
+    }
 
     if (selectedTable?.uuid) {
       this.tableService

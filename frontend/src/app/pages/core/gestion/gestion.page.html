@@ -1,7 +1,10 @@
 <div class="gestion-page">
   <div class="screen-gestion">
     <div class="page-container">
-      <div class="gestion-api-warning" *ngIf="apiErrorMessage">{{ apiErrorMessage }}</div>
+      <div class="gestion-api-warning" *ngIf="apiErrorMessage">
+        <span>{{ apiErrorMessage }}</span>
+        <button type="button" class="gestion-api-warning-close" (click)="clearApiError()">&times;</button>
+      </div>
       <div class="gestion-layout">
         <app-restaurant-list
           [restaurants]="managementRestaurants"

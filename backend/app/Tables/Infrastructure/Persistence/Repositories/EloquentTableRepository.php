@@ -79,4 +79,32 @@ class EloquentTableRepository implements TableRepositoryInterface
 
         return (bool) $model->delete();
     }
+
+    public function findByZoneIdAndName(string $zoneId, string $name, ?string $excludeId = null): ?Table
+    {
+        $query = $this->model->newQuery()
+            ->with('zone')
+            ->whereHas('zone', function ($query) use ($zoneId) {
+                $query->where('uuid', $zoneId);
+            })
+            ->whereRaw('LOWER(name) = LOWER(?)', [$name]);
+
+        if ($excludeId !== null) {
+            $query->where('uuid', '!=', $excludeId);
+        }
+
+        $model = $query->first();
+
+        if ($model === null || $model->zone === null) {
+            return null;
+        }
+
+        return Table::fromPersistence(
+            id: $model->uuid,
+            zoneId: $model->zone->uuid,
+            name: $model->name,
+            createdAt: $model->created_at->toDateTimeImmutable(),
+            updatedAt: $model->updated_at->toDateTimeImmutable(),
+        );
+    }
 }

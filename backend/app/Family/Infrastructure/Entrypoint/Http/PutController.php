@@ -3,6 +3,7 @@
 namespace App\Family\Infrastructure\Entrypoint\Http;
 
 use App\Family\Application\UpdateFamily\UpdateFamily;
+use App\Shared\Infrastructure\Tenant\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -11,6 +12,7 @@ class PutController
 {
     public function __construct(
         private UpdateFamily $updateFamily,
+        private TenantContext $tenantContext,
     ) {}
 
     public function __invoke(Request $request, string $id): JsonResponse
@@ -20,7 +22,10 @@ class PutController
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('families', 'name')->ignore($id, 'uuid')->whereNull('deleted_at'),
+                Rule::unique('families', 'name')
+                    ->ignore($id, 'uuid')
+                    ->where('restaurant_id', $this->tenantContext->requireRestaurantId())
+                    ->whereNull('deleted_at'),
             ],
         ]);
 

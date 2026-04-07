@@ -16,4 +16,9 @@ interface TableRepositoryInterface
     public function findAll(bool $includeDeleted = false): array;
 
     public function deleteById(string $id): bool;
+
+    /**
+     * Find a table by zone ID and name (case-insensitive).
+     */
+    public function findByZoneIdAndName(string $zoneId, string $name, ?string $excludeId = null): ?Table;
 }
