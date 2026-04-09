@@ -46,10 +46,14 @@ class Tax
         );
     }
 
-    public function update(TaxName $name, TaxPercentage $percentage): void
+    public function update(?TaxName $name = null, ?TaxPercentage $percentage = null): void
     {
-        $this->name = $name;
-        $this->percentage = $percentage;
+        if ($name !== null) {
+            $this->name = $name;
+        }
+        if ($percentage !== null) {
+            $this->percentage = $percentage;
+        }
         $this->touch();
     }
 

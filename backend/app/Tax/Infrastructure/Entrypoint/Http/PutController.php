@@ -17,15 +17,19 @@ class PutController
     {
         $validated = $request->validate([
             'name' => [
-                'required',
+                'sometimes',
                 'string',
                 'max:255',
                 Rule::unique('taxes', 'name')->ignore($id, 'uuid')->whereNull('deleted_at'),
             ],
-            'percentage' => ['required', 'integer', 'between:0,100'],
+            'percentage' => ['sometimes', 'integer', 'between:0,100'],
         ]);
 
-        $response = ($this->updateTax)($id, $validated['name'], $validated['percentage']);
+        $response = ($this->updateTax)(
+            $id,
+            $validated['name'] ?? null,
+            $validated['percentage'] ?? null
+        );
 
         if ($response === null) {
             return new JsonResponse(['message' => 'Tax not found.'], 404);

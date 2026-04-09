@@ -12,7 +12,7 @@ class UpdateTax
         private TaxRepositoryInterface $taxRepository,
     ) {}
 
-    public function __invoke(string $id, string $name, int $percentage): ?UpdateTaxResponse
+    public function __invoke(string $id, ?string $name = null, ?int $percentage = null): ?UpdateTaxResponse
     {
         $tax = $this->taxRepository->findById($id);
 
@@ -20,7 +20,10 @@ class UpdateTax
             return null;
         }
 
-        $tax->update(TaxName::create($name), TaxPercentage::create($percentage));
+        $tax->update(
+            $name !== null ? TaxName::create($name) : null,
+            $percentage !== null ? TaxPercentage::create($percentage) : null
+        );
         $this->taxRepository->save($tax);
 
         return UpdateTaxResponse::create($tax);
