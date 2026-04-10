@@ -14,6 +14,10 @@ use App\User\Infrastructure\Persistence\Models\EloquentUser;
 
 final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
 {
+    public function __construct(
+        private EloquentOrderLine $model,
+    ) {}
+
     public function save(OrderLine $orderLine): void
     {
         $restaurantId = EloquentRestaurant::query()->where('uuid', $orderLine->getRestaurantId()->value())->value('id');
@@ -21,7 +25,7 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
         $productId = EloquentProduct::query()->where('uuid', $orderLine->getProductId()->value())->value('id');
         $userId = EloquentUser::query()->where('uuid', $orderLine->getUserId()->value())->value('id');
 
-        EloquentOrderLine::updateOrCreate(
+        $this->model->newQuery()->updateOrCreate(
             ['uuid' => $orderLine->getId()->value()],
             [
                 'restaurant_id' => $restaurantId,
@@ -37,14 +41,14 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
 
     public function findById(Uuid $id): ?OrderLine
     {
-        $model = EloquentOrderLine::where('uuid', $id->value())->first();
+        $model = $this->model->newQuery()->where('uuid', $id->value())->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByUuid(Uuid $uuid): ?OrderLine
     {
-        $model = EloquentOrderLine::where('uuid', $uuid->value())->first();
+        $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();
 
         return $model ? $this->toDomain($model) : null;
     }
@@ -57,14 +61,14 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
             return [];
         }
 
-        $models = EloquentOrderLine::where('order_id', $orderInternalId)->get();
+        $models = $this->model->newQuery()->where('order_id', $orderInternalId)->get();
 
         return $models->map(fn ($model) => $this->toDomain($model))->toArray();
     }
 
     public function delete(Uuid $id): void
     {
-        EloquentOrderLine::where('uuid', $id->value())->delete();
+        $this->model->newQuery()->where('uuid', $id->value())->delete();
     }
 
     private function toDomain(EloquentOrderLine $model): OrderLine

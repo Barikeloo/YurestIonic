@@ -14,6 +14,10 @@ use App\User\Infrastructure\Persistence\Models\EloquentUser;
 
 final class EloquentOrderRepository implements OrderRepositoryInterface
 {
+    public function __construct(
+        private EloquentOrder $model,
+    ) {}
+
     public function save(Order $order): void
     {
         $restaurantId = EloquentRestaurant::query()->where('uuid', $order->getRestaurantId()->value())->value('id');
@@ -23,7 +27,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             ? EloquentUser::query()->where('uuid', $order->getClosedByUserId()->value())->value('id')
             : null;
 
-        EloquentOrder::updateOrCreate(
+        $this->model->newQuery()->updateOrCreate(
             ['uuid' => $order->getId()->value()],
             [
                 'restaurant_id' => $restaurantId,
@@ -40,33 +44,33 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
 
     public function all(): array
     {
-        return EloquentOrder::query()->get()->map(fn ($model) => $this->toDomain($model))->all();
+        return $this->model->newQuery()->get()->map(fn ($model) => $this->toDomain($model))->all();
     }
 
     public function getById(string $id): ?Order
     {
-        $model = EloquentOrder::where('uuid', $id)->first();
+        $model = $this->model->newQuery()->where('uuid', $id)->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findById(Uuid $id): ?Order
     {
-        $model = EloquentOrder::where('uuid', $id->value())->first();
+        $model = $this->model->newQuery()->where('uuid', $id->value())->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByUuid(Uuid $uuid): ?Order
     {
-        $model = EloquentOrder::where('uuid', $uuid->value())->first();
+        $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByTableId(Uuid $tableId): ?Order
     {
-        $model = EloquentOrder::where('table_id', $tableId->value())
+        $model = $this->model->newQuery()->where('table_id', $tableId->value())
             ->where('status', 'open')
             ->first();
 
@@ -75,7 +79,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
 
     public function delete(Uuid $id): void
     {
-        EloquentOrder::where('uuid', $id->value())->delete();
+        $this->model->newQuery()->where('uuid', $id->value())->delete();
     }
 
     private function toDomain(EloquentOrder $model): Order

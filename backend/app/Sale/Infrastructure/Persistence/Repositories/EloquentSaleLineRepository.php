@@ -15,6 +15,10 @@ use App\User\Infrastructure\Persistence\Models\EloquentUser;
 
 final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
 {
+    public function __construct(
+        private EloquentSaleLine $model,
+    ) {}
+
     public function save(SaleLine $saleLine): void
     {
         $restaurantId = EloquentRestaurant::query()->where('uuid', $saleLine->getRestaurantId()->value())->value('id');
@@ -23,7 +27,7 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
         $productId = EloquentProduct::query()->where('uuid', $saleLine->getProductId()->value())->value('id');
         $userId = EloquentUser::query()->where('uuid', $saleLine->getUserId()->value())->value('id');
 
-        EloquentSaleLine::updateOrCreate(
+        $this->model->newQuery()->updateOrCreate(
             ['uuid' => $saleLine->getId()->value()],
             [
                 'restaurant_id' => $restaurantId,
@@ -40,14 +44,14 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
 
     public function findById(Uuid $id): ?SaleLine
     {
-        $model = EloquentSaleLine::where('uuid', $id->value())->first();
+        $model = $this->model->newQuery()->where('uuid', $id->value())->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByUuid(Uuid $uuid): ?SaleLine
     {
-        $model = EloquentSaleLine::where('uuid', $uuid->value())->first();
+        $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();
 
         return $model ? $this->toDomain($model) : null;
     }
@@ -60,14 +64,14 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
             return [];
         }
 
-        $models = EloquentSaleLine::where('sale_id', $saleInternalId)->get();
+        $models = $this->model->newQuery()->where('sale_id', $saleInternalId)->get();
 
         return $models->map(fn ($model) => $this->toDomain($model))->toArray();
     }
 
     public function delete(Uuid $id): void
     {
-        EloquentSaleLine::where('uuid', $id->value())->delete();
+        $this->model->newQuery()->where('uuid', $id->value())->delete();
     }
 
     private function toDomain(EloquentSaleLine $model): SaleLine

@@ -8,9 +8,13 @@ use App\SuperAdmin\Infrastructure\Persistence\Models\EloquentSuperAdmin;
 
 final class EloquentSuperAdminRepository implements SuperAdminRepositoryInterface
 {
+    public function __construct(
+        private EloquentSuperAdmin $model,
+    ) {}
+
     public function findByEmail(string $email): ?SuperAdmin
     {
-        $model = EloquentSuperAdmin::query()->where('email', $email)->first();
+        $model = $this->model->newQuery()->where('email', $email)->first();
 
         if ($model === null) {
             return null;
@@ -26,7 +30,7 @@ final class EloquentSuperAdminRepository implements SuperAdminRepositoryInterfac
 
     public function findById(string $id): ?SuperAdmin
     {
-        $model = EloquentSuperAdmin::query()->where('uuid', $id)->first();
+        $model = $this->model->newQuery()->where('uuid', $id)->first();
 
         if ($model === null) {
             return null;

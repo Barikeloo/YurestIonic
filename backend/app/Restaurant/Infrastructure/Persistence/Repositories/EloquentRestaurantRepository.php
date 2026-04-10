@@ -11,9 +11,13 @@ use App\Shared\Domain\ValueObject\Uuid;
 
 final class EloquentRestaurantRepository implements RestaurantRepositoryInterface
 {
+    public function __construct(
+        private EloquentRestaurant $model,
+    ) {}
+
     public function save(Restaurant $restaurant): void
     {
-        EloquentRestaurant::updateOrCreate(
+        $this->model->newQuery()->updateOrCreate(
             ['uuid' => $restaurant->getId()->value()],
             [
                 'name' => $restaurant->getName(),
@@ -27,47 +31,47 @@ final class EloquentRestaurantRepository implements RestaurantRepositoryInterfac
 
     public function all(): array
     {
-        return EloquentRestaurant::query()->get()->map(fn ($model) => $this->toDomain($model))->all();
+        return $this->model->newQuery()->get()->map(fn ($model) => $this->toDomain($model))->all();
     }
 
     public function getById(string $id): ?Restaurant
     {
-        $model = EloquentRestaurant::where('uuid', $id)->first();
+        $model = $this->model->newQuery()->where('uuid', $id)->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findById(Uuid $id): ?Restaurant
     {
-        $model = EloquentRestaurant::where('uuid', $id->value())->first();
+        $model = $this->model->newQuery()->where('uuid', $id->value())->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByEmail(Email $email): ?Restaurant
     {
-        $model = EloquentRestaurant::where('email', $email->value())->first();
+        $model = $this->model->newQuery()->where('email', $email->value())->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByUuid(Uuid $uuid): ?Restaurant
     {
-        $model = EloquentRestaurant::where('uuid', $uuid->value())->first();
+        $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByInternalId(int $internalId): ?Restaurant
     {
-        $model = EloquentRestaurant::where('id', $internalId)->first();
+        $model = $this->model->newQuery()->where('id', $internalId)->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByTaxId(string $taxId): array
     {
-        return EloquentRestaurant::query()
+        return $this->model->newQuery()
             ->where('tax_id', $taxId)
             ->get()
             ->map(fn ($model) => $this->toDomain($model))
@@ -76,7 +80,7 @@ final class EloquentRestaurantRepository implements RestaurantRepositoryInterfac
 
     public function delete(Uuid $id): void
     {
-        EloquentRestaurant::where('uuid', $id->value())->delete();
+        $this->model->newQuery()->where('uuid', $id->value())->delete();
     }
 
     private function toDomain(EloquentRestaurant $model): Restaurant
