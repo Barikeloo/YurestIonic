@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { take } from 'rxjs/operators';
 import { AppContextService } from '../../../services/app-context.service';
+import { DeviceStorageService } from '../../../services/device-storage.service';
 import { FamilyItem, FamilyService } from '../../../services/family.service';
 import { ProductItem, ProductService } from '../../../services/product.service';
 import { RestaurantService } from '../../../services/restaurant.service';
@@ -274,6 +275,8 @@ export class GestionPage {
 
   constructor(
     private readonly contextService: AppContextService,
+    private readonly router: Router,
+    private readonly deviceStorageService: DeviceStorageService,
     private readonly familyService: FamilyService,
     private readonly productService: ProductService,
     private readonly restaurantService: RestaurantService,
@@ -290,6 +293,15 @@ export class GestionPage {
 
   public clearApiError(): void {
     this.apiErrorMessage = null;
+  }
+
+  public unlinkDevice(): void {
+    if (confirm('¿Estás seguro de que deseas desvincular este dispositivo?')) {
+      console.log('Before clear - isDeviceLinked:', this.deviceStorageService.isDeviceLinked());
+      this.deviceStorageService.clearLinkedRestaurant();
+      console.log('After clear - isDeviceLinked:', this.deviceStorageService.isDeviceLinked());
+      this.router.navigateByUrl('/home');
+    }
   }
 
   private loadFamilies(silent: boolean = false): void {

@@ -7,5 +7,5 @@ interface UserQuickAccessRepositoryInterface
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function getQuickUsersByDeviceId(string $deviceId): array;
+    public function getQuickUsersByDeviceId(string $deviceId, ?string $restaurantUuid = null): array;
 }

@@ -1,0 +1,65 @@
+<ion-content [fullscreen]="true" class="link-device-admin-login-page">
+  <div class="login-container">
+    <div class="login-header">
+      <button class="btn-back" type="button" (click)="goBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div class="login-content">
+      <div class="login-title-section">
+        <h1 class="login-title">Vincular dispositivo</h1>
+        <p class="login-subtitle">Inicio de sesión administrador</p>
+        <p class="login-description">Introduce tus credenciales de administrador para vincular este dispositivo a un restaurante.</p>
+      </div>
+
+      <form [formGroup]="loginForm" (ngSubmit)="submit()" class="login-form">
+        <div class="form-group">
+          <label class="form-label">Correo electrónico</label>
+          <input
+            class="form-input"
+            type="email"
+            formControlName="email"
+            placeholder="admin@restaurante.com"
+            [disabled]="isSubmitting"
+          />
+          <div *ngIf="loginForm.get('email')?.hasError('required') && loginForm.get('email')?.touched" class="error-msg">
+            El correo es requerido
+          </div>
+          <div *ngIf="loginForm.get('email')?.hasError('email') && loginForm.get('email')?.touched" class="error-msg">
+            Correo no válido
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input
+            class="form-input"
+            type="password"
+            formControlName="password"
+            placeholder="Tu contraseña"
+            [disabled]="isSubmitting"
+          />
+          <div *ngIf="loginForm.get('password')?.hasError('required') && loginForm.get('password')?.touched" class="error-msg">
+            La contraseña es requerida
+          </div>
+        </div>
+
+        <div *ngIf="errorMessage" class="error-banner">
+          {{ errorMessage }}
+        </div>
+
+        <button
+          class="btn-submit"
+          type="submit"
+          [disabled]="isSubmitting || loginForm.invalid"
+        >
+          {{ isSubmitting ? 'Iniciando sesión...' : 'Continuar' }}
+        </button>
+      </form>
+    </div>
+  </div>
+</ion-content>

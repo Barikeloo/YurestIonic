@@ -5,58 +5,16 @@
         <div class="login-logo-icon">
           <img src="assets/images/ventoo-icon-principal.svg" alt="Ventoo" />
         </div>
-        <span class="login-logo-text">Ventoo</span>
+        <span class="login-logo-text">{{ linkedRestaurant ? linkedRestaurant.name : 'Ventoo' }}</span>
       </div>
-      <button class="back-link" type="button" (click)="goBack()">Volver</button>
     </div>
 
-    <div class="login-body">
-      <section class="pin-panel">
-        <div class="pin-section-label">Acceso rapido por PIN</div>
-
-        <div class="user-select-grid" *ngIf="quickUsers.length; else noQuickUsersTpl">
-          <button
-            *ngFor="let user of quickUsers"
-            type="button"
-            class="user-chip"
-            [class.selected]="isSelectedQuickUser(user)"
-            (click)="selectUser(user)"
-          >
-            <div class="user-avatar" [style.background]="user.color">{{ user.initials }}</div>
-            <span class="user-chip-name">{{ user.name }}</span>
-          </button>
-        </div>
-
-        <ng-template #noQuickUsersTpl>
-          <div class="quick-users-empty">No hay usuarios recientes para este dispositivo. Inicia sesion con email y contraseña para habilitar acceso rápido por PIN.</div>
-        </ng-template>
-
-        <div class="pin-dots">
-          <div class="pin-dot" [class.filled]="isPinDotFilled(0)"></div>
-          <div class="pin-dot" [class.filled]="isPinDotFilled(1)"></div>
-          <div class="pin-dot" [class.filled]="isPinDotFilled(2)"></div>
-          <div class="pin-dot" [class.filled]="isPinDotFilled(3)"></div>
-        </div>
-
-        <div class="pin-keypad">
-          <button class="key" type="button" (click)="pinKey('1')" [disabled]="!selectedQuickUser">1</button>
-          <button class="key" type="button" (click)="pinKey('2')" [disabled]="!selectedQuickUser">2</button>
-          <button class="key" type="button" (click)="pinKey('3')" [disabled]="!selectedQuickUser">3</button>
-          <button class="key" type="button" (click)="pinKey('4')" [disabled]="!selectedQuickUser">4</button>
-          <button class="key" type="button" (click)="pinKey('5')" [disabled]="!selectedQuickUser">5</button>
-          <button class="key" type="button" (click)="pinKey('6')" [disabled]="!selectedQuickUser">6</button>
-          <button class="key" type="button" (click)="pinKey('7')" [disabled]="!selectedQuickUser">7</button>
-          <button class="key" type="button" (click)="pinKey('8')" [disabled]="!selectedQuickUser">8</button>
-          <button class="key" type="button" (click)="pinKey('9')" [disabled]="!selectedQuickUser">9</button>
-          <button class="key key-del" type="button" (click)="pinDel()" [disabled]="!selectedQuickUser">⌫</button>
-          <button class="key" type="button" (click)="pinKey('0')" [disabled]="!selectedQuickUser">0</button>
-          <button class="key key-enter" type="button" (click)="pinEnter()" [disabled]="!selectedQuickUser">
-            {{ isSubmitting ? '...' : 'Entrar' }}
-          </button>
-        </div>
-      </section>
-
-      <section class="email-panel">
+    <!-- Estado 1: Dispositivo NO vinculado - Formulario email/contraseña -->
+    <div class="login-body" *ngIf="!linkedRestaurant">
+      <section class="email-panel full-width">
+        <button class="btn-back" type="button" (click)="goBack()">
+          ← Volver
+        </button>
         <form class="email-form" [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
           <div class="login-form-title">Iniciar sesion</div>
           <div class="login-form-sub">Accede con tu cuenta del restaurante</div>
@@ -104,6 +62,153 @@
           </div>
 
           <p class="login-form-sub">Si necesitas acceso, solicita alta al superadmin de la plataforma.</p>
+        </form>
+      </section>
+    </div>
+
+    <!-- Estado 2: Dispositivo vinculado - Vista lista de empleados -->
+    <div class="login-body employee-view" *ngIf="linkedRestaurant && !showPinPanel && !showEmailForm">
+      <section class="employee-list-panel">
+        <div class="search-section">
+          <input
+            class="search-input"
+            [value]="searchQuery"
+            (input)="onSearchChange($event)"
+            placeholder="Buscar empleado..."
+          />
+        </div>
+
+        <div *ngIf="isLoading" class="loading-container">
+          <p>Cargando empleados...</p>
+        </div>
+
+        <div *ngIf="errorMessage && !showPinPanel && !showEmailForm" class="error-container">
+          <div class="error-box">
+            <p>{{ errorMessage }}</p>
+          </div>
+        </div>
+
+        <div *ngIf="!isLoading && filteredEmployees.length > 0" class="employees-grid">
+          <div
+            *ngFor="let employee of filteredEmployees"
+            class="employee-card"
+            [class.selected]="isSelectedEmployee(employee)"
+            (click)="selectEmployee(employee)"
+          >
+            <div class="employee-avatar" [style.background-color]="employee.color">
+              {{ employee.initials }}
+            </div>
+            <div class="employee-info">
+              <div class="employee-name">{{ employee.name }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="!isLoading && filteredEmployees.length === 0" class="empty-container">
+          <p *ngIf="searchQuery">No se encontraron empleados con "{{ searchQuery }}"</p>
+          <p *ngIf="!searchQuery">No hay empleados disponibles</p>
+        </div>
+
+        <button class="btn-classic-login" type="button" (click)="showClassicLogin()">
+          Iniciar sesión con correo y contraseña
+        </button>
+      </section>
+    </div>
+
+    <!-- Estado 3: Dispositivo vinculado - Panel PIN -->
+    <div class="login-body pin-view" *ngIf="linkedRestaurant && showPinPanel && selectedEmployee">
+      <section class="pin-panel">
+        <button class="btn-back" type="button" (click)="backToEmployeeList()">
+          ← Volver
+        </button>
+        <div class="pin-header">
+          <div class="pin-employee-avatar" [style.background-color]="selectedEmployee.color">
+            {{ selectedEmployee.initials }}
+          </div>
+          <h2 class="pin-title">{{ selectedEmployee.name }}</h2>
+        </div>
+
+        <div class="pin-dots">
+          <div class="pin-dot" [class.filled]="isPinDotFilled(0)"></div>
+          <div class="pin-dot" [class.filled]="isPinDotFilled(1)"></div>
+          <div class="pin-dot" [class.filled]="isPinDotFilled(2)"></div>
+          <div class="pin-dot" [class.filled]="isPinDotFilled(3)"></div>
+        </div>
+
+        <div *ngIf="errorMessage" class="server-error">{{ errorMessage }}</div>
+
+        <div class="pin-keypad">
+          <button class="key" type="button" (click)="pinKey('1')">1</button>
+          <button class="key" type="button" (click)="pinKey('2')">2</button>
+          <button class="key" type="button" (click)="pinKey('3')">3</button>
+          <button class="key" type="button" (click)="pinKey('4')">4</button>
+          <button class="key" type="button" (click)="pinKey('5')">5</button>
+          <button class="key" type="button" (click)="pinKey('6')">6</button>
+          <button class="key" type="button" (click)="pinKey('7')">7</button>
+          <button class="key" type="button" (click)="pinKey('8')">8</button>
+          <button class="key" type="button" (click)="pinKey('9')">9</button>
+          <button class="key key-del" type="button" (click)="pinDel()">⌫</button>
+          <button class="key" type="button" (click)="pinKey('0')">0</button>
+          <button class="key key-enter" type="button" (click)="pinEnter()">
+            {{ isSubmitting ? '...' : 'Entrar' }}
+          </button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Estado 4: Dispositivo vinculado - Formulario email/contraseña -->
+    <div class="login-body email-view" *ngIf="linkedRestaurant && showEmailForm">
+      <section class="email-panel full-width">
+        <button class="btn-back" type="button" (click)="backToEmployeeList()">
+          ← Volver
+        </button>
+        <form class="email-form" [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
+          <div class="login-form-title">Iniciar sesion</div>
+          <div class="login-form-sub">Accede con tu cuenta del restaurante</div>
+
+          <div class="form-field">
+            <label class="form-label" for="email">Email</label>
+            <input
+              id="email"
+              class="form-input"
+              type="email"
+              formControlName="email"
+              autocomplete="username"
+              placeholder="empleado@ejemplo.com"
+            />
+            <p class="field-error" *ngIf="loginForm.controls.email.touched && loginForm.controls.email.invalid">
+              Introduce un email valido.
+            </p>
+          </div>
+
+          <div class="form-field">
+            <label class="form-label" for="password">Contrasena</label>
+            <input
+              id="password"
+              class="form-input"
+              type="password"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+            />
+            <p class="field-error" *ngIf="loginForm.controls.password.touched && loginForm.controls.password.invalid">
+              La contrasena es obligatoria.
+            </p>
+          </div>
+
+          <p class="server-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+          <button class="btn-login" type="submit" [disabled]="isSubmitting">
+            {{ isSubmitting ? 'Validando...' : 'Entrar' }}
+          </button>
+
+          <div class="login-divider">
+            <div class="divider-line"></div>
+            <span class="divider-text">o</span>
+            <div class="divider-line"></div>
+          </div>
+
+          <p class="login-form-sub">Si necesitas acceso, solicita alta al administrador del restaurante.</p>
         </form>
       </section>
     </div>

@@ -108,13 +108,17 @@ export class AuthService {
     return this.http
       .post<LoginResponse>(
         `${this.authBaseUrl}/login`,
-        { email, password, device_id: deviceId },
+        {
+          email,
+          password,
+          device_id: this.getDeviceId(),
+        },
         { withCredentials: true },
       )
       .pipe(
         map((response: LoginResponse) => {
           if (!response.success || !response.id || !response.name || !response.email) {
-            const message: string = response.message ?? 'No se pudo iniciar sesion.';
+            const message: string = response.message ?? 'No se pudo iniciar sesión.';
 
             throw new Error(message);
           }
@@ -123,7 +127,42 @@ export class AuthService {
             id: response.id,
             name: response.name,
             email: response.email,
-            role: response.role,
+            role: response.role ?? 'operator',
+            restaurantId: response.restaurant_id,
+            restaurantName: response.restaurant_name,
+          };
+        }),
+        tap((user: AuthUser) => {
+          this.currentUserSubject.next(user);
+        }),
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
+  public loginForDeviceLink(email: string, password: string): Observable<AuthUser> {
+    return this.http
+      .post<LoginResponse>(
+        `${this.authBaseUrl}/login-for-device-link`,
+        {
+          email,
+          password,
+          device_id: this.getDeviceId(),
+        },
+        { withCredentials: true },
+      )
+      .pipe(
+        map((response: LoginResponse) => {
+          if (!response.success || !response.id || !response.name || !response.email) {
+            const message: string = response.message ?? 'No se pudo iniciar sesión.';
+
+            throw new Error(message);
+          }
+
+          return {
+            id: response.id,
+            name: response.name,
+            email: response.email,
+            role: 'admin',
             restaurantId: response.restaurant_id,
             restaurantName: response.restaurant_name,
           };
@@ -168,13 +207,18 @@ export class AuthService {
       );
   }
 
-  public getQuickUsers(deviceId: string): Observable<QuickAccessUserResponse[]> {
+  public getQuickUsers(deviceId: string, restaurantUuid?: string): Observable<QuickAccessUserResponse[]> {
     const resolvedDeviceId = deviceId.trim() !== '' ? deviceId : this.getOrCreateDeviceId();
+    const params: Record<string, string> = { device_id: resolvedDeviceId };
+
+    if (restaurantUuid) {
+      params['restaurant_uuid'] = restaurantUuid;
+    }
 
     return this.http
       .get<QuickAccessResponse>(`${this.authBaseUrl}/quick-users`, {
         withCredentials: true,
-        params: { device_id: resolvedDeviceId },
+        params,
       })
       .pipe(
         map((response: QuickAccessResponse) => response.users ?? []),
@@ -464,6 +508,15 @@ export class AuthService {
         { withCredentials: true },
       )
       .pipe(
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
+  public getAdminRestaurants(): Observable<Restaurant[]> {
+    return this.http
+      .get<{ data: Restaurant[] }>(`${environment.apiUrl}/admin/restaurants`, { withCredentials: true })
+      .pipe(
+        map((response) => response.data ?? []),
         catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
       );
   }

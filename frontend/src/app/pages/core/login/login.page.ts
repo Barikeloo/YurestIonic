@@ -5,13 +5,13 @@ import { Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { finalize, take } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
+import { DeviceStorageService, LinkedRestaurant } from '../../../services/device-storage.service';
 
 interface QuickUser {
   name: string;
   initials: string;
   userUuid: string;
   role: string;
-  restaurantName: string;
   color: string;
 }
 
@@ -32,37 +32,108 @@ export class LoginPage {
 
   public pinValue: string = '';
 
-  public quickUsers: QuickUser[] = [];
-  public selectedQuickUser: QuickUser | null = null;
+  public employees: QuickUser[] = [];
+  public filteredEmployees: QuickUser[] = [];
+  public selectedEmployee: QuickUser | null = null;
+  public isLoading: boolean = true;
+  public searchQuery: string = '';
+
+  public linkedRestaurant: LinkedRestaurant | null = null;
+
+  // View states for linked device
+  public showPinPanel: boolean = false;
+  public showEmailForm: boolean = false;
 
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly authService: AuthService,
     private readonly router: Router,
-  ) {
-    this.loadQuickUsers();
-  }
+    private readonly deviceStorageService: DeviceStorageService,
+  ) {}
 
   public ionViewWillEnter(): void {
-    this.loadQuickUsers();
+    this.linkedRestaurant = this.deviceStorageService.getLinkedRestaurant();
+    this.selectedEmployee = null;
+    this.pinValue = '';
+    this.showPinPanel = false;
+    this.showEmailForm = false;
+    this.errorMessage = null;
+
+    if (this.linkedRestaurant) {
+      this.loadEmployees();
+    } else {
+      this.isLoading = false;
+    }
   }
 
-  public selectUser(user: QuickUser): void {
-    this.selectedQuickUser = user;
+  // Employee list view
+  public loadEmployees(): void {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    this.authService
+      .getQuickUsers(this.authService.getDeviceId(), this.linkedRestaurant?.uuid)
+      .pipe(take(1))
+      .subscribe({
+        next: (users) => {
+          this.employees = users.map((user) => ({
+            name: user.name,
+            initials: this.buildInitials(user.name),
+            userUuid: user.user_uuid,
+            role: user.role,
+            color: this.roleColor(user.role),
+          }));
+          this.filteredEmployees = [...this.employees];
+          this.isLoading = false;
+        },
+        error: (error: unknown) => {
+          this.errorMessage = error instanceof Error ? error.message : 'No se pudieron cargar los empleados.';
+          this.isLoading = false;
+        },
+      });
+  }
+
+  public onSearchChange(event: Event): void {
+    const query = (event.target as HTMLInputElement).value.toLowerCase();
+    this.searchQuery = query;
+    this.filteredEmployees = this.employees.filter((employee) => employee.name.toLowerCase().includes(query));
+  }
+
+  public selectEmployee(employee: QuickUser): void {
+    this.selectedEmployee = employee;
     this.pinValue = '';
     this.errorMessage = null;
+    this.showPinPanel = true;
+    this.showEmailForm = false;
   }
 
-  public isSelectedQuickUser(user: QuickUser): boolean {
-    return this.selectedQuickUser?.userUuid === user.userUuid;
+  public isSelectedEmployee(employee: QuickUser): boolean {
+    return this.selectedEmployee?.userUuid === employee.userUuid;
   }
 
+  public backToEmployeeList(): void {
+    this.selectedEmployee = null;
+    this.pinValue = '';
+    this.errorMessage = null;
+    this.showPinPanel = false;
+    this.showEmailForm = false;
+  }
+
+  public showClassicLogin(): void {
+    this.selectedEmployee = null;
+    this.pinValue = '';
+    this.errorMessage = null;
+    this.showPinPanel = false;
+    this.showEmailForm = true;
+  }
+
+  // PIN panel
   public isPinDotFilled(index: number): boolean {
     return index < this.pinValue.length;
   }
 
   public pinKey(value: string): void {
-    if (this.isSubmitting || this.pinValue.length >= 4 || !this.selectedQuickUser) {
+    if (this.isSubmitting || this.pinValue.length >= 4) {
       return;
     }
 
@@ -86,34 +157,31 @@ export class LoginPage {
       return;
     }
 
-    if (!this.selectedQuickUser) {
-      this.errorMessage = 'Selecciona un usuario para acceder con PIN.';
-
+    if (!this.selectedEmployee) {
+      this.errorMessage = 'Selecciona un empleado para acceder con PIN.';
       return;
     }
 
     if (this.pinValue.length !== 4) {
-      this.errorMessage = 'El PIN debe tener 4 digitos.';
-
+      this.errorMessage = 'El PIN debe tener 4 dígitos.';
       return;
     }
 
-    this.loginWithPinApi(this.selectedQuickUser.userUuid, this.pinValue, true);
+    this.loginWithPinApi(this.selectedEmployee.userUuid, this.pinValue);
   }
 
+  // Email/password form
   public submit(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
-
       return;
     }
 
     const { email, password } = this.loginForm.getRawValue();
-
-    this.loginWithApi(email, password, false);
+    this.loginWithApi(email, password);
   }
 
-  private loginWithApi(email: string, password: string, fromPin: boolean): void {
+  private loginWithApi(email: string, password: string): void {
     this.isSubmitting = true;
     this.errorMessage = null;
 
@@ -127,23 +195,15 @@ export class LoginPage {
       )
       .subscribe({
         next: () => {
-          if (fromPin) {
-            this.pinValue = '';
-          }
-
           this.router.navigateByUrl('/app/mesas');
         },
         error: (error: unknown) => {
-          this.errorMessage = error instanceof Error ? error.message : 'No se pudo iniciar sesion.';
-
-          if (fromPin) {
-            this.pinValue = '';
-          }
+          this.errorMessage = error instanceof Error ? error.message : 'No se pudo iniciar sesión.';
         },
       });
   }
 
-  private loginWithPinApi(userUuid: string, pin: string, fromPin: boolean): void {
+  private loginWithPinApi(userUuid: string, pin: string): void {
     this.isSubmitting = true;
     this.errorMessage = null;
 
@@ -157,42 +217,12 @@ export class LoginPage {
       )
       .subscribe({
         next: () => {
-          if (fromPin) {
-            this.pinValue = '';
-          }
-
+          this.pinValue = '';
           this.router.navigateByUrl('/app/mesas');
         },
         error: (error: unknown) => {
-          this.errorMessage = error instanceof Error ? error.message : 'No se pudo iniciar sesion con PIN.';
-
-          if (fromPin) {
-            this.pinValue = '';
-          }
-        },
-      });
-  }
-
-  private loadQuickUsers(): void {
-    this.authService
-      .getQuickUsers(this.getDeviceId())
-      .pipe(take(1))
-      .subscribe({
-        next: (users) => {
-          this.quickUsers = users.map((user) => ({
-            name: user.name,
-            initials: this.buildInitials(user.name),
-            userUuid: user.user_uuid,
-            role: user.role,
-            restaurantName: user.restaurant_name,
-            color: this.roleColor(user.role),
-          }));
-
-          this.selectedQuickUser = this.quickUsers[0] ?? null;
-        },
-        error: () => {
-          this.quickUsers = [];
-          this.selectedQuickUser = null;
+          this.errorMessage = error instanceof Error ? error.message : 'No se pudo iniciar sesión con PIN.';
+          this.pinValue = '';
         },
       });
   }
@@ -201,7 +231,6 @@ export class LoginPage {
     const parts = name.trim().split(/\s+/).filter(Boolean);
     const first = parts[0]?.charAt(0) ?? 'U';
     const second = parts[1]?.charAt(0) ?? parts[0]?.charAt(1) ?? 'S';
-
     return `${first}${second}`.toUpperCase();
   }
 
@@ -222,6 +251,10 @@ export class LoginPage {
   }
 
   public goBack(): void {
-    this.router.navigateByUrl('/home');
+    if (this.linkedRestaurant && (this.showPinPanel || this.showEmailForm)) {
+      this.backToEmployeeList();
+    } else {
+      this.router.navigateByUrl('/home');
+    }
   }
 }

@@ -17,10 +17,11 @@ final class GetQuickUsersController
     {
         $validated = $request->validate([
             'device_id' => ['required', 'string', 'max:100'],
+            'restaurant_uuid' => ['nullable', 'string', 'uuid'],
         ]);
 
         /** @var GetQuickUsersResponse $response */
-        $response = ($this->getQuickUsers)($validated['device_id']);
+        $response = ($this->getQuickUsers)($validated['device_id'], $validated['restaurant_uuid'] ?? null);
 
         return new JsonResponse($response->toArray());
     }

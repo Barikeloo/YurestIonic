@@ -199,20 +199,51 @@
 }
 
 .gestion-workspace-top {
-  padding: 14px 16px 10px;
+  padding: 20px;
   border-bottom: 1px solid var(--gray-200);
 }
 
+.gestion-workspace-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  gap: 16px;
+}
+
 .gestion-workspace-title {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--black);
+  margin-bottom: 6px;
 }
 
 .gestion-workspace-sub {
-  margin-top: 3px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--gray-500);
+  line-height: 1.4;
+}
+
+.btn-unlink-device {
+  padding: 10px 20px;
+  background: var(--accent);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--accent-light);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 }
 
 .gestion-entity-tabs {

@@ -45,6 +45,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/core/developer-login/developer-login.page').then((m) => m.DeveloperLoginPage),
   },
   {
+    path: 'link-device-admin-login',
+    loadComponent: () => import('./pages/core/link-device-admin-login/link-device-admin-login.page').then((m) => m.LinkDeviceAdminLoginPage),
+  },
+  {
+    path: 'link-device-select-restaurant',
+    loadComponent: () => import('./pages/core/link-device-select-restaurant/link-device-select-restaurant.page').then((m) => m.LinkDeviceSelectRestaurantPage),
+  },
+  {
     path: 'home',
     loadComponent: () => import('./pages/core/home/home.page').then((m) => m.HomePage),
   },

@@ -1,0 +1,63 @@
+<ion-content [fullscreen]="true" class="link-device-select-restaurant-page">
+  <div class="container">
+    <div class="header-section">
+      <button class="btn-back" type="button" (click)="goBack()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div class="content-section">
+      <div class="info-section">
+        <h1 class="title">Seleccionar restaurante</h1>
+        <p class="subtitle">Bienvenido, {{ adminName }}</p>
+        <p class="description">Selecciona el restaurante que deseas vincular a este dispositivo.</p>
+      </div>
+
+      <div *ngIf="isLoading" class="loading-container">
+        <div class="spinner"></div>
+        <p>Cargando restaurantes...</p>
+      </div>
+
+      <div *ngIf="errorMessage" class="error-container">
+        <div class="error-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <p>{{ errorMessage }}</p>
+        </div>
+        <button class="btn-retry" type="button" (click)="loadRestaurants()">Reintentar</button>
+      </div>
+
+      <div *ngIf="!isLoading && !errorMessage && restaurants.length > 0" class="restaurants-list">
+        <div *ngFor="let restaurant of restaurants" class="restaurant-item" (click)="selectRestaurant(restaurant)">
+          <div class="restaurant-info">
+            <h3 class="restaurant-name">{{ restaurant.name }}</h3>
+            <p class="restaurant-legal">{{ restaurant.legal_name || 'Sin razón social' }}</p>
+            <p *ngIf="restaurant.tax_id" class="restaurant-cif">CIF: {{ restaurant.tax_id }}</p>
+          </div>
+          <div class="restaurant-arrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!isLoading && !errorMessage && restaurants.length === 0" class="empty-container">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="16"></line>
+          <line x1="8" y1="12" x2="16" y2="12"></line>
+        </svg>
+        <p>No hay restaurantes disponibles para vincular.</p>
+        <button class="btn-back-home" type="button" (click)="goBack()">Volver</button>
+      </div>
+    </div>
+  </div>
+</ion-content>

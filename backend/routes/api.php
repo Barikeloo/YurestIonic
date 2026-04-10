@@ -53,6 +53,7 @@ use App\Tables\Infrastructure\Entrypoint\Http\PutController as TablePutControlle
 use App\User\Infrastructure\Entrypoint\Http\GetMeController;
 use App\User\Infrastructure\Entrypoint\Http\GetQuickUsersController;
 use App\User\Infrastructure\Entrypoint\Http\LoginByPinController;
+use App\User\Infrastructure\Entrypoint\Http\LoginForDeviceLinkController;
 use App\User\Infrastructure\Entrypoint\Http\LogoutController;
 use App\User\Infrastructure\Entrypoint\Http\PostController;
 use App\User\Infrastructure\Entrypoint\Http\LoginController;
@@ -79,6 +80,7 @@ Route::middleware([
 ])->group(function (): void {
 	Route::post('/auth/login', LoginController::class);
 	Route::post('/auth/login-pin', LoginByPinController::class);
+	Route::post('/auth/login-for-device-link', LoginForDeviceLinkController::class);
 	Route::get('/auth/quick-users', GetQuickUsersController::class);
 	Route::get('/auth/me', GetMeController::class);
 	Route::post('/auth/logout', LogoutController::class);
@@ -100,7 +102,6 @@ Route::middleware([
 	Route::get('/tpv/tables', TableGetCollectionController::class);
 	Route::get('/tpv/taxes', TaxGetCollectionController::class);
 
-	// Ventas y órdenes (operaciones transaccionales del TPV)
 	Route::post('/tpv/orders', OrderPostController::class);
 	Route::post('/tpv/orders/lines', OrderAddLineController::class);
 	Route::get('/tpv/orders', OrderGetCollectionController::class);
@@ -116,11 +117,7 @@ Route::middleware([
 	Route::put('/tpv/sales/{id}', SalePutController::class)->whereUuid('id');
 	Route::delete('/tpv/sales/{id}', SaleDeleteController::class)->whereUuid('id');
 
-	// ============================================
-	// Admin - Backoffice (CRUD completo)
-	// ============================================
 
-	// Familias
 	Route::get('/admin/families', FamilyGetCollectionController::class);
 	Route::get('/admin/families/{id}', FamilyGetController::class)->whereUuid('id');
 	Route::post('/admin/families', FamilyPostController::class);
@@ -129,28 +126,27 @@ Route::middleware([
 	Route::patch('/admin/families/{id}/activate', FamilyActivateController::class)->whereUuid('id');
 	Route::patch('/admin/families/{id}/deactivate', FamilyDeactivateController::class)->whereUuid('id');
 
-	// Impuestos
+
 	Route::get('/admin/taxes', TaxGetCollectionController::class);
 	Route::get('/admin/taxes/{id}', TaxGetController::class)->whereUuid('id');
 	Route::post('/admin/taxes', TaxPostController::class);
 	Route::put('/admin/taxes/{id}', TaxPutController::class)->whereUuid('id');
 	Route::delete('/admin/taxes/{id}', TaxDeleteController::class)->whereUuid('id');
 
-	// Zonas
+
 	Route::get('/admin/zones', ZoneGetCollectionController::class);
 	Route::get('/admin/zones/{id}', ZoneGetController::class)->whereUuid('id');
 	Route::post('/admin/zones', ZonePostController::class);
 	Route::put('/admin/zones/{id}', ZonePutController::class)->whereUuid('id');
 	Route::delete('/admin/zones/{id}', ZoneDeleteController::class)->whereUuid('id');
 
-	// Mesas
+
 	Route::get('/admin/tables', TableGetCollectionController::class);
 	Route::get('/admin/tables/{id}', TableGetController::class)->whereUuid('id');
 	Route::post('/admin/tables', TablePostController::class);
 	Route::put('/admin/tables/{id}', TablePutController::class)->whereUuid('id');
 	Route::delete('/admin/tables/{id}', TableDeleteController::class)->whereUuid('id');
 
-	// Productos
 	Route::get('/admin/products', ProductGetCollectionController::class);
 	Route::get('/admin/products/{id}', ProductGetController::class)->whereUuid('id');
 	Route::post('/admin/products', ProductPostController::class);
@@ -169,13 +165,11 @@ Route::middleware([
 	Route::get('/admin/restaurants', RestaurantAdminGetCollectionController::class);
 	Route::post('/admin/context/restaurant', AdminSelectRestaurantContextController::class);
 
-	// Restaurant management
 	Route::post('/admin/restaurants', RestaurantPostController::class);
 	Route::get('/admin/restaurants/{id}', RestaurantGetController::class)->whereUuid('id');
 	Route::put('/admin/restaurants/{id}', RestaurantPutController::class)->whereUuid('id');
 	Route::delete('/admin/restaurants/{id}', RestaurantDeleteController::class)->whereUuid('id');
 
-	// User management for restaurant
 	Route::get('/admin/restaurants/{uuid}/users', UserAdminGetCollectionController::class)->whereUuid('uuid');
 	Route::post('/admin/restaurants/{uuid}/users', UserAdminPostController::class)->whereUuid('uuid');
 	Route::put('/admin/restaurants/{uuid}/users/{userUuid}', UserAdminPutController::class)->whereUuid('uuid')->whereUuid('userUuid');
@@ -188,13 +182,11 @@ Route::middleware([
 	StartSession::class,
 	RequireSuperAdminSession::class,
 ])->group(function (): void {
-	// Superadmin restaurant management
 	Route::post('/superadmin/restaurants', RestaurantPostController::class);
 	Route::get('/superadmin/restaurants/{id}', RestaurantGetController::class)->whereUuid('id');
 	Route::put('/superadmin/restaurants/{id}', RestaurantPutController::class)->whereUuid('id');
 	Route::delete('/superadmin/restaurants/{id}', RestaurantDeleteController::class)->whereUuid('id');
 
-	// Superadmin user management for restaurant
 	Route::get('/superadmin/restaurants/{uuid}/users', UserAdminGetCollectionController::class)->whereUuid('uuid');
 	Route::post('/superadmin/restaurants/{uuid}/users', UserAdminPostController::class)->whereUuid('uuid');
 	Route::put('/superadmin/restaurants/{uuid}/users/{userUuid}', UserAdminPutController::class)->whereUuid('uuid')->whereUuid('userUuid');

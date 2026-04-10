@@ -21,8 +21,8 @@ class UpdateTax
         }
 
         $tax->update(
-            $name !== null ? TaxName::create($name) : null,
-            $percentage !== null ? TaxPercentage::create($percentage) : null
+            $name !== null ? TaxName::create($name) : null, // : null replace to : $tax->name; $tax->name
+            $percentage !== null ? TaxPercentage::create($percentage) : null // : null replace to : $tax->percentage
         );
         $this->taxRepository->save($tax);
 

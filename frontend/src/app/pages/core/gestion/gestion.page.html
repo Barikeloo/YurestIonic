@@ -14,9 +14,16 @@
 
         <section class="gestion-workspace">
           <div class="gestion-workspace-top">
-            <div class="gestion-workspace-title">{{ selectedRestaurant ? 'Gestion de ' + selectedRestaurant.name : 'Selecciona un restaurante' }}</div>
-            <div class="gestion-workspace-sub">
-              {{ selectedRestaurant ? selectedRestaurant.legalName + ' · ' + selectedRestaurant.taxId + ' · ' + selectedRestaurant.email : 'Aqui apareceran las entidades disponibles para su gestion.' }}
+            <div class="gestion-workspace-header">
+              <div>
+                <div class="gestion-workspace-title">{{ selectedRestaurant ? 'Gestion de ' + selectedRestaurant.name : 'Selecciona un restaurante' }}</div>
+                <div class="gestion-workspace-sub">
+                  {{ selectedRestaurant ? selectedRestaurant.legalName + ' · ' + selectedRestaurant.taxId + ' · ' + selectedRestaurant.email : 'Aqui apareceran las entidades disponibles para su gestion.' }}
+                </div>
+              </div>
+              <button class="btn-unlink-device" type="button" (click)="unlinkDevice()">
+                Desvincular dispositivo
+              </button>
             </div>
             <app-entity-tabs
               [entities]="managementEntities"
