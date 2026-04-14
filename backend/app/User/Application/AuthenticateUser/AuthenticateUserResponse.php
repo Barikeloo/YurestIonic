@@ -29,7 +29,7 @@ final readonly class AuthenticateUserResponse
             statusCode: 200,
             message: null,
             id: $user->id()->value(),
-            name: $user->name(),
+            name: $user->name()->value(),
             email: $user->email()->value(),
             role: $role,
             restaurant_id: $restaurantId,

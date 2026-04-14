@@ -33,8 +33,8 @@ class CreateUserTest extends TestCase
             ->once()
             ->with(Mockery::on(function (User $user) use ($hashedPassword) {
                 return $user->email()->value() === 'create@example.com'
-                    && $user->name() === 'Create User'
-                    && $user->passwordHash() === $hashedPassword;
+                    && $user->name()->value() === 'Create User'
+                    && $user->passwordHash()->value() === $hashedPassword;
             }));
 
         $createUser = new CreateUser($repository, $passwordHasher);

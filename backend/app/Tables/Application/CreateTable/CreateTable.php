@@ -16,7 +16,6 @@ class CreateTable
 
     public function __invoke(string $zoneId, string $name): CreateTableResponse
     {
-        // Validar que no exista otra mesa con el mismo nombre en esta zona
         $existingTable = $this->tableRepository->findByZoneIdAndName($zoneId, $name);
         if ($existingTable !== null) {
             throw new InvalidArgumentException('Ya existe una mesa con ese nombre en esta zona.');

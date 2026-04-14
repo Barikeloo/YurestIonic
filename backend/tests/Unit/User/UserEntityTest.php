@@ -26,11 +26,13 @@ class UserEntityTest extends TestCase
             '/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i',
             $user->id()->value()
         );
-        $this->assertSame('Test User', $user->name());
+        $this->assertInstanceOf(UserName::class, $user->name());
+        $this->assertSame('Test User', $user->name()->value());
         $this->assertSame('user@example.com', $user->email()->value());
+        $this->assertInstanceOf(PasswordHash::class, $user->passwordHash());
         $this->assertSame(
             '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
-            $user->passwordHash()
+            $user->passwordHash()->value()
         );
         $this->assertInstanceOf(DomainDateTime::class, $user->createdAt());
         $this->assertInstanceOf(DomainDateTime::class, $user->updatedAt());

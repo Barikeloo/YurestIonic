@@ -3,7 +3,6 @@
 namespace App\User\Infrastructure\Entrypoint\Http;
 
 use App\User\Application\AuthenticateForDeviceLink\AuthenticateForDeviceLink;
-use App\User\Application\AuthenticateForDeviceLink\AuthenticateForDeviceLinkResponse;
 use App\User\Infrastructure\Services\QuickAccessRecorder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

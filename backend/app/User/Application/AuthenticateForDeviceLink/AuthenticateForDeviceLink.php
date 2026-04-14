@@ -24,7 +24,7 @@ class AuthenticateForDeviceLink
             return AuthenticateForDeviceLinkResponse::notFound();
         }
 
-        $isValidPassword = $this->passwordHasher->verify($plainPassword, $user->passwordHash());
+        $isValidPassword = $this->passwordHasher->verify($plainPassword, $user->passwordHash()->value());
 
         if (! $isValidPassword) {
             return AuthenticateForDeviceLinkResponse::invalidCredentials();
@@ -50,7 +50,7 @@ class AuthenticateForDeviceLink
 
         return AuthenticateForDeviceLinkResponse::authenticated(
             $user->id()->value(),
-            $user->name(),
+            $user->name()->value(),
             $user->email()->value(),
             $restaurantId,
             $restaurantName,

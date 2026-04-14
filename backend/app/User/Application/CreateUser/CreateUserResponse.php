@@ -18,7 +18,7 @@ final readonly class CreateUserResponse
     {
         return new self(
             id: $user->id()->value(),
-            name: $user->name(),
+            name: $user->name()->value(),
             email: $user->email()->value(),
             createdAt: $user->createdAt()->format(\DateTimeInterface::ATOM),
             updatedAt: $user->updatedAt()->format(\DateTimeInterface::ATOM),

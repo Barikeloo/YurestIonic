@@ -24,7 +24,7 @@ class AuthenticateUser
             return AuthenticateUserResponse::notFound();
         }
 
-        $isValidPassword = $this->passwordHasher->verify($plainPassword, $user->passwordHash());
+        $isValidPassword = $this->passwordHasher->verify($plainPassword, $user->passwordHash()->value());
 
         if (! $isValidPassword) {
             return AuthenticateUserResponse::invalidCredentials();

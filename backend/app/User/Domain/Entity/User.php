@@ -74,9 +74,9 @@ class User
         return $this->id;
     }
 
-    public function name(): string
+    public function name(): UserName
     {
-        return $this->name->value();
+        return $this->name;
     }
 
     public function email(): Email
@@ -84,9 +84,9 @@ class User
         return $this->email;
     }
 
-    public function passwordHash(): string
+    public function passwordHash(): PasswordHash
     {
-        return $this->passwordHash->value();
+        return $this->passwordHash;
     }
 
     public function createdAt(): DomainDateTime

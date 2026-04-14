@@ -19,7 +19,7 @@ class GetMeResponse
     {
         return new self(
             $user->id()->value(),
-            $user->name(),
+            $user->name()->value(),
             $user->email()->value(),
             $role,
             $restaurantId,

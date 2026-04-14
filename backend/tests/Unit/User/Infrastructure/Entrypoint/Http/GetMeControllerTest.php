@@ -17,8 +17,8 @@ class GetMeControllerTest extends TestCase
 
         $session = $this->createMock(Session::class);
         $session->expects($this->once())->method('get')->with('auth_user_id')->willReturn(null);
-        $session->expects($this->once())->method('forget')->with('auth_user_id');
-        $request->method('session')->willReturn($session);
+        $session->expects($this->never())->method('forget');
+        $request->expects($this->once())->method('session')->willReturn($session);
 
         $response = $controller->__invoke($request);
         $this->assertInstanceOf(JsonResponse::class, $response);
@@ -29,14 +29,14 @@ class GetMeControllerTest extends TestCase
     public function test_returns_unauthenticated_if_getMe_returns_null(): void
     {
         $getMe = $this->createMock(GetMe::class);
-        $getMe->method('__invoke')->willReturn(null);
+        $getMe->expects($this->once())->method('__invoke')->with('user-id')->willReturn(null);
         $controller = new GetMeController($getMe);
         $request = $this->createMock(Request::class);
 
         $session = $this->createMock(Session::class);
         $session->expects($this->once())->method('get')->with('auth_user_id')->willReturn('user-id');
         $session->expects($this->once())->method('forget')->with('auth_user_id');
-        $request->method('session')->willReturn($session);
+        $request->expects($this->exactly(2))->method('session')->willReturn($session);
 
         $response = $controller->__invoke($request);
         $this->assertInstanceOf(JsonResponse::class, $response);
@@ -58,14 +58,14 @@ class GetMeControllerTest extends TestCase
         ]);
 
         $getMe = $this->createMock(GetMe::class);
-        $getMe->method('__invoke')->willReturn($getMeResponse);
+        $getMe->expects($this->once())->method('__invoke')->with('user-id')->willReturn($getMeResponse);
         $controller = new GetMeController($getMe);
         $request = $this->createMock(Request::class);
 
         $session = $this->createMock(Session::class);
         $session->expects($this->once())->method('get')->with('auth_user_id')->willReturn('user-id');
         $session->expects($this->never())->method('forget');
-        $request->method('session')->willReturn($session);
+        $request->expects($this->once())->method('session')->willReturn($session);
 
         $response = $controller->__invoke($request);
         $this->assertInstanceOf(JsonResponse::class, $response);

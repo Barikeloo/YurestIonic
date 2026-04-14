@@ -32,15 +32,19 @@ class GetQuickUsersControllerTest extends TestCase
         $getQuickUsers = $this->createMock(GetQuickUsers::class);
         $getQuickUsers->expects($this->once())
             ->method('__invoke')
-            ->with('device-123')
+            ->with('device-123', null)
             ->willReturn($getQuickUsersResponse);
 
         $controller = new GetQuickUsersController($getQuickUsers);
-        $request = $this->createMock(Request::class);
+        $request = $this->getMockBuilder(Request::class)
+            ->disableOriginalConstructor()
+            ->addMethods(['validate'])
+            ->getMock();
         $request->expects($this->once())
             ->method('validate')
             ->with([
                 'device_id' => ['required', 'string', 'max:100'],
+                'restaurant_uuid' => ['nullable', 'string', 'uuid'],
             ])
             ->willReturn(['device_id' => 'device-123']);
 
