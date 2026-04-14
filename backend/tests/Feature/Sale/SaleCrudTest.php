@@ -79,7 +79,7 @@ final class SaleCrudTest extends TestCase
 
         $session = ['auth_user_id' => $userUuid];
 
-        $createResponse = $this->withSession($session)->postJson('/api/sales', [
+        $createResponse = $this->withSession($session)->postJson('/api/tpv/sales', [
             'restaurant_id' => $restaurantUuid,
             'order_id' => $orderUuid,
             'opened_by_user_id' => $userUuid,
@@ -88,7 +88,7 @@ final class SaleCrudTest extends TestCase
         $createResponse->assertStatus(201);
         $saleId = $createResponse->json('id');
 
-        $this->withSession($session)->putJson("/api/sales/{$saleId}", [
+        $this->withSession($session)->putJson("/api/tpv/sales/{$saleId}", [
             'closed_by_user_id' => $userUuid,
             'ticket_number' => 1001,
         ])
@@ -165,7 +165,7 @@ final class SaleCrudTest extends TestCase
 
         $session = ['auth_user_id' => $userUuid];
 
-        $createResponse = $this->withSession($session)->postJson('/api/sales', [
+        $createResponse = $this->withSession($session)->postJson('/api/tpv/sales', [
             'restaurant_id' => $restaurantUuid,
             'order_id' => $orderUuid,
             'opened_by_user_id' => $userUuid,
@@ -242,20 +242,20 @@ final class SaleCrudTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $this->withSession($session)->getJson('/api/sales')
+        $this->withSession($session)->getJson('/api/tpv/sales')
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $saleId,
             ]);
 
-        $this->withSession($session)->getJson("/api/sales/{$saleId}")
+        $this->withSession($session)->getJson("/api/tpv/sales/{$saleId}")
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $saleId,
                 'restaurant_id' => $restaurantUuid,
             ]);
 
-        $this->withSession($session)->putJson("/api/sales/{$saleId}", [
+        $this->withSession($session)->putJson("/api/tpv/sales/{$saleId}", [
             'closed_by_user_id' => $userUuid,
             'ticket_number' => 1001,
         ])
@@ -267,10 +267,10 @@ final class SaleCrudTest extends TestCase
                 'total' => 2200,
             ]);
 
-        $this->withSession($session)->deleteJson("/api/sales/{$saleId}")
+        $this->withSession($session)->deleteJson("/api/tpv/sales/{$saleId}")
             ->assertStatus(204);
 
-        $this->withSession($session)->getJson("/api/sales/{$saleId}")
+        $this->withSession($session)->getJson("/api/tpv/sales/{$saleId}")
             ->assertStatus(404);
     }
 }

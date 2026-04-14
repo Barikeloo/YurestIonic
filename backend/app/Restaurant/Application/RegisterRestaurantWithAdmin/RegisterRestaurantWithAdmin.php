@@ -4,6 +4,10 @@ namespace App\Restaurant\Application\RegisterRestaurantWithAdmin;
 
 use App\Restaurant\Domain\Entity\Restaurant;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
+use App\Restaurant\Domain\ValueObject\RestaurantLegalName;
+use App\Restaurant\Domain\ValueObject\RestaurantName;
+use App\Restaurant\Domain\ValueObject\RestaurantPasswordHash;
+use App\Restaurant\Domain\ValueObject\RestaurantTaxId;
 use App\Shared\Domain\Interfaces\TransactionManagerInterface;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -40,11 +44,11 @@ final class RegisterRestaurantWithAdmin
 
         $restaurant = Restaurant::dddCreate(
             id: Uuid::generate(),
-            name: $restaurantName,
-            legalName: $legalName,
-            taxId: $taxId,
+            name: RestaurantName::create($restaurantName),
+            legalName: RestaurantLegalName::createNullable($legalName),
+            taxId: RestaurantTaxId::createNullable($taxId),
             email: $emailVO,
-            password: $hashedPassword,
+            password: RestaurantPasswordHash::create($hashedPassword),
         );
 
         $effectiveAdminName = $adminName;
@@ -66,7 +70,7 @@ final class RegisterRestaurantWithAdmin
 
         return RegisterRestaurantWithAdminResponse::create(
             restaurantId: $restaurant->getUuid()->value(),
-            restaurantName: $restaurant->getName(),
+            restaurantName: $restaurant->getName()->value(),
             adminEmail: $emailVO->value(),
             adminName: $effectiveAdminName,
             adminPin: $effectiveAdminPin,

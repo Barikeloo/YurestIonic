@@ -37,7 +37,7 @@ class GetAdminRestaurantCollection
             return GetAdminRestaurantCollectionResponse::linkedRestaurantNotFound();
         }
 
-        $taxId = $linkedRestaurant->getTaxId();
+        $taxId = $linkedRestaurant->getTaxId()?->value();
 
         if (! is_string($taxId) || $taxId === '') {
             return GetAdminRestaurantCollectionResponse::linkedRestaurantWithoutTaxId();
@@ -56,15 +56,15 @@ class GetAdminRestaurantCollection
     {
         usort(
             $restaurants,
-            static fn (Restaurant $left, Restaurant $right): int => strcmp($left->getName(), $right->getName()),
+            static fn (Restaurant $left, Restaurant $right): int => strcmp($left->getName()->value(), $right->getName()->value()),
         );
 
         return array_map(
             static fn (Restaurant $restaurant): array => [
                 'uuid' => $restaurant->getUuid()->value(),
-                'name' => $restaurant->getName(),
-                'legal_name' => $restaurant->getLegalName(),
-                'tax_id' => $restaurant->getTaxId(),
+                'name' => $restaurant->getName()->value(),
+                'legal_name' => $restaurant->getLegalName()?->value(),
+                'tax_id' => $restaurant->getTaxId()?->value(),
                 'email' => $restaurant->getEmail()->value(),
             ],
             $restaurants,

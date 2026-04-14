@@ -4,6 +4,10 @@ namespace App\Restaurant\Application\CreateRestaurant;
 
 use App\Restaurant\Domain\Entity\Restaurant;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
+use App\Restaurant\Domain\ValueObject\RestaurantLegalName;
+use App\Restaurant\Domain\ValueObject\RestaurantName;
+use App\Restaurant\Domain\ValueObject\RestaurantPasswordHash;
+use App\Restaurant\Domain\ValueObject\RestaurantTaxId;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -22,11 +26,11 @@ final class CreateRestaurant
     ): CreateRestaurantResponse {
         $restaurant = Restaurant::dddCreate(
             id: Uuid::generate(),
-            name: $name,
-            legalName: $legalName,
-            taxId: $taxId,
+            name: RestaurantName::create($name),
+            legalName: RestaurantLegalName::createNullable($legalName),
+            taxId: RestaurantTaxId::createNullable($taxId),
             email: Email::create($email),
-            password: $password, // TODO: hashear la contraseña
+            password: RestaurantPasswordHash::create($password),
         );
 
         $this->restaurantRepository->save($restaurant);

@@ -105,8 +105,11 @@
           placeholder="usuario@example.com"
           [disabled]="isSubmitting"
         />
-        <span *ngIf="form.get('email')?.hasError('required') && form.get('email')?.touched" class="error-text">
+        <span *ngIf="form.get('email')?.hasError('required') && (form.get('email')?.dirty || form.get('email')?.touched)" class="error-text">
           Email requerido
+        </span>
+        <span *ngIf="form.get('email')?.hasError('email') && (form.get('email')?.dirty || form.get('email')?.touched)" class="error-text">
+          Introduce un email válido
         </span>
       </div>
 

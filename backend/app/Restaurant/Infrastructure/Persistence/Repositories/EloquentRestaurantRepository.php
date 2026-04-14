@@ -4,6 +4,10 @@ namespace App\Restaurant\Infrastructure\Persistence\Repositories;
 
 use App\Restaurant\Domain\Entity\Restaurant;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
+use App\Restaurant\Domain\ValueObject\RestaurantLegalName;
+use App\Restaurant\Domain\ValueObject\RestaurantName;
+use App\Restaurant\Domain\ValueObject\RestaurantPasswordHash;
+use App\Restaurant\Domain\ValueObject\RestaurantTaxId;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Email;
@@ -20,11 +24,11 @@ final class EloquentRestaurantRepository implements RestaurantRepositoryInterfac
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $restaurant->getId()->value()],
             [
-                'name' => $restaurant->getName(),
-                'legal_name' => $restaurant->getLegalName(),
-                'tax_id' => $restaurant->getTaxId(),
+                'name' => $restaurant->getName()->value(),
+                'legal_name' => $restaurant->getLegalName()?->value(),
+                'tax_id' => $restaurant->getTaxId()?->value(),
                 'email' => $restaurant->getEmail()->value(),
-                'password' => $restaurant->getPassword(),
+                'password' => $restaurant->getPassword()->value(),
             ],
         );
     }
@@ -88,11 +92,11 @@ final class EloquentRestaurantRepository implements RestaurantRepositoryInterfac
         return Restaurant::hydrate(
             id: Uuid::create($model->uuid),
             uuid: Uuid::create($model->uuid),
-            name: $model->name,
-            legalName: $model->legal_name,
-            taxId: $model->tax_id,
+            name: RestaurantName::create($model->name),
+            legalName: RestaurantLegalName::createNullable($model->legal_name),
+            taxId: RestaurantTaxId::createNullable($model->tax_id),
             email: Email::create($model->email),
-            password: $model->password,
+            password: RestaurantPasswordHash::create($model->password),
             createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
             updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
             deletedAt: $model->deleted_at ? DomainDateTime::create($model->deleted_at->toDateTimeImmutable()) : null,

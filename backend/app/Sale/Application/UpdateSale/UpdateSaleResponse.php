@@ -27,9 +27,9 @@ final class UpdateSaleResponse
             order_id: $sale->getOrderId()->value(),
             opened_by_user_id: $sale->getOpenedByUserId()->value(),
             closed_by_user_id: $sale->getClosedByUserId()?->value(),
-            ticket_number: $sale->getTicketNumber(),
+            ticket_number: $sale->getTicketNumber()?->value(),
             value_date: $sale->getValueDate()->format('Y-m-d H:i:s'),
-            total: $sale->getTotal(),
+            total: $sale->getTotal()->value(),
         );
     }
 

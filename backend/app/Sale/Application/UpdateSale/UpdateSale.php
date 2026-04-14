@@ -4,6 +4,8 @@ namespace App\Sale\Application\UpdateSale;
 
 use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
+use App\Sale\Domain\ValueObject\SaleTicketNumber;
+use App\Sale\Domain\ValueObject\SaleTotal;
 use App\Shared\Domain\ValueObject\Uuid;
 use InvalidArgumentException;
 
@@ -37,15 +39,15 @@ final class UpdateSale
 
         $total = 0;
         foreach ($saleLines as $saleLine) {
-            $lineBase = $saleLine->getPrice() * $saleLine->getQuantity();
-            $lineWithTax = intdiv($lineBase * (100 + $saleLine->getTaxPercentage()), 100);
+            $lineBase = $saleLine->getPrice()->value() * $saleLine->getQuantity()->value();
+            $lineWithTax = intdiv($lineBase * (100 + $saleLine->getTaxPercentage()->value()), 100);
             $total += $lineWithTax;
         }
 
         $sale->close(
             closedByUserId: Uuid::create($closedByUserId),
-            ticketNumber: $ticketNumber,
-            total: $total,
+            ticketNumber: SaleTicketNumber::create($ticketNumber),
+            total: SaleTotal::create($total),
         );
 
         $this->saleRepository->save($sale);

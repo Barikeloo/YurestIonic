@@ -39,7 +39,7 @@ class AuthenticateUser
 
             if ($restaurant !== null) {
                 $restaurantId = $restaurant->getUuid()->value();
-                $restaurantName = $restaurant->getName();
+                $restaurantName = $restaurant->getName()->value();
             }
         }
 

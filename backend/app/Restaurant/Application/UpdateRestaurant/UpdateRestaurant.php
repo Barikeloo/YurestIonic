@@ -3,6 +3,10 @@
 namespace App\Restaurant\Application\UpdateRestaurant;
 
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
+use App\Restaurant\Domain\ValueObject\RestaurantLegalName;
+use App\Restaurant\Domain\ValueObject\RestaurantName;
+use App\Restaurant\Domain\ValueObject\RestaurantPasswordHash;
+use App\Restaurant\Domain\ValueObject\RestaurantTaxId;
 use App\Shared\Domain\ValueObject\Email;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
@@ -30,15 +34,15 @@ final class UpdateRestaurant
         }
 
         if ($name !== null) {
-            $restaurant->updateName($name);
+            $restaurant->updateName(RestaurantName::create($name));
         }
 
         if ($legalName !== null) {
-            $restaurant->updateLegalName($legalName);
+            $restaurant->updateLegalName(RestaurantLegalName::createNullable($legalName));
         }
 
         if ($taxId !== null) {
-            $restaurant->updateTaxId($taxId);
+            $restaurant->updateTaxId(RestaurantTaxId::createNullable($taxId));
         }
 
         if ($email !== null) {
@@ -49,7 +53,7 @@ final class UpdateRestaurant
 
         if ($plainPassword !== null) {
             $passwordHash = $this->passwordHasher->hash($plainPassword);
-            $restaurant->updatePassword($passwordHash);
+            $restaurant->updatePassword(RestaurantPasswordHash::create($passwordHash));
         }
 
         $this->restaurantRepository->save($restaurant);

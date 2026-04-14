@@ -4,6 +4,8 @@ namespace App\Sale\Domain\Entity;
 
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\Sale\Domain\ValueObject\SaleTicketNumber;
+use App\Sale\Domain\ValueObject\SaleTotal;
 
 final class Sale
 {
@@ -14,9 +16,9 @@ final class Sale
         private readonly Uuid $orderId,
         private readonly Uuid $openedByUserId,
         private ?Uuid $closedByUserId,
-        private ?int $ticketNumber,
+        private ?SaleTicketNumber $ticketNumber,
         private readonly DomainDateTime $valueDate,
-        private int $total,
+        private SaleTotal $total,
         private readonly DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
         private ?DomainDateTime $deletedAt = null,
@@ -38,7 +40,7 @@ final class Sale
             closedByUserId: null,
             ticketNumber: null,
             valueDate: DomainDateTime::now(),
-            total: 0,
+            total: SaleTotal::create(0),
             createdAt: DomainDateTime::now(),
             updatedAt: DomainDateTime::now(),
         );
@@ -51,9 +53,9 @@ final class Sale
         Uuid $orderId,
         Uuid $openedByUserId,
         ?Uuid $closedByUserId,
-        ?int $ticketNumber,
+        ?SaleTicketNumber $ticketNumber,
         DomainDateTime $valueDate,
-        int $total,
+        SaleTotal $total,
         DomainDateTime $createdAt,
         DomainDateTime $updatedAt,
         ?DomainDateTime $deletedAt = null,
@@ -74,7 +76,7 @@ final class Sale
         );
     }
 
-    public function close(Uuid $closedByUserId, int $ticketNumber, int $total): void
+    public function close(Uuid $closedByUserId, SaleTicketNumber $ticketNumber, SaleTotal $total): void
     {
         $this->closedByUserId = $closedByUserId;
         $this->ticketNumber = $ticketNumber;
@@ -112,7 +114,7 @@ final class Sale
         return $this->closedByUserId;
     }
 
-    public function getTicketNumber(): ?int
+    public function getTicketNumber(): ?SaleTicketNumber
     {
         return $this->ticketNumber;
     }
@@ -122,7 +124,7 @@ final class Sale
         return $this->valueDate;
     }
 
-    public function getTotal(): int
+    public function getTotal(): SaleTotal
     {
         return $this->total;
     }

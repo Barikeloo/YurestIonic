@@ -3,6 +3,8 @@
 namespace Tests\Unit\Sale;
 
 use App\Sale\Domain\Entity\Sale;
+use App\Sale\Domain\ValueObject\SaleTicketNumber;
+use App\Sale\Domain\ValueObject\SaleTotal;
 use App\Shared\Domain\ValueObject\Uuid;
 use PHPUnit\Framework\TestCase;
 
@@ -28,7 +30,7 @@ class SaleEntityTest extends TestCase
         $this->assertSame($orderId->value(), $sale->getOrderId()->value());
         $this->assertSame($userId->value(), $sale->getOpenedByUserId()->value());
         $this->assertNull($sale->getClosedByUserId());
-        $this->assertSame(0, $sale->getTotal());
+        $this->assertSame(0, $sale->getTotal()->value());
     }
 
     public function test_ddd_create_generates_timestamps(): void
@@ -60,10 +62,10 @@ class SaleEntityTest extends TestCase
         $closedBy = Uuid::generate();
 
         $sale = Sale::dddCreate($uuid, $restaurantId, $orderId, $openedBy);
-        $sale->close($closedBy, 1001, 5500);
+        $sale->close($closedBy, SaleTicketNumber::create(1001), SaleTotal::create(5500));
 
-        $this->assertSame(1001, $sale->getTicketNumber());
+        $this->assertSame(1001, $sale->getTicketNumber()?->value());
         $this->assertSame($closedBy->value(), $sale->getClosedByUserId()?->value());
-        $this->assertSame(5500, $sale->getTotal());
+        $this->assertSame(5500, $sale->getTotal()->value());
     }
 }

@@ -2,6 +2,10 @@
 
 namespace Tests\Unit\Restaurant;
 
+use App\Restaurant\Domain\ValueObject\RestaurantLegalName;
+use App\Restaurant\Domain\ValueObject\RestaurantName;
+use App\Restaurant\Domain\ValueObject\RestaurantPasswordHash;
+use App\Restaurant\Domain\ValueObject\RestaurantTaxId;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Restaurant\Domain\Entity\Restaurant;
@@ -16,18 +20,18 @@ class RestaurantEntityTest extends TestCase
 
         $restaurant = Restaurant::dddCreate(
             $uuid,
-            'Test Restaurant',
-            'Test Restaurant S.L.',
-            'B12345678',
+            RestaurantName::create('Test Restaurant'),
+            RestaurantLegalName::create('Test Restaurant S.L.'),
+            RestaurantTaxId::create('B12345678'),
             $email,
-            '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
+            RestaurantPasswordHash::create('$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi')
         );
 
         $this->assertInstanceOf(Restaurant::class, $restaurant);
         $this->assertSame($uuid->value(), $restaurant->getId()->value());
-        $this->assertSame('Test Restaurant', $restaurant->getName());
-        $this->assertSame('Test Restaurant S.L.', $restaurant->getLegalName());
-        $this->assertSame('B12345678', $restaurant->getTaxId());
+        $this->assertSame('Test Restaurant', $restaurant->getName()->value());
+        $this->assertSame('Test Restaurant S.L.', $restaurant->getLegalName()?->value());
+        $this->assertSame('B12345678', $restaurant->getTaxId()?->value());
         $this->assertSame('restaurant@example.com', $restaurant->getEmail()->value());
     }
 
@@ -38,11 +42,11 @@ class RestaurantEntityTest extends TestCase
 
         $restaurant = Restaurant::dddCreate(
             $uuid,
-            'Restaurant',
-            'Restaurant S.L.',
-            'B12345678',
+            RestaurantName::create('Restaurant'),
+            RestaurantLegalName::create('Restaurant S.L.'),
+            RestaurantTaxId::create('B12345678'),
             $email,
-            'hashed_password'
+            RestaurantPasswordHash::create('$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi')
         );
 
         $this->assertSame($uuid->value(), $restaurant->getId()->value());
@@ -56,11 +60,11 @@ class RestaurantEntityTest extends TestCase
 
         $restaurant = Restaurant::dddCreate(
             $uuid,
-            'Restaurant',
-            'Restaurant S.L.',
-            'B12345678',
+            RestaurantName::create('Restaurant'),
+            RestaurantLegalName::create('Restaurant S.L.'),
+            RestaurantTaxId::create('B12345678'),
             $email,
-            'hashed_password'
+            RestaurantPasswordHash::create('$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi')
         );
 
         $afterCreation = now();

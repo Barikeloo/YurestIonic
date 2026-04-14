@@ -4,6 +4,8 @@ namespace App\Sale\Infrastructure\Persistence\Repositories;
 
 use App\Sale\Domain\Entity\Sale;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
+use App\Sale\Domain\ValueObject\SaleTicketNumber;
+use App\Sale\Domain\ValueObject\SaleTotal;
 use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrder;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
@@ -34,9 +36,9 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
                 'user_id' => $openedByUserId,
                 'opened_by_user_id' => $openedByUserId,
                 'closed_by_user_id' => $closedByUserId,
-                'ticket_number' => $sale->getTicketNumber(),
+                'ticket_number' => $sale->getTicketNumber()?->value(),
                 'value_date' => $sale->getValueDate()->value(),
-                'total' => $sale->getTotal(),
+                'total' => $sale->getTotal()->value(),
             ],
         );
     }
@@ -101,9 +103,9 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
             orderId: Uuid::create($orderUuid),
             openedByUserId: Uuid::create($openedByUserUuid),
             closedByUserId: $closedByUserUuid !== null ? Uuid::create($closedByUserUuid) : null,
-            ticketNumber: $model->ticket_number,
+            ticketNumber: $model->ticket_number !== null ? SaleTicketNumber::create((int) $model->ticket_number) : null,
             valueDate: DomainDateTime::create($model->value_date->toDateTimeImmutable()),
-            total: $model->total,
+            total: SaleTotal::create((int) $model->total),
             createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
             updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
             deletedAt: $model->deleted_at ? DomainDateTime::create($model->deleted_at->toDateTimeImmutable()) : null,

@@ -213,6 +213,37 @@
   }
 }
 
+.email-hint {
+  color: var(--gray-200);
+  border-color: rgba(255, 212, 138, 0.35);
+  background: rgba(255, 212, 138, 0.08);
+}
+
+.email-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .email-hint {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin: 0;
+    border-width: 0;
+    overflow: hidden;
+    transition: opacity 0.15s ease, max-height 0.15s ease, padding 0.15s ease, border-width 0.15s ease;
+    pointer-events: none;
+  }
+
+  &:focus-within .email-hint {
+    opacity: 1;
+    max-height: 64px;
+    padding: 8px 10px;
+    border-width: 1px;
+  }
+}
+
 .form-actions {
   display: flex;
   gap: 12px;

@@ -2,6 +2,10 @@
 
 namespace App\Restaurant\Domain\Entity;
 
+use App\Restaurant\Domain\ValueObject\RestaurantLegalName;
+use App\Restaurant\Domain\ValueObject\RestaurantName;
+use App\Restaurant\Domain\ValueObject\RestaurantPasswordHash;
+use App\Restaurant\Domain\ValueObject\RestaurantTaxId;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -11,11 +15,11 @@ final class Restaurant
     private function __construct(
         private readonly Uuid $id,
         private readonly Uuid $uuid,
-        private string $name,
-        private ?string $legalName,
-        private ?string $taxId,
+        private RestaurantName $name,
+        private ?RestaurantLegalName $legalName,
+        private ?RestaurantTaxId $taxId,
         private Email $email,
-        private string $password,
+        private RestaurantPasswordHash $password,
         private readonly DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
         private ?DomainDateTime $deletedAt = null,
@@ -24,11 +28,11 @@ final class Restaurant
 
     public static function dddCreate(
         Uuid $id,
-        string $name,
-        ?string $legalName,
-        ?string $taxId,
+        RestaurantName $name,
+        ?RestaurantLegalName $legalName,
+        ?RestaurantTaxId $taxId,
         Email $email,
-        string $password,
+        RestaurantPasswordHash $password,
     ): self {
         return new self(
             id: $id,
@@ -46,11 +50,11 @@ final class Restaurant
     public static function hydrate(
         Uuid $id,
         Uuid $uuid,
-        string $name,
-        ?string $legalName,
-        ?string $taxId,
+        RestaurantName $name,
+        ?RestaurantLegalName $legalName,
+        ?RestaurantTaxId $taxId,
         Email $email,
-        string $password,
+        RestaurantPasswordHash $password,
         DomainDateTime $createdAt,
         DomainDateTime $updatedAt,
         ?DomainDateTime $deletedAt = null,
@@ -69,19 +73,19 @@ final class Restaurant
         );
     }
 
-    public function updateName(string $name): void
+    public function updateName(RestaurantName $name): void
     {
         $this->name = $name;
         $this->updatedAt = DomainDateTime::now();
     }
 
-    public function updateLegalName(?string $legalName): void
+    public function updateLegalName(?RestaurantLegalName $legalName): void
     {
         $this->legalName = $legalName;
         $this->updatedAt = DomainDateTime::now();
     }
 
-    public function updateTaxId(?string $taxId): void
+    public function updateTaxId(?RestaurantTaxId $taxId): void
     {
         $this->taxId = $taxId;
         $this->updatedAt = DomainDateTime::now();
@@ -93,7 +97,7 @@ final class Restaurant
         $this->updatedAt = DomainDateTime::now();
     }
 
-    public function updatePassword(string $password): void
+    public function updatePassword(RestaurantPasswordHash $password): void
     {
         $this->password = $password;
         $this->updatedAt = DomainDateTime::now();
@@ -109,17 +113,17 @@ final class Restaurant
         return $this->uuid;
     }
 
-    public function getName(): string
+    public function getName(): RestaurantName
     {
         return $this->name;
     }
 
-    public function getLegalName(): ?string
+    public function getLegalName(): ?RestaurantLegalName
     {
         return $this->legalName;
     }
 
-    public function getTaxId(): ?string
+    public function getTaxId(): ?RestaurantTaxId
     {
         return $this->taxId;
     }
@@ -129,7 +133,7 @@ final class Restaurant
         return $this->email;
     }
 
-    public function getPassword(): string
+    public function getPassword(): RestaurantPasswordHash
     {
         return $this->password;
     }

@@ -6,6 +6,9 @@ use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Sale\Domain\Entity\SaleLine;
 use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
+use App\Sale\Domain\ValueObject\SaleLinePrice;
+use App\Sale\Domain\ValueObject\SaleLineQuantity;
+use App\Sale\Domain\ValueObject\SaleLineTaxPercentage;
 use App\Shared\Domain\ValueObject\Uuid;
 use InvalidArgumentException;
 
@@ -50,9 +53,9 @@ final class AddLineToSale
             orderLineId: Uuid::create($orderLineId),
             productId: Uuid::create($productId),
             userId: Uuid::create($userId),
-            quantity: $quantity,
-            price: $price,
-            taxPercentage: $taxPercentage,
+            quantity: SaleLineQuantity::create($quantity),
+            price: SaleLinePrice::create($price),
+            taxPercentage: SaleLineTaxPercentage::create($taxPercentage),
         );
 
         $this->saleLineRepository->save($saleLine);

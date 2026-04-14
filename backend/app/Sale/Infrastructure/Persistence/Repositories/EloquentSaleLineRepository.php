@@ -4,6 +4,9 @@ namespace App\Sale\Infrastructure\Persistence\Repositories;
 
 use App\Sale\Domain\Entity\SaleLine;
 use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
+use App\Sale\Domain\ValueObject\SaleLinePrice;
+use App\Sale\Domain\ValueObject\SaleLineQuantity;
+use App\Sale\Domain\ValueObject\SaleLineTaxPercentage;
 use App\Sale\Infrastructure\Persistence\Models\EloquentSaleLine;
 use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrderLine;
@@ -35,9 +38,9 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
                 'order_line_id' => $orderLineId,
                 'product_id' => $productId,
                 'user_id' => $userId,
-                'quantity' => $saleLine->getQuantity(),
-                'price' => $saleLine->getPrice(),
-                'tax_percentage' => $saleLine->getTaxPercentage(),
+                'quantity' => $saleLine->getQuantity()->value(),
+                'price' => $saleLine->getPrice()->value(),
+                'tax_percentage' => $saleLine->getTaxPercentage()->value(),
             ],
         );
     }
@@ -90,9 +93,9 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
             orderLineId: Uuid::create($orderLineUuid),
             productId: Uuid::create($productUuid),
             userId: Uuid::create($userUuid),
-            quantity: $model->quantity,
-            price: $model->price,
-            taxPercentage: $model->tax_percentage,
+            quantity: SaleLineQuantity::create((int) $model->quantity),
+            price: SaleLinePrice::create((int) $model->price),
+            taxPercentage: SaleLineTaxPercentage::create((int) $model->tax_percentage),
             createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
             updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
             deletedAt: $model->deleted_at ? DomainDateTime::create($model->deleted_at->toDateTimeImmutable()) : null,

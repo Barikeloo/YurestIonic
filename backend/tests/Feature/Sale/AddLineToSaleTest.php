@@ -15,7 +15,7 @@ class AddLineToSaleTest extends TestCase
     {
         $tenant = $this->createTenantSession();
 
-        $response = $this->withSession($tenant['session'])->postJson('/api/sales/lines', [
+        $response = $this->withSession($tenant['session'])->postJson('/api/tpv/sales/lines', [
             'restaurant_id' => $tenant['restaurant_uuid'],
             'sale_id' => 'not-a-uuid',
             'order_line_id' => 'not-a-uuid',
@@ -33,7 +33,7 @@ class AddLineToSaleTest extends TestCase
     {
         $tenant = $this->createTenantSession();
 
-        $response = $this->withSession($tenant['session'])->postJson('/api/sales/lines', [
+        $response = $this->withSession($tenant['session'])->postJson('/api/tpv/sales/lines', [
             'restaurant_id' => $tenant['restaurant_uuid'],
             'sale_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
             'order_line_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
@@ -51,7 +51,7 @@ class AddLineToSaleTest extends TestCase
     {
         $tenant = $this->createTenantSession();
 
-        $response = $this->withSession($tenant['session'])->postJson('/api/sales/lines', [
+        $response = $this->withSession($tenant['session'])->postJson('/api/tpv/sales/lines', [
             'restaurant_id' => $tenant['restaurant_uuid'],
         ]);
 
@@ -160,7 +160,7 @@ class AddLineToSaleTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        $response = $this->withSession($tenant['session'])->postJson('/api/sales/lines', [
+        $response = $this->withSession($tenant['session'])->postJson('/api/tpv/sales/lines', [
             'restaurant_id' => $restaurantUuid,
             'sale_id' => $saleUuid,
             'order_line_id' => $orderLineUuid,

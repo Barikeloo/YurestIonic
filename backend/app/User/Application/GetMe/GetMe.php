@@ -31,7 +31,7 @@ class GetMe
             $restaurant = $this->restaurantRepository->findByInternalId($restaurantId);
             if ($restaurant !== null) {
                 $restaurantUuid = $restaurant->getUuid()->value();
-                $restaurantName = $restaurant->getName();
+                $restaurantName = $restaurant->getName()->value();
             }
         }
 

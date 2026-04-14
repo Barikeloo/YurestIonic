@@ -27,9 +27,9 @@ final class CreateSaleResponse
             orderId: $sale->getOrderId()->value(),
             openedByUserId: $sale->getOpenedByUserId()->value(),
             closedByUserId: $sale->getClosedByUserId()?->value(),
-            ticketNumber: $sale->getTicketNumber(),
+            ticketNumber: $sale->getTicketNumber()?->value(),
             valueDate: $sale->getValueDate()->format('Y-m-d H:i:s'),
-            total: $sale->getTotal(),
+            total: $sale->getTotal()->value(),
         );
     }
 

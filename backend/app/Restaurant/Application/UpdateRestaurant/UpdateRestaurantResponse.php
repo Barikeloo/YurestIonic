@@ -9,8 +9,8 @@ final class UpdateRestaurantResponse
     public function __construct(
         public readonly string $id,
         public readonly string $name,
-        public readonly string $legal_name,
-        public readonly string $tax_id,
+        public readonly ?string $legal_name,
+        public readonly ?string $tax_id,
         public readonly string $email,
     ) {}
 
@@ -18,9 +18,9 @@ final class UpdateRestaurantResponse
     {
         return new self(
             id: $restaurant->getId()->value(),
-            name: $restaurant->getName(),
-            legal_name: $restaurant->getLegalName(),
-            tax_id: $restaurant->getTaxId(),
+            name: $restaurant->getName()->value(),
+            legal_name: $restaurant->getLegalName()?->value(),
+            tax_id: $restaurant->getTaxId()?->value(),
             email: $restaurant->getEmail()->value(),
         );
     }

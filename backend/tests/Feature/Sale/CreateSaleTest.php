@@ -13,7 +13,7 @@ class CreateSaleTest extends TestCase
     {
         $tenant = $this->createTenantSession();
 
-        $response = $this->withSession($tenant['session'])->postJson('/api/sales', [
+        $response = $this->withSession($tenant['session'])->postJson('/api/tpv/sales', [
             'restaurant_id' => $tenant['restaurant_uuid'],
             'order_id' => 'not-a-uuid',
             'opened_by_user_id' => 'not-a-uuid',
@@ -27,7 +27,7 @@ class CreateSaleTest extends TestCase
     {
         $tenant = $this->createTenantSession();
 
-        $response = $this->withSession($tenant['session'])->postJson('/api/sales', [
+        $response = $this->withSession($tenant['session'])->postJson('/api/tpv/sales', [
             'restaurant_id' => $tenant['restaurant_uuid'],
             'order_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
             'opened_by_user_id' => 'invalid-uuid',
@@ -41,7 +41,7 @@ class CreateSaleTest extends TestCase
     {
         $tenant = $this->createTenantSession();
 
-        $response = $this->withSession($tenant['session'])->postJson('/api/sales', [
+        $response = $this->withSession($tenant['session'])->postJson('/api/tpv/sales', [
             'restaurant_id' => $tenant['restaurant_uuid'],
         ]);
 

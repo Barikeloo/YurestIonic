@@ -75,13 +75,16 @@
 
       <div class="form-group">
         <label class="form-label">Email</label>
-        <input
-          type="email"
-          formControlName="email"
-          class="form-input"
-          placeholder="contacto@restaurant.com"
-          [disabled]="isSubmitting || modalData.mode === 'edit'"
-        />
+        <div class="email-input-wrapper">
+          <input
+            type="email"
+            formControlName="email"
+            class="form-input"
+            placeholder="contacto@restaurant.com"
+            [disabled]="isSubmitting || modalData.mode === 'edit'"
+          />
+          <div *ngIf="modalData.mode === 'create'" class="field-hint email-hint">El correo no puede contener caracteres especiales como ñ o ç.</div>
+        </div>
         <ion-text *ngIf="form.get('email')?.hasError('required') && form.get('email')?.touched" class="error-text">
           Email requerido
         </ion-text>

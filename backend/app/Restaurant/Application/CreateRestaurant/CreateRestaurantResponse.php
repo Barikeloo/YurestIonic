@@ -20,9 +20,9 @@ final class CreateRestaurantResponse
         return new self(
             id: $restaurant->getId()->value(),
             uuid: $restaurant->getUuid()->value(),
-            name: $restaurant->getName(),
-            legalName: $restaurant->getLegalName(),
-            taxId: $restaurant->getTaxId(),
+            name: $restaurant->getName()->value(),
+            legalName: $restaurant->getLegalName()?->value(),
+            taxId: $restaurant->getTaxId()?->value(),
             email: $restaurant->getEmail()->value(),
         );
     }

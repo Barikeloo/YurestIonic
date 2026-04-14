@@ -25,9 +25,9 @@ final class AddLineToSaleResponse
             saleId: $saleLine->getSaleId()->value(),
             orderLineId: $saleLine->getOrderLineId()->value(),
             productId: $saleLine->getProductId()->value(),
-            quantity: $saleLine->getQuantity(),
-            price: $saleLine->getPrice(),
-            taxPercentage: $saleLine->getTaxPercentage(),
+            quantity: $saleLine->getQuantity()->value(),
+            price: $saleLine->getPrice()->value(),
+            taxPercentage: $saleLine->getTaxPercentage()->value(),
         );
     }
 
