@@ -2,8 +2,10 @@
 
 namespace App\SuperAdmin\Application\AuthenticateSuperAdmin;
 
+use App\Shared\Domain\ValueObject\Email;
 use App\SuperAdmin\Domain\Interfaces\SuperAdminRepositoryInterface;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
+use InvalidArgumentException;
 
 final class AuthenticateSuperAdmin
 {
@@ -14,20 +16,24 @@ final class AuthenticateSuperAdmin
 
     public function __invoke(string $email, string $plainPassword): AuthenticateSuperAdminResponse
     {
-        $superAdmin = $this->superAdminRepository->findByEmail($email);
+        try {
+            $superAdmin = $this->superAdminRepository->findByEmail(Email::create($email));
+        } catch (InvalidArgumentException) {
+            return AuthenticateSuperAdminResponse::invalidCredentials();
+        }
 
         if ($superAdmin === null) {
             return AuthenticateSuperAdminResponse::invalidCredentials();
         }
 
-        if (! $this->passwordHasher->verify($plainPassword, $superAdmin->passwordHash())) {
+        if (! $this->passwordHasher->verify($plainPassword, $superAdmin->passwordHash()->value())) {
             return AuthenticateSuperAdminResponse::invalidCredentials();
         }
 
         return AuthenticateSuperAdminResponse::success(
-            $superAdmin->id(),
-            $superAdmin->name(),
-            $superAdmin->email(),
+            $superAdmin->id()->value(),
+            $superAdmin->name()->value(),
+            $superAdmin->email()->value(),
         );
     }
 }

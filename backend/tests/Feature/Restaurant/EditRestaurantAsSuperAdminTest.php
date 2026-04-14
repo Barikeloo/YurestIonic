@@ -19,7 +19,7 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
         parent::setUp();
 
         // Create superadmin test user
-        $this->superAdminUuid = 'a0000000-0000-0000-0000-000000000001';
+        $this->superAdminUuid = 'a0000000-0000-4000-8000-000000000001';
         $this->restaurantUuid = '11111111-1111-4111-8111-111111111111';
         EloquentSuperAdmin::create([
             'uuid' => $this->superAdminUuid,

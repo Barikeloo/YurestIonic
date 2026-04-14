@@ -2,7 +2,9 @@
 
 namespace App\SuperAdmin\Application\GetSuperAdminMe;
 
+use App\Shared\Domain\ValueObject\Uuid;
 use App\SuperAdmin\Domain\Interfaces\SuperAdminRepositoryInterface;
+use InvalidArgumentException;
 
 final class GetSuperAdminMe
 {
@@ -16,16 +18,20 @@ final class GetSuperAdminMe
             return GetSuperAdminMeResponse::notAuthenticated();
         }
 
-        $superAdmin = $this->superAdminRepository->findById($superAdminId);
+        try {
+            $superAdmin = $this->superAdminRepository->findById(Uuid::create($superAdminId));
+        } catch (InvalidArgumentException) {
+            return GetSuperAdminMeResponse::notAuthenticated();
+        }
 
         if ($superAdmin === null) {
             return GetSuperAdminMeResponse::notAuthenticated();
         }
 
         return GetSuperAdminMeResponse::success(
-            $superAdmin->id(),
-            $superAdmin->name(),
-            $superAdmin->email(),
+            $superAdmin->id()->value(),
+            $superAdmin->name()->value(),
+            $superAdmin->email()->value(),
         );
     }
 }
