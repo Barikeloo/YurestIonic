@@ -4,6 +4,7 @@ namespace App\Tables\Infrastructure\Persistence\Repositories;
 
 use App\Tables\Domain\Entity\Table;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
+use App\Tables\Domain\ValueObject\ZoneId;
 use App\Tables\Infrastructure\Persistence\Models\EloquentTable;
 use App\Zone\Infrastructure\Persistence\Models\EloquentZone;
 
@@ -15,7 +16,7 @@ class EloquentTableRepository implements TableRepositoryInterface
 
     public function save(Table $table): void
     {
-        $zone = EloquentZone::query()->where('uuid', $table->zoneId())->firstOrFail();
+        $zone = EloquentZone::query()->where('uuid', $table->zoneId()->value())->firstOrFail();
 
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $table->id()->value()],
@@ -80,12 +81,12 @@ class EloquentTableRepository implements TableRepositoryInterface
         return (bool) $model->delete();
     }
 
-    public function findByZoneIdAndName(string $zoneId, string $name, ?string $excludeId = null): ?Table
+    public function findByZoneIdAndName(ZoneId $zoneId, string $name, ?string $excludeId = null): ?Table
     {
         $query = $this->model->newQuery()
             ->with('zone')
             ->whereHas('zone', function ($query) use ($zoneId) {
-                $query->where('uuid', $zoneId);
+                $query->where('uuid', $zoneId->value());
             })
             ->whereRaw('LOWER(name) = LOWER(?)', [$name]);
 

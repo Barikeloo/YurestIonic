@@ -18,7 +18,7 @@ final readonly class ListTablesItemResponse
     {
         return new self(
             id: $table->id()->value(),
-            zoneId: $table->zoneId(),
+            zoneId: $table->zoneId()->value(),
             name: $table->name(),
             createdAt: $table->createdAt()->format(\DateTimeInterface::ATOM),
             updatedAt: $table->updatedAt()->format(\DateTimeInterface::ATOM),

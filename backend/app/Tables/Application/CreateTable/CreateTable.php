@@ -2,10 +2,10 @@
 
 namespace App\Tables\Application\CreateTable;
 
-use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Entity\Table;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
 use App\Tables\Domain\ValueObject\TableName;
+use App\Tables\Domain\ValueObject\ZoneId;
 use InvalidArgumentException;
 
 class CreateTable
@@ -16,13 +16,15 @@ class CreateTable
 
     public function __invoke(string $zoneId, string $name): CreateTableResponse
     {
-        $existingTable = $this->tableRepository->findByZoneIdAndName($zoneId, $name);
+        $zoneIdVO = ZoneId::create($zoneId);
+
+        $existingTable = $this->tableRepository->findByZoneIdAndName($zoneIdVO, $name);
         if ($existingTable !== null) {
             throw new InvalidArgumentException('Ya existe una mesa con ese nombre en esta zona.');
         }
 
         $table = Table::dddCreate(
-            Uuid::create($zoneId),
+            $zoneIdVO,
             TableName::create($name),
         );
 

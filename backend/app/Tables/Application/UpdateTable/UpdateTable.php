@@ -2,9 +2,9 @@
 
 namespace App\Tables\Application\UpdateTable;
 
-use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
 use App\Tables\Domain\ValueObject\TableName;
+use App\Tables\Domain\ValueObject\ZoneId;
 use InvalidArgumentException;
 
 class UpdateTable
@@ -21,14 +21,16 @@ class UpdateTable
             return null;
         }
 
+        $zoneIdVO = ZoneId::create($zoneId);
+
         // Validar que no exista otra mesa con el mismo nombre en esta zona (excluyendo la mesa actual)
-        $existingTable = $this->tableRepository->findByZoneIdAndName($zoneId, $name, $id);
+        $existingTable = $this->tableRepository->findByZoneIdAndName($zoneIdVO, $name, $id);
         if ($existingTable !== null) {
             throw new InvalidArgumentException('Ya existe una mesa con ese nombre en esta zona.');
         }
 
         $table->update(
-            Uuid::create($zoneId),
+            $zoneIdVO,
             TableName::create($name),
         );
 
