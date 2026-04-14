@@ -23,12 +23,12 @@ final readonly class GetProductResponse
     {
         return new self(
             id: $product->id()->value(),
-            familyId: $product->familyId(),
-            taxId: $product->taxId(),
-            imageSrc: $product->imageSrc(),
-            name: $product->name(),
-            price: $product->price(),
-            stock: $product->stock(),
+            familyId: $product->familyId()->value(),
+            taxId: $product->taxId()->value(),
+            imageSrc: $product->imageSrc()->value(),
+            name: $product->name()->value(),
+            price: $product->price()->value(),
+            stock: $product->stock()->value(),
             active: $product->isActive(),
             createdAt: $product->createdAt()->format(\DateTimeInterface::ATOM),
             updatedAt: $product->updatedAt()->format(\DateTimeInterface::ATOM),

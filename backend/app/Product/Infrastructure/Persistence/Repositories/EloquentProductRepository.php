@@ -16,8 +16,8 @@ class EloquentProductRepository implements ProductRepositoryInterface
 
     public function save(Product $product): void
     {
-        $family = EloquentFamily::query()->where('uuid', $product->familyId())->firstOrFail();
-        $tax = EloquentTax::query()->where('uuid', $product->taxId())->firstOrFail();
+        $family = EloquentFamily::query()->where('uuid', $product->familyId()->value())->firstOrFail();
+        $tax = EloquentTax::query()->where('uuid', $product->taxId()->value())->firstOrFail();
 
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $product->id()->value()],
@@ -25,10 +25,10 @@ class EloquentProductRepository implements ProductRepositoryInterface
                 'restaurant_id' => $family->restaurant_id,
                 'family_id' => $family->id,
                 'tax_id' => $tax->id,
-                'image_src' => $product->imageSrc(),
-                'name' => $product->name(),
-                'price' => $product->price(),
-                'stock' => $product->stock(),
+                'image_src' => $product->imageSrc()->value(),
+                'name' => $product->name()->value(),
+                'price' => $product->price()->value(),
+                'stock' => $product->stock()->value(),
                 'active' => $product->isActive(),
                 'created_at' => $product->createdAt()->value(),
                 'updated_at' => $product->updatedAt()->value(),

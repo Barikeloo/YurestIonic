@@ -40,7 +40,9 @@ class GetAdminRestaurantCollection
         $taxId = $linkedRestaurant->getTaxId()?->value();
 
         if (! is_string($taxId) || $taxId === '') {
-            return GetAdminRestaurantCollectionResponse::linkedRestaurantWithoutTaxId();
+            return GetAdminRestaurantCollectionResponse::success(
+                $this->mapRestaurants([$linkedRestaurant]),
+            );
         }
 
         return GetAdminRestaurantCollectionResponse::success(

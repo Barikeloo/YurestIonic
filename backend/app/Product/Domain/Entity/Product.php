@@ -115,34 +115,34 @@ class Product
         return $this->id;
     }
 
-    public function familyId(): string
+    public function familyId(): Uuid
     {
-        return $this->familyId->value();
+        return $this->familyId;
     }
 
-    public function taxId(): string
+    public function taxId(): Uuid
     {
-        return $this->taxId->value();
+        return $this->taxId;
     }
 
-    public function imageSrc(): ?string
+    public function imageSrc(): ProductImageSrc
     {
-        return $this->imageSrc->value();
+        return $this->imageSrc;
     }
 
-    public function name(): string
+    public function name(): ProductName
     {
-        return $this->name->value();
+        return $this->name;
     }
 
-    public function price(): int
+    public function price(): ProductPrice
     {
-        return $this->price->value();
+        return $this->price;
     }
 
-    public function stock(): int
+    public function stock(): ProductStock
     {
-        return $this->stock->value();
+        return $this->stock;
     }
 
     public function isActive(): bool

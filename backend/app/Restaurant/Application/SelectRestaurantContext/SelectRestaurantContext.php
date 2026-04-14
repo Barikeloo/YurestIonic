@@ -27,7 +27,7 @@ class SelectRestaurantContext
         if ($isSuperAdmin) {
             return SelectRestaurantContextResponse::success(
                 $targetRestaurant->getUuid()->value(),
-                $targetRestaurant->getName(),
+                $targetRestaurant->getName()->value(),
             );
         }
 
@@ -47,19 +47,26 @@ class SelectRestaurantContext
             return SelectRestaurantContextResponse::linkedRestaurantNotFound();
         }
 
-        $linkedTaxId = $linkedRestaurant->getTaxId();
+        $linkedTaxId = $linkedRestaurant->getTaxId()?->value();
 
         if (! is_string($linkedTaxId) || $linkedTaxId === '') {
-            return SelectRestaurantContextResponse::linkedRestaurantWithoutTaxId();
+            if ($targetRestaurant->getUuid()->value() !== $linkedRestaurant->getUuid()->value()) {
+                return SelectRestaurantContextResponse::forbidden();
+            }
+
+            return SelectRestaurantContextResponse::success(
+                $targetRestaurant->getUuid()->value(),
+                $targetRestaurant->getName()->value(),
+            );
         }
 
-        if ($targetRestaurant->getTaxId() !== $linkedTaxId) {
+        if ($targetRestaurant->getTaxId()?->value() !== $linkedTaxId) {
             return SelectRestaurantContextResponse::forbidden();
         }
 
         return SelectRestaurantContextResponse::success(
             $targetRestaurant->getUuid()->value(),
-            $targetRestaurant->getName(),
+            $targetRestaurant->getName()->value(),
         );
     }
 }

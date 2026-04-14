@@ -32,10 +32,18 @@ class AuthorizeRestaurantAccess
             return AuthorizeRestaurantAccessResponse::restaurantNotFound();
         }
 
-        $linkedTaxId = $linkedRestaurant->getTaxId();
-        $targetTaxId = $targetRestaurant->getTaxId();
+        $linkedTaxId = $linkedRestaurant->getTaxId()?->value();
+        $targetTaxId = $targetRestaurant->getTaxId()?->value();
 
-        if (! is_string($linkedTaxId) || $linkedTaxId === '' || $linkedTaxId !== $targetTaxId) {
+        if (! is_string($linkedTaxId) || $linkedTaxId === '') {
+            if ($targetRestaurant->getUuid()->value() !== $linkedRestaurant->getUuid()->value()) {
+                return AuthorizeRestaurantAccessResponse::forbidden();
+            }
+
+            return AuthorizeRestaurantAccessResponse::authorized();
+        }
+
+        if ($linkedTaxId !== $targetTaxId) {
             return AuthorizeRestaurantAccessResponse::forbidden();
         }
 

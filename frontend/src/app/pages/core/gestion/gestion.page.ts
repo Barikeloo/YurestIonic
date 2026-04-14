@@ -112,91 +112,9 @@ export class GestionPage {
   public isSavingTax: boolean = false;
   public isSavingProduct: boolean = false;
 
-  public readonly managementRestaurants: ManagementRestaurant[] = [
-    {
-      id: 1,
-      name: 'Restaurante Voraz',
-      legalName: 'Voraz Food S.L.',
-      taxId: 'B12345678',
-      email: 'admin@voraz.es',
-      status: 'active',
-      users: 6,
-      zones: 4,
-      products: 78,
-    },
-    {
-      id: 2,
-      name: 'Bahia 21',
-      legalName: 'Bahia 21 Hosteleria S.L.',
-      taxId: 'B84533122',
-      email: 'direccion@bahia21.es',
-      status: 'active',
-      users: 4,
-      zones: 3,
-      products: 54,
-    },
-    {
-      id: 3,
-      name: 'La Terraza Azul',
-      legalName: 'Grupo Terraza Azul S.L.',
-      taxId: 'B78451235',
-      email: 'admin@terrazaazul.es',
-      status: 'active',
-      users: 5,
-      zones: 5,
-      products: 92,
-    },
-  ];
+  public readonly managementRestaurants: ManagementRestaurant[] = [];
 
-  public readonly managementData: Record<number, ManagementDataRow> = {
-    1: {
-      users: [
-        { name: 'Maria Gomez', role: 'admin', email: 'maria@voraz.es', pin: '1234' },
-        { name: 'Carlos Ruiz', role: 'operator', email: 'carlos@voraz.es', pin: '2580' },
-      ],
-      families: [
-        { name: 'Entrantes', active: true },
-        { name: 'Principales', active: true },
-        { name: 'Bebidas', active: true },
-      ],
-      taxes: [
-        { name: 'IVA reducido', percentage: 10 },
-        { name: 'IVA general', percentage: 21 },
-      ],
-      zones: [],
-      products: [],
-    },
-    2: {
-      users: [
-        { name: 'Eva Luna', role: 'admin', email: 'eva@bahia21.es', pin: '4455' },
-        { name: 'Joel Nunez', role: 'operator', email: 'joel@bahia21.es', pin: '2211' },
-      ],
-      families: [
-        { name: 'Tapas', active: true },
-        { name: 'Bebidas', active: true },
-      ],
-      taxes: [{ name: 'IVA hosteleria', percentage: 10 }],
-      zones: [],
-      products: [],
-    },
-    3: {
-      users: [
-        { name: 'Paula Sanz', role: 'admin', email: 'paula@terrazaazul.es', pin: '4451' },
-        { name: 'Leo Martin', role: 'operator', email: 'leo@terrazaazul.es', pin: '7854' },
-      ],
-      families: [
-        { name: 'Desayunos', active: true },
-        { name: 'Cafeteria', active: true },
-        { name: 'Postres', active: true },
-      ],
-      taxes: [
-        { name: 'IVA reducido', percentage: 10 },
-        { name: 'IVA general', percentage: 21 },
-      ],
-      zones: [],
-      products: [],
-    },
-  };
+  public readonly managementData: Record<number, ManagementDataRow> = {};
 
   public readonly managementEntities: Array<{ key: ManagementEntityKey; label: string }> = [
     { key: 'restaurant', label: 'Restaurante' },
@@ -212,7 +130,7 @@ export class GestionPage {
     entity: ManagementEntityKey;
     selectedIndex: Record<'users' | 'families' | 'products' | 'zones' | 'tables' | 'taxes', number>;
   } = {
-    restaurantId: 1,
+    restaurantId: 0,
     entity: 'restaurant',
     selectedIndex: {
       users: 0,
@@ -1420,8 +1338,12 @@ export class GestionPage {
 
           if (!response.data.length) {
             this.managementRestaurants.splice(0, this.managementRestaurants.length);
+            for (const key of Object.keys(this.managementData)) {
+              delete this.managementData[Number(key)];
+            }
             this.managementState.restaurantId = 0;
             this.contextService.clearActiveRestaurant();
+            this.syncForms();
 
             return;
           }
@@ -1443,16 +1365,18 @@ export class GestionPage {
             })),
           );
 
+          for (const key of Object.keys(this.managementData)) {
+            delete this.managementData[Number(key)];
+          }
+
           for (const restaurant of this.managementRestaurants) {
-            if (!this.managementData[restaurant.id]) {
-              this.managementData[restaurant.id] = {
-                users: [],
-                families: [],
-                taxes: [],
-                zones: [],
-                products: [],
-              };
-            }
+            this.managementData[restaurant.id] = {
+              users: [],
+              families: [],
+              taxes: [],
+              zones: [],
+              products: [],
+            };
 
             // Keep KPI cards in sync even before selecting a restaurant.
             this.updateRestaurantKpis(restaurant.id);
@@ -1484,6 +1408,13 @@ export class GestionPage {
           }
         },
         error: (error: unknown) => {
+          this.managementRestaurants.splice(0, this.managementRestaurants.length);
+          for (const key of Object.keys(this.managementData)) {
+            delete this.managementData[Number(key)];
+          }
+          this.managementState.restaurantId = 0;
+          this.contextService.clearActiveRestaurant();
+          this.syncForms();
           this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar restaurantes.';
         },
       });

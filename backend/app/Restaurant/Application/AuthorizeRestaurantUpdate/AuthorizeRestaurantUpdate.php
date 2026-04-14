@@ -39,7 +39,11 @@ final class AuthorizeRestaurantUpdate
         $linkedTaxId = $linkedRestaurant->getTaxId()?->value();
 
         if (! is_string($linkedTaxId) || $linkedTaxId === '') {
-            return AuthorizeRestaurantUpdateResponse::linkedRestaurantWithoutTaxId();
+            if ($targetRestaurant->getUuid()->value() !== $linkedRestaurant->getUuid()->value()) {
+                return AuthorizeRestaurantUpdateResponse::forbidden();
+            }
+
+            return AuthorizeRestaurantUpdateResponse::success();
         }
 
         if ($targetRestaurant->getTaxId()?->value() !== $linkedTaxId) {
