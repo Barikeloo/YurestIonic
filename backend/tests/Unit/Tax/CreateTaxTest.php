@@ -24,7 +24,7 @@ class CreateTaxTest extends TestCase
         $repository->shouldReceive('save')
             ->once()
             ->with(Mockery::on(function (Tax $tax): bool {
-                return $tax->name() === 'IVA Test' && $tax->percentage() === 7;
+                return $tax->name()->value() === 'IVA Test' && $tax->percentage()->value() === 7;
             }));
 
         $createTax = new CreateTax($repository);

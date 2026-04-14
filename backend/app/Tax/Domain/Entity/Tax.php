@@ -62,14 +62,14 @@ class Tax
         return $this->id;
     }
 
-    public function name(): string
+    public function name(): TaxName
     {
-        return $this->name->value();
+        return $this->name;
     }
 
-    public function percentage(): int
+    public function percentage(): TaxPercentage
     {
-        return $this->percentage->value();
+        return $this->percentage;
     }
 
     public function createdAt(): DomainDateTime

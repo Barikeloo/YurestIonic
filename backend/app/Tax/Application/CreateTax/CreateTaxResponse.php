@@ -18,8 +18,8 @@ final readonly class CreateTaxResponse
     {
         return new self(
             id: $tax->id()->value(),
-            name: $tax->name(),
-            percentage: $tax->percentage(),
+            name: $tax->name()->value(),
+            percentage: $tax->percentage()->value(),
             createdAt: $tax->createdAt()->format(\DateTimeInterface::ATOM),
             updatedAt: $tax->updatedAt()->format(\DateTimeInterface::ATOM),
         );

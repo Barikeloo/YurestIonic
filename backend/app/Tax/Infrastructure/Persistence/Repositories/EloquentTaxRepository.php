@@ -22,8 +22,8 @@ class EloquentTaxRepository implements TaxRepositoryInterface
             ['uuid' => $tax->id()->value()],
             [
                 'restaurant_id' => $restaurantId,
-                'name' => $tax->name(),
-                'percentage' => $tax->percentage(),
+                'name' => $tax->name()->value(),
+                'percentage' => $tax->percentage()->value(),
                 'created_at' => $tax->createdAt()->value(),
                 'updated_at' => $tax->updatedAt()->value(),
             ],

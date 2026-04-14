@@ -16,15 +16,17 @@ class TaxEntityTest extends TestCase
             TaxPercentage::create(21),
         );
 
-        $this->assertSame('IVA General', $tax->name());
-        $this->assertSame(21, $tax->percentage());
+        $this->assertInstanceOf(TaxName::class, $tax->name());
+        $this->assertSame('IVA General', $tax->name()->value());
+        $this->assertInstanceOf(TaxPercentage::class, $tax->percentage());
+        $this->assertSame(21, $tax->percentage()->value());
 
         $tax->update(
             TaxName::create('IVA Revisado'),
             TaxPercentage::create(10),
         );
 
-        $this->assertSame('IVA Revisado', $tax->name());
-        $this->assertSame(10, $tax->percentage());
+        $this->assertSame('IVA Revisado', $tax->name()->value());
+        $this->assertSame(10, $tax->percentage()->value());
     }
 }
