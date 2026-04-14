@@ -2,6 +2,9 @@
 
 namespace App\Order\Domain\Entity;
 
+use App\Order\Domain\ValueObject\OrderLinePrice;
+use App\Order\Domain\ValueObject\OrderLineQuantity;
+use App\Order\Domain\ValueObject\OrderLineTaxPercentage;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -14,9 +17,9 @@ final class OrderLine
         private readonly Uuid $orderId,
         private readonly Uuid $productId,
         private readonly Uuid $userId,
-        private readonly int $quantity,
-        private readonly int $price,
-        private readonly int $taxPercentage,
+        private readonly OrderLineQuantity $quantity,
+        private readonly OrderLinePrice $price,
+        private readonly OrderLineTaxPercentage $taxPercentage,
         private readonly DomainDateTime $createdAt,
         private readonly DomainDateTime $updatedAt,
         private readonly ?DomainDateTime $deletedAt = null,
@@ -29,9 +32,9 @@ final class OrderLine
         Uuid $orderId,
         Uuid $productId,
         Uuid $userId,
-        int $quantity,
-        int $price,
-        int $taxPercentage,
+        OrderLineQuantity $quantity,
+        OrderLinePrice $price,
+        OrderLineTaxPercentage $taxPercentage,
     ): self {
         return new self(
             id: $id,
@@ -55,9 +58,9 @@ final class OrderLine
         Uuid $orderId,
         Uuid $productId,
         Uuid $userId,
-        int $quantity,
-        int $price,
-        int $taxPercentage,
+        OrderLineQuantity $quantity,
+        OrderLinePrice $price,
+        OrderLineTaxPercentage $taxPercentage,
         DomainDateTime $createdAt,
         DomainDateTime $updatedAt,
         ?DomainDateTime $deletedAt = null,
@@ -108,17 +111,17 @@ final class OrderLine
         return $this->userId;
     }
 
-    public function getQuantity(): int
+    public function getQuantity(): OrderLineQuantity
     {
         return $this->quantity;
     }
 
-    public function getPrice(): int
+    public function getPrice(): OrderLinePrice
     {
         return $this->price;
     }
 
-    public function getTaxPercentage(): int
+    public function getTaxPercentage(): OrderLineTaxPercentage
     {
         return $this->taxPercentage;
     }

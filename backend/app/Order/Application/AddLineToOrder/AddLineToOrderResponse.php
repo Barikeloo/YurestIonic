@@ -23,9 +23,9 @@ final class AddLineToOrderResponse
             uuid: $orderLine->getUuid()->value(),
             orderId: $orderLine->getOrderId()->value(),
             productId: $orderLine->getProductId()->value(),
-            quantity: $orderLine->getQuantity(),
-            price: $orderLine->getPrice(),
-            taxPercentage: $orderLine->getTaxPercentage(),
+            quantity: $orderLine->getQuantity()->value(),
+            price: $orderLine->getPrice()->value(),
+            taxPercentage: $orderLine->getTaxPercentage()->value(),
         );
     }
 

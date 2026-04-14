@@ -29,19 +29,19 @@ class Family
         );
     }
 
-    public static function fromPersistence(
-        string $id,
-        string $name,
+    public static function hydrate(
+        Uuid $id,
+        FamilyName $name,
         bool $active,
-        \DateTimeImmutable $createdAt,
-        \DateTimeImmutable $updatedAt,
+        DomainDateTime $createdAt,
+        DomainDateTime $updatedAt,
     ): self {
         return new self(
-            id: Uuid::create($id),
-            name: FamilyName::create($name),
+            id: $id,
+            name: $name,
             active: $active,
-            createdAt: DomainDateTime::create($createdAt),
-            updatedAt: DomainDateTime::create($updatedAt),
+            createdAt: $createdAt,
+            updatedAt: $updatedAt,
         );
     }
 
@@ -72,9 +72,9 @@ class Family
         return $this->id;
     }
 
-    public function name(): string
+    public function name(): FamilyName
     {
-        return $this->name->value();
+        return $this->name;
     }
 
     public function isActive(): bool

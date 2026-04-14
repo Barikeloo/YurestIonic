@@ -75,4 +75,48 @@ class TableCrudTest extends TestCase
         $this->withSession($tenant['session'])->getJson("/api/admin/tables/{$tableId}")
             ->assertStatus(404);
     }
+
+    public function test_table_name_can_repeat_in_different_restaurants(): void
+    {
+        $tenantA = $this->createTenantSession();
+        $tenantB = $this->createTenantSession();
+
+        $zoneA = $this->withSession($tenantA['session'])->postJson('/api/admin/zones', [
+            'name' => 'Comedor',
+        ]);
+        $zoneA->assertStatus(201);
+
+        $zoneB = $this->withSession($tenantB['session'])->postJson('/api/admin/zones', [
+            'name' => 'Comedor',
+        ]);
+        $zoneB->assertStatus(201);
+
+        $this->withSession($tenantA['session'])->postJson('/api/admin/tables', [
+            'zone_id' => $zoneA->json('id'),
+            'name' => 'Mesa 1',
+        ])->assertStatus(201);
+
+        $this->withSession($tenantB['session'])->postJson('/api/admin/tables', [
+            'zone_id' => $zoneB->json('id'),
+            'name' => 'Mesa 1',
+        ])->assertStatus(201);
+    }
+
+    public function test_table_cannot_be_created_with_zone_from_another_restaurant(): void
+    {
+        $tenantA = $this->createTenantSession();
+        $tenantB = $this->createTenantSession();
+
+        $zoneA = $this->withSession($tenantA['session'])->postJson('/api/admin/zones', [
+            'name' => 'Comedor',
+        ]);
+        $zoneA->assertStatus(201);
+
+        $this->withSession($tenantB['session'])->postJson('/api/admin/tables', [
+            'zone_id' => $zoneA->json('id'),
+            'name' => 'Mesa Foranea',
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['zone_id']);
+    }
 }

@@ -4,6 +4,9 @@ namespace App\Order\Infrastructure\Persistence\Repositories;
 
 use App\Order\Domain\Entity\OrderLine;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
+use App\Order\Domain\ValueObject\OrderLinePrice;
+use App\Order\Domain\ValueObject\OrderLineQuantity;
+use App\Order\Domain\ValueObject\OrderLineTaxPercentage;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrderLine;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrder;
 use App\Product\Infrastructure\Persistence\Models\EloquentProduct;
@@ -32,9 +35,9 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
                 'order_id' => $orderId,
                 'product_id' => $productId,
                 'user_id' => $userId,
-                'quantity' => $orderLine->getQuantity(),
-                'price' => $orderLine->getPrice(),
-                'tax_percentage' => $orderLine->getTaxPercentage(),
+                'quantity' => $orderLine->getQuantity()->value(),
+                'price' => $orderLine->getPrice()->value(),
+                'tax_percentage' => $orderLine->getTaxPercentage()->value(),
             ],
         );
     }
@@ -85,9 +88,9 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
             orderId: Uuid::create($orderUuid),
             productId: Uuid::create($productUuid),
             userId: Uuid::create($userUuid),
-            quantity: $model->quantity,
-            price: $model->price,
-            taxPercentage: $model->tax_percentage,
+            quantity: OrderLineQuantity::create((int) $model->quantity),
+            price: OrderLinePrice::create((int) $model->price),
+            taxPercentage: OrderLineTaxPercentage::create((int) $model->tax_percentage),
             createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
             updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
             deletedAt: $model->deleted_at ? DomainDateTime::create($model->deleted_at->toDateTimeImmutable()) : null,

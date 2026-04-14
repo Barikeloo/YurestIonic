@@ -52,7 +52,7 @@ class GetAdminRestaurantCollection
 
     /**
      * @param array<Restaurant> $restaurants
-     * @return array<array{uuid: string, name: string, legal_name: string|null, tax_id: string|null, email: string}>
+        * @return array<array{uuid: string, name: string, legal_name: string|null, tax_id: string|null, email: string, users: int, zones: int, products: int}>
      */
     private function mapRestaurants(array $restaurants): array
     {
@@ -62,13 +62,20 @@ class GetAdminRestaurantCollection
         );
 
         return array_map(
-            static fn (Restaurant $restaurant): array => [
-                'uuid' => $restaurant->getUuid()->value(),
-                'name' => $restaurant->getName()->value(),
-                'legal_name' => $restaurant->getLegalName()?->value(),
-                'tax_id' => $restaurant->getTaxId()?->value(),
-                'email' => $restaurant->getEmail()->value(),
-            ],
+            function (Restaurant $restaurant): array {
+                $kpis = $this->restaurantRepository->getKpisByUuid($restaurant->getUuid());
+
+                return [
+                    'uuid' => $restaurant->getUuid()->value(),
+                    'name' => $restaurant->getName()->value(),
+                    'legal_name' => $restaurant->getLegalName()?->value(),
+                    'tax_id' => $restaurant->getTaxId()?->value(),
+                    'email' => $restaurant->getEmail()->value(),
+                    'users' => $kpis['users'],
+                    'zones' => $kpis['zones'],
+                    'products' => $kpis['products'],
+                ];
+            },
             $restaurants,
         );
     }

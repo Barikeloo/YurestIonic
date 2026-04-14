@@ -13,7 +13,7 @@ class FamilyCrudTest extends TestCase
     {
         $tenant = $this->createTenantSession();
 
-        $createResponse = $this->withSession($tenant['session'])->postJson('/api/families', [
+        $createResponse = $this->withSession($tenant['session'])->postJson('/api/admin/families', [
             'name' => 'Entrantes',
         ]);
 
@@ -25,14 +25,14 @@ class FamilyCrudTest extends TestCase
 
         $familyId = $createResponse->json('id');
 
-        $this->withSession($tenant['session'])->getJson('/api/families')
+        $this->withSession($tenant['session'])->getJson('/api/admin/families')
             ->assertStatus(200)
             ->assertJsonFragment([
                 'id' => $familyId,
                 'name' => 'Entrantes',
             ]);
 
-        $this->withSession($tenant['session'])->getJson("/api/families/{$familyId}")
+        $this->withSession($tenant['session'])->getJson("/api/admin/families/{$familyId}")
             ->assertStatus(200)
             ->assertJson([
                 'id' => $familyId,
@@ -40,7 +40,7 @@ class FamilyCrudTest extends TestCase
                 'active' => true,
             ]);
 
-        $this->withSession($tenant['session'])->putJson("/api/families/{$familyId}", [
+        $this->withSession($tenant['session'])->putJson("/api/admin/families/{$familyId}", [
             'name' => 'Entrantes Premium',
         ])
             ->assertStatus(200)
@@ -49,24 +49,24 @@ class FamilyCrudTest extends TestCase
                 'name' => 'Entrantes Premium',
             ]);
 
-        $this->withSession($tenant['session'])->patchJson("/api/families/{$familyId}/deactivate")
+        $this->withSession($tenant['session'])->patchJson("/api/admin/families/{$familyId}/deactivate")
             ->assertStatus(200)
             ->assertJson([
                 'id' => $familyId,
                 'active' => false,
             ]);
 
-        $this->withSession($tenant['session'])->patchJson("/api/families/{$familyId}/activate")
+        $this->withSession($tenant['session'])->patchJson("/api/admin/families/{$familyId}/activate")
             ->assertStatus(200)
             ->assertJson([
                 'id' => $familyId,
                 'active' => true,
             ]);
 
-        $this->withSession($tenant['session'])->deleteJson("/api/families/{$familyId}")
+        $this->withSession($tenant['session'])->deleteJson("/api/admin/families/{$familyId}")
             ->assertStatus(204);
 
-        $this->withSession($tenant['session'])->getJson("/api/families/{$familyId}")
+        $this->withSession($tenant['session'])->getJson("/api/admin/families/{$familyId}")
             ->assertStatus(404);
     }
 }

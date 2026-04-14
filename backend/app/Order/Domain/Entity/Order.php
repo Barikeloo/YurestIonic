@@ -2,6 +2,7 @@
 
 namespace App\Order\Domain\Entity;
 
+use App\Order\Domain\ValueObject\OrderDiners;
 use App\Order\Domain\ValueObject\OrderStatus;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -16,7 +17,7 @@ final class Order
         private readonly Uuid $tableId,
         private readonly Uuid $openedByUserId,
         private ?Uuid $closedByUserId,
-        private int $diners,
+        private OrderDiners $diners,
         private readonly DomainDateTime $openedAt,
         private ?DomainDateTime $closedAt,
         private readonly DomainDateTime $createdAt,
@@ -30,7 +31,7 @@ final class Order
         Uuid $restaurantId,
         Uuid $tableId,
         Uuid $openedByUserId,
-        int $diners,
+        OrderDiners $diners,
     ): self {
         return new self(
             id: $id,
@@ -56,7 +57,7 @@ final class Order
         Uuid $tableId,
         Uuid $openedByUserId,
         ?Uuid $closedByUserId,
-        int $diners,
+        OrderDiners $diners,
         DomainDateTime $openedAt,
         ?DomainDateTime $closedAt,
         DomainDateTime $createdAt,
@@ -96,7 +97,7 @@ final class Order
         $this->updatedAt = DomainDateTime::now();
     }
 
-    public function updateDiners(int $diners): void
+    public function updateDiners(OrderDiners $diners): void
     {
         $this->diners = $diners;
         $this->updatedAt = DomainDateTime::now();
@@ -137,7 +138,7 @@ final class Order
         return $this->closedByUserId;
     }
 
-    public function getDiners(): int
+    public function getDiners(): OrderDiners
     {
         return $this->diners;
     }

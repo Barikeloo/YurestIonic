@@ -29,7 +29,7 @@ final class GetOrderResponse
             table_id: $order->getTableId()->value(),
             opened_by_user_id: $order->getOpenedByUserId()->value(),
             closed_by_user_id: $order->getClosedByUserId()?->value(),
-            diners: $order->getDiners(),
+            diners: $order->getDiners()->value(),
             opened_at: $order->getOpenedAt()->format('Y-m-d H:i:s'),
             closed_at: $order->getClosedAt()?->format('Y-m-d H:i:s'),
         );

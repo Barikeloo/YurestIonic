@@ -4,6 +4,7 @@ namespace App\Order\Infrastructure\Persistence\Repositories;
 
 use App\Order\Domain\Entity\Order;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Order\Domain\ValueObject\OrderDiners;
 use App\Order\Domain\ValueObject\OrderStatus;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrder;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
@@ -35,7 +36,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
                 'table_id' => $tableId,
                 'opened_by_user_id' => $openedByUserId,
                 'closed_by_user_id' => $closedByUserId,
-                'diners' => $order->getDiners(),
+                'diners' => $order->getDiners()->value(),
                 'opened_at' => $order->getOpenedAt()->value(),
                 'closed_at' => $order->getClosedAt()?->value(),
             ],
@@ -99,7 +100,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             tableId: Uuid::create($tableUuid),
             openedByUserId: Uuid::create($openedByUserUuid),
             closedByUserId: $closedByUserUuid ? Uuid::create($closedByUserUuid) : null,
-            diners: $model->diners,
+            diners: OrderDiners::create((int) $model->diners),
             openedAt: DomainDateTime::create($model->opened_at->toDateTimeImmutable()),
             closedAt: $model->closed_at ? DomainDateTime::create($model->closed_at->toDateTimeImmutable()) : null,
             createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),

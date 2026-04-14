@@ -26,7 +26,7 @@ final class CreateOrderResponse
             tableId: $order->getTableId()->value(),
             openedByUserId: $order->getOpenedByUserId()->value(),
             status: $order->getStatus()->value(),
-            diners: $order->getDiners(),
+            diners: $order->getDiners()->value(),
             openedAt: $order->getOpenedAt()->format('Y-m-d H:i:s'),
         );
     }

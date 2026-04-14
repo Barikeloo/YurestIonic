@@ -31,9 +31,9 @@ final class ListOrderLinesResponse
             product_id: $orderLine->getProductId()->value(),
             product_name: $productName,
             user_id: $orderLine->getUserId()->value(),
-            quantity: $orderLine->getQuantity(),
-            price: $orderLine->getPrice(),
-            tax_percentage: $orderLine->getTaxPercentage(),
+            quantity: $orderLine->getQuantity()->value(),
+            price: $orderLine->getPrice()->value(),
+            tax_percentage: $orderLine->getTaxPercentage()->value(),
             created_at: $orderLine->getCreatedAt()->format('Y-m-d H:i:s'),
             updated_at: $orderLine->getUpdatedAt()->format('Y-m-d H:i:s'),
         );

@@ -12,6 +12,7 @@ use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
+use Illuminate\Support\Facades\DB;
 
 final class EloquentRestaurantRepository implements RestaurantRepositoryInterface
 {
@@ -80,6 +81,29 @@ final class EloquentRestaurantRepository implements RestaurantRepositoryInterfac
             ->get()
             ->map(fn ($model) => $this->toDomain($model))
             ->all();
+    }
+
+    public function getKpisByUuid(Uuid $uuid): array
+    {
+        $restaurantId = $this->model->newQuery()
+            ->where('uuid', $uuid->value())
+            ->value('id');
+
+        if (! is_numeric($restaurantId)) {
+            return [
+                'users' => 0,
+                'zones' => 0,
+                'products' => 0,
+            ];
+        }
+
+        $restaurantId = (int) $restaurantId;
+
+        return [
+            'users' => DB::table('users')->where('restaurant_id', $restaurantId)->whereNull('deleted_at')->count(),
+            'zones' => DB::table('zones')->where('restaurant_id', $restaurantId)->whereNull('deleted_at')->count(),
+            'products' => DB::table('products')->where('restaurant_id', $restaurantId)->whereNull('deleted_at')->count(),
+        ];
     }
 
     public function delete(Uuid $id): void

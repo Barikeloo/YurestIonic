@@ -4,6 +4,7 @@ namespace App\Order\Application\CreateOrder;
 
 use App\Order\Domain\Entity\Order;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Order\Domain\ValueObject\OrderDiners;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class CreateOrder
@@ -23,7 +24,7 @@ final class CreateOrder
             restaurantId: Uuid::create($restaurantId),
             tableId: Uuid::create($tableId),
             openedByUserId: Uuid::create($openedByUserId),
-            diners: $diners,
+            diners: OrderDiners::create($diners),
         );
 
         $this->orderRepository->save($order);

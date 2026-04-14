@@ -10,6 +10,9 @@ export interface AdminRestaurantItem {
   legal_name: string;
   tax_id: string;
   email: string;
+  users: number;
+  zones: number;
+  products: number;
 }
 
 export interface AdminRestaurantUser {

@@ -4,6 +4,9 @@ namespace App\Order\Application\AddLineToOrder;
 
 use App\Order\Domain\Entity\OrderLine;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
+use App\Order\Domain\ValueObject\OrderLinePrice;
+use App\Order\Domain\ValueObject\OrderLineQuantity;
+use App\Order\Domain\ValueObject\OrderLineTaxPercentage;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use InvalidArgumentException;
@@ -40,9 +43,9 @@ final class AddLineToOrder
             orderId: Uuid::create($orderId),
             productId: Uuid::create($productId),
             userId: Uuid::create($userId),
-            quantity: $quantity,
-            price: $price,
-            taxPercentage: $taxPercentage,
+            quantity: OrderLineQuantity::create($quantity),
+            price: OrderLinePrice::create($price),
+            taxPercentage: OrderLineTaxPercentage::create($taxPercentage),
         );
 
         $this->orderLineRepository->save($orderLine);

@@ -3,6 +3,7 @@
 namespace App\Order\Application\UpdateOrder;
 
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Order\Domain\ValueObject\OrderDiners;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class UpdateOrder
@@ -24,7 +25,7 @@ final class UpdateOrder
         }
 
         if ($diners !== null) {
-            $order->updateDiners($diners);
+            $order->updateDiners(OrderDiners::create($diners));
         }
 
         if ($action === 'close' && $closedByUserId !== null) {

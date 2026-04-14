@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { AppContextService } from '../../../services/app-context.service';
 import { DeviceStorageService } from '../../../services/device-storage.service';
@@ -111,6 +112,7 @@ export class GestionPage {
   public isSavingFamily: boolean = false;
   public isSavingTax: boolean = false;
   public isSavingProduct: boolean = false;
+  private preloadRunId: number = 0;
 
   public readonly managementRestaurants: ManagementRestaurant[] = [];
 
@@ -446,6 +448,7 @@ export class GestionPage {
   }
 
   public selectRestaurant(restaurantId: number): void {
+    this.preloadRunId++;
     this.managementState.restaurantId = restaurantId;
     if (this.selectedRestaurant) {
       this.contextService.setActiveRestaurant({ name: this.selectedRestaurant.name });
@@ -460,6 +463,7 @@ export class GestionPage {
               this.loadTaxes();
               this.loadProducts();
               this.loadZonesAndTables();
+              this.startBackgroundPreload();
             },
             error: (error: unknown) => {
               const message = error instanceof Error ? error.message : 'No se pudo seleccionar el restaurante.';
@@ -1359,9 +1363,9 @@ export class GestionPage {
               taxId: row.tax_id,
               email: row.email,
               status: 'active' as const,
-              users: 0,
-              zones: 0,
-              products: 0,
+              users: row.users,
+              zones: row.zones,
+              products: row.products,
             })),
           );
 
@@ -1377,9 +1381,6 @@ export class GestionPage {
               zones: [],
               products: [],
             };
-
-            // Keep KPI cards in sync even before selecting a restaurant.
-            this.updateRestaurantKpis(restaurant.id);
 
             if (restaurant.uuid) {
               this.loadRestaurantUsers(restaurant.uuid, true);
@@ -1400,6 +1401,7 @@ export class GestionPage {
                   this.loadTaxes();
                   this.loadProducts();
                   this.loadZonesAndTables();
+                  this.startBackgroundPreload();
                 },
                 error: (error: unknown) => {
                   this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo seleccionar el restaurante.';
@@ -1418,6 +1420,133 @@ export class GestionPage {
           this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar restaurantes.';
         },
       });
+  }
+
+  private startBackgroundPreload(): void {
+    const selectedRestaurant = this.selectedRestaurant;
+
+    if (!selectedRestaurant?.uuid) {
+      return;
+    }
+
+    const runId = ++this.preloadRunId;
+    void this.preloadRestaurantsInBackground(runId, selectedRestaurant.uuid);
+  }
+
+  private async preloadRestaurantsInBackground(runId: number, selectedRestaurantUuid: string): Promise<void> {
+    for (const restaurant of this.managementRestaurants) {
+      if (runId !== this.preloadRunId) {
+        return;
+      }
+
+      if (!restaurant.uuid || restaurant.uuid === selectedRestaurantUuid) {
+        continue;
+      }
+
+      const currentData = this.managementData[restaurant.id];
+      if (!currentData) {
+        continue;
+      }
+
+      const alreadyLoaded =
+        currentData.users.length > 0 ||
+        currentData.families.length > 0 ||
+        currentData.taxes.length > 0 ||
+        currentData.products.length > 0 ||
+        currentData.zones.length > 0;
+
+      if (alreadyLoaded) {
+        continue;
+      }
+
+      try {
+        await firstValueFrom(this.restaurantService.selectAdminRestaurantContext(restaurant.uuid));
+
+        const [usersResponse, families, taxes, products, zones, tables] = await Promise.all([
+          firstValueFrom(this.restaurantService.getRestaurantUsers(restaurant.uuid)),
+          firstValueFrom(this.familyService.listFamilies()),
+          firstValueFrom(this.taxService.listTaxes()),
+          firstValueFrom(this.productService.listProducts()),
+          firstValueFrom(this.zoneService.listZones()),
+          firstValueFrom(this.tableService.listTables()),
+        ]);
+
+        if (runId !== this.preloadRunId) {
+          return;
+        }
+
+        currentData.users = usersResponse.users.map((user) => ({
+          uuid: user.uuid,
+          name: user.name,
+          email: user.email,
+          role: this.normalizeRole(user.role),
+        }));
+
+        currentData.families = families.map((family) => ({
+          uuid: family.id,
+          name: family.name,
+          active: family.active,
+        }));
+
+        currentData.taxes = taxes.map((tax) => ({
+          uuid: tax.id,
+          name: tax.name,
+          percentage: tax.percentage,
+        }));
+
+        currentData.products = products.map((product) => ({
+          uuid: product.id,
+          name: product.name,
+          family_id: product.family_id,
+          tax_id: product.tax_id,
+          price: product.price,
+          stock: product.stock,
+          active: product.active,
+        }));
+
+        const zoneRows: ZoneRow[] = zones.map((zone) => ({
+          uuid: zone.id,
+          name: zone.name,
+          tables: [],
+        }));
+
+        const zoneById = new Map(zoneRows.map((zone) => [zone.uuid, zone]));
+
+        tables.forEach((table) => {
+          const zone = zoneById.get(table.zone_id);
+          if (!zone) {
+            return;
+          }
+
+          zone.tables.push({
+            uuid: table.id,
+            name: table.name,
+          });
+        });
+
+        currentData.zones = zoneRows;
+
+        this.updateRestaurantKpis(restaurant.id);
+      } catch {
+        // Background preload is best-effort and should not block management UX.
+      }
+    }
+
+    if (runId !== this.preloadRunId) {
+      return;
+    }
+
+    const currentlySelected = this.selectedRestaurant;
+
+    if (!currentlySelected?.uuid) {
+      return;
+    }
+
+    try {
+      await firstValueFrom(this.restaurantService.selectAdminRestaurantContext(currentlySelected.uuid));
+    } catch {
+      // Keep current in-memory data even if context restore fails.
+    }
   }
 
   private loadRestaurantUsers(restaurantUuid: string, silent: boolean = false): void {
@@ -1439,7 +1568,7 @@ export class GestionPage {
           }));
 
           this.managementData[restaurant.id].users = users;
-          this.updateRestaurantKpis(restaurant.id);
+          restaurant.users = users.length;
           this.syncForms();
 
           if (!silent) {

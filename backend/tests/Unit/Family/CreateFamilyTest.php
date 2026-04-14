@@ -24,7 +24,7 @@ class CreateFamilyTest extends TestCase
         $repository->shouldReceive('save')
             ->once()
             ->with(Mockery::on(function (Family $family): bool {
-                return $family->name() === 'Comida' && $family->isActive();
+                return $family->name()->value() === 'Comida' && $family->isActive();
             }));
 
         $createFamily = new CreateFamily($repository);

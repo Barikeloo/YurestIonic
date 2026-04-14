@@ -4,7 +4,10 @@ namespace App\Family\Infrastructure\Persistence\Repositories;
 
 use App\Family\Domain\Entity\Family;
 use App\Family\Domain\Interfaces\FamilyRepositoryInterface;
+use App\Family\Domain\ValueObject\FamilyName;
 use App\Family\Infrastructure\Persistence\Models\EloquentFamily;
+use App\Shared\Domain\ValueObject\DomainDateTime;
+use App\Shared\Domain\ValueObject\Uuid;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 
 class EloquentFamilyRepository implements FamilyRepositoryInterface
@@ -22,7 +25,7 @@ class EloquentFamilyRepository implements FamilyRepositoryInterface
             ['uuid' => $family->id()->value()],
             [
                 'restaurant_id' => $restaurantId,
-                'name' => $family->name(),
+                'name' => $family->name()->value(),
                 'active' => $family->isActive(),
                 'created_at' => $family->createdAt()->value(),
                 'updated_at' => $family->updatedAt()->value(),
@@ -38,12 +41,12 @@ class EloquentFamilyRepository implements FamilyRepositoryInterface
             return null;
         }
 
-        return Family::fromPersistence(
-            id: $model->uuid,
-            name: $model->name,
+        return Family::hydrate(
+            id: Uuid::create($model->uuid),
+            name: FamilyName::create($model->name),
             active: (bool) $model->active,
-            createdAt: $model->created_at->toDateTimeImmutable(),
-            updatedAt: $model->updated_at->toDateTimeImmutable(),
+            createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
+            updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
         );
     }
 
@@ -57,12 +60,12 @@ class EloquentFamilyRepository implements FamilyRepositoryInterface
 
         $models = $query->get();
 
-        return $models->map(static fn (EloquentFamily $model): Family => Family::fromPersistence(
-            id: $model->uuid,
-            name: $model->name,
+        return $models->map(static fn (EloquentFamily $model): Family => Family::hydrate(
+            id: Uuid::create($model->uuid),
+            name: FamilyName::create($model->name),
             active: (bool) $model->active,
-            createdAt: $model->created_at->toDateTimeImmutable(),
-            updatedAt: $model->updated_at->toDateTimeImmutable(),
+            createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
+            updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
         ))->all();
     }
 

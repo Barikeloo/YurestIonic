@@ -33,5 +33,10 @@ interface RestaurantRepositoryInterface
      */
     public function findByTaxId(string $taxId): array;
 
+    /**
+     * @return array{users: int, zones: int, products: int}
+     */
+    public function getKpisByUuid(Uuid $uuid): array;
+
     public function delete(Uuid $id): void;
 }

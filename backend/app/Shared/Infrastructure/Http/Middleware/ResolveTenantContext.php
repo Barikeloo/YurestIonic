@@ -88,13 +88,49 @@ final class ResolveTenantContext
             ], 403);
         }
 
-        $restaurantUuid = EloquentRestaurant::query()->where('id', $user->restaurant_id)->value('uuid');
+        $linkedRestaurant = EloquentRestaurant::query()->where('id', $user->restaurant_id)->first();
 
-        if (! is_string($restaurantUuid) || $restaurantUuid === '') {
+        if ($linkedRestaurant === null || ! is_string($linkedRestaurant->uuid) || $linkedRestaurant->uuid === '') {
             return new JsonResponse([
                 'message' => 'Authenticated user has an invalid restaurant assignment.',
             ], 403);
         }
+
+        $selectedRestaurantUuid = $request->header('X-Restaurant-Id');
+
+        if (! is_string($selectedRestaurantUuid) || $selectedRestaurantUuid === '') {
+            $selectedRestaurantUuid = $request->session()->get('tenant_restaurant_uuid');
+        }
+
+        $effectiveRestaurant = $linkedRestaurant;
+
+        if (is_string($selectedRestaurantUuid) && $selectedRestaurantUuid !== '' && $selectedRestaurantUuid !== $linkedRestaurant->uuid) {
+            $targetRestaurant = EloquentRestaurant::query()->where('uuid', $selectedRestaurantUuid)->first();
+
+            if ($targetRestaurant === null) {
+                return new JsonResponse([
+                    'message' => 'Selected restaurant context does not exist.',
+                ], 422);
+            }
+
+            $linkedTaxId = $linkedRestaurant->tax_id;
+
+            if (! is_string($linkedTaxId) || $linkedTaxId === '') {
+                return new JsonResponse([
+                    'message' => 'Forbidden for this restaurant context.',
+                ], 403);
+            }
+
+            if ($targetRestaurant->tax_id !== $linkedTaxId) {
+                return new JsonResponse([
+                    'message' => 'Forbidden for this restaurant context.',
+                ], 403);
+            }
+
+            $effectiveRestaurant = $targetRestaurant;
+        }
+
+        $restaurantUuid = (string) $effectiveRestaurant->uuid;
 
         $requestRestaurantUuid = $request->input('restaurant_id');
 
@@ -104,7 +140,7 @@ final class ResolveTenantContext
             ], 422);
         }
 
-        $this->tenantContext->set((int) $user->restaurant_id, $restaurantUuid, false);
+        $this->tenantContext->set((int) $effectiveRestaurant->id, $restaurantUuid, false);
         $request->merge(['restaurant_id' => $restaurantUuid]);
 
         return $next($request);

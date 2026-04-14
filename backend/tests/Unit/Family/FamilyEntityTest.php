@@ -14,13 +14,13 @@ class FamilyEntityTest extends TestCase
         $family = Family::dddCreate(FamilyName::create('Bebidas'));
 
         $this->assertInstanceOf(Family::class, $family);
-        $this->assertSame('Bebidas', $family->name());
+        $this->assertSame('Bebidas', $family->name()->value());
         $this->assertTrue($family->isActive());
         $this->assertInstanceOf(DomainDateTime::class, $family->createdAt());
         $this->assertInstanceOf(DomainDateTime::class, $family->updatedAt());
 
         $family->rename(FamilyName::create('Bebidas Frias'));
-        $this->assertSame('Bebidas Frias', $family->name());
+        $this->assertSame('Bebidas Frias', $family->name()->value());
 
         $family->deactivate();
         $this->assertFalse($family->isActive());

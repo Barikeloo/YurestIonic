@@ -3,6 +3,7 @@
 namespace Tests\Unit\Order;
 
 use App\Order\Domain\Entity\Order;
+use App\Order\Domain\ValueObject\OrderDiners;
 use App\Order\Domain\ValueObject\OrderStatus;
 use App\Shared\Domain\ValueObject\Uuid;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,7 @@ class OrderEntityTest extends TestCase
             $restaurantId,
             $tableId,
             $userId,
-            4
+            OrderDiners::create(4)
         );
 
         $this->assertInstanceOf(Order::class, $order);
@@ -38,7 +39,7 @@ class OrderEntityTest extends TestCase
         $tableId = Uuid::generate();
         $userId = Uuid::generate();
 
-        $order = Order::dddCreate($uuid, $restaurantId, $tableId, $userId, 4);
+        $order = Order::dddCreate($uuid, $restaurantId, $tableId, $userId, OrderDiners::create(4));
 
         $this->assertInstanceOf(OrderStatus::class, $order->getStatus());
         $this->assertSame('open', $order->getStatus()->value());
@@ -52,7 +53,7 @@ class OrderEntityTest extends TestCase
         $userId = Uuid::generate();
         $beforeCreation = now();
 
-        $order = Order::dddCreate($uuid, $restaurantId, $tableId, $userId, 4);
+        $order = Order::dddCreate($uuid, $restaurantId, $tableId, $userId, OrderDiners::create(4));
 
         $afterCreation = now();
 

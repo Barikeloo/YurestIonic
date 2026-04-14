@@ -18,7 +18,7 @@ final readonly class SetFamilyActiveResponse
     {
         return new self(
             id: $family->id()->value(),
-            name: $family->name(),
+            name: $family->name()->value(),
             active: $family->isActive(),
             createdAt: $family->createdAt()->format(\DateTimeInterface::ATOM),
             updatedAt: $family->updatedAt()->format(\DateTimeInterface::ATOM),
