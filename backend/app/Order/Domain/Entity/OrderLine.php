@@ -51,92 +51,92 @@ final class OrderLine
         );
     }
 
-    public static function hydrate(
-        Uuid $id,
-        Uuid $restaurantId,
-        Uuid $uuid,
-        Uuid $orderId,
-        Uuid $productId,
-        Uuid $userId,
-        OrderLineQuantity $quantity,
-        OrderLinePrice $price,
-        OrderLineTaxPercentage $taxPercentage,
-        DomainDateTime $createdAt,
-        DomainDateTime $updatedAt,
-        ?DomainDateTime $deletedAt = null,
+    public static function fromPersistence(
+        string $id,
+        string $restaurantId,
+        string $uuid,
+        string $orderId,
+        string $productId,
+        string $userId,
+        int $quantity,
+        int $price,
+        int $taxPercentage,
+        \DateTimeImmutable $createdAt,
+        \DateTimeImmutable $updatedAt,
+        ?\DateTimeImmutable $deletedAt = null,
     ): self {
         return new self(
-            id: $id,
-            restaurantId: $restaurantId,
-            uuid: $uuid,
-            orderId: $orderId,
-            productId: $productId,
-            userId: $userId,
-            quantity: $quantity,
-            price: $price,
-            taxPercentage: $taxPercentage,
-            createdAt: $createdAt,
-            updatedAt: $updatedAt,
-            deletedAt: $deletedAt,
+            id: Uuid::create($id),
+            restaurantId: Uuid::create($restaurantId),
+            uuid: Uuid::create($uuid),
+            orderId: Uuid::create($orderId),
+            productId: Uuid::create($productId),
+            userId: Uuid::create($userId),
+            quantity: OrderLineQuantity::create($quantity),
+            price: OrderLinePrice::create($price),
+            taxPercentage: OrderLineTaxPercentage::create($taxPercentage),
+            createdAt: DomainDateTime::create($createdAt),
+            updatedAt: DomainDateTime::create($updatedAt),
+            deletedAt: $deletedAt !== null ? DomainDateTime::create($deletedAt) : null,
         );
     }
 
-    public function getId(): Uuid
+    public function id(): Uuid
     {
         return $this->id;
     }
 
-    public function getRestaurantId(): Uuid
+    public function restaurantId(): Uuid
     {
         return $this->restaurantId;
     }
 
-    public function getUuid(): Uuid
+    public function uuid(): Uuid
     {
         return $this->uuid;
     }
 
-    public function getOrderId(): Uuid
+    public function orderId(): Uuid
     {
         return $this->orderId;
     }
 
-    public function getProductId(): Uuid
+    public function productId(): Uuid
     {
         return $this->productId;
     }
 
-    public function getUserId(): Uuid
+    public function userId(): Uuid
     {
         return $this->userId;
     }
 
-    public function getQuantity(): OrderLineQuantity
+    public function quantity(): OrderLineQuantity
     {
         return $this->quantity;
     }
 
-    public function getPrice(): OrderLinePrice
+    public function price(): OrderLinePrice
     {
         return $this->price;
     }
 
-    public function getTaxPercentage(): OrderLineTaxPercentage
+    public function taxPercentage(): OrderLineTaxPercentage
     {
         return $this->taxPercentage;
     }
 
-    public function getCreatedAt(): DomainDateTime
+    public function createdAt(): DomainDateTime
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): DomainDateTime
+    public function updatedAt(): DomainDateTime
     {
         return $this->updatedAt;
     }
 
-    public function getDeletedAt(): ?DomainDateTime
+    public function deletedAt(): ?DomainDateTime
     {
         return $this->deletedAt;
     }

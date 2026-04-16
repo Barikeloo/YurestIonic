@@ -19,13 +19,13 @@ final class AddLineToOrderResponse
     public static function create(OrderLine $orderLine): self
     {
         return new self(
-            id: $orderLine->getId()->value(),
-            uuid: $orderLine->getUuid()->value(),
-            orderId: $orderLine->getOrderId()->value(),
-            productId: $orderLine->getProductId()->value(),
-            quantity: $orderLine->getQuantity()->value(),
-            price: $orderLine->getPrice()->value(),
-            taxPercentage: $orderLine->getTaxPercentage()->value(),
+            id: $orderLine->id()->value(),
+            uuid: $orderLine->uuid()->value(),
+            orderId: $orderLine->orderId()->value(),
+            productId: $orderLine->productId()->value(),
+            quantity: $orderLine->quantity()->value(),
+            price: $orderLine->price()->value(),
+            taxPercentage: $orderLine->taxPercentage()->value(),
         );
     }
 

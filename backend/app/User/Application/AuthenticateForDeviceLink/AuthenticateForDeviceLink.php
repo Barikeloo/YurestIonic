@@ -18,7 +18,7 @@ class AuthenticateForDeviceLink
     public function __invoke(string $email, string $plainPassword): AuthenticateForDeviceLinkResponse
     {
         $emailVO = Email::create($email);
-        $user = $this->userRepository->findByEmail($emailVO->value());
+        $user = $this->userRepository->findByEmail($emailVO);
 
         if ($user === null) {
             return AuthenticateForDeviceLinkResponse::notFound();
@@ -32,19 +32,19 @@ class AuthenticateForDeviceLink
 
         $role = $user->role();
 
-        if ($role !== 'admin') {
+        if ($role === null || ! $role->isAdmin()) {
             return AuthenticateForDeviceLinkResponse::forbidden();
         }
 
         $restaurantId = null;
         $restaurantName = null;
 
-        if (is_numeric($user->restaurantId())) {
-            $restaurant = $this->restaurantRepository->findByInternalId((int) $user->restaurantId());
+        if ($user->restaurantId() !== null) {
+            $restaurant = $this->restaurantRepository->findByInternalId($user->restaurantId()->toInt());
 
             if ($restaurant !== null) {
-                $restaurantId = $restaurant->getUuid()->value();
-                $restaurantName = $restaurant->getName()->value();
+                $restaurantId = $restaurant->uuid()->value();
+                $restaurantName = $restaurant->name()->value();
             }
         }
 

@@ -20,14 +20,14 @@ final class AddLineToSaleResponse
     public static function create(SaleLine $saleLine): self
     {
         return new self(
-            id: $saleLine->getId()->value(),
-            uuid: $saleLine->getUuid()->value(),
-            saleId: $saleLine->getSaleId()->value(),
-            orderLineId: $saleLine->getOrderLineId()->value(),
-            productId: $saleLine->getProductId()->value(),
-            quantity: $saleLine->getQuantity()->value(),
-            price: $saleLine->getPrice()->value(),
-            taxPercentage: $saleLine->getTaxPercentage()->value(),
+            id: $saleLine->id()->value(),
+            uuid: $saleLine->uuid()->value(),
+            saleId: $saleLine->saleId()->value(),
+            orderLineId: $saleLine->orderLineId()->value(),
+            productId: $saleLine->productId()->value(),
+            quantity: $saleLine->quantity()->value(),
+            price: $saleLine->price()->value(),
+            taxPercentage: $saleLine->taxPercentage()->value(),
         );
     }
 

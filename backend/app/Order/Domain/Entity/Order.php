@@ -49,35 +49,35 @@ final class Order
         );
     }
 
-    public static function hydrate(
-        Uuid $id,
-        Uuid $restaurantId,
-        Uuid $uuid,
-        OrderStatus $status,
-        Uuid $tableId,
-        Uuid $openedByUserId,
-        ?Uuid $closedByUserId,
-        OrderDiners $diners,
-        DomainDateTime $openedAt,
-        ?DomainDateTime $closedAt,
-        DomainDateTime $createdAt,
-        DomainDateTime $updatedAt,
-        ?DomainDateTime $deletedAt = null,
+    public static function fromPersistence(
+        string $id,
+        string $restaurantId,
+        string $uuid,
+        string $status,
+        string $tableId,
+        string $openedByUserId,
+        ?string $closedByUserId,
+        int $diners,
+        ?\DateTimeImmutable $openedAt,
+        ?\DateTimeImmutable $closedAt,
+        \DateTimeImmutable $createdAt,
+        \DateTimeImmutable $updatedAt,
+        ?\DateTimeImmutable $deletedAt = null,
     ): self {
         return new self(
-            id: $id,
-            restaurantId: $restaurantId,
-            uuid: $uuid,
-            status: $status,
-            tableId: $tableId,
-            openedByUserId: $openedByUserId,
-            closedByUserId: $closedByUserId,
-            diners: $diners,
-            openedAt: $openedAt,
-            closedAt: $closedAt,
-            createdAt: $createdAt,
-            updatedAt: $updatedAt,
-            deletedAt: $deletedAt,
+            id: Uuid::create($id),
+            restaurantId: Uuid::create($restaurantId),
+            uuid: Uuid::create($uuid),
+            status: OrderStatus::create($status),
+            tableId: Uuid::create($tableId),
+            openedByUserId: Uuid::create($openedByUserId),
+            closedByUserId: $closedByUserId !== null ? Uuid::create($closedByUserId) : null,
+            diners: OrderDiners::create($diners),
+            openedAt: $openedAt !== null ? DomainDateTime::create($openedAt) : null,
+            closedAt: $closedAt !== null ? DomainDateTime::create($closedAt) : null,
+            createdAt: DomainDateTime::create($createdAt),
+            updatedAt: DomainDateTime::create($updatedAt),
+            deletedAt: $deletedAt !== null ? DomainDateTime::create($deletedAt) : null,
         );
     }
 
@@ -103,67 +103,67 @@ final class Order
         $this->updatedAt = DomainDateTime::now();
     }
 
-    public function getId(): Uuid
+    public function id(): Uuid
     {
         return $this->id;
     }
 
-    public function getRestaurantId(): Uuid
+    public function restaurantId(): Uuid
     {
         return $this->restaurantId;
     }
 
-    public function getUuid(): Uuid
+    public function uuid(): Uuid
     {
         return $this->uuid;
     }
 
-    public function getStatus(): OrderStatus
+    public function status(): OrderStatus
     {
         return $this->status;
     }
 
-    public function getTableId(): Uuid
+    public function tableId(): Uuid
     {
         return $this->tableId;
     }
 
-    public function getOpenedByUserId(): Uuid
+    public function openedByUserId(): Uuid
     {
         return $this->openedByUserId;
     }
 
-    public function getClosedByUserId(): ?Uuid
+    public function closedByUserId(): ?Uuid
     {
         return $this->closedByUserId;
     }
 
-    public function getDiners(): OrderDiners
+    public function diners(): OrderDiners
     {
         return $this->diners;
     }
 
-    public function getOpenedAt(): DomainDateTime
+    public function openedAt(): ?DomainDateTime
     {
         return $this->openedAt;
     }
 
-    public function getClosedAt(): ?DomainDateTime
+    public function closedAt(): ?DomainDateTime
     {
         return $this->closedAt;
     }
 
-    public function getCreatedAt(): DomainDateTime
+    public function createdAt(): DomainDateTime
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): DomainDateTime
+    public function updatedAt(): DomainDateTime
     {
         return $this->updatedAt;
     }
 
-    public function getDeletedAt(): ?DomainDateTime
+    public function deletedAt(): ?DomainDateTime
     {
         return $this->deletedAt;
     }

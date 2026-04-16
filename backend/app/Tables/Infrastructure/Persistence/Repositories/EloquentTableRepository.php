@@ -23,7 +23,7 @@ class EloquentTableRepository implements TableRepositoryInterface
             [
                 'restaurant_id' => $zone->restaurant_id,
                 'zone_id' => $zone->id,
-                'name' => $table->name(),
+                'name' => $table->name()->value(),
                 'created_at' => $table->createdAt()->value(),
                 'updated_at' => $table->updatedAt()->value(),
             ],

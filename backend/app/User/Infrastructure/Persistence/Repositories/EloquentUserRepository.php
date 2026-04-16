@@ -3,6 +3,7 @@
 namespace App\User\Infrastructure\Persistence\Repositories;
 
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
+use App\Shared\Domain\ValueObject\Email;
 use App\User\Domain\Entity\User;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
@@ -21,8 +22,8 @@ class EloquentUserRepository implements UserRepositoryInterface
             [
                 'name' => $user->name()->value(),
                 'email' => $user->email()->value(),
-                'role' => $user->role() ?? 'operator',
-                'restaurant_id' => $user->restaurantId(),
+                'role' => $user->role()?->value() ?? 'operator',
+                'restaurant_id' => $user->restaurantId()?->value(),
                 'password' => $user->passwordHash()->value(),
                 'created_at' => $user->createdAt()->value(),
                 'updated_at' => $user->updatedAt()->value(),
@@ -113,9 +114,9 @@ class EloquentUserRepository implements UserRepositoryInterface
         );
     }
 
-    public function findByEmail(string $email): ?User
+    public function findByEmail(Email $email): ?User
     {
-        $model = $this->model->newQuery()->where('email', $email)->first();
+        $model = $this->model->newQuery()->where('email', $email->value())->first();
 
         if ($model === null) {
             return null;

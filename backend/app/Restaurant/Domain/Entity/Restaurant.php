@@ -47,29 +47,29 @@ final class Restaurant
         );
     }
 
-    public static function hydrate(
-        Uuid $id,
-        Uuid $uuid,
-        RestaurantName $name,
-        ?RestaurantLegalName $legalName,
-        ?RestaurantTaxId $taxId,
-        Email $email,
-        RestaurantPasswordHash $password,
-        DomainDateTime $createdAt,
-        DomainDateTime $updatedAt,
-        ?DomainDateTime $deletedAt = null,
+    public static function fromPersistence(
+        string $id,
+        string $uuid,
+        string $name,
+        ?string $legalName,
+        ?string $taxId,
+        string $email,
+        string $password,
+        \DateTimeImmutable $createdAt,
+        \DateTimeImmutable $updatedAt,
+        ?\DateTimeImmutable $deletedAt = null,
     ): self {
         return new self(
-            id: $id,
-            uuid: $uuid,
-            name: $name,
-            legalName: $legalName,
-            taxId: $taxId,
-            email: $email,
-            password: $password,
-            createdAt: $createdAt,
-            updatedAt: $updatedAt,
-            deletedAt: $deletedAt,
+            id: Uuid::create($id),
+            uuid: Uuid::create($uuid),
+            name: RestaurantName::create($name),
+            legalName: $legalName !== null ? RestaurantLegalName::create($legalName) : null,
+            taxId: $taxId !== null ? RestaurantTaxId::create($taxId) : null,
+            email: Email::create($email),
+            password: RestaurantPasswordHash::create($password),
+            createdAt: DomainDateTime::create($createdAt),
+            updatedAt: DomainDateTime::create($updatedAt),
+            deletedAt: $deletedAt !== null ? DomainDateTime::create($deletedAt) : null,
         );
     }
 
@@ -103,52 +103,52 @@ final class Restaurant
         $this->updatedAt = DomainDateTime::now();
     }
 
-    public function getId(): Uuid
+    public function id(): Uuid
     {
         return $this->id;
     }
 
-    public function getUuid(): Uuid
+    public function uuid(): Uuid
     {
         return $this->uuid;
     }
 
-    public function getName(): RestaurantName
+    public function name(): RestaurantName
     {
         return $this->name;
     }
 
-    public function getLegalName(): ?RestaurantLegalName
+    public function legalName(): ?RestaurantLegalName
     {
         return $this->legalName;
     }
 
-    public function getTaxId(): ?RestaurantTaxId
+    public function taxId(): ?RestaurantTaxId
     {
         return $this->taxId;
     }
 
-    public function getEmail(): Email
+    public function email(): Email
     {
         return $this->email;
     }
 
-    public function getPassword(): RestaurantPasswordHash
+    public function password(): RestaurantPasswordHash
     {
         return $this->password;
     }
 
-    public function getCreatedAt(): DomainDateTime
+    public function createdAt(): DomainDateTime
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): DomainDateTime
+    public function updatedAt(): DomainDateTime
     {
         return $this->updatedAt;
     }
 
-    public function getDeletedAt(): ?DomainDateTime
+    public function deletedAt(): ?DomainDateTime
     {
         return $this->deletedAt;
     }

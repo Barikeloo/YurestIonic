@@ -23,21 +23,21 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
 
     public function save(OrderLine $orderLine): void
     {
-        $restaurantId = EloquentRestaurant::query()->where('uuid', $orderLine->getRestaurantId()->value())->value('id');
-        $orderId = EloquentOrder::query()->where('uuid', $orderLine->getOrderId()->value())->value('id');
-        $productId = EloquentProduct::query()->where('uuid', $orderLine->getProductId()->value())->value('id');
-        $userId = EloquentUser::query()->where('uuid', $orderLine->getUserId()->value())->value('id');
+        $restaurantId = EloquentRestaurant::query()->where('uuid', $orderLine->restaurantId()->value())->value('id');
+        $orderId = EloquentOrder::query()->where('uuid', $orderLine->orderId()->value())->value('id');
+        $productId = EloquentProduct::query()->where('uuid', $orderLine->productId()->value())->value('id');
+        $userId = EloquentUser::query()->where('uuid', $orderLine->userId()->value())->value('id');
 
         $this->model->newQuery()->updateOrCreate(
-            ['uuid' => $orderLine->getId()->value()],
+            ['uuid' => $orderLine->id()->value()],
             [
                 'restaurant_id' => $restaurantId,
                 'order_id' => $orderId,
                 'product_id' => $productId,
                 'user_id' => $userId,
-                'quantity' => $orderLine->getQuantity()->value(),
-                'price' => $orderLine->getPrice()->value(),
-                'tax_percentage' => $orderLine->getTaxPercentage()->value(),
+                'quantity' => $orderLine->quantity()->value(),
+                'price' => $orderLine->price()->value(),
+                'tax_percentage' => $orderLine->taxPercentage()->value(),
             ],
         );
     }
@@ -81,19 +81,19 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
         $productUuid = EloquentProduct::query()->where('id', $model->product_id)->value('uuid');
         $userUuid = EloquentUser::query()->where('id', $model->user_id)->value('uuid');
 
-        return OrderLine::hydrate(
-            id: Uuid::create($model->uuid),
-            restaurantId: Uuid::create($restaurantUuid),
-            uuid: Uuid::create($model->uuid),
-            orderId: Uuid::create($orderUuid),
-            productId: Uuid::create($productUuid),
-            userId: Uuid::create($userUuid),
-            quantity: OrderLineQuantity::create((int) $model->quantity),
-            price: OrderLinePrice::create((int) $model->price),
-            taxPercentage: OrderLineTaxPercentage::create((int) $model->tax_percentage),
-            createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
-            updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
-            deletedAt: $model->deleted_at ? DomainDateTime::create($model->deleted_at->toDateTimeImmutable()) : null,
+        return OrderLine::fromPersistence(
+            $model->uuid,
+            $restaurantUuid,
+            $model->uuid,
+            $orderUuid,
+            $productUuid,
+            $userUuid,
+            (int) $model->quantity,
+            (int) $model->price,
+            (int) $model->tax_percentage,
+            $model->created_at->toDateTimeImmutable(),
+            $model->updated_at->toDateTimeImmutable(),
+            $model->deleted_at?->toDateTimeImmutable(),
         );
     }
 }

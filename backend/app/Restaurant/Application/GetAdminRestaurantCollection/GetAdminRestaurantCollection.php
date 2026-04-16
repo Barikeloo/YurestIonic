@@ -27,17 +27,17 @@ class GetAdminRestaurantCollection
 
         $user = $this->userRepository->findById($authUserUuid);
 
-        if ($user === null || ! is_numeric($user->restaurantId())) {
+        if ($user === null || $user->restaurantId() === null) {
             return GetAdminRestaurantCollectionResponse::notAuthenticated();
         }
 
-        $linkedRestaurant = $this->restaurantRepository->findByInternalId((int) $user->restaurantId());
+        $linkedRestaurant = $this->restaurantRepository->findByInternalId($user->restaurantId()->toInt());
 
         if ($linkedRestaurant === null) {
             return GetAdminRestaurantCollectionResponse::linkedRestaurantNotFound();
         }
 
-        $taxId = $linkedRestaurant->getTaxId()?->value();
+        $taxId = $linkedRestaurant->taxId()?->value();
 
         if (! is_string($taxId) || $taxId === '') {
             return GetAdminRestaurantCollectionResponse::success(
@@ -58,19 +58,19 @@ class GetAdminRestaurantCollection
     {
         usort(
             $restaurants,
-            static fn (Restaurant $left, Restaurant $right): int => strcmp($left->getName()->value(), $right->getName()->value()),
+            static fn (Restaurant $left, Restaurant $right): int => strcmp($left->name()->value(), $right->name()->value()),
         );
 
         return array_map(
             function (Restaurant $restaurant): array {
-                $kpis = $this->restaurantRepository->getKpisByUuid($restaurant->getUuid());
+                $kpis = $this->restaurantRepository->getKpisByUuid($restaurant->uuid());
 
                 return [
-                    'uuid' => $restaurant->getUuid()->value(),
-                    'name' => $restaurant->getName()->value(),
-                    'legal_name' => $restaurant->getLegalName()?->value(),
-                    'tax_id' => $restaurant->getTaxId()?->value(),
-                    'email' => $restaurant->getEmail()->value(),
+                    'uuid' => $restaurant->uuid()->value(),
+                    'name' => $restaurant->name()->value(),
+                    'legal_name' => $restaurant->legalName()?->value(),
+                    'tax_id' => $restaurant->taxId()?->value(),
+                    'email' => $restaurant->email()->value(),
                     'users' => $kpis['users'],
                     'zones' => $kpis['zones'],
                     'products' => $kpis['products'],

@@ -22,16 +22,16 @@ final class ListOrdersResponse
     public static function create(Order $order): self
     {
         return new self(
-            id: $order->getId()->value(),
-            uuid: $order->getUuid()->value(),
-            restaurant_id: $order->getRestaurantId()->value(),
-            status: $order->getStatus()->value(),
-            table_id: $order->getTableId()->value(),
-            opened_by_user_id: $order->getOpenedByUserId()->value(),
-            closed_by_user_id: $order->getClosedByUserId()?->value(),
-            diners: $order->getDiners()->value(),
-            opened_at: $order->getOpenedAt()->format('Y-m-d H:i:s'),
-            closed_at: $order->getClosedAt()?->format('Y-m-d H:i:s'),
+            id: $order->id()->value(),
+            uuid: $order->uuid()->value(),
+            restaurant_id: $order->restaurantId()->value(),
+            status: $order->status()->value(),
+            table_id: $order->tableId()->value(),
+            opened_by_user_id: $order->openedByUserId()->value(),
+            closed_by_user_id: $order->closedByUserId()?->value(),
+            diners: $order->diners()->value(),
+            opened_at: $order->openedAt()?->format('Y-m-d H:i:s'),
+            closed_at: $order->closedAt()?->format('Y-m-d H:i:s'),
         );
     }
 

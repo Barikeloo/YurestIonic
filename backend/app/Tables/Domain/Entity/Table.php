@@ -63,9 +63,9 @@ class Table
 		return $this->zoneId;
 	}
 
-	public function name(): string
+	public function name(): TableName
 	{
-		return $this->name->value();
+		return $this->name;
 	}
 
 	public function createdAt(): DomainDateTime

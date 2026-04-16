@@ -24,23 +24,23 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
 
     public function save(SaleLine $saleLine): void
     {
-        $restaurantId = EloquentRestaurant::query()->where('uuid', $saleLine->getRestaurantId()->value())->value('id');
-        $saleId = EloquentSale::query()->where('uuid', $saleLine->getSaleId()->value())->value('id');
-        $orderLineId = EloquentOrderLine::query()->where('uuid', $saleLine->getOrderLineId()->value())->value('id');
-        $productId = EloquentProduct::query()->where('uuid', $saleLine->getProductId()->value())->value('id');
-        $userId = EloquentUser::query()->where('uuid', $saleLine->getUserId()->value())->value('id');
+        $restaurantId = EloquentRestaurant::query()->where('uuid', $saleLine->restaurantId()->value())->value('id');
+        $saleId = EloquentSale::query()->where('uuid', $saleLine->saleId()->value())->value('id');
+        $orderLineId = EloquentOrderLine::query()->where('uuid', $saleLine->orderLineId()->value())->value('id');
+        $productId = EloquentProduct::query()->where('uuid', $saleLine->productId()->value())->value('id');
+        $userId = EloquentUser::query()->where('uuid', $saleLine->userId()->value())->value('id');
 
         $this->model->newQuery()->updateOrCreate(
-            ['uuid' => $saleLine->getId()->value()],
+            ['uuid' => $saleLine->id()->value()],
             [
                 'restaurant_id' => $restaurantId,
                 'sale_id' => $saleId,
                 'order_line_id' => $orderLineId,
                 'product_id' => $productId,
                 'user_id' => $userId,
-                'quantity' => $saleLine->getQuantity()->value(),
-                'price' => $saleLine->getPrice()->value(),
-                'tax_percentage' => $saleLine->getTaxPercentage()->value(),
+                'quantity' => $saleLine->quantity()->value(),
+                'price' => $saleLine->price()->value(),
+                'tax_percentage' => $saleLine->taxPercentage()->value(),
             ],
         );
     }
@@ -85,20 +85,20 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
         $productUuid = EloquentProduct::query()->where('id', $model->product_id)->value('uuid');
         $userUuid = EloquentUser::query()->where('id', $model->user_id)->value('uuid');
 
-        return SaleLine::hydrate(
-            id: Uuid::create($model->uuid),
-            restaurantId: Uuid::create($restaurantUuid),
-            uuid: Uuid::create($model->uuid),
-            saleId: Uuid::create($saleUuid),
-            orderLineId: Uuid::create($orderLineUuid),
-            productId: Uuid::create($productUuid),
-            userId: Uuid::create($userUuid),
-            quantity: SaleLineQuantity::create((int) $model->quantity),
-            price: SaleLinePrice::create((int) $model->price),
-            taxPercentage: SaleLineTaxPercentage::create((int) $model->tax_percentage),
-            createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
-            updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
-            deletedAt: $model->deleted_at ? DomainDateTime::create($model->deleted_at->toDateTimeImmutable()) : null,
+        return SaleLine::fromPersistence(
+            $model->uuid,
+            $restaurantUuid,
+            $model->uuid,
+            $saleUuid,
+            $orderLineUuid,
+            $productUuid,
+            $userUuid,
+            (int) $model->quantity,
+            (int) $model->price,
+            (int) $model->tax_percentage,
+            $model->created_at->toDateTimeImmutable(),
+            $model->updated_at->toDateTimeImmutable(),
+            $model->deleted_at?->toDateTimeImmutable(),
         );
     }
 }

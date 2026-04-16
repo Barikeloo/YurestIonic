@@ -19,7 +19,7 @@ final readonly class GetTableResponse
         return new self(
             id: $table->id()->value(),
             zoneId: $table->zoneId()->value(),
-            name: $table->name(),
+            name: $table->name()->value(),
             createdAt: $table->createdAt()->format(\DateTimeInterface::ATOM),
             updatedAt: $table->updatedAt()->format(\DateTimeInterface::ATOM),
         );

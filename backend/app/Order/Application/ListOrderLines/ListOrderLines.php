@@ -19,7 +19,7 @@ final class ListOrderLines
 
         return array_map(
             function ($orderLine): array {
-                $product = $this->productRepository->findById($orderLine->getProductId()->value());
+                $product = $this->productRepository->findById($orderLine->productId()->value());
 
                 return ListOrderLinesResponse::create(
                     orderLine: $orderLine,

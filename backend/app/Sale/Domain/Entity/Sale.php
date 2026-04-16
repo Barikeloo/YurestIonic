@@ -46,33 +46,33 @@ final class Sale
         );
     }
 
-    public static function hydrate(
-        Uuid $id,
-        Uuid $restaurantId,
-        Uuid $uuid,
-        Uuid $orderId,
-        Uuid $openedByUserId,
-        ?Uuid $closedByUserId,
-        ?SaleTicketNumber $ticketNumber,
-        DomainDateTime $valueDate,
-        SaleTotal $total,
-        DomainDateTime $createdAt,
-        DomainDateTime $updatedAt,
-        ?DomainDateTime $deletedAt = null,
+    public static function fromPersistence(
+        string $id,
+        string $restaurantId,
+        string $uuid,
+        string $orderId,
+        string $openedByUserId,
+        ?string $closedByUserId,
+        ?int $ticketNumber,
+        \DateTimeImmutable $valueDate,
+        int $total,
+        \DateTimeImmutable $createdAt,
+        \DateTimeImmutable $updatedAt,
+        ?\DateTimeImmutable $deletedAt = null,
     ): self {
         return new self(
-            id: $id,
-            restaurantId: $restaurantId,
-            uuid: $uuid,
-            orderId: $orderId,
-            openedByUserId: $openedByUserId,
-            closedByUserId: $closedByUserId,
-            ticketNumber: $ticketNumber,
-            valueDate: $valueDate,
-            total: $total,
-            createdAt: $createdAt,
-            updatedAt: $updatedAt,
-            deletedAt: $deletedAt,
+            id: Uuid::create($id),
+            restaurantId: Uuid::create($restaurantId),
+            uuid: Uuid::create($uuid),
+            orderId: Uuid::create($orderId),
+            openedByUserId: Uuid::create($openedByUserId),
+            closedByUserId: $closedByUserId !== null ? Uuid::create($closedByUserId) : null,
+            ticketNumber: $ticketNumber !== null ? SaleTicketNumber::create($ticketNumber) : null,
+            valueDate: DomainDateTime::create($valueDate),
+            total: SaleTotal::create($total),
+            createdAt: DomainDateTime::create($createdAt),
+            updatedAt: DomainDateTime::create($updatedAt),
+            deletedAt: $deletedAt !== null ? DomainDateTime::create($deletedAt) : null,
         );
     }
 
@@ -84,62 +84,62 @@ final class Sale
         $this->updatedAt = DomainDateTime::now();
     }
 
-    public function getId(): Uuid
+    public function id(): Uuid
     {
         return $this->id;
     }
 
-    public function getRestaurantId(): Uuid
+    public function restaurantId(): Uuid
     {
         return $this->restaurantId;
     }
 
-    public function getUuid(): Uuid
+    public function uuid(): Uuid
     {
         return $this->uuid;
     }
 
-    public function getOrderId(): Uuid
+    public function orderId(): Uuid
     {
         return $this->orderId;
     }
 
-    public function getOpenedByUserId(): Uuid
+    public function openedByUserId(): Uuid
     {
         return $this->openedByUserId;
     }
 
-    public function getClosedByUserId(): ?Uuid
+    public function closedByUserId(): ?Uuid
     {
         return $this->closedByUserId;
     }
 
-    public function getTicketNumber(): ?SaleTicketNumber
+    public function ticketNumber(): ?SaleTicketNumber
     {
         return $this->ticketNumber;
     }
 
-    public function getValueDate(): DomainDateTime
+    public function valueDate(): DomainDateTime
     {
         return $this->valueDate;
     }
 
-    public function getTotal(): SaleTotal
+    public function total(): SaleTotal
     {
         return $this->total;
     }
 
-    public function getCreatedAt(): DomainDateTime
+    public function createdAt(): DomainDateTime
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): DomainDateTime
+    public function updatedAt(): DomainDateTime
     {
         return $this->updatedAt;
     }
 
-    public function getDeletedAt(): ?DomainDateTime
+    public function deletedAt(): ?DomainDateTime
     {
         return $this->deletedAt;
     }

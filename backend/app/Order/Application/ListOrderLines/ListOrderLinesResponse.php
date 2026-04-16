@@ -24,18 +24,18 @@ final class ListOrderLinesResponse
     public static function create(OrderLine $orderLine, ?string $productName = null): self
     {
         return new self(
-            id: $orderLine->getId()->value(),
-            uuid: $orderLine->getUuid()->value(),
-            restaurant_id: $orderLine->getRestaurantId()->value(),
-            order_id: $orderLine->getOrderId()->value(),
-            product_id: $orderLine->getProductId()->value(),
+            id: $orderLine->id()->value(),
+            uuid: $orderLine->uuid()->value(),
+            restaurant_id: $orderLine->restaurantId()->value(),
+            order_id: $orderLine->orderId()->value(),
+            product_id: $orderLine->productId()->value(),
             product_name: $productName,
-            user_id: $orderLine->getUserId()->value(),
-            quantity: $orderLine->getQuantity()->value(),
-            price: $orderLine->getPrice()->value(),
-            tax_percentage: $orderLine->getTaxPercentage()->value(),
-            created_at: $orderLine->getCreatedAt()->format('Y-m-d H:i:s'),
-            updated_at: $orderLine->getUpdatedAt()->format('Y-m-d H:i:s'),
+            user_id: $orderLine->userId()->value(),
+            quantity: $orderLine->quantity()->value(),
+            price: $orderLine->price()->value(),
+            tax_percentage: $orderLine->taxPercentage()->value(),
+            created_at: $orderLine->createdAt()->format('Y-m-d H:i:s'),
+            updated_at: $orderLine->updatedAt()->format('Y-m-d H:i:s'),
         );
     }
 

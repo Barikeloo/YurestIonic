@@ -17,11 +17,11 @@ final class GetRestaurantResponse
     public static function create(Restaurant $restaurant): self
     {
         return new self(
-            id: $restaurant->getId()->value(),
-            name: $restaurant->getName()->value(),
-            legal_name: $restaurant->getLegalName()?->value(),
-            tax_id: $restaurant->getTaxId()?->value(),
-            email: $restaurant->getEmail()->value(),
+            id: $restaurant->id()->value(),
+            name: $restaurant->name()->value(),
+            legal_name: $restaurant->legalName()?->value(),
+            tax_id: $restaurant->taxId()?->value(),
+            email: $restaurant->email()->value(),
         );
     }
 

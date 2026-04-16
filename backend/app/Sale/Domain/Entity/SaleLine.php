@@ -54,99 +54,99 @@ final class SaleLine
         );
     }
 
-    public static function hydrate(
-        Uuid $id,
-        Uuid $restaurantId,
-        Uuid $uuid,
-        Uuid $saleId,
-        Uuid $orderLineId,
-        Uuid $productId,
-        Uuid $userId,
-        SaleLineQuantity $quantity,
-        SaleLinePrice $price,
-        SaleLineTaxPercentage $taxPercentage,
-        DomainDateTime $createdAt,
-        DomainDateTime $updatedAt,
-        ?DomainDateTime $deletedAt = null,
+    public static function fromPersistence(
+        string $id,
+        string $restaurantId,
+        string $uuid,
+        string $saleId,
+        string $orderLineId,
+        string $productId,
+        string $userId,
+        int $quantity,
+        int $price,
+        int $taxPercentage,
+        \DateTimeImmutable $createdAt,
+        \DateTimeImmutable $updatedAt,
+        ?\DateTimeImmutable $deletedAt = null,
     ): self {
         return new self(
-            id: $id,
-            restaurantId: $restaurantId,
-            uuid: $uuid,
-            saleId: $saleId,
-            orderLineId: $orderLineId,
-            productId: $productId,
-            userId: $userId,
-            quantity: $quantity,
-            price: $price,
-            taxPercentage: $taxPercentage,
-            createdAt: $createdAt,
-            updatedAt: $updatedAt,
-            deletedAt: $deletedAt,
+            id: Uuid::create($id),
+            restaurantId: Uuid::create($restaurantId),
+            uuid: Uuid::create($uuid),
+            saleId: Uuid::create($saleId),
+            orderLineId: Uuid::create($orderLineId),
+            productId: Uuid::create($productId),
+            userId: Uuid::create($userId),
+            quantity: SaleLineQuantity::create($quantity),
+            price: SaleLinePrice::create($price),
+            taxPercentage: SaleLineTaxPercentage::create($taxPercentage),
+            createdAt: DomainDateTime::create($createdAt),
+            updatedAt: DomainDateTime::create($updatedAt),
+            deletedAt: $deletedAt !== null ? DomainDateTime::create($deletedAt) : null,
         );
     }
 
-    public function getId(): Uuid
+    public function id(): Uuid
     {
         return $this->id;
     }
 
-    public function getRestaurantId(): Uuid
+    public function restaurantId(): Uuid
     {
         return $this->restaurantId;
     }
 
-    public function getUuid(): Uuid
+    public function uuid(): Uuid
     {
         return $this->uuid;
     }
 
-    public function getSaleId(): Uuid
+    public function saleId(): Uuid
     {
         return $this->saleId;
     }
 
-    public function getOrderLineId(): Uuid
+    public function orderLineId(): Uuid
     {
         return $this->orderLineId;
     }
 
-    public function getProductId(): Uuid
+    public function productId(): Uuid
     {
         return $this->productId;
     }
 
-    public function getUserId(): Uuid
+    public function userId(): Uuid
     {
         return $this->userId;
     }
 
-    public function getQuantity(): SaleLineQuantity
+    public function quantity(): SaleLineQuantity
     {
         return $this->quantity;
     }
 
-    public function getPrice(): SaleLinePrice
+    public function price(): SaleLinePrice
     {
         return $this->price;
     }
 
-    public function getTaxPercentage(): SaleLineTaxPercentage
+    public function taxPercentage(): SaleLineTaxPercentage
     {
         return $this->taxPercentage;
     }
 
-    public function getCreatedAt(): DomainDateTime
+    public function createdAt(): DomainDateTime
     {
         return $this->createdAt;
     }
 
-    public function getUpdatedAt(): DomainDateTime
+    public function updatedAt(): DomainDateTime
     {
         return $this->updatedAt;
     }
 
-    public function getDeletedAt(): ?DomainDateTime
+    public function deletedAt(): ?DomainDateTime
     {
         return $this->deletedAt;
     }

@@ -22,7 +22,7 @@ class EloquentZoneRepository implements ZoneRepositoryInterface
             ['uuid' => $zone->id()->value()],
             [
                 'restaurant_id' => $restaurantId,
-                'name' => $zone->name(),
+                'name' => $zone->name()->value(),
                 'created_at' => $zone->createdAt()->value(),
                 'updated_at' => $zone->updatedAt()->value(),
             ],

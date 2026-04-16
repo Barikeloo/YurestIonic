@@ -2,6 +2,7 @@
 
 namespace App\SuperAdmin\Domain\Entity;
 
+use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\SuperAdmin\Domain\ValueObject\SuperAdminName;
@@ -14,15 +15,37 @@ final class SuperAdmin
         private SuperAdminName $name,
         private Email $email,
         private SuperAdminPasswordHash $passwordHash,
+        private DomainDateTime $createdAt,
+        private DomainDateTime $updatedAt,
     ) {}
 
-    public static function hydrate(
+    public static function dddCreate(
         Uuid $id,
         SuperAdminName $name,
         Email $email,
         SuperAdminPasswordHash $passwordHash,
     ): self {
-        return new self($id, $name, $email, $passwordHash);
+        $now = DomainDateTime::now();
+
+        return new self($id, $name, $email, $passwordHash, $now, $now);
+    }
+
+    public static function fromPersistence(
+        string $id,
+        string $name,
+        string $email,
+        string $passwordHash,
+        \DateTimeImmutable $createdAt,
+        \DateTimeImmutable $updatedAt,
+    ): self {
+        return new self(
+            Uuid::create($id),
+            SuperAdminName::create($name),
+            Email::create($email),
+            SuperAdminPasswordHash::create($passwordHash),
+            DomainDateTime::create($createdAt),
+            DomainDateTime::create($updatedAt),
+        );
     }
 
     public function id(): Uuid
@@ -43,5 +66,15 @@ final class SuperAdmin
     public function passwordHash(): SuperAdminPasswordHash
     {
         return $this->passwordHash;
+    }
+
+    public function createdAt(): DomainDateTime
+    {
+        return $this->createdAt;
+    }
+
+    public function updatedAt(): DomainDateTime
+    {
+        return $this->updatedAt;
     }
 }

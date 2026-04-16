@@ -20,14 +20,14 @@ final class CreateOrderResponse
     public static function create(Order $order): self
     {
         return new self(
-            id: $order->getId()->value(),
-            uuid: $order->getUuid()->value(),
-            restaurantId: $order->getRestaurantId()->value(),
-            tableId: $order->getTableId()->value(),
-            openedByUserId: $order->getOpenedByUserId()->value(),
-            status: $order->getStatus()->value(),
-            diners: $order->getDiners()->value(),
-            openedAt: $order->getOpenedAt()->format('Y-m-d H:i:s'),
+            id: $order->id()->value(),
+            uuid: $order->uuid()->value(),
+            restaurantId: $order->restaurantId()->value(),
+            tableId: $order->tableId()->value(),
+            openedByUserId: $order->openedByUserId()->value(),
+            status: $order->status()->value(),
+            diners: $order->diners()->value(),
+            openedAt: $order->openedAt()?->format('Y-m-d H:i:s'),
         );
     }
 

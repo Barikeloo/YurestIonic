@@ -18,7 +18,7 @@ final class DeleteSale
             return false;
         }
 
-        $this->saleRepository->delete($sale->getId());
+        $this->saleRepository->delete($sale->id());
 
         return true;
     }

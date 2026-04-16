@@ -21,24 +21,24 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
 
     public function save(Sale $sale): void
     {
-        $restaurantId = EloquentRestaurant::query()->where('uuid', $sale->getRestaurantId()->value())->value('id');
-        $orderId = EloquentOrder::query()->where('uuid', $sale->getOrderId()->value())->value('id');
-        $openedByUserId = EloquentUser::query()->where('uuid', $sale->getOpenedByUserId()->value())->value('id');
-        $closedByUserId = $sale->getClosedByUserId() !== null
-            ? EloquentUser::query()->where('uuid', $sale->getClosedByUserId()?->value())->value('id')
+        $restaurantId = EloquentRestaurant::query()->where('uuid', $sale->restaurantId()->value())->value('id');
+        $orderId = EloquentOrder::query()->where('uuid', $sale->orderId()->value())->value('id');
+        $openedByUserId = EloquentUser::query()->where('uuid', $sale->openedByUserId()->value())->value('id');
+        $closedByUserId = $sale->closedByUserId() !== null
+            ? EloquentUser::query()->where('uuid', $sale->closedByUserId()?->value())->value('id')
             : null;
 
         $this->model->newQuery()->updateOrCreate(
-            ['uuid' => $sale->getId()->value()],
+            ['uuid' => $sale->id()->value()],
             [
                 'restaurant_id' => $restaurantId,
                 'order_id' => $orderId,
                 'user_id' => $openedByUserId,
                 'opened_by_user_id' => $openedByUserId,
                 'closed_by_user_id' => $closedByUserId,
-                'ticket_number' => $sale->getTicketNumber()?->value(),
-                'value_date' => $sale->getValueDate()->value(),
-                'total' => $sale->getTotal()->value(),
+                'ticket_number' => $sale->ticketNumber()?->value(),
+                'value_date' => $sale->valueDate()->value(),
+                'total' => $sale->total()->value(),
             ],
         );
     }
@@ -96,19 +96,19 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
             ? EloquentUser::query()->where('id', $model->closed_by_user_id)->value('uuid')
             : null;
 
-        return Sale::hydrate(
-            id: Uuid::create($model->uuid),
-            restaurantId: Uuid::create($restaurantUuid),
-            uuid: Uuid::create($model->uuid),
-            orderId: Uuid::create($orderUuid),
-            openedByUserId: Uuid::create($openedByUserUuid),
-            closedByUserId: $closedByUserUuid !== null ? Uuid::create($closedByUserUuid) : null,
-            ticketNumber: $model->ticket_number !== null ? SaleTicketNumber::create((int) $model->ticket_number) : null,
-            valueDate: DomainDateTime::create($model->value_date->toDateTimeImmutable()),
-            total: SaleTotal::create((int) $model->total),
-            createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
-            updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
-            deletedAt: $model->deleted_at ? DomainDateTime::create($model->deleted_at->toDateTimeImmutable()) : null,
+        return Sale::fromPersistence(
+            $model->uuid,
+            $restaurantUuid,
+            $model->uuid,
+            $orderUuid,
+            $openedByUserUuid,
+            $closedByUserUuid,
+            $model->ticket_number !== null ? (int) $model->ticket_number : null,
+            $model->value_date->toDateTimeImmutable(),
+            (int) $model->total,
+            $model->created_at->toDateTimeImmutable(),
+            $model->updated_at->toDateTimeImmutable(),
+            $model->deleted_at?->toDateTimeImmutable(),
         );
     }
 }

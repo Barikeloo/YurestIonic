@@ -52,9 +52,9 @@ class Zone
         return $this->id;
     }
 
-    public function name(): string
+    public function name(): ZoneName
     {
-        return $this->name->value();
+        return $this->name;
     }
 
     public function createdAt(): DomainDateTime

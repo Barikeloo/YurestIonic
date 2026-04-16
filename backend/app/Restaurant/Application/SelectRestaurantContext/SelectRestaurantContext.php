@@ -26,8 +26,8 @@ class SelectRestaurantContext
 
         if ($isSuperAdmin) {
             return SelectRestaurantContextResponse::success(
-                $targetRestaurant->getUuid()->value(),
-                $targetRestaurant->getName()->value(),
+                $targetRestaurant->uuid()->value(),
+                $targetRestaurant->name()->value(),
             );
         }
 
@@ -37,36 +37,36 @@ class SelectRestaurantContext
 
         $user = $this->userRepository->findById($authUserUuid);
 
-        if ($user === null || ! is_numeric($user->restaurantId())) {
+        if ($user === null || $user->restaurantId() === null) {
             return SelectRestaurantContextResponse::notAuthenticated();
         }
 
-        $linkedRestaurant = $this->restaurantRepository->findByInternalId((int) $user->restaurantId());
+        $linkedRestaurant = $this->restaurantRepository->findByInternalId($user->restaurantId()->toInt());
 
         if ($linkedRestaurant === null) {
             return SelectRestaurantContextResponse::linkedRestaurantNotFound();
         }
 
-        $linkedTaxId = $linkedRestaurant->getTaxId()?->value();
+        $linkedTaxId = $linkedRestaurant->taxId()?->value();
 
         if (! is_string($linkedTaxId) || $linkedTaxId === '') {
-            if ($targetRestaurant->getUuid()->value() !== $linkedRestaurant->getUuid()->value()) {
+            if ($targetRestaurant->uuid()->value() !== $linkedRestaurant->uuid()->value()) {
                 return SelectRestaurantContextResponse::forbidden();
             }
 
             return SelectRestaurantContextResponse::success(
-                $targetRestaurant->getUuid()->value(),
-                $targetRestaurant->getName()->value(),
+                $targetRestaurant->uuid()->value(),
+                $targetRestaurant->name()->value(),
             );
         }
 
-        if ($targetRestaurant->getTaxId()?->value() !== $linkedTaxId) {
+        if ($targetRestaurant->taxId()?->value() !== $linkedTaxId) {
             return SelectRestaurantContextResponse::forbidden();
         }
 
         return SelectRestaurantContextResponse::success(
-            $targetRestaurant->getUuid()->value(),
-            $targetRestaurant->getName()->value(),
+            $targetRestaurant->uuid()->value(),
+            $targetRestaurant->name()->value(),
         );
     }
 }

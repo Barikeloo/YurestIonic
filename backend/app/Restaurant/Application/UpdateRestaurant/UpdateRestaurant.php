@@ -60,7 +60,7 @@ final class UpdateRestaurant
 
         if ($email !== null || $passwordHash !== null) {
             $this->userRepository->syncAdminCredentialsForRestaurant(
-                restaurantUuid: $restaurant->getId()->value(),
+                restaurantUuid: $restaurant->id()->value(),
                 email: $email,
                 passwordHash: $passwordHash,
             );

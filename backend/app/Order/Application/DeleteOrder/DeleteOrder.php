@@ -18,7 +18,7 @@ final class DeleteOrder
             return false;
         }
 
-        $this->orderRepository->delete($order->getId());
+        $this->orderRepository->delete($order->id());
 
         return true;
     }

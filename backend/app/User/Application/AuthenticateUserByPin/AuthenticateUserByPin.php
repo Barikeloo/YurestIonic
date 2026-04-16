@@ -40,16 +40,16 @@ final class AuthenticateUserByPin
             return AuthenticateUserResponse::notFound();
         }
 
-        $role = $user->role();
+        $role = $user->role()?->value();
         $restaurantId = null;
         $restaurantName = null;
 
-        if (is_numeric($user->restaurantId())) {
-            $restaurant = $this->restaurantRepository->findByInternalId((int) $user->restaurantId());
+        if ($user->restaurantId() !== null) {
+            $restaurant = $this->restaurantRepository->findByInternalId($user->restaurantId()->toInt());
 
             if ($restaurant !== null) {
-                $restaurantId = $restaurant->getUuid()->value();
-                $restaurantName = $restaurant->getName()->value();
+                $restaurantId = $restaurant->uuid()->value();
+                $restaurantName = $restaurant->name()->value();
             }
         }
 

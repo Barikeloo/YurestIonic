@@ -60,7 +60,7 @@ final class RegisterRestaurantWithAdmin
         $this->transactionManager->run(function () use ($restaurant, $effectiveAdminName, $emailVO, $hashedPassword, $hashedPin): void {
             $this->restaurantRepository->save($restaurant);
             $this->userRepository->saveAdminForRestaurant(
-                restaurantUuid: $restaurant->getUuid()->value(),
+                restaurantUuid: $restaurant->uuid()->value(),
                 name: $effectiveAdminName,
                 email: $emailVO->value(),
                 passwordHash: $hashedPassword,
@@ -69,8 +69,8 @@ final class RegisterRestaurantWithAdmin
         });
 
         return RegisterRestaurantWithAdminResponse::create(
-            restaurantId: $restaurant->getUuid()->value(),
-            restaurantName: $restaurant->getName()->value(),
+            restaurantId: $restaurant->uuid()->value(),
+            restaurantName: $restaurant->name()->value(),
             adminEmail: $emailVO->value(),
             adminName: $effectiveAdminName,
             adminPin: $effectiveAdminPin,

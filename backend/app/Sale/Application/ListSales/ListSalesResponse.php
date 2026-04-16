@@ -21,15 +21,15 @@ final class ListSalesResponse
     public static function create(Sale $sale): self
     {
         return new self(
-            id: $sale->getId()->value(),
-            uuid: $sale->getUuid()->value(),
-            restaurant_id: $sale->getRestaurantId()->value(),
-            order_id: $sale->getOrderId()->value(),
-            opened_by_user_id: $sale->getOpenedByUserId()->value(),
-            closed_by_user_id: $sale->getClosedByUserId()?->value(),
-            ticket_number: $sale->getTicketNumber()?->value(),
-            value_date: $sale->getValueDate()->format('Y-m-d H:i:s'),
-            total: $sale->getTotal()->value(),
+            id: $sale->id()->value(),
+            uuid: $sale->uuid()->value(),
+            restaurant_id: $sale->restaurantId()->value(),
+            order_id: $sale->orderId()->value(),
+            opened_by_user_id: $sale->openedByUserId()->value(),
+            closed_by_user_id: $sale->closedByUserId()?->value(),
+            ticket_number: $sale->ticketNumber()?->value(),
+            value_date: $sale->valueDate()->format('Y-m-d H:i:s'),
+            total: $sale->total()->value(),
         );
     }
 

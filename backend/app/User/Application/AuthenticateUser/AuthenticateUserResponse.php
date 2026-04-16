@@ -14,8 +14,8 @@ final readonly class AuthenticateUserResponse
         public ?string $name,
         public ?string $email,
         public ?string $role = null,
-        public ?string $restaurant_id = null,
-        public ?string $restaurant_name = null,
+        public ?string $restaurantId = null,
+        public ?string $restaurantName = null,
     ) {}
 
     public static function authenticated(
@@ -32,8 +32,8 @@ final readonly class AuthenticateUserResponse
             name: $user->name()->value(),
             email: $user->email()->value(),
             role: $role,
-            restaurant_id: $restaurantId,
-            restaurant_name: $restaurantName,
+            restaurantId: $restaurantId,
+            restaurantName: $restaurantName,
         );
     }
 
@@ -79,8 +79,8 @@ final readonly class AuthenticateUserResponse
             'name' => (string) $this->name,
             'email' => (string) $this->email,
             'role' => $this->role,
-            'restaurant_id' => $this->restaurant_id,
-            'restaurant_name' => $this->restaurant_name,
+            'restaurantId' => $this->restaurantId,
+            'restaurantName' => $this->restaurantName,
         ];
     }
 }

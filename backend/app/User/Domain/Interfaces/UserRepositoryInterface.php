@@ -2,6 +2,7 @@
 
 namespace App\User\Domain\Interfaces;
 
+use App\Shared\Domain\ValueObject\Email;
 use App\User\Domain\Entity\User;
 
 interface UserRepositoryInterface
@@ -24,7 +25,7 @@ interface UserRepositoryInterface
 
     public function findById(string $id): ?User;
 
-    public function findByEmail(string $email): ?User;
+    public function findByEmail(Email $email): ?User;
 
     public function findPinByUuid(string $uuid): ?string;
 

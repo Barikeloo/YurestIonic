@@ -21,22 +21,22 @@ class AuthorizeRestaurantAccess
 
         $user = $this->userRepository->findById($authUserUuid);
 
-        if ($user === null || ! is_numeric($user->restaurantId())) {
+        if ($user === null || $user->restaurantId() === null) {
             return AuthorizeRestaurantAccessResponse::notAuthenticated();
         }
 
-        $linkedRestaurant = $this->restaurantRepository->findByInternalId((int) $user->restaurantId());
+        $linkedRestaurant = $this->restaurantRepository->findByInternalId($user->restaurantId()->toInt());
         $targetRestaurant = $this->restaurantRepository->findByUuid(Uuid::create($targetRestaurantUuid));
 
         if ($linkedRestaurant === null || $targetRestaurant === null) {
             return AuthorizeRestaurantAccessResponse::restaurantNotFound();
         }
 
-        $linkedTaxId = $linkedRestaurant->getTaxId()?->value();
-        $targetTaxId = $targetRestaurant->getTaxId()?->value();
+        $linkedTaxId = $linkedRestaurant->taxId()?->value();
+        $targetTaxId = $targetRestaurant->taxId()?->value();
 
         if (! is_string($linkedTaxId) || $linkedTaxId === '') {
-            if ($targetRestaurant->getUuid()->value() !== $linkedRestaurant->getUuid()->value()) {
+            if ($targetRestaurant->uuid()->value() !== $linkedRestaurant->uuid()->value()) {
                 return AuthorizeRestaurantAccessResponse::forbidden();
             }
 

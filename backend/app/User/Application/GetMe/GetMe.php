@@ -20,8 +20,8 @@ class GetMe
             return null;
         }
 
-        $role = $user->role();
-        $restaurantId = $user->restaurantId();
+        $role = $user->role()?->value();
+        $restaurantId = $user->restaurantId()?->toInt();
         $restaurantUuid = null;
         $restaurantName = null;
 
@@ -30,8 +30,8 @@ class GetMe
             // Usar el repositorio para obtener el restaurante por id interno
             $restaurant = $this->restaurantRepository->findByInternalId($restaurantId);
             if ($restaurant !== null) {
-                $restaurantUuid = $restaurant->getUuid()->value();
-                $restaurantName = $restaurant->getName()->value();
+                $restaurantUuid = $restaurant->uuid()->value();
+                $restaurantName = $restaurant->name()->value();
             }
         }
 

@@ -27,11 +27,11 @@ final class UpdateSale
             return null;
         }
 
-        if ($sale->getClosedByUserId() !== null) {
+        if ($sale->closedByUserId() !== null) {
             throw new InvalidArgumentException('Sale is already closed.');
         }
 
-        $saleLines = $this->saleLineRepository->findBySaleId($sale->getId());
+        $saleLines = $this->saleLineRepository->findBySaleId($sale->id());
 
         if ($saleLines === []) {
             throw new InvalidArgumentException('A sale must have at least one line before closing.');
@@ -39,8 +39,8 @@ final class UpdateSale
 
         $total = 0;
         foreach ($saleLines as $saleLine) {
-            $lineBase = $saleLine->getPrice()->value() * $saleLine->getQuantity()->value();
-            $lineWithTax = intdiv($lineBase * (100 + $saleLine->getTaxPercentage()->value()), 100);
+            $lineBase = $saleLine->price()->value() * $saleLine->quantity()->value();
+            $lineWithTax = intdiv($lineBase * (100 + $saleLine->taxPercentage()->value()), 100);
             $total += $lineWithTax;
         }
 

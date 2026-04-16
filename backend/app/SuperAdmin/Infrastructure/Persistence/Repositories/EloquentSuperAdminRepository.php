@@ -24,11 +24,13 @@ final class EloquentSuperAdminRepository implements SuperAdminRepositoryInterfac
             return null;
         }
 
-        return SuperAdmin::hydrate(
-            Uuid::create($model->uuid),
-            SuperAdminName::create($model->name),
-            Email::create($model->email),
-            SuperAdminPasswordHash::create($model->password),
+        return SuperAdmin::fromPersistence(
+            $model->uuid,
+            $model->name,
+            $model->email,
+            $model->password,
+            $model->created_at->toDateTimeImmutable(),
+            $model->updated_at->toDateTimeImmutable(),
         );
     }
 
@@ -40,11 +42,13 @@ final class EloquentSuperAdminRepository implements SuperAdminRepositoryInterfac
             return null;
         }
 
-        return SuperAdmin::hydrate(
-            Uuid::create($model->uuid),
-            SuperAdminName::create($model->name),
-            Email::create($model->email),
-            SuperAdminPasswordHash::create($model->password),
+        return SuperAdmin::fromPersistence(
+            $model->uuid,
+            $model->name,
+            $model->email,
+            $model->password,
+            $model->created_at->toDateTimeImmutable(),
+            $model->updated_at->toDateTimeImmutable(),
         );
     }
 }

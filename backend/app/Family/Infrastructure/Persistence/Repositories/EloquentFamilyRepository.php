@@ -41,12 +41,12 @@ class EloquentFamilyRepository implements FamilyRepositoryInterface
             return null;
         }
 
-        return Family::hydrate(
-            id: Uuid::create($model->uuid),
-            name: FamilyName::create($model->name),
-            active: (bool) $model->active,
-            createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
-            updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
+        return Family::fromPersistence(
+            $model->uuid,
+            $model->name,
+            (bool) $model->active,
+            $model->created_at->toDateTimeImmutable(),
+            $model->updated_at->toDateTimeImmutable(),
         );
     }
 
@@ -60,12 +60,12 @@ class EloquentFamilyRepository implements FamilyRepositoryInterface
 
         $models = $query->get();
 
-        return $models->map(static fn (EloquentFamily $model): Family => Family::hydrate(
-            id: Uuid::create($model->uuid),
-            name: FamilyName::create($model->name),
-            active: (bool) $model->active,
-            createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
-            updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
+        return $models->map(static fn (EloquentFamily $model): Family => Family::fromPersistence(
+            $model->uuid,
+            $model->name,
+            (bool) $model->active,
+            $model->created_at->toDateTimeImmutable(),
+            $model->updated_at->toDateTimeImmutable(),
         ))->all();
     }
 

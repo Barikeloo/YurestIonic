@@ -21,24 +21,24 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
 
     public function save(Order $order): void
     {
-        $restaurantId = EloquentRestaurant::query()->where('uuid', $order->getRestaurantId()->value())->value('id');
-        $tableId = EloquentTable::query()->where('uuid', $order->getTableId()->value())->value('id');
-        $openedByUserId = EloquentUser::query()->where('uuid', $order->getOpenedByUserId()->value())->value('id');
-        $closedByUserId = $order->getClosedByUserId() !== null
-            ? EloquentUser::query()->where('uuid', $order->getClosedByUserId()->value())->value('id')
+        $restaurantId = EloquentRestaurant::query()->where('uuid', $order->restaurantId()->value())->value('id');
+        $tableId = EloquentTable::query()->where('uuid', $order->tableId()->value())->value('id');
+        $openedByUserId = EloquentUser::query()->where('uuid', $order->openedByUserId()->value())->value('id');
+        $closedByUserId = $order->closedByUserId() !== null
+            ? EloquentUser::query()->where('uuid', $order->closedByUserId()->value())->value('id')
             : null;
 
         $this->model->newQuery()->updateOrCreate(
-            ['uuid' => $order->getId()->value()],
+            ['uuid' => $order->id()->value()],
             [
                 'restaurant_id' => $restaurantId,
-                'status' => $order->getStatus()->value(),
+                'status' => $order->status()->value(),
                 'table_id' => $tableId,
                 'opened_by_user_id' => $openedByUserId,
                 'closed_by_user_id' => $closedByUserId,
-                'diners' => $order->getDiners()->value(),
-                'opened_at' => $order->getOpenedAt()->value(),
-                'closed_at' => $order->getClosedAt()?->value(),
+                'diners' => $order->diners()->value(),
+                'opened_at' => $order->openedAt()?->value(),
+                'closed_at' => $order->closedAt()?->value(),
             ],
         );
     }
@@ -92,20 +92,20 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             ? EloquentUser::query()->where('id', $model->closed_by_user_id)->value('uuid')
             : null;
 
-        return Order::hydrate(
-            id: Uuid::create($model->uuid),
-            restaurantId: Uuid::create($restaurantUuid),
-            uuid: Uuid::create($model->uuid),
-            status: OrderStatus::create($model->status),
-            tableId: Uuid::create($tableUuid),
-            openedByUserId: Uuid::create($openedByUserUuid),
-            closedByUserId: $closedByUserUuid ? Uuid::create($closedByUserUuid) : null,
-            diners: OrderDiners::create((int) $model->diners),
-            openedAt: DomainDateTime::create($model->opened_at->toDateTimeImmutable()),
-            closedAt: $model->closed_at ? DomainDateTime::create($model->closed_at->toDateTimeImmutable()) : null,
-            createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
-            updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
-            deletedAt: $model->deleted_at ? DomainDateTime::create($model->deleted_at->toDateTimeImmutable()) : null,
+        return Order::fromPersistence(
+            $model->uuid,
+            $restaurantUuid,
+            $model->uuid,
+            $model->status,
+            $tableUuid,
+            $openedByUserUuid,
+            $closedByUserUuid,
+            (int) $model->diners,
+            $model->opened_at?->toDateTimeImmutable(),
+            $model->closed_at?->toDateTimeImmutable(),
+            $model->created_at->toDateTimeImmutable(),
+            $model->updated_at->toDateTimeImmutable(),
+            $model->deleted_at?->toDateTimeImmutable(),
         );
     }
 }

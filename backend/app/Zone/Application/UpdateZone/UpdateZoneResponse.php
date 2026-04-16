@@ -17,7 +17,7 @@ final readonly class UpdateZoneResponse
     {
         return new self(
             id: $zone->id()->value(),
-            name: $zone->name(),
+            name: $zone->name()->value(),
             createdAt: $zone->createdAt()->format(\DateTimeInterface::ATOM),
             updatedAt: $zone->updatedAt()->format(\DateTimeInterface::ATOM),
         );

@@ -23,13 +23,13 @@ final class EloquentRestaurantRepository implements RestaurantRepositoryInterfac
     public function save(Restaurant $restaurant): void
     {
         $this->model->newQuery()->updateOrCreate(
-            ['uuid' => $restaurant->getId()->value()],
+            ['uuid' => $restaurant->id()->value()],
             [
-                'name' => $restaurant->getName()->value(),
-                'legal_name' => $restaurant->getLegalName()?->value(),
-                'tax_id' => $restaurant->getTaxId()?->value(),
-                'email' => $restaurant->getEmail()->value(),
-                'password' => $restaurant->getPassword()->value(),
+                'name' => $restaurant->name()->value(),
+                'legal_name' => $restaurant->legalName()?->value(),
+                'tax_id' => $restaurant->taxId()?->value(),
+                'email' => $restaurant->email()->value(),
+                'password' => $restaurant->password()->value(),
             ],
         );
     }
@@ -113,17 +113,17 @@ final class EloquentRestaurantRepository implements RestaurantRepositoryInterfac
 
     private function toDomain(EloquentRestaurant $model): Restaurant
     {
-        return Restaurant::hydrate(
-            id: Uuid::create($model->uuid),
-            uuid: Uuid::create($model->uuid),
-            name: RestaurantName::create($model->name),
-            legalName: RestaurantLegalName::createNullable($model->legal_name),
-            taxId: RestaurantTaxId::createNullable($model->tax_id),
-            email: Email::create($model->email),
-            password: RestaurantPasswordHash::create($model->password),
-            createdAt: DomainDateTime::create($model->created_at->toDateTimeImmutable()),
-            updatedAt: DomainDateTime::create($model->updated_at->toDateTimeImmutable()),
-            deletedAt: $model->deleted_at ? DomainDateTime::create($model->deleted_at->toDateTimeImmutable()) : null,
+        return Restaurant::fromPersistence(
+            $model->uuid,
+            $model->uuid,
+            $model->name,
+            $model->legal_name,
+            $model->tax_id,
+            $model->email,
+            $model->password,
+            $model->created_at->toDateTimeImmutable(),
+            $model->updated_at->toDateTimeImmutable(),
+            $model->deleted_at?->toDateTimeImmutable(),
         );
     }
 }
