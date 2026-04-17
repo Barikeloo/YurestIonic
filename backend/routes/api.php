@@ -22,7 +22,6 @@ use App\Product\Infrastructure\Entrypoint\Http\GetController as ProductGetContro
 use App\Product\Infrastructure\Entrypoint\Http\PostController as ProductPostController;
 use App\Product\Infrastructure\Entrypoint\Http\PutController as ProductPutController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\PostController as RestaurantPostController;
-use App\Restaurant\Infrastructure\Entrypoint\Http\GetCollectionController as RestaurantGetCollectionController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\AdminGetCollectionController as RestaurantAdminGetCollectionController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\AdminSelectRestaurantContextController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\GetController as RestaurantGetController;
