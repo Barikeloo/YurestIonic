@@ -5,6 +5,7 @@ namespace App\User\Infrastructure\Entrypoint\Http\Admin;
 use App\User\Application\AuthorizeRestaurantAccess\AuthorizeRestaurantAccess;
 use App\User\Application\AuthorizeRestaurantAccess\AuthorizeRestaurantAccessResponse;
 use App\User\Application\UpdateRestaurantUser\UpdateRestaurantUser;
+use App\User\Domain\ValueObject\Role;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -66,7 +67,7 @@ class AdminPutController
             is_string($authUserUuid)
             && $authUserUuid === $userUuid
             && isset($validated['role'])
-            && $validated['role'] !== 'admin'
+            && ! Role::create($validated['role'])->isAdmin()
         ) {
             return new JsonResponse([
                 'success' => false,

@@ -2,7 +2,7 @@
 
 namespace App\Shared\Infrastructure\Http\Middleware;
 
-use App\User\Infrastructure\Persistence\Models\EloquentUser;
+use App\User\Domain\Interfaces\UserRepositoryInterface;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,6 +10,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class RequireAdminSession
 {
+    public function __construct(
+        private UserRepositoryInterface $userRepository,
+    ) {}
+
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->hasSession()) {
@@ -26,7 +30,7 @@ final class RequireAdminSession
             ], 401);
         }
 
-        $user = EloquentUser::query()->where('uuid', $authUserUuid)->first();
+        $user = $this->userRepository->findById($authUserUuid);
 
         if ($user === null) {
             return new JsonResponse([
@@ -34,7 +38,7 @@ final class RequireAdminSession
             ], 401);
         }
 
-        if ($user->role !== 'admin') {
+        if ($user->role() === null || ! $user->role()->isAdmin()) {
             return new JsonResponse([
                 'message' => 'Forbidden.',
             ], 403);
