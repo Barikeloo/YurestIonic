@@ -2,6 +2,7 @@
 
 namespace App\Restaurant\Infrastructure\Persistence\Repositories;
 
+use App\Restaurant\Application\DTO\RestaurantWithInternalId;
 use App\Restaurant\Domain\Entity\Restaurant;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Restaurant\Domain\ValueObject\RestaurantLegalName;
@@ -72,6 +73,34 @@ final class EloquentRestaurantRepository implements RestaurantRepositoryInterfac
         $model = $this->model->newQuery()->where('id', $internalId)->first();
 
         return $model ? $this->toDomain($model) : null;
+    }
+
+    public function findByInternalIdWithInternalId(int $internalId): ?RestaurantWithInternalId
+    {
+        $model = $this->model->newQuery()->where('id', $internalId)->first();
+
+        if ($model === null) {
+            return null;
+        }
+
+        return new RestaurantWithInternalId(
+            restaurant: $this->toDomain($model),
+            internalId: (int) $model->id,
+        );
+    }
+
+    public function findByUuidWithInternalId(Uuid $uuid): ?RestaurantWithInternalId
+    {
+        $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();
+
+        if ($model === null) {
+            return null;
+        }
+
+        return new RestaurantWithInternalId(
+            restaurant: $this->toDomain($model),
+            internalId: (int) $model->id,
+        );
     }
 
     public function findByTaxId(string $taxId): array

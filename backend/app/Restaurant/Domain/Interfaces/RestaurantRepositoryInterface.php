@@ -2,6 +2,7 @@
 
 namespace App\Restaurant\Domain\Interfaces;
 
+use App\Restaurant\Application\DTO\RestaurantWithInternalId;
 use App\Restaurant\Domain\Entity\Restaurant;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -27,6 +28,16 @@ interface RestaurantRepositoryInterface
      * Busca un restaurante por su id interno (BIGINT).
      */
     public function findByInternalId(int $internalId): ?Restaurant;
+
+    /**
+     * Busca un restaurante por su id interno y devuelve DTO con entidad e ID interno.
+     */
+    public function findByInternalIdWithInternalId(int $internalId): ?RestaurantWithInternalId;
+
+    /**
+     * Busca un restaurante por UUID y devuelve DTO con entidad e ID interno.
+     */
+    public function findByUuidWithInternalId(Uuid $uuid): ?RestaurantWithInternalId;
 
     /**
      * @return array<Restaurant>

@@ -2,11 +2,12 @@
 
 namespace App\Shared\Infrastructure\Http\Middleware;
 
-use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
+use App\Restaurant\Application\DTO\RestaurantWithInternalId;
+use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 use App\SuperAdmin\Domain\Interfaces\SuperAdminRepositoryInterface;
-use App\User\Infrastructure\Persistence\Models\EloquentUser;
+use App\User\Domain\Interfaces\UserRepositoryInterface;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,8 @@ final class ResolveTenantContext
     public function __construct(
         private readonly TenantContext $tenantContext,
         private readonly SuperAdminRepositoryInterface $superAdminRepository,
+        private readonly RestaurantRepositoryInterface $restaurantRepository,
+        private readonly UserRepositoryInterface $userRepository,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -54,7 +57,7 @@ final class ResolveTenantContext
                 ], 400);
             }
 
-            $restaurant = EloquentRestaurant::query()->where('uuid', $selectedRestaurantUuid)->first();
+            $restaurant = $this->restaurantRepository->findByUuidWithInternalId(Uuid::create($selectedRestaurantUuid));
 
             if ($restaurant === null) {
                 return new JsonResponse([
@@ -62,8 +65,8 @@ final class ResolveTenantContext
                 ], 422);
             }
 
-            $this->tenantContext->set((int) $restaurant->id, (string) $restaurant->uuid, true);
-            $request->merge(['restaurant_id' => (string) $restaurant->uuid]);
+            $this->tenantContext->set($restaurant->internalId, (string) $restaurant->restaurant->uuid()->value(), true);
+            $request->merge(['restaurant_id' => (string) $restaurant->restaurant->uuid()->value()]);
 
             return $next($request);
         }
@@ -76,7 +79,7 @@ final class ResolveTenantContext
             ], 401);
         }
 
-        $user = EloquentUser::query()->where('uuid', $authUserUuid)->first();
+        $user = $this->userRepository->findById($authUserUuid);
 
         if ($user === null) {
             return new JsonResponse([
@@ -84,15 +87,15 @@ final class ResolveTenantContext
             ], 401);
         }
 
-        if ($user->restaurant_id === null) {
+        if ($user->restaurantId() === null) {
             return new JsonResponse([
                 'message' => 'Authenticated user does not have an assigned restaurant.',
             ], 403);
         }
 
-        $linkedRestaurant = EloquentRestaurant::query()->where('id', $user->restaurant_id)->first();
+        $linkedRestaurant = $this->restaurantRepository->findByInternalIdWithInternalId((int) $user->restaurantId()->value());
 
-        if ($linkedRestaurant === null || ! is_string($linkedRestaurant->uuid) || $linkedRestaurant->uuid === '') {
+        if ($linkedRestaurant === null) {
             return new JsonResponse([
                 'message' => 'Authenticated user has an invalid restaurant assignment.',
             ], 403);
@@ -106,8 +109,8 @@ final class ResolveTenantContext
 
         $effectiveRestaurant = $linkedRestaurant;
 
-        if (is_string($selectedRestaurantUuid) && $selectedRestaurantUuid !== '' && $selectedRestaurantUuid !== $linkedRestaurant->uuid) {
-            $targetRestaurant = EloquentRestaurant::query()->where('uuid', $selectedRestaurantUuid)->first();
+        if (is_string($selectedRestaurantUuid) && $selectedRestaurantUuid !== '' && $selectedRestaurantUuid !== $linkedRestaurant->restaurant->uuid()->value()) {
+            $targetRestaurant = $this->restaurantRepository->findByUuidWithInternalId(Uuid::create($selectedRestaurantUuid));
 
             if ($targetRestaurant === null) {
                 return new JsonResponse([
@@ -115,7 +118,7 @@ final class ResolveTenantContext
                 ], 422);
             }
 
-            $linkedTaxId = $linkedRestaurant->tax_id;
+            $linkedTaxId = $linkedRestaurant->restaurant->taxId()?->value();
 
             if (! is_string($linkedTaxId) || $linkedTaxId === '') {
                 return new JsonResponse([
@@ -123,7 +126,7 @@ final class ResolveTenantContext
                 ], 403);
             }
 
-            if ($targetRestaurant->tax_id !== $linkedTaxId) {
+            if ($targetRestaurant->restaurant->taxId()?->value() !== $linkedTaxId) {
                 return new JsonResponse([
                     'message' => 'Forbidden for this restaurant context.',
                 ], 403);
@@ -132,7 +135,7 @@ final class ResolveTenantContext
             $effectiveRestaurant = $targetRestaurant;
         }
 
-        $restaurantUuid = (string) $effectiveRestaurant->uuid;
+        $restaurantUuid = (string) $effectiveRestaurant->restaurant->uuid()->value();
 
         $requestRestaurantUuid = $request->input('restaurant_id');
 
@@ -142,7 +145,7 @@ final class ResolveTenantContext
             ], 422);
         }
 
-        $this->tenantContext->set((int) $effectiveRestaurant->id, $restaurantUuid, false);
+        $this->tenantContext->set($effectiveRestaurant->internalId, $restaurantUuid, false);
         $request->merge(['restaurant_id' => $restaurantUuid]);
 
         return $next($request);
