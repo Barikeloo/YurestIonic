@@ -27,6 +27,7 @@ use App\Restaurant\Infrastructure\Entrypoint\Http\AdminSelectRestaurantContextCo
 use App\Restaurant\Infrastructure\Entrypoint\Http\GetController as RestaurantGetController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\PutController as RestaurantPutController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\DeleteController as RestaurantDeleteController;
+use App\Shared\Infrastructure\Http\Middleware\RequireAdminSession;
 use App\Shared\Infrastructure\Http\Middleware\RequireManagementSession;
 use App\Shared\Infrastructure\Http\Middleware\ResolveTenantContext;
 use App\Shared\Infrastructure\Http\Middleware\RequireSuperAdminSession;
@@ -115,8 +116,15 @@ Route::middleware([
 	Route::get('/tpv/sales/{id}', SaleGetController::class)->whereUuid('id');
 	Route::put('/tpv/sales/{id}', SalePutController::class)->whereUuid('id');
 	Route::delete('/tpv/sales/{id}', SaleDeleteController::class)->whereUuid('id');
+});
 
-
+Route::middleware([
+	EncryptCookies::class,
+	AddQueuedCookiesToResponse::class,
+	StartSession::class,
+	ResolveTenantContext::class,
+	RequireAdminSession::class,
+])->group(function (): void {
 	Route::get('/admin/families', FamilyGetCollectionController::class);
 	Route::get('/admin/families/{id}', FamilyGetController::class)->whereUuid('id');
 	Route::post('/admin/families', FamilyPostController::class);

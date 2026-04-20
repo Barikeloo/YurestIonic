@@ -3,8 +3,9 @@
 namespace App\Shared\Infrastructure\Http\Middleware;
 
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
-use App\SuperAdmin\Infrastructure\Persistence\Models\EloquentSuperAdmin;
+use App\Shared\Domain\ValueObject\Uuid;
 use App\Shared\Infrastructure\Tenant\TenantContext;
+use App\SuperAdmin\Domain\Interfaces\SuperAdminRepositoryInterface;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
 use Closure;
 use Illuminate\Http\JsonResponse;
@@ -15,6 +16,7 @@ final class ResolveTenantContext
 {
     public function __construct(
         private readonly TenantContext $tenantContext,
+        private readonly SuperAdminRepositoryInterface $superAdminRepository,
     ) {}
 
     public function handle(Request $request, Closure $next): Response
@@ -30,7 +32,7 @@ final class ResolveTenantContext
         $superAdminUuid = $request->session()->get('super_admin_id');
 
         if (is_string($superAdminUuid) && $superAdminUuid !== '') {
-            $superAdmin = EloquentSuperAdmin::query()->where('uuid', $superAdminUuid)->first();
+            $superAdmin = $this->superAdminRepository->findById(Uuid::create($superAdminUuid));
 
             if ($superAdmin === null) {
                 $request->session()->forget('super_admin_id');

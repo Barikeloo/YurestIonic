@@ -2,7 +2,8 @@
 
 namespace App\Shared\Infrastructure\Http\Middleware;
 
-use App\SuperAdmin\Infrastructure\Persistence\Models\EloquentSuperAdmin;
+use App\Shared\Domain\ValueObject\Uuid;
+use App\SuperAdmin\Domain\Interfaces\SuperAdminRepositoryInterface;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,6 +11,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class RequireSuperAdminSession
 {
+    public function __construct(
+        private SuperAdminRepositoryInterface $superAdminRepository,
+    ) {}
+
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->hasSession()) {
@@ -26,7 +31,7 @@ final class RequireSuperAdminSession
             ], 401);
         }
 
-        $superAdmin = EloquentSuperAdmin::query()->where('uuid', $superAdminUuid)->first();
+        $superAdmin = $this->superAdminRepository->findById(Uuid::create($superAdminUuid));
 
         if ($superAdmin === null) {
             $request->session()->forget('super_admin_id');
