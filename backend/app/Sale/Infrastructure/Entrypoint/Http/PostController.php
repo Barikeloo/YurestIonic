@@ -15,15 +15,17 @@ final class PostController
     public function __invoke(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'restaurant_id' => ['required', 'string', 'uuid'],
-            'order_id' => ['required', 'string', 'uuid'],
-            'opened_by_user_id' => ['required', 'string', 'uuid'],
+            'restaurant_id'      => ['required', 'string', 'uuid'],
+            'order_id'           => ['required', 'string', 'uuid'],
+            'opened_by_user_id'  => ['required', 'string', 'uuid'],
+            'closed_by_user_id'  => ['required', 'string', 'uuid'],
         ]);
 
         $response = ($this->createSale)(
-            restaurantId: $validated['restaurant_id'],
-            orderId: $validated['order_id'],
-            openedByUserId: $validated['opened_by_user_id'],
+            restaurantId:     $validated['restaurant_id'],
+            orderId:          $validated['order_id'],
+            openedByUserId:   $validated['opened_by_user_id'],
+            closedByUserId:   $validated['closed_by_user_id'],
         );
 
         return new JsonResponse($response->toArray(), 201);

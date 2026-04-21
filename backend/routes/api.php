@@ -8,6 +8,7 @@ use App\Family\Infrastructure\Entrypoint\Http\GetController as FamilyGetControll
 use App\Family\Infrastructure\Entrypoint\Http\PostController as FamilyPostController;
 use App\Family\Infrastructure\Entrypoint\Http\PutController as FamilyPutController;
 use App\Order\Infrastructure\Entrypoint\Http\AddLineController as OrderAddLineController;
+use App\Order\Infrastructure\Entrypoint\Http\DeleteLineController as OrderDeleteLineController;
 use App\Order\Infrastructure\Entrypoint\Http\GetCollectionController as OrderGetCollectionController;
 use App\Order\Infrastructure\Entrypoint\Http\GetController as OrderGetController;
 use App\Order\Infrastructure\Entrypoint\Http\GetLinesController as OrderGetLinesController;
@@ -104,6 +105,7 @@ Route::middleware([
 
 	Route::post('/tpv/orders', OrderPostController::class);
 	Route::post('/tpv/orders/lines', OrderAddLineController::class);
+	Route::delete('/tpv/orders/lines/{lineId}', OrderDeleteLineController::class)->whereUuid('lineId');
 	Route::get('/tpv/orders', OrderGetCollectionController::class);
 	Route::get('/tpv/orders/{id}', OrderGetController::class)->whereUuid('id');
 	Route::get('/tpv/orders/{id}/lines', OrderGetLinesController::class)->whereUuid('id');

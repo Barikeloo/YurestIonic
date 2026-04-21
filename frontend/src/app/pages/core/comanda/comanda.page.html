@@ -1,0 +1,207 @@
+<div class="pedidos-page">
+
+  <!-- Top bar -->
+  <div class="comanda-topbar">
+    <button class="btn-back" (click)="goBack()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+      Volver
+    </button>
+    <span class="comanda-title">Nueva comanda</span>
+    <span *ngIf="order" class="comanda-sub">— Mesa {{ order.diners }} comensales</span>
+    <div class="topbar-spacer"></div>
+    <button class="btn-cerrar-topbar" (click)="openCloseModal()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/>
+        <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+      </svg>
+      Cerrar cuenta
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="loading-state">Cargando catálogo...</div>
+
+  <!-- Main layout -->
+  <div *ngIf="!loading" class="comanda-layout">
+
+    <!-- Left: products area -->
+    <div class="products-area">
+
+      <!-- Family tabs -->
+      <div class="family-tabs">
+        <button class="family-tab" [class.active]="activeFamilyId === null" (click)="setFamily(null)">Todo</button>
+        <button
+          *ngFor="let family of families"
+          class="family-tab"
+          [class.active]="activeFamilyId === family.id"
+          (click)="setFamily(family.id)"
+        >{{ family.name }}</button>
+      </div>
+
+      <!-- Search -->
+      <div class="products-search">
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Buscar producto..."
+          [(ngModel)]="searchQuery"
+        />
+      </div>
+
+      <!-- Products grid -->
+      <div class="products-grid-wrap">
+        <div class="products-grid">
+          <button
+            *ngFor="let product of filteredProducts"
+            class="product-card"
+            (click)="addToCart(product)"
+          >
+            <div class="product-initial">{{ product.name[0] }}</div>
+            <div class="product-name">{{ product.name }}</div>
+            <div class="product-price">{{ formatCents(product.price) }}</div>
+          </button>
+          <div *ngIf="filteredProducts.length === 0" class="products-empty">Sin resultados</div>
+        </div>
+      </div>
+
+      <!-- Confirmed lines accordion -->
+      <div *ngIf="existingLines.length > 0" class="confirmed-strip">
+        <button class="confirmed-toggle" (click)="showConfirmed = !showConfirmed">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline [attr.points]="showConfirmed ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
+          </svg>
+          {{ existingLines.length }} línea{{ existingLines.length !== 1 ? 's' : '' }} confirmada{{ existingLines.length !== 1 ? 's' : '' }} · {{ formatCents(existingTotal) }}
+        </button>
+        <div *ngIf="showConfirmed" class="confirmed-lines">
+          <div *ngFor="let line of existingLines" class="confirmed-line">
+            <span class="cl-qty">{{ line.quantity }}</span>
+            <span class="cl-name">{{ line.product_name ?? 'Producto' }}</span>
+            <span class="cl-price">{{ formatCents(line.price * line.quantity) }}</span>
+            <button class="btn-delete-line" (click)="deleteLine(line)" title="Eliminar">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Right: sidebar -->
+    <div class="comanda-sidebar">
+
+      <div class="order-panel-header">
+        <div class="order-table-info">
+          <div>
+            <div class="order-table-name">Comanda actual</div>
+            <div class="order-table-sub">
+              {{ cartCount > 0 ? cartCount + ' producto' + (cartCount !== 1 ? 's' : '') + ' añadido' + (cartCount !== 1 ? 's' : '') : 'Toca un producto para añadirlo' }}
+            </div>
+          </div>
+          <div class="order-total-big">{{ formatCents(cartTotal) }}</div>
+        </div>
+      </div>
+
+      <!-- Cart lines -->
+      <div class="order-lines">
+        <div *ngIf="cartLines.length === 0" class="order-empty-msg">
+          Toca un producto para añadirlo
+        </div>
+        <div *ngFor="let line of cartLines" class="order-line">
+          <div class="order-line-qty">{{ line.quantity }}</div>
+          <div class="order-line-info">
+            <div class="order-line-name">{{ line.productName }}</div>
+          </div>
+          <div class="cart-line-right">
+            <div class="order-line-price">{{ formatCents(line.price * line.quantity) }}</div>
+            <button class="btn-remove-cart" (click)="changeQty(line, -1)">−</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="order-actions">
+        <button
+          class="btn-comanda"
+          [disabled]="cartLines.length === 0 || sendingOrder"
+          (click)="sendComanda()"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          {{ sendingOrder ? 'Enviando...' : 'Enviar comanda' }}
+        </button>
+        <button class="btn-outline" style="width:100%" (click)="clearCart()" [disabled]="cartLines.length === 0">
+          Limpiar
+        </button>
+        <div *ngIf="sendError" class="send-error">{{ sendError }}</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal cierre de cuenta ─────────────────── -->
+<div class="modal-overlay" [class.open]="closeModalOpen" (click)="closeCloseModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+
+    <button class="modal-close-btn" (click)="closeCloseModal()">✕</button>
+
+    <div class="modal-title">Cerrar cuenta</div>
+    <div class="modal-sub">
+      Total confirmado: <strong>{{ formatCents(existingTotal) }}</strong>
+    </div>
+
+    <div class="modal-section-label">¿Quién cobra?</div>
+    <div class="user-select-grid">
+      <button
+        *ngFor="let user of quickUsers; let i = index"
+        class="user-chip"
+        [class.selected]="selectedCloser?.user_uuid === user.user_uuid"
+        (click)="selectCloser(user)"
+      >
+        <div class="user-avatar" [style.background]="avatarColor(i)">
+          {{ getUserInitials(user.name).toUpperCase() }}
+        </div>
+        <span class="user-chip-name">{{ user.name.split(' ')[0] }}</span>
+      </button>
+      <div *ngIf="quickUsers.length === 0" class="user-chip-empty">Sin usuarios recientes</div>
+    </div>
+
+    <button
+      class="btn-comanda"
+      style="width:100%; margin-top: 8px"
+      [disabled]="!selectedCloser || closing"
+      (click)="confirmClose()"
+    >
+      {{ closing ? 'Procesando...' : 'Confirmar cierre' }}
+    </button>
+
+    <div *ngIf="closeError" class="modal-error">{{ closeError }}</div>
+  </div>
+</div>
+
+<!-- ── Pantalla de ticket generado ───────────── -->
+<div class="modal-overlay" [class.open]="ticketNumber !== null" (click)="goBack()">
+  <div class="modal-box ticket-box" (click)="$event.stopPropagation()">
+
+    <div class="ticket-icon">✓</div>
+    <div class="modal-title" style="text-align:center">Cuenta cerrada</div>
+    <div class="modal-sub" style="text-align:center">La mesa ha sido liberada correctamente</div>
+
+    <div class="ticket-number-wrap">
+      <span class="ticket-label">Nº de ticket</span>
+      <span class="ticket-number">{{ ticketNumber }}</span>
+    </div>
+
+    <div class="ticket-total">{{ formatCents(existingTotal) }}</div>
+
+    <button class="btn-comanda" style="width:100%; margin-top: 24px" (click)="goBack()">
+      Volver a mesas
+    </button>
+  </div>
+</div>

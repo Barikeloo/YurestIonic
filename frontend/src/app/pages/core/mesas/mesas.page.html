@@ -1,6 +1,168 @@
-<div class="placeholder-page">
-  <div class="placeholder-wrap">
-    <h1>Mesas</h1>
-    <p>Vista en preparacion. El layout superior ya es comun y fijo.</p>
+<div class="mesas-page">
+
+  <!-- Zone tabs -->
+  <div class="zone-tabs">
+    <button
+      *ngFor="let zone of zones"
+      class="zone-tab"
+      [class.active]="zone.id === activeZoneId"
+      (click)="setZone(zone.id)"
+    >{{ zone.name }}</button>
+  </div>
+
+  <!-- Main layout -->
+  <div class="main-layout">
+
+    <!-- Tables grid -->
+    <div class="tables-area">
+      <div class="tables-grid-wrap">
+        <div *ngIf="loading" class="loading-state">Cargando mesas...</div>
+
+        <div *ngIf="!loading" class="tables-grid">
+          <button
+            *ngFor="let table of tablesForActiveZone"
+            class="mesa"
+            [class.occupied]="table.occupied"
+            [class.selected]="selectedTable?.id === table.id"
+            (click)="selectTable(table)"
+          >
+            <span class="mesa-zone-label">{{ getZoneName(table.zone_id) }}</span>
+            <span class="mesa-name">{{ table.name }}</span>
+            <span *ngIf="table.occupied && selectedTable?.id === table.id && linesTotal > 0" class="mesa-amount">
+              {{ formatCents(linesTotal) }}
+            </span>
+          </button>
+        </div>
+
+        <div *ngIf="!loading && tablesForActiveZone.length === 0" class="empty-zone">
+          No hay mesas en esta zona
+        </div>
+      </div>
+    </div>
+
+    <!-- Side panel -->
+    <div class="order-panel">
+
+      <div *ngIf="!selectedTable" class="no-order-selected">
+        <div class="no-order-icon">🍽️</div>
+        <div class="no-order-title">Sin mesa seleccionada</div>
+        <div class="no-order-sub">Toca una mesa para ver su estado</div>
+      </div>
+
+      <ng-container *ngIf="selectedTable">
+        <div class="order-panel-header">
+          <div class="order-table-info">
+            <div>
+              <div class="order-table-name">{{ selectedTable.name }} · {{ getZoneName(selectedTable.zone_id) }}</div>
+              <div class="order-table-sub">
+                <ng-container *ngIf="selectedTable.occupied">
+                  {{ formatTime(selectedTable.opened_at) }}<ng-container *ngIf="selectedTable.diners"> · {{ selectedTable.diners }} comensales</ng-container>
+                </ng-container>
+                <ng-container *ngIf="!selectedTable.occupied">Mesa libre</ng-container>
+              </div>
+            </div>
+            <div class="order-total-big">
+              {{ selectedTable.occupied && linesTotal > 0 ? formatCents(linesTotal) : '0,00€' }}
+            </div>
+          </div>
+        </div>
+
+        <div class="order-lines">
+          <div *ngIf="!selectedTable.occupied" class="order-empty-msg">Mesa vacía</div>
+          <div *ngIf="selectedTable.occupied && loadingLines" class="order-empty-msg">Cargando líneas...</div>
+          <ng-container *ngIf="selectedTable.occupied && !loadingLines">
+            <div *ngIf="orderLines.length === 0" class="order-empty-msg">Sin líneas</div>
+            <div *ngFor="let line of orderLines" class="order-line">
+              <div class="order-line-qty">{{ line.quantity }}</div>
+              <div class="order-line-info">
+                <div class="order-line-name">{{ line.product_name ?? 'Producto' }}</div>
+              </div>
+              <div class="order-line-price">{{ formatCents(line.price * line.quantity) }}</div>
+            </div>
+          </ng-container>
+        </div>
+
+        <div class="order-summary">
+          <div class="summary-row"><span>Subtotal</span><span>{{ formatCents(linesSubtotal) }}</span></div>
+          <div class="summary-row"><span>Impuestos</span><span>{{ formatCents(linesTax) }}</span></div>
+          <div class="summary-row total"><span>Total</span><span>{{ formatCents(linesTotal) }}</span></div>
+        </div>
+
+        <div class="order-actions">
+          <button class="btn-comanda" (click)="selectedTable.occupied ? goToPedido() : openModal()">
+            <svg *ngIf="!selectedTable.occupied" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            {{ selectedTable.occupied ? 'Nueva comanda' : 'Abrir mesa' }}
+          </button>
+          <div *ngIf="selectedTable.occupied" class="btn-row">
+            <button class="btn-outline">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+              Imprimir ticket
+            </button>
+            <button class="btn-outline" (click)="goToPedido()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              Cerrar cuenta
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Modal apertura de mesa ───────────────── -->
+<div class="modal-overlay" [class.open]="modalOpen" (click)="closeModal()">
+  <div class="modal-box" (click)="$event.stopPropagation()">
+
+    <button class="modal-close-btn" (click)="closeModal()">✕</button>
+
+    <div class="modal-title">Abrir mesa</div>
+    <div class="modal-sub" *ngIf="selectedTable">
+      {{ selectedTable.name }} · {{ getZoneName(selectedTable.zone_id) }}
+    </div>
+
+    <!-- Operador -->
+    <div class="modal-section-label">Operador</div>
+    <div class="user-select-grid">
+      <button
+        *ngFor="let user of quickUsers; let i = index"
+        class="user-chip"
+        [class.selected]="selectedOperator?.user_uuid === user.user_uuid"
+        (click)="selectOperator(user)"
+      >
+        <div class="user-avatar" [style.background]="avatarColor(i)">
+          {{ getUserInitials(user.name).toUpperCase() }}
+        </div>
+        <span class="user-chip-name">{{ user.name.split(' ')[0] }}</span>
+      </button>
+      <div *ngIf="quickUsers.length === 0" class="user-chip-empty">Sin usuarios recientes</div>
+    </div>
+
+    <!-- Comensales -->
+    <div class="modal-section-label">Comensales</div>
+    <div class="diners-display">{{ diners }}</div>
+
+    <div class="pin-keypad">
+      <button class="key" (click)="numpadPress('1')">1</button>
+      <button class="key" (click)="numpadPress('2')">2</button>
+      <button class="key" (click)="numpadPress('3')">3</button>
+      <button class="key" (click)="numpadPress('4')">4</button>
+      <button class="key" (click)="numpadPress('5')">5</button>
+      <button class="key" (click)="numpadPress('6')">6</button>
+      <button class="key" (click)="numpadPress('7')">7</button>
+      <button class="key" (click)="numpadPress('8')">8</button>
+      <button class="key" (click)="numpadPress('9')">9</button>
+      <button class="key key-del" (click)="numpadPress('del')">⌫</button>
+      <button class="key" (click)="numpadPress('0')">0</button>
+      <button class="key key-enter" (click)="confirmOpen()" [disabled]="openingOrder || !selectedOperator">
+        {{ openingOrder ? '...' : 'Abrir' }}
+      </button>
+    </div>
+
+    <div *ngIf="openingError" class="modal-error">{{ openingError }}</div>
+
   </div>
 </div>

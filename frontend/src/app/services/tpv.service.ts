@@ -14,7 +14,8 @@ export interface TpvProductItem {
   id: string;
   name: string;
   price: number;
-  familyId: string;
+  family_id: string;
+  tax_id: string;
   active: boolean;
 }
 
@@ -26,8 +27,7 @@ export interface TpvZoneItem {
 export interface TpvTableItem {
   id: string;
   name: string;
-  zoneId: string;
-  seats: number;
+  zone_id: string;
 }
 
 export interface TpvTaxItem {
@@ -38,26 +38,46 @@ export interface TpvTaxItem {
 
 export interface TpvOrder {
   id: string;
-  tableId: string;
-  status: string;
-  total: number;
-  createdAt: string;
+  table_id: string;
+  status: 'open' | 'cancelled' | 'invoiced';
+  diners: number;
+  opened_at: string;
+  closed_at?: string | null;
+  closed_by_user_id?: string | null;
+}
+
+export interface TpvOrderLine {
+  id: string;
+  product_id: string;
+  product_name: string | null;
+  quantity: number;
+  price: number;
+  tax_percentage: number;
 }
 
 export interface TpvSale {
   id: string;
-  orderId?: string;
-  status: string;
+  order_id: string;
+  opened_by_user_id: string;
+  closed_by_user_id: string | null;
+  ticket_number: number | null;
+  value_date: string;
   total: number;
-  createdAt: string;
 }
 
 interface AddLinePayload {
-  orderId?: string;
-  saleId?: string;
-  productId: string;
+  order_id: string;
+  product_id: string;
+  user_id: string;
   quantity: number;
   price: number;
+  tax_percentage: number;
+}
+
+interface UpdateOrderPayload {
+  diners?: number;
+  action?: 'close' | 'cancel';
+  closed_by_user_id?: string;
 }
 
 @Injectable({
@@ -106,7 +126,7 @@ export class TpvService {
   // Órdenes (transaccional)
   // ============================================
 
-  public createOrder(payload: { tableId: string }): Observable<TpvOrder> {
+  public createOrder(payload: { table_id: string; opened_by_user_id: string; diners: number }): Observable<TpvOrder> {
     return this.http
       .post<TpvOrder>(`${this.baseUrl}/tpv/orders`, payload, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
@@ -124,7 +144,7 @@ export class TpvService {
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
-  public updateOrder(id: string, payload: Partial<TpvOrder>): Observable<TpvOrder> {
+  public updateOrder(id: string, payload: UpdateOrderPayload): Observable<TpvOrder> {
     return this.http
       .put<TpvOrder>(`${this.baseUrl}/tpv/orders/${id}`, payload, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
@@ -142,9 +162,15 @@ export class TpvService {
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
-  public getOrderLines(orderId: string): Observable<unknown[]> {
+  public deleteOrderLine(lineId: string): Observable<void> {
     return this.http
-      .get<unknown[]>(`${this.baseUrl}/tpv/orders/${orderId}/lines`, { withCredentials: true })
+      .delete<void>(`${this.baseUrl}/tpv/orders/lines/${lineId}`, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public getOrderLines(orderId: string): Observable<TpvOrderLine[]> {
+    return this.http
+      .get<TpvOrderLine[]>(`${this.baseUrl}/tpv/orders/${orderId}/lines`, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
@@ -152,7 +178,7 @@ export class TpvService {
   // Ventas (transaccional)
   // ============================================
 
-  public createSale(payload: { orderId?: string }): Observable<TpvSale> {
+  public createSale(payload: { order_id: string; opened_by_user_id: string; closed_by_user_id: string }): Observable<TpvSale> {
     return this.http
       .post<TpvSale>(`${this.baseUrl}/tpv/sales`, payload, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
@@ -167,12 +193,6 @@ export class TpvService {
   public getSale(id: string): Observable<TpvSale> {
     return this.http
       .get<TpvSale>(`${this.baseUrl}/tpv/sales/${id}`, { withCredentials: true })
-      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
-  }
-
-  public updateSale(id: string, payload: Partial<TpvSale>): Observable<TpvSale> {
-    return this.http
-      .put<TpvSale>(`${this.baseUrl}/tpv/sales/${id}`, payload, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 

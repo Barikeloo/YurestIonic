@@ -20,4 +20,6 @@ interface SaleRepositoryInterface
     public function findByOrderId(Uuid $orderId): ?Sale;
 
     public function delete(Uuid $id): void;
+
+    public function nextTicketNumber(string $restaurantId): int;
 }

@@ -23,7 +23,7 @@ final class ListOrderLines
 
                 return ListOrderLinesResponse::create(
                     orderLine: $orderLine,
-                    productName: $product?->name(),
+                    productName: $product?->name()->value(),
                 )->toArray();
             },
             $orderLines,

@@ -21,8 +21,8 @@ interface LoginResponse {
   name?: string;
   email?: string;
   role?: string;
-  restaurant_id?: string;
-  restaurant_name?: string;
+  restaurantId?: string;
+  restaurantName?: string;
 }
 
 interface GetMeResponse {
@@ -77,7 +77,7 @@ interface CreateUserResponse {
   message: string;
 }
 
-interface QuickAccessUserResponse {
+export interface QuickAccessUserResponse {
   user_uuid: string;
   name: string;
   role: string;
@@ -128,8 +128,8 @@ export class AuthService {
             name: response.name,
             email: response.email,
             role: response.role ?? 'operator',
-            restaurantId: response.restaurant_id,
-            restaurantName: response.restaurant_name,
+            restaurantId: response.restaurantId,
+            restaurantName: response.restaurantName,
           };
         }),
         tap((user: AuthUser) => {
@@ -163,8 +163,8 @@ export class AuthService {
             name: response.name,
             email: response.email,
             role: 'admin',
-            restaurantId: response.restaurant_id,
-            restaurantName: response.restaurant_name,
+            restaurantId: response.restaurantId,
+            restaurantName: response.restaurantName,
           };
         }),
         tap((user: AuthUser) => {
@@ -196,8 +196,8 @@ export class AuthService {
             name: response.name,
             email: response.email,
             role: response.role,
-            restaurantId: response.restaurant_id,
-            restaurantName: response.restaurant_name,
+            restaurantId: response.restaurantId,
+            restaurantName: response.restaurantName,
           };
         }),
         tap((user: AuthUser) => {

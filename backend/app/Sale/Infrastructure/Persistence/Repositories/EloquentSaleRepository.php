@@ -87,6 +87,14 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
         $this->model->newQuery()->where('uuid', $id->value())->delete();
     }
 
+    public function nextTicketNumber(string $restaurantId): int
+    {
+        $internalId = EloquentRestaurant::query()->where('uuid', $restaurantId)->value('id');
+        $max = $this->model->newQuery()->where('restaurant_id', $internalId)->max('ticket_number');
+
+        return $max !== null ? (int) $max + 1 : 1;
+    }
+
     private function toDomain(EloquentSale $model): Sale
     {
         $restaurantUuid = EloquentRestaurant::query()->where('id', $model->restaurant_id)->value('uuid');
