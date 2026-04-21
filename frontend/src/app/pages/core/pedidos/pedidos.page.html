@@ -11,6 +11,7 @@
       <div class="pedidos-tabs">
         <button class="pedidos-tab" [class.active]="activeTab === 'all'" (click)="setTab('all')">Todo el turno</button>
         <button class="pedidos-tab" [class.active]="activeTab === 'open'" (click)="setTab('open')">Activos</button>
+        <button class="pedidos-tab" [class.active]="activeTab === 'to-charge'" (click)="setTab('to-charge')">Para cobrar</button>
         <button class="pedidos-tab" [class.active]="activeTab === 'invoiced'" (click)="setTab('invoiced')">Cerrados hoy</button>
         <button class="pedidos-tab" [class.active]="activeTab === 'cancelled'" (click)="setTab('cancelled')">Cancelados</button>
       </div>
@@ -22,16 +23,16 @@
           <div class="kpi-value">{{ kpiOpen }}</div>
         </div>
         <div class="kpi-card">
+          <div class="kpi-label">Para Cobrar</div>
+          <div class="kpi-value">{{ kpiToCharge }}</div>
+        </div>
+        <div class="kpi-card">
           <div class="kpi-label">Cerrados</div>
           <div class="kpi-value">{{ kpiInvoiced }}</div>
         </div>
         <div class="kpi-card">
-          <div class="kpi-label">Cancelados</div>
-          <div class="kpi-value">{{ kpiCancelled }}</div>
-        </div>
-        <div class="kpi-card">
-          <div class="kpi-label">Total pedidos</div>
-          <div class="kpi-value">{{ orders.length }}</div>
+          <div class="kpi-label">Ticket Medio</div>
+          <div class="kpi-value">{{ formatCents(kpiTicketMedium) }}</div>
         </div>
       </div>
 
@@ -40,12 +41,17 @@
         <select class="pedidos-input" [(ngModel)]="filterStatus">
           <option value="all">Todos los estados</option>
           <option value="open">Abiertos</option>
+          <option value="to-charge">Para cobrar</option>
           <option value="invoiced">Cerrados</option>
           <option value="cancelled">Cancelados</option>
         </select>
         <select class="pedidos-input" [(ngModel)]="filterZone">
           <option value="all">Todas las zonas</option>
           <option *ngFor="let zone of zones" [value]="zone.id">{{ zone.name }}</option>
+        </select>
+        <select class="pedidos-input" [(ngModel)]="filterUser">
+          <option value="all">Todos los camareros</option>
+          <option *ngFor="let user of users" [value]="user.user_uuid">{{ user.name }}</option>
         </select>
         <input class="pedidos-input" type="date" [(ngModel)]="filterDate" />
         <input class="pedidos-input" type="text" placeholder="Buscar por ID..." [(ngModel)]="filterSearch" />
@@ -57,7 +63,7 @@
         <div class="pedidos-list-head">
           <div>Pedido</div>
           <div>Apertura</div>
-          <div>Líneas</div>
+          <div>Total</div>
           <div>Estado</div>
         </div>
         <div class="pedidos-list">
@@ -72,7 +78,7 @@
               <div class="pedido-main-sub">{{ order.diners }} comensal{{ order.diners !== 1 ? 'es' : '' }}</div>
             </div>
             <div class="pedido-meta">{{ formatTime(order.opened_at) }}</div>
-            <div class="pedido-meta">—</div>
+            <div class="pedido-meta">{{ formatCents(order.total) }}</div>
             <div>
               <span class="status-pill" [class]="'status-' + order.status">
                 {{ statusLabel(order.status) }}
@@ -127,10 +133,17 @@
         </div>
 
         <div class="pedido-detail-actions">
+          <button class="btn-small" (click)="goToMesa()">Abrir en mesa</button>
           <button class="btn-small" (click)="goToComanda()" [disabled]="selectedOrder.status !== 'open'">
             Añadir productos
           </button>
           <button class="btn-small">Imprimir ticket</button>
+          <button class="btn-small primary" (click)="markAsCharged()" [disabled]="selectedOrder.status !== 'open'">
+            Marcar cobrado
+          </button>
+          <button class="btn-small" (click)="cancelOrder()" [disabled]="selectedOrder.status === 'invoiced' || selectedOrder.status === 'cancelled'">
+            Cancelar pedido
+          </button>
         </div>
       </ng-container>
 

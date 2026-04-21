@@ -3,9 +3,10 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../../../services/auth.service';
 import { TpvOrder, TpvOrderLine, TpvService, TpvZoneItem } from '../../../services/tpv.service';
 
-type TabId = 'all' | 'open' | 'invoiced' | 'cancelled';
+type TabId = 'all' | 'open' | 'to-charge' | 'invoiced' | 'cancelled';
 
 @Component({
   selector: 'app-pedidos',
@@ -16,12 +17,14 @@ type TabId = 'all' | 'open' | 'invoiced' | 'cancelled';
 export class PedidosPage implements OnInit {
   orders: TpvOrder[] = [];
   zones: TpvZoneItem[] = [];
+  users: any[] = [];
   loading = true;
 
   activeTab: TabId = 'all';
 
   filterStatus = 'all';
   filterZone = 'all';
+  filterUser = 'all';
   filterDate = '';
   filterSearch = '';
 
@@ -32,17 +35,24 @@ export class PedidosPage implements OnInit {
   constructor(
     private readonly tpvService: TpvService,
     private readonly router: Router,
+    private readonly authService: AuthService,
   ) {}
 
   async ngOnInit(): Promise<void> {
     this.loading = true;
     try {
-      const [orders, zones] = await Promise.all([
+      const user = await firstValueFrom(this.authService.currentUser$);
+      const deviceId = this.authService.getDeviceId();
+      const restaurantUuid = user?.restaurantId;
+
+      const [orders, zones, usersResponse] = await Promise.all([
         firstValueFrom(this.tpvService.listOrders()),
         firstValueFrom(this.tpvService.listZones()),
+        deviceId ? firstValueFrom(this.tpvService.listUsers(deviceId, restaurantUuid)) : Promise.resolve({ users: [] }),
       ]);
       this.orders = orders;
       this.zones = zones;
+      this.users = usersResponse.users;
     } finally {
       this.loading = false;
     }
@@ -69,6 +79,10 @@ export class PedidosPage implements OnInit {
       result = result.filter((o) => o.status === this.filterStatus);
     }
 
+    if (this.filterUser !== 'all') {
+      result = result.filter((o) => o.opened_by_user_id === this.filterUser);
+    }
+
     if (this.filterDate) {
       result = result.filter((o) => o.opened_at?.startsWith(this.filterDate));
     }
@@ -86,6 +100,7 @@ export class PedidosPage implements OnInit {
   resetFilters(): void {
     this.filterStatus = 'all';
     this.filterZone = 'all';
+    this.filterUser = 'all';
     this.filterDate = '';
     this.filterSearch = '';
   }
@@ -104,10 +119,15 @@ export class PedidosPage implements OnInit {
     return this.orders.filter((o) => o.status === 'cancelled').length;
   }
 
-  get kpiAvgTotal(): number {
+  get kpiToCharge(): number {
+    return this.orders.filter((o) => o.status === 'to-charge').length;
+  }
+
+  get kpiTicketMedium(): number {
     const closed = this.orders.filter((o) => o.status === 'invoiced');
     if (closed.length === 0) return 0;
-    return 0; // total not available in order response
+    const totalSum = closed.reduce((acc, o) => acc + o.total, 0);
+    return totalSum / closed.length;
   }
 
   // ── Detail ─────────────────────────────────────
@@ -150,6 +170,23 @@ export class PedidosPage implements OnInit {
     });
   }
 
+  goToMesa(): void {
+    if (!this.selectedOrder) return;
+    void this.router.navigate(['/app/mesas']);
+  }
+
+  async markAsCharged(): Promise<void> {
+    if (!this.selectedOrder) return;
+    // TODO: Implementar llamada al backend para cambiar estado a 'to-charge'
+    console.log('Marcar como cobrado:', this.selectedOrder.id);
+  }
+
+  async cancelOrder(): Promise<void> {
+    if (!this.selectedOrder) return;
+    // TODO: Implementar llamada al backend para cambiar estado a 'cancelled'
+    console.log('Cancelar pedido:', this.selectedOrder.id);
+  }
+
   // ── Helpers ────────────────────────────────────
 
   formatCents(cents: number): string {
@@ -166,7 +203,7 @@ export class PedidosPage implements OnInit {
   }
 
   statusLabel(status: string): string {
-    const map: Record<string, string> = { open: 'Abierto', invoiced: 'Cerrado', cancelled: 'Cancelado' };
+    const map: Record<string, string> = { open: 'Abierto', 'to-charge': 'Para cobrar', invoiced: 'Cerrado', cancelled: 'Cancelado' };
     return map[status] ?? status;
   }
 }

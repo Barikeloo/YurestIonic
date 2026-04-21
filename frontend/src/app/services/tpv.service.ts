@@ -39,11 +39,13 @@ export interface TpvTaxItem {
 export interface TpvOrder {
   id: string;
   table_id: string;
-  status: 'open' | 'cancelled' | 'invoiced';
+  status: 'open' | 'to-charge' | 'cancelled' | 'invoiced';
   diners: number;
   opened_at: string;
+  opened_by_user_id: string;
   closed_at?: string | null;
   closed_by_user_id?: string | null;
+  total: number;
 }
 
 export interface TpvOrderLine {
@@ -187,6 +189,19 @@ export class TpvService {
   public listSales(): Observable<TpvSale[]> {
     return this.http
       .get<TpvSale[]>(`${this.baseUrl}/tpv/sales`, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public listUsers(deviceId: string, restaurantUuid?: string): Observable<{ users: any[] }> {
+    const params: Record<string, string> = { device_id: deviceId };
+    if (restaurantUuid) {
+      params['restaurant_uuid'] = restaurantUuid;
+    }
+    return this.http
+      .get<{ users: any[] }>(`${this.baseUrl}/auth/quick-users`, {
+        withCredentials: true,
+        params,
+      })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 

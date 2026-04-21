@@ -101,14 +101,14 @@ export class MesasPage implements OnInit {
 
   // ── Modal apertura ────────────────────────────
   async openModal(): Promise<void> {
-    this.selectedOperator = null;
-    this.diners = 1;
-    this.openingError = null;
     this.modalOpen = true;
-
+    this.openingError = null;
+    this.diners = 1;
     try {
       const deviceId = this.authService.getDeviceId();
-      this.quickUsers = await firstValueFrom(this.authService.getQuickUsers(deviceId));
+      const user = await firstValueFrom(this.authService.currentUser$);
+      const restaurantUuid = user?.restaurantId;
+      this.quickUsers = await firstValueFrom(this.authService.getQuickUsers(deviceId, restaurantUuid));
       if (this.quickUsers.length > 0) this.selectedOperator = this.quickUsers[0];
     } catch {
       this.quickUsers = [];

@@ -17,9 +17,10 @@ final class ListOrdersResponse
         public readonly int $diners,
         public readonly string $opened_at,
         public readonly ?string $closed_at,
+        public readonly int $total,
     ) {}
 
-    public static function create(Order $order): self
+    public static function create(Order $order, int $total): self
     {
         return new self(
             id: $order->id()->value(),
@@ -32,6 +33,7 @@ final class ListOrdersResponse
             diners: $order->diners()->value(),
             opened_at: $order->openedAt()?->format('Y-m-d H:i:s'),
             closed_at: $order->closedAt()?->format('Y-m-d H:i:s'),
+            total: $total,
         );
     }
 
@@ -48,6 +50,7 @@ final class ListOrdersResponse
             'diners' => $this->diners,
             'opened_at' => $this->opened_at,
             'closed_at' => $this->closed_at,
+            'total' => $this->total,
         ];
     }
 }
