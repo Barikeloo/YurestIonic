@@ -109,6 +109,11 @@
     .mesa-zone-label  { color: rgba(255, 255, 255, 0.5); }
     .mesa-name        { color: #fff; }
     .mesa-cobrar-tag  { color: #fff; }
+
+    &.occupied .mesa-amount,
+    .mesa-amount {
+      color: rgba(255, 255, 255, 0.9);
+    }
   }
 
   &.selected {

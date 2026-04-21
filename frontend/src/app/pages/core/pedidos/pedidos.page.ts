@@ -180,14 +180,26 @@ export class PedidosPage implements OnInit {
 
   async markAsCharged(): Promise<void> {
     if (!this.selectedOrder) return;
-    // TODO: Implementar llamada al backend para cambiar estado a 'to-charge'
-    console.log('Marcar como cobrado:', this.selectedOrder.id);
+    const user = await firstValueFrom(this.authService.currentUser$);
+    await firstValueFrom(
+      this.tpvService.updateOrder(this.selectedOrder.id, {
+        action: 'mark-to-charge',
+        closed_by_user_id: user?.id,
+      }),
+    );
+    await this.ngOnInit();
   }
 
   async cancelOrder(): Promise<void> {
     if (!this.selectedOrder) return;
-    // TODO: Implementar llamada al backend para cambiar estado a 'cancelled'
-    console.log('Cancelar pedido:', this.selectedOrder.id);
+    const user = await firstValueFrom(this.authService.currentUser$);
+    await firstValueFrom(
+      this.tpvService.updateOrder(this.selectedOrder.id, {
+        action: 'cancel',
+        closed_by_user_id: user?.id,
+      }),
+    );
+    await this.ngOnInit();
   }
 
   // ── Helpers ────────────────────────────────────

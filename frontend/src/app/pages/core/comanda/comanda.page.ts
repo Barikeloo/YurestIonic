@@ -49,7 +49,6 @@ export class ComandaPage implements OnInit {
   selectedCloser: QuickAccessUserResponse | null = null;
   closing = false;
   closeError: string | null = null;
-  ticketNumber: number | null = null;
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -237,25 +236,14 @@ export class ComandaPage implements OnInit {
     this.closeError = null;
 
     try {
-      // Paso 1: cerrar la order → status pasa a invoiced
       await firstValueFrom(
         this.tpvService.updateOrder(this.orderId, {
-          action: 'close',
+          action: 'mark-to-charge',
           closed_by_user_id: this.selectedCloser.user_uuid,
         }),
       );
-
-      // Paso 2: crear la venta → genera el ticket_number
-      const sale = await firstValueFrom(
-        this.tpvService.createSale({
-          order_id: this.orderId,
-          opened_by_user_id: this.selectedCloser.user_uuid,
-          closed_by_user_id: this.selectedCloser.user_uuid,
-        }),
-      );
-
-      this.ticketNumber = sale.ticket_number ?? null;
       this.closeModalOpen = false;
+      void this.router.navigate(['/app/mesas']);
     } catch (err) {
       this.closeError = err instanceof Error ? err.message : 'No se pudo cerrar la cuenta.';
     } finally {

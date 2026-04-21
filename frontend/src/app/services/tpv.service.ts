@@ -78,7 +78,7 @@ interface AddLinePayload {
 
 interface UpdateOrderPayload {
   diners?: number;
-  action?: 'close' | 'cancel';
+  action?: 'mark-to-charge' | 'close' | 'cancel';
   closed_by_user_id?: string;
 }
 

@@ -7,6 +7,7 @@ import { TpvOrder, TpvOrderLine, TpvService, TpvTableItem, TpvZoneItem } from '.
 
 interface TableWithStatus extends TpvTableItem {
   occupied: boolean;
+  status?: 'open' | 'to-charge';
   order_id?: string;
   diners?: number;
   opened_at?: string;
@@ -38,6 +39,13 @@ export class MesasPage implements OnInit {
   openingOrder = false;
   openingError: string | null = null;
 
+  // Modal cerrar cuenta (mark-to-charge)
+  closeAccountModalOpen = false;
+  closeAccountUsers: QuickAccessUserResponse[] = [];
+  selectedCloser: QuickAccessUserResponse | null = null;
+  closingAccount = false;
+  closeAccountError: string | null = null;
+
   constructor(
     private readonly tpvService: TpvService,
     private readonly authService: AuthService,
@@ -60,14 +68,21 @@ export class MesasPage implements OnInit {
       this.zones = zones;
       if (zones.length > 0) this.activeZoneId = zones[0].id;
 
-      const openOrders = orders.filter((o) => o.status === 'open');
-      this.openOrders = openOrders;
+      const activeOrders = orders.filter((o) => o.status === 'open' || o.status === 'to-charge');
+      this.openOrders = activeOrders;
       const orderByTable = new Map<string, TpvOrder>();
-      for (const order of openOrders) orderByTable.set(order.table_id, order);
+      for (const order of activeOrders) orderByTable.set(order.table_id, order);
 
       this.tables = tables.map((t) => {
         const order = orderByTable.get(t.id);
-        return { ...t, occupied: !!order, order_id: order?.id, diners: order?.diners, opened_at: order?.opened_at };
+        return {
+          ...t,
+          occupied: !!order,
+          status: order?.status as 'open' | 'to-charge' | undefined,
+          order_id: order?.id,
+          diners: order?.diners,
+          opened_at: order?.opened_at,
+        };
       });
     } finally {
       this.loading = false;
@@ -158,6 +173,55 @@ export class MesasPage implements OnInit {
       this.openingError = err instanceof Error ? err.message : 'No se pudo abrir la mesa.';
     } finally {
       this.openingOrder = false;
+    }
+  }
+
+  // ── Modal cerrar cuenta ───────────────────────
+  async openCloseAccountModal(): Promise<void> {
+    if (!this.selectedTable?.order_id) return;
+    this.closeAccountModalOpen = true;
+    this.closeAccountError = null;
+    this.selectedCloser = null;
+    try {
+      const deviceId = this.authService.getDeviceId();
+      const user = await firstValueFrom(this.authService.currentUser$);
+      const restaurantUuid = user?.restaurantId;
+      this.closeAccountUsers = await firstValueFrom(this.authService.getQuickUsers(deviceId, restaurantUuid));
+      if (this.closeAccountUsers.length > 0) this.selectedCloser = this.closeAccountUsers[0];
+    } catch {
+      this.closeAccountUsers = [];
+    }
+  }
+
+  closeCloseAccountModal(): void {
+    this.closeAccountModalOpen = false;
+  }
+
+  selectCloser(user: QuickAccessUserResponse): void {
+    this.selectedCloser = user;
+  }
+
+  async confirmCloseAccount(): Promise<void> {
+    if (!this.selectedTable?.order_id || !this.selectedCloser || this.closingAccount) return;
+    this.closingAccount = true;
+    this.closeAccountError = null;
+    try {
+      await firstValueFrom(this.tpvService.updateOrder(this.selectedTable.order_id, {
+        action: 'mark-to-charge',
+        closed_by_user_id: this.selectedCloser.user_uuid,
+      }));
+      this.closeAccountModalOpen = false;
+      const previouslySelectedId = this.selectedTable.id;
+      await this.loadData();
+      const refreshed = this.tables.find((t) => t.id === previouslySelectedId) ?? null;
+      this.selectedTable = refreshed;
+      if (refreshed?.order_id) {
+        this.orderLines = await firstValueFrom(this.tpvService.getOrderLines(refreshed.order_id));
+      }
+    } catch (err) {
+      this.closeAccountError = err instanceof Error ? err.message : 'No se pudo cerrar la cuenta.';
+    } finally {
+      this.closingAccount = false;
     }
   }
 

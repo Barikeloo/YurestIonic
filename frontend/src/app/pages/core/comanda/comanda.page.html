@@ -178,24 +178,3 @@
     <div *ngIf="closeError" class="modal-error">{{ closeError }}</div>
   </div>
 </div>
-
-<!-- ── Pantalla de ticket generado ───────────── -->
-<div class="modal-overlay" [class.open]="ticketNumber !== null" (click)="goBack()">
-  <div class="modal-box ticket-box" (click)="$event.stopPropagation()">
-
-    <div class="ticket-icon">✓</div>
-    <div class="modal-title" style="text-align:center">Cuenta cerrada</div>
-    <div class="modal-sub" style="text-align:center">La mesa ha sido liberada correctamente</div>
-
-    <div class="ticket-number-wrap">
-      <span class="ticket-label">Nº de ticket</span>
-      <span class="ticket-number">{{ ticketNumber }}</span>
-    </div>
-
-    <div class="ticket-total">{{ formatCents(existingTotal) }}</div>
-
-    <button class="btn-comanda" style="width:100%; margin-top: 24px" (click)="goBack()">
-      Volver a mesas
-    </button>
-  </div>
-</div>
