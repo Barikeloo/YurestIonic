@@ -15,5 +15,12 @@ interface OrderLineRepositoryInterface
 
     public function findByOrderId(Uuid $orderId): array;
 
+    public function findMatchingMergeableLine(
+        Uuid $orderId,
+        Uuid $productId,
+        int $price,
+        int $taxPercentage,
+    ): ?OrderLine;
+
     public function delete(Uuid $id): void;
 }

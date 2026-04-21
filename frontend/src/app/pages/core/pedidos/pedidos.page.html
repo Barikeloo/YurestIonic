@@ -61,7 +61,7 @@
       <!-- List -->
       <div class="pedidos-list-wrap">
         <div class="pedidos-list-head">
-          <div>Pedido</div>
+          <div>Mesa</div>
           <div>Apertura</div>
           <div>Total</div>
           <div>Estado</div>
@@ -74,7 +74,7 @@
             (click)="selectOrder(order)"
           >
             <div class="pedido-main">
-              <div class="pedido-main-title">{{ order.id.slice(0, 8) }}...</div>
+              <div class="pedido-main-title">{{ getTableName(order.table_id) }}</div>
               <div class="pedido-main-sub">{{ order.diners }} comensal{{ order.diners !== 1 ? 'es' : '' }}</div>
             </div>
             <div class="pedido-meta">{{ formatTime(order.opened_at) }}</div>

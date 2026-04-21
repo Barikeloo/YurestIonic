@@ -69,6 +69,34 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
         return $models->map(fn ($model) => $this->toDomain($model))->toArray();
     }
 
+    public function findMatchingMergeableLine(
+        Uuid $orderId,
+        Uuid $productId,
+        int $price,
+        int $taxPercentage,
+    ): ?OrderLine {
+        $order = EloquentOrder::query()->where('uuid', $orderId->value())->first(['id', 'status']);
+
+        if ($order === null || $order->status !== 'open') {
+            return null;
+        }
+
+        $productInternalId = EloquentProduct::query()->where('uuid', $productId->value())->value('id');
+
+        if ($productInternalId === null) {
+            return null;
+        }
+
+        $model = $this->model->newQuery()
+            ->where('order_id', $order->id)
+            ->where('product_id', $productInternalId)
+            ->where('price', $price)
+            ->where('tax_percentage', $taxPercentage)
+            ->first();
+
+        return $model ? $this->toDomain($model) : null;
+    }
+
     public function delete(Uuid $id): void
     {
         $this->model->newQuery()->where('uuid', $id->value())->delete();

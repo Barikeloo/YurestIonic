@@ -162,6 +162,14 @@ export class MesasPage implements OnInit {
   }
 
   // ── Panel ──────────────────────────────────────
+  goToComanda(): void {
+    if (this.selectedTable?.order_id) {
+      void this.router.navigate(['/app/comanda'], {
+        queryParams: { orderId: this.selectedTable.order_id },
+      });
+    }
+  }
+
   goToPedido(): void {
     if (this.selectedTable?.order_id) {
       void this.router.navigate(['/app/pedidos'], {

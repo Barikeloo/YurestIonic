@@ -140,4 +140,22 @@ final class OrderLine
     {
         return $this->deletedAt;
     }
+
+    public function withAddedQuantity(int $delta): self
+    {
+        return new self(
+            id: $this->id,
+            restaurantId: $this->restaurantId,
+            uuid: $this->uuid,
+            orderId: $this->orderId,
+            productId: $this->productId,
+            userId: $this->userId,
+            quantity: OrderLineQuantity::create($this->quantity->value() + $delta),
+            price: $this->price,
+            taxPercentage: $this->taxPercentage,
+            createdAt: $this->createdAt,
+            updatedAt: DomainDateTime::now(),
+            deletedAt: $this->deletedAt,
+        );
+    }
 }

@@ -37,7 +37,6 @@ export class ComandaPage implements OnInit {
   searchQuery = '';
 
   cartLines: CartLine[] = [];
-  showConfirmed = false;
 
   loading = true;
   sendingOrder = false;
@@ -173,7 +172,8 @@ export class ComandaPage implements OnInit {
         );
       }
       this.cartLines = [];
-      this.existingLines = await firstValueFrom(this.tpvService.getOrderLines(this.orderId));
+      void this.router.navigate(['/app/mesas']);
+      return;
     } catch (err) {
       this.sendError = err instanceof Error ? err.message : 'Error al enviar la comanda.';
     } finally {
@@ -287,6 +287,15 @@ export class ComandaPage implements OnInit {
 
   get existingTotal(): number {
     return this.existingLines.reduce((acc, l) => acc + l.price * l.quantity, 0);
+  }
+
+  get orderTotal(): number {
+    return this.existingTotal + this.cartTotal;
+  }
+
+  get orderLineCount(): number {
+    const existingCount = this.existingLines.reduce((acc, l) => acc + l.quantity, 0);
+    return existingCount + this.cartCount;
   }
 
   // ── Helpers ─────────────────────────────────────

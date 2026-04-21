@@ -18,6 +18,7 @@ export class PedidosPage implements OnInit {
   orders: TpvOrder[] = [];
   zones: TpvZoneItem[] = [];
   users: any[] = [];
+  tables: any[] = [];
   loading = true;
 
   activeTab: TabId = 'all';
@@ -45,14 +46,16 @@ export class PedidosPage implements OnInit {
       const deviceId = this.authService.getDeviceId();
       const restaurantUuid = user?.restaurantId;
 
-      const [orders, zones, usersResponse] = await Promise.all([
+      const [orders, zones, usersResponse, tables] = await Promise.all([
         firstValueFrom(this.tpvService.listOrders()),
         firstValueFrom(this.tpvService.listZones()),
         deviceId ? firstValueFrom(this.tpvService.listUsers(deviceId, restaurantUuid)) : Promise.resolve({ users: [] }),
+        firstValueFrom(this.tpvService.listTables()),
       ]);
       this.orders = orders;
       this.zones = zones;
       this.users = usersResponse.users;
+      this.tables = tables;
     } finally {
       this.loading = false;
     }
@@ -188,6 +191,12 @@ export class PedidosPage implements OnInit {
   }
 
   // ── Helpers ────────────────────────────────────
+
+  getTableName(tableId: string): string {
+    const table = this.tables.find((t) => t.id === tableId);
+    const name = table?.name ?? tableId;
+    return `Mesa ${name}`;
+  }
 
   formatCents(cents: number): string {
     return (cents / 100).toFixed(2).replace('.', ',') + '€';

@@ -15,7 +15,7 @@ final class UpdateOrder
     public function __invoke(
         string $id,
         ?int $diners = null,
-        ?string $action = null, // 'close', 'cancel'
+        ?string $action = null, // 'mark-to-charge', 'close', 'cancel'
         ?string $closedByUserId = null,
     ): ?UpdateOrderResponse {
         $order = $this->orderRepository->getById($id);
@@ -28,7 +28,9 @@ final class UpdateOrder
             $order->updateDiners(OrderDiners::create($diners));
         }
 
-        if ($action === 'close' && $closedByUserId !== null) {
+        if ($action === 'mark-to-charge' && $closedByUserId !== null) {
+            $order->markToCharge(Uuid::create($closedByUserId));
+        } elseif ($action === 'close' && $closedByUserId !== null) {
             $order->close(Uuid::create($closedByUserId));
         } elseif ($action === 'cancel' && $closedByUserId !== null) {
             $order->cancel(Uuid::create($closedByUserId));

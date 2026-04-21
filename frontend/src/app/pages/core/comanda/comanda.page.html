@@ -66,28 +66,6 @@
         </div>
       </div>
 
-      <!-- Confirmed lines accordion -->
-      <div *ngIf="existingLines.length > 0" class="confirmed-strip">
-        <button class="confirmed-toggle" (click)="showConfirmed = !showConfirmed">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline [attr.points]="showConfirmed ? '18 15 12 9 6 15' : '6 9 12 15 18 9'"/>
-          </svg>
-          {{ existingLines.length }} línea{{ existingLines.length !== 1 ? 's' : '' }} confirmada{{ existingLines.length !== 1 ? 's' : '' }} · {{ formatCents(existingTotal) }}
-        </button>
-        <div *ngIf="showConfirmed" class="confirmed-lines">
-          <div *ngFor="let line of existingLines" class="confirmed-line">
-            <span class="cl-qty">{{ line.quantity }}</span>
-            <span class="cl-name">{{ line.product_name ?? 'Producto' }}</span>
-            <span class="cl-price">{{ formatCents(line.price * line.quantity) }}</span>
-            <button class="btn-delete-line" (click)="deleteLine(line)" title="Eliminar">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
     </div>
 
     <!-- Right: sidebar -->
@@ -98,18 +76,34 @@
           <div>
             <div class="order-table-name">Comanda actual</div>
             <div class="order-table-sub">
-              {{ cartCount > 0 ? cartCount + ' producto' + (cartCount !== 1 ? 's' : '') + ' añadido' + (cartCount !== 1 ? 's' : '') : 'Toca un producto para añadirlo' }}
+              {{ orderLineCount > 0 ? orderLineCount + ' producto' + (orderLineCount !== 1 ? 's' : '') : 'Toca un producto para añadirlo' }}
             </div>
           </div>
-          <div class="order-total-big">{{ formatCents(cartTotal) }}</div>
+          <div class="order-total-big">{{ formatCents(orderTotal) }}</div>
         </div>
       </div>
 
-      <!-- Cart lines -->
+      <!-- Order lines -->
       <div class="order-lines">
-        <div *ngIf="cartLines.length === 0" class="order-empty-msg">
+        <div *ngIf="existingLines.length === 0 && cartLines.length === 0" class="order-empty-msg">
           Toca un producto para añadirlo
         </div>
+
+        <!-- Confirmed lines -->
+        <div *ngIf="existingLines.length > 0" class="order-section-label">Confirmadas</div>
+        <div *ngFor="let line of existingLines" class="order-line order-line-confirmed">
+          <div class="order-line-qty">{{ line.quantity }}</div>
+          <div class="order-line-info">
+            <div class="order-line-name">{{ line.product_name ?? 'Producto' }}</div>
+          </div>
+          <div class="cart-line-right">
+            <div class="order-line-price">{{ formatCents(line.price * line.quantity) }}</div>
+            <button class="btn-remove-cart" (click)="deleteLine(line)" title="Eliminar">×</button>
+          </div>
+        </div>
+
+        <!-- Cart lines -->
+        <div *ngIf="cartLines.length > 0" class="order-section-label">Sin enviar</div>
         <div *ngFor="let line of cartLines" class="order-line">
           <div class="order-line-qty">{{ line.quantity }}</div>
           <div class="order-line-info">

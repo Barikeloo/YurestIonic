@@ -18,6 +18,10 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/core/pedidos/pedidos.page').then((m) => m.PedidosPage),
       },
       {
+        path: 'comanda',
+        loadComponent: () => import('./pages/core/comanda/comanda.page').then((m) => m.ComandaPage),
+      },
+      {
         path: 'autoservicio',
         loadComponent: () => import('./pages/core/autoservicio/autoservicio.page').then((m) => m.AutoservicioPage),
       },

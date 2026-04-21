@@ -16,16 +16,20 @@ final class PutController
     {
         $validated = $request->validate([
             'diners' => ['sometimes', 'integer', 'min:1'],
-            'action' => ['sometimes', 'string', 'in:close,cancel'],
+            'action' => ['sometimes', 'string', 'in:mark-to-charge,close,cancel'],
             'closed_by_user_id' => ['sometimes', 'string', 'uuid'],
         ]);
 
-        $response = ($this->updateOrder)(
-            id: $id,
-            diners: $validated['diners'] ?? null,
-            action: $validated['action'] ?? null,
-            closedByUserId: $validated['closed_by_user_id'] ?? null,
-        );
+        try {
+            $response = ($this->updateOrder)(
+                id: $id,
+                diners: $validated['diners'] ?? null,
+                action: $validated['action'] ?? null,
+                closedByUserId: $validated['closed_by_user_id'] ?? null,
+            );
+        } catch (\DomainException $exception) {
+            return new JsonResponse(['message' => $exception->getMessage()], 422);
+        }
 
         if ($response === null) {
             return new JsonResponse(['message' => 'Order not found.'], 404);

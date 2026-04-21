@@ -17,6 +17,7 @@ export class AppLayoutPage implements OnInit, OnDestroy {
   public currentUser: AuthUser | null = null;
   public activeRestaurantName: string = 'Sin restaurante';
   public isAdminUser: boolean = false;
+  public isPedidosOrComanda: boolean = false;
 
   private timerSubscription?: Subscription;
   private userSubscription?: Subscription;
@@ -51,6 +52,10 @@ export class AppLayoutPage implements OnInit, OnDestroy {
 
     this.contextSubscription = this.contextService.activeRestaurant$.subscribe((context) => {
       this.activeRestaurantName = context?.name ?? 'Sin restaurante';
+    });
+
+    this.router.events.subscribe(() => {
+      this.isPedidosOrComanda = this.router.url.startsWith('/app/pedidos') || this.router.url.startsWith('/app/comanda');
     });
 
     this.authService.restoreSession().pipe(take(1)).subscribe({

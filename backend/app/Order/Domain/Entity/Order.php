@@ -81,6 +81,17 @@ final class Order
         );
     }
 
+    public function markToCharge(Uuid $closedByUserId): void
+    {
+        if (! $this->status->isOpen()) {
+            throw new \DomainException('Only open orders can be marked as to-charge.');
+        }
+
+        $this->status = OrderStatus::toCharge();
+        $this->closedByUserId = $closedByUserId;
+        $this->updatedAt = DomainDateTime::now();
+    }
+
     public function close(Uuid $closedByUserId): void
     {
         $this->status = OrderStatus::invoiced();

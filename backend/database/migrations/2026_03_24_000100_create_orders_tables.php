@@ -13,7 +13,7 @@ return new class extends Migration
             $table->id();
             $table->uuid('uuid')->unique();
             $table->foreignId('restaurant_id')->constrained('restaurants')->cascadeOnDelete();
-            $table->enum('status', ['open', 'cancelled', 'invoiced'])->default('open');
+            $table->enum('status', ['open', 'to-charge', 'cancelled', 'invoiced'])->default('open');
             $table->foreignId('table_id')->constrained('tables');
             $table->foreignId('opened_by_user_id')->constrained('users');
             $table->foreignId('closed_by_user_id')->nullable()->constrained('users');

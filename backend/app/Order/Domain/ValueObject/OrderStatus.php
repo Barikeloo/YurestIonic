@@ -7,6 +7,7 @@ use InvalidArgumentException;
 final class OrderStatus
 {
     private const OPEN = 'open';
+    private const TO_CHARGE = 'to-charge';
     private const CANCELLED = 'cancelled';
     private const INVOICED = 'invoiced';
 
@@ -18,7 +19,7 @@ final class OrderStatus
     {
         $value = strtolower($value);
 
-        if (! in_array($value, [self::OPEN, self::CANCELLED, self::INVOICED], true)) {
+        if (! in_array($value, [self::OPEN, self::TO_CHARGE, self::CANCELLED, self::INVOICED], true)) {
             throw new InvalidArgumentException("Estado de orden inválido: {$value}");
         }
 
@@ -28,6 +29,11 @@ final class OrderStatus
     public static function open(): self
     {
         return new self(self::OPEN);
+    }
+
+    public static function toCharge(): self
+    {
+        return new self(self::TO_CHARGE);
     }
 
     public static function cancelled(): self
@@ -48,6 +54,11 @@ final class OrderStatus
     public function isOpen(): bool
     {
         return $this->value === self::OPEN;
+    }
+
+    public function isToCharge(): bool
+    {
+        return $this->value === self::TO_CHARGE;
     }
 
     public function isCancelled(): bool
