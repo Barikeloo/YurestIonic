@@ -46,6 +46,13 @@ export class MesasPage implements OnInit {
   closingAccount = false;
   closeAccountError: string | null = null;
 
+  // Modal cobrar (create sale + close order)
+  paymentModalOpen = false;
+  paymentUsers: QuickAccessUserResponse[] = [];
+  selectedPayer: QuickAccessUserResponse | null = null;
+  processingPayment = false;
+  paymentError: string | null = null;
+
   constructor(
     private readonly tpvService: TpvService,
     private readonly authService: AuthService,
@@ -222,6 +229,65 @@ export class MesasPage implements OnInit {
       this.closeAccountError = err instanceof Error ? err.message : 'No se pudo cerrar la cuenta.';
     } finally {
       this.closingAccount = false;
+    }
+  }
+
+  // ── Modal cobrar ────────────────────────────────
+  async openPaymentModal(): Promise<void> {
+    if (!this.selectedTable?.order_id) return;
+    this.paymentModalOpen = true;
+    this.paymentError = null;
+    this.selectedPayer = null;
+    try {
+      const deviceId = this.authService.getDeviceId();
+      const user = await firstValueFrom(this.authService.currentUser$);
+      const restaurantUuid = user?.restaurantId;
+      this.paymentUsers = await firstValueFrom(this.authService.getQuickUsers(deviceId, restaurantUuid));
+      if (this.paymentUsers.length > 0) this.selectedPayer = this.paymentUsers[0];
+    } catch {
+      this.paymentUsers = [];
+    }
+  }
+
+  closePaymentModal(): void {
+    this.paymentModalOpen = false;
+  }
+
+  selectPayer(user: QuickAccessUserResponse): void {
+    this.selectedPayer = user;
+  }
+
+  async confirmPayment(): Promise<void> {
+    if (!this.selectedTable?.order_id || !this.selectedPayer || this.processingPayment) return;
+    this.processingPayment = true;
+    this.paymentError = null;
+
+    try {
+      // Crear la venta (Sale)
+      await firstValueFrom(
+        this.tpvService.createSale({
+          order_id: this.selectedTable.order_id,
+          opened_by_user_id: this.selectedPayer.user_uuid,
+          closed_by_user_id: this.selectedPayer.user_uuid,
+        }),
+      );
+
+      // Cerrar la orden (action: 'close')
+      await firstValueFrom(
+        this.tpvService.updateOrder(this.selectedTable.order_id, {
+          action: 'close',
+          closed_by_user_id: this.selectedPayer.user_uuid,
+        }),
+      );
+
+      this.paymentModalOpen = false;
+      this.selectedTable = null;
+      this.orderLines = [];
+      await this.loadData();
+    } catch (err) {
+      this.paymentError = err instanceof Error ? err.message : 'No se pudo procesar el cobro.';
+    } finally {
+      this.processingPayment = false;
     }
   }
 

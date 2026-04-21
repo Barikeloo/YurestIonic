@@ -134,9 +134,6 @@
 
         <div class="pedido-detail-actions">
           <button class="btn-small" (click)="goToMesa()">Abrir en mesa</button>
-          <button class="btn-small" (click)="goToComanda()" [disabled]="selectedOrder.status !== 'open'">
-            Añadir productos
-          </button>
           <button class="btn-small">Imprimir ticket</button>
           <button class="btn-small primary" (click)="markAsCharged()" [disabled]="selectedOrder.status !== 'open'">
             Marcar cobrado

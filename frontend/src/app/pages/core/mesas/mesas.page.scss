@@ -363,6 +363,32 @@
   }
 }
 
+.btn-cobrar {
+  background: #1A9E5A;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s;
+  font-family: inherit;
+
+  &:hover {
+    background: #1BB868;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
 .btn-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
