@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Cash\Domain\Entity;
 
+use App\Cash\Domain\ValueObject\MovementReasonCode;
+use App\Cash\Domain\ValueObject\MovementType;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Money;
-use App\Shared\Domain\ValueObject\MovementReasonCode;
-use App\Shared\Domain\ValueObject\MovementType;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class CashMovement

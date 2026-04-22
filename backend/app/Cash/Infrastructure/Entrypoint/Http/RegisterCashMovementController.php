@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Cash\Infrastructure\Entrypoint\Http;
 
 use App\Cash\Application\RegisterCashMovement\RegisterCashMovement;
+use App\Shared\Infrastructure\Tenant\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -12,12 +13,12 @@ final class RegisterCashMovementController
 {
     public function __construct(
         private readonly RegisterCashMovement $registerCashMovement,
+        private readonly TenantContext $tenantContext,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'restaurant_id' => ['required', 'string', 'uuid'],
             'cash_session_id' => ['required', 'string', 'uuid'],
             'type' => ['required', 'string', 'in:in,out'],
             'reason_code' => ['required', 'string', 'in:change_refill,supplier_payment,tip_declared,sangria,adjustment,other'],
@@ -26,8 +27,13 @@ final class RegisterCashMovementController
             'description' => ['nullable', 'string'],
         ]);
 
+        $restaurantId = $this->tenantContext->restaurantUuid();
+        if ($restaurantId === null) {
+            throw new \RuntimeException('Tenant context is required.');
+        }
+
         $response = ($this->registerCashMovement)(
-            restaurantId: $validated['restaurant_id'],
+            restaurantId: $restaurantId,
             cashSessionId: $validated['cash_session_id'],
             type: $validated['type'],
             reasonCode: $validated['reason_code'],

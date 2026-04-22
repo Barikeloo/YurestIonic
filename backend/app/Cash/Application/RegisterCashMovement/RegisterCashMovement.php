@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\RegisterCashMovement;
 
+use App\Cash\Domain\Entity\CashMovement;
 use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
+use App\Cash\Domain\ValueObject\MovementReasonCode;
+use App\Cash\Domain\ValueObject\MovementType;
 use App\Shared\Domain\ValueObject\Money;
-use App\Shared\Domain\ValueObject\MovementReasonCode;
-use App\Shared\Domain\ValueObject\MovementType;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class RegisterCashMovement
@@ -39,7 +40,7 @@ final class RegisterCashMovement
             throw new \DomainException('Cannot register movements on a closed session.');
         }
 
-        $cashMovement = \App\Cash\Domain\Entity\CashMovement::dddCreate(
+        $cashMovement = CashMovement::dddCreate(
             id: Uuid::generate(),
             restaurantId: $restaurantUuid,
             cashSessionId: $cashSessionUuid,

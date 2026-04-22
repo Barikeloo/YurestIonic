@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Shared\Domain\ValueObject;
+namespace App\Cash\Domain\ValueObject;
 
 final class CashSessionStatus
 {

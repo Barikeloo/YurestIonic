@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Cash\Infrastructure\Persistence\Repositories;
 
-use App\Cash\Domain\Entity\SalePayment;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
+use App\Sale\Domain\Entity\SalePayment;
 use App\Cash\Infrastructure\Persistence\Models\EloquentCashSession;
 use App\Cash\Infrastructure\Persistence\Models\EloquentSalePayment;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;

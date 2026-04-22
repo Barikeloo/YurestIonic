@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cash\Domain\Interfaces;
 
-use App\Cash\Domain\Entity\SalePayment;
+use App\Sale\Domain\Entity\SalePayment;
 use App\Shared\Domain\ValueObject\Uuid;
 
 interface SalePaymentRepositoryInterface

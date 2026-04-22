@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Cash\Domain\Entity;
 
+use App\Cash\Domain\ValueObject\TipSource;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class Tip
 {
-    private const VALID_SOURCES = ['card_added', 'cash_declared'];
-
     private function __construct(
         private readonly Uuid $id,
         private readonly Uuid $restaurantId,
@@ -19,15 +18,12 @@ final class Tip
         private readonly Uuid $saleId,
         private readonly Uuid $cashSessionId,
         private readonly Money $amount,
-        private readonly string $source,
+        private readonly TipSource $source,
         private ?Uuid $beneficiaryUserId,
         private readonly DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
         private ?DomainDateTime $deletedAt = null,
     ) {
-        if (!in_array($source, self::VALID_SOURCES, true)) {
-            throw new \InvalidArgumentException("Invalid tip source: {$source}");
-        }
     }
 
     public static function dddCreate(
@@ -46,7 +42,7 @@ final class Tip
             saleId: $saleId,
             cashSessionId: $cashSessionId,
             amount: $amount,
-            source: $source,
+            source: TipSource::create($source),
             beneficiaryUserId: $beneficiaryUserId,
             createdAt: DomainDateTime::now(),
             updatedAt: DomainDateTime::now(),
@@ -73,7 +69,7 @@ final class Tip
             saleId: Uuid::create($saleId),
             cashSessionId: Uuid::create($cashSessionId),
             amount: Money::create($amountCents),
-            source: $source,
+            source: TipSource::create($source),
             beneficiaryUserId: $beneficiaryUserId !== null ? Uuid::create($beneficiaryUserId) : null,
             createdAt: DomainDateTime::create($createdAt),
             updatedAt: DomainDateTime::create($updatedAt),
@@ -113,7 +109,7 @@ final class Tip
         return $this->amount;
     }
 
-    public function source(): string
+    public function source(): TipSource
     {
         return $this->source;
     }

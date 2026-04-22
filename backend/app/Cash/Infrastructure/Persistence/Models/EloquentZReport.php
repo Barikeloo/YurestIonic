@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Cash\Infrastructure\Persistence\Models;
 
+use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
+use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class EloquentZReport extends Model
 {
+    use HasTenantScope;
     use SoftDeletes;
 
     protected $table = 'z_reports';
@@ -44,6 +47,6 @@ final class EloquentZReport extends Model
 
     public function restaurant(): BelongsTo
     {
-        return $this->belongsTo(\App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant::class, 'restaurant_id');
+        return $this->belongsTo(EloquentRestaurant::class, 'restaurant_id');
     }
 }

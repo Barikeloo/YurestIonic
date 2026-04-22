@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\OpenCashSession;
 
+use App\Cash\Domain\Entity\CashSession;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -28,7 +29,7 @@ final class OpenCashSession
             throw new \DomainException('An active cash session already exists for this device.');
         }
 
-        $cashSession = \App\Cash\Domain\Entity\CashSession::dddCreate(
+        $cashSession = CashSession::dddCreate(
             id: Uuid::generate(),
             restaurantId: $restaurantUuid,
             deviceId: $deviceId,

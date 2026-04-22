@@ -138,7 +138,6 @@ Route::middleware([
 	Route::post('/tpv/cash-sessions/start-closing', StartClosingCashSessionController::class);
 	Route::post('/tpv/cash-sessions/cancel-closing', CancelClosingCashSessionController::class);
 	Route::post('/tpv/cash-sessions/close', CloseCashSessionController::class);
-	Route::post('/tpv/cash-sessions/force-close', ForceCloseCashSessionController::class);
 	Route::post('/tpv/z-reports/generate', GenerateZReportController::class);
 	Route::get('/tpv/z-reports/{id}', GetZReportController::class)->whereUuid('id');
 });
@@ -186,6 +185,8 @@ Route::middleware([
 	Route::delete('/admin/products/{id}', ProductDeleteController::class)->whereUuid('id');
 	Route::patch('/admin/products/{id}/activate', ProductActivateController::class)->whereUuid('id');
 	Route::patch('/admin/products/{id}/deactivate', ProductDeactivateController::class)->whereUuid('id');
+
+	Route::post('/tpv/cash-sessions/force-close', ForceCloseCashSessionController::class);
 });
 
 Route::middleware([

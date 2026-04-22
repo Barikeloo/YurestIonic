@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cash\Domain\Entity;
 
-use App\Shared\Domain\ValueObject\CashSessionStatus;
+use App\Cash\Domain\ValueObject\CashSessionStatus;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -159,13 +159,13 @@ final class CashSession
 
     public function forceClose(Uuid $closedByUserId): void
     {
-        if ($this->status->isClosed()) {
-            throw new \DomainException('Session is already closed.');
+        if ($this->status->isClosed() || $this->status->isAbandoned()) {
+            throw new \DomainException('Session is already closed or abandoned.');
         }
 
         $this->closedByUserId = $closedByUserId;
         $this->closedAt = DomainDateTime::now();
-        $this->status = CashSessionStatus::closed();
+        $this->status = CashSessionStatus::abandoned();
         $this->updatedAt = DomainDateTime::now();
     }
 

@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace App\Cash\Infrastructure\Persistence\Models;
 
+use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
+use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
+use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
+use App\User\Infrastructure\Persistence\Models\EloquentUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class EloquentTip extends Model
 {
+    use HasTenantScope;
+    use SoftDeletes;
     protected $table = 'tips';
 
     protected $fillable = [
@@ -27,12 +34,12 @@ final class EloquentTip extends Model
 
     public function restaurant(): BelongsTo
     {
-        return $this->belongsTo(\App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant::class, 'restaurant_id');
+        return $this->belongsTo(EloquentRestaurant::class, 'restaurant_id');
     }
 
     public function sale(): BelongsTo
     {
-        return $this->belongsTo(\App\Sale\Infrastructure\Persistence\Models\EloquentSale::class, 'sale_id');
+        return $this->belongsTo(EloquentSale::class, 'sale_id');
     }
 
     public function cashSession(): BelongsTo
@@ -42,6 +49,6 @@ final class EloquentTip extends Model
 
     public function beneficiaryUser(): BelongsTo
     {
-        return $this->belongsTo(\App\User\Infrastructure\Persistence\Models\EloquentUser::class, 'beneficiary_user_id');
+        return $this->belongsTo(EloquentUser::class, 'beneficiary_user_id');
     }
 }

@@ -3,8 +3,8 @@
 namespace App\User\Infrastructure\Persistence\Repositories;
 
 use App\User\Domain\Interfaces\UserQuickAccessRepositoryInterface;
+use App\User\Infrastructure\Persistence\Models\EloquentUser;
 use App\User\Infrastructure\Persistence\Models\EloquentUserQuickAccess;
-use \App\User\Infrastructure\Persistence\Models\EloquentUser;
 
 final class EloquentUserQuickAccessRepository implements UserQuickAccessRepositoryInterface
 {

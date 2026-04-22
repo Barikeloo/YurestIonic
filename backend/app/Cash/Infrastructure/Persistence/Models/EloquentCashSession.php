@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 namespace App\Cash\Infrastructure\Persistence\Models;
 
+use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
+use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
+use App\User\Infrastructure\Persistence\Models\EloquentUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 final class EloquentCashSession extends Model
 {
+    use HasTenantScope;
+    use SoftDeletes;
     protected $table = 'cash_sessions';
 
     protected $fillable = [
@@ -42,16 +48,16 @@ final class EloquentCashSession extends Model
 
     public function restaurant(): BelongsTo
     {
-        return $this->belongsTo(\App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant::class, 'restaurant_id');
+        return $this->belongsTo(EloquentRestaurant::class, 'restaurant_id');
     }
 
     public function openedByUser(): BelongsTo
     {
-        return $this->belongsTo(\App\User\Infrastructure\Persistence\Models\EloquentUser::class, 'opened_by_user_id');
+        return $this->belongsTo(EloquentUser::class, 'opened_by_user_id');
     }
 
     public function closedByUser(): BelongsTo
     {
-        return $this->belongsTo(\App\User\Infrastructure\Persistence\Models\EloquentUser::class, 'closed_by_user_id');
+        return $this->belongsTo(EloquentUser::class, 'closed_by_user_id');
     }
 }

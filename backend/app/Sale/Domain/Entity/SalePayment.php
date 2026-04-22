@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Cash\Domain\Entity;
+namespace App\Sale\Domain\Entity;
 
+use App\Sale\Domain\ValueObject\PaymentMethod;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Money;
-use App\Shared\Domain\ValueObject\PaymentMethod;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class SalePayment

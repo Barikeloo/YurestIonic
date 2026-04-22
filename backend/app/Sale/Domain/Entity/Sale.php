@@ -4,6 +4,7 @@ namespace App\Sale\Domain\Entity;
 
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\Sale\Domain\ValueObject\SaleStatus;
 use App\Sale\Domain\ValueObject\SaleTicketNumber;
 use App\Sale\Domain\ValueObject\SaleTotal;
 
@@ -26,7 +27,7 @@ final class Sale
         private ?Uuid $cancelledByUserId = null,
         private ?string $cancellationReason = null,
         private ?DomainDateTime $cancelledAt = null,
-        private string $status = 'closed',
+        private SaleStatus $status,
     ) {
     }
 
@@ -50,7 +51,7 @@ final class Sale
             createdAt: DomainDateTime::now(),
             updatedAt: DomainDateTime::now(),
             cashSessionId: $cashSessionId,
-            status: 'closed',
+            status: SaleStatus::closed(),
         );
     }
 
@@ -90,7 +91,7 @@ final class Sale
             cancelledByUserId: $cancelledByUserId !== null ? Uuid::create($cancelledByUserId) : null,
             cancellationReason: $cancellationReason,
             cancelledAt: $cancelledAt !== null ? DomainDateTime::create($cancelledAt) : null,
-            status: $status,
+            status: SaleStatus::create($status),
         );
     }
 
@@ -99,26 +100,26 @@ final class Sale
         $this->closedByUserId = $closedByUserId;
         $this->ticketNumber = $ticketNumber;
         $this->total = $total;
-        $this->status = 'closed';
+        $this->status = SaleStatus::closed();
         $this->updatedAt = DomainDateTime::now();
     }
 
     public function cancel(Uuid $cancelledByUserId, string $reason): void
     {
-        if ($this->status === 'cancelled') {
+        if ($this->status->isCancelled()) {
             throw new \DomainException('Sale is already cancelled.');
         }
 
         $this->cancelledByUserId = $cancelledByUserId;
         $this->cancellationReason = $reason;
         $this->cancelledAt = DomainDateTime::now();
-        $this->status = 'cancelled';
+        $this->status = SaleStatus::cancelled();
         $this->updatedAt = DomainDateTime::now();
     }
 
     public function isCancelled(): bool
     {
-        return $this->status === 'cancelled';
+        return $this->status->isCancelled();
     }
 
     public function id(): Uuid
@@ -186,7 +187,7 @@ final class Sale
         return $this->cashSessionId;
     }
 
-    public function status(): string
+    public function status(): SaleStatus
     {
         return $this->status;
     }

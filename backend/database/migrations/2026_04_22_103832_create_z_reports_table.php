@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('z_reports', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
-            $table->unsignedBigInteger('restaurant_id');
-            $table->unsignedBigInteger('cash_session_id');
+            $table->foreignId('restaurant_id')->constrained('restaurants')->cascadeOnDelete();
+            $table->foreignId('cash_session_id');
             $table->integer('report_number');
             $table->string('report_hash');
             $table->unsignedBigInteger('total_sales_cents')->default(0);
@@ -32,8 +32,13 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('restaurant_id')->references('id')->on('restaurants');
-            $table->foreign('cash_session_id')->references('id')->on('cash_sessions');
+            $table->unique(['restaurant_id', 'id']);
+            $table->unique(['restaurant_id', 'report_number']);
+
+            $table->foreign(['restaurant_id', 'cash_session_id'], 'z_reports_restaurant_session_fk')
+                ->references(['restaurant_id', 'id'])
+                ->on('cash_sessions')
+                ->cascadeOnDelete();
         });
     }
 
