@@ -6,9 +6,9 @@ namespace App\Cash\Infrastructure\Persistence\Repositories;
 
 use App\Cash\Domain\Entity\ZReport;
 use App\Cash\Domain\Interfaces\ZReportRepositoryInterface;
+use App\Cash\Infrastructure\Persistence\Models\EloquentCashSession;
 use App\Cash\Infrastructure\Persistence\Models\EloquentZReport;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
-use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class EloquentZReportRepository implements ZReportRepositoryInterface
@@ -19,13 +19,13 @@ final class EloquentZReportRepository implements ZReportRepositoryInterface
 
     public function save(ZReport $zReport): void
     {
-        $cashSessionInternalId = \App\Cash\Infrastructure\Persistence\Models\EloquentCashSession::query()
-            ->where('uuid', $zReport->cashSessionId()->value())
+        $restaurantId = EloquentRestaurant::query()
+            ->where('uuid', $zReport->restaurantId()->value())
             ->value('id');
 
-        $restaurantId = \App\Cash\Infrastructure\Persistence\Models\EloquentCashSession::query()
+        $cashSessionInternalId = EloquentCashSession::query()
             ->where('uuid', $zReport->cashSessionId()->value())
-            ->value('restaurant_id');
+            ->value('id');
 
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $zReport->id()->value()],
@@ -58,7 +58,7 @@ final class EloquentZReportRepository implements ZReportRepositoryInterface
 
     public function findByCashSessionId(Uuid $cashSessionId): ?ZReport
     {
-        $cashSessionInternalId = \App\Cash\Infrastructure\Persistence\Models\EloquentCashSession::query()
+        $cashSessionInternalId = EloquentCashSession::query()
             ->where('uuid', $cashSessionId->value())
             ->value('id');
 
@@ -66,34 +66,53 @@ final class EloquentZReportRepository implements ZReportRepositoryInterface
             return null;
         }
 
-        $model = $this->model->newQuery()->where('cash_session_id', $cashSessionInternalId)->first();
+        $model = $this->model->newQuery()
+            ->where('cash_session_id', $cashSessionInternalId)
+            ->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
-    public function nextReportNumber(string $restaurantId): int
+    public function nextReportNumber(Uuid $restaurantId): int
     {
-        $restaurantInternalId = EloquentRestaurant::query()->where('uuid', $restaurantId)->value('id');
-        $max = $this->model->newQuery()->where('restaurant_id', $restaurantInternalId)->max('report_number');
+        $restaurantInternalId = EloquentRestaurant::query()
+            ->where('uuid', $restaurantId->value())
+            ->value('id');
+
+        $max = $this->model->newQuery()
+            ->where('restaurant_id', $restaurantInternalId)
+            ->max('report_number');
 
         return $max !== null ? (int) $max + 1 : 1;
     }
 
     private function toDomain(EloquentZReport $model): ZReport
     {
-        return ZReport::generate(
-            cashSessionId: Uuid::create($model->cashSession->uuid),
-            reportNumber: $model->report_number,
-            totalSales: Money::create($model->total_sales_cents),
-            totalCash: Money::create($model->total_cash_cents),
-            totalCard: Money::create($model->total_card_cents),
-            totalOther: Money::create($model->total_other_cents),
-            cashIn: Money::create($model->cash_in_cents),
-            cashOut: Money::create($model->cash_out_cents),
-            tips: Money::create($model->tips_cents),
-            discrepancy: Money::create($model->discrepancy_cents),
-            salesCount: $model->sales_count,
-            cancelledSalesCount: $model->cancelled_sales_count,
+        $restaurantUuid = EloquentRestaurant::query()
+            ->where('id', $model->restaurant_id)
+            ->value('uuid');
+
+        $cashSessionUuid = EloquentCashSession::query()
+            ->where('id', $model->cash_session_id)
+            ->value('uuid');
+
+        return ZReport::fromPersistence(
+            $model->uuid,
+            $restaurantUuid,
+            $cashSessionUuid,
+            (int) $model->report_number,
+            $model->report_hash,
+            (int) $model->total_sales_cents,
+            (int) $model->total_cash_cents,
+            (int) $model->total_card_cents,
+            (int) $model->total_other_cents,
+            (int) $model->cash_in_cents,
+            (int) $model->cash_out_cents,
+            (int) $model->tips_cents,
+            (int) $model->discrepancy_cents,
+            (int) $model->sales_count,
+            (int) $model->cancelled_sales_count,
+            $model->generated_at->toDateTimeImmutable(),
         );
     }
 }

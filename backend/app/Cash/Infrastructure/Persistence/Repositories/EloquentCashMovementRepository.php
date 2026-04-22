@@ -86,10 +86,11 @@ final class EloquentCashMovementRepository implements CashMovementRepositoryInte
         return CashMovement::fromPersistence(
             $model->uuid,
             $restaurantUuid,
+            $model->uuid,
             $cashSessionUuid,
             $model->type,
             $model->reason_code,
-            $model->amount_cents,
+            (int) $model->amount_cents,
             $model->description,
             $userUuid,
             $model->created_at->toDateTimeImmutable(),

@@ -20,8 +20,6 @@ final class CloseCashSessionController
             'cash_session_id' => ['required', 'string', 'uuid'],
             'closed_by_user_id' => ['required', 'string', 'uuid'],
             'final_amount_cents' => ['required', 'integer', 'min:0'],
-            'expected_amount_cents' => ['required', 'integer', 'min:0'],
-            'discrepancy_cents' => ['required', 'integer'],
             'discrepancy_reason' => ['nullable', 'string'],
         ]);
 
@@ -29,8 +27,6 @@ final class CloseCashSessionController
             cashSessionId: $validated['cash_session_id'],
             closedByUserId: $validated['closed_by_user_id'],
             finalAmountCents: $validated['final_amount_cents'],
-            expectedAmountCents: $validated['expected_amount_cents'],
-            discrepancyCents: $validated['discrepancy_cents'],
             discrepancyReason: $validated['discrepancy_reason'] ?? null,
         );
 

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\CloseCashSession;
 
-use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Application\GenerateZReport\GenerateZReport;
+use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -20,8 +20,6 @@ final class CloseCashSession
         string $cashSessionId,
         string $closedByUserId,
         int $finalAmountCents,
-        int $expectedAmountCents,
-        int $discrepancyCents,
         ?string $discrepancyReason = null,
     ): CloseCashSessionResponse {
         $cashSessionUuid = Uuid::create($cashSessionId);
@@ -31,19 +29,30 @@ final class CloseCashSession
             throw new \DomainException('Cash session not found.');
         }
 
-        $closedByUserUuid = Uuid::create($closedByUserId);
+        $finalAmount = Money::create($finalAmountCents);
 
+        // 1. Generate the Z-Report first. It computes totals, teorico and signed discrepancy
+        //    server-side and is the source of truth. If the session is not in 'closing'
+        //    state, GenerateZReport will reject.
+        $zReportResponse = ($this->generateZReport)($cashSessionId, $finalAmount);
+
+        // Expected is derived algebraically so this use case does not depend on the
+        // internal expected-cash formula in GenerateZReport.
+        $discrepancy = Money::create($zReportResponse->discrepancyCents);
+        $expectedAmount = $finalAmount->subtract($discrepancy);
+
+        // 2. Apply the close on the session with the numbers from the Z.
         $cashSession->close(
-            closedByUserId: $closedByUserUuid,
-            finalAmount: Money::create($finalAmountCents),
-            expectedAmount: Money::create($expectedAmountCents),
-            discrepancy: Money::create($discrepancyCents),
+            closedByUserId: Uuid::create($closedByUserId),
+            finalAmount: $finalAmount,
+            expectedAmount: $expectedAmount,
+            discrepancy: $discrepancy,
+            zReportNumber: $zReportResponse->reportNumber,
+            zReportHash: $zReportResponse->reportHash,
             discrepancyReason: $discrepancyReason,
         );
 
         $this->cashSessionRepository->save($cashSession);
-
-        $zReportResponse = ($this->generateZReport)($cashSessionUuid);
 
         return CloseCashSessionResponse::create($cashSession, $zReportResponse);
     }

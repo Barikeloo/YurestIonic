@@ -12,6 +12,7 @@ final class ZReport
 {
     private function __construct(
         private readonly Uuid $id,
+        private readonly Uuid $restaurantId,
         private readonly Uuid $cashSessionId,
         private readonly int $reportNumber,
         private readonly string $reportHash,
@@ -30,6 +31,7 @@ final class ZReport
     }
 
     public static function generate(
+        Uuid $restaurantId,
         Uuid $cashSessionId,
         int $reportNumber,
         Money $totalSales,
@@ -44,6 +46,7 @@ final class ZReport
         int $cancelledSalesCount,
     ): self {
         $id = Uuid::generate();
+        $generatedAt = DomainDateTime::now();
         $reportHash = self::calculateHash(
             $cashSessionId,
             $reportNumber,
@@ -57,10 +60,12 @@ final class ZReport
             $discrepancy,
             $salesCount,
             $cancelledSalesCount,
+            $generatedAt,
         );
 
         return new self(
             id: $id,
+            restaurantId: $restaurantId,
             cashSessionId: $cashSessionId,
             reportNumber: $reportNumber,
             reportHash: $reportHash,
@@ -74,8 +79,67 @@ final class ZReport
             discrepancy: $discrepancy,
             salesCount: $salesCount,
             cancelledSalesCount: $cancelledSalesCount,
-            generatedAt: DomainDateTime::now(),
+            generatedAt: $generatedAt,
         );
+    }
+
+    public static function fromPersistence(
+        string $id,
+        string $restaurantId,
+        string $cashSessionId,
+        int $reportNumber,
+        string $reportHash,
+        int $totalSalesCents,
+        int $totalCashCents,
+        int $totalCardCents,
+        int $totalOtherCents,
+        int $cashInCents,
+        int $cashOutCents,
+        int $tipsCents,
+        int $discrepancyCents,
+        int $salesCount,
+        int $cancelledSalesCount,
+        \DateTimeImmutable $generatedAt,
+    ): self {
+        return new self(
+            id: Uuid::create($id),
+            restaurantId: Uuid::create($restaurantId),
+            cashSessionId: Uuid::create($cashSessionId),
+            reportNumber: $reportNumber,
+            reportHash: $reportHash,
+            totalSales: Money::create($totalSalesCents),
+            totalCash: Money::create($totalCashCents),
+            totalCard: Money::create($totalCardCents),
+            totalOther: Money::create($totalOtherCents),
+            cashIn: Money::create($cashInCents),
+            cashOut: Money::create($cashOutCents),
+            tips: Money::create($tipsCents),
+            discrepancy: Money::create($discrepancyCents),
+            salesCount: $salesCount,
+            cancelledSalesCount: $cancelledSalesCount,
+            generatedAt: DomainDateTime::create($generatedAt),
+        );
+    }
+
+    public function verifyHash(): bool
+    {
+        $expected = self::calculateHash(
+            $this->cashSessionId,
+            $this->reportNumber,
+            $this->totalSales,
+            $this->totalCash,
+            $this->totalCard,
+            $this->totalOther,
+            $this->cashIn,
+            $this->cashOut,
+            $this->tips,
+            $this->discrepancy,
+            $this->salesCount,
+            $this->cancelledSalesCount,
+            $this->generatedAt,
+        );
+
+        return hash_equals($expected, $this->reportHash);
     }
 
     private static function calculateHash(
@@ -91,6 +155,7 @@ final class ZReport
         Money $discrepancy,
         int $salesCount,
         int $cancelledSalesCount,
+        DomainDateTime $generatedAt,
     ): string {
         $data = implode('|', [
             $cashSessionId->value(),
@@ -105,7 +170,7 @@ final class ZReport
             $discrepancy->toCents(),
             $salesCount,
             $cancelledSalesCount,
-            DomainDateTime::now()->format('Y-m-d H:i:s'),
+            $generatedAt->format('Y-m-d H:i:s'),
         ]);
 
         return hash('sha256', $data);
@@ -114,6 +179,11 @@ final class ZReport
     public function id(): Uuid
     {
         return $this->id;
+    }
+
+    public function restaurantId(): Uuid
+    {
+        return $this->restaurantId;
     }
 
     public function cashSessionId(): Uuid
@@ -190,6 +260,7 @@ final class ZReport
     {
         return [
             'id' => $this->id->value(),
+            'restaurant_id' => $this->restaurantId->value(),
             'cash_session_id' => $this->cashSessionId->value(),
             'report_number' => $this->reportNumber,
             'report_hash' => $this->reportHash,

@@ -29,13 +29,20 @@ final class EloquentSale extends Model
         'ticket_number',
         'value_date',
         'total',
+        'cash_session_id',
+        'status',
+        'cancelled_at',
         'cancelled_by_user_id',
         'cancel_reason',
-        'status',
+        'parent_sale_id',
+        'document_type',
+        'customer_fiscal_data',
     ];
 
     protected $casts = [
         'value_date' => 'datetime',
+        'cancelled_at' => 'datetime',
+        'customer_fiscal_data' => 'array',
     ];
 
     public function order(): BelongsTo

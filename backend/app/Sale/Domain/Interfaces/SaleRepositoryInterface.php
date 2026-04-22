@@ -23,5 +23,5 @@ interface SaleRepositoryInterface
 
     public function delete(Uuid $id): void;
 
-    public function nextTicketNumber(string $restaurantId): int;
+    public function nextTicketNumber(Uuid $restaurantId): int;
 }

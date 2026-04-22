@@ -2,6 +2,7 @@
 
 namespace App\Sale\Application\CreateSale;
 
+use App\Cash\Domain\Entity\SalePayment;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
@@ -43,6 +44,7 @@ final class CreateSale
             restaurantId: $restaurantUuid,
             orderId: $orderUuid,
             openedByUserId: Uuid::create($openedByUserId),
+            cashSessionId: $activeSession->uuid(),
         );
 
         $orderLines = $this->orderLineRepository->findByOrderId($orderUuid);
@@ -61,7 +63,7 @@ final class CreateSale
             throw new \DomainException('Payments total does not match sale total.');
         }
 
-        $ticketNumber = $this->saleRepository->nextTicketNumber($restaurantId);
+        $ticketNumber = $this->saleRepository->nextTicketNumber($restaurantUuid);
 
         $sale->close(
             closedByUserId: Uuid::create($closedByUserId),
@@ -72,7 +74,7 @@ final class CreateSale
         $this->saleRepository->save($sale);
 
         foreach ($payments as $payment) {
-            $salePayment = \App\Cash\Domain\Entity\SalePayment::dddCreate(
+            $salePayment = SalePayment::dddCreate(
                 id: Uuid::generate(),
                 restaurantId: $restaurantUuid,
                 saleId: $sale->uuid(),

@@ -22,9 +22,11 @@ final class Sale
         private readonly DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
         private ?DomainDateTime $deletedAt = null,
+        private ?Uuid $cashSessionId = null,
         private ?Uuid $cancelledByUserId = null,
         private ?string $cancellationReason = null,
-        private string $status = 'completed',
+        private ?DomainDateTime $cancelledAt = null,
+        private string $status = 'closed',
     ) {
     }
 
@@ -33,6 +35,7 @@ final class Sale
         Uuid $restaurantId,
         Uuid $orderId,
         Uuid $openedByUserId,
+        Uuid $cashSessionId,
     ): self {
         return new self(
             id: $id,
@@ -46,8 +49,7 @@ final class Sale
             total: SaleTotal::create(0),
             createdAt: DomainDateTime::now(),
             updatedAt: DomainDateTime::now(),
-            cancelledByUserId: null,
-            cancellationReason: null,
+            cashSessionId: $cashSessionId,
             status: 'closed',
         );
     }
@@ -65,9 +67,11 @@ final class Sale
         \DateTimeImmutable $createdAt,
         \DateTimeImmutable $updatedAt,
         ?\DateTimeImmutable $deletedAt = null,
+        ?string $cashSessionId = null,
         ?string $cancelledByUserId = null,
         ?string $cancellationReason = null,
-        string $status = 'completed',
+        ?\DateTimeImmutable $cancelledAt = null,
+        string $status = 'closed',
     ): self {
         return new self(
             id: Uuid::create($id),
@@ -82,8 +86,10 @@ final class Sale
             createdAt: DomainDateTime::create($createdAt),
             updatedAt: DomainDateTime::create($updatedAt),
             deletedAt: $deletedAt !== null ? DomainDateTime::create($deletedAt) : null,
+            cashSessionId: $cashSessionId !== null ? Uuid::create($cashSessionId) : null,
             cancelledByUserId: $cancelledByUserId !== null ? Uuid::create($cancelledByUserId) : null,
             cancellationReason: $cancellationReason,
+            cancelledAt: $cancelledAt !== null ? DomainDateTime::create($cancelledAt) : null,
             status: $status,
         );
     }
@@ -105,6 +111,7 @@ final class Sale
 
         $this->cancelledByUserId = $cancelledByUserId;
         $this->cancellationReason = $reason;
+        $this->cancelledAt = DomainDateTime::now();
         $this->status = 'cancelled';
         $this->updatedAt = DomainDateTime::now();
     }
@@ -174,6 +181,11 @@ final class Sale
         return $this->deletedAt;
     }
 
+    public function cashSessionId(): ?Uuid
+    {
+        return $this->cashSessionId;
+    }
+
     public function status(): string
     {
         return $this->status;
@@ -187,5 +199,10 @@ final class Sale
     public function cancellationReason(): ?string
     {
         return $this->cancellationReason;
+    }
+
+    public function cancelledAt(): ?DomainDateTime
+    {
+        return $this->cancelledAt;
     }
 }

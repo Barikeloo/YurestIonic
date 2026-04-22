@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\Shared\Domain\ValueObject;
 
+/**
+ * Monetary amount in cents. May be negative (for credit notes, discrepancies,
+ * deltas...). VOs that require non-negative semantics (prices, quantities)
+ * must validate at their own boundary, not rely on Money.
+ */
 final class Money
 {
     private function __construct(private readonly int $cents)
     {
-        if ($cents < 0) {
-            throw new \InvalidArgumentException('Money cannot be negative');
-        }
     }
 
     public static function create(int $cents): self
@@ -45,16 +47,32 @@ final class Money
 
     public function subtract(Money $other): self
     {
-        $result = $this->cents - $other->cents;
-        if ($result < 0) {
-            throw new \InvalidArgumentException('Subtraction would result in negative money');
-        }
-        return new self($result);
+        return new self($this->cents - $other->cents);
+    }
+
+    public function negate(): self
+    {
+        return new self(-$this->cents);
+    }
+
+    public function abs(): self
+    {
+        return new self(abs($this->cents));
     }
 
     public function isZero(): bool
     {
         return $this->cents === 0;
+    }
+
+    public function isPositive(): bool
+    {
+        return $this->cents > 0;
+    }
+
+    public function isNegative(): bool
+    {
+        return $this->cents < 0;
     }
 
     public function isGreaterThan(Money $other): bool

@@ -6,6 +6,7 @@ use App\Sale\Domain\Entity\Sale;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Sale\Domain\ValueObject\SaleTicketNumber;
 use App\Sale\Domain\ValueObject\SaleTotal;
+use App\Cash\Infrastructure\Persistence\Models\EloquentCashSession;
 use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrder;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
@@ -25,10 +26,13 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
         $orderId = EloquentOrder::query()->where('uuid', $sale->orderId()->value())->value('id');
         $openedByUserId = EloquentUser::query()->where('uuid', $sale->openedByUserId()->value())->value('id');
         $closedByUserId = $sale->closedByUserId() !== null
-            ? EloquentUser::query()->where('uuid', $sale->closedByUserId()?->value())->value('id')
+            ? EloquentUser::query()->where('uuid', $sale->closedByUserId()->value())->value('id')
             : null;
         $cancelledByUserId = $sale->cancelledByUserId() !== null
             ? EloquentUser::query()->where('uuid', $sale->cancelledByUserId()->value())->value('id')
+            : null;
+        $cashSessionId = $sale->cashSessionId() !== null
+            ? EloquentCashSession::query()->where('uuid', $sale->cashSessionId()->value())->value('id')
             : null;
 
         $this->model->newQuery()->updateOrCreate(
@@ -42,9 +46,11 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
                 'ticket_number' => $sale->ticketNumber()?->value(),
                 'value_date' => $sale->valueDate()->value(),
                 'total' => $sale->total()->value(),
+                'cash_session_id' => $cashSessionId,
+                'status' => $sale->status(),
+                'cancelled_at' => $sale->cancelledAt()?->value(),
                 'cancelled_by_user_id' => $cancelledByUserId,
                 'cancel_reason' => $sale->cancellationReason(),
-                'status' => $sale->status(),
             ],
         );
     }
@@ -90,7 +96,7 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
 
     public function findByCashSessionId(Uuid $cashSessionId): array
     {
-        $cashSessionInternalId = \App\Cash\Infrastructure\Persistence\Models\EloquentCashSession::query()
+        $cashSessionInternalId = EloquentCashSession::query()
             ->where('uuid', $cashSessionId->value())
             ->value('id');
 
@@ -110,9 +116,15 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
         $this->model->newQuery()->where('uuid', $id->value())->delete();
     }
 
-    public function nextTicketNumber(string $restaurantId): int
+    public function nextTicketNumber(Uuid $restaurantId): int
     {
-        $max = $this->model->newQuery()->max('ticket_number');
+        $restaurantInternalId = EloquentRestaurant::query()
+            ->where('uuid', $restaurantId->value())
+            ->value('id');
+
+        $max = $this->model->newQuery()
+            ->where('restaurant_id', $restaurantInternalId)
+            ->max('ticket_number');
 
         return $max !== null ? (int) $max + 1 : 1;
     }
@@ -128,6 +140,9 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
         $cancelledByUserUuid = $model->cancelled_by_user_id !== null
             ? EloquentUser::query()->where('id', $model->cancelled_by_user_id)->value('uuid')
             : null;
+        $cashSessionUuid = $model->cash_session_id !== null
+            ? EloquentCashSession::query()->where('id', $model->cash_session_id)->value('uuid')
+            : null;
 
         return Sale::fromPersistence(
             $model->uuid,
@@ -142,8 +157,10 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),
             $model->deleted_at?->toDateTimeImmutable(),
+            $cashSessionUuid,
             $cancelledByUserUuid,
             $model->cancel_reason,
+            $model->cancelled_at?->toDateTimeImmutable(),
             $model->status ?? 'closed',
         );
     }

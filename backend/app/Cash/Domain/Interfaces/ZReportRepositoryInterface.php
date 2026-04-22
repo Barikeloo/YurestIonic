@@ -15,5 +15,5 @@ interface ZReportRepositoryInterface
 
     public function findByCashSessionId(Uuid $cashSessionId): ?ZReport;
 
-    public function nextReportNumber(string $restaurantId): int;
+    public function nextReportNumber(Uuid $restaurantId): int;
 }

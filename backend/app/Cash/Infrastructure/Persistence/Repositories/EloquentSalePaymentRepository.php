@@ -34,7 +34,7 @@ final class EloquentSalePaymentRepository implements SalePaymentRepositoryInterf
                 'cash_session_id' => $cashSessionId,
                 'method' => $salePayment->method()->value(),
                 'amount_cents' => $salePayment->amount()->toCents(),
-                'metadata' => $salePayment->metadata() !== null ? json_encode($salePayment->metadata()) : null,
+                'metadata' => $salePayment->metadata(),
                 'user_id' => $userId,
             ],
         );
@@ -93,10 +93,11 @@ final class EloquentSalePaymentRepository implements SalePaymentRepositoryInterf
         return SalePayment::fromPersistence(
             $model->uuid,
             $restaurantUuid,
+            $model->uuid,
             $saleUuid,
             $cashSessionUuid,
             $model->method,
-            $model->amount_cents,
+            (int) $model->amount_cents,
             $model->metadata,
             $userUuid,
             $model->created_at->toDateTimeImmutable(),
