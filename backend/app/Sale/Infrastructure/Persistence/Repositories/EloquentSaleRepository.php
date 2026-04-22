@@ -27,6 +27,9 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
         $closedByUserId = $sale->closedByUserId() !== null
             ? EloquentUser::query()->where('uuid', $sale->closedByUserId()?->value())->value('id')
             : null;
+        $cancelledByUserId = $sale->cancelledByUserId() !== null
+            ? EloquentUser::query()->where('uuid', $sale->cancelledByUserId()->value())->value('id')
+            : null;
 
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $sale->id()->value()],
@@ -39,6 +42,9 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
                 'ticket_number' => $sale->ticketNumber()?->value(),
                 'value_date' => $sale->valueDate()->value(),
                 'total' => $sale->total()->value(),
+                'cancelled_by_user_id' => $cancelledByUserId,
+                'cancel_reason' => $sale->cancellationReason(),
+                'status' => $sale->status(),
             ],
         );
     }
@@ -82,6 +88,23 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
         return $model ? $this->toDomain($model) : null;
     }
 
+    public function findByCashSessionId(Uuid $cashSessionId): array
+    {
+        $cashSessionInternalId = \App\Cash\Infrastructure\Persistence\Models\EloquentCashSession::query()
+            ->where('uuid', $cashSessionId->value())
+            ->value('id');
+
+        if ($cashSessionInternalId === null) {
+            return [];
+        }
+
+        return $this->model->newQuery()
+            ->where('cash_session_id', $cashSessionInternalId)
+            ->get()
+            ->map(fn ($model) => $this->toDomain($model))
+            ->all();
+    }
+
     public function delete(Uuid $id): void
     {
         $this->model->newQuery()->where('uuid', $id->value())->delete();
@@ -89,8 +112,7 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
 
     public function nextTicketNumber(string $restaurantId): int
     {
-        $internalId = EloquentRestaurant::query()->where('uuid', $restaurantId)->value('id');
-        $max = $this->model->newQuery()->where('restaurant_id', $internalId)->max('ticket_number');
+        $max = $this->model->newQuery()->max('ticket_number');
 
         return $max !== null ? (int) $max + 1 : 1;
     }
@@ -102,6 +124,9 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
         $openedByUserUuid = EloquentUser::query()->where('id', $model->opened_by_user_id ?? $model->user_id)->value('uuid');
         $closedByUserUuid = $model->closed_by_user_id !== null
             ? EloquentUser::query()->where('id', $model->closed_by_user_id)->value('uuid')
+            : null;
+        $cancelledByUserUuid = $model->cancelled_by_user_id !== null
+            ? EloquentUser::query()->where('id', $model->cancelled_by_user_id)->value('uuid')
             : null;
 
         return Sale::fromPersistence(
@@ -117,6 +142,9 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),
             $model->deleted_at?->toDateTimeImmutable(),
+            $cancelledByUserUuid,
+            $model->cancel_reason,
+            $model->status ?? 'closed',
         );
     }
 }

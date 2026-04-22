@@ -1,0 +1,22 @@
+meta {
+  name: 08 - Force Close Cash Session
+  type: http
+  seq: 8
+}
+
+post {
+  url: http://localhost:8000/api/tpv/cash-sessions/force-close
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "cash_session_id": "CASH_SESSION_UUID",
+    "closed_by_user_id": "11ec2609-42c1-475e-8949-c680b59700ab"
+  }
+}

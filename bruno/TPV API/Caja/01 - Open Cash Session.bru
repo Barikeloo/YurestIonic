@@ -1,0 +1,25 @@
+meta {
+  name: 01 - Open Cash Session
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/tpv/cash-sessions
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "restaurant_id": "{{restaurantId}}",
+    "device_id": "{{deviceId}}",
+    "opened_by_user_id": "{{userId}}",
+    "initial_amount_cents": 50000,
+    "notes": "Turno de prueba"
+  }
+}

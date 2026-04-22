@@ -41,6 +41,17 @@ use App\Sale\Infrastructure\Entrypoint\Http\GetController as SaleGetController;
 use App\Sale\Infrastructure\Entrypoint\Http\PutController as SalePutController;
 use App\Sale\Infrastructure\Entrypoint\Http\DeleteController as SaleDeleteController;
 use App\Sale\Infrastructure\Entrypoint\Http\PostController as SalePostController;
+use App\Sale\Infrastructure\Entrypoint\Http\CancelSaleController;
+use App\Cash\Infrastructure\Entrypoint\Http\OpenCashSessionController;
+use App\Cash\Infrastructure\Entrypoint\Http\GetActiveCashSessionController;
+use App\Cash\Infrastructure\Entrypoint\Http\RegisterCashMovementController;
+use App\Cash\Infrastructure\Entrypoint\Http\StartClosingCashSessionController;
+use App\Cash\Infrastructure\Entrypoint\Http\CancelClosingCashSessionController;
+use App\Cash\Infrastructure\Entrypoint\Http\CloseCashSessionController;
+use App\Cash\Infrastructure\Entrypoint\Http\ForceCloseCashSessionController;
+use App\Cash\Infrastructure\Entrypoint\Http\GenerateZReportController;
+use App\Cash\Infrastructure\Entrypoint\Http\GetZReportController;
+use App\Cash\Infrastructure\Entrypoint\Http\GetCashSessionSummaryController;
 use App\Tax\Infrastructure\Entrypoint\Http\DeleteController as TaxDeleteController;
 use App\Tax\Infrastructure\Entrypoint\Http\GetCollectionController as TaxGetCollectionController;
 use App\Tax\Infrastructure\Entrypoint\Http\GetController as TaxGetController;
@@ -114,10 +125,22 @@ Route::middleware([
 
 	Route::post('/tpv/sales', SalePostController::class);
 	Route::post('/tpv/sales/lines', SaleAddLineController::class);
+	Route::post('/tpv/sales/cancel', CancelSaleController::class);
 	Route::get('/tpv/sales', SaleGetCollectionController::class);
 	Route::get('/tpv/sales/{id}', SaleGetController::class)->whereUuid('id');
 	Route::put('/tpv/sales/{id}', SalePutController::class)->whereUuid('id');
 	Route::delete('/tpv/sales/{id}', SaleDeleteController::class)->whereUuid('id');
+
+	Route::post('/tpv/cash-sessions', OpenCashSessionController::class);
+	Route::get('/tpv/cash-sessions/active', GetActiveCashSessionController::class);
+	Route::get('/tpv/cash-sessions/{id}/summary', GetCashSessionSummaryController::class)->whereUuid('id');
+	Route::post('/tpv/cash-movements', RegisterCashMovementController::class);
+	Route::post('/tpv/cash-sessions/start-closing', StartClosingCashSessionController::class);
+	Route::post('/tpv/cash-sessions/cancel-closing', CancelClosingCashSessionController::class);
+	Route::post('/tpv/cash-sessions/close', CloseCashSessionController::class);
+	Route::post('/tpv/cash-sessions/force-close', ForceCloseCashSessionController::class);
+	Route::post('/tpv/z-reports/generate', GenerateZReportController::class);
+	Route::get('/tpv/z-reports/{id}', GetZReportController::class)->whereUuid('id');
 });
 
 Route::middleware([

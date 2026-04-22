@@ -16,6 +16,7 @@ final class CreateSaleResponse
         public readonly ?int $ticketNumber,
         public readonly string $valueDate,
         public readonly int $total,
+        public readonly string $status,
     ) {}
 
     public static function create(Sale $sale): self
@@ -30,6 +31,7 @@ final class CreateSaleResponse
             ticketNumber: $sale->ticketNumber()?->value(),
             valueDate: $sale->valueDate()->format('Y-m-d H:i:s'),
             total: $sale->total()->value(),
+            status: $sale->status(),
         );
     }
 
@@ -45,6 +47,7 @@ final class CreateSaleResponse
             'ticket_number' => $this->ticketNumber,
             'value_date' => $this->valueDate,
             'total' => $this->total,
+            'status' => $this->status,
         ];
     }
 }

@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
             SaleSeeder::class,
             UserQuickAccessSeeder::class,
             SuperAdminTestSeeder::class,
+            CashSessionSeeder::class,
+            ZReportSeeder::class,
         ]);
     }
 }

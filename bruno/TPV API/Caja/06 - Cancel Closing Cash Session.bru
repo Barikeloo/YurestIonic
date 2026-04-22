@@ -1,0 +1,21 @@
+meta {
+  name: 06 - Cancel Closing Cash Session
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:8000/api/tpv/cash-sessions/cancel-closing
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "cash_session_id": "CASH_SESSION_UUID"
+  }
+}

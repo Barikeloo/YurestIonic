@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "name": "TPV API",
+  "environments": {
+    "local": {
+      "baseUrl": "http://localhost:8000",
+      "restaurantId": "9bd91363-510b-4cf8-9000-914b83b7bd11",
+      "userId": "11ec2609-42c1-475e-8949-c680b59700ab",
+      "deviceId": "test-device-001",
+      "cashSessionId": ""
+    }
+  },
+  "env": "local"
+}

@@ -19,6 +19,10 @@ final class PostController
             'order_id'           => ['required', 'string', 'uuid'],
             'opened_by_user_id'  => ['required', 'string', 'uuid'],
             'closed_by_user_id'  => ['required', 'string', 'uuid'],
+            'device_id'          => ['required', 'string'],
+            'payments'           => ['required', 'array'],
+            'payments.*.method'  => ['required', 'string'],
+            'payments.*.amount_cents' => ['required', 'integer', 'min:0'],
         ]);
 
         $response = ($this->createSale)(
@@ -26,6 +30,8 @@ final class PostController
             orderId:          $validated['order_id'],
             openedByUserId:   $validated['opened_by_user_id'],
             closedByUserId:   $validated['closed_by_user_id'],
+            deviceId:         $validated['device_id'],
+            payments:         $validated['payments'],
         );
 
         return new JsonResponse($response->toArray(), 201);

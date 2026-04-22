@@ -29,6 +29,9 @@ final class EloquentSale extends Model
         'ticket_number',
         'value_date',
         'total',
+        'cancelled_by_user_id',
+        'cancel_reason',
+        'status',
     ];
 
     protected $casts = [
@@ -58,6 +61,11 @@ final class EloquentSale extends Model
     public function closedByUser(): BelongsTo
     {
         return $this->belongsTo(EloquentUser::class, 'closed_by_user_id');
+    }
+
+    public function cancelledByUser(): BelongsTo
+    {
+        return $this->belongsTo(EloquentUser::class, 'cancelled_by_user_id');
     }
 
     public function lines(): HasMany

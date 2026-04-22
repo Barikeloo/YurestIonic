@@ -35,6 +35,16 @@ use App\Zone\Domain\Interfaces\ZoneRepositoryInterface;
 use App\Zone\Infrastructure\Persistence\Repositories\EloquentZoneRepository;
 use \App\User\Domain\Interfaces\UserQuickAccessRepositoryInterface;
 use \App\User\Infrastructure\Persistence\Repositories\EloquentUserQuickAccessRepository;
+use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
+use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
+use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
+use App\Cash\Domain\Interfaces\TipRepositoryInterface;
+use App\Cash\Domain\Interfaces\ZReportRepositoryInterface;
+use App\Cash\Infrastructure\Persistence\Repositories\EloquentCashSessionRepository;
+use App\Cash\Infrastructure\Persistence\Repositories\EloquentCashMovementRepository;
+use App\Cash\Infrastructure\Persistence\Repositories\EloquentSalePaymentRepository;
+use App\Cash\Infrastructure\Persistence\Repositories\EloquentTipRepository;
+use App\Cash\Infrastructure\Persistence\Repositories\EloquentZReportRepository;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -59,6 +69,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SaleRepositoryInterface::class, EloquentSaleRepository::class);
         $this->app->bind(SaleLineRepositoryInterface::class, EloquentSaleLineRepository::class);
         $this->app->bind(UserQuickAccessRepositoryInterface::class,EloquentUserQuickAccessRepository::class);
+        $this->app->bind(CashSessionRepositoryInterface::class, EloquentCashSessionRepository::class);
+        $this->app->bind(CashMovementRepositoryInterface::class, EloquentCashMovementRepository::class);
+        $this->app->bind(SalePaymentRepositoryInterface::class, EloquentSalePaymentRepository::class);
+        $this->app->bind(TipRepositoryInterface::class, EloquentTipRepository::class);
+        $this->app->bind(ZReportRepositoryInterface::class, EloquentZReportRepository::class);
         $this->app->bind(TransactionManagerInterface::class, LaravelTransactionManager::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext());
     }
