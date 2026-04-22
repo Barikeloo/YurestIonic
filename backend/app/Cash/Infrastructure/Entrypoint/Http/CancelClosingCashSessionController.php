@@ -20,10 +20,10 @@ final class CancelClosingCashSessionController
             'cash_session_id' => ['required', 'string', 'uuid'],
         ]);
 
-        ($this->cancelClosingCashSession)(
+        $response = ($this->cancelClosingCashSession)(
             cashSessionId: $validated['cash_session_id'],
         );
 
-        return new JsonResponse(['message' => 'Closing cancelled'], 200);
+        return new JsonResponse($response->toArray(), 200);
     }
 }

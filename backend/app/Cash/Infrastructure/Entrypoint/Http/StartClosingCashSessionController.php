@@ -20,10 +20,10 @@ final class StartClosingCashSessionController
             'cash_session_id' => ['required', 'string', 'uuid'],
         ]);
 
-        ($this->startClosingCashSession)(
+        $response = ($this->startClosingCashSession)(
             cashSessionId: $validated['cash_session_id'],
         );
 
-        return new JsonResponse(['message' => 'Closing started'], 200);
+        return new JsonResponse($response->toArray(), 200);
     }
 }

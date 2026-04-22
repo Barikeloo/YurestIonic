@@ -34,6 +34,9 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
         $cashSessionId = $sale->cashSessionId() !== null
             ? EloquentCashSession::query()->where('uuid', $sale->cashSessionId()->value())->value('id')
             : null;
+        $parentSaleId = $sale->parentSaleId() !== null
+            ? EloquentSale::query()->where('uuid', $sale->parentSaleId()->value())->value('id')
+            : null;
 
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $sale->id()->value()],
@@ -51,6 +54,9 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
                 'cancelled_at' => $sale->cancelledAt()?->value(),
                 'cancelled_by_user_id' => $cancelledByUserId,
                 'cancel_reason' => $sale->cancellationReason(),
+                'parent_sale_id' => $parentSaleId,
+                'document_type' => $sale->documentType()->value(),
+                'customer_fiscal_data' => $sale->customerFiscalData(),
             ],
         );
     }
@@ -143,6 +149,9 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
         $cashSessionUuid = $model->cash_session_id !== null
             ? EloquentCashSession::query()->where('id', $model->cash_session_id)->value('uuid')
             : null;
+        $parentSaleUuid = $model->parent_sale_id !== null
+            ? EloquentSale::query()->where('id', $model->parent_sale_id)->value('uuid')
+            : null;
 
         return Sale::fromPersistence(
             $model->uuid,
@@ -162,6 +171,9 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
             $model->cancel_reason,
             $model->cancelled_at?->toDateTimeImmutable(),
             $model->status ?? 'closed',
+            $parentSaleUuid,
+            $model->document_type ?? 'simplified',
+            $model->customer_fiscal_data,
         );
     }
 }

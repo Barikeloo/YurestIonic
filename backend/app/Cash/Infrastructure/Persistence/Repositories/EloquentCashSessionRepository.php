@@ -86,6 +86,27 @@ final class EloquentCashSessionRepository implements CashSessionRepositoryInterf
             ->all();
     }
 
+    public function findLastClosedByRestaurant(Uuid $restaurantId): ?CashSession
+    {
+        $restaurantIdInt = EloquentRestaurant::query()->where('uuid', $restaurantId->value())->value('id');
+        $model = $this->model->newQuery()
+            ->where('restaurant_id', $restaurantIdInt)
+            ->where('status', 'closed')
+            ->orderBy('closed_at', 'desc')
+            ->first();
+        return $model ? $this->toDomain($model) : null;
+    }
+
+    public function findOrphanByRestaurant(Uuid $restaurantId): ?CashSession
+    {
+        $restaurantIdInt = EloquentRestaurant::query()->where('uuid', $restaurantId->value())->value('id');
+        $model = $this->model->newQuery()
+            ->where('restaurant_id', $restaurantIdInt)
+            ->where('status', 'abandoned')
+            ->first();
+        return $model ? $this->toDomain($model) : null;
+    }
+
     public function delete(Uuid $id): void
     {
         $this->model->newQuery()->where('uuid', $id->value())->delete();

@@ -1,0 +1,10 @@
+<div class="segment">
+  <button
+    *ngFor="let option of options"
+    class="segment-btn"
+    [class.active]="value === option.value"
+    (click)="onSelect(option.value)"
+  >
+    {{ option.label }}
+  </button>
+</div>

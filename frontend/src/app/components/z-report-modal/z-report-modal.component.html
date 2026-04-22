@@ -1,0 +1,107 @@
+<div *ngIf="isOpen && session" class="modal-overlay" (click)="onClose()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">Informe Z #{{ session.zNum }} — {{ session.date }}</span>
+      <button class="close-btn" (click)="onClose()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Info card -->
+      <app-card [padding]="14" [clickable]="false" [style.background]="'var(--gray-50)'" class="info-card">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Restaurante</div>
+            <div class="info-value">La Tasca de Miguel</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Device</div>
+            <div class="info-value">TPV Sala</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Apertura</div>
+            <div class="info-value">{{ session.opened }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Cierre</div>
+            <div class="info-value">{{ session.closed }}</div>
+          </div>
+        </div>
+      </app-card>
+
+      <!-- Sales and Arqueo cards -->
+      <div class="report-grid">
+        <app-card [padding]="14" [clickable]="false">
+          <div class="card-section-title">Ventas</div>
+          <div class="report-row">
+            <span class="report-label">Tickets</span>
+            <span class="report-value">{{ session.tickets }}</span>
+          </div>
+          <div class="report-row">
+            <span class="report-label">Comensales</span>
+            <span class="report-value">{{ session.diners }}</span>
+          </div>
+          <div class="report-row">
+            <span class="report-label">Venta bruta</span>
+            <span class="report-value">{{ formatCents(session.gross) }}</span>
+          </div>
+          <div class="report-row">
+            <span class="report-label">Descuentos</span>
+            <span class="report-value">− {{ formatCents(session.discounts) }}</span>
+          </div>
+          <div class="report-row">
+            <span class="report-label">Invitaciones</span>
+            <span class="report-value">{{ session.invitations }} ({{ formatCents(session.invValue) }})</span>
+          </div>
+          <div class="report-row">
+            <span class="report-label">Anulaciones</span>
+            <span class="report-value">{{ session.cancellations }}</span>
+          </div>
+          <div class="report-row">
+            <span class="report-label">Venta neta</span>
+            <span class="report-value report-bold">{{ formatCents(session.net) }}</span>
+          </div>
+        </app-card>
+
+        <app-card [padding]="14" [clickable]="false">
+          <div class="card-section-title">Arqueo</div>
+          <div class="report-row">
+            <span class="report-label">Fondo inicial</span>
+            <span class="report-value">{{ formatCents(session.initial) }}</span>
+          </div>
+          <div class="report-row">
+            <span class="report-label">Entradas</span>
+            <span class="report-value">{{ formatCents(session.movIn) }}</span>
+          </div>
+          <div class="report-row">
+            <span class="report-label">Salidas</span>
+            <span class="report-value">− {{ formatCents(session.movOut) }}</span>
+          </div>
+          <div class="report-row">
+            <span class="report-label">Teórico</span>
+            <span class="report-value">{{ formatCents(session.expected) }}</span>
+          </div>
+          <div class="report-row">
+            <span class="report-label">Contado</span>
+            <span class="report-value">{{ formatCents(session.counted) }}</span>
+          </div>
+          <div class="report-row">
+            <span class="report-label">Diferencia</span>
+            <span class="report-value" [style.color]="diffColor" [class.report-bold]="true">
+              {{ session.diff >= 0 ? '+' : '' }}{{ formatNum(session.diff) }} €
+            </span>
+          </div>
+          <div *ngIf="session.diffReason" class="diff-reason">Motivo: {{ session.diffReason }}</div>
+          <div class="status-badge" [style.background]="isSquared ? 'var(--green-soft)' : 'var(--accent-soft)'">
+            <span [style.color]="isSquared ? 'var(--green)' : 'var(--accent)'" class="status-text">{{ statusText }}</span>
+            <app-badge [text]="' ' + (session.diff >= 0 ? '+' : '') + formatNum(session.diff) + ' €'" [color]="diffColor"></app-badge>
+          </div>
+        </app-card>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <app-btn variant="outline" color="#5a5a5a">🖨 Imprimir</app-btn>
+      <app-btn variant="outline" color="#5a5a5a">📧 Email</app-btn>
+    </div>
+  </div>
+</div>

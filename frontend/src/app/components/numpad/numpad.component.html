@@ -1,0 +1,13 @@
+<div class="numpad">
+  <button
+    *ngFor="let key of keys"
+    class="numpad-btn"
+    [class.clear]="key === 'C'"
+    [class.backspace]="key === '⌫'"
+    (mousedown)="onMouseDown($event)"
+    (mouseup)="onMouseUp($event)"
+    (click)="onTap(key)"
+  >
+    {{ key }}
+  </button>
+</div>

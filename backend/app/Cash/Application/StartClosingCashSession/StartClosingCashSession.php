@@ -15,7 +15,7 @@ final class StartClosingCashSession
 
     public function __invoke(
         string $cashSessionId,
-    ): void {
+    ): StartClosingCashSessionResponse {
         $cashSessionUuid = Uuid::create($cashSessionId);
         $cashSession = $this->cashSessionRepository->findByUuid($cashSessionUuid);
 
@@ -25,5 +25,7 @@ final class StartClosingCashSession
 
         $cashSession->startClosing();
         $this->cashSessionRepository->save($cashSession);
+
+        return StartClosingCashSessionResponse::create($cashSession);
     }
 }

@@ -1,0 +1,53 @@
+<div *ngIf="isOpen" class="modal-overlay" (click)="onClose()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">Abrir caja — Nueva sesión</span>
+      <button class="close-btn" (click)="onClose()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="modal-grid">
+        <!-- Columna izquierda: Operador -->
+        <div class="operator-section">
+          <div class="section-label">Operador</div>
+          <div class="users-list">
+            <div
+              *ngFor="let user of availableUsers"
+              class="user-item"
+              [class.selected]="selectedUserId === user.id"
+              (click)="selectUser(user.id)"
+            >
+              <div class="user-avatar">{{ user.initials }}</div>
+              <span class="user-name">{{ user.name }}</span>
+            </div>
+          </div>
+          <div class="note-section">
+            <button class="note-toggle" (click)="toggleNote()">
+              {{ showNote ? '− Ocultar nota' : '+ Añadir nota de apertura' }}
+            </button>
+            <textarea
+              *ngIf="showNote"
+              [(ngModel)]="notes"
+              placeholder="Nota opcional..."
+              class="note-textarea"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Columna derecha: Fondo inicial -->
+        <div class="amount-section">
+          <div class="section-label">Fondo inicial</div>
+          <app-amount-display [cents]="initialAmountCents" [large]="true"></app-amount-display>
+          <app-numpad [(value)]="initialAmountCents" (valueChange)="onAmountChange($event)"></app-numpad>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <app-btn variant="gray" (click)="onClose()">Cancelar</app-btn>
+      <app-btn variant="success" (click)="onSubmit()">
+        Abrir caja — {{ formatCents(initialAmountCents) }}
+      </app-btn>
+    </div>
+  </div>
+</div>

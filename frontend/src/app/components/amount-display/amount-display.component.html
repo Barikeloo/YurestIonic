@@ -1,0 +1,6 @@
+<div class="amount-display">
+  <div *ngIf="label" class="label">{{ label }}</div>
+  <div class="value" [class.large]="large" [style.color]="color || null">
+    {{ int | number:'1.0-0' }}<span class="decimal">,{{ dec }}</span><span class="currency">€</span>
+  </div>
+</div>

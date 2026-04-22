@@ -1,0 +1,17 @@
+@import '../../styles/variables.scss';
+
+.card {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-200);
+  transition: box-shadow 0.12s;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:hover {
+      box-shadow: var(--shadow-md);
+    }
+  }
+}

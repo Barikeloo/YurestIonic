@@ -1,0 +1,76 @@
+@import '../../styles/variables.scss';
+
+.btn {
+  border-radius: 10px;
+  font-family: var(--font);
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.12s;
+  white-space: nowrap;
+  border: none;
+
+  &.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &.block {
+    width: 100%;
+  }
+
+  // Sizes
+  &.sm {
+    padding: 6px 14px;
+    font-size: 12px;
+    height: 32px;
+  }
+
+  &.md {
+    padding: 10px 20px;
+    font-size: 14px;
+    height: 42px;
+  }
+
+  &.lg {
+    padding: 14px 28px;
+    font-size: 16px;
+    height: 52px;
+  }
+
+  // Variants
+  &.fill {
+    background: var(--accent);
+    color: var(--white);
+  }
+
+  &.outline {
+    background: transparent;
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+  }
+
+  &.ghost {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+  }
+
+  &.gray {
+    background: var(--gray-100);
+    color: var(--black);
+  }
+
+  &.success {
+    background: var(--green);
+    color: var(--white);
+  }
+
+  &.danger {
+    background: var(--accent);
+    color: var(--white);
+  }
+}

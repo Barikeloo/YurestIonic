@@ -1,0 +1,56 @@
+<div *ngIf="isOpen" class="modal-overlay" (click)="onClose()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <span class="modal-title">Movimiento de caja</span>
+      <button class="close-btn" (click)="onClose()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <app-segment [options]="typeOptions" [value]="type" (valueChange)="onTypeChange($event)"></app-segment>
+
+      <div class="reason-section">
+        <div class="section-label">Motivo</div>
+        <div class="reason-chips">
+          <button
+            *ngFor="let reason of currentReasons"
+            class="reason-chip"
+            [class.selected]="reasonCode === reason.value"
+            [style.borderColor]="reasonCode === reason.value ? accentColor : 'var(--gray-200)'"
+            [style.background]="reasonCode === reason.value ? accentColor + '1a' : 'var(--white)'"
+            [style.color]="reasonCode === reason.value ? accentColor : 'var(--gray-600)'"
+            (click)="selectReason(reason.value)"
+          >
+            {{ reason.label }}
+          </button>
+        </div>
+      </div>
+
+      <div class="amount-section">
+        <div class="amount-grid">
+          <div class="amount-display-wrapper">
+            <app-amount-display [cents]="amountCents" label="Importe" [large]="true" [color]="accentColor"></app-amount-display>
+          </div>
+          <app-numpad [(value)]="amountCents" (valueChange)="onAmountChange($event)"></app-numpad>
+        </div>
+      </div>
+
+      <textarea
+        [(ngModel)]="description"
+        placeholder="Descripción libre (opcional)..."
+        class="description-textarea"
+      ></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <app-btn variant="gray" (click)="onClose()">Cancelar</app-btn>
+      <app-btn
+        [variant]="type === 'in' ? 'success' : 'danger'"
+        [color]="accentColor"
+        [disabled]="amountCents === 0"
+        (click)="onSubmit()"
+      >
+        {{ type === 'in' ? 'Registrar entrada' : 'Registrar salida' }} — {{ formatCents(amountCents) }}
+      </app-btn>
+    </div>
+  </div>
+</div>

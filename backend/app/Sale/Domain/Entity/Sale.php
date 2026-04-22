@@ -7,6 +7,7 @@ use App\Shared\Domain\ValueObject\Uuid;
 use App\Sale\Domain\ValueObject\SaleStatus;
 use App\Sale\Domain\ValueObject\SaleTicketNumber;
 use App\Sale\Domain\ValueObject\SaleTotal;
+use App\Sale\Domain\ValueObject\DocumentType;
 
 final class Sale
 {
@@ -28,6 +29,9 @@ final class Sale
         private ?string $cancellationReason = null,
         private ?DomainDateTime $cancelledAt = null,
         private SaleStatus $status,
+        private ?Uuid $parentSaleId = null,
+        private DocumentType $documentType,
+        private ?array $customerFiscalData = null,
     ) {
     }
 
@@ -36,7 +40,10 @@ final class Sale
         Uuid $restaurantId,
         Uuid $orderId,
         Uuid $openedByUserId,
-        Uuid $cashSessionId,
+        ?Uuid $cashSessionId = null,
+        ?Uuid $parentSaleId = null,
+        ?DocumentType $documentType = null,
+        ?array $customerFiscalData = null,
     ): self {
         return new self(
             id: $id,
@@ -52,6 +59,9 @@ final class Sale
             updatedAt: DomainDateTime::now(),
             cashSessionId: $cashSessionId,
             status: SaleStatus::closed(),
+            parentSaleId: $parentSaleId,
+            documentType: $documentType ?? DocumentType::simplified(),
+            customerFiscalData: $customerFiscalData,
         );
     }
 
@@ -73,6 +83,9 @@ final class Sale
         ?string $cancellationReason = null,
         ?\DateTimeImmutable $cancelledAt = null,
         string $status = 'closed',
+        ?string $parentSaleId = null,
+        ?string $documentType = null,
+        ?array $customerFiscalData = null,
     ): self {
         return new self(
             id: Uuid::create($id),
@@ -92,6 +105,9 @@ final class Sale
             cancellationReason: $cancellationReason,
             cancelledAt: $cancelledAt !== null ? DomainDateTime::create($cancelledAt) : null,
             status: SaleStatus::create($status),
+            parentSaleId: $parentSaleId !== null ? Uuid::create($parentSaleId) : null,
+            documentType: DocumentType::create($documentType ?? 'simplified'),
+            customerFiscalData: $customerFiscalData,
         );
     }
 
@@ -205,5 +221,20 @@ final class Sale
     public function cancelledAt(): ?DomainDateTime
     {
         return $this->cancelledAt;
+    }
+
+    public function parentSaleId(): ?Uuid
+    {
+        return $this->parentSaleId;
+    }
+
+    public function documentType(): DocumentType
+    {
+        return $this->documentType;
+    }
+
+    public function customerFiscalData(): ?array
+    {
+        return $this->customerFiscalData;
     }
 }

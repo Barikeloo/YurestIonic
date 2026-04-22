@@ -1,0 +1,5 @@
+<app-card [clickable]="false">
+  <div class="kpi-label">{{ label }}</div>
+  <div class="kpi-value" [class.mono]="mono" [style.color]="color || null">{{ value }}</div>
+  <div *ngIf="sub" class="kpi-sub">{{ sub }}</div>
+</app-card>

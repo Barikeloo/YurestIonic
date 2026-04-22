@@ -1,0 +1,19 @@
+<button
+  class="btn"
+  [class.disabled]="disabled"
+  [class.block]="block"
+  [class.sm]="size === 'sm'"
+  [class.md]="size === 'md'"
+  [class.lg]="size === 'lg'"
+  [class.fill]="variant === 'fill'"
+  [class.outline]="variant === 'outline'"
+  [class.ghost]="variant === 'ghost'"
+  [class.gray]="variant === 'gray'"
+  [class.success]="variant === 'success'"
+  [class.danger]="variant === 'danger'"
+  [disabled]="disabled"
+  [style.color]="variant === 'outline' || variant === 'ghost' ? color : null"
+  [style.borderColor]="variant === 'outline' ? color : null"
+>
+  <ng-content></ng-content>
+</button>

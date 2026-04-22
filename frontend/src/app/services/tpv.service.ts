@@ -67,6 +67,50 @@ export interface TpvSale {
   total: number;
 }
 
+export interface TpvCashSession {
+  id: string;
+  uuid: string;
+  restaurant_id: string;
+  device_id: string;
+  opened_by_user_id: string;
+  closed_by_user_id: string | null;
+  opened_at: string;
+  closed_at: string | null;
+  initial_amount_cents: number;
+  final_amount_cents: number | null;
+  expected_amount_cents: number | null;
+  discrepancy_cents: number | null;
+  discrepancy_reason: string | null;
+  z_report_number: number | null;
+  z_report_hash: string | null;
+  notes: string | null;
+  status: 'open' | 'closing' | 'closed' | 'abandoned';
+}
+
+export interface TpvCashMovement {
+  id: string;
+  uuid: string;
+  cash_session_id: string;
+  type: 'in' | 'out';
+  reason_code: string;
+  amount_cents: number;
+  description: string | null;
+  user_id: string;
+  created_at: string;
+}
+
+export interface TpvCashSessionSummary {
+  total_sales_cents: number;
+  total_cash_cents: number;
+  total_card_cents: number;
+  total_other_cents: number;
+  cash_in_cents: number;
+  cash_out_cents: number;
+  tips_cents: number;
+  sales_count: number;
+  cancelled_sales_count: number;
+}
+
 interface AddLinePayload {
   order_id: string;
   product_id: string;
@@ -220,6 +264,113 @@ export class TpvService {
   public addSaleLine(payload: AddLinePayload): Observable<unknown> {
     return this.http
       .post(`${this.baseUrl}/tpv/sales/lines`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  // ============================================
+  // Sesiones de Caja
+  // ============================================
+
+  public openCashSession(payload: {
+    device_id: string;
+    opened_by_user_id: string;
+    initial_amount_cents: number;
+    notes?: string;
+  }): Observable<TpvCashSession> {
+    return this.http
+      .post<TpvCashSession>(`${this.baseUrl}/tpv/cash-sessions`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public getActiveCashSession(): Observable<TpvCashSession | null> {
+    return this.http
+      .get<TpvCashSession | null>(`${this.baseUrl}/tpv/cash-sessions/active`, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public getLastClosedCashSession(): Observable<{
+    last_closed: {
+      id: string;
+      opened_by_user_id: string;
+      closed_by_user_id: string | null;
+      closed_at: string | null;
+      final_amount_cents: number | null;
+      discrepancy_cents: number | null;
+      discrepancy_reason: string | null;
+    } | null;
+    orphan_session: {
+      id: string;
+      opened_by_user_id: string;
+      opened_at: string;
+      device_id: string;
+    } | null;
+  }> {
+    return this.http
+      .get<{
+        last_closed: {
+          id: string;
+          opened_by_user_id: string;
+          closed_by_user_id: string | null;
+          closed_at: string | null;
+          final_amount_cents: number | null;
+          discrepancy_cents: number | null;
+          discrepancy_reason: string | null;
+        } | null;
+        orphan_session: {
+          id: string;
+          opened_by_user_id: string;
+          opened_at: string;
+          device_id: string;
+        } | null;
+      }>(`${this.baseUrl}/tpv/cash-sessions/last-closed`, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public getCashSessionSummary(id: string): Observable<TpvCashSessionSummary> {
+    return this.http
+      .get<TpvCashSessionSummary>(`${this.baseUrl}/tpv/cash-sessions/${id}/summary`, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public registerCashMovement(payload: {
+    cash_session_id: string;
+    type: string;
+    reason_code: string;
+    amount_cents: number;
+    user_id: string;
+    description?: string;
+  }): Observable<TpvCashMovement> {
+    return this.http
+      .post<TpvCashMovement>(`${this.baseUrl}/tpv/cash-movements`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public startClosingCashSession(payload: { cash_session_id: string }): Observable<{ id: string; status: string }> {
+    return this.http
+      .post<{ id: string; status: string }>(`${this.baseUrl}/tpv/cash-sessions/start-closing`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public cancelClosingCashSession(payload: { cash_session_id: string }): Observable<{ id: string; status: string }> {
+    return this.http
+      .post<{ id: string; status: string }>(`${this.baseUrl}/tpv/cash-sessions/cancel-closing`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public closeCashSession(payload: {
+    cash_session_id: string;
+    closed_by_user_id: string;
+    final_amount_cents: number;
+    discrepancy_reason?: string;
+  }): Observable<unknown> {
+    return this.http
+      .post(`${this.baseUrl}/tpv/cash-sessions/close`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public forceCloseCashSession(payload: { cash_session_id: string; closed_by_user_id: string }): Observable<unknown> {
+    return this.http
+      .post(`${this.baseUrl}/tpv/cash-sessions/force-close`, payload, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 

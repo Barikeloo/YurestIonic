@@ -1,0 +1,151 @@
+<div *ngIf="isOpen" class="wizard-overlay">
+  <div class="wizard-content">
+    <!-- Header -->
+    <div class="wizard-header">
+      <div class="header-left">
+        <button class="back-btn" (click)="onClose()">←</button>
+        <div class="header-info">
+          <div class="header-title">Cerrar caja</div>
+          <div class="header-sub">{{ restaurantName }} · {{ deviceName }} · {{ operatorName }}</div>
+        </div>
+      </div>
+      <div class="steps-indicator">
+        <div *ngFor="let s of steps; let i = index" class="step-item">
+          <div class="step-circle-wrapper">
+            <div class="step-circle" [class.completed]="step > s.n" [class.current]="step === s.n">
+              {{ step > s.n ? '✓' : s.n }}
+            </div>
+            <span class="step-label" [class.active]="step >= s.n">{{ s.l }}</span>
+          </div>
+          <div *ngIf="i < 2" class="step-line" [class.completed]="step > s.n"></div>
+        </div>
+      </div>
+      <div class="header-spacer"></div>
+    </div>
+
+    <!-- Body -->
+    <div class="wizard-body">
+      <!-- Paso 1: Contar -->
+      <div *ngIf="step === 1" class="step-content step-1">
+        <div class="step-1-info">Arqueo ciego — No ves el teórico hasta confirmar</div>
+        <div class="step-1-question">¿Cuánto efectivo hay en la caja?</div>
+        <app-amount-display [cents]="counted" [large]="true" [color]="counted > 0 ? 'var(--black)' : 'var(--gray-300)'"></app-amount-display>
+        <div class="numpad-wrapper">
+          <app-numpad [(value)]="counted" (valueChange)="onCountedChange($event)"></app-numpad>
+        </div>
+      </div>
+
+      <!-- Paso 2: Justificar -->
+      <div *ngIf="step === 2" class="step-content step-2">
+        <div class="step-2-title">Descuadre detectado</div>
+        <div class="discrepancy-card-wrapper">
+          <app-card [padding]="20" [clickable]="false" [style.background]="discrepancy < 0 ? 'var(--accent-soft)' : 'var(--green-soft)'" [style.border]="'none'" [style.borderRadius]="'16px'">
+            <div class="discrepancy-grid">
+              <div class="discrepancy-item">
+                <div class="discrepancy-label">TEÓRICO</div>
+                <div class="discrepancy-value" [style.color]="'var(--black)'">{{ formatNum(expectedAmount) }} €</div>
+              </div>
+              <div class="discrepancy-item">
+                <div class="discrepancy-label">CONTADO</div>
+                <div class="discrepancy-value" [style.color]="'var(--black)'">{{ formatNum(counted) }} €</div>
+              </div>
+              <div class="discrepancy-item">
+                <div class="discrepancy-label">DIFERENCIA</div>
+                <div class="discrepancy-value" [style.color]="discrepancyColor">
+                  {{ discrepancy > 0 ? '+' : '' }}{{ formatNum(Math.abs(discrepancy)) }} €
+                </div>
+              </div>
+            </div>
+          </app-card>
+        </div>
+        <div class="reason-section">
+          <div class="reason-label">Motivo del descuadre</div>
+          <div class="reason-chips">
+            <button
+              *ngFor="let r of reasons"
+              class="reason-chip"
+              [class.selected]="reason === r"
+              [style.borderColor]="reason === r ? 'var(--accent)' : 'var(--gray-200)'"
+              [style.background]="reason === r ? 'var(--accent-soft)' : 'var(--white)'"
+              [style.color]="reason === r ? 'var(--accent)' : 'var(--gray-600)'"
+              (click)="reason = r"
+            >
+              {{ r }}
+            </button>
+          </div>
+          <textarea
+            *ngIf="reason === 'Otro'"
+            placeholder="Describe el motivo con detalle..."
+            class="reason-textarea"
+          ></textarea>
+        </div>
+      </div>
+
+      <!-- Paso 3: Revisar Z -->
+      <div *ngIf="step === 3" class="step-content step-3">
+        <div class="step-3-title">Informe Z — Revisa antes de confirmar</div>
+        <div class="step-3-sub">Una vez confirmado, el Z es inmutable</div>
+        <div class="z-cards-grid">
+          <app-card [padding]="14">
+            <div class="card-section-title">Ventas del turno</div>
+            <div class="z-row" *ngFor="let row of [
+              ['Tickets', zData?.tickets],
+              ['Comensales', zData?.diners],
+              ['Venta bruta', formatCents(zData?.gross || 0)],
+              ['Descuentos', '− ' + formatCents(zData?.discounts || 0)],
+              ['Invitaciones', (zData?.invitations || 0) + ' · ' + formatCents(zData?.invValue || 0)],
+              ['Anulaciones', zData?.cancellations],
+              ['Venta neta', formatCents(zData?.net || 0)]
+            ]">
+              <span class="z-row-label">{{ row[0] }}</span>
+              <span class="z-row-value" [class.bold]="row[0] === 'Venta neta'">{{ row[1] }}</span>
+            </div>
+          </app-card>
+          <app-card [padding]="14">
+            <div class="card-section-title">Por método</div>
+            <div class="z-row" *ngFor="let row of [
+              ['Efectivo', formatCents(zData?.cash || 0), '#1a9e5a'],
+              ['Tarjeta', formatCents(zData?.card || 0), 'var(--black)'],
+              ['Bizum', formatCents(zData?.bizum || 0), 'var(--black)'],
+              ['Invitación', formatCents(zData?.invitation || 0), '#ff4d4d'],
+              ['Propinas tarjeta', formatCents(zData?.tipsCard || 0), '#1a9e5a']
+            ]">
+              <span class="z-row-label">{{ row[0] }}</span>
+              <span class="z-row-value" [style.color]="row[2]">{{ row[1] }}</span>
+            </div>
+          </app-card>
+          <app-card [padding]="14">
+            <div class="card-section-title">Arqueo efectivo</div>
+            <div class="z-row" *ngFor="let row of [
+              ['Fondo inicial', formatCents(zData?.initial || 0), ''],
+              ['Entradas', formatCents(zData?.movIn || 0), ''],
+              ['Salidas', '− ' + formatCents(zData?.movOut || 0), ''],
+              ['Teórico', formatCents(expectedAmount), ''],
+              ['Contado', formatCents(counted), ''],
+              ['Diferencia', (discrepancy >= 0 ? '+' : '') + formatNum(discrepancy) + ' €', discrepancy < 0 ? '#ff4d4d' : '#1a9e5a']
+            ]">
+              <span class="z-row-label">{{ row[0] }}</span>
+              <span class="z-row-value" [class.bold]="row[0] === 'Diferencia'" [style.color]="row[2] || 'var(--black)'">{{ row[1] }}</span>
+            </div>
+            <div *ngIf="reason" class="discrepancy-reason">Motivo: {{ reason }}</div>
+          </app-card>
+        </div>
+        <div class="z-actions">
+          <app-btn variant="outline" color="#5a5a5a">🖨 Imprimir Z</app-btn>
+          <app-btn variant="outline" color="#5a5a5a">📧 Enviar por email</app-btn>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="wizard-footer">
+      <app-btn variant="gray" (click)="step === 1 ? onClose() : goPrevious()">
+        {{ step === 1 ? 'Cancelar' : '← Anterior' }}
+      </app-btn>
+      <div class="step-indicator">Paso {{ step }} de 3</div>
+      <app-btn [variant]="step === 3 ? 'success' : 'fill'" [disabled]="step === 1 && counted === 0" (click)="goNext()">
+        {{ step === 3 ? '✓ Confirmar Z y cerrar caja' : 'Siguiente →' }}
+      </app-btn>
+    </div>
+  </div>
+</div>

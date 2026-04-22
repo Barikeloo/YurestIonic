@@ -1,0 +1,45 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Cash\Application\GetLastClosedCashSession;
+
+use App\Cash\Domain\Entity\CashSession;
+
+final readonly class GetLastClosedCashSessionResponse
+{
+    private function __construct(
+        public ?array $lastClosed,
+        public ?array $orphanSession,
+    ) {
+    }
+
+    public static function create(?CashSession $lastClosed, ?CashSession $orphanSession): self
+    {
+        return new self(
+            lastClosed: $lastClosed !== null ? [
+                'id' => $lastClosed->id()->value(),
+                'opened_by_user_id' => $lastClosed->openedByUserId()->value(),
+                'closed_by_user_id' => $lastClosed->closedByUserId()?->value(),
+                'closed_at' => $lastClosed->closedAt()?->format('Y-m-d H:i:s'),
+                'final_amount_cents' => $lastClosed->finalAmount()?->toCents(),
+                'discrepancy_cents' => $lastClosed->discrepancy()?->toCents(),
+                'discrepancy_reason' => $lastClosed->discrepancyReason(),
+            ] : null,
+            orphanSession: $orphanSession !== null ? [
+                'id' => $orphanSession->id()->value(),
+                'opened_by_user_id' => $orphanSession->openedByUserId()->value(),
+                'opened_at' => $orphanSession->openedAt()->format('Y-m-d H:i:s'),
+                'device_id' => $orphanSession->deviceId(),
+            ] : null,
+        );
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'last_closed' => $this->lastClosed,
+            'orphan_session' => $this->orphanSession,
+        ];
+    }
+}

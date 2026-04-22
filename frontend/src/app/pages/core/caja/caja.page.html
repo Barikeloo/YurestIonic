@@ -1,6 +1,159 @@
-<div class="placeholder-page">
-  <div class="placeholder-wrap">
-    <h1>Abrir Caja</h1>
-    <p>Vista en preparacion. El layout superior ya es comun y fijo.</p>
+<div class="caja-container">
+  <!-- Header -->
+  <div class="caja-header">
+    <div class="header-left">
+      <div class="restaurant-name">La Tasca de Miguel</div>
+      <div class="session-info">
+        <ng-container [ngSwitch]="state">
+          <ng-container *ngSwitchCase="'activa'">
+            Turno abierto · María G. · desde {{ formatDate(activeSession?.opened_at) }}
+          </ng-container>
+          <ng-container *ngSwitchDefault>
+            Caja cerrada · TPV Sala
+          </ng-container>
+        </ng-container>
+      </div>
+    </div>
+    <div class="header-center">
+      <div class="status-badge" [class.open]="state === 'activa'">
+        <span>{{ state === 'activa' ? '● ABIERTA' : '○ CERRADA' }}</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="role-selector">
+        <button class="role-btn" [class.active]="true">Camarero</button>
+        <button class="role-btn">Supervisor</button>
+        <button class="role-btn">Admin</button>
+      </div>
+      <app-btn *ngIf="state === 'activa'" size="sm" variant="outline" color="#ff4d4d" (click)="onStartClosing()">Cerrar caja</app-btn>
+      <div class="clock">{{ currentTime }}</div>
+    </div>
+  </div>
+
+  <!-- Loading state -->
+  <div *ngIf="loading" class="loading-state">
+    <p>Cargando...</p>
+  </div>
+
+  <!-- Modal de apertura -->
+  <app-open-cash-modal
+    [isOpen]="showOpenModal"
+    [availableUsers]="availableUsers"
+    (closeModal)="showOpenModal = false"
+    (openCash)="onOpenCash($event)"
+  ></app-open-cash-modal>
+
+  <!-- Modal de movimiento manual -->
+  <app-cash-movement-modal
+    [isOpen]="showMovementModal"
+    (closeModal)="showMovementModal = false"
+    (registerMovement)="onRegisterMovement($event)"
+  ></app-cash-movement-modal>
+
+  <!-- Estado: Pre-apertura -->
+  <div *ngIf="!loading && state === 'pre-apertura'" class="pre-apertura">
+    <!-- Banner sesión huérfana (si aplica) -->
+    <div *ngIf="orphanSession" class="orphan-session-card">
+      <app-card [padding]="16" [clickable]="false" [style.background]="'var(--accent-soft)'" [style.border]="'1.5px solid var(--accent)'">
+        <div class="orphan-title">⚠ Turno sin cerrar detectado</div>
+        <div class="orphan-text">Turno del {{ formatDate(orphanSession.opened_at) }} ({{ orphanSession.opened_by_user_id }}) no fue cerrado correctamente en {{ orphanSession.device_id }}.</div>
+        <app-btn size="sm" variant="danger">Forzar cierre del turno anterior</app-btn>
+      </app-card>
+    </div>
+
+    <!-- Card último cierre -->
+    <app-card [padding]="20" class="last-closure-card">
+      <div class="closure-label">Último cierre · Z #41</div>
+      <div class="closure-header">
+        <div>
+          <div class="closure-operator">{{ lastClosed?.closed_by_user_id || '-' }}</div>
+          <div class="closure-date">{{ formatDate(lastClosed?.closed_at) }}</div>
+        </div>
+        <div class="closure-amount">
+          <div class="amount">{{ lastClosed ? formatCents(lastClosed.final_amount_cents || 0) : '-' }}</div>
+          <app-badge *ngIf="lastClosed?.discrepancy_cents" [text]="'Descuadre ' + formatCents(lastClosed?.discrepancy_cents || 0)" color="#ff4d4d"></app-badge>
+        </div>
+      </div>
+      <div class="closure-stats">
+        <div class="stat-item">
+          <div class="stat-value">{{ lastClosed?.id ? '23' : '-' }}</div>
+          <div class="stat-label">Tickets</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ lastClosed?.id ? '61' : '-' }}</div>
+          <div class="stat-label">Comensales</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">{{ lastClosed ? formatCents((lastClosed.final_amount_cents || 0) / 23) : '-' }}</div>
+          <div class="stat-label">Ticket medio</div>
+        </div>
+      </div>
+    </app-card>
+
+    <div class="open-cash-section">
+      <div class="open-cash-text">{{ orphanSession ? 'Resuelve el turno huérfano antes de abrir' : 'La caja está cerrada · TPV Sala' }}</div>
+      <app-btn size="lg" variant="success" [block]="true" (click)="onOpenModal()">Abrir caja</app-btn>
+    </div>
+  </div>
+
+  <!-- Estado: Activa -->
+  <div *ngIf="!loading && state === 'activa'" class="activa">
+    <div class="dashboard-grid">
+      <!-- Card hero verde con efectivo teórico -->
+      <div class="hero-card">
+        <div class="hero-label">Efectivo en caja · teórico</div>
+        <div class="hero-value">
+          {{ sessionSummary ? formatCents(sessionSummary.total_cash_cents) : '-' }}<span class="hero-currency"> €</span>
+        </div>
+        <div class="hero-sub">
+          Fondo inicial: {{ activeSession ? formatCents(activeSession.initial_amount_cents) : '-' }} · +{{ sessionSummary ? formatCents(sessionSummary.cash_in_cents) : '-' }} entradas · −{{ sessionSummary ? formatCents(sessionSummary.cash_out_cents) : '-' }} salidas
+        </div>
+        <div class="hero-actions">
+          <app-btn size="sm" variant="outline" color="rgba(255,255,255,0.9)" (click)="onOpenMovementModal()">+ Entrada</app-btn>
+          <app-btn size="sm" variant="outline" color="rgba(255,255,255,0.9)" (click)="onOpenMovementModal()">− Salida</app-btn>
+        </div>
+      </div>
+
+      <!-- KPIs a la derecha -->
+      <div class="kpi-column">
+        <app-kpi-card label="Ventas netas" [value]="sessionSummary ? formatCents(sessionSummary.total_sales_cents) : '-'" color="#1a9e5a"></app-kpi-card>
+        <app-kpi-card label="Tickets" [value]="(sessionSummary?.sales_count || '-').toString()" [sub]="'comensales'" [mono]="false"></app-kpi-card>
+        <app-kpi-card label="Ticket medio" [value]="sessionSummary && sessionSummary.sales_count > 0 ? formatCents(sessionSummary.total_sales_cents / sessionSummary.sales_count) : '-'"></app-kpi-card>
+      </div>
+    </div>
+
+    <!-- Acciones principales -->
+    <div class="actions-row">
+      <app-btn variant="gray" (click)="onOpenMovementModal()">Movimiento manual</app-btn>
+      <app-btn variant="danger" (click)="onStartClosing()">Cerrar caja</app-btn>
+    </div>
+  </div>
+
+  <!-- Estado: En arqueo -->
+  <div *ngIf="!loading && state === 'arqueo'" class="arqueo">
+    <h2>Arqueo en curso</h2>
+    <p>Wizard de cierre de 3 pasos (pendiente)</p>
+    <button class="btn btn-secondary" (click)="onCancelClosing()">Cancelar cierre</button>
+  </div>
+
+  <!-- Estado: Histórico -->
+  <div *ngIf="!loading && state === 'historico'" class="historico">
+    <div class="historico-header">
+      <div class="historico-title">Histórico de sesiones</div>
+      <div class="historico-controls">
+        <input class="search-input" placeholder="Buscar operador..." />
+        <app-segment [options]="[{value:'all',label:'Todos'},{value:'disc',label:'Con descuadre'},{value:'ok',label:'Cuadrados'}]" value="all"></app-segment>
+      </div>
+    </div>
+
+    <div class="historico-kpis">
+      <app-kpi-card label="Ventas periodo" value="-" color="#1a9e5a"></app-kpi-card>
+      <app-kpi-card label="Tickets" value="-" sub="0 sesiones" [mono]="false"></app-kpi-card>
+      <app-kpi-card label="Descuadre acumulado" value="0 €" color="#0d0d0d"></app-kpi-card>
+    </div>
+
+    <div class="historico-list">
+      <div class="historico-empty">No hay sesiones registradas</div>
+    </div>
   </div>
 </div>
