@@ -90,6 +90,10 @@ export class ClosingWizardComponent {
     return this.discrepancy < 0 ? '#ff4d4d' : '#1a9e5a';
   }
 
+  public get absDiscrepancy(): number {
+    return Math.abs(this.discrepancy);
+  }
+
   public onClose(): void {
     this.closeModal.emit();
     this.reset();

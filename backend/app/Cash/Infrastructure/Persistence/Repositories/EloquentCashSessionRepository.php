@@ -86,6 +86,18 @@ final class EloquentCashSessionRepository implements CashSessionRepositoryInterf
             ->all();
     }
 
+    public function findClosedByRestaurantId(Uuid $restaurantId): array
+    {
+        $restaurantIdInt = EloquentRestaurant::query()->where('uuid', $restaurantId->value())->value('id');
+        return $this->model->newQuery()
+            ->where('restaurant_id', $restaurantIdInt)
+            ->whereIn('status', ['closed', 'abandoned'])
+            ->orderBy('closed_at', 'desc')
+            ->get()
+            ->map(fn ($model) => $this->toDomain($model))
+            ->all();
+    }
+
     public function findLastClosedByRestaurant(Uuid $restaurantId): ?CashSession
     {
         $restaurantIdInt = EloquentRestaurant::query()->where('uuid', $restaurantId->value())->value('id');

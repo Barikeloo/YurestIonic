@@ -26,6 +26,7 @@ export class OpenCashModalComponent {
   public initialAmountCents = 15000;
   public notes = '';
   public showNote = false;
+  public showUserError = false;
 
   public onClose(): void {
     this.closeModal.emit();
@@ -37,18 +38,21 @@ export class OpenCashModalComponent {
   }
 
   public onSubmit(): void {
-    if (this.selectedUserId && this.initialAmountCents >= 0) {
-      this.openCash.emit({
-        userId: this.selectedUserId,
-        initialAmountCents: this.initialAmountCents,
-        notes: this.notes || undefined,
-      });
-      this.resetForm();
+    if (!this.selectedUserId) {
+      this.showUserError = true;
+      return;
     }
+    this.openCash.emit({
+      userId: this.selectedUserId,
+      initialAmountCents: this.initialAmountCents,
+      notes: this.notes || undefined,
+    });
+    this.resetForm();
   }
 
   public selectUser(userId: string): void {
     this.selectedUserId = userId;
+    this.showUserError = false;
   }
 
   public toggleNote(): void {
@@ -64,5 +68,6 @@ export class OpenCashModalComponent {
     this.initialAmountCents = 15000;
     this.notes = '';
     this.showNote = false;
+    this.showUserError = false;
   }
 }

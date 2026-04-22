@@ -17,16 +17,14 @@ final class EloquentUserQuickAccessRepository implements UserQuickAccessReposito
                 ->where('user_quick_accesses.device_id', $deviceId)
                 ->whereNull('users.deleted_at')
                 ->whereNotNull('users.pin')
-                ->where('users.pin', '!=', '')
-                ->where('users.role', '!=', 'admin');
+                ->where('users.pin', '!=', '');
         } else {
             $query = EloquentUser::query()
                 ->join('restaurants', 'restaurants.id', '=', 'users.restaurant_id')
                 ->where('restaurants.uuid', $restaurantUuid)
                 ->whereNull('users.deleted_at')
                 ->whereNotNull('users.pin')
-                ->where('users.pin', '!=', '')
-                ->where('users.role', '!=', 'admin');
+                ->where('users.pin', '!=', '');
         }
 
         return $query

@@ -10,6 +10,7 @@
         <!-- Columna izquierda: Operador -->
         <div class="operator-section">
           <div class="section-label">Operador</div>
+          <div *ngIf="showUserError" class="user-error">Selecciona un operador</div>
           <div class="users-list">
             <div
               *ngFor="let user of availableUsers"

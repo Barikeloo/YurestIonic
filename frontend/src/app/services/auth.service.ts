@@ -347,6 +347,11 @@ export class AuthService {
   }
 
   private getOrCreateDeviceId(): string {
+    const devId = environment.devDeviceId;
+    if (devId && devId.trim() !== '') {
+      return devId;
+    }
+
     const storageKey = 'tpv_device_id';
     const fromStorage = localStorage.getItem(storageKey);
 

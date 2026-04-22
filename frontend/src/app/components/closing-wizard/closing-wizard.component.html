@@ -52,7 +52,7 @@
               <div class="discrepancy-item">
                 <div class="discrepancy-label">DIFERENCIA</div>
                 <div class="discrepancy-value" [style.color]="discrepancyColor">
-                  {{ discrepancy > 0 ? '+' : '' }}{{ formatNum(Math.abs(discrepancy)) }} €
+                  {{ discrepancy > 0 ? '+' : '' }}{{ formatNum(absDiscrepancy) }} €
                 </div>
               </div>
             </div>

@@ -14,14 +14,10 @@ final class GetCashSessionSummaryController
         private readonly GetCashSessionSummary $getCashSessionSummary,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(Request $request, string $id): JsonResponse
     {
-        $validated = $request->validate([
-            'cash_session_id' => ['required', 'string', 'uuid'],
-        ]);
-
         $response = ($this->getCashSessionSummary)(
-            cashSessionId: $validated['cash_session_id'],
+            cashSessionId: $id,
         );
 
         if ($response === null) {

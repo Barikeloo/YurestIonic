@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 import { finalize, take } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
@@ -44,14 +44,18 @@ export class LoginPage {
   public showPinPanel: boolean = false;
   public showEmailForm: boolean = false;
 
+  private returnUrl: string = '/app/caja';
+
   constructor(
     private readonly formBuilder: FormBuilder,
     private readonly authService: AuthService,
     private readonly router: Router,
+    private readonly route: ActivatedRoute,
     private readonly deviceStorageService: DeviceStorageService,
   ) {}
 
   public ionViewWillEnter(): void {
+    this.returnUrl = this.route.snapshot.queryParamMap.get('returnUrl') ?? '/app/caja';
     this.linkedRestaurant = this.deviceStorageService.getLinkedRestaurant();
     this.selectedEmployee = null;
     this.pinValue = '';
@@ -195,7 +199,7 @@ export class LoginPage {
       )
       .subscribe({
         next: () => {
-          this.router.navigateByUrl('/app/mesas');
+          this.router.navigateByUrl(this.returnUrl);
         },
         error: (error: unknown) => {
           this.errorMessage = error instanceof Error ? error.message : 'No se pudo iniciar sesión.';
@@ -218,7 +222,7 @@ export class LoginPage {
       .subscribe({
         next: () => {
           this.pinValue = '';
-          this.router.navigateByUrl('/app/mesas');
+          this.router.navigateByUrl(this.returnUrl);
         },
         error: (error: unknown) => {
           this.errorMessage = error instanceof Error ? error.message : 'No se pudo iniciar sesión con PIN.';

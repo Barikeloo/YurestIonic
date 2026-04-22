@@ -54,6 +54,8 @@ use App\Cash\Infrastructure\Entrypoint\Http\ForceCloseCashSessionController;
 use App\Cash\Infrastructure\Entrypoint\Http\GenerateZReportController;
 use App\Cash\Infrastructure\Entrypoint\Http\GetZReportController;
 use App\Cash\Infrastructure\Entrypoint\Http\GetCashSessionSummaryController;
+use App\Cash\Infrastructure\Entrypoint\Http\ListCashSessionsController;
+use App\Cash\Infrastructure\Entrypoint\Http\ListCashMovementsController;
 use App\Tax\Infrastructure\Entrypoint\Http\DeleteController as TaxDeleteController;
 use App\Tax\Infrastructure\Entrypoint\Http\GetCollectionController as TaxGetCollectionController;
 use App\Tax\Infrastructure\Entrypoint\Http\GetController as TaxGetController;
@@ -135,6 +137,7 @@ Route::middleware([
 	Route::delete('/tpv/sales/{id}', SaleDeleteController::class)->whereUuid('id');
 
 	Route::post('/tpv/cash-sessions', OpenCashSessionController::class);
+	Route::get('/tpv/cash-sessions', ListCashSessionsController::class);
 	Route::get('/tpv/cash-sessions/active', GetActiveCashSessionController::class);
 	Route::get('/tpv/cash-sessions/last-closed', GetLastClosedCashSessionController::class);
 	Route::get('/tpv/cash-sessions/{id}/summary', GetCashSessionSummaryController::class)->whereUuid('id');

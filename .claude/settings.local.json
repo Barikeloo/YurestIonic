@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx ng *)",
+      "Bash(./node_modules/.bin/ng serve *)",
+      "Bash(php --version)",
+      "Bash(docker exec training_api *)",
+      "Bash(xargs cat *)",
+      "Bash(node node_modules/@angular/cli/bin/ng.js build --configuration development)",
+      "Bash(docker exec training_frontend *)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(cp \"C:\\\\Users\\\\barik\\\\.claude\\\\projects\\\\C--Users-barik-Desktop-YurestTPV\\\\c40325d8-e025-40c0-abb2-ed99da0212f9\\\\tool-results\\\\webfetch-1776888069185-78841d.bin\" /tmp/design.gz)",
+      "Bash(gunzip -c /tmp/design.gz)",
+      "Read(//tmp/**)",
+      "Bash(tar -x --wildcards \"*/Caja Design.html\" -O)",
+      "Bash(mkdir -p /tmp/design_bundle)",
+      "Bash(tar -xf /tmp/design.gz)",
+      "Bash(curl *)",
+      "Bash(xargs grep *)",
+      "Bash(grep -v \"^$\")"
+    ]
+  }
+}

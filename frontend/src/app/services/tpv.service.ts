@@ -100,15 +100,33 @@ export interface TpvCashMovement {
 }
 
 export interface TpvCashSessionSummary {
-  total_sales_cents: number;
-  total_cash_cents: number;
-  total_card_cents: number;
-  total_other_cents: number;
-  cash_in_cents: number;
-  cash_out_cents: number;
-  tips_cents: number;
-  sales_count: number;
-  cancelled_sales_count: number;
+  initial_amount_cents: number;
+  total_sales: number;
+  total_cash_payments: number;
+  total_card_payments: number;
+  total_bizum_payments: number;
+  total_other_payments: number;
+  total_in_movements: number;
+  total_out_movements: number;
+  expected_amount: number;
+  movements_count: number;
+  payments_count: number;
+}
+
+export interface TpvCashSessionListItem {
+  uuid: string;
+  device_id: string;
+  opened_by_user_id: string;
+  closed_by_user_id: string | null;
+  opened_at: string;
+  closed_at: string | null;
+  initial_amount_cents: number;
+  final_amount_cents: number | null;
+  expected_amount_cents: number | null;
+  discrepancy_cents: number | null;
+  discrepancy_reason: string | null;
+  z_report_number: number | null;
+  status: string;
 }
 
 interface AddLinePayload {
@@ -282,9 +300,18 @@ export class TpvService {
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
-  public getActiveCashSession(): Observable<TpvCashSession | null> {
+  public getActiveCashSession(deviceId: string): Observable<TpvCashSession | null> {
     return this.http
-      .get<TpvCashSession | null>(`${this.baseUrl}/tpv/cash-sessions/active`, { withCredentials: true })
+      .get<TpvCashSession | null>(`${this.baseUrl}/tpv/cash-sessions/active`, {
+        withCredentials: true,
+        params: { device_id: deviceId },
+      })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public listCashSessions(): Observable<{ sessions: TpvCashSessionListItem[] }> {
+    return this.http
+      .get<{ sessions: TpvCashSessionListItem[] }>(`${this.baseUrl}/tpv/cash-sessions`, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 

@@ -4,32 +4,23 @@ declare(strict_types=1);
 
 namespace App\Cash\Infrastructure\Entrypoint\Http;
 
-use App\Cash\Application\GetActiveCashSession\GetActiveCashSession;
+use App\Cash\Application\ListCashSessions\ListCashSessions;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-final class GetActiveCashSessionController
+final class ListCashSessionsController
 {
     public function __construct(
-        private readonly GetActiveCashSession $getActiveCashSession,
+        private readonly ListCashSessions $listCashSessions,
         private readonly TenantContext $tenantContext,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'device_id' => ['required', 'string', 'max:100'],
-        ]);
-
-        $response = ($this->getActiveCashSession)(
+        $response = ($this->listCashSessions)(
             restaurantId: $this->tenantContext->restaurantUuid(),
-            deviceId: $validated['device_id'],
         );
-
-        if ($response === null) {
-            return new JsonResponse(null, 204);
-        }
 
         return new JsonResponse($response->toArray(), 200);
     }

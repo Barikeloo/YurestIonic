@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TpvService, TpvCashSession } from '../../../services/tpv.service';
-import { Observable } from 'rxjs';
+import { AuthService } from '../../../services/auth.service';
+import { TpvService, TpvCashSession, TpvCashSessionListItem } from '../../../services/tpv.service';
 import { OpenCashModalComponent } from '../../../components/open-cash-modal/open-cash-modal.component';
 import { CashMovementModalComponent } from '../../../components/cash-movement-modal/cash-movement-modal.component';
+import { ClosingWizardComponent, ZReportData } from '../../../components/closing-wizard/closing-wizard.component';
 import { CardComponent } from '../../../components/card/card.component';
 import { BadgeComponent } from '../../../components/badge/badge.component';
 import { BtnComponent } from '../../../components/btn/btn.component';
@@ -30,27 +31,38 @@ interface OrphanSessionData {
 }
 
 interface CashSessionSummary {
-  total_sales_cents: number;
-  total_cash_cents: number;
-  total_card_cents: number;
-  total_other_cents: number;
-  cash_in_cents: number;
-  cash_out_cents: number;
-  tips_cents: number;
-  sales_count: number;
-  cancelled_sales_count: number;
+  initial_amount_cents: number;
+  total_sales: number;
+  total_cash_payments: number;
+  total_card_payments: number;
+  total_bizum_payments: number;
+  total_other_payments: number;
+  total_in_movements: number;
+  total_out_movements: number;
+  expected_amount: number;
+  movements_count: number;
+  payments_count: number;
 }
 
 @Component({
   selector: 'app-caja',
   templateUrl: './caja.page.html',
   styleUrls: ['./caja.page.scss'],
-  imports: [CommonModule, OpenCashModalComponent, CashMovementModalComponent, CardComponent, BadgeComponent, BtnComponent, KpiCardComponent, SegmentComponent],
+  imports: [
+    CommonModule,
+    OpenCashModalComponent,
+    CashMovementModalComponent,
+    ClosingWizardComponent,
+    CardComponent,
+    BadgeComponent,
+    BtnComponent,
+    KpiCardComponent,
+    SegmentComponent,
+  ],
   standalone: true,
 })
 export class CajaPage implements OnInit, OnDestroy {
   public state: CajaState = 'pre-apertura';
-  public activeSession$: Observable<TpvCashSession | null>;
   public activeSession: TpvCashSession | null = null;
   public loading = true;
   public lastClosed: LastClosedData | null = null;
@@ -59,24 +71,37 @@ export class CajaPage implements OnInit, OnDestroy {
   public availableUsers: Array<{ id: string; name: string; initials: string }> = [];
   public sessionSummary: CashSessionSummary | null = null;
   public showMovementModal = false;
+  public showWizard = false;
   public currentTime = '';
+  public closedSessions: TpvCashSessionListItem[] = [];
+  public openCashError: string | null = null;
+
   private refreshInterval: any;
   private clockInterval: any;
+  public readonly deviceId: string;
 
-  constructor(private readonly tpvService: TpvService) {
-    this.activeSession$ = this.tpvService.getActiveCashSession();
+  constructor(
+    private readonly tpvService: TpvService,
+    private readonly authService: AuthService,
+  ) {
+    this.deviceId = this.authService.getDeviceId();
   }
 
   public ngOnInit(): void {
     this.updateClock();
-    this.clockInterval = setInterval(() => {
-      this.updateClock();
-    }, 1000);
+    this.clockInterval = setInterval(() => this.updateClock(), 1000);
+    this.loadActiveSession();
+  }
 
-    this.activeSession$.subscribe({
+  public ngOnDestroy(): void {
+    this.stopRefreshInterval();
+    if (this.clockInterval) clearInterval(this.clockInterval);
+  }
+
+  private loadActiveSession(): void {
+    this.tpvService.getActiveCashSession(this.deviceId).subscribe({
       next: (session) => {
         this.activeSession = session;
-
         if (session === null) {
           this.state = 'pre-apertura';
           this.loadLastClosedData();
@@ -91,32 +116,25 @@ export class CajaPage implements OnInit, OnDestroy {
               break;
             case 'closing':
               this.state = 'arqueo';
+              this.showWizard = true;
               this.loadSessionSummary();
               this.stopRefreshInterval();
               break;
             case 'closed':
             case 'abandoned':
               this.state = 'historico';
+              this.loadClosedSessions();
               this.stopRefreshInterval();
               break;
           }
         }
       },
-      error: (error) => {
-        console.error('Error loading cash session:', error);
+      error: () => {
         this.loading = false;
         this.state = 'pre-apertura';
         this.loadLastClosedData();
-        this.stopRefreshInterval();
       },
     });
-  }
-
-  public ngOnDestroy(): void {
-    this.stopRefreshInterval();
-    if (this.clockInterval) {
-      clearInterval(this.clockInterval);
-    }
   }
 
   private updateClock(): void {
@@ -128,23 +146,16 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   private loadSessionSummary(): void {
-    if (this.activeSession) {
-      this.tpvService.getCashSessionSummary(this.activeSession.uuid).subscribe({
-        next: (summary) => {
-          this.sessionSummary = summary;
-        },
-        error: (error) => {
-          console.error('Error loading session summary:', error);
-        },
-      });
-    }
+    if (!this.activeSession) return;
+    this.tpvService.getCashSessionSummary(this.activeSession.uuid).subscribe({
+      next: (summary) => { this.sessionSummary = summary as unknown as CashSessionSummary; },
+      error: (error) => { console.error('Error loading session summary:', error); },
+    });
   }
 
   private startRefreshInterval(): void {
     this.stopRefreshInterval();
-    this.refreshInterval = setInterval(() => {
-      this.loadSessionSummary();
-    }, 30000); // Actualizar cada 30 segundos
+    this.refreshInterval = setInterval(() => this.loadSessionSummary(), 30000);
   }
 
   private stopRefreshInterval(): void {
@@ -160,24 +171,26 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   private loadAvailableUsers(): void {
-    // TODO: Obtener device_id y restaurant_uuid desde contexto
-    const deviceId = 'device-uuid'; // Placeholder
-    this.tpvService.listUsers(deviceId).subscribe({
+    this.tpvService.listUsers(this.deviceId).subscribe({
       next: (response) => {
-        this.availableUsers = response.users;
+        this.availableUsers = response.users.map((u: any) => ({
+          id: u.user_uuid,
+          name: u.name,
+          initials: u.name
+            .split(' ')
+            .slice(0, 2)
+            .map((w: string) => w[0].toUpperCase())
+            .join(''),
+        }));
       },
-      error: (error) => {
-        console.error('Error loading users:', error);
-      },
+      error: (error) => { console.error('Error loading users:', error); },
     });
   }
 
   public onOpenCash(data: { userId: string; initialAmountCents: number; notes?: string }): void {
-    // TODO: Obtener device_id desde contexto
-    const deviceId = 'device-uuid'; // Placeholder
-
+    this.openCashError = null;
     this.tpvService.openCashSession({
-      device_id: deviceId,
+      device_id: this.deviceId,
       opened_by_user_id: data.userId,
       initial_amount_cents: data.initialAmountCents,
       notes: data.notes,
@@ -186,10 +199,12 @@ export class CajaPage implements OnInit, OnDestroy {
         this.showOpenModal = false;
         this.activeSession = session;
         this.state = 'activa';
+        this.loadSessionSummary();
+        this.startRefreshInterval();
       },
       error: (error) => {
-        console.error('Error opening cash session:', error);
-        alert('Error al abrir la caja: ' + error.message);
+        this.openCashError = error.message;
+        this.showOpenModal = false;
       },
     });
   }
@@ -204,61 +219,90 @@ export class CajaPage implements OnInit, OnDestroy {
     amountCents: number;
     description?: string;
   }): void {
-    if (this.activeSession) {
-      // TODO: Obtener user_id desde contexto
-      const userId = 'user-uuid'; // Placeholder
-
-      this.tpvService.registerCashMovement({
-        cash_session_id: this.activeSession.uuid,
-        type: data.type,
-        reason_code: data.reasonCode,
-        amount_cents: data.amountCents,
-        user_id: userId,
-        description: data.description,
-      }).subscribe({
-        next: () => {
-          this.showMovementModal = false;
-          this.loadSessionSummary(); // Recargar el resumen después de registrar movimiento
-        },
-        error: (error) => {
-          console.error('Error registering movement:', error);
-          alert('Error al registrar el movimiento: ' + error.message);
-        },
-      });
-    }
+    if (!this.activeSession) return;
+    this.tpvService.registerCashMovement({
+      cash_session_id: this.activeSession.uuid,
+      type: data.type,
+      reason_code: data.reasonCode,
+      amount_cents: data.amountCents,
+      user_id: this.activeSession.opened_by_user_id,
+      description: data.description,
+    }).subscribe({
+      next: () => {
+        this.showMovementModal = false;
+        this.loadSessionSummary();
+      },
+      error: (error) => { alert('Error al registrar el movimiento: ' + error.message); },
+    });
   }
 
   public onStartClosing(): void {
-    if (this.activeSession) {
-      this.tpvService.startClosingCashSession({
-        cash_session_id: this.activeSession.uuid,
-      }).subscribe({
-        next: () => {
-          this.state = 'arqueo';
-          this.loadSessionSummary();
-        },
-        error: (error) => {
-          console.error('Error starting closing:', error);
-          alert('Error al iniciar el cierre: ' + error.message);
-        },
-      });
-    }
+    if (!this.activeSession) return;
+    this.tpvService.startClosingCashSession({ cash_session_id: this.activeSession.uuid }).subscribe({
+      next: () => {
+        this.state = 'arqueo';
+        this.showWizard = true;
+        this.loadSessionSummary();
+        this.stopRefreshInterval();
+      },
+      error: (error) => { alert('Error al iniciar el cierre: ' + error.message); },
+    });
   }
 
   public onCancelClosing(): void {
-    if (this.activeSession) {
-      this.tpvService.cancelClosingCashSession({
-        cash_session_id: this.activeSession.uuid,
-      }).subscribe({
-        next: () => {
-          this.state = 'activa';
-        },
-        error: (error) => {
-          console.error('Error cancelling closing:', error);
-          alert('Error al cancelar el cierre: ' + error.message);
-        },
-      });
-    }
+    if (!this.activeSession) return;
+    this.tpvService.cancelClosingCashSession({ cash_session_id: this.activeSession.uuid }).subscribe({
+      next: () => {
+        this.state = 'activa';
+        this.showWizard = false;
+        this.startRefreshInterval();
+      },
+      error: (error) => { alert('Error al cancelar el cierre: ' + error.message); },
+    });
+  }
+
+  public onCompleteClosing(data: { countedAmount: number; discrepancyReason?: string }): void {
+    if (!this.activeSession) return;
+    this.tpvService.closeCashSession({
+      cash_session_id: this.activeSession.uuid,
+      closed_by_user_id: this.activeSession.opened_by_user_id,
+      final_amount_cents: data.countedAmount,
+      discrepancy_reason: data.discrepancyReason,
+    }).subscribe({
+      next: () => {
+        this.showWizard = false;
+        this.activeSession = null;
+        this.state = 'historico';
+        this.loadClosedSessions();
+      },
+      error: (error) => { alert('Error al cerrar la caja: ' + error.message); },
+    });
+  }
+
+  public get wizardExpectedAmount(): number {
+    return this.sessionSummary?.expected_amount ?? 0;
+  }
+
+  public get wizardZData(): ZReportData | null {
+    if (!this.sessionSummary) return null;
+    return {
+      tickets: this.sessionSummary.payments_count,
+      diners: 0,
+      gross: this.sessionSummary.total_sales,
+      discounts: 0,
+      net: this.sessionSummary.total_sales,
+      cash: this.sessionSummary.total_cash_payments,
+      card: this.sessionSummary.total_card_payments,
+      bizum: this.sessionSummary.total_bizum_payments,
+      invitation: this.sessionSummary.total_other_payments,
+      invitations: 0,
+      invValue: 0,
+      cancellations: 0,
+      tipsCard: 0,
+      initial: this.sessionSummary.initial_amount_cents,
+      movIn: this.sessionSummary.total_in_movements,
+      movOut: this.sessionSummary.total_out_movements,
+    };
   }
 
   private loadLastClosedData(): void {
@@ -268,15 +312,20 @@ export class CajaPage implements OnInit, OnDestroy {
         this.orphanSession = data.orphan_session;
         this.loading = false;
       },
-      error: (error) => {
-        console.error('Error loading last closed session:', error);
-        this.loading = false;
-      },
+      error: () => { this.loading = false; },
     });
   }
 
-  public formatCents(cents: number): string {
-    return (cents / 100).toFixed(2);
+  private loadClosedSessions(): void {
+    this.tpvService.listCashSessions().subscribe({
+      next: (data) => { this.closedSessions = data.sessions; },
+      error: (error) => { console.error('Error loading sessions:', error); },
+    });
+  }
+
+  public formatCents(cents: number | null | undefined): string {
+    if (cents == null) return '-';
+    return (cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   public formatDate(dateString: string | null | undefined): string {
