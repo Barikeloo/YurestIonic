@@ -102,7 +102,6 @@ final class EloquentCashSessionRepository implements CashSessionRepositoryInterf
         return CashSession::fromPersistence(
             $model->uuid,
             $restaurantUuid,
-            $model->uuid,
             $model->device_id,
             $openedByUserUuid,
             $closedByUserUuid,

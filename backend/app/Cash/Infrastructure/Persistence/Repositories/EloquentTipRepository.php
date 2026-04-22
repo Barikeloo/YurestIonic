@@ -96,7 +96,6 @@ final class EloquentTipRepository implements TipRepositoryInterface
         return Tip::fromPersistence(
             $model->uuid,
             $restaurantUuid,
-            $model->uuid,
             $saleUuid,
             $cashSessionUuid,
             $model->amount_cents,

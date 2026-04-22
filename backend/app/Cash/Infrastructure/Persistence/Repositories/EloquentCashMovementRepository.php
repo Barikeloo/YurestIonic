@@ -86,7 +86,6 @@ final class EloquentCashMovementRepository implements CashMovementRepositoryInte
         return CashMovement::fromPersistence(
             $model->uuid,
             $restaurantUuid,
-            $model->uuid,
             $cashSessionUuid,
             $model->type,
             $model->reason_code,

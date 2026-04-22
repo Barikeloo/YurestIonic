@@ -93,7 +93,6 @@ final class EloquentSalePaymentRepository implements SalePaymentRepositoryInterf
         return SalePayment::fromPersistence(
             $model->uuid,
             $restaurantUuid,
-            $model->uuid,
             $saleUuid,
             $cashSessionUuid,
             $model->method,
