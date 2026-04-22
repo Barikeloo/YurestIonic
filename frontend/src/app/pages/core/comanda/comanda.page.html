@@ -3,7 +3,7 @@
   <!-- Top bar -->
   <div class="comanda-topbar">
     <button class="btn-back" (click)="goBack()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="15 18 9 12 15 6"/>
       </svg>
       Volver
@@ -12,7 +12,7 @@
     <span *ngIf="order" class="comanda-sub">— Mesa {{ order.diners }} comensales</span>
     <div class="topbar-spacer"></div>
     <button class="btn-cerrar-topbar" (click)="openCloseModal()">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/>
         <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
       </svg>
@@ -104,15 +104,17 @@
 
         <!-- Cart lines -->
         <div *ngIf="cartLines.length > 0" class="order-section-label">Sin enviar</div>
-        <div *ngFor="let line of cartLines" class="order-line">
-          <div class="order-line-qty">{{ line.quantity }}</div>
+        <div *ngFor="let line of cartLines" class="order-line order-line-cart">
           <div class="order-line-info">
             <div class="order-line-name">{{ line.productName }}</div>
+            <div class="order-line-unit">{{ formatCents(line.price) }} / ud.</div>
           </div>
-          <div class="cart-line-right">
-            <div class="order-line-price">{{ formatCents(line.price * line.quantity) }}</div>
-            <button class="btn-remove-cart" (click)="changeQty(line, -1)">−</button>
+          <div class="cart-qty-controls">
+            <button class="qty-btn" (click)="changeQty(line, -1)" aria-label="Quitar una unidad">−</button>
+            <div class="qty-value">{{ line.quantity }}</div>
+            <button class="qty-btn" (click)="changeQty(line, 1)" aria-label="Añadir una unidad">+</button>
           </div>
+          <div class="order-line-price">{{ formatCents(line.price * line.quantity) }}</div>
         </div>
       </div>
 
@@ -123,7 +125,7 @@
           [disabled]="cartLines.length === 0 || sendingOrder"
           (click)="sendComanda()"
         >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <line x1="22" y1="2" x2="11" y2="13"/>
             <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>

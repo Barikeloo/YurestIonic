@@ -1,7 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap');
 
 :host {
   --accent: #ff4d4d;
+  --accent-hover: #ff6363;
   --accent-soft: #ffecec;
   --black: #0d0d0d;
   --gray-800: #2c2c2c;
@@ -11,7 +12,9 @@
   --gray-100: #f4f4f4;
   --white: #ffffff;
   --font: 'DM Sans', sans-serif;
-  --radius-sm: 8px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
 }
 
 .app-shell {
@@ -25,37 +28,39 @@
 .topbar {
   display: flex;
   align-items: center;
-  padding: 0 20px;
-  height: 60px;
+  padding: 0 24px;
+  height: 72px;
   background: var(--white);
   border-bottom: 1px solid var(--gray-200);
-  gap: 4px;
+  gap: 12px;
   flex-shrink: 0;
 }
 
 .topbar-brand {
   display: flex;
   flex-direction: column;
-  margin-right: 20px;
+  margin-right: 24px;
+  min-width: 0;
 }
 
 .topbar-name {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--black);
-  line-height: 1;
+  line-height: 1.1;
+  letter-spacing: -0.2px;
 }
 
 .topbar-date {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--gray-400);
-  margin-top: 2px;
+  margin-top: 3px;
 }
 
 .topbar-nav {
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   flex: 1;
   justify-content: center;
 }
@@ -63,17 +68,25 @@
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
+  gap: 8px;
+  padding: 12px 20px;
+  height: 48px;
+  box-sizing: border-box;
+  border-radius: var(--radius-md);
+  font-size: 15px;
   font-weight: 500;
   color: var(--gray-500);
   cursor: pointer;
-  transition: all 0.15s;
+  transition: background 0.15s, color 0.15s;
   border: none;
   background: transparent;
   text-decoration: none;
+  touch-action: manipulation;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .nav-item:hover {
@@ -84,28 +97,36 @@
 .nav-item.active {
   color: var(--accent);
   background: var(--accent-soft);
+  font-weight: 600;
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .btn-caja {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
+  gap: 8px;
+  padding: 0 20px;
+  height: 48px;
   background: var(--black);
   color: var(--white);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-family: var(--font);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s;
+  touch-action: manipulation;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .btn-caja:hover {
@@ -113,18 +134,23 @@
 }
 
 .user-avatar-sm {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: var(--accent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--white);
   cursor: pointer;
   border: none;
+  transition: background 0.15s, transform 0.08s;
+  touch-action: manipulation;
+
+  &:hover { background: var(--accent-hover); }
+  &:active { transform: scale(0.94); }
 }
 
 .app-shell-content {
@@ -132,23 +158,45 @@
   min-height: 0;
 }
 
+@media (max-width: 900px) {
+  .topbar {
+    padding: 0 14px;
+    gap: 8px;
+  }
+
+  .topbar-brand {
+    margin-right: 12px;
+  }
+
+  .nav-item {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .btn-caja {
+    padding: 0 14px;
+    font-size: 14px;
+  }
+}
+
 @media (max-width: 740px) {
   .topbar {
     height: auto;
-    padding: 10px 12px;
-    align-items: flex-start;
+    padding: 12px;
+    align-items: stretch;
     flex-direction: column;
     gap: 10px;
   }
 
-  .topbar-brand {
-    margin-right: 0;
-  }
+  .topbar-brand { margin-right: 0; }
 
   .topbar-nav {
     width: 100%;
     justify-content: flex-start;
     overflow-x: auto;
+    gap: 6px;
+
+    &::-webkit-scrollbar { height: 0; }
   }
 
   .topbar-actions {
