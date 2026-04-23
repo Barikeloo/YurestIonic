@@ -43,6 +43,7 @@ use App\Sale\Infrastructure\Entrypoint\Http\DeleteController as SaleDeleteContro
 use App\Sale\Infrastructure\Entrypoint\Http\PostController as SalePostController;
 use App\Sale\Infrastructure\Entrypoint\Http\CancelSaleController;
 use App\Sale\Infrastructure\Entrypoint\Http\CreateCreditNoteController;
+use App\Sale\Infrastructure\Entrypoint\Http\GetOrderPaidTotalController;
 use App\Cash\Infrastructure\Entrypoint\Http\OpenCashSessionController;
 use App\Cash\Infrastructure\Entrypoint\Http\GetActiveCashSessionController;
 use App\Cash\Infrastructure\Entrypoint\Http\GetLastClosedCashSessionController;
@@ -135,6 +136,7 @@ Route::middleware([
 	Route::get('/tpv/sales/{id}', SaleGetController::class)->whereUuid('id');
 	Route::put('/tpv/sales/{id}', SalePutController::class)->whereUuid('id');
 	Route::delete('/tpv/sales/{id}', SaleDeleteController::class)->whereUuid('id');
+	Route::get('/tpv/sales/order/{orderId}/paid-total', GetOrderPaidTotalController::class)->whereUuid('orderId');
 
 	Route::post('/tpv/cash-sessions', OpenCashSessionController::class);
 	Route::get('/tpv/cash-sessions', ListCashSessionsController::class);
@@ -142,6 +144,7 @@ Route::middleware([
 	Route::get('/tpv/cash-sessions/last-closed', GetLastClosedCashSessionController::class);
 	Route::get('/tpv/cash-sessions/{id}/summary', GetCashSessionSummaryController::class)->whereUuid('id');
 	Route::post('/tpv/cash-movements', RegisterCashMovementController::class);
+	Route::get('/tpv/cash-movements', ListCashMovementsController::class);
 	Route::post('/tpv/cash-sessions/start-closing', StartClosingCashSessionController::class);
 	Route::post('/tpv/cash-sessions/cancel-closing', CancelClosingCashSessionController::class);
 	Route::post('/tpv/cash-sessions/close', CloseCashSessionController::class);

@@ -11,6 +11,8 @@ interface TableWithStatus extends TpvTableItem {
   order_id?: string;
   diners?: number;
   opened_at?: string;
+  total?: number;
+  remaining_total?: number;
 }
 
 const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#E74C3C'];
@@ -46,13 +48,6 @@ export class MesasPage implements OnInit {
   closingAccount = false;
   closeAccountError: string | null = null;
 
-  // Modal cobrar (create sale + close order)
-  paymentModalOpen = false;
-  paymentUsers: QuickAccessUserResponse[] = [];
-  selectedPayer: QuickAccessUserResponse | null = null;
-  processingPayment = false;
-  paymentError: string | null = null;
-
   constructor(
     private readonly tpvService: TpvService,
     private readonly authService: AuthService,
@@ -80,8 +75,24 @@ export class MesasPage implements OnInit {
       const orderByTable = new Map<string, TpvOrder>();
       for (const order of activeOrders) orderByTable.set(order.table_id, order);
 
+      // Fetch paid totals for all active orders
+      const paidTotals = new Map<string, number>();
+      for (const order of activeOrders) {
+        try {
+          const response = await firstValueFrom(this.tpvService.getOrderPaidTotal(order.id));
+          paidTotals.set(order.id, response.total_cents);
+        } catch (error) {
+          console.error('Error fetching paid total for order:', order.id, error);
+          paidTotals.set(order.id, 0);
+        }
+      }
+
       this.tables = tables.map((t) => {
         const order = orderByTable.get(t.id);
+        const total = order?.total || 0;
+        const paidTotal = order ? paidTotals.get(order.id) || 0 : 0;
+        const remainingTotal = Math.max(0, total - paidTotal);
+
         return {
           ...t,
           occupied: !!order,
@@ -89,6 +100,8 @@ export class MesasPage implements OnInit {
           order_id: order?.id,
           diners: order?.diners,
           opened_at: order?.opened_at,
+          total,
+          remaining_total: remainingTotal,
         };
       });
     } finally {
@@ -232,63 +245,12 @@ export class MesasPage implements OnInit {
     }
   }
 
-  // ── Modal cobrar ────────────────────────────────
-  async openPaymentModal(): Promise<void> {
+  // ── Ir a cobrar (navega a caja) ───────────────────
+  goToCobrar(): void {
     if (!this.selectedTable?.order_id) return;
-    this.paymentModalOpen = true;
-    this.paymentError = null;
-    this.selectedPayer = null;
-    try {
-      const deviceId = this.authService.getDeviceId();
-      const user = await firstValueFrom(this.authService.currentUser$);
-      const restaurantUuid = user?.restaurantId;
-      this.paymentUsers = await firstValueFrom(this.authService.getQuickUsers(deviceId, restaurantUuid));
-      if (this.paymentUsers.length > 0) this.selectedPayer = this.paymentUsers[0];
-    } catch {
-      this.paymentUsers = [];
-    }
-  }
-
-  closePaymentModal(): void {
-    this.paymentModalOpen = false;
-  }
-
-  selectPayer(user: QuickAccessUserResponse): void {
-    this.selectedPayer = user;
-  }
-
-  async confirmPayment(): Promise<void> {
-    if (!this.selectedTable?.order_id || !this.selectedPayer || this.processingPayment) return;
-    this.processingPayment = true;
-    this.paymentError = null;
-
-    try {
-      // Crear la venta (Sale)
-      await firstValueFrom(
-        this.tpvService.createSale({
-          order_id: this.selectedTable.order_id,
-          opened_by_user_id: this.selectedPayer.user_uuid,
-          closed_by_user_id: this.selectedPayer.user_uuid,
-        }),
-      );
-
-      // Cerrar la orden (action: 'close')
-      await firstValueFrom(
-        this.tpvService.updateOrder(this.selectedTable.order_id, {
-          action: 'close',
-          closed_by_user_id: this.selectedPayer.user_uuid,
-        }),
-      );
-
-      this.paymentModalOpen = false;
-      this.selectedTable = null;
-      this.orderLines = [];
-      await this.loadData();
-    } catch (err) {
-      this.paymentError = err instanceof Error ? err.message : 'No se pudo procesar el cobro.';
-    } finally {
-      this.processingPayment = false;
-    }
+    void this.router.navigate(['/app/caja'], {
+      queryParams: { orderId: this.selectedTable.order_id, fromMesas: true },
+    });
   }
 
   // ── Panel ──────────────────────────────────────

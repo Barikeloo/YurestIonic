@@ -28,6 +28,7 @@ final class AddLineToOrder
         int $quantity,
         int $price,
         int $taxPercentage,
+        ?int $dinerNumber = null,
     ): AddLineToOrderResponse {
         $order = $this->orderRepository->getById($orderId);
 
@@ -72,6 +73,7 @@ final class AddLineToOrder
             quantity: OrderLineQuantity::create($quantity),
             price: OrderLinePrice::create($price),
             taxPercentage: OrderLineTaxPercentage::create($taxPercentage),
+            dinerNumber: $dinerNumber,
         );
 
         $this->orderLineRepository->save($orderLine);

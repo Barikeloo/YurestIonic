@@ -24,6 +24,9 @@ final class PostController
             'payments'           => ['required', 'array'],
             'payments.*.method'  => ['required', 'string'],
             'payments.*.amount_cents' => ['required', 'integer', 'min:0'],
+            'order_line_ids'     => ['nullable', 'array'],
+            'order_line_ids.*'   => ['string', 'uuid'],
+            'is_partial_payment' => ['nullable', 'boolean'],
         ]);
 
         $restaurantId = $this->tenantContext->restaurantUuid();
@@ -38,6 +41,8 @@ final class PostController
             closedByUserId:   $validated['closed_by_user_id'],
             deviceId:         $validated['device_id'],
             payments:         $validated['payments'],
+            orderLineIds:     $validated['order_line_ids'] ?? null,
+            isPartialPayment: $validated['is_partial_payment'] ?? false,
         );
 
         return new JsonResponse($response->toArray(), 201);

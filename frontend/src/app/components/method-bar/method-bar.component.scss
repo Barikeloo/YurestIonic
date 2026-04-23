@@ -1,0 +1,77 @@
+@import '../../styles/variables.scss';
+
+.method-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  font-family: var(--font);
+  margin-bottom: 12px;
+}
+
+.method-bar {
+  display: flex;
+  border-radius: 6px;
+  overflow: hidden;
+  height: 8px;
+  margin-bottom: 12px;
+  gap: 2px;
+}
+
+.method-segment {
+  min-width: 2px;
+}
+
+.method-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.method-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.method-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.method-label {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+.method-values {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.method-amount {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.method-percentage {
+  font-size: 10px;
+  color: var(--gray-400);
+  font-family: var(--font);
+  width: 28px;
+  text-align: right;
+}
+
+.method-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--gray-400);
+  font-family: var(--font);
+  font-size: 13px;
+}

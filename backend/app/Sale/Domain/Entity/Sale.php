@@ -23,14 +23,14 @@ final class Sale
         private SaleTotal $total,
         private readonly DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
+        private SaleStatus $status,
+        private DocumentType $documentType,
         private ?DomainDateTime $deletedAt = null,
         private ?Uuid $cashSessionId = null,
         private ?Uuid $cancelledByUserId = null,
         private ?string $cancellationReason = null,
         private ?DomainDateTime $cancelledAt = null,
-        private SaleStatus $status,
         private ?Uuid $parentSaleId = null,
-        private DocumentType $documentType,
         private ?array $customerFiscalData = null,
     ) {
     }

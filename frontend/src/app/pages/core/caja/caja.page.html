@@ -49,6 +49,29 @@
     (registerMovement)="onRegisterMovement($event)"
   ></app-cash-movement-modal>
 
+  <!-- Modal de cobro -->
+  <app-cobrar-modal
+    [isOpen]="showCobrarModal"
+    [total]="currentPaymentAmount || selectedTable?.total || 0"
+    [tableLabel]="selectedTable?.table_name || ''"
+    [lines]="selectedTableLines"
+    (closeModal)="showCobrarModal = false"
+    (confirmPayment)="onConfirmPayment($event)"
+    (splitBill)="onSplitBill()"
+  ></app-cobrar-modal>
+
+  <!-- Modal de dividir cuenta -->
+  <app-split-bill-modal
+    [isOpen]="showSplitModal"
+    [total]="selectedTable?.total || 0"
+    [tableLabel]="selectedTable?.table_name || ''"
+    [lines]="selectedTableLines"
+    [diners]="selectedTable?.diners || 2"
+    [paidDiners]="paidDiners"
+    (closeModal)="showSplitModal = false"
+    (confirmSplit)="onConfirmSplit($event)"
+  ></app-split-bill-modal>
+
   <!-- Wizard de cierre (a pantalla completa, se monta sobre todo) -->
   <app-closing-wizard
     [isOpen]="showWizard"
@@ -145,6 +168,22 @@
           color="#1a9e5a"
         ></app-kpi-card>
       </div>
+    </div>
+
+    <!-- Mesas con cuenta pendiente -->
+    <app-mesas-abiertas
+      [mesas]="pendingTables"
+      (cobrar)="onCobrarMesa($event)"
+    ></app-mesas-abiertas>
+
+    <!-- Grid: Desglose por método y Movimientos -->
+    <div class="dashboard-bottom-grid">
+      <app-method-bar [methods]="paymentMethods"></app-method-bar>
+      <app-movimientos-list
+        [movements]="movementsList"
+        (addEntrada)="onOpenMovementModal()"
+        (addSalida)="onOpenMovementModal()"
+      ></app-movimientos-list>
     </div>
 
     <!-- Acciones principales -->

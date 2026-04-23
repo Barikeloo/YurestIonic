@@ -1,0 +1,163 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="onClose()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <div class="modal-title">Cobrar — {{ tableLabel }}</div>
+      <button class="close-btn" (click)="onClose()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="payment-grid">
+        <!-- Left Column -->
+        <div class="left-column">
+          <app-card class="summary-card">
+            <div class="section-label">Resumen</div>
+            <div *ngFor="let line of lines" class="summary-row">
+              <span class="summary-name">{{ line.name }}</span>
+              <span class="summary-price">{{ formatCents(line.price) }} €</span>
+            </div>
+            <div class="summary-total">
+              <span>Total</span>
+              <span class="total-amount">{{ formatCents(total) }} €</span>
+            </div>
+          </app-card>
+
+          <div class="payment-methods">
+            <div class="section-label">Método de pago</div>
+            <div class="methods-grid">
+              <button
+                *ngFor="let m of methods"
+                class="method-btn"
+                [class.active]="method === m.value"
+                (click)="method = m.value"
+              >
+                <div class="method-icon">{{ m.icon }}</div>
+                <div class="method-label">{{ m.label }}</div>
+              </button>
+            </div>
+          </div>
+
+          <div class="fiscal-toggle">
+            <span class="fiscal-label">Factura completa (NIF)</span>
+            <app-toggle [(value)]="showFiscal"></app-toggle>
+          </div>
+
+          <div *ngIf="showFiscal" class="fiscal-fields">
+            <input placeholder="NIF / CIF" class="fiscal-input" />
+            <input placeholder="Razón social" class="fiscal-input" />
+            <input placeholder="Dirección fiscal" class="fiscal-input" />
+          </div>
+        </div>
+
+        <!-- Right Column - Method specific content -->
+        <div class="right-column">
+          <!-- Cash method -->
+          <ng-container *ngIf="method === 'cash'">
+            <app-amount-display [cents]="cashGiven" label="Cliente entrega" [large]="true"></app-amount-display>
+            <app-numpad [value]="cashGiven" (valueChange)="onCashGivenChange($event)"></app-numpad>
+
+            <app-card *ngIf="cashGiven > 0" [class.success]="change >= 0" [class.error]="change < 0">
+              <div class="change-row">
+                <span [class.success-text]="change >= 0" [class.error-text]="change < 0">
+                  {{ change >= 0 ? '✓ Cambio' : '⚠ Falta' }}
+                </span>
+                <span class="change-amount" [class.success-text]="change >= 0" [class.error-text]="change < 0">
+                  {{ formatCents(abs(change)) }} €
+                </span>
+              </div>
+            </app-card>
+
+            <div class="quick-amounts">
+              <div class="section-label">Importes rápidos</div>
+              <div class="quick-buttons">
+                <button
+                  *ngFor="let amount of [4000, 5000, 6000, 10000, 20000, 50000]"
+                  class="quick-btn"
+                  [class.active]="cashGiven === amount"
+                  (click)="setQuickAmount(amount)"
+                >
+                  {{ formatCents(amount) }} €
+                </button>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Card method -->
+          <ng-container *ngIf="method === 'card'">
+            <div class="card-payment">
+              <div class="card-icon">💳</div>
+              <div class="card-text">Pase la tarjeta por el datáfono</div>
+              <app-card class="card-amount-card">
+                <div class="card-amount-row">
+                  <span class="card-amount-label">Importe a cobrar</span>
+                  <span class="card-amount-value">{{ formatCents(total) }} €</span>
+                </div>
+                <div class="tip-toggle-row">
+                  <span class="tip-label">Añadir propina</span>
+                  <app-toggle [(value)]="showTip" color="#1a9e5a"></app-toggle>
+                </div>
+                <div *ngIf="showTip" class="tip-buttons">
+                  <button
+                    *ngFor="let t of [0, 100, 200, 500]"
+                    class="tip-btn"
+                    [class.active]="tip === t"
+                    (click)="tip = t"
+                  >
+                    {{ t === 0 ? 'Sin prop.' : formatCents(t) + ' €' }}
+                  </button>
+                </div>
+                <div *ngIf="showTip && tip > 0" class="card-total-row">
+                  <span>Total tarjeta</span>
+                  <span class="card-total-value">{{ formatCents(total + tip) }} €</span>
+                </div>
+              </app-card>
+            </div>
+          </ng-container>
+
+          <!-- Bizum method -->
+          <ng-container *ngIf="method === 'bizum'">
+            <div class="bizum-payment">
+              <div class="bizum-icon">📱</div>
+              <div class="bizum-text">Bizum al número del restaurante</div>
+              <div class="bizum-number">+34 612 345 678</div>
+              <app-card class="bizum-amount-card">
+                <div class="bizum-amount-row">
+                  <span class="bizum-amount-label">Importe exacto</span>
+                  <span class="bizum-amount-value">{{ formatCents(total) }} €</span>
+                </div>
+              </app-card>
+            </div>
+          </ng-container>
+
+          <!-- Mixed method -->
+          <ng-container *ngIf="method === 'mixed'">
+            <div class="mixed-payment">
+              <div class="section-label">Distribución del pago</div>
+              <p class="mixed-placeholder">Pago mixto - implementación pendiente</p>
+            </div>
+          </ng-container>
+
+          <!-- Invitation method -->
+          <ng-container *ngIf="method === 'invitation'">
+            <div class="invitation-payment">
+              <div class="invitation-icon">🎁</div>
+              <div class="invitation-title">Invitación de la casa</div>
+              <div class="invitation-text">Requiere supervisor. Se registra como invitación.</div>
+              <app-card class="invitation-value-card">
+                <span class="invitation-label">Valor teórico:</span>
+                <span class="invitation-value">{{ formatCents(total) }} €</span>
+              </app-card>
+            </div>
+          </ng-container>
+
+          <div class="payment-actions">
+            <app-btn variant="outline" size="lg" [block]="true" (click)="onSplitBill()">
+              Dividir cuenta
+            </app-btn>
+            <app-btn variant="success" size="lg" [block]="true" (click)="onConfirm()">
+              Confirmar cobro — {{ formatCents(total + (showTip ? tip : 0)) }} €
+            </app-btn>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

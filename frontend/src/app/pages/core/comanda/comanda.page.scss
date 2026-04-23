@@ -323,6 +323,7 @@
 .order-line-cart {
   grid-template-columns: 1fr auto auto;
   gap: 14px;
+  align-items: center;
 }
 
 .order-line-confirmed {

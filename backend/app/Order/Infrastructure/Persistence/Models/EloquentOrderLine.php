@@ -27,6 +27,13 @@ final class EloquentOrderLine extends Model
         'quantity',
         'price',
         'tax_percentage',
+        'diner_number',
+        'discount_percent',
+        'discount_amount_cents',
+        'discount_reason',
+        'is_invitation',
+        'price_override_cents',
+        'notes',
     ];
 
     public function order(): BelongsTo

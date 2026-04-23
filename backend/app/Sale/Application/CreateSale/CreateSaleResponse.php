@@ -31,7 +31,7 @@ final class CreateSaleResponse
             ticketNumber: $sale->ticketNumber()?->value(),
             valueDate: $sale->valueDate()->format('Y-m-d H:i:s'),
             total: $sale->total()->value(),
-            status: $sale->status(),
+            status: $sale->status()->value(),
         );
     }
 

@@ -251,6 +251,12 @@
   gap: 12px;
 }
 
+.dashboard-bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .hero-card {
   background: linear-gradient(135deg, var(--green) 0%, #14854c 100%);
   border-radius: var(--radius-xl);

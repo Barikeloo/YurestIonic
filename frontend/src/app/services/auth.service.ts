@@ -342,6 +342,10 @@ export class AuthService {
     return this.currentUserSubject.value !== null;
   }
 
+  public get currentUserSnapshot(): AuthUser | null {
+    return this.currentUserSubject.value;
+  }
+
   public getDeviceId(): string {
     return this.getOrCreateDeviceId();
   }

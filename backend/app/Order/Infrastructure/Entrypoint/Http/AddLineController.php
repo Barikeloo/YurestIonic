@@ -23,6 +23,7 @@ final class AddLineController
             'quantity' => ['required', 'integer', 'min:1'],
             'price' => ['required', 'integer', 'min:0'],
             'tax_percentage' => ['required', 'integer', 'min:0', 'max:100'],
+            'diner_number' => ['nullable', 'integer', 'min:1'],
         ]);
 
         try {
@@ -34,6 +35,7 @@ final class AddLineController
                 quantity: $validated['quantity'],
                 price: $validated['price'],
                 taxPercentage: $validated['tax_percentage'],
+                dinerNumber: $validated['diner_number'] ?? null,
             );
         } catch (InvalidArgumentException $exception) {
             return new JsonResponse([

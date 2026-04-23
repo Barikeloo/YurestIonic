@@ -50,7 +50,7 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
                 'value_date' => $sale->valueDate()->value(),
                 'total' => $sale->total()->value(),
                 'cash_session_id' => $cashSessionId,
-                'status' => $sale->status(),
+                'status' => $sale->status()->value(),
                 'cancelled_at' => $sale->cancelledAt()?->value(),
                 'cancelled_by_user_id' => $cancelledByUserId,
                 'cancel_reason' => $sale->cancellationReason(),
@@ -98,6 +98,19 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
         $model = $this->model->newQuery()->where('order_id', $orderInternalId)->first();
 
         return $model ? $this->toDomain($model) : null;
+    }
+
+    public function findAllByOrderId(Uuid $orderId): array
+    {
+        $orderInternalId = EloquentOrder::query()->where('uuid', $orderId->value())->value('id');
+
+        if ($orderInternalId === null) {
+            return [];
+        }
+
+        $models = $this->model->newQuery()->where('order_id', $orderInternalId)->get();
+
+        return $models->map(fn($model) => $this->toDomain($model))->toArray();
     }
 
     public function findByCashSessionId(Uuid $cashSessionId): array

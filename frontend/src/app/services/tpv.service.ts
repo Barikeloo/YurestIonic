@@ -55,6 +55,7 @@ export interface TpvOrderLine {
   quantity: number;
   price: number;
   tax_percentage: number;
+  diner_number?: number | null;
 }
 
 export interface TpvSale {
@@ -136,6 +137,7 @@ interface AddLinePayload {
   quantity: number;
   price: number;
   tax_percentage: number;
+  diner_number?: number | null;
 }
 
 interface UpdateOrderPayload {
@@ -242,9 +244,23 @@ export class TpvService {
   // Ventas (transaccional)
   // ============================================
 
-  public createSale(payload: { order_id: string; opened_by_user_id: string; closed_by_user_id: string }): Observable<TpvSale> {
+  public createSale(payload: {
+    order_id: string;
+    opened_by_user_id: string;
+    closed_by_user_id: string;
+    device_id: string;
+    payments: Array<{ method: string; amount_cents: number; metadata?: Record<string, unknown> }>;
+    order_line_ids?: string[];
+    is_partial_payment?: boolean;
+  }): Observable<TpvSale> {
     return this.http
       .post<TpvSale>(`${this.baseUrl}/tpv/sales`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public getOrderPaidTotal(orderId: string): Observable<{ total_cents: number }> {
+    return this.http
+      .get<{ total_cents: number }>(`${this.baseUrl}/tpv/sales/order/${orderId}/paid-total`, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
@@ -369,6 +385,23 @@ export class TpvService {
   }): Observable<TpvCashMovement> {
     return this.http
       .post<TpvCashMovement>(`${this.baseUrl}/tpv/cash-movements`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public listCashMovements(cashSessionId: string): Observable<{ movements: Array<{
+    uuid: string;
+    type: 'in' | 'out';
+    reason_code: string;
+    amount_cents: number;
+    description: string | null;
+    user_id: string;
+    created_at: string;
+  }> }> {
+    return this.http
+      .get<{ movements: any[] }>(`${this.baseUrl}/tpv/cash-movements`, {
+        withCredentials: true,
+        params: { cash_session_id: cashSessionId },
+      })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 

@@ -1,0 +1,58 @@
+@import '../../styles/variables.scss';
+
+.mesas-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.mesas-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  font-family: var(--font);
+}
+
+.mesa-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.mesa-info {
+  .mesa-name {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--black);
+  }
+
+  .mesa-details {
+    font-size: 11px;
+    color: var(--gray-400);
+    font-family: var(--font);
+  }
+}
+
+.mesa-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mesa-total {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.mesas-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--gray-400);
+  font-family: var(--font);
+  font-size: 13px;
+}

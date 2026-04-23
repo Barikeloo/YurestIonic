@@ -1,0 +1,24 @@
+<app-card>
+  <div class="method-title">Desglose por método</div>
+  <div class="method-bar">
+    <div
+      *ngFor="let method of methods | keyvalue"
+      class="method-segment"
+      [style.flex]="method.value"
+      [style.background]="getMethodColor(method.key)"
+    ></div>
+  </div>
+  <div *ngFor="let method of methods | keyvalue" class="method-row">
+    <div class="method-info">
+      <div class="method-dot" [style.background]="getMethodColor(method.key)"></div>
+      <span class="method-label">{{ getMethodLabel(method.key) }}</span>
+    </div>
+    <div class="method-values">
+      <span class="method-amount">{{ formatCents(method.value) }}</span>
+      <span class="method-percentage">{{ getPercentage(method.value) }}%</span>
+    </div>
+  </div>
+  <div *ngIf="getTotal() === 0" class="method-empty">
+    Sin datos de pago
+  </div>
+</app-card>

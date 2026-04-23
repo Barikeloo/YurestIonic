@@ -20,6 +20,13 @@ final class OrderLine
         private readonly OrderLineQuantity $quantity,
         private readonly OrderLinePrice $price,
         private readonly OrderLineTaxPercentage $taxPercentage,
+        private readonly ?int $dinerNumber,
+        private readonly ?int $discountPercent,
+        private readonly ?int $discountAmountCents,
+        private readonly ?string $discountReason,
+        private readonly bool $isInvitation,
+        private readonly ?int $priceOverrideCents,
+        private readonly ?string $notes,
         private readonly DomainDateTime $createdAt,
         private readonly DomainDateTime $updatedAt,
         private readonly ?DomainDateTime $deletedAt = null,
@@ -35,6 +42,13 @@ final class OrderLine
         OrderLineQuantity $quantity,
         OrderLinePrice $price,
         OrderLineTaxPercentage $taxPercentage,
+        ?int $dinerNumber = null,
+        ?int $discountPercent = null,
+        ?int $discountAmountCents = null,
+        ?string $discountReason = null,
+        bool $isInvitation = false,
+        ?int $priceOverrideCents = null,
+        ?string $notes = null,
     ): self {
         return new self(
             id: $id,
@@ -46,6 +60,13 @@ final class OrderLine
             quantity: $quantity,
             price: $price,
             taxPercentage: $taxPercentage,
+            dinerNumber: $dinerNumber,
+            discountPercent: $discountPercent,
+            discountAmountCents: $discountAmountCents,
+            discountReason: $discountReason,
+            isInvitation: $isInvitation,
+            priceOverrideCents: $priceOverrideCents,
+            notes: $notes,
             createdAt: DomainDateTime::now(),
             updatedAt: DomainDateTime::now(),
         );
@@ -61,6 +82,13 @@ final class OrderLine
         int $quantity,
         int $price,
         int $taxPercentage,
+        ?int $dinerNumber,
+        ?int $discountPercent,
+        ?int $discountAmountCents,
+        ?string $discountReason,
+        bool $isInvitation,
+        ?int $priceOverrideCents,
+        ?string $notes,
         \DateTimeImmutable $createdAt,
         \DateTimeImmutable $updatedAt,
         ?\DateTimeImmutable $deletedAt = null,
@@ -75,6 +103,13 @@ final class OrderLine
             quantity: OrderLineQuantity::create($quantity),
             price: OrderLinePrice::create($price),
             taxPercentage: OrderLineTaxPercentage::create($taxPercentage),
+            dinerNumber: $dinerNumber,
+            discountPercent: $discountPercent,
+            discountAmountCents: $discountAmountCents,
+            discountReason: $discountReason,
+            isInvitation: $isInvitation,
+            priceOverrideCents: $priceOverrideCents,
+            notes: $notes,
             createdAt: DomainDateTime::create($createdAt),
             updatedAt: DomainDateTime::create($updatedAt),
             deletedAt: $deletedAt !== null ? DomainDateTime::create($deletedAt) : null,
@@ -141,6 +176,41 @@ final class OrderLine
         return $this->deletedAt;
     }
 
+    public function dinerNumber(): ?int
+    {
+        return $this->dinerNumber;
+    }
+
+    public function discountPercent(): ?int
+    {
+        return $this->discountPercent;
+    }
+
+    public function discountAmountCents(): ?int
+    {
+        return $this->discountAmountCents;
+    }
+
+    public function discountReason(): ?string
+    {
+        return $this->discountReason;
+    }
+
+    public function isInvitation(): bool
+    {
+        return $this->isInvitation;
+    }
+
+    public function priceOverrideCents(): ?int
+    {
+        return $this->priceOverrideCents;
+    }
+
+    public function notes(): ?string
+    {
+        return $this->notes;
+    }
+
     public function withAddedQuantity(int $delta): self
     {
         return new self(
@@ -153,6 +223,13 @@ final class OrderLine
             quantity: OrderLineQuantity::create($this->quantity->value() + $delta),
             price: $this->price,
             taxPercentage: $this->taxPercentage,
+            dinerNumber: $this->dinerNumber,
+            discountPercent: $this->discountPercent,
+            discountAmountCents: $this->discountAmountCents,
+            discountReason: $this->discountReason,
+            isInvitation: $this->isInvitation,
+            priceOverrideCents: $this->priceOverrideCents,
+            notes: $this->notes,
             createdAt: $this->createdAt,
             updatedAt: DomainDateTime::now(),
             deletedAt: $this->deletedAt,

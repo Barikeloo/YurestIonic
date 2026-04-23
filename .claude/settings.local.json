@@ -17,7 +17,11 @@
       "Bash(tar -xf /tmp/design.gz)",
       "Bash(curl *)",
       "Bash(xargs grep *)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(php artisan *)",
+      "Bash(docker compose *)"
     ]
   }
 }

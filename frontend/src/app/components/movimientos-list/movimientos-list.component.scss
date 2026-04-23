@@ -1,0 +1,92 @@
+@import '../../styles/variables.scss';
+
+.movimientos-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.movimientos-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+  font-family: var(--font);
+}
+
+.movimientos-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.movement-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.movement-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.movement-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+
+  &.in {
+    background: var(--green-soft);
+    color: var(--green);
+  }
+
+  &.out {
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+}
+
+.movement-details {
+  .movement-reason {
+    font-size: 12px;
+    font-family: var(--font);
+    font-weight: 600;
+    color: var(--black);
+  }
+
+  .movement-meta {
+    font-size: 10px;
+    color: var(--gray-400);
+    font-family: var(--font);
+  }
+}
+
+.movement-amount {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+
+  &.in {
+    color: var(--green);
+  }
+
+  &.out {
+    color: var(--accent);
+  }
+}
+
+.movimientos-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--gray-400);
+  font-family: var(--font);
+  font-size: 13px;
+}

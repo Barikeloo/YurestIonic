@@ -561,6 +561,36 @@
   padding: 20px 0;
 }
 
+// ── Payment method selector ───────────────────
+.payment-methods {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.payment-method {
+  height: 48px;
+  border: 2px solid #E5E5E5;
+  background: #FFFFFF;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0D0D0D;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background 0.12s ease;
+
+  &.selected {
+    border-color: #E8440A;
+    background: #FFF3EC;
+    color: #E8440A;
+  }
+
+  &:hover:not(.selected) {
+    border-color: #B5B5B5;
+  }
+}
+
 // ── Diners display ─────────────────────────────
 .diners-display {
   font-size: 64px;

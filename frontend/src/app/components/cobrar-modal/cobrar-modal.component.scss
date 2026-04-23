@@ -1,0 +1,427 @@
+@import '../../styles/variables.scss';
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 300;
+  backdrop-filter: blur(3px);
+}
+
+.modal-content {
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  width: 90%;
+  max-width: 900px;
+  max-height: 92vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  font-family: var(--font);
+  color: var(--black);
+}
+
+.close-btn {
+  border: none;
+  background: none;
+  font-size: 24px;
+  color: var(--gray-400);
+  cursor: pointer;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.modal-body {
+  overflow-y: auto;
+  flex: 1;
+  padding: 24px;
+}
+
+.payment-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+}
+
+.left-column,
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.section-label {
+  font-size: 11px;
+  color: var(--gray-400);
+  font-family: var(--font);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-card {
+  background: var(--gray-50);
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.summary-name {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+.summary-price {
+  font-family: var(--mono);
+  font-size: 13px;
+}
+
+.summary-total {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-weight: 700;
+  font-family: var(--font);
+  font-size: 15px;
+}
+
+.total-amount {
+  font-family: var(--mono);
+}
+
+.methods-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+
+.method-btn {
+  padding: 10px 4px;
+  border-radius: 10px;
+  border: 1.5px solid var(--gray-200);
+  background: var(--white);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.12s;
+
+  &.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+}
+
+.method-icon {
+  font-size: 20px;
+}
+
+.method-label {
+  font-size: 10px;
+  font-family: var(--font);
+  color: var(--gray-500);
+  margin-top: 3px;
+
+  .active & {
+    color: var(--accent);
+    font-weight: 700;
+  }
+}
+
+.fiscal-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fiscal-label {
+  font-size: 13px;
+  font-family: var(--font);
+  color: var(--gray-700);
+}
+
+.fiscal-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fiscal-input {
+  border-radius: 8px;
+  border: 1.5px solid var(--gray-200);
+  padding: 8px 10px;
+  font-family: var(--font);
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.change-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.change-amount {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.success-text {
+  color: var(--green);
+}
+
+.error-text {
+  color: var(--accent);
+}
+
+.quick-amounts {
+  .quick-buttons {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+}
+
+.quick-btn {
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1.5px solid var(--gray-200);
+  background: var(--white);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--gray-700);
+
+  &.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+}
+
+// Card payment
+.card-payment {
+  text-align: center;
+  padding-top: 12px;
+}
+
+.card-icon {
+  font-size: 60px;
+  margin-bottom: 10px;
+}
+
+.card-text {
+  font-size: 14px;
+  font-family: var(--font);
+  color: var(--gray-600);
+  margin-bottom: 20px;
+}
+
+.card-amount-card {
+  background: var(--gray-50);
+}
+
+.card-amount-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.card-amount-label {
+  color: var(--gray-500);
+}
+
+.card-amount-value {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 20px;
+}
+
+.tip-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--gray-200);
+}
+
+.tip-label {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--gray-700);
+}
+
+.tip-buttons {
+  margin-top: 10px;
+  display: flex;
+  gap: 6px;
+}
+
+.tip-btn {
+  flex: 1;
+  padding: 6px 0;
+  border-radius: 8px;
+  border: 1.5px solid var(--gray-200);
+  background: var(--white);
+  font-family: var(--mono);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--gray-600);
+
+  &.active {
+    border-color: var(--green);
+    background: var(--green-soft);
+    color: var(--green);
+    font-weight: 700;
+  }
+}
+
+.card-total-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--gray-200);
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.card-total-value {
+  font-family: var(--mono);
+}
+
+// Bizum payment
+.bizum-payment {
+  text-align: center;
+  padding-top: 12px;
+}
+
+.bizum-icon {
+  font-size: 60px;
+  margin-bottom: 10px;
+}
+
+.bizum-text {
+  font-size: 14px;
+  font-family: var(--font);
+  color: var(--gray-600);
+  margin-bottom: 6px;
+}
+
+.bizum-number {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--black);
+}
+
+.bizum-amount-card {
+  background: var(--gray-50);
+}
+
+.bizum-amount-row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font);
+  font-size: 13px;
+}
+
+.bizum-amount-label {
+  color: var(--gray-500);
+}
+
+.bizum-amount-value {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 22px;
+}
+
+// Mixed payment
+.mixed-payment {
+  .mixed-placeholder {
+    color: var(--gray-500);
+    font-family: var(--font);
+    font-size: 13px;
+  }
+}
+
+// Invitation payment
+.invitation-payment {
+  text-align: center;
+  padding-top: 16px;
+}
+
+.invitation-icon {
+  font-size: 56px;
+  margin-bottom: 8px;
+}
+
+.invitation-title {
+  font-size: 15px;
+  font-family: var(--font);
+  font-weight: 600;
+  color: var(--black);
+  margin-bottom: 4px;
+}
+
+.invitation-text {
+  font-size: 13px;
+  font-family: var(--font);
+  color: var(--gray-400);
+  margin-bottom: 20px;
+}
+
+.invitation-value-card {
+  background: var(--accent-soft);
+  border: none;
+}
+
+.invitation-label {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.invitation-value {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.payment-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

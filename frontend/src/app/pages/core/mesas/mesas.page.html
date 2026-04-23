@@ -30,8 +30,8 @@
             <span class="mesa-zone-label">{{ getZoneName(table.zone_id) }}</span>
             <span class="mesa-name">{{ table.name }}</span>
             <span *ngIf="table.status === 'to-charge'" class="mesa-cobrar-tag">COBRAR</span>
-            <span *ngIf="table.occupied && selectedTable?.id === table.id && linesTotal > 0" class="mesa-amount">
-              {{ formatCents(linesTotal) }}
+            <span *ngIf="table.occupied && selectedTable?.id === table.id && (table.remaining_total ?? 0) > 0" class="mesa-amount">
+              {{ formatCents(table.remaining_total ?? 0) }}
             </span>
           </button>
         </div>
@@ -64,7 +64,7 @@
               </div>
             </div>
             <div class="order-total-big">
-              {{ selectedTable.occupied && linesTotal > 0 ? formatCents(linesTotal) : '0,00€' }}
+              {{ selectedTable.occupied && (selectedTable.remaining_total ?? 0) > 0 ? formatCents(selectedTable.remaining_total ?? 0) : '0,00€' }}
             </div>
           </div>
         </div>
@@ -94,7 +94,7 @@
           <button
             *ngIf="selectedTable.status === 'to-charge'"
             class="btn-cobrar"
-            (click)="openPaymentModal()"
+            (click)="goToCobrar()"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
               <line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>
@@ -224,47 +224,6 @@
     </button>
 
     <div *ngIf="closeAccountError" class="modal-error">{{ closeAccountError }}</div>
-
-  </div>
-</div>
-
-<!-- ── Modal cobrar ───────────────────────────────── -->
-<div class="modal-overlay" [class.open]="paymentModalOpen" (click)="closePaymentModal()">
-  <div class="modal-box" (click)="$event.stopPropagation()">
-
-    <button class="modal-close-btn" (click)="closePaymentModal()">✕</button>
-
-    <div class="modal-title">Cobrar mesa</div>
-    <div class="modal-sub" *ngIf="selectedTable">
-      {{ selectedTable.name }} · Total <strong>{{ formatCents(linesTotal) }}</strong>
-    </div>
-
-    <div class="modal-section-label">¿Quién cobra?</div>
-    <div class="user-select-grid">
-      <button
-        *ngFor="let user of paymentUsers; let i = index"
-        class="user-chip"
-        [class.selected]="selectedPayer?.user_uuid === user.user_uuid"
-        (click)="selectPayer(user)"
-      >
-        <div class="user-avatar" [style.background]="avatarColor(i)">
-          {{ getUserInitials(user.name).toUpperCase() }}
-        </div>
-        <span class="user-chip-name">{{ user.name.split(' ')[0] }}</span>
-      </button>
-      <div *ngIf="paymentUsers.length === 0" class="user-chip-empty">Sin usuarios recientes</div>
-    </div>
-
-    <button
-      class="btn-comanda"
-      style="width:100%; margin-top: 12px"
-      [disabled]="!selectedPayer || processingPayment"
-      (click)="confirmPayment()"
-    >
-      {{ processingPayment ? 'Procesando...' : 'Confirmar cobro' }}
-    </button>
-
-    <div *ngIf="paymentError" class="modal-error">{{ paymentError }}</div>
 
   </div>
 </div>

@@ -1,0 +1,26 @@
+<app-card>
+  <div class="movimientos-header">
+    <div class="movimientos-title">Movimientos manuales</div>
+    <div class="movimientos-actions">
+      <app-btn size="sm" variant="outline" color="#1a9e5a" (click)="addEntrada.emit()">+ Entrada</app-btn>
+      <app-btn size="sm" variant="outline" color="#ff4d4d" (click)="addSalida.emit()">− Salida</app-btn>
+    </div>
+  </div>
+  <div *ngFor="let movement of movements" class="movement-row">
+    <div class="movement-info">
+      <div class="movement-icon" [class.in]="movement.type === 'in'" [class.out]="movement.type === 'out'">
+        {{ movement.type === 'in' ? '↑' : '↓' }}
+      </div>
+      <div class="movement-details">
+        <div class="movement-reason">{{ movement.reason }}</div>
+        <div class="movement-meta">{{ movement.time }} · {{ movement.user }}</div>
+      </div>
+    </div>
+    <span class="movement-amount" [class.in]="movement.type === 'in'" [class.out]="movement.type === 'out'">
+      {{ movement.type === 'in' ? '+' : '−' }}{{ formatCents(movement.amount) }}
+    </span>
+  </div>
+  <div *ngIf="movements.length === 0" class="movimientos-empty">
+    Sin movimientos manuales
+  </div>
+</app-card>

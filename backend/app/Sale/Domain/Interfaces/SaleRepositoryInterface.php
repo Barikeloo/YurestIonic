@@ -19,6 +19,8 @@ interface SaleRepositoryInterface
 
     public function findByOrderId(Uuid $orderId): ?Sale;
 
+    public function findAllByOrderId(Uuid $orderId): array;
+
     public function findByCashSessionId(Uuid $cashSessionId): array;
 
     public function delete(Uuid $id): void;
