@@ -28,6 +28,7 @@ export class CobrarModalComponent {
   @Input() total = 0;
   @Input() tableLabel = '';
   @Input() lines: OrderLine[] = [];
+  @Input() isPartialPayment = false;
   @Output() closeModal = new EventEmitter<void>();
   @Output() confirmPayment = new EventEmitter<{ method: PaymentMethod; amount: number; tip?: number }>();
   @Output() splitBill = new EventEmitter<void>();
@@ -48,11 +49,11 @@ export class CobrarModalComponent {
 
   public get methods(): Array<{ value: PaymentMethod; label: string; icon: string }> {
     return [
-      { value: 'cash', label: 'Efectivo', icon: '💵' },
-      { value: 'card', label: 'Tarjeta', icon: '💳' },
-      { value: 'bizum', label: 'Bizum', icon: '📱' },
-      { value: 'mixed', label: 'Mixto', icon: '🔀' },
-      { value: 'invitation', label: 'Invitación', icon: '🎁' },
+      { value: 'cash', label: 'Efectivo', icon: 'cash' },
+      { value: 'card', label: 'Tarjeta', icon: 'card' },
+      { value: 'bizum', label: 'Bizum', icon: 'phone' },
+      { value: 'mixed', label: 'Mixto', icon: 'mixed' },
+      { value: 'invitation', label: 'Invitación', icon: 'gift' },
     ];
   }
 

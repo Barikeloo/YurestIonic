@@ -4,34 +4,62 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .mesas-title {
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--gray-600);
   font-family: var(--font);
+}
+
+.mesas-list {
+  max-height: 300px;
+  overflow-y: auto;
+  // Custom scrollbar for better UX
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) var(--gray-100);
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 4px;
+
+    &:hover {
+      background: var(--gray-400);
+    }
+  }
 }
 
 .mesa-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 9px 0;
-  border-bottom: 1px solid var(--gray-100);
+  padding: 16px 0;
+  border-bottom: 2px solid var(--gray-100);
+  // Optimized for tablet touch targets
+  min-height: 60px;
 }
 
 .mesa-info {
   .mesa-name {
     font-family: var(--font);
-    font-size: 13px;
+    font-size: 16px;
     font-weight: 600;
     color: var(--black);
   }
 
   .mesa-details {
-    font-size: 11px;
+    font-size: 14px;
     color: var(--gray-400);
     font-family: var(--font);
   }
@@ -40,19 +68,19 @@
 .mesa-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
 .mesa-total {
   font-family: var(--mono);
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
 }
 
 .mesas-empty {
   text-align: center;
-  padding: 20px;
+  padding: 32px;
   color: var(--gray-400);
   font-family: var(--font);
-  font-size: 13px;
+  font-size: 16px;
 }

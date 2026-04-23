@@ -1,25 +1,12 @@
 <div class="caja-container">
-  <!-- Header -->
-  <div class="caja-header">
-    <div class="header-left">
-      <div class="restaurant-name">La Tasca de Miguel</div>
-      <div class="session-info">
-        <ng-container *ngIf="state === 'activa'; else closedInfo">
-          Turno abierto · desde {{ formatDate(activeSession?.opened_at) }}
-        </ng-container>
-        <ng-template #closedInfo>
-          Caja cerrada · TPV Sala
-        </ng-template>
-      </div>
+  <!-- Status badge and actions -->
+  <div class="status-bar">
+    <div class="status-badge" [class.open]="state === 'activa'">
+      <span>{{ state === 'activa' ? '● ABIERTA' : '○ CERRADA' }}</span>
     </div>
-    <div class="header-center">
-      <div class="status-badge" [class.open]="state === 'activa'">
-        <span>{{ state === 'activa' ? '● ABIERTA' : '○ CERRADA' }}</span>
-      </div>
-    </div>
-    <div class="header-right">
+    <div class="status-actions">
       <app-btn *ngIf="state === 'activa'" size="sm" variant="outline" color="#ff4d4d" (click)="onStartClosing()">Cerrar caja</app-btn>
-      <div class="clock">{{ currentTime }}</div>
+      <app-btn *ngIf="state === 'activa'" size="sm" variant="gray" (click)="onOpenMovementModal()">Movimiento manual</app-btn>
     </div>
   </div>
 
@@ -55,6 +42,7 @@
     [total]="currentPaymentAmount || selectedTable?.total || 0"
     [tableLabel]="selectedTable?.table_name || ''"
     [lines]="selectedTableLines"
+    [isPartialPayment]="isPartialPayment"
     (closeModal)="showCobrarModal = false"
     (confirmPayment)="onConfirmPayment($event)"
     (splitBill)="onSplitBill()"
@@ -72,6 +60,12 @@
     (confirmSplit)="onConfirmSplit($event)"
   ></app-split-bill-modal>
 
+  <!-- Animación de confirmación de pago -->
+  <app-payment-success
+    [isOpen]="showPaymentSuccess"
+    (complete)="onPaymentSuccessComplete()"
+  ></app-payment-success>
+
   <!-- Wizard de cierre (a pantalla completa, se monta sobre todo) -->
   <app-closing-wizard
     [isOpen]="showWizard"
@@ -79,7 +73,7 @@
     deviceName="TPV Sala"
     [expectedAmount]="wizardExpectedAmount"
     [zData]="wizardZData"
-    (closeModal)="onCancelClosing()"
+    (closeModal)="onWizardClose()"
     (completeClosing)="onCompleteClosing($event)"
   ></app-closing-wizard>
 
@@ -184,12 +178,6 @@
         (addEntrada)="onOpenMovementModal()"
         (addSalida)="onOpenMovementModal()"
       ></app-movimientos-list>
-    </div>
-
-    <!-- Acciones principales -->
-    <div class="actions-row">
-      <app-btn variant="gray" (click)="onOpenMovementModal()">Movimiento manual</app-btn>
-      <app-btn variant="danger" (click)="onStartClosing()">Cerrar caja</app-btn>
     </div>
   </div>
 

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
-export type ManagementEntityKey = 'restaurant' | 'users' | 'families' | 'products' | 'zones' | 'taxes';
+export type ManagementEntityKey = 'restaurant' | 'users' | 'families' | 'products' | 'zones' | 'taxes' | 'zreports';
 
 export interface ManagementEntity {
   key: ManagementEntityKey;

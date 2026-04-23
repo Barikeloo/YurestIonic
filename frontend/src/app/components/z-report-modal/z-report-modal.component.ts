@@ -36,6 +36,8 @@ export interface ZReportSession {
 export class ZReportModalComponent {
   @Input() isOpen = false;
   @Input() session: ZReportSession | null = null;
+  @Input() restaurantName = '';
+  @Input() deviceName = '';
   @Output() closeModal = new EventEmitter<void>();
 
   public onClose(): void {
@@ -48,6 +50,17 @@ export class ZReportModalComponent {
 
   public formatNum(cents: number): string {
     return (cents / 100).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  public formatDate(dateString: string): string {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   }
 
   public get isSquared(): boolean {

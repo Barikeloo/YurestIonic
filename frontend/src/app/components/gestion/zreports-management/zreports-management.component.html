@@ -1,0 +1,56 @@
+<div class="zreports-management">
+  <div class="zreports-header">
+    <div class="zreports-title">Z Reports</div>
+    <app-btn size="sm" variant="outline" (click)="onRefresh()">
+      <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 4v6h-6"></path>
+        <path d="M1 20v-6h6"></path>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+      </svg>
+      Actualizar
+    </app-btn>
+  </div>
+
+  <div class="zreports-content">
+    <div *ngIf="loading" class="zreports-loading">
+      Cargando reports...
+    </div>
+
+    <div *ngIf="!loading && reports.length === 0" class="zreports-empty">
+      No hay Z reports disponibles
+    </div>
+
+    <div *ngIf="!loading && reports.length > 0" class="zreports-list">
+      <div *ngFor="let report of reports" class="zreport-card" (click)="onViewReport(report)">
+        <div class="zreport-header">
+          <div class="zreport-number">Z #{{ report.zNum }}</div>
+          <app-badge [text]="getDiffText(report.diff)" [color]="getDiffColor(report.diff)"></app-badge>
+        </div>
+        <div class="zreport-date">{{ formatDate(report.date) }}</div>
+        <div class="zreport-details">
+          <div class="zreport-detail">
+            <span class="detail-label">Tickets:</span>
+            <span class="detail-value">{{ report.tickets }}</span>
+          </div>
+          <div class="zreport-detail">
+            <span class="detail-label">Neto:</span>
+            <span class="detail-value">{{ formatCents(report.net) }}€</span>
+          </div>
+          <div class="zreport-detail">
+            <span class="detail-label">Efectivo:</span>
+            <span class="detail-value">{{ formatCents(report.initial + report.movIn - report.movOut) }}€</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal para ver detalles del Z report -->
+  <app-z-report-modal
+    [isOpen]="showReportModal"
+    [session]="selectedReport"
+    [restaurantName]="restaurantName"
+    [deviceName]="deviceName"
+    (closeModal)="onCloseModal()"
+  ></app-z-report-modal>
+</div>

@@ -6,21 +6,23 @@
       <app-btn size="sm" variant="outline" color="#ff4d4d" (click)="addSalida.emit()">− Salida</app-btn>
     </div>
   </div>
-  <div *ngFor="let movement of movements" class="movement-row">
-    <div class="movement-info">
-      <div class="movement-icon" [class.in]="movement.type === 'in'" [class.out]="movement.type === 'out'">
-        {{ movement.type === 'in' ? '↑' : '↓' }}
+  <div class="movimientos-list">
+    <div *ngFor="let movement of movements" class="movement-row">
+      <div class="movement-info">
+        <div class="movement-icon" [class.in]="movement.type === 'in'" [class.out]="movement.type === 'out'">
+          {{ movement.type === 'in' ? '↑' : '↓' }}
+        </div>
+        <div class="movement-details">
+          <div class="movement-reason">{{ movement.reason }}</div>
+          <div class="movement-meta">{{ movement.time }} · {{ movement.user }}</div>
+        </div>
       </div>
-      <div class="movement-details">
-        <div class="movement-reason">{{ movement.reason }}</div>
-        <div class="movement-meta">{{ movement.time }} · {{ movement.user }}</div>
-      </div>
+      <span class="movement-amount" [class.in]="movement.type === 'in'" [class.out]="movement.type === 'out'">
+        {{ movement.type === 'in' ? '+' : '−' }}{{ formatCents(movement.amount) }}
+      </span>
     </div>
-    <span class="movement-amount" [class.in]="movement.type === 'in'" [class.out]="movement.type === 'out'">
-      {{ movement.type === 'in' ? '+' : '−' }}{{ formatCents(movement.amount) }}
-    </span>
-  </div>
-  <div *ngIf="movements.length === 0" class="movimientos-empty">
-    Sin movimientos manuales
+    <div *ngIf="movements.length === 0" class="movimientos-empty">
+      Sin movimientos manuales
+    </div>
   </div>
 </app-card>

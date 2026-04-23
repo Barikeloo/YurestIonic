@@ -29,7 +29,7 @@ export class SplitBillModalComponent implements OnChanges {
   @Output() closeModal = new EventEmitter<void>();
   @Output() confirmSplit = new EventEmitter<{ selectedLines: BillLine[]; diner?: number; amount?: number; isEqualPart?: boolean }>();
 
-  public mode: 'equal' | 'lines' | 'diner' = 'lines';
+  public mode: 'equal' | 'lines' | 'diner' = 'equal';
   public parts = 2;
   public assignedLines: BillLine[] = [];
 

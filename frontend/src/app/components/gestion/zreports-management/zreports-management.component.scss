@@ -1,0 +1,129 @@
+@import '../../../styles/variables.scss';
+
+.zreports-management {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.zreports-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gray-200);
+}
+
+.zreports-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--black);
+  font-family: var(--font);
+}
+
+.refresh-icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
+.zreports-content {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) var(--gray-100);
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 4px;
+    &:hover {
+      background: var(--gray-400);
+    }
+  }
+}
+
+.zreports-loading,
+.zreports-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  font-size: 14px;
+  color: var(--gray-500);
+  font-family: var(--font);
+}
+
+.zreports-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 4px;
+}
+
+.zreport-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+}
+
+.zreport-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.zreport-number {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--black);
+  font-family: var(--font);
+}
+
+.zreport-date {
+  font-size: 13px;
+  color: var(--gray-500);
+  font-family: var(--font);
+  margin-bottom: 12px;
+}
+
+.zreport-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.zreport-detail {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-family: var(--font);
+}
+
+.detail-label {
+  color: var(--gray-500);
+}
+
+.detail-value {
+  color: var(--gray-700);
+  font-weight: 500;
+}

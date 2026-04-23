@@ -3,17 +3,19 @@
     <div class="mesas-title">Mesas con cuenta pendiente</div>
     <app-badge [text]="mesas.length + ' abiertas'" color="#ff4d4d"></app-badge>
   </div>
-  <div *ngFor="let mesa of mesas" class="mesa-row">
-    <div class="mesa-info">
-      <div class="mesa-name">{{ mesa.table_name }}</div>
-      <div class="mesa-details">{{ mesa.diners }} comensales · desde {{ formatDate(mesa.opened_at) }}</div>
+  <div class="mesas-list">
+    <div *ngFor="let mesa of mesas" class="mesa-row">
+      <div class="mesa-info">
+        <div class="mesa-name">{{ mesa.table_name }}</div>
+        <div class="mesa-details">{{ mesa.diners }} comensales · desde {{ formatDate(mesa.opened_at) }}</div>
+      </div>
+      <div class="mesa-actions">
+        <span class="mesa-total">{{ formatCents(mesa.total) }} €</span>
+        <app-btn size="sm" variant="fill" (click)="cobrar.emit(mesa)">Cobrar</app-btn>
+      </div>
     </div>
-    <div class="mesa-actions">
-      <span class="mesa-total">{{ formatCents(mesa.total) }} €</span>
-      <app-btn size="sm" variant="fill" (click)="cobrar.emit(mesa)">Cobrar</app-btn>
+    <div *ngIf="mesas.length === 0" class="mesas-empty">
+      No hay mesas con cuenta pendiente
     </div>
-  </div>
-  <div *ngIf="mesas.length === 0" class="mesas-empty">
-    No hay mesas con cuenta pendiente
   </div>
 </app-card>

@@ -128,6 +128,16 @@ export interface TpvCashSessionListItem {
   discrepancy_reason: string | null;
   z_report_number: number | null;
   status: string;
+  tickets: number;
+  diners: number;
+  gross: number;
+  discounts: number;
+  invitations: number;
+  inv_value: number;
+  cancellations: number;
+  net: number;
+  mov_in: number;
+  mov_out: number;
 }
 
 interface AddLinePayload {

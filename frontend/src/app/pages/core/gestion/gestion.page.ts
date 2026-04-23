@@ -20,8 +20,9 @@ import { FamiliesManagementComponent } from '../../../components/gestion/familie
 import { ProductsManagementComponent } from '../../../components/gestion/products-management/products-management.component';
 import { ZonesManagementComponent } from '../../../components/gestion/zones-management/zones-management.component';
 import { TaxesManagementComponent } from '../../../components/gestion/taxes-management/taxes-management.component';
-
-type ManagementEntityKey = 'restaurant' | 'users' | 'families' | 'products' | 'zones' | 'taxes';
+import { ZReportsManagementComponent, ZReportRow } from '../../../components/gestion/zreports-management/zreports-management.component';
+import { ManagementEntityKey } from '../../../components/gestion/entity-tabs/entity-tabs.component';
+import { TpvService } from '../../../services/tpv.service';
 type UserRole = 'operator' | 'supervisor' | 'admin';
 
 interface ManagementRestaurant {
@@ -85,6 +86,7 @@ interface ManagementDataRow {
   taxes: TaxRow[];
   zones: ZoneRow[];
   products: ProductRow[];
+  zreports: ZReportRow[];
 }
 
 @Component({
@@ -103,6 +105,7 @@ interface ManagementDataRow {
     ProductsManagementComponent,
     ZonesManagementComponent,
     TaxesManagementComponent,
+    ZReportsManagementComponent,
   ],
 })
 export class GestionPage {
@@ -112,6 +115,7 @@ export class GestionPage {
   public isSavingFamily: boolean = false;
   public isSavingTax: boolean = false;
   public isSavingProduct: boolean = false;
+  public isLoadingZReports: boolean = false;
   private preloadRunId: number = 0;
 
   public readonly managementRestaurants: ManagementRestaurant[] = [];
@@ -125,12 +129,13 @@ export class GestionPage {
     { key: 'products', label: 'Productos' },
     { key: 'zones', label: 'Zonas y Mesas' },
     { key: 'taxes', label: 'Impuestos' },
+    { key: 'zreports', label: 'Z Reports' },
   ];
 
   public managementState: {
     restaurantId: number;
     entity: ManagementEntityKey;
-    selectedIndex: Record<'users' | 'families' | 'products' | 'zones' | 'tables' | 'taxes', number>;
+    selectedIndex: Record<'users' | 'families' | 'products' | 'zones' | 'tables' | 'taxes' | 'zreports', number>;
   } = {
     restaurantId: 0,
     entity: 'restaurant',
@@ -141,6 +146,7 @@ export class GestionPage {
       zones: 0,
       tables: 0,
       taxes: 0,
+      zreports: 0,
     },
   };
 
@@ -203,6 +209,7 @@ export class GestionPage {
     private readonly tableService: TableService,
     private readonly taxService: TaxService,
     private readonly zoneService: ZoneService,
+    private readonly tpvService: TpvService,
   ) {
     this.syncForms();
     if (this.selectedRestaurant) {
@@ -392,6 +399,7 @@ export class GestionPage {
         taxes: [],
         zones: [],
         products: [],
+        zreports: [],
       }
     );
   }
@@ -767,7 +775,7 @@ export class GestionPage {
             next: () => {
               selectedUser.name = name;
               selectedUser.email = email;
-              selectedUser.role = role;
+              selectedUser.role = role as UserRole;
               this.userForm.password = '';
               this.userForm.pin = '';
               this.apiErrorMessage = null;
@@ -798,7 +806,7 @@ export class GestionPage {
                 uuid: response.uuid,
                 name: response.name,
                 email: response.email,
-                role: this.normalizeRole(response.role ?? role),
+                role: this.normalizeRole(response.role ?? role) as UserRole,
               };
 
               (rows as UserRow[]).push(newUser);
@@ -1380,6 +1388,7 @@ export class GestionPage {
               taxes: [],
               zones: [],
               products: [],
+              zreports: [],
             };
 
             if (restaurant.uuid) {
@@ -1479,7 +1488,7 @@ export class GestionPage {
           uuid: user.uuid,
           name: user.name,
           email: user.email,
-          role: this.normalizeRole(user.role),
+          role: this.normalizeRole(user.role) as UserRole,
         }));
 
         currentData.families = families.map((family) => ({
@@ -1564,7 +1573,7 @@ export class GestionPage {
             uuid: user.uuid,
             name: user.name,
             email: user.email,
-            role: this.normalizeRole(user.role),
+            role: this.normalizeRole(user.role) as UserRole,
           }));
 
           this.managementData[restaurant.id].users = users;
@@ -1601,25 +1610,68 @@ export class GestionPage {
     const normalizedRole = this.normalizeRole(role);
 
     if (normalizedRole === 'admin') {
-      return 'role-badge-admin';
+      return 'badge-admin';
     }
 
     if (normalizedRole === 'supervisor') {
-      return 'role-badge-supervisor';
+      return 'badge-supervisor';
     }
 
-    return 'role-badge-operator';
+    return 'badge-operator';
   }
 
-  private normalizeRole(role: string | null | undefined): UserRole {
-    if (role === 'admin' || role === 'manager') {
+  public normalizeRole(role: string): string {
+    if (!role) return 'operator';
+
+    const lower = role.toLowerCase();
+
+    if (lower === 'admin' || lower === 'administrator') {
       return 'admin';
     }
 
-    if (role === 'supervisor' || role === 'kitchen') {
+    if (lower === 'supervisor') {
       return 'supervisor';
     }
 
     return 'operator';
+  }
+
+  public loadZReports(): void {
+    const restaurant = this.selectedRestaurant;
+    if (!restaurant || !restaurant.uuid) return;
+
+    this.isLoadingZReports = true;
+    this.tpvService.listCashSessions().subscribe({
+      next: (response) => {
+        this.managementData[restaurant.id].zreports = response.sessions.map((session): ZReportRow => ({
+          id: session.uuid,
+          zNum: session.z_report_number || 0,
+          date: session.closed_at || session.opened_at || '',
+          opened: session.opened_at || '',
+          closed: session.closed_at || '',
+          tickets: session.tickets || 0,
+          diners: session.diners || 0,
+          gross: session.gross || 0,
+          discounts: session.discounts || 0,
+          invitations: session.invitations || 0,
+          invValue: session.inv_value || 0,
+          cancellations: session.cancellations || 0,
+          net: session.net || session.final_amount_cents || session.expected_amount_cents || 0,
+          initial: session.initial_amount_cents,
+          movIn: session.mov_in || 0,
+          movOut: session.mov_out || 0,
+          expected: session.expected_amount_cents || 0,
+          counted: session.final_amount_cents || 0,
+          diff: session.discrepancy_cents || 0,
+          diffReason: session.discrepancy_reason || undefined,
+        }));
+        this.isLoadingZReports = false;
+      },
+      error: (error) => {
+        console.error('Error loading Z reports:', error);
+        this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudieron cargar los Z reports.';
+        this.isLoadingZReports = false;
+      },
+    });
   }
 }

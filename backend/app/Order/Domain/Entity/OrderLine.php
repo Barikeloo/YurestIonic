@@ -20,7 +20,7 @@ final class OrderLine
         private readonly OrderLineQuantity $quantity,
         private readonly OrderLinePrice $price,
         private readonly OrderLineTaxPercentage $taxPercentage,
-        private readonly ?int $dinerNumber,
+        private readonly ?int $dinerNumber, // hacer VO's pendientes
         private readonly ?int $discountPercent,
         private readonly ?int $discountAmountCents,
         private readonly ?string $discountReason,

@@ -11,19 +11,19 @@
         <div class="info-grid">
           <div class="info-item">
             <div class="info-label">Restaurante</div>
-            <div class="info-value">La Tasca de Miguel</div>
+            <div class="info-value">{{ restaurantName || '-' }}</div>
           </div>
           <div class="info-item">
             <div class="info-label">Device</div>
-            <div class="info-value">TPV Sala</div>
+            <div class="info-value">{{ deviceName || '-' }}</div>
           </div>
           <div class="info-item">
             <div class="info-label">Apertura</div>
-            <div class="info-value">{{ session.opened }}</div>
+            <div class="info-value">{{ formatDate(session.opened) }}</div>
           </div>
           <div class="info-item">
             <div class="info-label">Cierre</div>
-            <div class="info-value">{{ session.closed }}</div>
+            <div class="info-value">{{ formatDate(session.closed) }}</div>
           </div>
         </div>
       </app-card>

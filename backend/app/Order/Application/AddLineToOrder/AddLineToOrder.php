@@ -73,7 +73,7 @@ final class AddLineToOrder
             quantity: OrderLineQuantity::create($quantity),
             price: OrderLinePrice::create($price),
             taxPercentage: OrderLineTaxPercentage::create($taxPercentage),
-            dinerNumber: $dinerNumber,
+            dinerNumber: $dinerNumber, // hacer VO's
         );
 
         $this->orderLineRepository->save($orderLine);

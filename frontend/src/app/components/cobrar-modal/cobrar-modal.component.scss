@@ -118,33 +118,50 @@
 .methods-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 6px;
+  gap: 12px;
 }
 
 .method-btn {
-  padding: 10px 4px;
-  border-radius: 10px;
-  border: 1.5px solid var(--gray-200);
+  padding: 16px 8px;
+  border-radius: 12px;
+  border: 2px solid var(--gray-200);
   background: var(--white);
   cursor: pointer;
   text-align: center;
   transition: all 0.12s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 80px;
 
   &.active {
     border-color: var(--accent);
     background: var(--accent-soft);
   }
+
+  &:hover {
+    border-color: var(--gray-300);
+  }
 }
 
 .method-icon {
-  font-size: 20px;
+  width: 32px;
+  height: 32px;
+  color: var(--gray-600);
+  transition: color 0.12s;
+
+  .active & {
+    color: var(--accent);
+  }
 }
 
 .method-label {
-  font-size: 10px;
+  font-size: 13px;
   font-family: var(--font);
   color: var(--gray-500);
-  margin-top: 3px;
+  font-weight: 500;
 
   .active & {
     color: var(--accent);

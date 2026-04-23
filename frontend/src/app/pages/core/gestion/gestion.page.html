@@ -111,6 +111,15 @@
                 (saveChanges)="saveManagementEntity('taxes')"
               />
 
+              <app-zreports-management
+                *ngSwitchCase="'zreports'"
+                [reports]="selectedData.zreports"
+                [loading]="isLoadingZReports"
+                [restaurantName]="selectedRestaurant?.name || ''"
+                [deviceName]="'TPV'"
+                (refresh)="loadZReports()"
+              />
+
               <div *ngSwitchDefault class="gestion-empty">Selecciona una entidad para comenzar.</div>
             </div>
           </div>

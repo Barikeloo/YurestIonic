@@ -1,0 +1,118 @@
+@import '../../styles/variables.scss';
+
+.success-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.success-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.success-circle {
+  width: 80px;
+  height: 80px;
+  position: relative;
+}
+
+.success-check {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 3;
+  stroke: var(--white);
+  stroke-miterlimit: 10;
+  box-shadow: inset 0px 0px 0px var(--green);
+  animation: fill 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both;
+}
+
+.success-circle-bg {
+  stroke: var(--green);
+  stroke-width: 3;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.success-check-path {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+.success-text {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--white);
+  font-family: var(--font);
+  animation: fadeInUp 0.5s ease-out 0.5s both;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fill {
+  0% {
+    box-shadow: inset 0px 0px 0px var(--green);
+  }
+  100% {
+    box-shadow: inset 0px 0px 0px 40px var(--green);
+  }
+}
+
+@keyframes scale {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@keyframes stroke {
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
