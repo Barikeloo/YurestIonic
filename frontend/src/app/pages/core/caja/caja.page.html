@@ -21,13 +21,40 @@
     <button (click)="openCashError = null">✕</button>
   </div>
 
+  <!-- Modal de autenticación PIN -->
+  <app-pin-auth-modal
+    [isOpen]="showPinAuthModal"
+    [title]="'Abrir caja'"
+    [subtitle]="'Verifica tu PIN para continuar'"
+    (closeModal)="showPinAuthModal = false"
+    (authenticated)="onPinAuthenticated()"
+  ></app-pin-auth-modal>
+
+  <!-- Modal de autenticación PIN - Cobrar mesa -->
+  <app-pin-auth-modal
+    [isOpen]="showPinAuthModalForCobrarMesa"
+    [title]="'Cobrar mesa'"
+    [subtitle]="'Verifica tu PIN para continuar'"
+    (closeModal)="showPinAuthModalForCobrarMesa = false; pendingTableToCharge = null"
+    (authenticated)="onPinAuthenticatedForCobrarMesa()"
+  ></app-pin-auth-modal>
+
   <!-- Modal de apertura -->
   <app-open-cash-modal
     [isOpen]="showOpenModal"
-    [availableUsers]="availableUsers"
+    [currentUserId]="currentUser?.id ?? null"
     (closeModal)="showOpenModal = false"
     (openCash)="onOpenCash($event)"
   ></app-open-cash-modal>
+
+  <!-- Modal cobrar mesa -->
+  <app-cobrar-modal
+    [isOpen]="showCobrarModal"
+    [table]="pendingTableToCharge"
+    [cashSession]="activeSession"
+    (closeModal)="showCobrarModal = false; pendingTableToCharge = null"
+    (success)="onCobroSuccess($event)"
+  ></app-cobrar-modal>
 
   <!-- Modal de movimiento manual -->
   <app-cash-movement-modal
@@ -79,48 +106,67 @@
 
   <!-- Estado: Pre-apertura -->
   <div *ngIf="!loading && state === 'pre-apertura'" class="pre-apertura">
-    <!-- Banner sesión huérfana -->
-    <div *ngIf="orphanSession" class="orphan-session-card">
-      <app-card [padding]="16" [clickable]="false" [style.background]="'var(--accent-soft)'" [style.border]="'1.5px solid var(--accent)'">
-        <div class="orphan-title">⚠ Turno sin cerrar detectado</div>
-        <div class="orphan-text">
-          Turno del {{ formatDate(orphanSession.opened_at) }} no fue cerrado correctamente en {{ orphanSession.device_id }}.
+    <div class="pre-apertura-content">
+      <!-- Banner sesión huérfana -->
+      <div *ngIf="orphanSession" class="orphan-session-card">
+        <app-card [padding]="16" [clickable]="false" [style.background]="'var(--accent-soft)'" [style.border]="'1.5px solid var(--accent)'">
+          <div class="orphan-title">⚠ Turno sin cerrar detectado</div>
+          <div class="orphan-text">
+            Turno del {{ formatDate(orphanSession.opened_at) }} no fue cerrado correctamente en {{ orphanSession.device_id }}.
+          </div>
+          <app-btn size="sm" variant="danger">Forzar cierre del turno anterior</app-btn>
+        </app-card>
+      </div>
+
+      <!-- Card último cierre -->
+      <app-card [padding]="20" class="last-closure-card">
+        <div class="closure-label">
+          Último cierre · Z #{{ lastClosed?.z_report_number ?? '-' }}
         </div>
-        <app-btn size="sm" variant="danger">Forzar cierre del turno anterior</app-btn>
+        <div class="closure-header">
+          <div class="closure-info">
+            <div class="closure-operator">{{ lastClosed?.operator_name || 'Operario' }}</div>
+            <div class="closure-date">
+              {{ formatShortDate(lastClosed?.opened_at) }} · {{ formatTime(lastClosed?.opened_at) }} → {{ formatTime(lastClosed?.closed_at) }}
+            </div>
+          </div>
+          <div class="closure-amount">
+            <div class="amount">{{ formatCents(lastClosed?.final_amount_cents) }} €</div>
+            <app-badge
+              *ngIf="lastClosed?.discrepancy_cents"
+              [text]="'Descuadre ' + formatCentsSigned(lastClosed?.discrepancy_cents) + ' €'"
+              color="#ff4d4d"
+            ></app-badge>
+          </div>
+        </div>
+        <div class="closure-stats">
+          <div class="stat-item">
+            <div class="stat-value">{{ lastClosed?.tickets ?? 0 }}</div>
+            <div class="stat-label">Tickets</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">{{ lastClosed?.diners ?? 0 }}</div>
+            <div class="stat-label">Comensales</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">€ {{ formatAverageTicket(lastClosed) }}</div>
+            <div class="stat-label">Ticket medio</div>
+          </div>
+        </div>
       </app-card>
-    </div>
 
-    <!-- Card último cierre -->
-    <app-card [padding]="20" class="last-closure-card">
-      <div class="closure-label">
-        Último cierre
-      </div>
-      <div class="closure-header">
-        <div>
-          <div class="closure-date">{{ formatDate(lastClosed?.closed_at) }}</div>
+      <div class="open-cash-section">
+        <div class="open-cash-text">
+          {{ orphanSession ? 'Resuelve el turno huérfano antes de abrir' : 'La caja está cerrada · TPV Sala' }}
         </div>
-        <div class="closure-amount">
-          <div class="amount">{{ formatCents(lastClosed?.final_amount_cents) }} €</div>
-          <app-badge
-            *ngIf="lastClosed?.discrepancy_cents"
-            [text]="'Descuadre ' + formatCents(lastClosed?.discrepancy_cents)"
-            color="#ff4d4d"
-          ></app-badge>
-        </div>
+        <app-btn
+          size="lg"
+          variant="success"
+          [block]="true"
+          [disabled]="!!orphanSession"
+          (click)="onOpenModal()"
+        >Abrir caja</app-btn>
       </div>
-    </app-card>
-
-    <div class="open-cash-section">
-      <div class="open-cash-text">
-        {{ orphanSession ? 'Resuelve el turno huérfano antes de abrir' : 'La caja está cerrada · TPV Sala' }}
-      </div>
-      <app-btn
-        size="lg"
-        variant="success"
-        [block]="true"
-        [disabled]="!!orphanSession"
-        (click)="onOpenModal()"
-      >Abrir caja</app-btn>
     </div>
   </div>
 

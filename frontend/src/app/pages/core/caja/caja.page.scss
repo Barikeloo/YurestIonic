@@ -79,37 +79,43 @@
   align-items: center;
   justify-content: center;
   background: var(--gray-50);
-  padding: 48px;
+  padding: 32px;
+}
+
+.pre-apertura-content {
+  max-width: 440px;
+  width: 100%;
 }
 
 .orphan-session-card {
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .orphan-title {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--accent);
   font-family: var(--font);
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .orphan-text {
-  font-size: 14px;
+  font-size: 12px;
   color: var(--accent-light);
   font-family: var(--font);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .last-closure-card {
-  margin-bottom: 32px;
+  margin-bottom: 24px;
+  display: block;
 }
 
 .closure-label {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--gray-400);
   font-family: var(--font);
-  margin-bottom: 16px;
+  margin-bottom: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -118,17 +124,23 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
+
+  .closure-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
 
   .closure-operator {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
     font-family: var(--font);
     color: var(--black);
   }
 
   .closure-date {
-    font-size: 14px;
+    font-size: 12px;
     color: var(--gray-500);
     font-family: var(--font);
   }
@@ -137,33 +149,34 @@
     text-align: right;
 
     .amount {
-      font-size: 32px;
+      font-size: 24px;
       font-family: var(--mono);
       font-weight: 700;
+      color: var(--black);
     }
   }
 }
 
 .closure-stats {
   background: var(--gray-100);
-  border-radius: 12px;
-  padding: 16px 20px;
+  border-radius: 8px;
+  padding: 10px 14px;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 8px;
 
   .stat-item {
     text-align: center;
 
     .stat-value {
-      font-size: 20px;
+      font-size: 16px;
       font-family: var(--mono);
       font-weight: 700;
       color: var(--black);
     }
 
     .stat-label {
-      font-size: 12px;
+      font-size: 10px;
       color: var(--gray-400);
       font-family: var(--font);
     }
@@ -174,10 +187,10 @@
   text-align: center;
 
   .open-cash-text {
-    font-size: 15px;
+    font-size: 13px;
     color: var(--gray-400);
     font-family: var(--font);
-    margin-bottom: 24px;
+    margin-bottom: 16px;
   }
 }
 

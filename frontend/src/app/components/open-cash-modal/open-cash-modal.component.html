@@ -7,21 +7,8 @@
 
     <div class="modal-body">
       <div class="modal-grid">
-        <!-- Columna izquierda: Operador -->
+        <!-- Columna izquierda: Nota -->
         <div class="operator-section">
-          <div class="section-label">Operador</div>
-          <div *ngIf="showUserError" class="user-error">Selecciona un operador</div>
-          <div class="users-list">
-            <div
-              *ngFor="let user of availableUsers"
-              class="user-item"
-              [class.selected]="selectedUserId === user.id"
-              (click)="selectUser(user.id)"
-            >
-              <div class="user-avatar">{{ user.initials }}</div>
-              <span class="user-name">{{ user.name }}</span>
-            </div>
-          </div>
           <div class="note-section">
             <button class="note-toggle" (click)="toggleNote()">
               {{ showNote ? '− Ocultar nota' : '+ Añadir nota de apertura' }}

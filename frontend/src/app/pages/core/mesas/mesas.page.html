@@ -144,23 +144,6 @@
       {{ selectedTable.name }} · {{ getZoneName(selectedTable.zone_id) }}
     </div>
 
-    <!-- Operador -->
-    <div class="modal-section-label">Operador</div>
-    <div class="user-select-grid">
-      <button
-        *ngFor="let user of quickUsers; let i = index"
-        class="user-chip"
-        [class.selected]="selectedOperator?.user_uuid === user.user_uuid"
-        (click)="selectOperator(user)"
-      >
-        <div class="user-avatar" [style.background]="avatarColor(i)">
-          {{ getUserInitials(user.name).toUpperCase() }}
-        </div>
-        <span class="user-chip-name">{{ user.name.split(' ')[0] }}</span>
-      </button>
-      <div *ngIf="quickUsers.length === 0" class="user-chip-empty">Sin usuarios recientes</div>
-    </div>
-
     <!-- Comensales -->
     <div class="modal-section-label">Comensales</div>
     <div class="diners-display">{{ diners }}</div>
@@ -177,7 +160,7 @@
       <button class="key" (click)="numpadPress('9')">9</button>
       <button class="key key-del" (click)="numpadPress('del')">⌫</button>
       <button class="key" (click)="numpadPress('0')">0</button>
-      <button class="key key-enter" (click)="confirmOpen()" [disabled]="openingOrder || !selectedOperator">
+      <button class="key key-enter" (click)="confirmOpen()" [disabled]="openingOrder">
         {{ openingOrder ? '...' : 'Abrir' }}
       </button>
     </div>
@@ -198,26 +181,14 @@
       {{ selectedTable.name }} · Total <strong>{{ formatCents(linesTotal) }}</strong>
     </div>
 
-    <div class="modal-section-label">¿Quién cierra?</div>
-    <div class="user-select-grid">
-      <button
-        *ngFor="let user of closeAccountUsers; let i = index"
-        class="user-chip"
-        [class.selected]="selectedCloser?.user_uuid === user.user_uuid"
-        (click)="selectCloser(user)"
-      >
-        <div class="user-avatar" [style.background]="avatarColor(i)">
-          {{ getUserInitials(user.name).toUpperCase() }}
-        </div>
-        <span class="user-chip-name">{{ user.name.split(' ')[0] }}</span>
-      </button>
-      <div *ngIf="closeAccountUsers.length === 0" class="user-chip-empty">Sin usuarios recientes</div>
+    <div class="close-account-info">
+      Se marcará la cuenta como pendiente de cobro.
     </div>
 
     <button
       class="btn-comanda"
-      style="width:100%; margin-top: 12px"
-      [disabled]="!selectedCloser || closingAccount"
+      style="width:100%; margin-top: 24px"
+      [disabled]="closingAccount"
       (click)="confirmCloseAccount()"
     >
       {{ closingAccount ? 'Procesando...' : 'Confirmar cierre' }}
@@ -227,3 +198,30 @@
 
   </div>
 </div>
+
+<!-- Modal de autenticación PIN - Abrir mesa -->
+<app-pin-auth-modal
+  [isOpen]="showPinAuthModal"
+  [title]="'Abrir mesa'"
+  [subtitle]="'Verifica tu PIN para continuar'"
+  (closeModal)="showPinAuthModal = false"
+  (authenticated)="onPinAuthenticated()"
+></app-pin-auth-modal>
+
+<!-- Modal de autenticación PIN - Cerrar cuenta -->
+<app-pin-auth-modal
+  [isOpen]="showPinAuthModalForCloseAccount"
+  [title]="'Cerrar cuenta'"
+  [subtitle]="'Verifica tu PIN para continuar'"
+  (closeModal)="showPinAuthModalForCloseAccount = false"
+  (authenticated)="onPinAuthenticatedForCloseAccount()"
+></app-pin-auth-modal>
+
+<!-- Modal de autenticación PIN - Cobrar -->
+<app-pin-auth-modal
+  [isOpen]="showPinAuthModalForCharge"
+  [title]="'Cobrar'"
+  [subtitle]="'Verifica tu PIN para continuar'"
+  (closeModal)="showPinAuthModalForCharge = false"
+  (authenticated)="onPinAuthenticatedForCharge()"
+></app-pin-auth-modal>

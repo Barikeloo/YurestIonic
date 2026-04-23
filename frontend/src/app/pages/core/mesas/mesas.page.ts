@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
+import { PinAuthModalComponent } from '../../../components/pin-auth-modal/pin-auth-modal.component';
 import { AuthService, QuickAccessUserResponse } from '../../../services/auth.service';
 import { TpvOrder, TpvOrderLine, TpvService, TpvTableItem, TpvZoneItem } from '../../../services/tpv.service';
 
@@ -21,7 +22,7 @@ const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#
   selector: 'app-mesas',
   templateUrl: './mesas.page.html',
   styleUrls: ['./mesas.page.scss'],
-  imports: [CommonModule],
+  imports: [CommonModule, PinAuthModalComponent],
 })
 export class MesasPage implements OnInit {
   zones: TpvZoneItem[] = [];
@@ -35,18 +36,19 @@ export class MesasPage implements OnInit {
 
   // Modal apertura
   modalOpen = false;
-  quickUsers: QuickAccessUserResponse[] = [];
-  selectedOperator: QuickAccessUserResponse | null = null;
+  showPinAuthModal = false;
   diners = 1;
   openingOrder = false;
   openingError: string | null = null;
 
   // Modal cerrar cuenta (mark-to-charge)
+  showPinAuthModalForCloseAccount = false;
   closeAccountModalOpen = false;
-  closeAccountUsers: QuickAccessUserResponse[] = [];
-  selectedCloser: QuickAccessUserResponse | null = null;
   closingAccount = false;
   closeAccountError: string | null = null;
+
+  // PIN auth para cobrar
+  showPinAuthModalForCharge = false;
 
   constructor(
     private readonly tpvService: TpvService,
@@ -136,26 +138,18 @@ export class MesasPage implements OnInit {
 
   // ── Modal apertura ────────────────────────────
   async openModal(): Promise<void> {
+    this.showPinAuthModal = true;
+  }
+
+  onPinAuthenticated(): void {
+    this.showPinAuthModal = false;
     this.modalOpen = true;
     this.openingError = null;
     this.diners = 1;
-    try {
-      const deviceId = this.authService.getDeviceId();
-      const user = await firstValueFrom(this.authService.currentUser$);
-      const restaurantUuid = user?.restaurantId;
-      this.quickUsers = await firstValueFrom(this.authService.getQuickUsers(deviceId, restaurantUuid));
-      if (this.quickUsers.length > 0) this.selectedOperator = this.quickUsers[0];
-    } catch {
-      this.quickUsers = [];
-    }
   }
 
   closeModal(): void {
     this.modalOpen = false;
-  }
-
-  selectOperator(user: QuickAccessUserResponse): void {
-    this.selectedOperator = user;
   }
 
   numpadPress(key: string): void {
@@ -176,13 +170,24 @@ export class MesasPage implements OnInit {
   }
 
   async confirmOpen(): Promise<void> {
-    if (!this.selectedTable || !this.selectedOperator || this.openingOrder) return;
+    if (!this.selectedTable || this.openingOrder) return;
+
     this.openingOrder = true;
     this.openingError = null;
+
     try {
+      // Obtener el usuario actual
+      const currentUser = await firstValueFrom(this.authService.currentUser$);
+      if (!currentUser) {
+        this.openingError = 'No hay sesión activa';
+        this.openingOrder = false;
+        return;
+      }
+
+      // Abrir la mesa
       const order = await firstValueFrom(this.tpvService.createOrder({
         table_id: this.selectedTable.id,
-        opened_by_user_id: this.selectedOperator.user_uuid,
+        opened_by_user_id: currentUser.id,
         diners: this.diners,
       }));
       this.modalOpen = false;
@@ -199,36 +204,37 @@ export class MesasPage implements OnInit {
   // ── Modal cerrar cuenta ───────────────────────
   async openCloseAccountModal(): Promise<void> {
     if (!this.selectedTable?.order_id) return;
+    this.showPinAuthModalForCloseAccount = true;
+  }
+
+  onPinAuthenticatedForCloseAccount(): void {
+    this.showPinAuthModalForCloseAccount = false;
     this.closeAccountModalOpen = true;
     this.closeAccountError = null;
-    this.selectedCloser = null;
-    try {
-      const deviceId = this.authService.getDeviceId();
-      const user = await firstValueFrom(this.authService.currentUser$);
-      const restaurantUuid = user?.restaurantId;
-      this.closeAccountUsers = await firstValueFrom(this.authService.getQuickUsers(deviceId, restaurantUuid));
-      if (this.closeAccountUsers.length > 0) this.selectedCloser = this.closeAccountUsers[0];
-    } catch {
-      this.closeAccountUsers = [];
-    }
   }
 
   closeCloseAccountModal(): void {
     this.closeAccountModalOpen = false;
   }
 
-  selectCloser(user: QuickAccessUserResponse): void {
-    this.selectedCloser = user;
-  }
-
   async confirmCloseAccount(): Promise<void> {
-    if (!this.selectedTable?.order_id || !this.selectedCloser || this.closingAccount) return;
+    if (!this.selectedTable?.order_id || this.closingAccount) return;
+
     this.closingAccount = true;
     this.closeAccountError = null;
+
     try {
+      // Obtener el usuario actual
+      const currentUser = await firstValueFrom(this.authService.currentUser$);
+      if (!currentUser) {
+        this.closeAccountError = 'No hay sesión activa';
+        this.closingAccount = false;
+        return;
+      }
+
       await firstValueFrom(this.tpvService.updateOrder(this.selectedTable.order_id, {
         action: 'mark-to-charge',
-        closed_by_user_id: this.selectedCloser.user_uuid,
+        closed_by_user_id: currentUser.id,
       }));
       this.closeAccountModalOpen = false;
       const previouslySelectedId = this.selectedTable.id;
@@ -248,8 +254,14 @@ export class MesasPage implements OnInit {
   // ── Ir a cobrar (navega a caja) ───────────────────
   goToCobrar(): void {
     if (!this.selectedTable?.order_id) return;
+    this.showPinAuthModalForCharge = true;
+  }
+
+  onPinAuthenticatedForCharge(): void {
+    this.showPinAuthModalForCharge = false;
+    if (!this.selectedTable?.order_id) return;
     void this.router.navigate(['/app/caja'], {
-      queryParams: { orderId: this.selectedTable.order_id, fromMesas: true },
+      queryParams: { orderId: this.selectedTable.order_id },
     });
   }
 

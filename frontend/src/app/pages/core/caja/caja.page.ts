@@ -6,6 +6,7 @@ import { catchError } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
 import { TpvService, TpvCashSession, TpvCashSessionListItem, TpvOrder, TpvTableItem } from '../../../services/tpv.service';
 import { OpenCashModalComponent } from '../../../components/open-cash-modal/open-cash-modal.component';
+import { PinAuthModalComponent } from '../../../components/pin-auth-modal/pin-auth-modal.component';
 import { CashMovementModalComponent } from '../../../components/cash-movement-modal/cash-movement-modal.component';
 import { ClosingWizardComponent, ZReportData } from '../../../components/closing-wizard/closing-wizard.component';
 import { CobrarModalComponent, OrderLine } from '../../../components/cobrar-modal/cobrar-modal.component';
@@ -26,10 +27,15 @@ interface LastClosedData {
   id: string;
   opened_by_user_id: string;
   closed_by_user_id: string | null;
+  opened_at: string;
   closed_at: string | null;
   final_amount_cents: number | null;
   discrepancy_cents: number | null;
   discrepancy_reason: string | null;
+  z_report_number: number | null;
+  operator_name: string | null;
+  tickets: number;
+  diners: number;
 }
 
 interface OrphanSessionData {
@@ -86,6 +92,7 @@ interface MethodBreakdownRow {
   imports: [
     CommonModule,
     OpenCashModalComponent,
+    PinAuthModalComponent,
     CashMovementModalComponent,
     ClosingWizardComponent,
     CobrarModalComponent,
@@ -109,7 +116,9 @@ export class CajaPage implements OnInit, OnDestroy {
   public lastClosed: LastClosedData | null = null;
   public orphanSession: OrphanSessionData | null = null;
   public showOpenModal = false;
-  public availableUsers: Array<{ id: string; name: string; initials: string }> = [];
+  public showPinAuthModal = false;
+  public showPinAuthModalForCobrarMesa = false;
+  public pendingTableToCharge: PendingTableRow | null = null;
   public sessionSummary: CashSessionSummary | null = null;
   public showMovementModal = false;
   public showWizard = false;
@@ -347,26 +356,12 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   public onOpenModal(): void {
-    this.loadAvailableUsers();
-    this.showOpenModal = true;
+    this.showPinAuthModal = true;
   }
 
-  private loadAvailableUsers(): void {
-    const restaurantUuid = this.authService.currentUserSnapshot?.restaurantId;
-    this.tpvService.listUsers(this.deviceId, restaurantUuid).subscribe({
-      next: (response) => {
-        this.availableUsers = response.users.map((u: any) => ({
-          id: u.user_uuid,
-          name: u.name,
-          initials: u.name
-            .split(' ')
-            .slice(0, 2)
-            .map((w: string) => w[0].toUpperCase())
-            .join(''),
-        }));
-      },
-      error: (error) => { console.error('Error loading users:', error); },
-    });
+  public onPinAuthenticated(): void {
+    this.showPinAuthModal = false;
+    this.showOpenModal = true;
   }
 
   public onOpenCash(data: { userId: string; initialAmountCents: number; notes?: string }): void {
@@ -421,13 +416,15 @@ export class CajaPage implements OnInit, OnDestroy {
   public onStartClosing(): void {
     if (!this.activeSession) return;
     this.tpvService.startClosingCashSession({ cash_session_id: this.activeSession.uuid }).subscribe({
-      next: () => {
+      next: (response) => {
         this.state = 'arqueo';
         this.showWizard = true;
+        // Actualizar el estado de la sesión activa para que onWizardClose funcione correctamente
+        this.activeSession = { ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' };
         this.loadSessionSummary();
         this.stopRefreshInterval();
       },
-      error: (error) => { alert('Error al iniciar el cierre: ' + error.message); },
+      error: (error) => { alert('Error al iniciar cierre: ' + error.message); },
     });
   }
 
@@ -438,9 +435,11 @@ export class CajaPage implements OnInit, OnDestroy {
       return;
     }
     this.tpvService.cancelClosingCashSession({ cash_session_id: this.activeSession.uuid }).subscribe({
-      next: () => {
+      next: (response) => {
         this.state = 'activa';
         this.showWizard = false;
+        // Actualizar el estado de la sesión activa
+        this.activeSession = { ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' };
         this.startRefreshInterval();
       },
       error: (error) => { alert('Error al cancelar el cierre: ' + error.message); },
@@ -451,8 +450,10 @@ export class CajaPage implements OnInit, OnDestroy {
     this.showWizard = false;
     if (this.state === 'arqueo' && this.activeSession?.status === 'closing') {
       this.tpvService.cancelClosingCashSession({ cash_session_id: this.activeSession.uuid }).subscribe({
-        next: () => {
+        next: (response) => {
           this.state = 'activa';
+          // Actualizar el estado de la sesión activa
+          this.activeSession = { ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' };
           this.startRefreshInterval();
         },
         error: (error) => {
@@ -539,6 +540,36 @@ export class CajaPage implements OnInit, OnDestroy {
     return new Date(dateString).toLocaleString('es-ES');
   }
 
+  public formatShortDate(dateString: string | null | undefined): string {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+    });
+  }
+
+  public formatTime(dateString: string | null | undefined): string {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleTimeString('es-ES', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  }
+
+  public formatCentsSigned(cents: number | null | undefined): string {
+    if (cents == null) return '0,00';
+    const value = cents / 100;
+    const formatted = Math.abs(value).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return value < 0 ? `− ${formatted}` : `+ ${formatted}`;
+  }
+
+  public formatAverageTicket(lastClosed: LastClosedData | null): string {
+    if (!lastClosed || !lastClosed.tickets || lastClosed.tickets === 0) return '0,00';
+    const finalAmount = lastClosed.final_amount_cents ?? 0;
+    const average = finalAmount / lastClosed.tickets / 100;
+    return average.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
   // Getters for new components
   public get movementsList(): CashMovement[] {
     return this.movements.map((m) => ({
@@ -563,9 +594,20 @@ export class CajaPage implements OnInit, OnDestroy {
 
   // Modal handlers for charging tables
   public onCobrarMesa(mesa: PendingTable): void {
-    // Always recalculate paidDiners based on actual paid total
+    // Store the table and show PIN auth first
+    this.pendingTableToCharge = mesa;
+    this.showPinAuthModalForCobrarMesa = true;
+  }
+
+  public onPinAuthenticatedForCobrarMesa(): void {
+    this.showPinAuthModalForCobrarMesa = false;
+    
+    if (!this.pendingTableToCharge) return;
+    
+    const mesa = this.pendingTableToCharge;
     this.selectedTable = mesa;
     this.isPartialPayment = false; // Reset to false for direct payment from caja page
+    
     this.tpvService.getOrder(mesa.order_id).subscribe({
       next: (order) => {
         console.log('Order loaded:', order);
@@ -599,12 +641,14 @@ export class CajaPage implements OnInit, OnDestroy {
                 // Set currentPaymentAmount to remaining total for direct payment
                 this.currentPaymentAmount = remainingTotal;
                 this.showCobrarModal = true;
+                this.pendingTableToCharge = null; // Clear pending after loading
               },
               error: (error) => {
                 console.error('Error loading order lines:', error);
                 this.selectedTableLines = [];
                 this.currentPaymentAmount = remainingTotal;
                 this.showCobrarModal = true;
+                this.pendingTableToCharge = null; // Clear pending after loading
               },
             });
           },
@@ -622,14 +666,17 @@ export class CajaPage implements OnInit, OnDestroy {
                   name: l.product_name || 'Producto',
                   price: l.price * l.quantity,
                 }));
+                // Set currentPaymentAmount to remaining total for direct payment
                 this.currentPaymentAmount = fallbackTotal;
                 this.showCobrarModal = true;
+                this.pendingTableToCharge = null; // Clear pending after loading
               },
               error: (error) => {
-                console.error('Error loading order lines:', error);
+                console.error('Error loading order lines (fallback):', error);
                 this.selectedTableLines = [];
                 this.currentPaymentAmount = fallbackTotal;
                 this.showCobrarModal = true;
+                this.pendingTableToCharge = null; // Clear pending after loading
               },
             });
           },
@@ -637,9 +684,8 @@ export class CajaPage implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error loading order:', error);
-        this.selectedTableLines = [];
-        this.currentPaymentAmount = mesa.total;
-        this.showCobrarModal = true;
+        alert('No se pudo cargar la orden.');
+        this.pendingTableToCharge = null; // Clear pending on error
       },
     });
   }

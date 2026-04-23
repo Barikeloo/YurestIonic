@@ -346,10 +346,15 @@ export class TpvService {
       id: string;
       opened_by_user_id: string;
       closed_by_user_id: string | null;
+      opened_at: string;
       closed_at: string | null;
       final_amount_cents: number | null;
       discrepancy_cents: number | null;
       discrepancy_reason: string | null;
+      z_report_number: number | null;
+      operator_name: string | null;
+      tickets: number;
+      diners: number;
     } | null;
     orphan_session: {
       id: string;
@@ -364,10 +369,15 @@ export class TpvService {
           id: string;
           opened_by_user_id: string;
           closed_by_user_id: string | null;
+          opened_at: string;
           closed_at: string | null;
           final_amount_cents: number | null;
           discrepancy_cents: number | null;
           discrepancy_reason: string | null;
+          z_report_number: number | null;
+          operator_name: string | null;
+          tickets: number;
+          diners: number;
         } | null;
         orphan_session: {
           id: string;

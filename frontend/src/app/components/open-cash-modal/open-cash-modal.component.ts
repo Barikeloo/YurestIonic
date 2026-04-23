@@ -14,7 +14,7 @@ import { BtnComponent } from '../btn/btn.component';
 })
 export class OpenCashModalComponent {
   @Input() isOpen = false;
-  @Input() availableUsers: Array<{ id: string; name: string; initials: string }> = [];
+  @Input() currentUserId: string | null = null;
   @Output() closeModal = new EventEmitter<void>();
   @Output() openCash = new EventEmitter<{
     userId: string;
@@ -22,11 +22,9 @@ export class OpenCashModalComponent {
     notes?: string;
   }>();
 
-  public selectedUserId: string | null = null;
   public initialAmountCents = 15000;
   public notes = '';
   public showNote = false;
-  public showUserError = false;
 
   public onClose(): void {
     this.closeModal.emit();
@@ -38,21 +36,13 @@ export class OpenCashModalComponent {
   }
 
   public onSubmit(): void {
-    if (!this.selectedUserId) {
-      this.showUserError = true;
-      return;
-    }
+    if (!this.currentUserId) return;
     this.openCash.emit({
-      userId: this.selectedUserId,
+      userId: this.currentUserId,
       initialAmountCents: this.initialAmountCents,
       notes: this.notes || undefined,
     });
     this.resetForm();
-  }
-
-  public selectUser(userId: string): void {
-    this.selectedUserId = userId;
-    this.showUserError = false;
   }
 
   public toggleNote(): void {
@@ -64,10 +54,8 @@ export class OpenCashModalComponent {
   }
 
   private resetForm(): void {
-    this.selectedUserId = null;
     this.initialAmountCents = 15000;
     this.notes = '';
     this.showNote = false;
-    this.showUserError = false;
   }
 }

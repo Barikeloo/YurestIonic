@@ -1,0 +1,52 @@
+<div *ngIf="isOpen" class="pin-auth-overlay" (click)="onClose()">
+  <div class="pin-auth-content" (click)="$event.stopPropagation()">
+    <!-- Estado normal: Teclado PIN -->
+    <div *ngIf="!showSuccess" class="pin-auth-body">
+      <div class="pin-auth-header">
+        <div class="pin-auth-title">{{ title }}</div>
+        <div class="pin-auth-subtitle">{{ subtitle }}</div>
+      </div>
+
+      <!-- Display de PIN -->
+      <div class="pin-display">
+        <span class="pin-dot" *ngFor="let d of pinDots" [class.filled]="d"></span>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="pinError" class="pin-error">{{ pinError }}</div>
+      <div *ngIf="!pinError" class="pin-error-placeholder"></div>
+
+      <!-- Teclado numérico -->
+      <div class="pin-keypad">
+        <button class="key" (click)="pinPress('1')" [disabled]="isVerifying">1</button>
+        <button class="key" (click)="pinPress('2')" [disabled]="isVerifying">2</button>
+        <button class="key" (click)="pinPress('3')" [disabled]="isVerifying">3</button>
+        <button class="key" (click)="pinPress('4')" [disabled]="isVerifying">4</button>
+        <button class="key" (click)="pinPress('5')" [disabled]="isVerifying">5</button>
+        <button class="key" (click)="pinPress('6')" [disabled]="isVerifying">6</button>
+        <button class="key" (click)="pinPress('7')" [disabled]="isVerifying">7</button>
+        <button class="key" (click)="pinPress('8')" [disabled]="isVerifying">8</button>
+        <button class="key" (click)="pinPress('9')" [disabled]="isVerifying">9</button>
+        <button class="key key-del" (click)="pinPress('del')" [disabled]="isVerifying">⌫</button>
+        <button class="key" (click)="pinPress('0')" [disabled]="isVerifying">0</button>
+        <button class="key key-clear" (click)="clearPin()" [disabled]="isVerifying">C</button>
+      </div>
+
+      <!-- Botón cancelar -->
+      <button class="btn-cancel" (click)="onClose()" [disabled]="isVerifying">
+        Cancelar
+      </button>
+    </div>
+
+    <!-- Estado éxito: Animación autenticado -->
+    <div *ngIf="showSuccess" class="success-container">
+      <div class="success-circle">
+        <svg class="success-check" viewBox="0 0 52 52">
+          <circle class="success-circle-bg" cx="26" cy="26" r="25" fill="none"></circle>
+          <path class="success-check-path" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"></path>
+        </svg>
+      </div>
+      <div class="success-text">Autenticado</div>
+    </div>
+  </div>
+</div>

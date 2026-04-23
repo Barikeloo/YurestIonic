@@ -74,66 +74,7 @@
   letter-spacing: 0.5px;
 }
 
-.user-error {
-  font-size: 12px;
-  color: var(--accent);
-  margin-bottom: 6px;
-  font-family: var(--font);
-}
-
 .operator-section {
-  .users-list {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .user-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 14px;
-    border-radius: 10px;
-    border: 1.5px solid var(--gray-200);
-    background: var(--gray-50);
-    cursor: pointer;
-    transition: all 0.12s;
-
-    &.selected {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-    }
-
-    .user-avatar {
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      background: var(--gray-300);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--white);
-      font-size: 12px;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
-    .user-name {
-      font-family: var(--font);
-      font-size: 14px;
-      font-weight: 400;
-      color: var(--black);
-    }
-
-    &.selected .user-avatar {
-      background: var(--accent);
-    }
-
-    &.selected .user-name {
-      font-weight: 600;
-    }
-  }
-
   .note-section {
     margin-top: 12px;
 
