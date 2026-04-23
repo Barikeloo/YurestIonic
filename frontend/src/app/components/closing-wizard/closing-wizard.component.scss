@@ -197,6 +197,7 @@
             font-size: 22px;
             font-family: var(--mono);
             font-weight: 700;
+            color: var(--black);
           }
         }
       }
@@ -299,9 +300,11 @@
         .z-row-value {
           font-family: var(--mono);
           font-weight: 400;
+          color: var(--gray-800);
 
           &.bold {
             font-weight: 700;
+            color: var(--black);
           }
         }
       }

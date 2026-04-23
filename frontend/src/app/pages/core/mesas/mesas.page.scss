@@ -347,6 +347,25 @@
   border-top: 1px solid #F0F0F0;
 }
 
+.caja-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff4e5;
+  border: 1px solid #f5a623;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #8a5a00;
+  line-height: 1.4;
+
+  svg {
+    flex-shrink: 0;
+    color: #f5a623;
+  }
+}
+
 .btn-comanda,
 .btn-cobrar {
   color: #fff;

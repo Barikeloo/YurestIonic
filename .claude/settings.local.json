@@ -22,7 +22,15 @@
       "Bash(echo \"EXIT: $?\")",
       "Bash(php artisan *)",
       "Bash(docker compose *)",
-      "PowerShell(wsl --list --verbose)"
+      "PowerShell(wsl --list --verbose)",
+      "PowerShell(wsl -d Ubuntu -- bash -c \"ls ~/YurestTPV 2>/dev/null && echo OK || echo 'not yet'\")",
+      "Bash(python3 *)",
+      "Bash(grep -r \"use App\\\\\\\\\\\\\\\\\" \"/c/Users/barik/Desktop/YurestTPV/backend/app/Cash/\" --include=\"*.php\")",
+      "Bash(grep -v \"App\\\\\\\\\\\\Cash\")",
+      "Bash(grep -v \"App\\\\\\\\\\\\Shared\")",
+      "Bash(grep -rn \"\\\\\\\\\\\\\\\\App\\\\\\\\\\\\\\\\\" \"/c/Users/barik/Desktop/YurestTPV/backend/app/Cash/\" --include=\"*.php\")",
+      "Bash(grep -En \"\\\\\\\\\\\\\\\\App\\\\\\\\\\\\\\\\\" \"/c/Users/barik/Desktop/YurestTPV/backend/app/Cash/**/*.php\")",
+      "Bash(grep *)"
     ]
   }
 }

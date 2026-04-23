@@ -116,9 +116,11 @@
   .report-value {
     font-family: var(--mono);
     font-weight: 400;
+    color: var(--gray-800);
 
     &.report-bold {
       font-weight: 700;
+      color: var(--black);
     }
   }
 }
@@ -151,4 +153,11 @@
   justify-content: flex-end;
   padding: 14px 32px;
   border-top: 1px solid var(--gray-200);
+}
+
+.footer-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+  margin-top: -1px;
 }

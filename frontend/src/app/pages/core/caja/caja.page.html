@@ -47,15 +47,6 @@
     (openCash)="onOpenCash($event)"
   ></app-open-cash-modal>
 
-  <!-- Modal cobrar mesa -->
-  <app-cobrar-modal
-    [isOpen]="showCobrarModal"
-    [table]="pendingTableToCharge"
-    [cashSession]="activeSession"
-    (closeModal)="showCobrarModal = false; pendingTableToCharge = null"
-    (success)="onCobroSuccess($event)"
-  ></app-cobrar-modal>
-
   <!-- Modal de movimiento manual -->
   <app-cash-movement-modal
     [isOpen]="showMovementModal"

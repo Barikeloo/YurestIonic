@@ -40,6 +40,7 @@ export class MesasPage implements OnInit {
   diners = 1;
   openingOrder = false;
   openingError: string | null = null;
+  cajaError: string | null = null;
 
   // Modal cerrar cuenta (mark-to-charge)
   showPinAuthModalForCloseAccount = false;
@@ -123,6 +124,7 @@ export class MesasPage implements OnInit {
 
   async selectTable(table: TableWithStatus): Promise<void> {
     this.selectedTable = table;
+    this.cajaError = null;
     this.orderLines = [];
     if (table.occupied && table.order_id) {
       this.loadingLines = true;
@@ -138,6 +140,18 @@ export class MesasPage implements OnInit {
 
   // ── Modal apertura ────────────────────────────
   async openModal(): Promise<void> {
+    this.cajaError = null;
+    const deviceId = this.authService.getDeviceId();
+    try {
+      const session = await firstValueFrom(this.tpvService.getActiveCashSession(deviceId));
+      if (!session || session.status !== 'open') {
+        this.cajaError = 'La caja está cerrada. Ábrela antes de operar mesas.';
+        return;
+      }
+    } catch {
+      this.cajaError = 'No se pudo verificar el estado de la caja.';
+      return;
+    }
     this.showPinAuthModal = true;
   }
 
