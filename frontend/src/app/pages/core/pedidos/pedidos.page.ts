@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
-import { TpvOrder, TpvOrderLine, TpvService, TpvZoneItem } from '../../../services/tpv.service';
+import { TpvOrder, TpvOrderLine, TpvService } from '../../../services/tpv.service';
 
 type TabId = 'all' | 'open' | 'to-charge' | 'invoiced' | 'cancelled';
 
@@ -16,7 +16,6 @@ type TabId = 'all' | 'open' | 'to-charge' | 'invoiced' | 'cancelled';
 })
 export class PedidosPage implements OnInit {
   orders: TpvOrder[] = [];
-  zones: TpvZoneItem[] = [];
   users: any[] = [];
   tables: any[] = [];
   loading = true;
@@ -24,7 +23,6 @@ export class PedidosPage implements OnInit {
   activeTab: TabId = 'all';
 
   filterStatus = 'all';
-  filterZone = 'all';
   filterUser = 'all';
   filterDate = '';
   filterSearch = '';
@@ -46,14 +44,12 @@ export class PedidosPage implements OnInit {
       const deviceId = this.authService.getDeviceId();
       const restaurantUuid = user?.restaurantId;
 
-      const [orders, zones, usersResponse, tables] = await Promise.all([
+      const [orders, usersResponse, tables] = await Promise.all([
         firstValueFrom(this.tpvService.listOrders()),
-        firstValueFrom(this.tpvService.listZones()),
         deviceId ? firstValueFrom(this.tpvService.listUsers(deviceId, restaurantUuid)) : Promise.resolve({ users: [] }),
         firstValueFrom(this.tpvService.listTables()),
       ]);
       this.orders = orders;
-      this.zones = zones;
       this.users = usersResponse.users;
       this.tables = tables;
     } finally {
@@ -102,7 +98,6 @@ export class PedidosPage implements OnInit {
 
   resetFilters(): void {
     this.filterStatus = 'all';
-    this.filterZone = 'all';
     this.filterUser = 'all';
     this.filterDate = '';
     this.filterSearch = '';

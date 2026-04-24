@@ -31,7 +31,12 @@ class EloquentZoneRepository implements ZoneRepositoryInterface
 
     public function findById(string $id): ?Zone
     {
-        $model = $this->model->newQuery()->where('uuid', $id)->first();
+        $restaurantId = $this->tenantContext->requireRestaurantId();
+
+        $model = $this->model->newQuery()
+            ->where('restaurant_id', $restaurantId)
+            ->where('uuid', $id)
+            ->first();
 
         if ($model === null) {
             return null;
@@ -47,7 +52,11 @@ class EloquentZoneRepository implements ZoneRepositoryInterface
 
     public function findAll(bool $includeDeleted = false): array
     {
-        $query = $this->model->newQuery()->orderBy('name');
+        $restaurantId = $this->tenantContext->requireRestaurantId();
+
+        $query = $this->model->newQuery()
+            ->where('restaurant_id', $restaurantId)
+            ->orderBy('name');
 
         if ($includeDeleted) {
             $query->withTrashed();

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './guards/auth.guard';
+import { RoleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
   {
@@ -8,7 +9,8 @@ export const routes: Routes = [
     children: [
       {
         path: 'gestion',
-        canActivate: [AuthGuard],
+        canActivate: [AuthGuard, RoleGuard],
+        data: { role: 'admin' },
         loadComponent: () => import('./pages/core/gestion/gestion.page').then((m) => m.GestionPage),
       },
       {

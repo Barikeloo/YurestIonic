@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CardComponent } from '../card/card.component';
@@ -23,7 +23,7 @@ export interface OrderLine {
   imports: [CommonModule, FormsModule, CardComponent, BtnComponent, ToggleComponent, NumpadComponent, AmountDisplayComponent],
   standalone: true,
 })
-export class CobrarModalComponent {
+export class CobrarModalComponent implements OnChanges {
   @Input() isOpen = false;
   @Input() total = 0;
   @Input() tableLabel = '';
@@ -38,6 +38,14 @@ export class CobrarModalComponent {
   public tip = 0;
   public showTip = false;
   public showFiscal = false;
+
+  public ngOnChanges(changes: SimpleChanges): void {
+    const justOpened = changes['isOpen'] && this.isOpen && !changes['isOpen'].previousValue;
+    const totalChangedWhileOpen = changes['total'] && this.isOpen;
+    if (justOpened || totalChangedWhileOpen) {
+      this.cashGiven = this.total;
+    }
+  }
 
   private methodLabels: { [key: string]: string } = {
     cash: 'Efectivo',
@@ -70,6 +78,13 @@ export class CobrarModalComponent {
     // Validate cash payment
     if (this.method === 'cash' && this.cashGiven < this.total) {
       alert('La cantidad entregada es insuficiente. Por favor, ingrese al menos ' + this.formatCents(this.total) + ' €');
+      return;
+    }
+
+    // For non-cash methods, payment amount cannot exceed total (no change given)
+    const paymentAmount = this.total + (this.showTip ? this.tip : 0);
+    if (this.method !== 'cash' && this.method !== 'mixed' && paymentAmount > this.total) {
+      alert('Para tarjeta, Bizum e invitación el importe no puede superar el total. Use Efectivo o Mixto si necesita dar cambio.');
       return;
     }
 

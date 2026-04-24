@@ -13,6 +13,7 @@ class UpdateRestaurantUser
     ) {}
 
     public function __invoke(
+        string $restaurantUuid,
         string $uuid,
         ?string $name = null,
         ?string $email = null,
@@ -23,6 +24,12 @@ class UpdateRestaurantUser
         $user = $this->userRepository->findById($uuid);
 
         if ($user === null) {
+            return UpdateRestaurantUserResponse::notFound();
+        }
+
+        // Verify the target user belongs to the same restaurant
+        $userRestaurantId = $user->restaurantId();
+        if ($userRestaurantId === null || $userRestaurantId->value() !== $restaurantUuid) {
             return UpdateRestaurantUserResponse::notFound();
         }
 

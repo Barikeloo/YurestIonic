@@ -143,10 +143,7 @@ export interface TpvCashSessionListItem {
 interface AddLinePayload {
   order_id: string;
   product_id: string;
-  user_id: string;
   quantity: number;
-  price: number;
-  tax_percentage: number;
   diner_number?: number | null;
 }
 
@@ -271,6 +268,12 @@ export class TpvService {
   public getOrderPaidTotal(orderId: string): Observable<{ total_cents: number }> {
     return this.http
       .get<{ total_cents: number }>(`${this.baseUrl}/tpv/sales/order/${orderId}/paid-total`, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public getOrderTotal(orderId: string): Observable<{ total_cents: number }> {
+    return this.http
+      .get<{ total_cents: number }>(`${this.baseUrl}/tpv/orders/${orderId}/total`, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 

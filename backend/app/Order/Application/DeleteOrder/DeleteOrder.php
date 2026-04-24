@@ -18,6 +18,10 @@ final class DeleteOrder
             return false;
         }
 
+        if (! $order->status()->isOpen()) {
+            throw new \DomainException('Solo se pueden eliminar órdenes abiertas');
+        }
+
         $this->orderRepository->delete($order->id());
 
         return true;

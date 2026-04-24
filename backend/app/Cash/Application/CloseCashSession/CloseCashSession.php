@@ -39,6 +39,8 @@ final class CloseCashSession
                 throw new \DomainException('Cash session not found.');
             }
 
+            error_log("CloseCashSession - Session status on entry: " . $cashSession->status()->value() . ", Session ID: $cashSessionId");
+
             // Pre-check: no sales with pending status
             $sales = $this->saleRepository->findByCashSessionId($cashSessionUuid);
             foreach ($sales as $sale) {

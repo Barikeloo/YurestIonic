@@ -53,7 +53,7 @@ class AdminDeleteController
             }
         }
 
-        $response = ($this->deleteRestaurantUser)($userUuid);
+        $response = ($this->deleteRestaurantUser)($uuid, $userUuid);
 
         if (! $response->found()) {
             return new JsonResponse([

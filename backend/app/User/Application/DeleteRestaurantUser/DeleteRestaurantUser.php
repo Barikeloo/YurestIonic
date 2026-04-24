@@ -10,11 +10,17 @@ class DeleteRestaurantUser
         private UserRepositoryInterface $userRepository,
     ) {}
 
-    public function __invoke(string $uuid): DeleteRestaurantUserResponse
+    public function __invoke(string $restaurantUuid, string $uuid): DeleteRestaurantUserResponse
     {
         $user = $this->userRepository->findById($uuid);
 
         if ($user === null) {
+            return DeleteRestaurantUserResponse::notFound();
+        }
+
+        // Verify the target user belongs to the same restaurant
+        $userRestaurantId = $user->restaurantId();
+        if ($userRestaurantId === null || $userRestaurantId->value() !== $restaurantUuid) {
             return DeleteRestaurantUserResponse::notFound();
         }
 

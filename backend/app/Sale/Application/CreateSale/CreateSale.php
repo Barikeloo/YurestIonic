@@ -121,62 +121,33 @@ final class CreateSale
                 $this->saleLineRepository->save($saleLine);
             }
 
-            // Close the order (status=invoiced)
+            // Close the order (status=invoiced) when cumulative payments across all sales
+            // for this order cover the original total. This unifies full, split-by-lines and
+            // split-by-equal-parts flows, so the order cannot be left stuck after a split.
             $order = $this->orderRepository->findByUuid($orderUuid);
             if ($order !== null) {
-                if ($isPartialPayment) {
-                    // Partial payment - check if payment is complete
-                    // Calculate original order total
-                    $originalTotal = 0;
-                    $allOrderLines = $this->orderLineRepository->findByOrderId($orderUuid);
-                    foreach ($allOrderLines as $line) {
-                        $originalTotal += $line->price()->value() * $line->quantity()->value();
+                $originalTotal = 0;
+                $allOrderLines = $this->orderLineRepository->findByOrderId($orderUuid);
+                foreach ($allOrderLines as $line) {
+                    $originalTotal += $line->price()->value() * $line->quantity()->value();
+                }
+
+                $totalPaid = $paymentsTotal;
+                $allSales = $this->saleRepository->findAllByOrderId($orderUuid);
+                foreach ($allSales as $existingSale) {
+                    if ($existingSale->uuid()->value() === $sale->uuid()->value()) {
+                        continue;
                     }
-
-                    // Calculate total paid by summing all sale payments
-                    $allSales = $this->saleRepository->findAllByOrderId($orderUuid);
-                    $totalPaid = 0;
-                    foreach ($allSales as $sale) {
-                        // Get all payments for this sale
-                        $salePayments = $this->salePaymentRepository->findBySaleId($sale->uuid());
-                        foreach ($salePayments as $payment) {
-                            $totalPaid += $payment->amount()->toCents();
-                        }
-                    }
-                    // Add current payment
-                    $totalPaid += $paymentsTotal;
-
-                    error_log('Partial payment - Total paid: ' . $totalPaid . ', Original total: ' . $originalTotal);
-
-                    if ($totalPaid >= $originalTotal) {
-                        // Payment complete, close the order
-                        $order->close(Uuid::create($closedByUserId));
-                        error_log('Order closed (payment complete): ' . $orderUuid->value());
-                    } else {
-                        error_log('Partial payment - order remains open: ' . $orderUuid->value());
-                    }
-                } elseif ($orderLineIds === null) {
-                    // Full payment (no split), close the order
-                    $order->close(Uuid::create($closedByUserId));
-                    error_log('Order closed (full payment): ' . $orderUuid->value());
-                } else {
-                    // Split payment, close only if all lines are paid
-                    $allOrderLines = $this->orderLineRepository->findByOrderId($orderUuid);
-                    $paidLineIds = array_map(fn($line) => $line->uuid()->value(), $orderLines);
-                    $unpaidLines = array_filter($allOrderLines, fn($line) => !in_array($line->uuid()->value(), $paidLineIds, true));
-
-                    error_log('Split payment - unpaid lines: ' . count($unpaidLines));
-
-                    if (count($unpaidLines) === 0) {
-                        // All lines paid, close the order
-                        $order->close(Uuid::create($closedByUserId));
-                        error_log('Order closed (all lines paid): ' . $orderUuid->value());
+                    $salePayments = $this->salePaymentRepository->findBySaleId($existingSale->uuid());
+                    foreach ($salePayments as $payment) {
+                        $totalPaid += $payment->amount()->toCents();
                     }
                 }
+
+                if ($totalPaid >= $originalTotal) {
+                    $order->close(Uuid::create($closedByUserId));
+                }
                 $this->orderRepository->save($order);
-                error_log('Order saved with status: ' . $order->status()->value());
-            } else {
-                error_log('Order not found: ' . $orderUuid->value());
             }
 
             foreach ($payments as $payment) {

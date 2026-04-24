@@ -147,8 +147,7 @@ export class ComandaPage implements OnInit {
   async sendComanda(): Promise<void> {
     if (!this.orderId || this.cartLines.length === 0 || this.sendingOrder) return;
 
-    const userId = this.currentUser?.id;
-    if (!userId) {
+    if (!this.currentUser?.id) {
       this.sendError = 'No se pudo identificar al usuario actual.';
       return;
     }
@@ -158,15 +157,11 @@ export class ComandaPage implements OnInit {
 
     try {
       for (const line of this.cartLines) {
-        const taxPercentage = this.taxMap.get(line.taxId) ?? 0;
         await firstValueFrom(
           this.tpvService.addOrderLine({
             order_id: this.orderId,
             product_id: line.productId,
-            user_id: userId,
             quantity: line.quantity,
-            price: line.price,
-            tax_percentage: taxPercentage,
           }),
         );
       }

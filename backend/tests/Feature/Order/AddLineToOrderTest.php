@@ -16,17 +16,13 @@ class AddLineToOrderTest extends TestCase
         $tenant = $this->createTenantSession();
 
         $response = $this->withSession($tenant['session'])->postJson('/api/tpv/orders/lines', [
-            'restaurant_id' => $tenant['restaurant_uuid'],
             'order_id' => 'not-a-uuid',
             'product_id' => 'not-a-uuid',
-            'user_id' => 'not-a-uuid',
             'quantity' => 2,
-            'price' => 1000,
-            'tax_percentage' => 21,
         ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['order_id', 'product_id', 'user_id']);
+        $response->assertJsonValidationErrors(['order_id', 'product_id']);
     }
 
     public function test_post_orders_lines_returns_422_when_quantity_is_invalid(): void
@@ -34,13 +30,9 @@ class AddLineToOrderTest extends TestCase
         $tenant = $this->createTenantSession();
 
         $response = $this->withSession($tenant['session'])->postJson('/api/tpv/orders/lines', [
-            'restaurant_id' => $tenant['restaurant_uuid'],
             'order_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
             'product_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
-            'user_id' => 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
             'quantity' => 0,
-            'price' => 1000,
-            'tax_percentage' => 21,
         ]);
 
         $response->assertStatus(422);
@@ -51,19 +43,16 @@ class AddLineToOrderTest extends TestCase
     {
         $tenant = $this->createTenantSession();
 
-        $response = $this->withSession($tenant['session'])->postJson('/api/tpv/orders/lines', [
-            'restaurant_id' => $tenant['restaurant_uuid'],
-        ]);
+        $response = $this->withSession($tenant['session'])->postJson('/api/tpv/orders/lines', []);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['order_id', 'product_id', 'user_id', 'quantity', 'price', 'tax_percentage']);
+        $response->assertJsonValidationErrors(['order_id', 'product_id', 'quantity']);
     }
 
     public function test_post_orders_lines_returns_422_when_product_is_inactive(): void
     {
         $tenant = $this->createTenantSession();
         $restaurantId = $tenant['restaurant_id'];
-        $restaurantUuid = $tenant['restaurant_uuid'];
         $userUuid = $tenant['user_uuid'];
         $userId = (int) DB::table('users')->where('uuid', $userUuid)->value('id');
 
@@ -132,13 +121,9 @@ class AddLineToOrderTest extends TestCase
         ]);
 
         $response = $this->withSession($tenant['session'])->postJson('/api/tpv/orders/lines', [
-            'restaurant_id' => $restaurantUuid,
             'order_id' => $orderUuid,
             'product_id' => $productUuid,
-            'user_id' => $userUuid,
             'quantity' => 1,
-            'price' => 150,
-            'tax_percentage' => 10,
         ]);
 
         $response->assertStatus(422);

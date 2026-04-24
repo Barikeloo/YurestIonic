@@ -1,16 +1,30 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
+import { catchError } from 'rxjs/operators';
+import { Router } from '@angular/router';
 
 @Injectable()
 export class InterceptorProvider implements HttpInterceptor {
 
+  constructor(private readonly router: Router) {}
+
   /**
    * Intercepta las peticiones HTTP y les añade las cabeceras por defecto
-   * 
+   * Maneja errores 401 redirigiendo al login
    */
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    return next.handle(this.setHeader(request));
+    return next.handle(this.setHeader(request)).pipe(
+      catchError((error) => {
+        if (error.status === 401) {
+          // Sesión expirada o inválida - redirigir al login
+          void this.router.navigate(['/login'], {
+            queryParams: { returnUrl: this.router.url },
+          });
+        }
+        return throwError(() => error);
+      }),
+    );
   }
 
 

@@ -32,7 +32,12 @@ class EloquentTaxRepository implements TaxRepositoryInterface
 
     public function findById(string $id): ?Tax
     {
-        $model = $this->model->newQuery()->where('uuid', $id)->first();
+        $restaurantId = $this->tenantContext->requireRestaurantId();
+
+        $model = $this->model->newQuery()
+            ->where('restaurant_id', $restaurantId)
+            ->where('uuid', $id)
+            ->first();
 
         if ($model === null) {
             return null;
@@ -49,7 +54,11 @@ class EloquentTaxRepository implements TaxRepositoryInterface
 
     public function findAll(bool $includeDeleted = false): array
     {
-        $query = $this->model->newQuery()->orderBy('name');
+        $restaurantId = $this->tenantContext->requireRestaurantId();
+
+        $query = $this->model->newQuery()
+            ->where('restaurant_id', $restaurantId)
+            ->orderBy('name');
 
         if ($includeDeleted) {
             $query->withTrashed();

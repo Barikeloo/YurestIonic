@@ -10,6 +10,7 @@ use App\Order\Domain\ValueObject\OrderLineQuantity;
 use App\Order\Domain\ValueObject\OrderLineTaxPercentage;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
 use InvalidArgumentException;
 
 final class AddLineToOrder
@@ -18,6 +19,7 @@ final class AddLineToOrder
         private readonly OrderLineRepositoryInterface $orderLineRepository,
         private readonly ProductRepositoryInterface $productRepository,
         private readonly OrderRepositoryInterface $orderRepository,
+        private readonly TaxRepositoryInterface $taxRepository,
     ) {}
 
     public function __invoke(
@@ -26,8 +28,6 @@ final class AddLineToOrder
         string $productId,
         string $userId,
         int $quantity,
-        int $price,
-        int $taxPercentage,
         ?int $dinerNumber = null,
     ): AddLineToOrderResponse {
         $order = $this->orderRepository->getById($orderId);
@@ -49,6 +49,15 @@ final class AddLineToOrder
         if (! $product->isActive()) {
             throw new InvalidArgumentException('Only active products can be sold.');
         }
+
+        $tax = $this->taxRepository->findById($product->taxId()->value());
+
+        if ($tax === null) {
+            throw new InvalidArgumentException('Tax not found for product.');
+        }
+
+        $price = $product->price()->value();
+        $taxPercentage = $tax->percentage()->value();
 
         $existing = $this->orderLineRepository->findMatchingMergeableLine(
             orderId: Uuid::create($orderId),

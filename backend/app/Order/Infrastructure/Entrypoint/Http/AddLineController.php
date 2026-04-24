@@ -3,38 +3,47 @@
 namespace App\Order\Infrastructure\Entrypoint\Http;
 
 use App\Order\Application\AddLineToOrder\AddLineToOrder;
+use App\Shared\Infrastructure\Tenant\TenantContext;
 use InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use RuntimeException;
 
 final class AddLineController
 {
     public function __construct(
         private readonly AddLineToOrder $addLineToOrder,
+        private readonly TenantContext $tenantContext,
     ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'restaurant_id' => ['required', 'string', 'uuid'],
             'order_id' => ['required', 'string', 'uuid'],
             'product_id' => ['required', 'string', 'uuid'],
-            'user_id' => ['required', 'string', 'uuid'],
             'quantity' => ['required', 'integer', 'min:1'],
-            'price' => ['required', 'integer', 'min:0'],
-            'tax_percentage' => ['required', 'integer', 'min:0', 'max:100'],
             'diner_number' => ['nullable', 'integer', 'min:1'],
         ]);
 
+        $restaurantId = $this->tenantContext->restaurantUuid();
+        if ($restaurantId === null) {
+            throw new RuntimeException('Tenant context is required.');
+        }
+
+        $userId = $request->session()->get('auth_user_id');
+        if (! is_string($userId) || $userId === '') {
+            return new JsonResponse([
+                'message' => 'Authenticated user is required.',
+            ], 401);
+        }
+
         try {
             $response = ($this->addLineToOrder)(
-                restaurantId: $validated['restaurant_id'],
+                restaurantId: $restaurantId,
                 orderId: $validated['order_id'],
                 productId: $validated['product_id'],
-                userId: $validated['user_id'],
+                userId: $userId,
                 quantity: $validated['quantity'],
-                price: $validated['price'],
-                taxPercentage: $validated['tax_percentage'],
                 dinerNumber: $validated['diner_number'] ?? null,
             );
         } catch (InvalidArgumentException $exception) {

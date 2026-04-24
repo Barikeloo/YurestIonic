@@ -1,7 +1,7 @@
 <div class="modal-overlay" *ngIf="isOpen" (click)="onClose()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <div class="modal-title">Cobrar — {{ tableLabel }}</div>
+      <div class="modal-title">Cobrar {{ tableLabel }} — {{ formatCents(total) }} €</div>
       <button class="close-btn" (click)="onClose()">&times;</button>
     </div>
     <div class="modal-body">

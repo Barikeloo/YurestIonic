@@ -45,10 +45,6 @@
           <option value="invoiced">Cerrados</option>
           <option value="cancelled">Cancelados</option>
         </select>
-        <select class="pedidos-input" [(ngModel)]="filterZone">
-          <option value="all">Todas las zonas</option>
-          <option *ngFor="let zone of zones" [value]="zone.id">{{ zone.name }}</option>
-        </select>
         <select class="pedidos-input" [(ngModel)]="filterUser">
           <option value="all">Todos los camareros</option>
           <option *ngFor="let user of users" [value]="user.user_uuid">{{ user.name }}</option>

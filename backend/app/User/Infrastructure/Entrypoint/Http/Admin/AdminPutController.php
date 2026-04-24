@@ -76,6 +76,7 @@ class AdminPutController
         }
 
         $response = ($this->updateRestaurantUser)(
+            $uuid,
             $userUuid,
             $validated['name'] ?? null,
             $validated['email'] ?? null,

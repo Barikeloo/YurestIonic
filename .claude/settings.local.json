@@ -30,7 +30,8 @@
       "Bash(grep -v \"App\\\\\\\\\\\\Shared\")",
       "Bash(grep -rn \"\\\\\\\\\\\\\\\\App\\\\\\\\\\\\\\\\\" \"/c/Users/barik/Desktop/YurestTPV/backend/app/Cash/\" --include=\"*.php\")",
       "Bash(grep -En \"\\\\\\\\\\\\\\\\App\\\\\\\\\\\\\\\\\" \"/c/Users/barik/Desktop/YurestTPV/backend/app/Cash/**/*.php\")",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(git stash *)"
     ]
   }
 }
