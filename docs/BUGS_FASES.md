@@ -1,5 +1,7 @@
   ---                                                                                                                                           
-  Revisión del código — Fases 1-3 (Caja)                                                                                                        
+  Revisión del código — Fases 1-3 (Caja)       
+
+  docker compose exec api php artisan db:seed --class=SaonaDemoSeeder                                                                                                 
                                                                                                                                               
   Resumen                                                                                                                                       
                                                                                                                                                 

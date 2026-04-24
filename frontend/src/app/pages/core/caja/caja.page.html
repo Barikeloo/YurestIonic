@@ -6,7 +6,6 @@
     </div>
     <div class="status-actions">
       <app-btn *ngIf="state === 'activa'" size="sm" variant="outline" color="#ff4d4d" (click)="onStartClosing()">Cerrar caja</app-btn>
-      <app-btn *ngIf="state === 'activa'" size="sm" variant="gray" (click)="onOpenMovementModal()">Movimiento manual</app-btn>
     </div>
   </div>
 
@@ -212,8 +211,6 @@
       <app-method-bar [methods]="paymentMethods"></app-method-bar>
       <app-movimientos-list
         [movements]="movementsList"
-        (addEntrada)="onOpenMovementModal()"
-        (addSalida)="onOpenMovementModal()"
       ></app-movimientos-list>
     </div>
   </div>

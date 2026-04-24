@@ -21,8 +21,6 @@ export interface CashMovement {
 })
 export class MovimientosListComponent {
   @Input() movements: CashMovement[] = [];
-  @Output() addEntrada = new EventEmitter<void>();
-  @Output() addSalida = new EventEmitter<void>();
 
   public formatCents(cents: number): string {
     return (cents / 100).toFixed(2);

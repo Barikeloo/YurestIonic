@@ -1,10 +1,6 @@
 <app-card>
   <div class="movimientos-header">
     <div class="movimientos-title">Movimientos manuales</div>
-    <div class="movimientos-actions">
-      <app-btn size="sm" variant="outline" color="#1a9e5a" (click)="addEntrada.emit()">+ Entrada</app-btn>
-      <app-btn size="sm" variant="outline" color="#ff4d4d" (click)="addSalida.emit()">− Salida</app-btn>
-    </div>
   </div>
   <div class="movimientos-list">
     <div *ngFor="let movement of movements" class="movement-row">

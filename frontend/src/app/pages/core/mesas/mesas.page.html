@@ -150,24 +150,40 @@
 
     <!-- Comensales -->
     <div class="modal-section-label">Comensales</div>
-    <div class="diners-display">{{ diners }}</div>
 
-    <div class="pin-keypad">
-      <button class="key" (click)="numpadPress('1')">1</button>
-      <button class="key" (click)="numpadPress('2')">2</button>
-      <button class="key" (click)="numpadPress('3')">3</button>
-      <button class="key" (click)="numpadPress('4')">4</button>
-      <button class="key" (click)="numpadPress('5')">5</button>
-      <button class="key" (click)="numpadPress('6')">6</button>
-      <button class="key" (click)="numpadPress('7')">7</button>
-      <button class="key" (click)="numpadPress('8')">8</button>
-      <button class="key" (click)="numpadPress('9')">9</button>
-      <button class="key key-del" (click)="numpadPress('del')">⌫</button>
-      <button class="key" (click)="numpadPress('0')">0</button>
-      <button class="key key-enter" (click)="confirmOpen()" [disabled]="openingOrder">
-        {{ openingOrder ? '...' : 'Abrir' }}
-      </button>
+    <div class="diners-stepper">
+      <button
+        class="stepper-btn"
+        (click)="decrementDiners()"
+        [disabled]="diners <= 1 || openingOrder"
+        aria-label="Disminuir comensales"
+      >−</button>
+      <div class="diners-display">{{ diners }}</div>
+      <button
+        class="stepper-btn"
+        (click)="incrementDiners()"
+        [disabled]="diners >= 99 || openingOrder"
+        aria-label="Aumentar comensales"
+      >+</button>
     </div>
+
+    <div class="diners-quick">
+      <button
+        *ngFor="let n of [1, 2, 3, 4, 5, 6, 7, 8]"
+        class="quick-chip"
+        [class.active]="diners === n"
+        (click)="diners = n"
+        [disabled]="openingOrder"
+      >{{ n }}</button>
+    </div>
+
+    <button
+      class="diners-confirm"
+      (click)="confirmOpen()"
+      [disabled]="openingOrder"
+    >
+      {{ openingOrder ? 'Abriendo...' : 'Abrir mesa' }}
+    </button>
 
     <div *ngIf="openingError" class="modal-error">{{ openingError }}</div>
 

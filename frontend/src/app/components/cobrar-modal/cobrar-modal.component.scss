@@ -100,6 +100,7 @@
 .summary-price {
   font-family: var(--mono);
   font-size: 13px;
+  color: var(--gray-700);
 }
 
 .summary-total {
@@ -109,10 +110,12 @@
   font-weight: 700;
   font-family: var(--font);
   font-size: 15px;
+  color: var(--black);
 }
 
 .total-amount {
   font-family: var(--mono);
+  color: var(--black);
 }
 
 .methods-grid {
@@ -188,14 +191,26 @@
 }
 
 .fiscal-input {
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1.5px solid var(--gray-200);
-  padding: 8px 10px;
+  padding: 10px 12px;
   font-family: var(--font);
   font-size: 13px;
   outline: none;
   box-sizing: border-box;
   width: 100%;
+  background: var(--white);
+  color: var(--gray-900);
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &::placeholder {
+    color: var(--gray-400);
+  }
+
+  &:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
 }
 
 .change-row {

@@ -591,16 +591,122 @@
   }
 }
 
-// ── Diners display ─────────────────────────────
+// ── Diners stepper ─────────────────────────────
+.diners-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.stepper-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 1.5px solid #E8E8E8;
+  background: #FFFFFF;
+  color: #0D0D0D;
+  font-size: 32px;
+  font-weight: 400;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.12s, border-color 0.12s, transform 0.08s;
+  touch-action: manipulation;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  &:hover:not(:disabled) {
+    background: #F4F4F4;
+    border-color: #D3D3D3;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.94);
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+}
+
 .diners-display {
-  font-size: 64px;
+  font-size: 72px;
   font-weight: 300;
   color: #0D0D0D;
   letter-spacing: -3px;
   text-align: center;
   font-family: 'DM Mono', monospace;
-  margin-bottom: 20px;
   line-height: 1;
+  min-width: 110px;
+}
+
+.diners-quick {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.quick-chip {
+  height: 44px;
+  border-radius: 10px;
+  border: 1.5px solid #E8E8E8;
+  background: #FFFFFF;
+  color: #3D3D3D;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+  touch-action: manipulation;
+
+  &:hover:not(:disabled) {
+    background: #F4F4F4;
+    border-color: #D3D3D3;
+  }
+
+  &.active {
+    background: #FFECEC;
+    border-color: #FF4D4D;
+    color: #FF4D4D;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.diners-confirm {
+  width: 100%;
+  height: 54px;
+  border-radius: 12px;
+  border: none;
+  background: #FF4D4D;
+  color: #FFFFFF;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s, transform 0.08s;
+  touch-action: manipulation;
+
+  &:hover:not(:disabled) {
+    background: #FF6363;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.99);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 }
 
 // ── Numpad ─────────────────────────────────────

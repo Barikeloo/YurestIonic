@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
-import { take } from 'rxjs/operators';
+import { filter, take } from 'rxjs/operators';
 import { AppContextService } from '../../../services/app-context.service';
 import { AuthService, AuthUser } from '../../../services/auth.service';
+import { TpvService } from '../../../services/tpv.service';
 
 @Component({
   selector: 'app-layout-page',
@@ -18,14 +19,18 @@ export class AppLayoutPage implements OnInit, OnDestroy {
   public activeRestaurantName: string = 'Sin restaurante';
   public isAdminUser: boolean = false;
   public isPedidosOrComanda: boolean = false;
+  public isCajaOpen: boolean = false;
+  public cajaLoaded: boolean = false;
 
   private timerSubscription?: Subscription;
   private userSubscription?: Subscription;
   private contextSubscription?: Subscription;
+  private routerSubscription?: Subscription;
 
   constructor(
     private readonly authService: AuthService,
     private readonly contextService: AppContextService,
+    private readonly tpvService: TpvService,
     private readonly router: Router,
   ) {}
 
@@ -54,9 +59,12 @@ export class AppLayoutPage implements OnInit, OnDestroy {
       this.activeRestaurantName = context?.name ?? 'Sin restaurante';
     });
 
-    this.router.events.subscribe(() => {
-      this.isPedidosOrComanda = this.router.url.startsWith('/app/pedidos') || this.router.url.startsWith('/app/comanda');
-    });
+    this.routerSubscription = this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        this.isPedidosOrComanda = this.router.url.startsWith('/app/pedidos') || this.router.url.startsWith('/app/comanda');
+        this.refreshCajaStatus();
+      });
 
     this.authService.restoreSession().pipe(take(1)).subscribe({
       next: () => undefined,
@@ -65,12 +73,30 @@ export class AppLayoutPage implements OnInit, OnDestroy {
         this.isAdminUser = false;
       },
     });
+
+    this.refreshCajaStatus();
   }
 
   public ngOnDestroy(): void {
     this.timerSubscription?.unsubscribe();
     this.userSubscription?.unsubscribe();
     this.contextSubscription?.unsubscribe();
+    this.routerSubscription?.unsubscribe();
+  }
+
+  private refreshCajaStatus(): void {
+    const deviceId = this.authService.getDeviceId();
+    if (!deviceId) return;
+    this.tpvService.getActiveCashSession(deviceId).pipe(take(1)).subscribe({
+      next: (session) => {
+        this.isCajaOpen = session?.status === 'open';
+        this.cajaLoaded = true;
+      },
+      error: () => {
+        this.isCajaOpen = false;
+        this.cajaLoaded = true;
+      },
+    });
   }
 
   public get currentUserInitials(): string {

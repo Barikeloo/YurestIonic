@@ -345,7 +345,7 @@ export class CajaPage implements OnInit, OnDestroy {
 
   private startRefreshInterval(): void {
     this.stopRefreshInterval();
-    this.refreshInterval = setInterval(() => this.loadSessionSummary(), 30000);
+    this.refreshInterval = setInterval(() => this.loadSessionSummary(), 10000);
   }
 
   private stopRefreshInterval(): void {
@@ -900,7 +900,7 @@ export class CajaPage implements OnInit, OnDestroy {
             },
             error: (error) => {
               console.error('Error fetching paid total for diner calculation:', error);
-              this.loadActiveDashboardData();
+              this.loadSessionSummary();
             },
           });
         } else {
@@ -909,9 +909,12 @@ export class CajaPage implements OnInit, OnDestroy {
             // Show success animation before closing
             this.showPaymentSuccess = true;
           } else {
-            this.loadActiveDashboardData();
+            this.loadSessionSummary();
           }
         }
+
+        // Always refresh KPIs after a successful payment so totals update immediately
+        this.loadSessionSummary();
 
         this.currentPaymentAmount = 0;
         this.fromMesas = false;
@@ -977,6 +980,6 @@ export class CajaPage implements OnInit, OnDestroy {
     this.selectedTable = null;
     this.paidDiners = [];
     this.originalOrderTotal = 0;
-    this.loadActiveDashboardData();
+    this.loadSessionSummary();
   }
 }

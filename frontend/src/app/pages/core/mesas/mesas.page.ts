@@ -166,21 +166,12 @@ export class MesasPage implements OnInit {
     this.modalOpen = false;
   }
 
-  numpadPress(key: string): void {
-    if (key === 'del') {
-      if (this.diners >= 10) {
-        this.diners = Math.floor(this.diners / 10);
-      } else {
-        this.diners = 1;
-      }
-      return;
-    }
-    const n = parseInt(key, 10);
-    if (this.diners === 1 && n > 0) {
-      this.diners = n;
-    } else if (this.diners < 100) {
-      this.diners = parseInt(String(this.diners) + key, 10);
-    }
+  incrementDiners(): void {
+    if (this.diners < 99) this.diners++;
+  }
+
+  decrementDiners(): void {
+    if (this.diners > 1) this.diners--;
   }
 
   async confirmOpen(): Promise<void> {
@@ -275,7 +266,7 @@ export class MesasPage implements OnInit {
     this.showPinAuthModalForCharge = false;
     if (!this.selectedTable?.order_id) return;
     void this.router.navigate(['/app/caja'], {
-      queryParams: { orderId: this.selectedTable.order_id },
+      queryParams: { orderId: this.selectedTable.order_id, fromMesas: 'true' },
     });
   }
 

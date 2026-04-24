@@ -106,31 +106,127 @@
   gap: 12px;
 }
 
-.btn-caja {
-  display: flex;
+.caja-chip {
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 20px;
+  gap: 10px;
+  padding: 6px 14px 6px 12px;
   height: 48px;
-  background: var(--black);
-  color: var(--white);
-  border: none;
+  background: var(--white);
+  border: 1.5px solid var(--gray-200);
   border-radius: var(--radius-md);
   font-family: var(--font);
-  font-size: 15px;
-  font-weight: 500;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.08s ease;
   touch-action: manipulation;
+  position: relative;
+}
 
-  svg {
-    width: 18px;
-    height: 18px;
+.caja-chip:hover {
+  border-color: var(--gray-400);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.caja-chip:active {
+  transform: scale(0.98);
+}
+
+.caja-chip-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--gray-400);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.caja-chip-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+  text-align: left;
+}
+
+.caja-chip-status {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-400);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.caja-chip-action {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--black);
+  margin-top: 2px;
+}
+
+.caja-chip-arrow {
+  color: var(--gray-400);
+  flex-shrink: 0;
+  transition: transform 0.18s ease, color 0.18s ease;
+}
+
+.caja-chip:hover .caja-chip-arrow {
+  color: var(--gray-800);
+  transform: translateX(2px);
+}
+
+// Estado: caja abierta — verde, discreto
+.caja-chip.open {
+  border-color: #b9e7cb;
+  background: #f3fbf6;
+
+  .caja-chip-dot {
+    background: #1a9e5a;
+    box-shadow: 0 0 0 3px rgba(26, 158, 90, 0.18);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 1.5px solid #1a9e5a;
+      opacity: 0.6;
+      animation: cajaPulse 2s ease-out infinite;
+    }
+  }
+
+  .caja-chip-status {
+    color: #1a9e5a;
+  }
+
+  &:hover {
+    border-color: #1a9e5a;
+    box-shadow: 0 2px 10px rgba(26, 158, 90, 0.15);
   }
 }
 
-.btn-caja:hover {
-  background: var(--gray-800);
+// Estado: caja cerrada — llamada a la acción en accent
+.caja-chip.closed {
+  border-color: var(--accent);
+  background: var(--white);
+
+  .caja-chip-dot {
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.18);
+  }
+
+  .caja-chip-status {
+    color: var(--accent);
+  }
+
+  &:hover {
+    box-shadow: 0 2px 10px rgba(255, 77, 77, 0.18);
+  }
+}
+
+@keyframes cajaPulse {
+  0%   { transform: scale(1);   opacity: 0.55; }
+  70%  { transform: scale(1.7); opacity: 0; }
+  100% { transform: scale(1.7); opacity: 0; }
 }
 
 .user-avatar-sm {
@@ -173,9 +269,16 @@
     font-size: 14px;
   }
 
-  .btn-caja {
-    padding: 0 14px;
-    font-size: 14px;
+  .caja-chip {
+    padding: 6px 10px;
+
+    .caja-chip-status {
+      font-size: 10px;
+    }
+
+    .caja-chip-action {
+      font-size: 13px;
+    }
   }
 }
 
