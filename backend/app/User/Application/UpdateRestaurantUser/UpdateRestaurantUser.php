@@ -27,9 +27,7 @@ class UpdateRestaurantUser
             return UpdateRestaurantUserResponse::notFound();
         }
 
-        // Verify the target user belongs to the same restaurant
-        $userRestaurantId = $user->restaurantId();
-        if ($userRestaurantId === null || $userRestaurantId->value() !== $restaurantUuid) {
+        if (!$this->userRepository->userBelongsToRestaurant($uuid, $restaurantUuid)) {
             return UpdateRestaurantUserResponse::notFound();
         }
 
@@ -52,7 +50,11 @@ class UpdateRestaurantUser
         }
 
         if ($plainPin !== null) {
-            $updates['pin'] = $this->passwordHasher->hash($plainPin);
+            $pinHash = $this->passwordHasher->hash($plainPin);
+            if ($this->userRepository->pinHashExistsForRestaurant($pinHash, $restaurantUuid, $uuid)) {
+                return UpdateRestaurantUserResponse::pinConflict();
+            }
+            $updates['pin'] = $pinHash;
         }
 
         if (empty($updates)) {

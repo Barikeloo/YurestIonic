@@ -27,7 +27,11 @@ interface UserRepositoryInterface
 
     public function findByEmail(Email $email): ?User;
 
-    public function findPinByUuid(string $uuid): ?string;
+    public function findPinByUuid(string $uuid, ?string $restaurantUuid = null): ?string;
+
+    public function pinHashExistsForRestaurant(string $pinHash, string $restaurantUuid, ?string $excludeUuid = null): bool;
+
+    public function userBelongsToRestaurant(string $userUuid, string $restaurantUuid): bool;
 
     public function updatePinHash(string $uuid, string $pinHash): void;
 

@@ -7,6 +7,7 @@ class UpdateRestaurantUserResponse
     private function __construct(
         private bool $found,
         private string $uuid,
+        private bool $pinConflict = false,
     ) {}
 
     public static function success(string $uuid): self
@@ -19,6 +20,11 @@ class UpdateRestaurantUserResponse
         return new self(false, '');
     }
 
+    public static function pinConflict(): self
+    {
+        return new self(false, '', true);
+    }
+
     public function found(): bool
     {
         return $this->found;
@@ -27,6 +33,11 @@ class UpdateRestaurantUserResponse
     public function uuid(): string
     {
         return $this->uuid;
+    }
+
+    public function hasPinConflict(): bool
+    {
+        return $this->pinConflict;
     }
 
     public function toArray(): array

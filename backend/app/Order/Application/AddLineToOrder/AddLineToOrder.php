@@ -27,10 +27,10 @@ final class AddLineToOrder
         string $orderId,
         string $productId,
         string $userId,
-        int $quantity,
+        OrderLineQuantity $quantity,
         ?int $dinerNumber = null,
     ): AddLineToOrderResponse {
-        $order = $this->orderRepository->getById($orderId);
+        $order = $this->orderRepository->findByUuid(Uuid::create($orderId));
 
         if ($order === null) {
             throw new InvalidArgumentException('Order not found.');
@@ -67,7 +67,7 @@ final class AddLineToOrder
         );
 
         if ($existing !== null) {
-            $merged = $existing->withAddedQuantity($quantity);
+            $merged = $existing->withAddedQuantity($quantity->value());
             $this->orderLineRepository->save($merged);
 
             return AddLineToOrderResponse::create($merged);
@@ -79,7 +79,7 @@ final class AddLineToOrder
             orderId: Uuid::create($orderId),
             productId: Uuid::create($productId),
             userId: Uuid::create($userId),
-            quantity: OrderLineQuantity::create($quantity),
+            quantity: $quantity,
             price: OrderLinePrice::create($price),
             taxPercentage: OrderLineTaxPercentage::create($taxPercentage),
             dinerNumber: $dinerNumber, // hacer VO's

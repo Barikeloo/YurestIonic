@@ -57,6 +57,7 @@ export class SplitBillModalComponent implements OnChanges {
   }
 
   public get equalPart(): number {
+    if (this.remainingDiners <= 0) return 0;
     return Math.floor(this.total / this.remainingDiners);
   }
 
@@ -120,6 +121,12 @@ export class SplitBillModalComponent implements OnChanges {
 
   public onConfirm(): void {
     this.confirmSplit.emit({ selectedLines: this.assignedLines });
+    this.closeModal.emit();
+  }
+
+  public onClose(): void {
+    const hasAssignedLines = this.mode === 'lines' && this.assignedLines.some((l) => l.diner != null);
+    if (hasAssignedLines && !confirm('Hay líneas asignadas. ¿Cerrar sin cobrar?')) return;
     this.closeModal.emit();
   }
 

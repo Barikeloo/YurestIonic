@@ -19,10 +19,15 @@ final class CreateOrder
         string $openedByUserId,
         int $diners,
     ): CreateOrderResponse {
+        $tableUuid = Uuid::create($tableId);
+        if ($this->orderRepository->findByTableId($tableUuid) !== null) {
+            throw new \DomainException('La mesa ya tiene una comanda abierta.');
+        }
+
         $order = Order::dddCreate(
             id: Uuid::generate(),
             restaurantId: Uuid::create($restaurantId),
-            tableId: Uuid::create($tableId),
+            tableId: $tableUuid,
             openedByUserId: Uuid::create($openedByUserId),
             diners: OrderDiners::create($diners),
         );

@@ -187,7 +187,7 @@ class LoginUserTest extends TestCase
                 'success' => true,
                 'name' => 'Pin User',
                 'role' => 'operator',
-                'restaurant_name' => 'Pin Restaurant',
+                'restaurantName' => 'Pin Restaurant',
             ]);
     }
 

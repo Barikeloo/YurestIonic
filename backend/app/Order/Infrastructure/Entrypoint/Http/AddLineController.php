@@ -3,6 +3,7 @@
 namespace App\Order\Infrastructure\Entrypoint\Http;
 
 use App\Order\Application\AddLineToOrder\AddLineToOrder;
+use App\Order\Domain\ValueObject\OrderLineQuantity;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 use InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
@@ -43,7 +44,7 @@ final class AddLineController
                 orderId: $validated['order_id'],
                 productId: $validated['product_id'],
                 userId: $userId,
-                quantity: $validated['quantity'],
+                quantity: OrderLineQuantity::create($validated['quantity']),
                 dinerNumber: $validated['diner_number'] ?? null,
             );
         } catch (InvalidArgumentException $exception) {

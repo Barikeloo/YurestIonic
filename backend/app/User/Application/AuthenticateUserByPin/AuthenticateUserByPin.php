@@ -15,9 +15,9 @@ final class AuthenticateUserByPin
         private readonly PasswordHasherInterface $passwordHasher,
     ) {}
 
-    public function __invoke(string $userUuid, string $pin): AuthenticateUserResponse
+    public function __invoke(string $userUuid, string $pin, ?string $restaurantUuid = null): AuthenticateUserResponse
     {
-        $persistedPin = $this->userRepository->findPinByUuid($userUuid);
+        $persistedPin = $this->userRepository->findPinByUuid($userUuid, $restaurantUuid);
 
         if ($persistedPin === null) {
             return AuthenticateUserResponse::invalidCredentials();

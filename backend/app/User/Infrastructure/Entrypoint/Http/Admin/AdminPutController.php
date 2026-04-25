@@ -85,6 +85,13 @@ class AdminPutController
             $validated['pin'] ?? null,
         );
 
+        if ($response->hasPinConflict()) {
+            return new JsonResponse([
+                'success' => false,
+                'message' => 'Este PIN ya está en uso en este restaurante.',
+            ], 409);
+        }
+
         if (! $response->found()) {
             return new JsonResponse([
                 'success' => false,

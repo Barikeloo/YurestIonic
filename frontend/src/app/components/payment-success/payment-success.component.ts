@@ -13,20 +13,31 @@ export class PaymentSuccessComponent {
   @Output() complete = new EventEmitter<void>();
 
   private autoCloseTimeout: any;
+  private hasCompleted = false;
 
   public ngOnChanges(): void {
     if (this.isOpen) {
+      this.hasCompleted = false;
       this.startAutoClose();
     } else {
       this.clearAutoClose();
     }
   }
 
+  public onOverlayClick(): void {
+    this.emit();
+  }
+
   private startAutoClose(): void {
     this.clearAutoClose();
-    this.autoCloseTimeout = setTimeout(() => {
-      this.complete.emit();
-    }, 2500);
+    this.autoCloseTimeout = setTimeout(() => this.emit(), 2500);
+  }
+
+  private emit(): void {
+    if (this.hasCompleted) return;
+    this.hasCompleted = true;
+    this.clearAutoClose();
+    this.complete.emit();
   }
 
   private clearAutoClose(): void {

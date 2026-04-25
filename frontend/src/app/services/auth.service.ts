@@ -176,11 +176,13 @@ export class AuthService {
 
   public loginWithPin(userUuid: string, pin: string, deviceId: string): Observable<AuthUser> {
     const resolvedDeviceId = deviceId.trim() !== '' ? deviceId : this.getOrCreateDeviceId();
+    const currentUser = this.currentUserSubject.getValue();
+    const restaurantId = currentUser?.restaurantId ?? null;
 
     return this.http
       .post<LoginResponse>(
         `${this.authBaseUrl}/login-pin`,
-        { user_uuid: userUuid, pin, device_id: resolvedDeviceId },
+        { user_uuid: userUuid, pin, device_id: resolvedDeviceId, restaurant_id: restaurantId },
         { withCredentials: true },
       )
       .pipe(

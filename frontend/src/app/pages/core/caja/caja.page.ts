@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
+import { forkJoin, of, Subject } from 'rxjs';
+import { catchError, switchMap, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
 import { TpvService, TpvCashSession, TpvCashSessionListItem, TpvOrder, TpvTableItem } from '../../../services/tpv.service';
 import { OpenCashModalComponent } from '../../../components/open-cash-modal/open-cash-modal.component';
@@ -142,6 +142,7 @@ export class CajaPage implements OnInit, OnDestroy {
 
   private refreshInterval: any;
   private clockInterval: any;
+  private readonly destroy$ = new Subject<void>();
   public readonly deviceId: string;
 
   constructor(
@@ -156,12 +157,12 @@ export class CajaPage implements OnInit, OnDestroy {
   public ngOnInit(): void {
     this.updateClock();
     this.clockInterval = setInterval(() => this.updateClock(), 1000);
-    this.authService.currentUser$.subscribe((user) => { this.currentUser = user; });
+    this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe((user) => { this.currentUser = user; });
     this.loadActiveSession();
 
     // Check if coming from mesas to open payment modal
     // Clear URL params after opening to prevent modal from opening on reload
-    this.route.queryParams.subscribe((params) => {
+    this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       if (params['orderId'] && params['fromMesas'] === 'true') {
         this.loadOrderForPayment(params['orderId']);
         // Clear URL params to prevent modal from opening on page reload
@@ -175,6 +176,8 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   public ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.stopRefreshInterval();
     if (this.clockInterval) clearInterval(this.clockInterval);
   }

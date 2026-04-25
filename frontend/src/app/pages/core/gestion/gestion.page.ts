@@ -1349,7 +1349,7 @@ export class GestionPage {
           this.apiErrorMessage = null;
 
           if (!response.data.length) {
-            this.managementRestaurants.splice(0, this.managementRestaurants.length);
+            this.managementRestaurants = [];
             for (const key of Object.keys(this.managementData)) {
               delete this.managementData[Number(key)];
             }
@@ -1419,7 +1419,7 @@ export class GestionPage {
           }
         },
         error: (error: unknown) => {
-          this.managementRestaurants.splice(0, this.managementRestaurants.length);
+          this.managementRestaurants = [];
           for (const key of Object.keys(this.managementData)) {
             delete this.managementData[Number(key)];
           }
@@ -1641,7 +1641,7 @@ export class GestionPage {
     if (!restaurant || !restaurant.uuid) return;
 
     this.isLoadingZReports = true;
-    this.tpvService.listCashSessions().subscribe({
+    this.tpvService.listCashSessions().pipe(take(1)).subscribe({
       next: (response) => {
         this.managementData[restaurant.id].zreports = response.sessions.map((session): ZReportRow => ({
           id: session.uuid,

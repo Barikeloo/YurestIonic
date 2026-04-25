@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
@@ -11,7 +11,7 @@ import { AuthService } from '../../services/auth.service';
   imports: [CommonModule, FormsModule],
   standalone: true,
 })
-export class PinAuthModalComponent {
+export class PinAuthModalComponent implements OnDestroy {
   @Input() isOpen = false;
   @Input() title = 'Verificación de PIN';
   @Input() subtitle = 'Introduce tu PIN para continuar';
@@ -23,7 +23,13 @@ export class PinAuthModalComponent {
   public isVerifying = false;
   public showSuccess = false;
 
+  private successTimeout: ReturnType<typeof setTimeout> | null = null;
+
   constructor(private readonly authService: AuthService) {}
+
+  public ngOnDestroy(): void {
+    if (this.successTimeout) clearTimeout(this.successTimeout);
+  }
 
   get pinDots(): boolean[] {
     return [0, 1, 2, 3].map(i => i < this.enteredPin.length);
@@ -85,7 +91,8 @@ export class PinAuthModalComponent {
       this.isVerifying = false;
 
       // Emitir evento de autenticación después de la animación
-      setTimeout(() => {
+      this.successTimeout = setTimeout(() => {
+        this.successTimeout = null;
         this.authenticated.emit();
         this.reset();
       }, 1500);

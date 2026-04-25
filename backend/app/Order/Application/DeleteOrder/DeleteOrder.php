@@ -3,6 +3,7 @@
 namespace App\Order\Application\DeleteOrder;
 
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Shared\Domain\ValueObject\Uuid;
 
 final class DeleteOrder
 {
@@ -12,7 +13,7 @@ final class DeleteOrder
 
     public function __invoke(string $id): bool
     {
-        $order = $this->orderRepository->getById($id);
+        $order = $this->orderRepository->findByUuid(Uuid::create($id));
 
         if ($order === null) {
             return false;

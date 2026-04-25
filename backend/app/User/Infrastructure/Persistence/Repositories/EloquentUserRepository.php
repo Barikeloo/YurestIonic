@@ -108,7 +108,7 @@ class EloquentUserRepository implements UserRepositoryInterface
             $model->email,
             $model->password,
             $model->role ?? null,
-            $model->restaurant_id ? (string)$model->restaurant_id : null, // Asegúrate que aquí ya es uuid en la base
+            $model->restaurant_id ? (string)$model->restaurant_id : null, // integer FK stored as string in RestaurantId VO
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),
         );
@@ -128,24 +128,66 @@ class EloquentUserRepository implements UserRepositoryInterface
             $model->email,
             $model->password,
             $model->role ?? null,
-            $model->restaurant_id ? (string)$model->restaurant_id : null,
+            $model->restaurant_id ? (string)$model->restaurant_id : null, // integer FK stored as string in RestaurantId VO
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),
         );
     }
 
-    public function findPinByUuid(string $uuid): ?string
+    public function findPinByUuid(string $uuid, ?string $restaurantUuid = null): ?string
     {
-        $model = $this->model->newQuery()
+        $query = $this->model->newQuery()
             ->select('pin')
-            ->where('uuid', $uuid)
-            ->first();
+            ->where('uuid', $uuid);
+
+        if ($restaurantUuid !== null) {
+            $restaurant = EloquentRestaurant::query()->where('uuid', $restaurantUuid)->first();
+            if ($restaurant === null) {
+                return null;
+            }
+            $query->where('restaurant_id', $restaurant->id);
+        }
+
+        $model = $query->first();
 
         if ($model === null || ! is_string($model->pin) || $model->pin === '') {
             return null;
         }
 
         return $model->pin;
+    }
+
+    public function userBelongsToRestaurant(string $userUuid, string $restaurantUuid): bool
+    {
+        $restaurant = EloquentRestaurant::query()->where('uuid', $restaurantUuid)->first();
+
+        if ($restaurant === null) {
+            return false;
+        }
+
+        return $this->model->newQuery()
+            ->where('uuid', $userUuid)
+            ->where('restaurant_id', $restaurant->id)
+            ->exists();
+    }
+
+    public function pinHashExistsForRestaurant(string $pinHash, string $restaurantUuid, ?string $excludeUuid = null): bool
+    {
+        $restaurant = EloquentRestaurant::query()->where('uuid', $restaurantUuid)->first();
+
+        if ($restaurant === null) {
+            return false;
+        }
+
+        $query = $this->model->newQuery()
+            ->where('restaurant_id', $restaurant->id)
+            ->where('pin', $pinHash);
+
+        if ($excludeUuid !== null) {
+            $query->where('uuid', '!=', $excludeUuid);
+        }
+
+        return $query->exists();
     }
 
     public function updatePinHash(string $uuid, string $pinHash): void

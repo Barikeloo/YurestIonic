@@ -27,6 +27,10 @@ class CreateRestaurantUser
             ? $this->passwordHasher->hash($plainPin)
             : null;
 
+        if ($pinHash !== null && $this->userRepository->pinHashExistsForRestaurant($pinHash, $restaurantUuid)) {
+            throw new \DomainException('Este PIN ya está en uso en este restaurante.');
+        }
+
         $this->userRepository->saveWithRestaurant(
             $userUuid,
             $name,

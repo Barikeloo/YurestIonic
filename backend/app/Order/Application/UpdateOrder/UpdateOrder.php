@@ -18,7 +18,7 @@ final class UpdateOrder
         ?string $action = null, // 'mark-to-charge', 'close', 'cancel'
         ?string $closedByUserId = null,
     ): ?UpdateOrderResponse {
-        $order = $this->orderRepository->getById($id);
+        $order = $this->orderRepository->findByUuid(Uuid::create($id));
 
         if ($order === null) {
             return null;

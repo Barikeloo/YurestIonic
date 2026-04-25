@@ -34,7 +34,9 @@ class SaonaDemoSeeder extends Seeder
         $this->seedQuickAccess($restaurantId, $userIds, $now);
 
         $this->command->info('SAONA demo seeded correctamente.');
-        $this->command->info('  Admin: '.self::RESTAURANT_EMAIL.' / 12345678 / PIN 1234');
+        $this->command->info('  Admin:      '.self::RESTAURANT_EMAIL.' / 12345678 / PIN 1234');
+        $this->command->info('  Supervisor: maria@saona.com / 12345678 / PIN 2345');
+        $this->command->info('  Operadores: carlos/laura/javier/sofia@saona.com / 12345678 / PIN 3456-6789');
     }
 
     /**
@@ -128,15 +130,13 @@ class SaonaDemoSeeder extends Seeder
     {
         $password = Hash::make('12345678');
 
-        $pin = Hash::make('1234');
-
         $users = [
-            ['email' => self::RESTAURANT_EMAIL, 'name' => 'José María Castellar', 'role' => 'admin'],
-            ['email' => 'maria@saona.com',      'name' => 'María García',          'role' => 'supervisor'],
-            ['email' => 'carlos@saona.com',     'name' => 'Carlos Ruiz',           'role' => 'operator'],
-            ['email' => 'laura@saona.com',      'name' => 'Laura Martínez',        'role' => 'operator'],
-            ['email' => 'javier@saona.com',     'name' => 'Javier López',          'role' => 'operator'],
-            ['email' => 'sofia@saona.com',      'name' => 'Sofía Romero',          'role' => 'operator'],
+            ['email' => self::RESTAURANT_EMAIL, 'name' => 'José María Castellar', 'role' => 'admin',       'pin' => '1234'],
+            ['email' => 'maria@saona.com',      'name' => 'María García',          'role' => 'supervisor', 'pin' => '2345'],
+            ['email' => 'carlos@saona.com',     'name' => 'Carlos Ruiz',           'role' => 'operator',  'pin' => '3456'],
+            ['email' => 'laura@saona.com',      'name' => 'Laura Martínez',        'role' => 'operator',  'pin' => '4567'],
+            ['email' => 'javier@saona.com',     'name' => 'Javier López',          'role' => 'operator',  'pin' => '5678'],
+            ['email' => 'sofia@saona.com',      'name' => 'Sofía Romero',          'role' => 'operator',  'pin' => '6789'],
         ];
 
         $ids = [];
@@ -150,7 +150,7 @@ class SaonaDemoSeeder extends Seeder
                     'image_src' => null,
                     'name' => $user['name'],
                     'password' => $password,
-                    'pin' => $pin,
+                    'pin' => Hash::make($user['pin']),
                     'email_verified_at' => $now,
                     'remember_token' => null,
                     'updated_at' => $now,

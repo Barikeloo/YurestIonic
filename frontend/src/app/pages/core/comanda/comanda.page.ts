@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { AuthService, AuthUser, QuickAccessUserResponse } from '../../../services/auth.service';
 import { TpvFamilyItem, TpvOrder, TpvOrderLine, TpvProductItem, TpvService, TpvTaxItem } from '../../../services/tpv.service';
 
@@ -22,7 +23,7 @@ const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#
   styleUrls: ['./comanda.page.scss'],
   imports: [CommonModule, FormsModule],
 })
-export class ComandaPage implements OnInit {
+export class ComandaPage implements OnInit, OnDestroy {
   orderId: string | null = null;
   tableId: string | null = null;
 
@@ -50,6 +51,8 @@ export class ComandaPage implements OnInit {
   closing = false;
   closeError: string | null = null;
 
+  private readonly destroy$ = new Subject<void>();
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
@@ -57,10 +60,15 @@ export class ComandaPage implements OnInit {
     private readonly authService: AuthService,
   ) {}
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   async ngOnInit(): Promise<void> {
     this.orderId = this.route.snapshot.queryParamMap.get('orderId');
     this.tableId = this.route.snapshot.queryParamMap.get('tableId');
-    this.authService.currentUser$.subscribe((user) => { this.currentUser = user; });
+    this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe((user) => { this.currentUser = user; });
     await this.loadData();
   }
 

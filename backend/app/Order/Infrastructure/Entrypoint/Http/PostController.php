@@ -21,12 +21,16 @@ final class PostController
             'diners' => ['required', 'integer', 'min:1'],
         ]);
 
-        $response = ($this->createOrder)(
-            restaurantId: $validated['restaurant_id'],
-            tableId: $validated['table_id'],
-            openedByUserId: $validated['opened_by_user_id'],
-            diners: $validated['diners'],
-        );
+        try {
+            $response = ($this->createOrder)(
+                restaurantId: $validated['restaurant_id'],
+                tableId: $validated['table_id'],
+                openedByUserId: $validated['opened_by_user_id'],
+                diners: $validated['diners'],
+            );
+        } catch (\DomainException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 409);
+        }
 
         return new JsonResponse($response->toArray(), 201);
     }

@@ -21,7 +21,7 @@ final class UpdateSale
         string $closedByUserId,
         int $ticketNumber,
     ): ?UpdateSaleResponse {
-        $sale = $this->saleRepository->getById($id);
+        $sale = $this->saleRepository->findByUuid(Uuid::create($id));
 
         if ($sale === null) {
             return null;

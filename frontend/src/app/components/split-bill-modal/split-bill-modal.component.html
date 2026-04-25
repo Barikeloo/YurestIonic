@@ -1,6 +1,6 @@
-<div class="modal-overlay" [class.open]="isOpen" (click)="closeModal.emit()">
+<div class="modal-overlay" [class.open]="isOpen" (click)="onClose()">
   <div class="modal-box" (click)="$event.stopPropagation()">
-    <button class="modal-close-btn" (click)="closeModal.emit()">✕</button>
+    <button class="modal-close-btn" (click)="onClose()">✕</button>
     <div class="modal-title">Dividir cuenta — {{ tableLabel }}</div>
 
     <div class="mode-selector">
@@ -37,7 +37,10 @@
         <div class="parts-grid">
           <div *ngFor="let dinerNum of unpaidDinerNumbers; let i = index" class="part-card">
             <div class="part-label">Comensal {{ dinerNum }}</div>
-            <div class="part-amount">{{ formatCents(equalPart + (i === remainingDiners - 1 ? remainder : 0)) }} €</div>
+            <div class="part-amount">
+              {{ formatCents(equalPart + (i === remainingDiners - 1 ? remainder : 0)) }} €
+              <span *ngIf="remainder > 0 && i === remainingDiners - 1" class="remainder-badge" title="Incluye el redondeo de {{ remainder }} ct">+{{ remainder }}ct</span>
+            </div>
             <button class="btn-charge" (click)="chargeEqualPart(dinerNum)">Cobrar</button>
           </div>
         </div>

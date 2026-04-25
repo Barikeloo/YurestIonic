@@ -75,23 +75,28 @@ export class CobrarModalComponent implements OnChanges {
   }
 
   public onConfirm(): void {
-    // Validate cash payment
-    if (this.method === 'cash' && this.cashGiven < this.total) {
-      alert('La cantidad entregada es insuficiente. Por favor, ingrese al menos ' + this.formatCents(this.total) + ' €');
-      return;
+    const tip = this.showTip ? this.tip : 0;
+
+    if (this.method === 'cash') {
+      if (this.cashGiven < this.total) {
+        alert('La cantidad entregada es insuficiente. Por favor, ingrese al menos ' + this.formatCents(this.total) + ' €');
+        return;
+      }
+      if (this.cashGiven > this.total * 2) {
+        alert('El importe introducido parece demasiado alto. Por favor, verifíquelo.');
+        return;
+      }
     }
 
-    // For non-cash methods, payment amount cannot exceed total (no change given)
-    const paymentAmount = this.total + (this.showTip ? this.tip : 0);
-    if (this.method !== 'cash' && this.method !== 'mixed' && paymentAmount > this.total) {
-      alert('Para tarjeta, Bizum e invitación el importe no puede superar el total. Use Efectivo o Mixto si necesita dar cambio.');
+    if (tip > this.total) {
+      alert('La propina no puede superar el importe total del pedido.');
       return;
     }
 
     this.confirmPayment.emit({
       method: this.method,
-      amount: this.total + (this.showTip ? this.tip : 0),
-      tip: this.showTip ? this.tip : undefined,
+      amount: this.total + tip,
+      tip: tip > 0 ? tip : undefined,
     });
     this.resetForm();
   }
