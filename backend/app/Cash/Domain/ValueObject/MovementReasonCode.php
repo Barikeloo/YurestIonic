@@ -12,6 +12,7 @@ final class MovementReasonCode
         'tip_declared',
         'sangria',
         'adjustment',
+        'cancellation',
         'other',
     ];
 
@@ -50,6 +51,11 @@ final class MovementReasonCode
     public static function adjustment(): self
     {
         return new self('adjustment');
+    }
+
+    public static function cancellation(): self
+    {
+        return new self('cancellation');
     }
 
     public static function other(): self

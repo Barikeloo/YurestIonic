@@ -4,6 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 
+export interface PinAuthResult {
+  userId: string;
+  userName: string;
+  userRole: string;
+}
+
 @Component({
   selector: 'app-pin-auth-modal',
   templateUrl: './pin-auth-modal.component.html',
@@ -16,7 +22,7 @@ export class PinAuthModalComponent implements OnDestroy {
   @Input() title = 'Verificación de PIN';
   @Input() subtitle = 'Introduce tu PIN para continuar';
   @Output() closeModal = new EventEmitter<void>();
-  @Output() authenticated = new EventEmitter<void>();
+  @Output() authenticated = new EventEmitter<PinAuthResult>();
 
   public enteredPin = '';
   public pinError: string | null = null;
@@ -73,7 +79,7 @@ export class PinAuthModalComponent implements OnDestroy {
     this.pinError = null;
 
     try {
-      // Obtener usuario actual
+      // Obtener usuario actual de la sesión
       const currentUser = await firstValueFrom(this.authService.currentUser$);
       if (!currentUser) {
         this.pinError = 'No hay sesión activa';
@@ -82,9 +88,11 @@ export class PinAuthModalComponent implements OnDestroy {
         return;
       }
 
-      // Verificar el PIN
+      // Verificar el PIN del usuario actual
       const deviceId = this.authService.getDeviceId();
-      await firstValueFrom(this.authService.loginWithPin(currentUser.id, this.enteredPin, deviceId));
+      await firstValueFrom(
+        this.authService.loginWithPin(currentUser.id, this.enteredPin, deviceId),
+      );
 
       // PIN correcto - mostrar animación de éxito
       this.showSuccess = true;
@@ -93,7 +101,11 @@ export class PinAuthModalComponent implements OnDestroy {
       // Emitir evento de autenticación después de la animación
       this.successTimeout = setTimeout(() => {
         this.successTimeout = null;
-        this.authenticated.emit();
+        this.authenticated.emit({
+          userId: currentUser.id,
+          userName: currentUser.name,
+          userRole: currentUser.role ?? 'operator',
+        });
         this.reset();
       }, 1500);
     } catch (err) {

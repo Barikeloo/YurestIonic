@@ -66,6 +66,19 @@ final class GetCashSessionSummary
 
         $expectedAmount = $cashSession->initialAmount()->toCents() + $totalCashPayments + $totalInMovements - $totalOutMovements;
 
+        // Contar tickets únicos (sale_ids distintos) - B5 fix
+        $uniqueSaleIds = [];
+        foreach ($payments as $payment) {
+            $saleId = $payment->saleId()->value();
+            $uniqueSaleIds[$saleId] = true;
+        }
+        $ticketsCount = count($uniqueSaleIds);
+
+        // TODO: B6 - Implementar conteo de diners y tipsCard
+        // Requiere inyección de OrderRepository y TipRepository
+        $dinersCount = 0;
+        $tipsCard = 0;
+
         return GetCashSessionSummaryResponse::create(
             cashSession: $cashSession,
             totalSales: $totalSales,
@@ -78,6 +91,9 @@ final class GetCashSessionSummary
             expectedAmount: $expectedAmount,
             movementsCount: count($movements),
             paymentsCount: count($payments),
+            ticketsCount: $ticketsCount,
+            dinersCount: $dinersCount,
+            tipsCard: $tipsCard,
         );
     }
 }

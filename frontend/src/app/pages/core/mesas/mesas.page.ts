@@ -2,8 +2,9 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { PinAuthModalComponent } from '../../../components/pin-auth-modal/pin-auth-modal.component';
+import { PinAuthModalComponent, PinAuthResult } from '../../../components/pin-auth-modal/pin-auth-modal.component';
 import { AuthService, QuickAccessUserResponse } from '../../../services/auth.service';
+import { PinAuthService } from '../../../services/pin-auth.service';
 import { TpvOrder, TpvOrderLine, TpvService, TpvTableItem, TpvZoneItem } from '../../../services/tpv.service';
 
 interface TableWithStatus extends TpvTableItem {
@@ -54,6 +55,7 @@ export class MesasPage implements OnInit {
   constructor(
     private readonly tpvService: TpvService,
     private readonly authService: AuthService,
+    private readonly pinAuthService: PinAuthService,
     private readonly router: Router,
   ) {}
 
@@ -152,10 +154,28 @@ export class MesasPage implements OnInit {
       this.cajaError = 'No se pudo verificar el estado de la caja.';
       return;
     }
-    this.showPinAuthModal = true;
+
+    // Abrir mesa es acción NORMAL - verificar sesión con timeout
+    if (this.pinAuthService.requiresPin('normal')) {
+      this.showPinAuthModal = true;
+    } else {
+      // Sesión activa, abrir directamente
+      this.modalOpen = true;
+      this.openingError = null;
+      this.diners = 1;
+    }
   }
 
-  onPinAuthenticated(): void {
+  onPinAuthenticated(result: PinAuthResult): void {
+    // Guardar contexto para sesión con timeout
+    const now = Date.now();
+    this.pinAuthService.setAuthContext({
+      userId: result.userId,
+      userName: result.userName,
+      userRole: result.userRole,
+      authenticatedAt: now,
+      lastActivityAt: now,
+    });
     this.showPinAuthModal = false;
     this.modalOpen = true;
     this.openingError = null;
@@ -209,10 +229,26 @@ export class MesasPage implements OnInit {
   // ── Modal cerrar cuenta ───────────────────────
   async openCloseAccountModal(): Promise<void> {
     if (!this.selectedTable?.order_id) return;
-    this.showPinAuthModalForCloseAccount = true;
+
+    // Cerrar cuenta es acción NORMAL - verificar sesión con timeout
+    if (this.pinAuthService.requiresPin('normal')) {
+      this.showPinAuthModalForCloseAccount = true;
+    } else {
+      this.closeAccountModalOpen = true;
+      this.closeAccountError = null;
+    }
   }
 
-  onPinAuthenticatedForCloseAccount(): void {
+  onPinAuthenticatedForCloseAccount(result: PinAuthResult): void {
+    // Guardar contexto para sesión con timeout
+    const now = Date.now();
+    this.pinAuthService.setAuthContext({
+      userId: result.userId,
+      userName: result.userName,
+      userRole: result.userRole,
+      authenticatedAt: now,
+      lastActivityAt: now,
+    });
     this.showPinAuthModalForCloseAccount = false;
     this.closeAccountModalOpen = true;
     this.closeAccountError = null;
@@ -259,10 +295,27 @@ export class MesasPage implements OnInit {
   // ── Ir a cobrar (navega a caja) ───────────────────
   goToCobrar(): void {
     if (!this.selectedTable?.order_id) return;
-    this.showPinAuthModalForCharge = true;
+
+    // Cobrar es acción NORMAL - verificar sesión con timeout
+    if (this.pinAuthService.requiresPin('normal')) {
+      this.showPinAuthModalForCharge = true;
+    } else {
+      void this.router.navigate(['/app/caja'], {
+        queryParams: { orderId: this.selectedTable.order_id, fromMesas: 'true' },
+      });
+    }
   }
 
-  onPinAuthenticatedForCharge(): void {
+  onPinAuthenticatedForCharge(result: PinAuthResult): void {
+    // Guardar contexto para sesión con timeout
+    const now = Date.now();
+    this.pinAuthService.setAuthContext({
+      userId: result.userId,
+      userName: result.userName,
+      userRole: result.userRole,
+      authenticatedAt: now,
+      lastActivityAt: now,
+    });
     this.showPinAuthModalForCharge = false;
     if (!this.selectedTable?.order_id) return;
     void this.router.navigate(['/app/caja'], {

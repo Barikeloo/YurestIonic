@@ -45,6 +45,8 @@ use App\Cash\Infrastructure\Persistence\Repositories\EloquentCashMovementReposit
 use App\Cash\Infrastructure\Persistence\Repositories\EloquentSalePaymentRepository;
 use App\Cash\Infrastructure\Persistence\Repositories\EloquentTipRepository;
 use App\Cash\Infrastructure\Persistence\Repositories\EloquentZReportRepository;
+use App\Product\Domain\Interfaces\ImageSearchServiceInterface;
+use App\Product\Infrastructure\Services\SpoonacularImageSearchService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -75,6 +77,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TipRepositoryInterface::class, EloquentTipRepository::class);
         $this->app->bind(ZReportRepositoryInterface::class, EloquentZReportRepository::class);
         $this->app->bind(TransactionManagerInterface::class, LaravelTransactionManager::class);
+        $this->app->bind(ImageSearchServiceInterface::class, SpoonacularImageSearchService::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext());
     }
 

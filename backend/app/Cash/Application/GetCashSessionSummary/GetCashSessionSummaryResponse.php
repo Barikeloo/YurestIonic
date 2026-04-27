@@ -23,6 +23,9 @@ final class GetCashSessionSummaryResponse
         public readonly int $expectedAmount,
         public readonly int $movementsCount,
         public readonly int $paymentsCount,
+        public readonly int $ticketsCount,
+        public readonly int $dinersCount,
+        public readonly int $tipsCard,
     ) {}
 
     public static function create(
@@ -37,6 +40,9 @@ final class GetCashSessionSummaryResponse
         int $expectedAmount,
         int $movementsCount,
         int $paymentsCount,
+        int $ticketsCount,
+        int $dinersCount,
+        int $tipsCard,
     ): self {
         return new self(
             id: $cashSession->id()->value(),
@@ -53,6 +59,9 @@ final class GetCashSessionSummaryResponse
             expectedAmount: $expectedAmount,
             movementsCount: $movementsCount,
             paymentsCount: $paymentsCount,
+            ticketsCount: $ticketsCount,
+            dinersCount: $dinersCount,
+            tipsCard: $tipsCard,
         );
     }
 
@@ -73,6 +82,9 @@ final class GetCashSessionSummaryResponse
             'expected_amount' => $this->expectedAmount,
             'movements_count' => $this->movementsCount,
             'payments_count' => $this->paymentsCount,
+            'tickets_count' => $this->ticketsCount,
+            'diners_count' => $this->dinersCount,
+            'tips_card' => $this->tipsCard,
         ];
     }
 }

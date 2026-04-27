@@ -19,6 +19,7 @@ use App\Order\Infrastructure\Entrypoint\Http\DeleteController as OrderDeleteCont
 use App\Order\Infrastructure\Entrypoint\Http\PostController as OrderPostController;
 use App\Product\Infrastructure\Entrypoint\Http\ActivateController as ProductActivateController;
 use App\Product\Infrastructure\Entrypoint\Http\DeactivateController as ProductDeactivateController;
+use App\Product\Infrastructure\Entrypoint\Http\SearchImagesController as ProductSearchImagesController;
 use App\Product\Infrastructure\Entrypoint\Http\DeleteController as ProductDeleteController;
 use App\Product\Infrastructure\Entrypoint\Http\GetCollectionController as ProductGetCollectionController;
 use App\Product\Infrastructure\Entrypoint\Http\GetController as ProductGetController;
@@ -33,6 +34,7 @@ use App\Restaurant\Infrastructure\Entrypoint\Http\PutController as RestaurantPut
 use App\Restaurant\Infrastructure\Entrypoint\Http\DeleteController as RestaurantDeleteController;
 use App\Shared\Infrastructure\Http\Middleware\RequireAdminSession;
 use App\Shared\Infrastructure\Http\Middleware\RequireManagementSession;
+use App\Shared\Infrastructure\Http\Middleware\RequireSupervisorSession;
 use App\Shared\Infrastructure\Http\Middleware\ResolveTenantContext;
 use App\Shared\Infrastructure\Http\Middleware\RequireSuperAdminSession;
 use App\SuperAdmin\Infrastructure\Entrypoint\Http\GetMeController as SuperAdminGetMeController;
@@ -124,7 +126,6 @@ Route::middleware([
 
 	Route::post('/tpv/orders', OrderPostController::class);
 	Route::post('/tpv/orders/lines', OrderAddLineController::class);
-	Route::delete('/tpv/orders/lines/{lineId}', OrderDeleteLineController::class)->whereUuid('lineId');
 	Route::get('/tpv/orders', OrderGetCollectionController::class);
 	Route::get('/tpv/orders/{id}', OrderGetController::class)->whereUuid('id');
 	Route::get('/tpv/orders/{id}/total', GetOrderTotalController::class)->whereUuid('id');
@@ -152,8 +153,19 @@ Route::middleware([
 	Route::post('/tpv/cash-sessions/start-closing', StartClosingCashSessionController::class);
 	Route::post('/tpv/cash-sessions/cancel-closing', CancelClosingCashSessionController::class);
 	Route::post('/tpv/cash-sessions/close', CloseCashSessionController::class);
-	Route::post('/tpv/z-reports/generate', GenerateZReportController::class);
 	Route::get('/tpv/z-reports/{id}', GetZReportController::class)->whereUuid('id');
+});
+
+// S3: Rutas de eliminación requieren supervisor o admin
+Route::middleware([
+	EncryptCookies::class,
+	AddQueuedCookiesToResponse::class,
+	StartSession::class,
+	ResolveTenantContext::class,
+	RequireSupervisorSession::class,
+])->group(function (): void {
+	Route::delete('/tpv/orders/{id}', OrderDeleteController::class)->whereUuid('id');
+	Route::delete('/tpv/orders/lines/{lineId}', OrderDeleteLineController::class)->whereUuid('lineId');
 });
 
 Route::middleware([
@@ -199,8 +211,10 @@ Route::middleware([
 	Route::delete('/admin/products/{id}', ProductDeleteController::class)->whereUuid('id');
 	Route::patch('/admin/products/{id}/activate', ProductActivateController::class)->whereUuid('id');
 	Route::patch('/admin/products/{id}/deactivate', ProductDeactivateController::class)->whereUuid('id');
+	Route::get('/admin/products/images/search', ProductSearchImagesController::class);
 
 	Route::post('/tpv/cash-sessions/force-close', ForceCloseCashSessionController::class);
+	Route::post('/tpv/z-reports/generate', GenerateZReportController::class);
 });
 
 Route::middleware([

@@ -4,6 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject, forkJoin, of, Subject, throwError } from 'rxjs';
 import { catchError, switchMap, takeUntil, map } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
+import { PinAuthService, AuthContext, AuthActionType } from '../../../services/pin-auth.service';
+import { PinAuthResult } from '../../../components/pin-auth-modal/pin-auth-modal.component';
 import { TpvService, TpvCashSession, TpvCashSessionListItem, TpvOrder, TpvTableItem } from '../../../services/tpv.service';
 import { OpenCashModalComponent } from '../../../components/open-cash-modal/open-cash-modal.component';
 import { PinAuthModalComponent } from '../../../components/pin-auth-modal/pin-auth-modal.component';
@@ -171,6 +173,7 @@ export class CajaPage implements OnInit, OnDestroy {
   constructor(
     private readonly tpvService: TpvService,
     private readonly authService: AuthService,
+    private readonly pinAuthService: PinAuthService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {
@@ -408,10 +411,23 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   public onOpenModal(): void {
-    this.showPinAuthModal = true;
+    // Abrir caja es acción CRÍTICA - siempre requiere PIN (pero extiende sesión para otras acciones)
+    if (this.pinAuthService.requiresPin('critical')) {
+      this.showPinAuthModal = true;
+    } else {
+      this.showOpenModal = true;
+    }
   }
 
-  public onPinAuthenticated(): void {
+  public onPinAuthenticated(result: PinAuthResult): void {
+    // Guardar contexto completo para sesión con timeout
+    this.pinAuthService.setAuthContext({
+      userId: result.userId,
+      userName: result.userName,
+      userRole: result.userRole,
+      authenticatedAt: Date.now(),
+      lastActivityAt: Date.now(),
+    });
     this.showPinAuthModal = false;
     this.showOpenModal = true;
   }
@@ -685,20 +701,24 @@ export class CajaPage implements OnInit, OnDestroy {
 
   // Modal handlers for charging tables
   public onCobrarMesa(mesa: PendingTable): void {
-    // Store the table and show PIN auth first
     this.pendingTableToCharge = mesa;
-    this.showPinAuthModalForCobrarMesa = true;
+
+    // Cobrar mesa es acción NORMAL - usa sesión con timeout
+    if (this.pinAuthService.requiresPin('normal')) {
+      this.showPinAuthModalForCobrarMesa = true;
+    } else {
+      this.loadOrderForCobrarMesa();
+    }
   }
 
-  public onPinAuthenticatedForCobrarMesa(): void {
-    this.showPinAuthModalForCobrarMesa = false;
-
+  private loadOrderForCobrarMesa(): void {
     const mesa = this.pendingTableToCharge;
     if (!mesa) return;
 
     // Cancel any previous payment flow (A7 fix)
     this.paymentFlowDestroy$.next();
     this.resetPaymentState();
+
     this.selectedTable = mesa;
     this.isPartialPayment = false; // Reset to false for direct payment from caja page
 
@@ -783,6 +803,20 @@ export class CajaPage implements OnInit, OnDestroy {
         // Error already handled in catchError
       },
     });
+  }
+
+  public onPinAuthenticatedForCobrarMesa(result: PinAuthResult): void {
+    // Guardar contexto completo para sesión con timeout
+    const now = Date.now();
+    this.pinAuthService.setAuthContext({
+      userId: result.userId,
+      userName: result.userName,
+      userRole: result.userRole,
+      authenticatedAt: now,
+      lastActivityAt: now,
+    });
+    this.showPinAuthModalForCobrarMesa = false;
+    this.loadOrderForCobrarMesa();
   }
 
   public onSplitMesa(mesa: PendingTable): void {

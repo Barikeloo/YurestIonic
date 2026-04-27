@@ -116,6 +116,18 @@ final class Order
         $this->updatedAt = DomainDateTime::now();
     }
 
+    public function reopen(Uuid $reopenedByUserId): void
+    {
+        if (! $this->status->isInvoiced()) {
+            throw new \DomainException('Only invoiced orders can be reopened.');
+        }
+
+        $this->status = OrderStatus::toCharge();
+        $this->closedByUserId = $reopenedByUserId;
+        $this->closedAt = null;
+        $this->updatedAt = DomainDateTime::now();
+    }
+
     public function updateDiners(OrderDiners $diners): void
     {
         $this->diners = $diners;

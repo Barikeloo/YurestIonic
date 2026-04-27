@@ -225,7 +225,7 @@
   [title]="'Abrir mesa'"
   [subtitle]="'Verifica tu PIN para continuar'"
   (closeModal)="showPinAuthModal = false"
-  (authenticated)="onPinAuthenticated()"
+  (authenticated)="onPinAuthenticated($event)"
 ></app-pin-auth-modal>
 
 <!-- Modal de autenticación PIN - Cerrar cuenta -->
@@ -234,7 +234,7 @@
   [title]="'Cerrar cuenta'"
   [subtitle]="'Verifica tu PIN para continuar'"
   (closeModal)="showPinAuthModalForCloseAccount = false"
-  (authenticated)="onPinAuthenticatedForCloseAccount()"
+  (authenticated)="onPinAuthenticatedForCloseAccount($event)"
 ></app-pin-auth-modal>
 
 <!-- Modal de autenticación PIN - Cobrar -->
@@ -243,5 +243,5 @@
   [title]="'Cobrar'"
   [subtitle]="'Verifica tu PIN para continuar'"
   (closeModal)="showPinAuthModalForCharge = false"
-  (authenticated)="onPinAuthenticatedForCharge()"
+  (authenticated)="onPinAuthenticatedForCharge($event)"
 ></app-pin-auth-modal>

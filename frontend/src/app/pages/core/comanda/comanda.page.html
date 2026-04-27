@@ -58,7 +58,12 @@
             class="product-card"
             (click)="addToCart(product)"
           >
-            <div class="product-initial">{{ product.name[0] }}</div>
+            <div class="product-image" *ngIf="product.image_src; else noImage">
+              <img [src]="product.image_src" [alt]="product.name" loading="lazy" />
+            </div>
+            <ng-template #noImage>
+              <div class="product-initial">{{ product.name[0] }}</div>
+            </ng-template>
             <div class="product-name">{{ product.name }}</div>
             <div class="product-price">{{ formatCents(product.price) }}</div>
           </button>

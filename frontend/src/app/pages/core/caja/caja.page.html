@@ -24,18 +24,18 @@
   <app-pin-auth-modal
     [isOpen]="showPinAuthModal"
     [title]="'Abrir caja'"
-    [subtitle]="'Verifica tu PIN para continuar'"
+    [subtitle]="'Introduce tu PIN para continuar'"
     (closeModal)="showPinAuthModal = false"
-    (authenticated)="onPinAuthenticated()"
+    (authenticated)="onPinAuthenticated($event)"
   ></app-pin-auth-modal>
 
   <!-- Modal de autenticación PIN - Cobrar mesa -->
   <app-pin-auth-modal
     [isOpen]="showPinAuthModalForCobrarMesa"
     [title]="'Cobrar mesa'"
-    [subtitle]="'Verifica tu PIN para continuar'"
+    [subtitle]="'Introduce tu PIN para continuar'"
     (closeModal)="showPinAuthModalForCobrarMesa = false; pendingTableToCharge = null"
-    (authenticated)="onPinAuthenticatedForCobrarMesa()"
+    (authenticated)="onPinAuthenticatedForCobrarMesa($event)"
   ></app-pin-auth-modal>
 
   <!-- Modal de apertura -->

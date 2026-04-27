@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../services/auth.service';
 import { TpvOrder, TpvOrderLine, TpvService } from '../../../services/tpv.service';
@@ -35,6 +35,7 @@ export class PedidosPage implements OnInit {
     private readonly tpvService: TpvService,
     private readonly router: Router,
     private readonly authService: AuthService,
+    private readonly route: ActivatedRoute,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -52,6 +53,19 @@ export class PedidosPage implements OnInit {
       this.orders = orders;
       this.users = usersResponse.users;
       this.tables = tables;
+
+      // Auto-seleccionar pedido si viene en query params (desde mesas)
+      const queryOrderId = this.route.snapshot.queryParams['orderId'];
+      if (queryOrderId) {
+        const order = this.orders.find((o) => o.id === queryOrderId);
+        if (order) {
+          // Cambiar al tab correspondiente si es necesario
+          if (this.activeTab !== 'all' && this.activeTab !== order.status) {
+            this.activeTab = order.status as TabId;
+          }
+          await this.selectOrder(order);
+        }
+      }
     } finally {
       this.loading = false;
     }
