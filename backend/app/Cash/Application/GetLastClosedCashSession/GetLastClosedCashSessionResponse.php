@@ -31,7 +31,7 @@ final readonly class GetLastClosedCashSessionResponse
                 'final_amount_cents' => $lastClosed->finalAmount()?->toCents(),
                 'discrepancy_cents' => $lastClosed->discrepancy()?->toCents(),
                 'discrepancy_reason' => $lastClosed->discrepancyReason(),
-                'z_report_number' => $lastClosed->zReportNumber(),
+                'z_report_number' => $lastClosed->zReportNumber()?->value(),
                 'operator_name' => $operatorName,
                 'tickets' => $tickets,
                 'diners' => $diners,
@@ -40,7 +40,7 @@ final readonly class GetLastClosedCashSessionResponse
                 'id' => $orphanSession->id()->value(),
                 'opened_by_user_id' => $orphanSession->openedByUserId()->value(),
                 'opened_at' => $orphanSession->openedAt()->format('Y-m-d H:i:s'),
-                'device_id' => $orphanSession->deviceId(),
+                'device_id' => $orphanSession->deviceId()->value(),
             ] : null,
         );
     }

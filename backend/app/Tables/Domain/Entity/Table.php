@@ -5,19 +5,18 @@ namespace App\Tables\Domain\Entity;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\ValueObject\TableName;
-use App\Tables\Domain\ValueObject\ZoneId;
 
 class Table
 {
 	private function __construct(
 		private Uuid $id,
-		private ZoneId $zoneId,
+		private Uuid $zoneId,
 		private TableName $name,
 		private DomainDateTime $createdAt,
 		private DomainDateTime $updatedAt,
 	) {}
 
-	public static function dddCreate(ZoneId $zoneId, TableName $name): self
+	public static function dddCreate(Uuid $zoneId, TableName $name): self
 	{
 		$now = DomainDateTime::now();
 
@@ -39,14 +38,14 @@ class Table
 	): self {
 		return new self(
 			id: Uuid::create($id),
-			zoneId: ZoneId::create($zoneId),
+			zoneId: Uuid::create($zoneId),
 			name: TableName::create($name),
 			createdAt: DomainDateTime::create($createdAt),
 			updatedAt: DomainDateTime::create($updatedAt),
 		);
 	}
 
-	public function update(ZoneId $zoneId, TableName $name): void
+	public function update(Uuid $zoneId, TableName $name): void
 	{
 		$this->zoneId = $zoneId;
 		$this->name = $name;
@@ -58,7 +57,7 @@ class Table
 		return $this->id;
 	}
 
-	public function zoneId(): ZoneId
+	public function zoneId(): Uuid
 	{
 		return $this->zoneId;
 	}
@@ -83,4 +82,3 @@ class Table
 		$this->updatedAt = DomainDateTime::now();
 	}
 }
-

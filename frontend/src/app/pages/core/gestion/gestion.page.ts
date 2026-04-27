@@ -118,7 +118,7 @@ export class GestionPage {
   public isLoadingZReports: boolean = false;
   private preloadRunId: number = 0;
 
-  public readonly managementRestaurants: ManagementRestaurant[] = [];
+  public managementRestaurants: ManagementRestaurant[] = [];
 
   public readonly managementData: Record<number, ManagementDataRow> = {};
 

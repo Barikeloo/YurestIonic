@@ -5,6 +5,7 @@ namespace App\Order\Application\AddLineToOrder;
 use App\Order\Domain\Entity\OrderLine;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Order\Domain\ValueObject\OrderLineDinerNumber;
 use App\Order\Domain\ValueObject\OrderLinePrice;
 use App\Order\Domain\ValueObject\OrderLineQuantity;
 use App\Order\Domain\ValueObject\OrderLineTaxPercentage;
@@ -82,7 +83,7 @@ final class AddLineToOrder
             quantity: $quantity,
             price: OrderLinePrice::create($price),
             taxPercentage: OrderLineTaxPercentage::create($taxPercentage),
-            dinerNumber: $dinerNumber, // hacer VO's
+            dinerNumber: $dinerNumber !== null ? OrderLineDinerNumber::create($dinerNumber) : null,
         );
 
         $this->orderLineRepository->save($orderLine);

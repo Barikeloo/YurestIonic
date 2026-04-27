@@ -3,6 +3,7 @@
 namespace App\Sale\Application\GetSale;
 
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
+use App\Shared\Domain\ValueObject\Uuid;
 
 final class GetSale
 {
@@ -12,7 +13,8 @@ final class GetSale
 
     public function __invoke(string $id): ?GetSaleResponse
     {
-        $sale = $this->saleRepository->getById($id);
+        $saleId = Uuid::create($id);
+        $sale = $this->saleRepository->findByUuid($saleId);
 
         if ($sale === null) {
             return null;

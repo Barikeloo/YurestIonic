@@ -21,7 +21,7 @@ final class ListCashSessionsResponse
         return [
             'sessions' => array_map(static fn (array $data): array => [
                 'uuid'                  => $data['session']->uuid()->value(),
-                'device_id'             => $data['session']->deviceId(),
+                'device_id'             => $data['session']->deviceId()->value(),
                 'opened_by_user_id'     => $data['session']->openedByUserId()->value(),
                 'closed_by_user_id'     => $data['session']->closedByUserId()?->value(),
                 'opened_at'             => $data['session']->openedAt()?->value()->format('Y-m-d\TH:i:s'),
@@ -31,7 +31,7 @@ final class ListCashSessionsResponse
                 'expected_amount_cents' => $data['session']->expectedAmount()?->toCents(),
                 'discrepancy_cents'     => $data['session']->discrepancy()?->toCents(),
                 'discrepancy_reason'    => $data['session']->discrepancyReason(),
-                'z_report_number'       => $data['session']->zReportNumber(),
+                'z_report_number'       => $data['session']->zReportNumber()?->value(),
                 'status'                => $data['session']->status()->value(),
                 'tickets'               => $data['tickets'],
                 'diners'                => $data['diners'],

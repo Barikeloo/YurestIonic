@@ -6,6 +6,7 @@ namespace App\Cash\Infrastructure\Persistence\Repositories;
 
 use App\Cash\Domain\Entity\ZReport;
 use App\Cash\Domain\Interfaces\ZReportRepositoryInterface;
+use App\Cash\Domain\ValueObject\ZReportNumber;
 use App\Cash\Infrastructure\Persistence\Models\EloquentCashSession;
 use App\Cash\Infrastructure\Persistence\Models\EloquentZReport;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
@@ -32,8 +33,8 @@ final class EloquentZReportRepository implements ZReportRepositoryInterface
             [
                 'restaurant_id' => $restaurantId,
                 'cash_session_id' => $cashSessionInternalId,
-                'report_number' => $zReport->reportNumber(),
-                'report_hash' => $zReport->reportHash(),
+                'report_number' => $zReport->reportNumber()->value(),
+                'report_hash' => $zReport->reportHash()->value(),
                 'total_sales_cents' => $zReport->totalSales()->toCents(),
                 'total_cash_cents' => $zReport->totalCash()->toCents(),
                 'total_card_cents' => $zReport->totalCard()->toCents(),
@@ -73,7 +74,7 @@ final class EloquentZReportRepository implements ZReportRepositoryInterface
         return $model ? $this->toDomain($model) : null;
     }
 
-    public function nextReportNumber(Uuid $restaurantId): int
+    public function nextReportNumber(Uuid $restaurantId): ZReportNumber
     {
         $restaurantInternalId = EloquentRestaurant::query()
             ->where('uuid', $restaurantId->value())
@@ -83,7 +84,7 @@ final class EloquentZReportRepository implements ZReportRepositoryInterface
             ->where('restaurant_id', $restaurantInternalId)
             ->max('report_number');
 
-        return $max !== null ? (int) $max + 1 : 1;
+        return ZReportNumber::create($max !== null ? (int) $max + 1 : 1);
     }
 
     private function toDomain(EloquentZReport $model): ZReport

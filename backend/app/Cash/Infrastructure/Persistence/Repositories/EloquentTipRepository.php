@@ -35,7 +35,7 @@ final class EloquentTipRepository implements TipRepositoryInterface
                 'sale_id' => $saleId,
                 'cash_session_id' => $cashSessionId,
                 'amount_cents' => $tip->amount()->toCents(),
-                'source' => $tip->source(),
+                'source' => $tip->source()->value(),
                 'beneficiary_user_id' => $beneficiaryUserId,
             ],
         );

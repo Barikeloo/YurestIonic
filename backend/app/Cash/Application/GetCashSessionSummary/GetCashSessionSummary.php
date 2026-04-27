@@ -64,7 +64,7 @@ final class GetCashSessionSummary
             }
         }
 
-        $expectedAmount = $cashSession->initialAmount()->toCents() + $totalSales + $totalInMovements - $totalOutMovements;
+        $expectedAmount = $cashSession->initialAmount()->toCents() + $totalCashPayments + $totalInMovements - $totalOutMovements;
 
         return GetCashSessionSummaryResponse::create(
             cashSession: $cashSession,

@@ -31,8 +31,8 @@ final class GetZReportResponse
         return new self(
             id: $zReport->id()->value(),
             cashSessionId: $zReport->cashSessionId()->value(),
-            reportNumber: $zReport->reportNumber(),
-            reportHash: $zReport->reportHash(),
+            reportNumber: $zReport->reportNumber()->value(),
+            reportHash: $zReport->reportHash()->value(),
             totalSalesCents: $zReport->totalSales()->toCents(),
             totalCashCents: $zReport->totalCash()->toCents(),
             totalCardCents: $zReport->totalCard()->toCents(),

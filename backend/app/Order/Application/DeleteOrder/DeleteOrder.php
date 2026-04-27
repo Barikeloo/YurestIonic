@@ -13,7 +13,8 @@ final class DeleteOrder
 
     public function __invoke(string $id): bool
     {
-        $order = $this->orderRepository->findByUuid(Uuid::create($id));
+        $orderId = Uuid::create($id);
+        $order = $this->orderRepository->findByUuid($orderId);
 
         if ($order === null) {
             return false;

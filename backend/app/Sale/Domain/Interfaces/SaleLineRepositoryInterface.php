@@ -9,8 +9,6 @@ interface SaleLineRepositoryInterface
 {
     public function save(SaleLine $saleLine): void;
 
-    public function findById(Uuid $id): ?SaleLine;
-
     public function findByUuid(Uuid $uuid): ?SaleLine;
 
     public function findBySaleId(Uuid $saleId): array;

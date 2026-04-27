@@ -6,6 +6,7 @@ namespace App\Cash\Infrastructure\Persistence\Repositories;
 
 use App\Cash\Domain\Entity\CashSession;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
+use App\Cash\Domain\ValueObject\DeviceId;
 use App\Cash\Infrastructure\Persistence\Models\EloquentCashSession;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -29,7 +30,7 @@ final class EloquentCashSessionRepository implements CashSessionRepositoryInterf
             ['uuid' => $cashSession->uuid()->value()],
             [
                 'restaurant_id' => $restaurantId,
-                'device_id' => $cashSession->deviceId(),
+                'device_id' => $cashSession->deviceId()->value(),
                 'opened_by_user_id' => $openedByUserId,
                 'closed_by_user_id' => $closedByUserId,
                 'opened_at' => $cashSession->openedAt()?->value(),
@@ -39,24 +40,12 @@ final class EloquentCashSessionRepository implements CashSessionRepositoryInterf
                 'expected_amount_cents' => $cashSession->expectedAmount()?->toCents(),
                 'discrepancy_cents' => $cashSession->discrepancy()?->toCents(),
                 'discrepancy_reason' => $cashSession->discrepancyReason(),
-                'z_report_number' => $cashSession->zReportNumber(),
-                'z_report_hash' => $cashSession->zReportHash(),
+                'z_report_number' => $cashSession->zReportNumber()?->value(),
+                'z_report_hash' => $cashSession->zReportHash()?->value(),
                 'notes' => $cashSession->notes(),
                 'status' => $cashSession->status()->value(),
             ],
         );
-    }
-
-    public function getById(string $id): ?CashSession
-    {
-        $model = $this->model->newQuery()->where('uuid', $id)->first();
-        return $model ? $this->toDomain($model) : null;
-    }
-
-    public function findById(Uuid $id): ?CashSession
-    {
-        $model = $this->model->newQuery()->where('uuid', $id->value())->first();
-        return $model ? $this->toDomain($model) : null;
     }
 
     public function findByUuid(Uuid $uuid): ?CashSession
@@ -65,12 +54,12 @@ final class EloquentCashSessionRepository implements CashSessionRepositoryInterf
         return $model ? $this->toDomain($model) : null;
     }
 
-    public function findActiveByDeviceId(string $deviceId, Uuid $restaurantId): ?CashSession
+    public function findActiveByDeviceId(DeviceId $deviceId, Uuid $restaurantId): ?CashSession
     {
         $restaurantIdInt = EloquentRestaurant::query()->where('uuid', $restaurantId->value())->value('id');
         $model = $this->model->newQuery()
             ->where('restaurant_id', $restaurantIdInt)
-            ->where('device_id', $deviceId)
+            ->where('device_id', $deviceId->value())
             ->where('status', 'open')
             ->first();
         return $model ? $this->toDomain($model) : null;

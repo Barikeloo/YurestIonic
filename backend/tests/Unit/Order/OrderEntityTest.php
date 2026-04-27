@@ -26,10 +26,10 @@ class OrderEntityTest extends TestCase
         );
 
         $this->assertInstanceOf(Order::class, $order);
-        $this->assertSame($uuid->value(), $order->getId()->value());
-        $this->assertSame($restaurantId->value(), $order->getRestaurantId()->value());
-        $this->assertSame($tableId->value(), $order->getTableId()->value());
-        $this->assertTrue($order->getStatus()->isOpen());
+        $this->assertSame($uuid->value(), $order->id()->value());
+        $this->assertSame($restaurantId->value(), $order->restaurantId()->value());
+        $this->assertSame($tableId->value(), $order->tableId()->value());
+        $this->assertTrue($order->status()->isOpen());
     }
 
     public function test_ddd_create_initializes_with_open_status(): void
@@ -41,8 +41,8 @@ class OrderEntityTest extends TestCase
 
         $order = Order::dddCreate($uuid, $restaurantId, $tableId, $userId, OrderDiners::create(4));
 
-        $this->assertInstanceOf(OrderStatus::class, $order->getStatus());
-        $this->assertSame('open', $order->getStatus()->value());
+        $this->assertInstanceOf(OrderStatus::class, $order->status());
+        $this->assertSame('open', $order->status()->value());
     }
 
     public function test_ddd_create_generates_timestamps(): void
@@ -57,8 +57,8 @@ class OrderEntityTest extends TestCase
 
         $afterCreation = now();
 
-        $this->assertTrue($order->getCreatedAt()->value() >= $beforeCreation);
-        $this->assertTrue($order->getCreatedAt()->value() <= $afterCreation);
-        $this->assertNull($order->getClosedAt());
+        $this->assertTrue($order->createdAt()->value() >= $beforeCreation);
+        $this->assertTrue($order->createdAt()->value() <= $afterCreation);
+        $this->assertNull($order->closedAt());
     }
 }

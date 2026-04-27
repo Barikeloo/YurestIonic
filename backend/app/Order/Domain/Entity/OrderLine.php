@@ -2,6 +2,9 @@
 
 namespace App\Order\Domain\Entity;
 
+use App\Order\Domain\ValueObject\OrderLineDinerNumber;
+use App\Order\Domain\ValueObject\OrderLineDiscountAmount;
+use App\Order\Domain\ValueObject\OrderLineDiscountPercent;
 use App\Order\Domain\ValueObject\OrderLinePrice;
 use App\Order\Domain\ValueObject\OrderLineQuantity;
 use App\Order\Domain\ValueObject\OrderLineTaxPercentage;
@@ -20,12 +23,12 @@ final class OrderLine
         private readonly OrderLineQuantity $quantity,
         private readonly OrderLinePrice $price,
         private readonly OrderLineTaxPercentage $taxPercentage,
-        private readonly ?int $dinerNumber, // hacer VO's pendientes
-        private readonly ?int $discountPercent,
-        private readonly ?int $discountAmountCents,
+        private readonly ?OrderLineDinerNumber $dinerNumber,
+        private readonly ?OrderLineDiscountPercent $discountPercent,
+        private readonly ?OrderLineDiscountAmount $discountAmount,
         private readonly ?string $discountReason,
         private readonly bool $isInvitation,
-        private readonly ?int $priceOverrideCents,
+        private readonly ?OrderLinePrice $priceOverride,
         private readonly ?string $notes,
         private readonly DomainDateTime $createdAt,
         private readonly DomainDateTime $updatedAt,
@@ -42,12 +45,12 @@ final class OrderLine
         OrderLineQuantity $quantity,
         OrderLinePrice $price,
         OrderLineTaxPercentage $taxPercentage,
-        ?int $dinerNumber = null,
-        ?int $discountPercent = null,
-        ?int $discountAmountCents = null,
+        ?OrderLineDinerNumber $dinerNumber = null,
+        ?OrderLineDiscountPercent $discountPercent = null,
+        ?OrderLineDiscountAmount $discountAmount = null,
         ?string $discountReason = null,
         bool $isInvitation = false,
-        ?int $priceOverrideCents = null,
+        ?OrderLinePrice $priceOverride = null,
         ?string $notes = null,
     ): self {
         return new self(
@@ -62,10 +65,10 @@ final class OrderLine
             taxPercentage: $taxPercentage,
             dinerNumber: $dinerNumber,
             discountPercent: $discountPercent,
-            discountAmountCents: $discountAmountCents,
+            discountAmount: $discountAmount,
             discountReason: $discountReason,
             isInvitation: $isInvitation,
-            priceOverrideCents: $priceOverrideCents,
+            priceOverride: $priceOverride,
             notes: $notes,
             createdAt: DomainDateTime::now(),
             updatedAt: DomainDateTime::now(),
@@ -103,12 +106,12 @@ final class OrderLine
             quantity: OrderLineQuantity::create($quantity),
             price: OrderLinePrice::create($price),
             taxPercentage: OrderLineTaxPercentage::create($taxPercentage),
-            dinerNumber: $dinerNumber,
-            discountPercent: $discountPercent,
-            discountAmountCents: $discountAmountCents,
+            dinerNumber: $dinerNumber !== null ? OrderLineDinerNumber::create($dinerNumber) : null,
+            discountPercent: $discountPercent !== null ? OrderLineDiscountPercent::create($discountPercent) : null,
+            discountAmount: $discountAmountCents !== null ? OrderLineDiscountAmount::create($discountAmountCents) : null,
             discountReason: $discountReason,
             isInvitation: $isInvitation,
-            priceOverrideCents: $priceOverrideCents,
+            priceOverride: $priceOverrideCents !== null ? OrderLinePrice::create($priceOverrideCents) : null,
             notes: $notes,
             createdAt: DomainDateTime::create($createdAt),
             updatedAt: DomainDateTime::create($updatedAt),
@@ -176,19 +179,19 @@ final class OrderLine
         return $this->deletedAt;
     }
 
-    public function dinerNumber(): ?int
+    public function dinerNumber(): ?OrderLineDinerNumber
     {
         return $this->dinerNumber;
     }
 
-    public function discountPercent(): ?int
+    public function discountPercent(): ?OrderLineDiscountPercent
     {
         return $this->discountPercent;
     }
 
-    public function discountAmountCents(): ?int
+    public function discountAmount(): ?OrderLineDiscountAmount
     {
-        return $this->discountAmountCents;
+        return $this->discountAmount;
     }
 
     public function discountReason(): ?string
@@ -201,9 +204,9 @@ final class OrderLine
         return $this->isInvitation;
     }
 
-    public function priceOverrideCents(): ?int
+    public function priceOverride(): ?OrderLinePrice
     {
-        return $this->priceOverrideCents;
+        return $this->priceOverride;
     }
 
     public function notes(): ?string
@@ -225,10 +228,10 @@ final class OrderLine
             taxPercentage: $this->taxPercentage,
             dinerNumber: $this->dinerNumber,
             discountPercent: $this->discountPercent,
-            discountAmountCents: $this->discountAmountCents,
+            discountAmount: $this->discountAmount,
             discountReason: $this->discountReason,
             isInvitation: $this->isInvitation,
-            priceOverrideCents: $this->priceOverrideCents,
+            priceOverride: $this->priceOverride,
             notes: $this->notes,
             createdAt: $this->createdAt,
             updatedAt: DomainDateTime::now(),

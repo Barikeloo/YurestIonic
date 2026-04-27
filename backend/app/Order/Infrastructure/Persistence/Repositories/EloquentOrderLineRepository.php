@@ -38,22 +38,15 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
                 'quantity' => $orderLine->quantity()->value(),
                 'price' => $orderLine->price()->value(),
                 'tax_percentage' => $orderLine->taxPercentage()->value(),
-                'diner_number' => $orderLine->dinerNumber(),
-                'discount_percent' => $orderLine->discountPercent(),
-                'discount_amount_cents' => $orderLine->discountAmountCents(),
+                'diner_number' => $orderLine->dinerNumber()?->value(),
+                'discount_percent' => $orderLine->discountPercent()?->value(),
+                'discount_amount_cents' => $orderLine->discountAmount()?->value(),
                 'discount_reason' => $orderLine->discountReason(),
                 'is_invitation' => $orderLine->isInvitation(),
-                'price_override_cents' => $orderLine->priceOverrideCents(),
+                'price_override_cents' => $orderLine->priceOverride()?->value(),
                 'notes' => $orderLine->notes(),
             ],
         );
-    }
-
-    public function findById(Uuid $id): ?OrderLine
-    {
-        $model = $this->model->newQuery()->where('uuid', $id->value())->first();
-
-        return $model ? $this->toDomain($model) : null;
     }
 
     public function findByUuid(Uuid $uuid): ?OrderLine
@@ -126,12 +119,12 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
             (int) $model->quantity,
             (int) $model->price,
             (int) $model->tax_percentage,
-            $model->diner_number,
-            $model->discount_percent,
-            $model->discount_amount_cents,
+            $model->diner_number !== null ? (int) $model->diner_number : null,
+            $model->discount_percent !== null ? (int) $model->discount_percent : null,
+            $model->discount_amount_cents !== null ? (int) $model->discount_amount_cents : null,
             $model->discount_reason,
             (bool) $model->is_invitation,
-            $model->price_override_cents,
+            $model->price_override_cents !== null ? (int) $model->price_override_cents : null,
             $model->notes,
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),

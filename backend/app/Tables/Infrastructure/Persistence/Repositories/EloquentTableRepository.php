@@ -2,9 +2,9 @@
 
 namespace App\Tables\Infrastructure\Persistence\Repositories;
 
+use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Entity\Table;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
-use App\Tables\Domain\ValueObject\ZoneId;
 use App\Tables\Infrastructure\Persistence\Models\EloquentTable;
 use App\Zone\Infrastructure\Persistence\Models\EloquentZone;
 
@@ -81,7 +81,7 @@ class EloquentTableRepository implements TableRepositoryInterface
         return (bool) $model->delete();
     }
 
-    public function findByZoneIdAndName(ZoneId $zoneId, string $name, ?string $excludeId = null): ?Table
+    public function findByZoneIdAndName(Uuid $zoneId, string $name, ?string $excludeId = null): ?Table
     {
         $query = $this->model->newQuery()
             ->with('zone')

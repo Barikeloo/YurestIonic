@@ -37,8 +37,6 @@ final class GenerateZReport
         }
 
         // State guard: Z can only be generated on a session that is closing or already closed.
-        $sessionStatus = $cashSession->status()->value();
-        error_log("GenerateZReport - Session status: $sessionStatus, Session ID: $cashSessionId");
         if (! $cashSession->status()->isClosing() && ! $cashSession->status()->isClosed()) {
             throw new \DomainException(
                 'Cannot generate Z-Report on a session with status ' . $cashSession->status()->value() . '.',

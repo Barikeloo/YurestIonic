@@ -6,7 +6,7 @@ use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\User\Domain\ValueObject\PasswordHash;
-use App\User\Domain\ValueObject\RestaurantId;
+use App\User\Domain\ValueObject\RestaurantInternalId;
 use App\User\Domain\ValueObject\Role;
 use App\User\Domain\ValueObject\UserName;
 
@@ -18,13 +18,13 @@ class User
         private Email $email,
         private PasswordHash $passwordHash,
         private ?Role $role,
-        private ?RestaurantId $restaurantId,
+        private ?RestaurantInternalId $restaurantId,
         private DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
     ) {}
 
 
-    public static function dddCreate(Email $email, UserName $name, PasswordHash $passwordHash, ?Role $role = null, ?RestaurantId $restaurantId = null): self
+    public static function dddCreate(Email $email, UserName $name, PasswordHash $passwordHash, ?Role $role = null, ?RestaurantInternalId $restaurantId = null): self
     {
         $now = DomainDateTime::now();
 
@@ -56,7 +56,7 @@ class User
             Email::create($email),
             PasswordHash::create($passwordHash),
             $role !== null ? Role::create($role) : null,
-            $restaurantId !== null ? RestaurantId::create($restaurantId) : null,
+            $restaurantId !== null ? RestaurantInternalId::create($restaurantId) : null,
             DomainDateTime::create($createdAt),
             DomainDateTime::create($updatedAt),
         );
@@ -66,7 +66,7 @@ class User
         return $this->role;
     }
 
-    public function restaurantId(): ?RestaurantId
+    public function restaurantId(): ?RestaurantInternalId
     {
         return $this->restaurantId;
     }

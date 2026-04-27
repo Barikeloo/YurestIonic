@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Cash\Domain\Entity;
 
+use App\Cash\Domain\ValueObject\ZReportHash;
+use App\Cash\Domain\ValueObject\ZReportNumber;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -14,8 +16,8 @@ final class ZReport
         private readonly Uuid $id,
         private readonly Uuid $restaurantId,
         private readonly Uuid $cashSessionId,
-        private readonly int $reportNumber,
-        private readonly string $reportHash,
+        private readonly ZReportNumber $reportNumber,
+        private readonly ZReportHash $reportHash,
         private readonly Money $totalSales,
         private readonly Money $totalCash,
         private readonly Money $totalCard,
@@ -33,7 +35,7 @@ final class ZReport
     public static function generate(
         Uuid $restaurantId,
         Uuid $cashSessionId,
-        int $reportNumber,
+        ZReportNumber $reportNumber,
         Money $totalSales,
         Money $totalCash,
         Money $totalCard,
@@ -47,7 +49,7 @@ final class ZReport
     ): self {
         $id = Uuid::generate();
         $generatedAt = DomainDateTime::now();
-        $reportHash = self::calculateHash(
+        $reportHash = ZReportHash::create(self::calculateHash(
             $cashSessionId,
             $reportNumber,
             $totalSales,
@@ -61,7 +63,7 @@ final class ZReport
             $salesCount,
             $cancelledSalesCount,
             $generatedAt,
-        );
+        ));
 
         return new self(
             id: $id,
@@ -105,8 +107,8 @@ final class ZReport
             id: Uuid::create($id),
             restaurantId: Uuid::create($restaurantId),
             cashSessionId: Uuid::create($cashSessionId),
-            reportNumber: $reportNumber,
-            reportHash: $reportHash,
+            reportNumber: ZReportNumber::create($reportNumber),
+            reportHash: ZReportHash::create($reportHash),
             totalSales: Money::create($totalSalesCents),
             totalCash: Money::create($totalCashCents),
             totalCard: Money::create($totalCardCents),
@@ -139,12 +141,12 @@ final class ZReport
             $this->generatedAt,
         );
 
-        return hash_equals($expected, $this->reportHash);
+        return hash_equals($expected, $this->reportHash->value());
     }
 
     private static function calculateHash(
         Uuid $cashSessionId,
-        int $reportNumber,
+        ZReportNumber $reportNumber,
         Money $totalSales,
         Money $totalCash,
         Money $totalCard,
@@ -159,7 +161,7 @@ final class ZReport
     ): string {
         $data = implode('|', [
             $cashSessionId->value(),
-            $reportNumber,
+            $reportNumber->value(),
             $totalSales->toCents(),
             $totalCash->toCents(),
             $totalCard->toCents(),
@@ -191,12 +193,12 @@ final class ZReport
         return $this->cashSessionId;
     }
 
-    public function reportNumber(): int
+    public function reportNumber(): ZReportNumber
     {
         return $this->reportNumber;
     }
 
-    public function reportHash(): string
+    public function reportHash(): ZReportHash
     {
         return $this->reportHash;
     }
@@ -262,8 +264,8 @@ final class ZReport
             'id' => $this->id->value(),
             'restaurant_id' => $this->restaurantId->value(),
             'cash_session_id' => $this->cashSessionId->value(),
-            'report_number' => $this->reportNumber,
-            'report_hash' => $this->reportHash,
+            'report_number' => $this->reportNumber->value(),
+            'report_hash' => $this->reportHash->value(),
             'total_sales_cents' => $this->totalSales->toCents(),
             'total_cash_cents' => $this->totalCash->toCents(),
             'total_card_cents' => $this->totalCard->toCents(),

@@ -3,6 +3,7 @@
 namespace App\Order\Application\GetOrder;
 
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Shared\Domain\ValueObject\Uuid;
 
 final class GetOrder
 {
@@ -12,7 +13,8 @@ final class GetOrder
 
     public function __invoke(string $id): ?GetOrderResponse
     {
-        $order = $this->orderRepository->getById($id);
+        $orderId = Uuid::create($id);
+        $order = $this->orderRepository->findByUuid($orderId);
 
         if ($order === null) {
             return null;

@@ -3,6 +3,7 @@
 namespace App\Sale\Application\DeleteSale;
 
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
+use App\Shared\Domain\ValueObject\Uuid;
 
 final class DeleteSale
 {
@@ -12,7 +13,8 @@ final class DeleteSale
 
     public function __invoke(string $id): bool
     {
-        $sale = $this->saleRepository->getById($id);
+        $saleId = Uuid::create($id);
+        $sale = $this->saleRepository->findByUuid($saleId);
 
         if ($sale === null) {
             return false;

@@ -4,10 +4,11 @@ namespace App\Sale\Domain\Entity;
 
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\Sale\Domain\ValueObject\CustomerFiscalData;
+use App\Sale\Domain\ValueObject\DocumentType;
 use App\Sale\Domain\ValueObject\SaleStatus;
 use App\Sale\Domain\ValueObject\SaleTicketNumber;
 use App\Sale\Domain\ValueObject\SaleTotal;
-use App\Sale\Domain\ValueObject\DocumentType;
 
 final class Sale
 {
@@ -31,7 +32,7 @@ final class Sale
         private ?string $cancellationReason = null,
         private ?DomainDateTime $cancelledAt = null,
         private ?Uuid $parentSaleId = null,
-        private ?array $customerFiscalData = null,
+        private ?CustomerFiscalData $customerFiscalData = null,
     ) {
     }
 
@@ -43,7 +44,7 @@ final class Sale
         ?Uuid $cashSessionId = null,
         ?Uuid $parentSaleId = null,
         ?DocumentType $documentType = null,
-        ?array $customerFiscalData = null,
+        ?CustomerFiscalData $customerFiscalData = null,
     ): self {
         return new self(
             id: $id,
@@ -107,7 +108,7 @@ final class Sale
             status: SaleStatus::create($status),
             parentSaleId: $parentSaleId !== null ? Uuid::create($parentSaleId) : null,
             documentType: DocumentType::create($documentType ?? 'simplified'),
-            customerFiscalData: $customerFiscalData,
+            customerFiscalData: $customerFiscalData !== null ? CustomerFiscalData::fromArray($customerFiscalData) : null,
         );
     }
 
@@ -233,7 +234,7 @@ final class Sale
         return $this->documentType;
     }
 
-    public function customerFiscalData(): ?array
+    public function customerFiscalData(): ?CustomerFiscalData
     {
         return $this->customerFiscalData;
     }

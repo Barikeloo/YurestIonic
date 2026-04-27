@@ -30,8 +30,6 @@ final class UpdateOrder
 
         if ($action === 'mark-to-charge' && $closedByUserId !== null) {
             $order->markToCharge(Uuid::create($closedByUserId));
-        } elseif ($action === 'close' && $closedByUserId !== null) {
-            $order->close(Uuid::create($closedByUserId));
         } elseif ($action === 'cancel' && $closedByUserId !== null) {
             $order->cancel(Uuid::create($closedByUserId));
         }

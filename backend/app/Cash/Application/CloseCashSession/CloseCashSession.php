@@ -6,6 +6,8 @@ namespace App\Cash\Application\CloseCashSession;
 
 use App\Cash\Application\GenerateZReport\GenerateZReport;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
+use App\Cash\Domain\ValueObject\ZReportHash;
+use App\Cash\Domain\ValueObject\ZReportNumber;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Shared\Domain\Interfaces\TransactionManagerInterface;
 use App\Shared\Domain\ValueObject\Money;
@@ -39,8 +41,6 @@ final class CloseCashSession
                 throw new \DomainException('Cash session not found.');
             }
 
-            error_log("CloseCashSession - Session status on entry: " . $cashSession->status()->value() . ", Session ID: $cashSessionId");
-
             // Pre-check: no sales with pending status
             $sales = $this->saleRepository->findByCashSessionId($cashSessionUuid);
             foreach ($sales as $sale) {
@@ -67,8 +67,8 @@ final class CloseCashSession
                 finalAmount: $finalAmount,
                 expectedAmount: $expectedAmount,
                 discrepancy: $discrepancy,
-                zReportNumber: $zReportResponse->reportNumber,
-                zReportHash: $zReportResponse->reportHash,
+                zReportNumber: ZReportNumber::create($zReportResponse->reportNumber),
+                zReportHash: ZReportHash::create($zReportResponse->reportHash),
                 discrepancyReason: $discrepancyReason,
             );
 

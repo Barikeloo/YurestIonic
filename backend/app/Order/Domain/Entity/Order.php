@@ -18,7 +18,7 @@ final class Order
         private readonly Uuid $openedByUserId,
         private ?Uuid $closedByUserId,
         private OrderDiners $diners,
-        private readonly DomainDateTime $openedAt,
+        private readonly ?DomainDateTime $openedAt,
         private ?DomainDateTime $closedAt,
         private readonly DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
@@ -94,6 +94,10 @@ final class Order
 
     public function close(Uuid $closedByUserId): void
     {
+        if (! $this->status->isOpen() && ! $this->status->isToCharge()) {
+            throw new \DomainException('Only open or to-charge orders can be closed.');
+        }
+
         $this->status = OrderStatus::invoiced();
         $this->closedByUserId = $closedByUserId;
         $this->closedAt = DomainDateTime::now();
@@ -102,6 +106,10 @@ final class Order
 
     public function cancel(Uuid $cancelledByUserId): void
     {
+        if (! $this->status->isOpen()) {
+            throw new \DomainException('Only open orders can be cancelled.');
+        }
+
         $this->status = OrderStatus::cancelled();
         $this->closedByUserId = $cancelledByUserId;
         $this->closedAt = DomainDateTime::now();

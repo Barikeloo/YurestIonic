@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Cash\Domain\Entity;
 
 use App\Cash\Domain\ValueObject\CashSessionStatus;
+use App\Cash\Domain\ValueObject\DeviceId;
+use App\Cash\Domain\ValueObject\ZReportHash;
+use App\Cash\Domain\ValueObject\ZReportNumber;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -15,7 +18,7 @@ final class CashSession
         private readonly Uuid $id,
         private readonly Uuid $restaurantId,
         private readonly Uuid $uuid,
-        private readonly string $deviceId,
+        private readonly DeviceId $deviceId,
         private readonly Uuid $openedByUserId,
         private ?Uuid $closedByUserId,
         private readonly DomainDateTime $openedAt,
@@ -25,8 +28,8 @@ final class CashSession
         private ?Money $expectedAmount,
         private ?Money $discrepancy,
         private ?string $discrepancyReason,
-        private ?int $zReportNumber,
-        private ?string $zReportHash,
+        private ?ZReportNumber $zReportNumber,
+        private ?ZReportHash $zReportHash,
         private ?string $notes,
         private CashSessionStatus $status,
         private readonly DomainDateTime $createdAt,
@@ -38,7 +41,7 @@ final class CashSession
     public static function dddCreate(
         Uuid $id,
         Uuid $restaurantId,
-        string $deviceId,
+        DeviceId $deviceId,
         Uuid $openedByUserId,
         Money $initialAmount,
         ?string $notes = null,
@@ -92,7 +95,7 @@ final class CashSession
             id: Uuid::create($id),
             restaurantId: Uuid::create($restaurantId),
             uuid: Uuid::create($uuid),
-            deviceId: $deviceId,
+            deviceId: DeviceId::create($deviceId),
             openedByUserId: Uuid::create($openedByUserId),
             closedByUserId: $closedByUserId !== null ? Uuid::create($closedByUserId) : null,
             openedAt: DomainDateTime::create($openedAt),
@@ -102,8 +105,8 @@ final class CashSession
             expectedAmount: $expectedAmountCents !== null ? Money::create($expectedAmountCents) : null,
             discrepancy: $discrepancyCents !== null ? Money::create($discrepancyCents) : null,
             discrepancyReason: $discrepancyReason,
-            zReportNumber: $zReportNumber,
-            zReportHash: $zReportHash,
+            zReportNumber: $zReportNumber !== null ? ZReportNumber::create($zReportNumber) : null,
+            zReportHash: $zReportHash !== null ? ZReportHash::create($zReportHash) : null,
             notes: $notes,
             status: CashSessionStatus::create($status),
             createdAt: DomainDateTime::create($createdAt),
@@ -137,8 +140,8 @@ final class CashSession
         Money $finalAmount,
         Money $expectedAmount,
         Money $discrepancy,
-        ?int $zReportNumber = null,
-        ?string $zReportHash = null,
+        ?ZReportNumber $zReportNumber = null,
+        ?ZReportHash $zReportHash = null,
         ?string $discrepancyReason = null,
     ): void {
         if (!$this->status->isClosing()) {
@@ -186,7 +189,7 @@ final class CashSession
         return $this->uuid;
     }
 
-    public function deviceId(): string
+    public function deviceId(): DeviceId
     {
         return $this->deviceId;
     }
@@ -236,12 +239,12 @@ final class CashSession
         return $this->discrepancyReason;
     }
 
-    public function zReportNumber(): ?int
+    public function zReportNumber(): ?ZReportNumber
     {
         return $this->zReportNumber;
     }
 
-    public function zReportHash(): ?string
+    public function zReportHash(): ?ZReportHash
     {
         return $this->zReportHash;
     }

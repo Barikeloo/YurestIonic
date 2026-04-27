@@ -48,20 +48,6 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         return $this->model->newQuery()->get()->map(fn ($model) => $this->toDomain($model))->all();
     }
 
-    public function getById(string $id): ?Order
-    {
-        $model = $this->model->newQuery()->where('uuid', $id)->first();
-
-        return $model ? $this->toDomain($model) : null;
-    }
-
-    public function findById(Uuid $id): ?Order
-    {
-        $model = $this->model->newQuery()->where('uuid', $id->value())->first();
-
-        return $model ? $this->toDomain($model) : null;
-    }
-
     public function findByUuid(Uuid $uuid): ?Order
     {
         $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();

@@ -10,11 +10,6 @@ interface OrderRepositoryInterface
     public function save(Order $order): void;
     public function all(): array;
 
-    public function getById(string $id): ?Order;
-
-
-    public function findById(Uuid $id): ?Order;
-
     public function findByUuid(Uuid $uuid): ?Order;
 
     public function findByTableId(Uuid $tableId): ?Order;

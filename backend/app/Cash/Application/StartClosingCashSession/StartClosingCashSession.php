@@ -27,11 +27,7 @@ final class StartClosingCashSession
             }
 
             $cashSession->startClosing();
-            $newStatus = $cashSession->status()->value();
-            error_log("StartClosingCashSession - After startClosing(), status: $newStatus, Session ID: $cashSessionId");
-
             $this->cashSessionRepository->save($cashSession);
-            error_log("StartClosingCashSession - Session saved successfully");
 
             return StartClosingCashSessionResponse::create($cashSession);
         });

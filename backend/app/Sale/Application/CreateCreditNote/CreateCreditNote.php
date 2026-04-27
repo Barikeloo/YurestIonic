@@ -6,8 +6,9 @@ namespace App\Sale\Application\CreateCreditNote;
 
 use App\Sale\Domain\Entity\Sale;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
-use App\Shared\Domain\ValueObject\Uuid;
+use App\Sale\Domain\ValueObject\CustomerFiscalData;
 use App\Sale\Domain\ValueObject\DocumentType;
+use App\Shared\Domain\ValueObject\Uuid;
 
 final class CreateCreditNote
 {
@@ -28,6 +29,10 @@ final class CreateCreditNote
             throw new \DomainException('Parent sale not found.');
         }
 
+        $fiscalData = $customerFiscalData !== null
+            ? CustomerFiscalData::fromArray($customerFiscalData)
+            : $parentSale->customerFiscalData();
+
         // Create credit note as a negative sale
         $creditNote = Sale::dddCreate(
             id: Uuid::generate(),
@@ -37,7 +42,7 @@ final class CreateCreditNote
             cashSessionId: null, // Credit notes can be created without active cash session
             parentSaleId: Uuid::create($parentSaleId),
             documentType: DocumentType::creditNote(),
-            customerFiscalData: $customerFiscalData ?? $parentSale->customerFiscalData(),
+            customerFiscalData: $fiscalData,
         );
 
         // Set negative total for credit note

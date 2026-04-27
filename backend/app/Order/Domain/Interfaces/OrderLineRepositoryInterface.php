@@ -9,8 +9,6 @@ interface OrderLineRepositoryInterface
 {
     public function save(OrderLine $orderLine): void;
 
-    public function findById(Uuid $id): ?OrderLine;
-
     public function findByUuid(Uuid $uuid): ?OrderLine;
 
     public function findByOrderId(Uuid $orderId): array;

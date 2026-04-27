@@ -2,10 +2,10 @@
 
 namespace App\Tables\Application\CreateTable;
 
+use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Entity\Table;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
 use App\Tables\Domain\ValueObject\TableName;
-use App\Tables\Domain\ValueObject\ZoneId;
 use InvalidArgumentException;
 
 class CreateTable
@@ -16,7 +16,7 @@ class CreateTable
 
     public function __invoke(string $zoneId, string $name): CreateTableResponse
     {
-        $zoneIdVO = ZoneId::create($zoneId);
+        $zoneIdVO = Uuid::create($zoneId);
 
         $existingTable = $this->tableRepository->findByZoneIdAndName($zoneIdVO, $name);
         if ($existingTable !== null) {

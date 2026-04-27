@@ -30,13 +30,13 @@ class OrderLineEntityTest extends TestCase
             taxPercentage: OrderLineTaxPercentage::create(10),
         );
 
-        $this->assertSame($id->value(), $orderLine->getId()->value());
-        $this->assertSame($restaurantId->value(), $orderLine->getRestaurantId()->value());
-        $this->assertSame($orderId->value(), $orderLine->getOrderId()->value());
-        $this->assertSame($productId->value(), $orderLine->getProductId()->value());
-        $this->assertSame($userId->value(), $orderLine->getUserId()->value());
-        $this->assertSame(2, $orderLine->getQuantity()->value());
-        $this->assertSame(1500, $orderLine->getPrice()->value());
-        $this->assertSame(10, $orderLine->getTaxPercentage()->value());
+        $this->assertSame($id->value(), $orderLine->id()->value());
+        $this->assertSame($restaurantId->value(), $orderLine->restaurantId()->value());
+        $this->assertSame($orderId->value(), $orderLine->orderId()->value());
+        $this->assertSame($productId->value(), $orderLine->productId()->value());
+        $this->assertSame($userId->value(), $orderLine->userId()->value());
+        $this->assertSame(2, $orderLine->quantity()->value());
+        $this->assertSame(1500, $orderLine->price()->value());
+        $this->assertSame(10, $orderLine->taxPercentage()->value());
     }
 }

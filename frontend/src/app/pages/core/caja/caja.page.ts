@@ -277,7 +277,7 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   private loadActiveSession(): void {
-    this.tpvService.getActiveCashSession(this.deviceId).subscribe({
+    this.tpvService.getActiveCashSession(this.deviceId).pipe(takeUntil(this.destroy$)).subscribe({
       next: (session) => {
         this.activeSession = session;
         if (session === null) {
@@ -326,7 +326,7 @@ export class CajaPage implements OnInit, OnDestroy {
 
   private loadSessionSummary(): void {
     if (!this.activeSession) return;
-    this.tpvService.getCashSessionSummary(this.activeSession.uuid).subscribe({
+    this.tpvService.getCashSessionSummary(this.activeSession.uuid).pipe(takeUntil(this.destroy$)).subscribe({
       next: (summary) => {
         this.sessionSummary = summary as unknown as CashSessionSummary;
         this.loadActiveDashboardData();
@@ -388,7 +388,7 @@ export class CajaPage implements OnInit, OnDestroy {
       opened_by_user_id: data.userId,
       initial_amount_cents: data.initialAmountCents,
       notes: data.notes,
-    }).subscribe({
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (session) => {
         this.showOpenModal = false;
         this.activeSession = session;
@@ -681,7 +681,7 @@ export class CajaPage implements OnInit, OnDestroy {
             // Calculate paid diners based on total paid
             const diners = mesa.diners || 2;
             const partAmount = Math.floor(originalTotal / diners);
-            const paidDinersCount = Math.floor(paidTotal / partAmount);
+            const paidDinersCount = partAmount > 0 ? Math.floor(paidTotal / partAmount) : 0;
             this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
             // Update selected table total to remaining amount
             if (this.selectedTable) {
@@ -769,7 +769,7 @@ export class CajaPage implements OnInit, OnDestroy {
             // Calculate paid diners based on total paid
             const diners = mesa.diners || 2;
             const partAmount = Math.floor(originalTotal / diners);
-            const paidDinersCount = Math.floor(paidTotal / partAmount);
+            const paidDinersCount = partAmount > 0 ? Math.floor(paidTotal / partAmount) : 0;
             this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
             // Update selected table total to remaining amount
             if (this.selectedTable) {
@@ -956,7 +956,7 @@ export class CajaPage implements OnInit, OnDestroy {
               const originalTotal = this.originalOrderTotal || this.selectedTable?.total || 0;
               const diners = this.selectedTable?.diners || 2;
               const partAmount = Math.floor(originalTotal / diners);
-              const paidDinersCount = Math.floor(paidTotal / partAmount);
+              const paidDinersCount = partAmount > 0 ? Math.floor(paidTotal / partAmount) : 0;
               // Update paidDiners array based on count
               this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
               console.log('Updated paidDiners based on total paid:', this.paidDiners);

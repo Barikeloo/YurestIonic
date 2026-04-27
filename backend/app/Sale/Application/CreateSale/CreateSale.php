@@ -4,6 +4,7 @@ namespace App\Sale\Application\CreateSale;
 
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
+use App\Cash\Domain\ValueObject\DeviceId;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Sale\Domain\Entity\Sale;
@@ -56,7 +57,7 @@ final class CreateSale
             $restaurantUuid = Uuid::create($restaurantId);
             $orderUuid = Uuid::create($orderId);
 
-            $activeSession = $this->cashSessionRepository->findActiveByDeviceId($deviceId, $restaurantUuid);
+            $activeSession = $this->cashSessionRepository->findActiveByDeviceId(DeviceId::create($deviceId), $restaurantUuid);
             if ($activeSession === null) {
                 throw new \DomainException('No active cash session for this device.');
             }

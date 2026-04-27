@@ -31,7 +31,8 @@
       "Bash(grep -rn \"\\\\\\\\\\\\\\\\App\\\\\\\\\\\\\\\\\" \"/c/Users/barik/Desktop/YurestTPV/backend/app/Cash/\" --include=\"*.php\")",
       "Bash(grep -En \"\\\\\\\\\\\\\\\\App\\\\\\\\\\\\\\\\\" \"/c/Users/barik/Desktop/YurestTPV/backend/app/Cash/**/*.php\")",
       "Bash(grep *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(xargs -I {} find {} -maxdepth 2 -type d)"
     ]
   }
 }

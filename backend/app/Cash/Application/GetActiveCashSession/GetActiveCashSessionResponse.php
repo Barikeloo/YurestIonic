@@ -26,7 +26,7 @@ final class GetActiveCashSessionResponse
             id: $cashSession->id()->value(),
             uuid: $cashSession->uuid()->value(),
             restaurantId: $cashSession->restaurantId()->value(),
-            deviceId: $cashSession->deviceId(),
+            deviceId: $cashSession->deviceId()->value(),
             openedByUserId: $cashSession->openedByUserId()->value(),
             openedAt: $cashSession->openedAt()->format('Y-m-d H:i:s'),
             initialAmountCents: $cashSession->initialAmount()->toCents(),

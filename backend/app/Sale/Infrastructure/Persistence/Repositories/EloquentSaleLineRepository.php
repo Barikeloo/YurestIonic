@@ -45,13 +45,6 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
         );
     }
 
-    public function findById(Uuid $id): ?SaleLine
-    {
-        $model = $this->model->newQuery()->where('uuid', $id->value())->first();
-
-        return $model ? $this->toDomain($model) : null;
-    }
-
     public function findByUuid(Uuid $uuid): ?SaleLine
     {
         $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();

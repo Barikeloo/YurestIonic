@@ -15,13 +15,14 @@ final class DeleteOrderLine
 
     public function __invoke(string $lineId): bool
     {
-        $line = $this->orderLineRepository->findByUuid(Uuid::create($lineId));
+        $orderLineId = Uuid::create($lineId);
+        $line = $this->orderLineRepository->findByUuid($orderLineId);
 
         if ($line === null) {
             return false;
         }
 
-        $order = $this->orderRepository->getById($line->orderId()->value());
+        $order = $this->orderRepository->findByUuid($line->orderId());
 
         if ($order === null) {
             return false;

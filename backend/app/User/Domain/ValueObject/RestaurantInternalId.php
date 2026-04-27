@@ -2,7 +2,11 @@
 
 namespace App\User\Domain\ValueObject;
 
-class RestaurantId
+/**
+ * Internal integer FK from users.restaurant_id to restaurants.id.
+ * Not a UUID — represents the database internal id of the linked restaurant.
+ */
+final class RestaurantInternalId
 {
     private const MIN_VALUE = 1;
 
@@ -14,7 +18,7 @@ class RestaurantId
 
         if ($numericValue < self::MIN_VALUE) {
             throw new \InvalidArgumentException(
-                sprintf('Restaurant ID must be a positive integer, got: %s', $value)
+                sprintf('Restaurant internal id must be a positive integer, got: %s', $value)
             );
         }
 

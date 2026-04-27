@@ -10,11 +10,6 @@ interface SaleRepositoryInterface
     public function save(Sale $sale): void;
     public function all(): array;
 
-    public function getById(string $id): ?Sale;
-
-
-    public function findById(Uuid $id): ?Sale;
-
     public function findByUuid(Uuid $uuid): ?Sale;
 
     public function findByOrderId(Uuid $orderId): ?Sale;

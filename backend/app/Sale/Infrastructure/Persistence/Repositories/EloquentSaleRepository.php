@@ -56,7 +56,7 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
                 'cancel_reason' => $sale->cancellationReason(),
                 'parent_sale_id' => $parentSaleId,
                 'document_type' => $sale->documentType()->value(),
-                'customer_fiscal_data' => $sale->customerFiscalData(),
+                'customer_fiscal_data' => $sale->customerFiscalData()?->toArray(),
             ],
         );
     }
@@ -64,20 +64,6 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
     public function all(): array
     {
         return $this->model->newQuery()->get()->map(fn ($model) => $this->toDomain($model))->all();
-    }
-
-    public function getById(string $id): ?Sale
-    {
-        $model = $this->model->newQuery()->where('uuid', $id)->first();
-
-        return $model ? $this->toDomain($model) : null;
-    }
-
-    public function findById(Uuid $id): ?Sale
-    {
-        $model = $this->model->newQuery()->where('uuid', $id->value())->first();
-
-        return $model ? $this->toDomain($model) : null;
     }
 
     public function findByUuid(Uuid $uuid): ?Sale
