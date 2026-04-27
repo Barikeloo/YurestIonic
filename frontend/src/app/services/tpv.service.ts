@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, shareReplay } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
 export interface TpvFamilyItem {
@@ -186,7 +186,10 @@ export class TpvService {
   public listTables(): Observable<TpvTableItem[]> {
     return this.http
       .get<TpvTableItem[]>(`${this.baseUrl}/tpv/tables`, { withCredentials: true })
-      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+      .pipe(
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+        shareReplay(1)
+      );
   }
 
   public listTaxes(): Observable<TpvTaxItem[]> {
@@ -214,7 +217,10 @@ export class TpvService {
   public getOrder(id: string): Observable<TpvOrder> {
     return this.http
       .get<TpvOrder>(`${this.baseUrl}/tpv/orders/${id}`, { withCredentials: true })
-      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+      .pipe(
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+        shareReplay(1)
+      );
   }
 
   public updateOrder(id: string, payload: UpdateOrderPayload): Observable<TpvOrder> {
@@ -244,7 +250,10 @@ export class TpvService {
   public getOrderLines(orderId: string): Observable<TpvOrderLine[]> {
     return this.http
       .get<TpvOrderLine[]>(`${this.baseUrl}/tpv/orders/${orderId}/lines`, { withCredentials: true })
-      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+      .pipe(
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+        shareReplay(1)
+      );
   }
 
   // ============================================
@@ -268,13 +277,19 @@ export class TpvService {
   public getOrderPaidTotal(orderId: string): Observable<{ total_cents: number }> {
     return this.http
       .get<{ total_cents: number }>(`${this.baseUrl}/tpv/sales/order/${orderId}/paid-total`, { withCredentials: true })
-      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+      .pipe(
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+        shareReplay(1)
+      );
   }
 
   public getOrderTotal(orderId: string): Observable<{ total_cents: number }> {
     return this.http
       .get<{ total_cents: number }>(`${this.baseUrl}/tpv/orders/${orderId}/total`, { withCredentials: true })
-      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+      .pipe(
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+        shareReplay(1)
+      );
   }
 
   public listSales(): Observable<TpvSale[]> {

@@ -1,8 +1,8 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BehaviorSubject, forkJoin, of, Subject } from 'rxjs';
-import { catchError, switchMap, takeUntil } from 'rxjs/operators';
+import { BehaviorSubject, forkJoin, of, Subject, throwError } from 'rxjs';
+import { catchError, switchMap, takeUntil, map } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
 import { TpvService, TpvCashSession, TpvCashSessionListItem, TpvOrder, TpvTableItem } from '../../../services/tpv.service';
 import { OpenCashModalComponent } from '../../../components/open-cash-modal/open-cash-modal.component';
@@ -162,6 +162,10 @@ export class CajaPage implements OnInit, OnDestroy {
   private refreshInterval: any;
   private clockInterval: any;
   private readonly destroy$ = new Subject<void>();
+  // Subject para cancelar peticiones de carga de orden en curso (A7 fix)
+  private readonly loadOrderDestroy$ = new Subject<void>();
+  // Subject para cancelar flujos de pago previos (A7 fix)
+  private readonly paymentFlowDestroy$ = new Subject<void>();
   public readonly deviceId: string;
 
   constructor(
@@ -197,6 +201,10 @@ export class CajaPage implements OnInit, OnDestroy {
   public ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.loadOrderDestroy$.next();
+    this.loadOrderDestroy$.complete();
+    this.paymentFlowDestroy$.next();
+    this.paymentFlowDestroy$.complete();
     this.stopRefreshInterval();
     if (this.clockInterval) clearInterval(this.clockInterval);
     // Complete BehaviorSubjects to prevent memory leaks
@@ -209,104 +217,96 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   private loadOrderForPayment(orderId: string): void {
+    // Cancel any previous load order request (A7 fix - cancel previous subscriptions)
+    this.loadOrderDestroy$.next();
     this.resetPaymentState();
     this.fromMesas = true;
-    this.tpvService.getOrder(orderId).pipe(takeUntil(this.destroy$)).subscribe({
-      next: (order) => {
-        // Load tables to get the table name
-        this.tpvService.listTables().pipe(takeUntil(this.destroy$)).subscribe({
-          next: (tables) => {
-            const table = tables.find((t) => t.id === order.table_id);
-            const tableName = table?.name || order.table_id || 'Mesa';
 
-            forkJoin({
-              lines: this.tpvService.getOrderLines(orderId),
-              orderTotal: this.tpvService.getOrderTotal(orderId),
-            }).pipe(takeUntil(this.destroy$)).subscribe({
-              next: ({ lines, orderTotal }) => {
-                const originalTotal = orderTotal.total_cents;
-                this.originalOrderTotal = originalTotal;
+    // Use switchMap chain to avoid nested subscriptions (A7 fix)
+    this.tpvService.getOrder(orderId).pipe(
+      takeUntil(this.destroy$),
+      takeUntil(this.loadOrderDestroy$),
+      switchMap((order) =>
+        this.tpvService.listTables().pipe(
+          takeUntil(this.loadOrderDestroy$),
+          map((tables) => ({ order, tables }))
+        )
+      ),
+      switchMap(({ order, tables }) => {
+        const table = tables.find((t) => t.id === order.table_id);
+        const tableName = table?.name || order.table_id || 'Mesa';
 
-                // Get paid total to calculate remaining amount and paid diners
-                this.tpvService.getOrderPaidTotal(orderId).pipe(takeUntil(this.destroy$)).subscribe({
-                  next: (paidResponse) => {
-                    const paidTotal = paidResponse.total_cents;
-                    const remainingTotal = Math.max(0, originalTotal - paidTotal);
+        return forkJoin({
+          lines: this.tpvService.getOrderLines(orderId).pipe(takeUntil(this.loadOrderDestroy$)),
+          orderTotal: this.tpvService.getOrderTotal(orderId).pipe(takeUntil(this.loadOrderDestroy$)),
+        }).pipe(
+          takeUntil(this.loadOrderDestroy$),
+          map(({ lines, orderTotal }) => ({ order, tableName, lines, orderTotal }))
+        );
+      }),
+      switchMap(({ order, tableName, lines, orderTotal }) => {
+        const originalTotal = orderTotal.total_cents;
+        this.originalOrderTotal = originalTotal;
 
-                    // Calculate paid diners based on total paid (handle single diner case)
-                    const diners = order.diners ?? 1;
-                    const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
-                    const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
-                    this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
-
-                    // Create a temporary selectedTable from the order with remaining total
-                    this.selectedTable = {
-                      order_id: orderId,
-                      table_name: tableName,
-                      total: remainingTotal,
-                      status: order.status,
-                      diners: diners,
-                      opened_at: order.opened_at || new Date().toISOString(),
-                    } as PendingTable;
-                    this.selectedTableLines = lines.map((l) => ({
-                      id: l.id,
-                      name: l.product_name || 'Producto',
-                      price: l.price * l.quantity,
-                    }));
-                    console.log('loadOrderForPayment - Original:', originalTotal, 'Paid:', paidTotal, 'Remaining:', remainingTotal);
-                    console.log('loadOrderForPayment - paidDiners:', this.paidDiners);
-                    // Set the payment amount to the remaining total
-                    this.currentPaymentAmount = remainingTotal;
-                    this.showCobrarModal = true;
-                  },
-                  error: (error) => {
-                    console.error('Error fetching paid total:', error);
-                    // Fallback: assume no payments made
-                    this.paidDiners = [];
-                    const diners = order.diners ?? 1;
-                    // Fallback to original total
-                    this.selectedTable = {
-                      order_id: orderId,
-                      table_name: tableName,
-                      total: originalTotal,
-                      status: order.status,
-                      diners: diners,
-                      opened_at: order.opened_at || new Date().toISOString(),
-                    } as PendingTable;
-                    this.selectedTableLines = lines.map((l) => ({
-                      id: l.id,
-                      name: l.product_name || 'Producto',
-                      price: l.price * l.quantity,
-                    }));
-                    this.currentPaymentAmount = originalTotal;
-                    this.showCobrarModal = true;
-                  },
-                });
-              },
-              error: (error) => {
-                console.error('Error loading order lines:', error);
-                this.selectedTableLines = [];
-                // Set to 0 as we don't have order lines data
-                this.currentPaymentAmount = this.selectedTable?.total || 0;
-                this.showCobrarModal = true;
-              },
+        return this.tpvService.getOrderPaidTotal(orderId).pipe(
+          takeUntil(this.loadOrderDestroy$),
+          map((paidResponse) => ({
+            order,
+            tableName,
+            lines,
+            originalTotal,
+            paidTotal: paidResponse.total_cents,
+          })),
+          catchError((error) => {
+            console.error('Error fetching paid total:', error);
+            // Fallback: assume no payments made
+            return of({
+              order,
+              tableName,
+              lines,
+              originalTotal,
+              paidTotal: 0,
             });
-          },
-          error: (error) => {
-            console.error('Error loading tables:', error);
-            this.selectedTableLines = [];
-            // Set to 0 as we don't have table data
-            this.currentPaymentAmount = 0;
-            this.showCobrarModal = true;
-          },
-        });
+          })
+        );
+      }),
+      catchError((error) => {
+        console.error('Error in loadOrderForPayment chain:', error);
+        return throwError(() => error);
+      })
+    ).subscribe({
+      next: ({ order, tableName, lines, originalTotal, paidTotal }) => {
+        const remainingTotal = Math.max(0, originalTotal - paidTotal);
+
+        // Calculate paid diners based on total paid (handle single diner case)
+        const diners = order.diners ?? 1;
+        const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
+        const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
+        this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
+
+        // Create a temporary selectedTable from the order with remaining total
+        this.selectedTable = {
+          order_id: orderId,
+          table_name: tableName,
+          total: remainingTotal,
+          status: order.status,
+          diners: diners,
+          opened_at: order.opened_at || new Date().toISOString(),
+        } as PendingTable;
+        this.selectedTableLines = lines.map((l) => ({
+          id: l.id,
+          name: l.product_name || 'Producto',
+          price: l.price * l.quantity,
+        }));
+        // Set the payment amount to the remaining total
+        this.currentPaymentAmount = remainingTotal;
+        this.showCobrarModal = true;
       },
       error: (error) => {
-        console.error('Error loading order:', error);
+        console.error('Error loading order for payment:', error);
         this.selectedTableLines = [];
-        // Set to 0 as we don't have order data
         this.currentPaymentAmount = 0;
-        this.showCobrarModal = true;
+        this.showCobrarModal = false;
       },
     });
   }
@@ -696,177 +696,193 @@ export class CajaPage implements OnInit, OnDestroy {
     const mesa = this.pendingTableToCharge;
     if (!mesa) return;
 
+    // Cancel any previous payment flow (A7 fix)
+    this.paymentFlowDestroy$.next();
     this.resetPaymentState();
     this.selectedTable = mesa;
     this.isPartialPayment = false; // Reset to false for direct payment from caja page
-    
+
+    // Use switchMap chain to avoid nested subscriptions (A7 fix)
     forkJoin({
-      order: this.tpvService.getOrder(mesa.order_id),
-      orderTotal: this.tpvService.getOrderTotal(mesa.order_id),
-    }).pipe(takeUntil(this.destroy$)).subscribe({
-      next: ({ order, orderTotal }) => {
+      order: this.tpvService.getOrder(mesa.order_id).pipe(takeUntil(this.paymentFlowDestroy$)),
+      orderTotal: this.tpvService.getOrderTotal(mesa.order_id).pipe(takeUntil(this.paymentFlowDestroy$)),
+    }).pipe(
+      takeUntil(this.destroy$),
+      takeUntil(this.paymentFlowDestroy$),
+      switchMap(({ order, orderTotal }) => {
         console.log('Order loaded:', order);
         const originalTotal = orderTotal.total_cents;
         this.originalOrderTotal = originalTotal;
-        // Calculate remaining total and paid diners
-        this.tpvService.getOrderPaidTotal(mesa.order_id).pipe(takeUntil(this.destroy$)).subscribe({
-          next: (paidResponse) => {
-            const paidTotal = paidResponse.total_cents;
-            const remainingTotal = Math.max(0, originalTotal - paidTotal);
-            // Calculate paid diners based on total paid (handle single diner case)
-            const diners = mesa.diners ?? 1;
-            const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
-            const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
-            this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
-            // Update selected table total to remaining amount
-            if (this.selectedTable) {
-              this.selectedTable.total = remainingTotal;
-            }
-            console.log('Order total:', originalTotal, 'Paid:', paidTotal, 'Remaining:', remainingTotal);
-            console.log('Calculated paidDiners:', this.paidDiners);
-            console.log('Loading order lines for order_id:', mesa.order_id);
-            this.tpvService.getOrderLines(mesa.order_id).pipe(takeUntil(this.destroy$)).subscribe({
-              next: (lines) => {
-                console.log('Order lines loaded:', lines);
-                this.selectedTableLines = lines.map((l) => ({
-                  id: l.id,
-                  name: l.product_name || 'Producto',
-                  price: l.price * l.quantity,
-                }));
-                // Set currentPaymentAmount to remaining total for direct payment
-                this.currentPaymentAmount = remainingTotal;
-                this.showCobrarModal = true;
-                this.pendingTableToCharge = null; // Clear pending after loading
-              },
-              error: (error) => {
-                console.error('Error loading order lines:', error);
-                this.selectedTableLines = [];
-                this.currentPaymentAmount = remainingTotal;
-                this.showCobrarModal = true;
-                this.pendingTableToCharge = null; // Clear pending after loading
-              },
-            });
-          },
-          error: (error) => {
+
+        return this.tpvService.getOrderPaidTotal(mesa.order_id).pipe(
+          takeUntil(this.paymentFlowDestroy$),
+          map((paidResponse) => ({
+            originalTotal,
+            paidTotal: paidResponse.total_cents,
+            fallback: false,
+          })),
+          catchError((error) => {
             console.error('Error fetching paid total:', error);
             // Fallback to original total and no paid diners
-            this.paidDiners = [];
-            const fallbackTotal = originalTotal;
-            console.log('Loading order lines for order_id:', mesa.order_id);
-            this.tpvService.getOrderLines(mesa.order_id).subscribe({
-              next: (lines) => {
-                console.log('Order lines loaded:', lines);
-                this.selectedTableLines = lines.map((l) => ({
-                  id: l.id,
-                  name: l.product_name || 'Producto',
-                  price: l.price * l.quantity,
-                }));
-                // Set currentPaymentAmount to remaining total for direct payment
-                this.currentPaymentAmount = fallbackTotal;
-                this.showCobrarModal = true;
-                this.pendingTableToCharge = null; // Clear pending after loading
-              },
-              error: (error) => {
-                console.error('Error loading order lines (fallback):', error);
-                this.selectedTableLines = [];
-                this.currentPaymentAmount = fallbackTotal;
-                this.showCobrarModal = true;
-                this.pendingTableToCharge = null; // Clear pending after loading
-              },
-            });
-          },
-        });
-      },
-      error: (error) => {
-        console.error('Error loading order:', error);
+            return of({ originalTotal, paidTotal: 0, fallback: true });
+          })
+        );
+      }),
+      switchMap(({ originalTotal, paidTotal, fallback }) => {
+        const remainingTotal = Math.max(0, originalTotal - paidTotal);
+        const diners = mesa.diners ?? 1;
+
+        if (!fallback) {
+          const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
+          const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
+          this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
+        } else {
+          this.paidDiners = [];
+        }
+
+        // Update selected table total to remaining amount
+        if (this.selectedTable) {
+          this.selectedTable.total = remainingTotal;
+        }
+
+        console.log('Order total:', originalTotal, 'Paid:', paidTotal, 'Remaining:', remainingTotal);
+        console.log('Calculated paidDiners:', this.paidDiners);
+        console.log('Loading order lines for order_id:', mesa.order_id);
+
+        return this.tpvService.getOrderLines(mesa.order_id).pipe(
+          takeUntil(this.paymentFlowDestroy$),
+          map((lines) => ({
+            lines: lines.map((l) => ({
+              id: l.id,
+              name: l.product_name || 'Producto',
+              price: l.price * l.quantity,
+            })),
+            remainingTotal,
+          })),
+          catchError((error) => {
+            console.error('Error loading order lines:', error);
+            return of({ lines: [] as OrderLine[], remainingTotal });
+          })
+        );
+      }),
+      catchError((error) => {
+        console.error('Error in payment flow chain:', error);
         alert('No se pudo cargar la orden.');
-        this.pendingTableToCharge = null; // Clear pending on error
+        this.pendingTableToCharge = null;
+        return throwError(() => error);
+      })
+    ).subscribe({
+      next: ({ lines, remainingTotal }) => {
+        this.selectedTableLines = lines;
+        // Set currentPaymentAmount to remaining total for direct payment
+        this.currentPaymentAmount = remainingTotal;
+        this.showCobrarModal = true;
+        this.pendingTableToCharge = null; // Clear pending after loading
+      },
+      error: () => {
+        // Error already handled in catchError
       },
     });
   }
 
   public onSplitMesa(mesa: PendingTable): void {
+    // Cancel any previous payment flow (A7 fix)
+    this.paymentFlowDestroy$.next();
     this.resetPaymentState();
     // Always recalculate paidDiners based on actual paid total
     this.selectedTable = mesa;
+
+    // Use switchMap chain to avoid nested subscriptions (A7 fix)
     forkJoin({
-      order: this.tpvService.getOrder(mesa.order_id),
-      orderTotal: this.tpvService.getOrderTotal(mesa.order_id),
-    }).subscribe({
-      next: ({ order, orderTotal }) => {
+      order: this.tpvService.getOrder(mesa.order_id).pipe(takeUntil(this.paymentFlowDestroy$)),
+      orderTotal: this.tpvService.getOrderTotal(mesa.order_id).pipe(takeUntil(this.paymentFlowDestroy$)),
+    }).pipe(
+      takeUntil(this.destroy$),
+      takeUntil(this.paymentFlowDestroy$),
+      switchMap(({ order, orderTotal }) => {
         const originalTotal = orderTotal.total_cents;
         this.originalOrderTotal = originalTotal;
-        // Calculate remaining total and paid diners
-        this.tpvService.getOrderPaidTotal(mesa.order_id).subscribe({
-          next: (paidResponse) => {
-            const paidTotal = paidResponse.total_cents;
-            const remainingTotal = Math.max(0, originalTotal - paidTotal);
-            // Calculate paid diners based on total paid (handle single diner case)
-            const diners = mesa.diners ?? 1;
-            const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
-            const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
-            this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
-            // Update selected table total to remaining amount
-            if (this.selectedTable) {
-              this.selectedTable.total = remainingTotal;
-            }
-            console.log('Order total:', originalTotal, 'Paid:', paidTotal, 'Remaining:', remainingTotal);
-            console.log('Calculated paidDiners:', this.paidDiners);
-            console.log('Loading order lines for order_id:', mesa.order_id);
-            this.tpvService.getOrderLines(mesa.order_id).subscribe({
-              next: (lines) => {
-                this.selectedTableLines = lines.map((l) => ({
-                  id: l.id,
-                  name: l.product_name || 'Producto',
-                  price: l.price * l.quantity,
-                  diner: l.diner_number,
-                }));
-                this.showSplitModal = true;
-              },
-              error: (error) => {
-                console.error('Error loading order lines:', error);
-                this.selectedTableLines = [];
-                this.showSplitModal = true;
-              },
-            });
-          },
-          error: (error) => {
+
+        return this.tpvService.getOrderPaidTotal(mesa.order_id).pipe(
+          takeUntil(this.paymentFlowDestroy$),
+          map((paidResponse) => ({
+            originalTotal,
+            paidTotal: paidResponse.total_cents,
+            fallback: false,
+          })),
+          catchError((error) => {
             console.error('Error fetching paid total:', error);
-            // Fallback to original total and no paid diners
-            this.paidDiners = [];
-            this.tpvService.getOrderLines(mesa.order_id).subscribe({
-              next: (lines) => {
-                this.selectedTableLines = lines.map((l) => ({
-                  id: l.id,
-                  name: l.product_name || 'Producto',
-                  price: l.price * l.quantity,
-                  diner: l.diner_number,
-                }));
-                this.showSplitModal = true;
-              },
-              error: (error) => {
-                console.error('Error loading order lines:', error);
-                this.selectedTableLines = [];
-                this.showSplitModal = true;
-              },
-            });
-          },
-        });
-      },
-      error: (error) => {
-        console.error('Error loading order:', error);
+            return of({ originalTotal, paidTotal: 0, fallback: true });
+          })
+        );
+      }),
+      switchMap(({ originalTotal, paidTotal, fallback }) => {
+        const remainingTotal = Math.max(0, originalTotal - paidTotal);
+        const diners = mesa.diners ?? 1;
+
+        if (!fallback) {
+          const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
+          const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
+          this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
+        } else {
+          this.paidDiners = [];
+        }
+
+        // Update selected table total to remaining amount
+        if (this.selectedTable) {
+          this.selectedTable.total = remainingTotal;
+        }
+
+        console.log('Order total:', originalTotal, 'Paid:', paidTotal, 'Remaining:', remainingTotal);
+        console.log('Calculated paidDiners:', this.paidDiners);
+        console.log('Loading order lines for order_id:', mesa.order_id);
+
+        return this.tpvService.getOrderLines(mesa.order_id).pipe(
+          takeUntil(this.paymentFlowDestroy$),
+          map((lines) => ({
+            lines: lines.map((l) => ({
+              id: l.id,
+              name: l.product_name || 'Producto',
+              price: l.price * l.quantity,
+              diner: l.diner_number,
+            })),
+            remainingTotal,
+          })),
+          catchError((error) => {
+            console.error('Error loading order lines:', error);
+            return of({ lines: [] as OrderLine[], remainingTotal });
+          })
+        );
+      }),
+      catchError((error) => {
+        console.error('Error in split mesa flow:', error);
         this.selectedTableLines = [];
         this.showSplitModal = true;
+        return throwError(() => error);
+      })
+    ).subscribe({
+      next: ({ lines }) => {
+        this.selectedTableLines = lines;
+        this.showSplitModal = true;
+      },
+      error: () => {
+        // Error already handled in catchError
       },
     });
   }
 
   public onSplitBill(): void {
     this.showCobrarModal = false;
+    // Cancel any previous payment flow requests (A7 fix)
+    this.paymentFlowDestroy$.next();
+
     // Fetch paid total to calculate remaining amount
     if (this.selectedTable) {
       const orderId = this.selectedTable.order_id;
-      this.tpvService.getOrderPaidTotal(orderId).subscribe({
+      this.tpvService.getOrderPaidTotal(orderId).pipe(
+        takeUntil(this.destroy$),
+        takeUntil(this.paymentFlowDestroy$)
+      ).subscribe({
         next: (response) => {
           const paidTotal = response.total_cents;
           // Use originalOrderTotal to calculate remaining amount
@@ -975,6 +991,9 @@ export class CajaPage implements OnInit, OnDestroy {
       is_partial_payment: isPartialPayment,
     });
 
+    // Cancel any previous payment flow (A7 fix)
+    this.paymentFlowDestroy$.next();
+
     this.tpvService.createSale({
       order_id: this.selectedTable.order_id,
       opened_by_user_id: this.currentUser.id,
@@ -983,18 +1002,21 @@ export class CajaPage implements OnInit, OnDestroy {
       payments,
       order_line_ids: orderLineIds,
       is_partial_payment: isPartialPayment,
-    }).subscribe({
-      next: (sale) => {
+    }).pipe(
+      takeUntil(this.destroy$),
+      takeUntil(this.paymentFlowDestroy$),
+      switchMap((sale) => {
         console.log('Sale created successfully:', sale);
         console.log('isPartialPayment:', isPartialPayment, 'selectedTable:', this.selectedTable, 'willBeComplete:', willBeComplete);
         this.showCobrarModal = false;
 
-        // For partial payments, always return to split modal and let backend handle order closure
-        if (isPartialPayment && this.selectedTable) {
-          console.log('Calling getOrderPaidTotal to return to split modal');
-          const orderId = this.selectedTable.order_id;
-          this.tpvService.getOrderPaidTotal(orderId).subscribe({
-            next: (paidResponse) => {
+        const orderId = this.selectedTable?.order_id;
+
+        // For partial payments, get paid total to check if order is complete
+        if (isPartialPayment && orderId) {
+          return this.tpvService.getOrderPaidTotal(orderId).pipe(
+            takeUntil(this.paymentFlowDestroy$),
+            map((paidResponse) => {
               const paidTotal = paidResponse.total_cents;
               const originalTotal = this.originalOrderTotal || this.selectedTable?.total || 0;
               const diners = this.selectedTable?.diners ?? 1;
@@ -1003,54 +1025,59 @@ export class CajaPage implements OnInit, OnDestroy {
               // Update paidDiners array based on count
               this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
               console.log('Updated paidDiners based on total paid:', this.paidDiners);
-              // Check if order is actually complete
+
               const isOrderComplete = paidTotal >= originalTotal;
-              if (isOrderComplete) {
-                // Order is complete, show success animation
-                this.showPaymentSuccess = true;
-              } else {
-                // Return to split modal for equal parts
-                console.log('Calling onSplitBill to return to split modal');
-                this.onSplitBill();
-              }
-            },
-            error: (error) => {
+              return { type: 'partial' as const, isOrderComplete, orderId };
+            }),
+            catchError((error) => {
               console.error('Error fetching paid total for diner calculation:', error);
-              this.loadSessionSummary();
-            },
-          });
-        } else {
-          // For non-partial payments, verify with fresh GET from backend
-          const orderId = this.selectedTable?.order_id;
-          if (orderId) {
-            forkJoin({
-              paidTotal: this.tpvService.getOrderPaidTotal(orderId),
-              orderTotal: this.tpvService.getOrderTotal(orderId),
-            }).subscribe({
-              next: ({ paidTotal, orderTotal }) => {
-                const isOrderComplete = paidTotal.total_cents >= orderTotal.total_cents;
-                if (isOrderComplete) {
-                  this.showPaymentSuccess = true;
-                } else {
-                  this.loadSessionSummary();
-                }
-              },
-              error: () => {
-                // Fallback to willBeComplete on error
-                if (willBeComplete) {
-                  this.showPaymentSuccess = true;
-                } else {
-                  this.loadSessionSummary();
-                }
-              },
-            });
+              return of({ type: 'partial' as const, isOrderComplete: false, orderId });
+            })
+          );
+        }
+
+        // For non-partial payments, verify with fresh GET from backend
+        if (orderId) {
+          return forkJoin({
+            paidTotal: this.tpvService.getOrderPaidTotal(orderId).pipe(takeUntil(this.paymentFlowDestroy$)),
+            orderTotal: this.tpvService.getOrderTotal(orderId).pipe(takeUntil(this.paymentFlowDestroy$)),
+          }).pipe(
+            map(({ paidTotal, orderTotal }) => {
+              const isOrderComplete = paidTotal.total_cents >= orderTotal.total_cents;
+              return { type: 'full' as const, isOrderComplete };
+            }),
+            catchError(() => {
+              // Fallback to willBeComplete on error
+              return of({ type: 'full' as const, isOrderComplete: willBeComplete });
+            })
+          );
+        }
+
+        // Fallback if no orderId
+        return of({ type: 'full' as const, isOrderComplete: willBeComplete });
+      }),
+      catchError((error) => {
+        console.error('Error creating sale:', error);
+        alert('Error al crear la venta: ' + (error.message || 'Error desconocido'));
+        this.isProcessingPayment = false;
+        return throwError(() => error);
+      })
+    ).subscribe({
+      next: (result) => {
+        if (result.type === 'partial') {
+          if (result.isOrderComplete) {
+            // Order is complete, show success animation
+            this.showPaymentSuccess = true;
           } else {
-            // Fallback to willBeComplete if no orderId
-            if (willBeComplete) {
-              this.showPaymentSuccess = true;
-            } else {
-              this.loadSessionSummary();
-            }
+            // Return to split modal for equal parts
+            console.log('Calling onSplitBill to return to split modal');
+            this.onSplitBill();
+          }
+        } else {
+          if (result.isOrderComplete) {
+            this.showPaymentSuccess = true;
+          } else {
+            this.loadSessionSummary();
           }
         }
 
@@ -1059,9 +1086,8 @@ export class CajaPage implements OnInit, OnDestroy {
         this.isPartialPayment = false;
         this.isProcessingPayment = false;
       },
-      error: (error) => {
-        console.error('Error creating sale:', error);
-        alert('Error al crear la venta: ' + (error.message || 'Error desconocido'));
+      error: () => {
+        // Error already handled in catchError
         this.isProcessingPayment = false;
       },
     });
