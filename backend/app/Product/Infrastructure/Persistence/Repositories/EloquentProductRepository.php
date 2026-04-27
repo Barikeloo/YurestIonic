@@ -1,17 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Product\Infrastructure\Persistence\Repositories;
 
 use App\Family\Infrastructure\Persistence\Models\EloquentFamily;
 use App\Product\Domain\Entity\Product;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Product\Infrastructure\Persistence\Models\EloquentProduct;
+use App\Shared\Infrastructure\Tenant\TenantContext;
 use App\Tax\Infrastructure\Persistence\Models\EloquentTax;
 
 class EloquentProductRepository implements ProductRepositoryInterface
 {
     public function __construct(
         private EloquentProduct $model,
+        private TenantContext $tenantContext,
     ) {}
 
     public function save(Product $product): void
@@ -38,7 +42,13 @@ class EloquentProductRepository implements ProductRepositoryInterface
 
     public function findById(string $id): ?Product
     {
-        $model = $this->model->newQuery()->with(['family', 'tax'])->where('uuid', $id)->first();
+        $restaurantId = $this->tenantContext->requireRestaurantId();
+
+        $model = $this->model->newQuery()
+            ->with(['family', 'tax'])
+            ->where('restaurant_id', $restaurantId)
+            ->where('uuid', $id)
+            ->first();
 
         if ($model === null || $model->family === null || $model->tax === null) {
             return null;
@@ -60,7 +70,12 @@ class EloquentProductRepository implements ProductRepositoryInterface
 
     public function findAll(bool $includeDeleted = false): array
     {
-        $query = $this->model->newQuery()->with(['family', 'tax'])->orderBy('name');
+        $restaurantId = $this->tenantContext->requireRestaurantId();
+
+        $query = $this->model->newQuery()
+            ->with(['family', 'tax'])
+            ->where('restaurant_id', $restaurantId)
+            ->orderBy('name');
 
         if ($includeDeleted) {
             $query->withTrashed();

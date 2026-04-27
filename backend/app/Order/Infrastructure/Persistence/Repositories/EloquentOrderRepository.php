@@ -1,14 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Order\Infrastructure\Persistence\Repositories;
 
 use App\Order\Domain\Entity\Order;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
-use App\Order\Domain\ValueObject\OrderDiners;
-use App\Order\Domain\ValueObject\OrderStatus;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrder;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
-use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Infrastructure\Persistence\Models\EloquentTable;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
@@ -45,19 +44,28 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
 
     public function all(): array
     {
-        return $this->model->newQuery()->get()->map(fn ($model) => $this->toDomain($model))->all();
+        return $this->model->newQuery()
+            ->with(['restaurant', 'table', 'openedByUser', 'closedByUser'])
+            ->get()
+            ->map(fn ($model) => $this->toDomain($model))
+            ->all();
     }
 
     public function findByUuid(Uuid $uuid): ?Order
     {
-        $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();
+        $model = $this->model->newQuery()
+            ->with(['restaurant', 'table', 'openedByUser', 'closedByUser'])
+            ->where('uuid', $uuid->value())
+            ->first();
 
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByTableId(Uuid $tableId): ?Order
     {
-        $model = $this->model->newQuery()->where('table_id', $tableId->value())
+        $model = $this->model->newQuery()
+            ->with(['restaurant', 'table', 'openedByUser', 'closedByUser'])
+            ->where('table_id', $tableId->value())
             ->where('status', 'open')
             ->first();
 
@@ -71,12 +79,11 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
 
     private function toDomain(EloquentOrder $model): Order
     {
-        $restaurantUuid = EloquentRestaurant::query()->where('id', $model->restaurant_id)->value('uuid');
-        $tableUuid = EloquentTable::query()->where('id', $model->table_id)->value('uuid');
-        $openedByUserUuid = EloquentUser::query()->where('id', $model->opened_by_user_id)->value('uuid');
-        $closedByUserUuid = $model->closed_by_user_id
-            ? EloquentUser::query()->where('id', $model->closed_by_user_id)->value('uuid')
-            : null;
+        // Use eager-loaded relationships to avoid N+1 queries
+        $restaurantUuid = $model->restaurant?->uuid ?? '';
+        $tableUuid = $model->table?->uuid ?? '';
+        $openedByUserUuid = $model->openedByUser?->uuid ?? '';
+        $closedByUserUuid = $model->closedByUser?->uuid ?? null;
 
         return Order::fromPersistence(
             $model->uuid,

@@ -28,7 +28,7 @@ final class GetCashSessionSummary
         }
 
         $movements = $this->cashMovementRepository->findByCashSessionId($cashSessionUuid);
-        $payments = $this->salePaymentRepository->findByCashSessionId($cashSessionUuid);
+        $payments = $this->salePaymentRepository->findNonCancelledByCashSessionId($cashSessionUuid);
 
         $totalInMovements = 0;
         $totalOutMovements = 0;

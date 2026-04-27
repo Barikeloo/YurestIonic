@@ -63,12 +63,19 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
 
     public function all(): array
     {
-        return $this->model->newQuery()->get()->map(fn ($model) => $this->toDomain($model))->all();
+        return $this->model->newQuery()
+            ->with(['restaurant', 'order', 'openedByUser', 'closedByUser', 'cancelledByUser', 'cashSession', 'parentSale'])
+            ->get()
+            ->map(fn ($model) => $this->toDomain($model))
+            ->all();
     }
 
     public function findByUuid(Uuid $uuid): ?Sale
     {
-        $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();
+        $model = $this->model->newQuery()
+            ->with(['restaurant', 'order', 'openedByUser', 'closedByUser', 'cancelledByUser', 'cashSession', 'parentSale'])
+            ->where('uuid', $uuid->value())
+            ->first();
 
         return $model ? $this->toDomain($model) : null;
     }
@@ -94,7 +101,10 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
             return [];
         }
 
-        $models = $this->model->newQuery()->where('order_id', $orderInternalId)->get();
+        $models = $this->model->newQuery()
+            ->with(['restaurant', 'order', 'openedByUser', 'closedByUser', 'cancelledByUser', 'cashSession', 'parentSale'])
+            ->where('order_id', $orderInternalId)
+            ->get();
 
         return $models->map(fn($model) => $this->toDomain($model))->toArray();
     }
@@ -110,6 +120,7 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
         }
 
         return $this->model->newQuery()
+            ->with(['restaurant', 'order', 'openedByUser', 'closedByUser', 'cancelledByUser', 'cashSession', 'parentSale'])
             ->where('cash_session_id', $cashSessionInternalId)
             ->get()
             ->map(fn ($model) => $this->toDomain($model))
@@ -136,21 +147,14 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
 
     private function toDomain(EloquentSale $model): Sale
     {
-        $restaurantUuid = EloquentRestaurant::query()->where('id', $model->restaurant_id)->value('uuid');
-        $orderUuid = EloquentOrder::query()->where('id', $model->order_id)->value('uuid');
-        $openedByUserUuid = EloquentUser::query()->where('id', $model->opened_by_user_id ?? $model->user_id)->value('uuid');
-        $closedByUserUuid = $model->closed_by_user_id !== null
-            ? EloquentUser::query()->where('id', $model->closed_by_user_id)->value('uuid')
-            : null;
-        $cancelledByUserUuid = $model->cancelled_by_user_id !== null
-            ? EloquentUser::query()->where('id', $model->cancelled_by_user_id)->value('uuid')
-            : null;
-        $cashSessionUuid = $model->cash_session_id !== null
-            ? EloquentCashSession::query()->where('id', $model->cash_session_id)->value('uuid')
-            : null;
-        $parentSaleUuid = $model->parent_sale_id !== null
-            ? EloquentSale::query()->where('id', $model->parent_sale_id)->value('uuid')
-            : null;
+        // Use eager-loaded relationships to avoid N+1 queries
+        $restaurantUuid = $model->restaurant?->uuid ?? '';
+        $orderUuid = $model->order?->uuid ?? '';
+        $openedByUserUuid = $model->openedByUser?->uuid ?? $model->user?->uuid ?? '';
+        $closedByUserUuid = $model->closedByUser?->uuid ?? null;
+        $cancelledByUserUuid = $model->cancelledByUser?->uuid ?? null;
+        $cashSessionUuid = $model->cashSession?->uuid ?? null;
+        $parentSaleUuid = $model->parentSale?->uuid ?? null;
 
         return Sale::fromPersistence(
             $model->uuid,

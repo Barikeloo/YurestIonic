@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin, of, Subject } from 'rxjs';
+import { BehaviorSubject, forkJoin, of, Subject } from 'rxjs';
 import { catchError, switchMap, takeUntil } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
 import { TpvService, TpvCashSession, TpvCashSessionListItem, TpvOrder, TpvTableItem } from '../../../services/tpv.service';
@@ -110,23 +110,41 @@ interface MethodBreakdownRow {
   standalone: true,
 })
 export class CajaPage implements OnInit, OnDestroy {
-  public state: CajaState = 'pre-apertura';
-  public activeSession: TpvCashSession | null = null;
-  public loading = true;
+  // BehaviorSubjects para estado reactivo
+  public readonly state$ = new BehaviorSubject<CajaState>('pre-apertura');
+  public readonly activeSession$ = new BehaviorSubject<TpvCashSession | null>(null);
+  public readonly loading$ = new BehaviorSubject<boolean>(true);
+  public readonly pendingTables$ = new BehaviorSubject<PendingTableRow[]>([]);
+  public readonly movements$ = new BehaviorSubject<CashMovementItem[]>([]);
+  public readonly sessionSummary$ = new BehaviorSubject<CashSessionSummary | null>(null);
+
+  // Getters para compatibilidad con templates existentes
+  public get state(): CajaState { return this.state$.value; }
+  public get activeSession(): TpvCashSession | null { return this.activeSession$.value; }
+  public get loading(): boolean { return this.loading$.value; }
+  public get pendingTables(): PendingTableRow[] { return this.pendingTables$.value; }
+  public get movements(): CashMovementItem[] { return this.movements$.value; }
+  public get sessionSummary(): CashSessionSummary | null { return this.sessionSummary$.value; }
+
+  // Setters para actualizar BehaviorSubjects
+  private setState(value: CajaState): void { this.state$.next(value); }
+  private setActiveSession(value: TpvCashSession | null): void { this.activeSession$.next(value); }
+  private setLoading(value: boolean): void { this.loading$.next(value); }
+  private setPendingTables(value: PendingTableRow[]): void { this.pendingTables$.next(value); }
+  private setMovements(value: CashMovementItem[]): void { this.movements$.next(value); }
+  private setSessionSummary(value: CashSessionSummary | null): void { this.sessionSummary$.next(value); }
+
   public lastClosed: LastClosedData | null = null;
   public orphanSession: OrphanSessionData | null = null;
   public showOpenModal = false;
   public showPinAuthModal = false;
   public showPinAuthModalForCobrarMesa = false;
   public pendingTableToCharge: PendingTableRow | null = null;
-  public sessionSummary: CashSessionSummary | null = null;
   public showMovementModal = false;
   public showWizard = false;
   public currentTime = '';
   public closedSessions: TpvCashSessionListItem[] = [];
   public openCashError: string | null = null;
-  public movements: CashMovementItem[] = [];
-  public pendingTables: PendingTableRow[] = [];
   public showCobrarModal = false;
   public showSplitModal = false;
   public showPaymentSuccess = false;
@@ -139,6 +157,7 @@ export class CajaPage implements OnInit, OnDestroy {
   public originalOrderTotal = 0;
   public currentPaymentAmount = 0;
   public isClosingInProgress = false;
+  public isProcessingPayment = false;
 
   private refreshInterval: any;
   private clockInterval: any;
@@ -180,15 +199,22 @@ export class CajaPage implements OnInit, OnDestroy {
     this.destroy$.complete();
     this.stopRefreshInterval();
     if (this.clockInterval) clearInterval(this.clockInterval);
+    // Complete BehaviorSubjects to prevent memory leaks
+    this.state$.complete();
+    this.activeSession$.complete();
+    this.loading$.complete();
+    this.pendingTables$.complete();
+    this.movements$.complete();
+    this.sessionSummary$.complete();
   }
 
   private loadOrderForPayment(orderId: string): void {
     this.resetPaymentState();
     this.fromMesas = true;
-    this.tpvService.getOrder(orderId).subscribe({
+    this.tpvService.getOrder(orderId).pipe(takeUntil(this.destroy$)).subscribe({
       next: (order) => {
         // Load tables to get the table name
-        this.tpvService.listTables().subscribe({
+        this.tpvService.listTables().pipe(takeUntil(this.destroy$)).subscribe({
           next: (tables) => {
             const table = tables.find((t) => t.id === order.table_id);
             const tableName = table?.name || order.table_id || 'Mesa';
@@ -196,16 +222,22 @@ export class CajaPage implements OnInit, OnDestroy {
             forkJoin({
               lines: this.tpvService.getOrderLines(orderId),
               orderTotal: this.tpvService.getOrderTotal(orderId),
-            }).subscribe({
+            }).pipe(takeUntil(this.destroy$)).subscribe({
               next: ({ lines, orderTotal }) => {
                 const originalTotal = orderTotal.total_cents;
                 this.originalOrderTotal = originalTotal;
 
-                // Get paid total to calculate remaining amount
-                this.tpvService.getOrderPaidTotal(orderId).subscribe({
+                // Get paid total to calculate remaining amount and paid diners
+                this.tpvService.getOrderPaidTotal(orderId).pipe(takeUntil(this.destroy$)).subscribe({
                   next: (paidResponse) => {
                     const paidTotal = paidResponse.total_cents;
                     const remainingTotal = Math.max(0, originalTotal - paidTotal);
+
+                    // Calculate paid diners based on total paid (handle single diner case)
+                    const diners = order.diners ?? 1;
+                    const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
+                    const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
+                    this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
 
                     // Create a temporary selectedTable from the order with remaining total
                     this.selectedTable = {
@@ -213,7 +245,7 @@ export class CajaPage implements OnInit, OnDestroy {
                       table_name: tableName,
                       total: remainingTotal,
                       status: order.status,
-                      diners: order.diners || 1,
+                      diners: diners,
                       opened_at: order.opened_at || new Date().toISOString(),
                     } as PendingTable;
                     this.selectedTableLines = lines.map((l) => ({
@@ -222,19 +254,23 @@ export class CajaPage implements OnInit, OnDestroy {
                       price: l.price * l.quantity,
                     }));
                     console.log('loadOrderForPayment - Original:', originalTotal, 'Paid:', paidTotal, 'Remaining:', remainingTotal);
+                    console.log('loadOrderForPayment - paidDiners:', this.paidDiners);
                     // Set the payment amount to the remaining total
                     this.currentPaymentAmount = remainingTotal;
                     this.showCobrarModal = true;
                   },
                   error: (error) => {
                     console.error('Error fetching paid total:', error);
+                    // Fallback: assume no payments made
+                    this.paidDiners = [];
+                    const diners = order.diners ?? 1;
                     // Fallback to original total
                     this.selectedTable = {
                       order_id: orderId,
                       table_name: tableName,
                       total: originalTotal,
                       status: order.status,
-                      diners: order.diners || 1,
+                      diners: diners,
                       opened_at: order.opened_at || new Date().toISOString(),
                     } as PendingTable;
                     this.selectedTableLines = lines.map((l) => ({
@@ -242,7 +278,6 @@ export class CajaPage implements OnInit, OnDestroy {
                       name: l.product_name || 'Producto',
                       price: l.price * l.quantity,
                     }));
-                    // Set the payment amount to the original total as fallback
                     this.currentPaymentAmount = originalTotal;
                     this.showCobrarModal = true;
                   },
@@ -279,29 +314,29 @@ export class CajaPage implements OnInit, OnDestroy {
   private loadActiveSession(): void {
     this.tpvService.getActiveCashSession(this.deviceId).pipe(takeUntil(this.destroy$)).subscribe({
       next: (session) => {
-        this.activeSession = session;
+        this.setActiveSession(session);
         if (session === null) {
-          this.state = 'pre-apertura';
+          this.setState('pre-apertura');
           this.loadLastClosedData();
           this.stopRefreshInterval();
         } else {
-          this.loading = false;
+          this.setLoading(false);
           switch (session.status) {
             case 'open':
-              this.state = 'activa';
+              this.setState('activa');
               this.loadSessionSummary();
               this.loadActiveDashboardData();
               this.startRefreshInterval();
               break;
             case 'closing':
-              this.state = 'arqueo';
+              this.setState('arqueo');
               this.showWizard = true;
               this.loadSessionSummary();
               this.stopRefreshInterval();
               break;
             case 'closed':
             case 'abandoned':
-              this.state = 'historico';
+              this.setState('historico');
               this.loadClosedSessions();
               this.stopRefreshInterval();
               break;
@@ -309,8 +344,8 @@ export class CajaPage implements OnInit, OnDestroy {
         }
       },
       error: () => {
-        this.loading = false;
-        this.state = 'pre-apertura';
+        this.setLoading(false);
+        this.setState('pre-apertura');
         this.loadLastClosedData();
       },
     });
@@ -328,7 +363,7 @@ export class CajaPage implements OnInit, OnDestroy {
     if (!this.activeSession) return;
     this.tpvService.getCashSessionSummary(this.activeSession.uuid).pipe(takeUntil(this.destroy$)).subscribe({
       next: (summary) => {
-        this.sessionSummary = summary as unknown as CashSessionSummary;
+        this.setSessionSummary(summary as unknown as CashSessionSummary);
         this.loadActiveDashboardData();
       },
       error: (error) => { console.error('Error loading session summary:', error); },
@@ -338,17 +373,17 @@ export class CajaPage implements OnInit, OnDestroy {
   private loadActiveDashboardData(): void {
     if (!this.activeSession) return;
     const sessionUuid = this.activeSession.uuid;
-    this.tpvService.listCashMovements(sessionUuid).subscribe({
-      next: (response) => { this.movements = response.movements as CashMovementItem[]; },
-      error: () => { this.movements = []; },
+    this.tpvService.listCashMovements(sessionUuid).pipe(takeUntil(this.destroy$)).subscribe({
+      next: (response) => { this.setMovements(response.movements as CashMovementItem[]); },
+      error: () => { this.setMovements([]); },
     });
 
     forkJoin({
       orders: this.tpvService.listOrders().pipe(catchError(() => of([] as TpvOrder[]))),
       tables: this.tpvService.listTables().pipe(catchError(() => of([] as TpvTableItem[]))),
-    }).subscribe(({ orders, tables }) => {
+    }).pipe(takeUntil(this.destroy$)).subscribe(({ orders, tables }) => {
       const tableNameById = new Map(tables.map((t) => [t.id, t.name] as const));
-      this.pendingTables = orders
+      this.setPendingTables(orders
         .filter((o) => o.status === 'open' || o.status === 'to-charge')
         .map((o) => ({
           order_id: o.id,
@@ -356,7 +391,7 @@ export class CajaPage implements OnInit, OnDestroy {
           diners: o.diners,
           opened_at: o.opened_at,
           total: o.total,
-        }));
+        })));
     });
   }
 
@@ -391,8 +426,8 @@ export class CajaPage implements OnInit, OnDestroy {
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (session) => {
         this.showOpenModal = false;
-        this.activeSession = session;
-        this.state = 'activa';
+        this.setActiveSession(session);
+        this.setState('activa');
         this.loadSessionSummary();
         this.startRefreshInterval();
       },
@@ -421,7 +456,7 @@ export class CajaPage implements OnInit, OnDestroy {
       amount_cents: data.amountCents,
       user_id: this.activeSession.opened_by_user_id,
       description: data.description,
-    }).subscribe({
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.showMovementModal = false;
         this.loadSessionSummary();
@@ -432,12 +467,12 @@ export class CajaPage implements OnInit, OnDestroy {
 
   public onStartClosing(): void {
     if (!this.activeSession) return;
-    this.tpvService.startClosingCashSession({ cash_session_id: this.activeSession.uuid }).subscribe({
+    this.tpvService.startClosingCashSession({ cash_session_id: this.activeSession.uuid }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
-        this.state = 'arqueo';
+        this.setState('arqueo');
         this.showWizard = true;
         // Actualizar el estado de la sesión activa para que onWizardClose funcione correctamente
-        this.activeSession = { ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' };
+        this.setActiveSession({ ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' });
         this.loadSessionSummary();
         this.stopRefreshInterval();
       },
@@ -451,12 +486,12 @@ export class CajaPage implements OnInit, OnDestroy {
       alert('Solo se puede cancelar el cierre cuando la sesión está en proceso de cierre.');
       return;
     }
-    this.tpvService.cancelClosingCashSession({ cash_session_id: this.activeSession.uuid }).subscribe({
+    this.tpvService.cancelClosingCashSession({ cash_session_id: this.activeSession.uuid }).pipe(takeUntil(this.destroy$)).subscribe({
       next: (response) => {
-        this.state = 'activa';
+        this.setState('activa');
         this.showWizard = false;
         // Actualizar el estado de la sesión activa
-        this.activeSession = { ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' };
+        this.setActiveSession({ ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' });
         this.startRefreshInterval();
       },
       error: (error) => { alert('Error al cancelar el cierre: ' + error.message); },
@@ -471,21 +506,21 @@ export class CajaPage implements OnInit, OnDestroy {
       return;
     }
     if (this.state === 'arqueo' && this.activeSession?.status === 'closing') {
-      this.tpvService.cancelClosingCashSession({ cash_session_id: this.activeSession.uuid }).subscribe({
+      this.tpvService.cancelClosingCashSession({ cash_session_id: this.activeSession.uuid }).pipe(takeUntil(this.destroy$)).subscribe({
         next: (response) => {
-          this.state = 'activa';
+          this.setState('activa');
           // Actualizar el estado de la sesión activa
-          this.activeSession = { ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' };
+          this.setActiveSession({ ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' });
           this.startRefreshInterval();
         },
         error: (error) => {
           console.error('Error al cancelar el cierre:', error);
-          this.state = 'activa';
+          this.setState('activa');
           this.startRefreshInterval();
         },
       });
     } else if (this.state === 'arqueo') {
-      this.state = 'activa';
+      this.setState('activa');
       this.startRefreshInterval();
     }
   }
@@ -496,16 +531,16 @@ export class CajaPage implements OnInit, OnDestroy {
     // Verify session is in 'closing' status before attempting to close
     if (this.activeSession.status !== 'closing') {
       console.warn('Session is not in closing status, reloading active session...');
-      this.tpvService.getActiveCashSession(this.deviceId).subscribe({
+      this.tpvService.getActiveCashSession(this.deviceId).pipe(takeUntil(this.destroy$)).subscribe({
         next: (session) => {
           if (session && session.status === 'closing') {
-            this.activeSession = session;
+            this.setActiveSession(session);
             this.proceedWithClose(data);
           } else {
             alert('Error: La sesión no está en estado de cierre. Por favor, intente iniciar el cierre nuevamente.');
             if (session) {
-              this.activeSession = session;
-              this.state = session.status === 'open' ? 'activa' : 'arqueo';
+              this.setActiveSession(session);
+              this.setState(session.status === 'open' ? 'activa' : 'arqueo');
             }
           }
         },
@@ -527,12 +562,12 @@ export class CajaPage implements OnInit, OnDestroy {
       closed_by_user_id: this.activeSession.opened_by_user_id,
       final_amount_cents: data.countedAmount,
       discrepancy_reason: data.discrepancyReason,
-    }).subscribe({
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
         this.isClosingInProgress = false;
         this.showWizard = false;
-        this.activeSession = null;
-        this.state = 'historico';
+        this.setActiveSession(null);
+        this.setState('historico');
         this.loadClosedSessions();
       },
       error: (error) => {
@@ -569,18 +604,18 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   private loadLastClosedData(): void {
-    this.tpvService.getLastClosedCashSession().subscribe({
+    this.tpvService.getLastClosedCashSession().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => {
         this.lastClosed = data.last_closed;
         this.orphanSession = data.orphan_session;
-        this.loading = false;
+        this.setLoading(false);
       },
-      error: () => { this.loading = false; },
+      error: () => { this.setLoading(false); },
     });
   }
 
   private loadClosedSessions(): void {
-    this.tpvService.listCashSessions().subscribe({
+    this.tpvService.listCashSessions().pipe(takeUntil(this.destroy$)).subscribe({
       next: (data) => { this.closedSessions = data.sessions; },
       error: (error) => { console.error('Error loading sessions:', error); },
     });
@@ -668,20 +703,20 @@ export class CajaPage implements OnInit, OnDestroy {
     forkJoin({
       order: this.tpvService.getOrder(mesa.order_id),
       orderTotal: this.tpvService.getOrderTotal(mesa.order_id),
-    }).subscribe({
+    }).pipe(takeUntil(this.destroy$)).subscribe({
       next: ({ order, orderTotal }) => {
         console.log('Order loaded:', order);
         const originalTotal = orderTotal.total_cents;
         this.originalOrderTotal = originalTotal;
         // Calculate remaining total and paid diners
-        this.tpvService.getOrderPaidTotal(mesa.order_id).subscribe({
+        this.tpvService.getOrderPaidTotal(mesa.order_id).pipe(takeUntil(this.destroy$)).subscribe({
           next: (paidResponse) => {
             const paidTotal = paidResponse.total_cents;
             const remainingTotal = Math.max(0, originalTotal - paidTotal);
-            // Calculate paid diners based on total paid
-            const diners = mesa.diners || 2;
-            const partAmount = Math.floor(originalTotal / diners);
-            const paidDinersCount = partAmount > 0 ? Math.floor(paidTotal / partAmount) : 0;
+            // Calculate paid diners based on total paid (handle single diner case)
+            const diners = mesa.diners ?? 1;
+            const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
+            const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
             this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
             // Update selected table total to remaining amount
             if (this.selectedTable) {
@@ -690,7 +725,7 @@ export class CajaPage implements OnInit, OnDestroy {
             console.log('Order total:', originalTotal, 'Paid:', paidTotal, 'Remaining:', remainingTotal);
             console.log('Calculated paidDiners:', this.paidDiners);
             console.log('Loading order lines for order_id:', mesa.order_id);
-            this.tpvService.getOrderLines(mesa.order_id).subscribe({
+            this.tpvService.getOrderLines(mesa.order_id).pipe(takeUntil(this.destroy$)).subscribe({
               next: (lines) => {
                 console.log('Order lines loaded:', lines);
                 this.selectedTableLines = lines.map((l) => ({
@@ -766,10 +801,10 @@ export class CajaPage implements OnInit, OnDestroy {
           next: (paidResponse) => {
             const paidTotal = paidResponse.total_cents;
             const remainingTotal = Math.max(0, originalTotal - paidTotal);
-            // Calculate paid diners based on total paid
-            const diners = mesa.diners || 2;
-            const partAmount = Math.floor(originalTotal / diners);
-            const paidDinersCount = partAmount > 0 ? Math.floor(paidTotal / partAmount) : 0;
+            // Calculate paid diners based on total paid (handle single diner case)
+            const diners = mesa.diners ?? 1;
+            const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
+            const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
             this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
             // Update selected table total to remaining amount
             if (this.selectedTable) {
@@ -854,6 +889,12 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   public onConfirmPayment(data: { method: string; amount: number; tip?: number }): void {
+    // Prevent double submission
+    if (this.isProcessingPayment) {
+      console.log('Payment already in progress, ignoring double click');
+      return;
+    }
+
     console.log('Payment confirmed:', data);
     console.log('Selected table:', this.selectedTable);
     console.log('Current user:', this.currentUser);
@@ -878,6 +919,8 @@ export class CajaPage implements OnInit, OnDestroy {
       return;
     }
 
+    this.isProcessingPayment = true;
+
     const payments = [
       {
         method: data.method,
@@ -891,10 +934,10 @@ export class CajaPage implements OnInit, OnDestroy {
     // selectedTable.total is set to the payment amount in split modal, not the remaining amount
     let willBeComplete = false;
     if (this.isPartialPayment && this.selectedTable) {
-      const diners = this.selectedTable.diners || 2;
+      const diners = this.selectedTable.diners ?? 1;
       const paidDinersCount = this.paidDiners.length;
-      // If this is the last unpaid diner, the payment will complete the order
-      willBeComplete = paidDinersCount === diners - 1;
+      // If this is the last unpaid diner (or single diner), the payment will complete the order
+      willBeComplete = diners === 1 || paidDinersCount === diners - 1;
       console.log('Partial payment - Diners:', diners, 'Paid diners:', paidDinersCount, 'Will be complete:', willBeComplete);
     } else {
       const currentPaid = this.originalOrderTotal - (this.selectedTable?.total || 0);
@@ -954,9 +997,9 @@ export class CajaPage implements OnInit, OnDestroy {
             next: (paidResponse) => {
               const paidTotal = paidResponse.total_cents;
               const originalTotal = this.originalOrderTotal || this.selectedTable?.total || 0;
-              const diners = this.selectedTable?.diners || 2;
-              const partAmount = Math.floor(originalTotal / diners);
-              const paidDinersCount = partAmount > 0 ? Math.floor(paidTotal / partAmount) : 0;
+              const diners = this.selectedTable?.diners ?? 1;
+              const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
+              const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
               // Update paidDiners array based on count
               this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
               console.log('Updated paidDiners based on total paid:', this.paidDiners);
@@ -1014,10 +1057,12 @@ export class CajaPage implements OnInit, OnDestroy {
         this.currentPaymentAmount = 0;
         this.fromMesas = false;
         this.isPartialPayment = false;
+        this.isProcessingPayment = false;
       },
       error: (error) => {
         console.error('Error creating sale:', error);
         alert('Error al crear la venta: ' + (error.message || 'Error desconocido'));
+        this.isProcessingPayment = false;
       },
     });
   }

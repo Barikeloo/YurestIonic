@@ -21,5 +21,11 @@ interface SalePaymentRepositoryInterface
 
     public function findByCashSessionId(Uuid $cashSessionId): array;
 
+    /**
+     * Find all non-cancelled sale payments for a cash session.
+     * Excludes payments associated with cancelled sales.
+     */
+    public function findNonCancelledByCashSessionId(Uuid $cashSessionId): array;
+
     public function delete(Uuid $id): void;
 }

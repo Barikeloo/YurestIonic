@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Infrastructure\Persistence\Models;
 
+use App\Cash\Infrastructure\Persistence\Models\EloquentCashSession;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrder;
+use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
 use App\Tables\Infrastructure\Persistence\Models\EloquentTable;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
@@ -73,6 +77,21 @@ final class EloquentSale extends Model
     public function cancelledByUser(): BelongsTo
     {
         return $this->belongsTo(EloquentUser::class, 'cancelled_by_user_id');
+    }
+
+    public function restaurant(): BelongsTo
+    {
+        return $this->belongsTo(EloquentRestaurant::class, 'restaurant_id');
+    }
+
+    public function cashSession(): BelongsTo
+    {
+        return $this->belongsTo(EloquentCashSession::class, 'cash_session_id');
+    }
+
+    public function parentSale(): BelongsTo
+    {
+        return $this->belongsTo(EloquentSale::class, 'parent_sale_id');
     }
 
     public function lines(): HasMany

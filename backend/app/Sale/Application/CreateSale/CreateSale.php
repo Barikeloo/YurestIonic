@@ -2,8 +2,10 @@
 
 namespace App\Sale\Application\CreateSale;
 
+use App\Cash\Domain\Entity\Tip;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
+use App\Cash\Domain\Interfaces\TipRepositoryInterface;
 use App\Cash\Domain\ValueObject\DeviceId;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
@@ -31,6 +33,7 @@ final class CreateSale
         private readonly SalePaymentRepositoryInterface $salePaymentRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly SaleLineRepositoryInterface $saleLineRepository,
+        private readonly TipRepositoryInterface $tipRepository,
         private readonly TransactionManagerInterface $transactionManager,
     ) {}
 
@@ -43,6 +46,7 @@ final class CreateSale
         array $payments,
         ?array $orderLineIds = null,
         bool $isPartialPayment = false,
+        int $tipCents = 0,
     ): CreateSaleResponse {
         return $this->transactionManager->run(function () use (
             $restaurantId,
@@ -53,6 +57,7 @@ final class CreateSale
             $payments,
             $orderLineIds,
             $isPartialPayment,
+            $tipCents,
         ) {
             $restaurantUuid = Uuid::create($restaurantId);
             $orderUuid = Uuid::create($orderId);
@@ -88,12 +93,13 @@ final class CreateSale
                 $paymentsTotal += $payment['amount_cents'];
             }
 
-            // For partial payments, use payment amount as sale total
-            // For full payments, require payments to be at least total (allow tips)
+            // Validate payment amounts match expected total + tip
             if ($isPartialPayment) {
                 $total = $paymentsTotal;
-            } elseif ($paymentsTotal < $total) {
-                throw new \DomainException('Payments total is less than sale total.');
+            } elseif ($paymentsTotal !== $total + $tipCents) {
+                throw new \DomainException(
+                    sprintf('Payments total (%d) must equal sale total (%d) plus tip (%d).', $paymentsTotal, $total, $tipCents)
+                );
             }
 
             $ticketNumber = $this->saleRepository->nextTicketNumber($restaurantUuid);
@@ -163,6 +169,20 @@ final class CreateSale
                     metadata: $payment['metadata'] ?? null,
                 );
                 $this->salePaymentRepository->save($salePayment);
+            }
+
+            // Create tip entity if tip amount is provided
+            if ($tipCents > 0) {
+                $tip = Tip::dddCreate(
+                    id: Uuid::generate(),
+                    restaurantId: $restaurantUuid,
+                    saleId: $sale->uuid(),
+                    cashSessionId: $activeSession->uuid(),
+                    amount: Money::create($tipCents),
+                    source: 'cash_declared',
+                    beneficiaryUserId: null, // Anonymous tip, can be assigned later
+                );
+                $this->tipRepository->save($tip);
             }
 
             return CreateSaleResponse::create($sale);

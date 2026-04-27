@@ -156,14 +156,6 @@
             </div>
           </ng-container>
 
-          <!-- Mixed method -->
-          <ng-container *ngIf="method === 'mixed'">
-            <div class="mixed-payment">
-              <div class="section-label">Distribución del pago</div>
-              <p class="mixed-placeholder">Pago mixto - implementación pendiente</p>
-            </div>
-          </ng-container>
-
           <!-- Invitation method -->
           <ng-container *ngIf="method === 'invitation'">
             <div class="invitation-payment">
@@ -181,8 +173,8 @@
             <app-btn *ngIf="!isPartialPayment" variant="outline" size="lg" [block]="true" (click)="onSplitBill()">
               Dividir cuenta
             </app-btn>
-            <app-btn variant="success" size="lg" [block]="true" (click)="onConfirm()">
-              Confirmar cobro — {{ formatCents(total + (showTip ? tip : 0)) }} €
+            <app-btn variant="success" size="lg" [block]="true" [disabled]="isProcessing" (click)="onConfirm()">
+              {{ isProcessing ? 'Procesando...' : 'Confirmar cobro — ' + formatCents(total + (showTip ? tip : 0)) + ' €' }}
             </app-btn>
           </div>
         </div>

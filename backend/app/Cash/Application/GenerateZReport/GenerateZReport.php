@@ -54,8 +54,8 @@ final class GenerateZReport
             throw new \DomainException('Final amount is required to generate the Z-Report.');
         }
 
-        // 1. Totals by payment method (all accepted payments of the session).
-        $payments = $this->salePaymentRepository->findByCashSessionId($cashSessionUuid);
+        // 1. Totals by payment method (only non-cancelled sales count for Z-Report).
+        $payments = $this->salePaymentRepository->findNonCancelledByCashSessionId($cashSessionUuid);
         $totalCash = Money::zero();
         $totalCard = Money::zero();
         $totalOther = Money::zero();

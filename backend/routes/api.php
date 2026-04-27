@@ -7,6 +7,7 @@ use App\Family\Infrastructure\Entrypoint\Http\GetCollectionController as FamilyG
 use App\Family\Infrastructure\Entrypoint\Http\GetController as FamilyGetController;
 use App\Family\Infrastructure\Entrypoint\Http\PostController as FamilyPostController;
 use App\Family\Infrastructure\Entrypoint\Http\PutController as FamilyPutController;
+use App\Family\Infrastructure\Entrypoint\Http\TpvGetCollectionController as FamilyTpvGetCollectionController;
 use App\Order\Infrastructure\Entrypoint\Http\AddLineController as OrderAddLineController;
 use App\Order\Infrastructure\Entrypoint\Http\DeleteLineController as OrderDeleteLineController;
 use App\Order\Infrastructure\Entrypoint\Http\GetCollectionController as OrderGetCollectionController;
@@ -23,6 +24,7 @@ use App\Product\Infrastructure\Entrypoint\Http\GetCollectionController as Produc
 use App\Product\Infrastructure\Entrypoint\Http\GetController as ProductGetController;
 use App\Product\Infrastructure\Entrypoint\Http\PostController as ProductPostController;
 use App\Product\Infrastructure\Entrypoint\Http\PutController as ProductPutController;
+use App\Product\Infrastructure\Entrypoint\Http\TpvGetCollectionController as ProductTpvGetCollectionController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\PostController as RestaurantPostController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\AdminGetCollectionController as RestaurantAdminGetCollectionController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\AdminSelectRestaurantContextController;
@@ -114,8 +116,8 @@ Route::middleware([
 	StartSession::class,
 	ResolveTenantContext::class,
 ])->group(function (): void {
-	Route::get('/tpv/families', FamilyGetCollectionController::class);
-	Route::get('/tpv/products', ProductGetCollectionController::class);
+	Route::get('/tpv/families', FamilyTpvGetCollectionController::class);
+	Route::get('/tpv/products', ProductTpvGetCollectionController::class);
 	Route::get('/tpv/zones', ZoneGetCollectionController::class);
 	Route::get('/tpv/tables', TableGetCollectionController::class);
 	Route::get('/tpv/taxes', TaxGetCollectionController::class);

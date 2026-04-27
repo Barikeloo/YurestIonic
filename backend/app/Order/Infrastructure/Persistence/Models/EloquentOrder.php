@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Order\Infrastructure\Persistence\Models;
 
-use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
+use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
+use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
 use App\Tables\Infrastructure\Persistence\Models\EloquentTable;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
 use Illuminate\Database\Eloquent\Model;
@@ -35,6 +38,11 @@ final class EloquentOrder extends Model
         'opened_at' => 'datetime',
         'closed_at' => 'datetime',
     ];
+
+    public function restaurant(): BelongsTo
+    {
+        return $this->belongsTo(EloquentRestaurant::class, 'restaurant_id');
+    }
 
     public function table(): BelongsTo
     {

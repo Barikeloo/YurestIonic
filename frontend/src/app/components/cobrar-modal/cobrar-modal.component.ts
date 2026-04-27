@@ -29,6 +29,7 @@ export class CobrarModalComponent implements OnChanges {
   @Input() tableLabel = '';
   @Input() lines: OrderLine[] = [];
   @Input() isPartialPayment = false;
+  @Input() isProcessing = false;
   @Output() closeModal = new EventEmitter<void>();
   @Output() confirmPayment = new EventEmitter<{ method: PaymentMethod; amount: number; tip?: number }>();
   @Output() splitBill = new EventEmitter<void>();

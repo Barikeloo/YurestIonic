@@ -22,9 +22,8 @@ final class GetOrderTotal
 
         $total = 0;
         foreach ($orderLines as $line) {
-            $lineBase = $line->price()->value() * $line->quantity()->value();
-            $lineWithTax = (int) round($lineBase * (100 + $line->taxPercentage()->value()) / 100);
-            $total += $lineWithTax;
+            // Prices are stored as gross (VAT included) - consistent with CreateSale
+            $total += $line->price()->value() * $line->quantity()->value();
         }
 
         return $total;

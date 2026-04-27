@@ -9,6 +9,7 @@ use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Sale\Domain\ValueObject\CustomerFiscalData;
 use App\Sale\Domain\ValueObject\DocumentType;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\Sale\Domain\ValueObject\SaleTotal;
 
 final class CreateCreditNote
 {
@@ -45,11 +46,11 @@ final class CreateCreditNote
             customerFiscalData: $fiscalData,
         );
 
-        // Set negative total for credit note
+        // Set total for credit note (positive value; sign is implicit via DocumentType::creditNote)
         $creditNote->close(
             closedByUserId: Uuid::create($openedByUserId),
             ticketNumber: $parentSale->ticketNumber(), // Use same ticket number as parent
-            total: \App\Sale\Domain\ValueObject\SaleTotal::create(-abs($totalCents)),
+            total: SaleTotal::create(abs($totalCents)),
         );
 
         $this->saleRepository->save($creditNote);

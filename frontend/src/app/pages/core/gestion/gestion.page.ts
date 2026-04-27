@@ -531,6 +531,11 @@ export class GestionPage {
         return;
       }
 
+      const familyName = family.name || 'Sin nombre';
+      if (!window.confirm(`¿Eliminar familia "${familyName}"? Esta acción no se puede deshacer.`)) {
+        return;
+      }
+
       this.familyService
         .deleteFamily(family.uuid)
         .pipe(take(1))
@@ -556,6 +561,11 @@ export class GestionPage {
       if (!user.uuid || !this.selectedRestaurant?.uuid) {
         window.alert('No se puede eliminar: usuario sin identificador.');
 
+        return;
+      }
+
+      const userName = user.name || user.email || 'Sin nombre';
+      if (!window.confirm(`¿Eliminar usuario "${userName}"? Esta acción no se puede deshacer.`)) {
         return;
       }
 
@@ -593,6 +603,11 @@ export class GestionPage {
         return;
       }
 
+      const zoneName = selectedZone.name || 'Sin nombre';
+      if (!window.confirm(`¿Eliminar zona "${zoneName}"? Esta acción no se puede deshacer.`)) {
+        return;
+      }
+
       this.zoneService
         .deleteZone(selectedZone.uuid)
         .pipe(take(1))
@@ -622,6 +637,11 @@ export class GestionPage {
         return;
       }
 
+      const taxName = tax.name || 'Sin nombre';
+      if (!window.confirm(`¿Eliminar impuesto "${taxName}"? Esta acción no se puede deshacer.`)) {
+        return;
+      }
+
       this.taxService
         .deleteTax(tax.uuid)
         .pipe(take(1))
@@ -648,6 +668,11 @@ export class GestionPage {
       if (!product.uuid) {
         window.alert('No se puede eliminar: producto sin identificador.');
 
+        return;
+      }
+
+      const productName = product.name || 'Sin nombre';
+      if (!window.confirm(`¿Eliminar producto "${productName}"? Esta acción no se puede deshacer.`)) {
         return;
       }
 

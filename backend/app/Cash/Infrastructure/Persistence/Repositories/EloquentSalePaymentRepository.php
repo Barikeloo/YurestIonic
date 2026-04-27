@@ -78,6 +78,20 @@ final class EloquentSalePaymentRepository implements SalePaymentRepositoryInterf
             ->all();
     }
 
+    public function findNonCancelledByCashSessionId(Uuid $cashSessionId): array
+    {
+        $cashSessionIdInt = EloquentCashSession::query()->where('uuid', $cashSessionId->value())->value('id');
+
+        return $this->model->newQuery()
+            ->join('sales', 'sale_payments.sale_id', '=', 'sales.id')
+            ->where('sale_payments.cash_session_id', $cashSessionIdInt)
+            ->where('sales.status', '!=', 'cancelled')
+            ->select('sale_payments.*')
+            ->get()
+            ->map(fn ($model) => $this->toDomain($model))
+            ->all();
+    }
+
     public function delete(Uuid $id): void
     {
         $this->model->newQuery()->where('uuid', $id->value())->delete();

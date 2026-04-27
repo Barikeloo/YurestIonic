@@ -39,9 +39,8 @@ final class UpdateSale
 
         $total = 0;
         foreach ($saleLines as $saleLine) {
-            $lineBase = $saleLine->price()->value() * $saleLine->quantity()->value();
-            $lineWithTax = (int) round($lineBase * (100 + $saleLine->taxPercentage()->value()) / 100);
-            $total += $lineWithTax;
+            // Prices are stored as gross (VAT included) - consistent with CreateSale
+            $total += $saleLine->price()->value() * $saleLine->quantity()->value();
         }
 
         $sale->close(
