@@ -7,11 +7,15 @@ namespace App\Sale\Domain\ValueObject;
 final class CustomerFiscalData
 {
     private const TAX_ID_MAX_LENGTH = 64;
+
     private const LEGAL_NAME_MAX_LENGTH = 255;
+
     private const ADDRESS_MAX_LENGTH = 500;
 
     private readonly string $taxId;
+
     private readonly string $legalName;
+
     private readonly ?string $address;
 
     private function __construct(string $taxId, string $legalName, ?string $address)

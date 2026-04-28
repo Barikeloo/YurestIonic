@@ -16,6 +16,7 @@ final class EloquentSalePayment extends Model
 {
     use HasTenantScope;
     use SoftDeletes;
+
     protected $table = 'sale_payments';
 
     protected $fillable = [

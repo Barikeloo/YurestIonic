@@ -3,9 +3,9 @@
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
 use App\Sale\Application\AddLineToSale\AddLineToSale;
-use InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 final class AddLineController
 {

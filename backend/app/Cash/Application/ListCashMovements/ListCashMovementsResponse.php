@@ -15,13 +15,13 @@ final class ListCashMovementsResponse
     {
         return [
             'movements' => array_map(fn (CashMovement $m) => [
-                'uuid'           => $m->uuid()->value(),
-                'type'           => $m->type()->value(),
-                'reason_code'    => $m->reasonCode()->value(),
-                'amount_cents'   => $m->amount()->toCents(),
-                'description'    => $m->description(),
-                'user_id'        => $m->userId()->value(),
-                'created_at'     => $m->createdAt()->format('Y-m-d H:i:s'),
+                'uuid' => $m->uuid()->value(),
+                'type' => $m->type()->value(),
+                'reason_code' => $m->reasonCode()->value(),
+                'amount_cents' => $m->amount()->toCents(),
+                'description' => $m->description(),
+                'user_id' => $m->userId()->value(),
+                'created_at' => $m->createdAt()->format('Y-m-d H:i:s'),
             ], $this->movements),
         ];
     }

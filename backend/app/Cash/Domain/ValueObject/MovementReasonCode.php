@@ -18,7 +18,7 @@ final class MovementReasonCode
 
     private function __construct(private readonly string $value)
     {
-        if (!in_array($value, self::VALID_CODES, true)) {
+        if (! in_array($value, self::VALID_CODES, true)) {
             throw new \InvalidArgumentException("Invalid movement reason code: {$value}");
         }
     }

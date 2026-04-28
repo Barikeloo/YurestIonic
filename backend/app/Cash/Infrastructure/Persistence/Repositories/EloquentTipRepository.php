@@ -44,24 +44,28 @@ final class EloquentTipRepository implements TipRepositoryInterface
     public function getById(string $id): ?Tip
     {
         $model = $this->model->newQuery()->where('uuid', $id)->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findById(Uuid $id): ?Tip
     {
         $model = $this->model->newQuery()->where('uuid', $id->value())->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByUuid(Uuid $uuid): ?Tip
     {
         $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findBySaleId(Uuid $saleId): array
     {
         $saleIdInt = EloquentSale::query()->where('uuid', $saleId->value())->value('id');
+
         return $this->model->newQuery()
             ->where('sale_id', $saleIdInt)
             ->get()
@@ -72,6 +76,7 @@ final class EloquentTipRepository implements TipRepositoryInterface
     public function findByCashSessionId(Uuid $cashSessionId): array
     {
         $cashSessionIdInt = EloquentCashSession::query()->where('uuid', $cashSessionId->value())->value('id');
+
         return $this->model->newQuery()
             ->where('cash_session_id', $cashSessionIdInt)
             ->get()

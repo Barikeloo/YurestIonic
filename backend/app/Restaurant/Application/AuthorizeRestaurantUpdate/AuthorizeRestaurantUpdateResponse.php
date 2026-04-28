@@ -5,9 +5,13 @@ namespace App\Restaurant\Application\AuthorizeRestaurantUpdate;
 final class AuthorizeRestaurantUpdateResponse
 {
     public const SUCCESS = 'success';
+
     public const NOT_AUTHENTICATED = 'not_authenticated';
+
     public const FORBIDDEN = 'forbidden';
+
     public const RESTAURANT_NOT_FOUND = 'restaurant_not_found';
+
     public const LINKED_RESTAURANT_WITHOUT_TAX_ID = 'linked_restaurant_without_tax_id';
 
     private function __construct(

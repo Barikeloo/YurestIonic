@@ -8,6 +8,7 @@ use App\Shared\Domain\ValueObject\Uuid;
 interface OrderRepositoryInterface
 {
     public function save(Order $order): void;
+
     public function all(): array;
 
     public function findByUuid(Uuid $uuid): ?Order;

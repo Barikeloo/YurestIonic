@@ -17,9 +17,9 @@ final class LoginByPinController
     public function __invoke(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'user_uuid'     => ['required', 'string', 'uuid'],
-            'pin'           => ['required', 'string', 'size:4'],
-            'device_id'     => ['sometimes', 'string', 'max:100'],
+            'user_uuid' => ['required', 'string', 'uuid'],
+            'pin' => ['required', 'string', 'size:4'],
+            'device_id' => ['sometimes', 'string', 'max:100'],
             'restaurant_id' => ['sometimes', 'nullable', 'string', 'uuid'],
         ]);
 

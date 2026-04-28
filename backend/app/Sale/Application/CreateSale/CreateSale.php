@@ -79,8 +79,8 @@ final class CreateSale
 
             // Filter order lines if orderLineIds is provided (split bill)
             if ($orderLineIds !== null && count($orderLineIds) > 0) {
-                $lineIdSet = array_map(fn($id) => Uuid::create($id), $orderLineIds);
-                $orderLines = array_filter($orderLines, fn($line) => in_array($line->uuid(), $lineIdSet, true));
+                $lineIdSet = array_map(fn ($id) => Uuid::create($id), $orderLineIds);
+                $orderLines = array_filter($orderLines, fn ($line) => in_array($line->uuid(), $lineIdSet, true));
             }
 
             $total = 0;

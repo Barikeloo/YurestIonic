@@ -13,7 +13,7 @@ class ZoneSeeder extends Seeder
         $now = now();
         $restaurantId = DB::table('restaurants')->first()?->id;
 
-        if (!$restaurantId) {
+        if (! $restaurantId) {
             return;
         }
 

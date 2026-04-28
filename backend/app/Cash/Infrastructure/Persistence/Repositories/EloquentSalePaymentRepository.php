@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Cash\Infrastructure\Persistence\Repositories;
 
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
-use App\Sale\Domain\Entity\SalePayment;
 use App\Cash\Infrastructure\Persistence\Models\EloquentCashSession;
 use App\Cash\Infrastructure\Persistence\Models\EloquentSalePayment;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
+use App\Sale\Domain\Entity\SalePayment;
 use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
@@ -43,24 +43,28 @@ final class EloquentSalePaymentRepository implements SalePaymentRepositoryInterf
     public function getById(string $id): ?SalePayment
     {
         $model = $this->model->newQuery()->where('uuid', $id)->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findById(Uuid $id): ?SalePayment
     {
         $model = $this->model->newQuery()->where('uuid', $id->value())->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByUuid(Uuid $uuid): ?SalePayment
     {
         $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findBySaleId(Uuid $saleId): array
     {
         $saleIdInt = EloquentSale::query()->where('uuid', $saleId->value())->value('id');
+
         return $this->model->newQuery()
             ->where('sale_id', $saleIdInt)
             ->get()
@@ -71,6 +75,7 @@ final class EloquentSalePaymentRepository implements SalePaymentRepositoryInterf
     public function findByCashSessionId(Uuid $cashSessionId): array
     {
         $cashSessionIdInt = EloquentCashSession::query()->where('uuid', $cashSessionId->value())->value('id');
+
         return $this->model->newQuery()
             ->where('cash_session_id', $cashSessionIdInt)
             ->get()

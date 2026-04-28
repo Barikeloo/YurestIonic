@@ -14,7 +14,7 @@ final class EditRestaurantAsAdminTest extends TestCase
     {
         $adminSession = $this->createTenantSession('admin');
 
-        $response = $this->withSession($adminSession['session'])->putJson('/api/admin/restaurants/' . $adminSession['restaurant_uuid'], [
+        $response = $this->withSession($adminSession['session'])->putJson('/api/admin/restaurants/'.$adminSession['restaurant_uuid'], [
             'name' => 'Nombre Operativo Nuevo',
             'email' => 'operativo-nuevo@local.test',
         ]);
@@ -36,7 +36,7 @@ final class EditRestaurantAsAdminTest extends TestCase
     {
         $adminSession = $this->createTenantSession('admin');
 
-        $responseTax = $this->withSession($adminSession['session'])->putJson('/api/admin/restaurants/' . $adminSession['restaurant_uuid'], [
+        $responseTax = $this->withSession($adminSession['session'])->putJson('/api/admin/restaurants/'.$adminSession['restaurant_uuid'], [
             'tax_id' => 'B11112222',
         ]);
 
@@ -45,7 +45,7 @@ final class EditRestaurantAsAdminTest extends TestCase
                 'message' => 'Forbidden. Only superadmins can update legal data.',
             ]);
 
-        $responseLegal = $this->withSession($adminSession['session'])->putJson('/api/admin/restaurants/' . $adminSession['restaurant_uuid'], [
+        $responseLegal = $this->withSession($adminSession['session'])->putJson('/api/admin/restaurants/'.$adminSession['restaurant_uuid'], [
             'legal_name' => 'Nueva Razon Social S.L.',
         ]);
 

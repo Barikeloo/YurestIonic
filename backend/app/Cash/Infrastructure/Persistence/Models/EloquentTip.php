@@ -16,6 +16,7 @@ final class EloquentTip extends Model
 {
     use HasTenantScope;
     use SoftDeletes;
+
     protected $table = 'tips';
 
     protected $fillable = [

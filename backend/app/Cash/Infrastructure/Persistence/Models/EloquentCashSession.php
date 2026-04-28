@@ -15,6 +15,7 @@ final class EloquentCashSession extends Model
 {
     use HasTenantScope;
     use SoftDeletes;
+
     protected $table = 'cash_sessions';
 
     protected $fillable = [

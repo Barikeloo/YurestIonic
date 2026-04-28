@@ -208,20 +208,6 @@
   &:active { transform: translateY(0) scale(0.98); }
 }
 
-.product-image {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  overflow: hidden;
-  flex-shrink: 0;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-}
-
 .product-initial {
   width: 56px;
   height: 56px;

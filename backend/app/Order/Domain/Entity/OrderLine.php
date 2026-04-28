@@ -33,8 +33,7 @@ final class OrderLine
         private readonly DomainDateTime $createdAt,
         private readonly DomainDateTime $updatedAt,
         private readonly ?DomainDateTime $deletedAt = null,
-    ) {
-    }
+    ) {}
 
     public static function dddCreate(
         Uuid $id,

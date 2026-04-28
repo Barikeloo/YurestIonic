@@ -10,7 +10,7 @@ final class CashSessionStatus
 
     private function __construct(private readonly string $value)
     {
-        if (!in_array($value, self::VALID_STATUSES, true)) {
+        if (! in_array($value, self::VALID_STATUSES, true)) {
             throw new \InvalidArgumentException("Invalid cash session status: {$value}");
         }
     }

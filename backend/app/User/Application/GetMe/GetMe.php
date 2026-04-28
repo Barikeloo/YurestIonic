@@ -2,9 +2,8 @@
 
 namespace App\User\Application\GetMe;
 
-use App\User\Domain\Interfaces\UserRepositoryInterface;
-use App\User\Application\GetMe\GetMeResponse;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
+use App\User\Domain\Interfaces\UserRepositoryInterface;
 
 class GetMe
 {
@@ -24,7 +23,6 @@ class GetMe
         $restaurantId = $user->restaurantId()?->toInt();
         $restaurantUuid = null;
         $restaurantName = null;
-
 
         if ($restaurantId !== null) {
             // Usar el repositorio para obtener el restaurante por id interno

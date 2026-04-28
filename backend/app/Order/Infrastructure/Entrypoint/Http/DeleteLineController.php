@@ -16,7 +16,7 @@ final class DeleteLineController
     {
         $deleted = ($this->deleteOrderLine)($lineId);
 
-        if (!$deleted) {
+        if (! $deleted) {
             return new JsonResponse(['message' => 'Order line not found.'], 404);
         }
 

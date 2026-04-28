@@ -23,7 +23,6 @@ class User
         private DomainDateTime $updatedAt,
     ) {}
 
-
     public static function dddCreate(Email $email, UserName $name, PasswordHash $passwordHash, ?Role $role = null, ?RestaurantInternalId $restaurantId = null): self
     {
         $now = DomainDateTime::now();
@@ -61,6 +60,7 @@ class User
             DomainDateTime::create($updatedAt),
         );
     }
+
     public function role(): ?Role
     {
         return $this->role;

@@ -5,10 +5,15 @@ namespace App\Restaurant\Application\SelectRestaurantContext;
 class SelectRestaurantContextResponse
 {
     public const SUCCESS = 'success';
+
     public const NOT_AUTHENTICATED = 'not_authenticated';
+
     public const RESTAURANT_NOT_FOUND = 'restaurant_not_found';
+
     public const LINKED_RESTAURANT_NOT_FOUND = 'linked_restaurant_not_found';
+
     public const LINKED_RESTAURANT_WITHOUT_TAX_ID = 'linked_restaurant_without_tax_id';
+
     public const FORBIDDEN = 'forbidden';
 
     private function __construct(

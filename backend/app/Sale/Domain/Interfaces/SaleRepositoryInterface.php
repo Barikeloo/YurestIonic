@@ -8,6 +8,7 @@ use App\Shared\Domain\ValueObject\Uuid;
 interface SaleRepositoryInterface
 {
     public function save(Sale $sale): void;
+
     public function all(): array;
 
     public function findByUuid(Uuid $uuid): ?Sale;

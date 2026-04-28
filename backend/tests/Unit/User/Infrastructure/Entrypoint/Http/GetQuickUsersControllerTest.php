@@ -1,15 +1,13 @@
 <?php
-namespace Tests\Unit\User\Infrastructure\Entrypoint\Http;
 
+namespace Tests\Unit\User\Infrastructure\Entrypoint\Http;
 
 use App\User\Application\GetQuickUsers\GetQuickUsers;
 use App\User\Application\GetQuickUsers\GetQuickUsersResponse;
 use App\User\Infrastructure\Entrypoint\Http\GetQuickUsersController;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use PHPUnit\Framework\TestCase;
-
-
 
 class GetQuickUsersControllerTest extends TestCase
 {

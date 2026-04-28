@@ -44,4 +44,3 @@ class CreateRestaurantUser
         return CreateRestaurantUserResponse::create($userUuid, $name, $email, $role);
     }
 }
-

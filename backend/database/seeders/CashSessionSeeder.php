@@ -14,7 +14,7 @@ class CashSessionSeeder extends Seeder
         $restaurant = DB::table('restaurants')->first();
         $user = DB::table('users')->first();
 
-        if (!$restaurant || !$user) {
+        if (! $restaurant || ! $user) {
             return;
         }
 

@@ -2,15 +2,12 @@
 
 namespace App\Sale\Infrastructure\Persistence\Repositories;
 
-use App\Sale\Domain\Entity\Sale;
-use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
-use App\Sale\Domain\ValueObject\SaleTicketNumber;
-use App\Sale\Domain\ValueObject\SaleTotal;
 use App\Cash\Infrastructure\Persistence\Models\EloquentCashSession;
-use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrder;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
-use App\Shared\Domain\ValueObject\DomainDateTime;
+use App\Sale\Domain\Entity\Sale;
+use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
+use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
 
@@ -106,7 +103,7 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
             ->where('order_id', $orderInternalId)
             ->get();
 
-        return $models->map(fn($model) => $this->toDomain($model))->toArray();
+        return $models->map(fn ($model) => $this->toDomain($model))->toArray();
     }
 
     public function findByCashSessionId(Uuid $cashSessionId): array

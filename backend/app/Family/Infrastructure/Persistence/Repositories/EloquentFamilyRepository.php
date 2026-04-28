@@ -4,10 +4,7 @@ namespace App\Family\Infrastructure\Persistence\Repositories;
 
 use App\Family\Domain\Entity\Family;
 use App\Family\Domain\Interfaces\FamilyRepositoryInterface;
-use App\Family\Domain\ValueObject\FamilyName;
 use App\Family\Infrastructure\Persistence\Models\EloquentFamily;
-use App\Shared\Domain\ValueObject\DomainDateTime;
-use App\Shared\Domain\ValueObject\Uuid;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 
 class EloquentFamilyRepository implements FamilyRepositoryInterface

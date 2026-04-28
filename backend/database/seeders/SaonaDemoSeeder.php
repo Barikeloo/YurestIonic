@@ -17,6 +17,7 @@ use Illuminate\Support\Str;
 class SaonaDemoSeeder extends Seeder
 {
     private const RESTAURANT_EMAIL = 'saona@gmail.com';
+
     private const DEMO_DEVICE_ID = 'seed-device-001';
 
     public function run(): void
@@ -201,7 +202,7 @@ class SaonaDemoSeeder extends Seeder
     }
 
     /**
-     * @param array<string,int> $familyIds family name => id
+     * @param  array<string,int>  $familyIds  family name => id
      */
     private function seedProducts(int $restaurantId, array $familyIds, $now): void
     {
@@ -209,7 +210,7 @@ class SaonaDemoSeeder extends Seeder
             ->where('restaurant_id', $restaurantId)
             ->pluck('id', 'name');
 
-        $ivaGeneral  = (int) $taxIds['IVA General'];
+        $ivaGeneral = (int) $taxIds['IVA General'];
         $ivaReducido = (int) $taxIds['IVA Reducido'];
 
         // price en céntimos
@@ -266,8 +267,8 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Agua mineral 50cl',      'price' => 200,  'stock' => 200],
             ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Refresco (Coca-Cola)',   'price' => 280,  'stock' => 200],
             ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Refresco (Fanta)',       'price' => 280,  'stock' => 150],
-            ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Zumo natural de naranja','price' => 380,  'stock' => 80],
-            ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Smoothie de frutos rojos','price' => 450,  'stock' => 50],
+            ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Zumo natural de naranja', 'price' => 380,  'stock' => 80],
+            ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Smoothie de frutos rojos', 'price' => 450,  'stock' => 50],
             ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Limonada casera',        'price' => 350,  'stock' => 70],
             ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Tónica premium',         'price' => 320,  'stock' => 80],
 
@@ -337,15 +338,15 @@ class SaonaDemoSeeder extends Seeder
     }
 
     /**
-     * @param array<string,int> $zoneIds zone name => id
+     * @param  array<string,int>  $zoneIds  zone name => id
      */
     private function seedTables(int $restaurantId, array $zoneIds, $now): void
     {
         $layout = [
-            'Terraza'         => ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'],
+            'Terraza' => ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8'],
             'Salón Principal' => ['S1', 'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'S11', 'S12'],
-            'Barra'           => ['B1', 'B2', 'B3', 'B4', 'B5', 'B6'],
-            'Reservado'       => ['R1', 'R2'],
+            'Barra' => ['B1', 'B2', 'B3', 'B4', 'B5', 'B6'],
+            'Reservado' => ['R1', 'R2'],
         ];
 
         foreach ($layout as $zoneName => $tables) {
@@ -365,7 +366,7 @@ class SaonaDemoSeeder extends Seeder
     }
 
     /**
-     * @param array<string,int> $userIds email => id
+     * @param  array<string,int>  $userIds  email => id
      */
     private function seedQuickAccess(int $restaurantId, array $userIds, $now): void
     {

@@ -7,6 +7,7 @@ import { AuthService } from '../../../services/auth.service';
 import { PinAuthService, AuthContext, AuthActionType } from '../../../services/pin-auth.service';
 import { PinAuthResult } from '../../../components/pin-auth-modal/pin-auth-modal.component';
 import { TpvService, TpvCashSession, TpvCashSessionListItem, TpvOrder, TpvTableItem } from '../../../services/tpv.service';
+import { ChargeSessionService } from '../../../services/charge-session.service';
 import { OpenCashModalComponent } from '../../../components/open-cash-modal/open-cash-modal.component';
 import { PinAuthModalComponent } from '../../../components/pin-auth-modal/pin-auth-modal.component';
 import { CashMovementModalComponent } from '../../../components/cash-movement-modal/cash-movement-modal.component';
@@ -22,6 +23,7 @@ import { BtnComponent } from '../../../components/btn/btn.component';
 import { KpiCardComponent } from '../../../components/kpi-card/kpi-card.component';
 import { SegmentComponent } from '../../../components/segment/segment.component';
 import { PaymentSuccessComponent } from '../../../components/payment-success/payment-success.component';
+import { DinersStatusComponent } from '../../../components/diners-status/diners-status.component';
 
 type CajaState = 'pre-apertura' | 'activa' | 'arqueo' | 'historico';
 
@@ -108,6 +110,7 @@ interface MethodBreakdownRow {
     KpiCardComponent,
     PaymentSuccessComponent,
     SegmentComponent,
+    DinersStatusComponent,
   ],
   standalone: true,
 })
@@ -160,6 +163,8 @@ export class CajaPage implements OnInit, OnDestroy {
   public currentPaymentAmount = 0;
   public isClosingInProgress = false;
   public isProcessingPayment = false;
+  public currentChargeSession: { id: string; amountPerDiner: number } | null = null;
+  public currentDinerNumber: number | null = null;
 
   private refreshInterval: any;
   private clockInterval: any;
@@ -174,6 +179,7 @@ export class CajaPage implements OnInit, OnDestroy {
     private readonly tpvService: TpvService,
     private readonly authService: AuthService,
     private readonly pinAuthService: PinAuthService,
+    private readonly chargeSessionService: ChargeSessionService,
     private readonly route: ActivatedRoute,
     private readonly router: Router,
   ) {
@@ -1046,6 +1052,43 @@ export class CajaPage implements OnInit, OnDestroy {
 
         const orderId = this.selectedTable?.order_id;
 
+        // Si hay una sesión de cobro activa, registrar el pago del comensal
+        if (this.currentChargeSession && this.currentDinerNumber && payments.length > 0) {
+          const paymentMethod = payments[0].method;
+          console.log('Recording charge session payment:', {
+            sessionId: this.currentChargeSession.id,
+            dinerNumber: this.currentDinerNumber,
+            paymentMethod
+          });
+
+          return this.chargeSessionService.recordPayment(
+            this.currentChargeSession.id,
+            {
+              diner_number: this.currentDinerNumber,
+              payment_method: paymentMethod as 'cash' | 'card' | 'bizum' | 'other'
+            }
+          ).pipe(
+            takeUntil(this.paymentFlowDestroy$),
+            map((paymentResponse) => {
+              console.log('Charge session payment recorded:', paymentResponse);
+              // Agregar el comensal a la lista de pagados
+              if (!this.paidDiners.includes(this.currentDinerNumber!)) {
+                this.paidDiners.push(this.currentDinerNumber!);
+              }
+              // Limpiar sesión actual
+              this.currentChargeSession = null;
+              this.currentDinerNumber = null;
+
+              return { type: 'charge_session' as const, isOrderComplete: paymentResponse.is_session_complete };
+            }),
+            catchError((error) => {
+              console.error('Error recording charge session payment:', error);
+              // Continuar aunque falle el registro en la sesión
+              return of({ type: 'charge_session_error' as const, isOrderComplete: willBeComplete });
+            })
+          );
+        }
+
         // For partial payments, get paid total to check if order is complete
         if (isPartialPayment && orderId) {
           return this.tpvService.getOrderPaidTotal(orderId).pipe(
@@ -1127,9 +1170,18 @@ export class CajaPage implements OnInit, OnDestroy {
     });
   }
 
-  public onConfirmSplit(data: { selectedLines: BillLine[]; diner?: number; amount?: number; isEqualPart?: boolean }): void {
+  public onConfirmSplit(data: { selectedLines: BillLine[]; diner?: number; amount?: number; isEqualPart?: boolean; chargeSessionId?: string }): void {
     console.log('Split confirmed:', data);
     console.log('Before - paidDiners:', this.paidDiners);
+
+    // Guardar sesión y comensal para registro posterior
+    if (data.chargeSessionId) {
+      this.currentChargeSession = {
+        id: data.chargeSessionId,
+        amountPerDiner: data.amount || 0
+      };
+    }
+    this.currentDinerNumber = data.diner || null;
 
     const selectedLines = data.selectedLines;
     const total = data.amount || selectedLines.reduce((sum, l) => sum + l.price, 0);
@@ -1192,5 +1244,10 @@ export class CajaPage implements OnInit, OnDestroy {
     this.fromMesas = false;
     this.isPartialPayment = false;
     this.pendingTableToCharge = null;
+  }
+
+  public getPerDinerAmount(total: number, diners: number): number {
+    if (diners <= 0) return 0;
+    return Math.floor(total / diners);
   }
 }

@@ -1,0 +1,52 @@
+<div class="diners-status-container" [class.compact]="compact">
+  <!-- Header -->
+  <div class="diners-status-header">
+    <span class="diners-status-title">Comensales</span>
+    <span class="diners-status-badge">{{ diners }} total · {{ paidDiners.length }} pagado · {{ remainingDiners }} pend.</span>
+  </div>
+
+  <!-- Resumen de montos -->
+  <div class="amounts-summary">
+    <div class="amount-row">
+      <span class="amount-label">Total cuenta:</span>
+      <span class="amount-value">{{ formatCents(total) }}</span>
+    </div>
+    <div class="amount-row paid">
+      <span class="amount-label">Pagado:</span>
+      <span class="amount-value paid">{{ formatCents(paidTotal) }}</span>
+    </div>
+    <div class="amount-row pending">
+      <span class="amount-label">Pendiente:</span>
+      <span class="amount-value pending">{{ formatCents(remainingTotal) }}</span>
+    </div>
+  </div>
+
+  <!-- Por comensal -->
+  <div *ngIf="diners > 0 && total > 0" class="per-diner-section">
+    <div class="per-diner-header">
+      <span>Por comensal:</span>
+      <span class="per-diner-amount">{{ formatCents(perDinerAmount) }}</span>
+    </div>
+  </div>
+
+  <!-- Grid de comensales -->
+  <div *ngIf="diners > 0" class="diners-grid">
+    <div
+      *ngFor="let diner of getDinerPayments()"
+      class="diner-card"
+      [class.paid]="diner.paid"
+    >
+      <div class="diner-number">{{ diner.number }}</div>
+      <div class="diner-status">
+        <span *ngIf="diner.paid" class="status-badge paid">✓</span>
+        <span *ngIf="!diner.paid" class="status-badge pending">○</span>
+      </div>
+      <div class="diner-amount">{{ formatCents(diner.amount) }}</div>
+    </div>
+  </div>
+
+  <!-- Mensaje si no hay comensales -->
+  <div *ngIf="diners === 0" class="no-diners-msg">
+    No hay comensales registrados
+  </div>
+</div>

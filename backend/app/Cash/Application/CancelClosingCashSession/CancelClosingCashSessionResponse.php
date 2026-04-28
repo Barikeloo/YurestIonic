@@ -11,8 +11,7 @@ final readonly class CancelClosingCashSessionResponse
     private function __construct(
         public string $id,
         public string $status,
-    ) {
-    }
+    ) {}
 
     public static function create(CashSession $cashSession): self
     {

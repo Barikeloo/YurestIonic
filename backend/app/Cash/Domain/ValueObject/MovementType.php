@@ -10,7 +10,7 @@ final class MovementType
 
     private function __construct(private readonly string $value)
     {
-        if (!in_array($value, self::VALID_TYPES, true)) {
+        if (! in_array($value, self::VALID_TYPES, true)) {
             throw new \InvalidArgumentException("Invalid movement type: {$value}");
         }
     }

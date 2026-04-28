@@ -12,6 +12,7 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
     use RefreshDatabase;
 
     private string $superAdminUuid;
+
     private string $restaurantUuid;
 
     protected function setUp(): void
@@ -34,8 +35,8 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
             'name' => 'Restaurant Zentral',
             'legal_name' => 'Restaurant Zentral SL',
             'tax_id' => 'B12345678',
-                'email' => 'zentral@restaurant.com',
-                'password' => bcrypt('restaurant123456'),
+            'email' => 'zentral@restaurant.com',
+            'password' => bcrypt('restaurant123456'),
         ]);
     }
 
@@ -51,10 +52,10 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
 
         // 2. Update restaurant
         $response = $this->withSession(['super_admin_id' => $this->superAdminUuid])
-            ->put('/api/superadmin/restaurants/' . $this->restaurantUuid, [
-            'name' => 'Restaurant Zentral Updated',
-            'legal_name' => 'Restaurant Zentral SL Updated',
-        ]);
+            ->put('/api/superadmin/restaurants/'.$this->restaurantUuid, [
+                'name' => 'Restaurant Zentral Updated',
+                'legal_name' => 'Restaurant Zentral SL Updated',
+            ]);
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -73,7 +74,7 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
 
     public function test_superadmin_gets_401_when_not_logged_in(): void
     {
-        $response = $this->put('/api/superadmin/restaurants/' . $this->restaurantUuid, [
+        $response = $this->put('/api/superadmin/restaurants/'.$this->restaurantUuid, [
             'name' => 'Updated Name',
         ]);
 
@@ -99,9 +100,9 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
     {
         // Test that we can access GET route to confirm routes are loaded
         $response = $this->withSession(['super_admin_id' => $this->superAdminUuid])
-            ->get('/api/superadmin/restaurants/' . $this->restaurantUuid);
+            ->get('/api/superadmin/restaurants/'.$this->restaurantUuid);
 
         // Should not be 404 (not found route) but 200 or 50x (server error)
-        $this->assertNotEquals(404, $response->status(), 'Route does not exist. Get: ' . $response->status() . ' - ' . $response->getContent());
+        $this->assertNotEquals(404, $response->status(), 'Route does not exist. Get: '.$response->status().' - '.$response->getContent());
     }
 }

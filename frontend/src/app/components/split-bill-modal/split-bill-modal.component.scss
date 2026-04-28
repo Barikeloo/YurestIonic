@@ -94,6 +94,35 @@
   flex: 1;
 }
 
+// ── Layout split con sidebar ───────────────────
+.modal-content-split {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+.modal-content-main {
+  flex: 1;
+  padding: 20px 24px;
+  overflow-y: auto;
+  min-width: 0;
+}
+
+.modal-content-sidebar {
+  width: 280px;
+  min-width: 280px;
+  padding: 20px;
+  background: #FAFAFA;
+  border-left: 1px solid #E8E8E8;
+  overflow-y: auto;
+
+  app-diners-status {
+    position: sticky;
+    top: 0;
+  }
+}
+
 .section-label {
   font-size: 11px;
   color: var(--gray-400);
@@ -369,4 +398,100 @@
   transition: background 0.12s;
 
   &:hover { background: #1bb868; }
+}
+
+// ── Standalone mode (cuando se usa con wrapper externo) ───────────────
+.modal-box.standalone {
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+// ── Loading state ───────────────────────────────────────────────────────
+.loading-state {
+  padding: 40px;
+  text-align: center;
+  color: var(--gray-500);
+  font-family: var(--font);
+  font-size: 14px;
+}
+
+// ── Error state ────────────────────────────────────────────────────────
+.error-state {
+  padding: 20px;
+  text-align: center;
+  background: var(--red-soft);
+  border: 1px solid var(--red);
+  border-radius: var(--radius-lg);
+  margin: 16px 24px;
+
+  span {
+    display: block;
+    color: var(--red);
+    font-family: var(--font);
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  button {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--red);
+    background: var(--white);
+    color: var(--red);
+    font-family: var(--font);
+    font-size: 12px;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--red-soft);
+    }
+  }
+}
+
+// ── Session info ───────────────────────────────────────────────────────
+.session-info {
+  padding: 4px 12px;
+  background: var(--accent-soft);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--accent);
+  font-family: var(--font);
+  font-weight: 500;
+}
+
+// ── Part card states ──────────────────────────────────────────────────
+.part-card {
+  &.paid {
+    background: var(--green-soft);
+    border: 1px solid var(--green);
+  }
+
+  .paid-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--green);
+    color: var(--white);
+    border-radius: 12px;
+    font-size: 12px;
+    font-family: var(--font);
+    font-weight: 600;
+  }
+}
+
+// ── Disabled button states ──────────────────────────────────────────────
+.btn-charge:disabled {
+  background: var(--gray-300);
+  cursor: not-allowed;
+
+  &:hover {
+    background: var(--gray-300);
+  }
+}
+
+.diner-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--gray-100);
 }

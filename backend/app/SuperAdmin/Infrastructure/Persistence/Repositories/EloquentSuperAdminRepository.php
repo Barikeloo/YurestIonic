@@ -6,8 +6,6 @@ use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\SuperAdmin\Domain\Entity\SuperAdmin;
 use App\SuperAdmin\Domain\Interfaces\SuperAdminRepositoryInterface;
-use App\SuperAdmin\Domain\ValueObject\SuperAdminName;
-use App\SuperAdmin\Domain\ValueObject\SuperAdminPasswordHash;
 use App\SuperAdmin\Infrastructure\Persistence\Models\EloquentSuperAdmin;
 
 final class EloquentSuperAdminRepository implements SuperAdminRepositoryInterface

@@ -2,7 +2,6 @@
 
 namespace App\Shared\Infrastructure\Http\Middleware;
 
-use App\Restaurant\Application\DTO\RestaurantWithInternalId;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Shared\Infrastructure\Tenant\TenantContext;

@@ -5,6 +5,7 @@ namespace App\Order\Domain\ValueObject;
 final class OrderLineTaxPercentage
 {
     private const MIN = 0;
+
     private const MAX = 100;
 
     private function __construct(

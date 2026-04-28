@@ -27,7 +27,7 @@ class UpdateRestaurantUser
             return UpdateRestaurantUserResponse::notFound();
         }
 
-        if (!$this->userRepository->userBelongsToRestaurant($uuid, $restaurantUuid)) {
+        if (! $this->userRepository->userBelongsToRestaurant($uuid, $restaurantUuid)) {
             return UpdateRestaurantUserResponse::notFound();
         }
 

@@ -2,13 +2,13 @@
 
 namespace App\Sale\Domain\Entity;
 
-use App\Shared\Domain\ValueObject\DomainDateTime;
-use App\Shared\Domain\ValueObject\Uuid;
 use App\Sale\Domain\ValueObject\CustomerFiscalData;
 use App\Sale\Domain\ValueObject\DocumentType;
 use App\Sale\Domain\ValueObject\SaleStatus;
 use App\Sale\Domain\ValueObject\SaleTicketNumber;
 use App\Sale\Domain\ValueObject\SaleTotal;
+use App\Shared\Domain\ValueObject\DomainDateTime;
+use App\Shared\Domain\ValueObject\Uuid;
 
 final class Sale
 {
@@ -33,8 +33,7 @@ final class Sale
         private ?DomainDateTime $cancelledAt = null,
         private ?Uuid $parentSaleId = null,
         private ?CustomerFiscalData $customerFiscalData = null,
-    ) {
-    }
+    ) {}
 
     public static function dddCreate(
         Uuid $id,

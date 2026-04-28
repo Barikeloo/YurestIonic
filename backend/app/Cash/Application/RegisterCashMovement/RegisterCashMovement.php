@@ -36,7 +36,7 @@ final class RegisterCashMovement
             throw new \DomainException('Cash session not found.');
         }
 
-        if (!$cashSession->status()->isOpen()) {
+        if (! $cashSession->status()->isOpen()) {
             throw new \DomainException('Cannot register movements on a closed session.');
         }
 

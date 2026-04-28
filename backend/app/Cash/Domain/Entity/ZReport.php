@@ -29,8 +29,7 @@ final class ZReport
         private readonly int $salesCount,
         private readonly int $cancelledSalesCount,
         private readonly DomainDateTime $generatedAt,
-    ) {
-    }
+    ) {}
 
     public static function generate(
         Uuid $restaurantId,

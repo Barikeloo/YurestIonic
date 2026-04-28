@@ -171,6 +171,28 @@
   background: rgba(255, 255, 255, 0.18);
 }
 
+// ── Botón menú 3 puntos en panel lateral ──────
+.panel-menu-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7A7A7A;
+  opacity: 0.7;
+  transition: opacity 0.15s, background 0.15s;
+  flex-shrink: 0;
+
+  &:hover {
+    opacity: 1;
+    background: #F4F4F4;
+  }
+}
+
 // ── States ─────────────────────────────────────
 .loading-state,
 .empty-zone {
@@ -222,13 +244,17 @@
   padding: 22px 24px 18px;
   border-bottom: 1px solid #F0F0F0;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .order-table-info {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex: 1;
 }
 
 .order-table-name {
@@ -251,6 +277,8 @@
   font-family: 'DM Mono', monospace;
   letter-spacing: -0.5px;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
 }
 
 // ── Order lines ────────────────────────────────
@@ -335,6 +363,12 @@
     border-top: 1px solid #E8E8E8;
     margin-bottom: 0;
   }
+}
+
+// ── Estado de comensales (componente) ─────────────
+app-diners-status {
+  display: block;
+  margin: 0 20px 16px;
 }
 
 // ── Actions ────────────────────────────────────
@@ -681,6 +715,19 @@
   }
 }
 
+.diners-warning {
+  background: #fff4e5;
+  border: 1px solid #ffb74d;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #e65100;
+  line-height: 1.4;
+}
+
 .diners-confirm {
   width: 100%;
   height: 54px;
@@ -763,6 +810,100 @@
   border-radius: 10px;
   font-size: 14px;
   color: #CC2222;
+}
+
+// ── Menú desplegable de opciones de mesa ─────────
+.table-menu-dropdown {
+  position: fixed;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+  z-index: 1000;
+  overflow: hidden;
+  animation: menuAppear 0.15s ease;
+}
+
+@keyframes menuAppear {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.table-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #E8E8E8;
+  background: #F9F9F9;
+}
+
+.table-menu-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0D0D0D;
+}
+
+.table-menu-close {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #7A7A7A;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.06);
+    color: #0D0D0D;
+  }
+}
+
+.table-menu-items {
+  padding: 8px;
+}
+
+.table-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #0D0D0D;
+  transition: background 0.15s;
+  text-align: left;
+
+  &:hover {
+    background: #F4F4F4;
+  }
+
+  svg {
+    flex-shrink: 0;
+    color: #7A7A7A;
+  }
+}
+
+.table-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
 }
 
 // ── Responsive: narrow tablets / portrait ──────

@@ -5,6 +5,7 @@ namespace App\SuperAdmin\Application\GetSuperAdminMe;
 final class GetSuperAdminMeResponse
 {
     public const SUCCESS = 'success';
+
     public const NOT_AUTHENTICATED = 'not_authenticated';
 
     private function __construct(

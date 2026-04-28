@@ -2,10 +2,10 @@
 
 namespace App\Zone\Infrastructure\Persistence\Repositories;
 
+use App\Shared\Infrastructure\Tenant\TenantContext;
 use App\Zone\Domain\Entity\Zone;
 use App\Zone\Domain\Interfaces\ZoneRepositoryInterface;
 use App\Zone\Infrastructure\Persistence\Models\EloquentZone;
-use App\Shared\Infrastructure\Tenant\TenantContext;
 
 class EloquentZoneRepository implements ZoneRepositoryInterface
 {

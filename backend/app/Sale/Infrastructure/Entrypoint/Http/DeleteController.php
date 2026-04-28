@@ -15,7 +15,7 @@ final class DeleteController
     {
         $deleted = ($this->deleteSale)($id);
 
-        if (!$deleted) {
+        if (! $deleted) {
             return new JsonResponse(['message' => 'Sale not found.'], 404);
         }
 

@@ -5,8 +5,11 @@ namespace App\User\Application\AuthorizeRestaurantAccess;
 class AuthorizeRestaurantAccessResponse
 {
     public const AUTHORIZED = 'authorized';
+
     public const NOT_AUTHENTICATED = 'not_authenticated';
+
     public const RESTAURANT_NOT_FOUND = 'restaurant_not_found';
+
     public const FORBIDDEN = 'forbidden';
 
     private function __construct(

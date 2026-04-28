@@ -5,9 +5,9 @@ namespace App\Order\Infrastructure\Entrypoint\Http;
 use App\Order\Application\AddLineToOrder\AddLineToOrder;
 use App\Order\Domain\ValueObject\OrderLineQuantity;
 use App\Shared\Infrastructure\Tenant\TenantContext;
-use InvalidArgumentException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 use RuntimeException;
 
 final class AddLineController

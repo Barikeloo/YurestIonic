@@ -2,13 +2,13 @@
 
 namespace Tests\Unit\Restaurant;
 
+use App\Restaurant\Domain\Entity\Restaurant;
 use App\Restaurant\Domain\ValueObject\RestaurantLegalName;
 use App\Restaurant\Domain\ValueObject\RestaurantName;
 use App\Restaurant\Domain\ValueObject\RestaurantPasswordHash;
 use App\Restaurant\Domain\ValueObject\RestaurantTaxId;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
-use App\Restaurant\Domain\Entity\Restaurant;
 use PHPUnit\Framework\TestCase;
 
 class RestaurantEntityTest extends TestCase

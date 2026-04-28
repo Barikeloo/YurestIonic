@@ -2,10 +2,10 @@
 
 namespace Tests;
 
+use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -19,7 +19,7 @@ abstract class TestCase extends BaseTestCase
         DB::table('super_admins')->insert([
             'uuid' => $superAdminUuid,
             'name' => 'Platform Superadmin',
-            'email' => 'superadmin-' . Str::lower(Str::random(8)) . '@local.test',
+            'email' => 'superadmin-'.Str::lower(Str::random(8)).'@local.test',
             'password' => Hash::make('superadmin123'),
             'created_at' => now(),
             'updated_at' => now(),
@@ -41,8 +41,8 @@ abstract class TestCase extends BaseTestCase
             'uuid' => $restaurantUuid,
             'name' => 'Test Restaurant',
             'legal_name' => 'Test Restaurant S.L.',
-            'tax_id' => 'B' . random_int(10000000, 99999999),
-            'email' => 'restaurant-' . Str::lower(Str::random(8)) . '@local.test',
+            'tax_id' => 'B'.random_int(10000000, 99999999),
+            'email' => 'restaurant-'.Str::lower(Str::random(8)).'@local.test',
             'password' => Hash::make('password123'),
             'created_at' => now(),
             'updated_at' => now(),
@@ -54,7 +54,7 @@ abstract class TestCase extends BaseTestCase
             'uuid' => $userUuid,
             'role' => $role,
             'name' => 'Test User',
-            'email' => 'user-' . Str::lower(Str::random(8)) . '@local.test',
+            'email' => 'user-'.Str::lower(Str::random(8)).'@local.test',
             'password' => Hash::make('password123'),
             'created_at' => now(),
             'updated_at' => now(),

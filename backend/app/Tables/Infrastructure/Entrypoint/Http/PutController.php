@@ -2,8 +2,8 @@
 
 namespace App\Tables\Infrastructure\Entrypoint\Http;
 
-use App\Tables\Application\UpdateTable\UpdateTable;
 use App\Shared\Infrastructure\Tenant\TenantContext;
+use App\Tables\Application\UpdateTable\UpdateTable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;

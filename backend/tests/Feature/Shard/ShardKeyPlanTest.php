@@ -306,7 +306,7 @@ final class ShardKeyPlanTest extends TestCase
 
         $this->withSession([
             'auth_user_id' => $userUuid,
-        ])->getJson('/api/orders/' . $orderUuid . '/lines')
+        ])->getJson('/api/orders/'.$orderUuid.'/lines')
             ->assertStatus(200)
             ->assertJsonCount(1)
             ->assertJsonPath('0.order_id', $orderUuid)
@@ -344,7 +344,7 @@ final class ShardKeyPlanTest extends TestCase
 
         $this->withSession([
             'auth_user_id' => $operatorUuid,
-        ])->putJson('/api/admin/restaurants/' . $restaurantUuid, [
+        ])->putJson('/api/admin/restaurants/'.$restaurantUuid, [
             'name' => 'Should Not Update',
         ])->assertStatus(403);
 
@@ -361,7 +361,7 @@ final class ShardKeyPlanTest extends TestCase
 
         $this->withSession([
             'super_admin_id' => $superAdminUuid,
-        ])->putJson('/api/admin/restaurants/' . $restaurantUuid, [
+        ])->putJson('/api/admin/restaurants/'.$restaurantUuid, [
             'name' => 'Now Allowed',
         ])->assertStatus(200);
     }
@@ -371,8 +371,8 @@ final class ShardKeyPlanTest extends TestCase
         return (int) DB::table('restaurants')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'name' => $name,
-            'legal_name' => $name . ' S.L.',
-            'tax_id' => 'B' . random_int(10000000, 99999999),
+            'legal_name' => $name.' S.L.',
+            'tax_id' => 'B'.random_int(10000000, 99999999),
             'email' => $email,
             'password' => Hash::make('password123'),
             'created_at' => now(),

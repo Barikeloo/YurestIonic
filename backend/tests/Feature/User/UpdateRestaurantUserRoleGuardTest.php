@@ -14,7 +14,7 @@ final class UpdateRestaurantUserRoleGuardTest extends TestCase
         $admin = $this->createTenantSession('admin');
 
         $response = $this->withSession($admin['session'])->putJson(
-            '/api/admin/restaurants/' . $admin['restaurant_uuid'] . '/users/' . $admin['user_uuid'],
+            '/api/admin/restaurants/'.$admin['restaurant_uuid'].'/users/'.$admin['user_uuid'],
             [
                 'role' => 'supervisor',
             ],

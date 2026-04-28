@@ -2,11 +2,11 @@
 
 namespace App\Sale\Domain\Entity;
 
-use App\Shared\Domain\ValueObject\DomainDateTime;
-use App\Shared\Domain\ValueObject\Uuid;
 use App\Sale\Domain\ValueObject\SaleLinePrice;
 use App\Sale\Domain\ValueObject\SaleLineQuantity;
 use App\Sale\Domain\ValueObject\SaleLineTaxPercentage;
+use App\Shared\Domain\ValueObject\DomainDateTime;
+use App\Shared\Domain\ValueObject\Uuid;
 
 final class SaleLine
 {
@@ -24,8 +24,7 @@ final class SaleLine
         private readonly DomainDateTime $createdAt,
         private readonly DomainDateTime $updatedAt,
         private readonly ?DomainDateTime $deletedAt = null,
-    ) {
-    }
+    ) {}
 
     public static function dddCreate(
         Uuid $id,

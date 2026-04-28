@@ -1,12 +1,15 @@
 <?php
+
 namespace Tests\Unit\User\Infrastructure\Entrypoint\Http;
+
 use App\User\Application\GetMe\GetMe;
 use App\User\Application\GetMe\GetMeResponse;
 use App\User\Infrastructure\Entrypoint\Http\GetMeController;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\Session\Session;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use PHPUnit\Framework\TestCase;
+
 class GetMeControllerTest extends TestCase
 {
     public function test_returns_unauthenticated_if_no_user_id_in_session(): void
@@ -26,7 +29,7 @@ class GetMeControllerTest extends TestCase
         $this->assertFalse($response->getData(true)['success']);
     }
 
-    public function test_returns_unauthenticated_if_getMe_returns_null(): void
+    public function test_returns_unauthenticated_if_get_me_returns_null(): void
     {
         $getMe = $this->createMock(GetMe::class);
         $getMe->expects($this->once())->method('__invoke')->with('user-id')->willReturn(null);

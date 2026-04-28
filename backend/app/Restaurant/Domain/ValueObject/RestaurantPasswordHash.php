@@ -5,6 +5,7 @@ namespace App\Restaurant\Domain\ValueObject;
 final class RestaurantPasswordHash
 {
     private const MIN_LENGTH = 1;
+
     private const MAX_LENGTH = 255;
 
     private function __construct(

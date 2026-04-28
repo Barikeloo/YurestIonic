@@ -15,7 +15,7 @@ final class DeleteController
     {
         $deleted = ($this->deleteOrder)($id);
 
-        if (!$deleted) {
+        if (! $deleted) {
             return new JsonResponse(['message' => 'Order not found.'], 404);
         }
 

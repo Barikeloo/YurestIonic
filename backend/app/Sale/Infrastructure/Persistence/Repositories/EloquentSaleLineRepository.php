@@ -2,17 +2,13 @@
 
 namespace App\Sale\Infrastructure\Persistence\Repositories;
 
-use App\Sale\Domain\Entity\SaleLine;
-use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
-use App\Sale\Domain\ValueObject\SaleLinePrice;
-use App\Sale\Domain\ValueObject\SaleLineQuantity;
-use App\Sale\Domain\ValueObject\SaleLineTaxPercentage;
-use App\Sale\Infrastructure\Persistence\Models\EloquentSaleLine;
-use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrderLine;
 use App\Product\Infrastructure\Persistence\Models\EloquentProduct;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
-use App\Shared\Domain\ValueObject\DomainDateTime;
+use App\Sale\Domain\Entity\SaleLine;
+use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
+use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
+use App\Sale\Infrastructure\Persistence\Models\EloquentSaleLine;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
 

@@ -30,13 +30,13 @@ final class DeleteRestaurantCascadeTest extends TestCase
         ]);
 
         // Create users for this restaurant
-        $userName = 'test-user-' . Str::random(5);
+        $userName = 'test-user-'.Str::random(5);
         $userUuid = (string) Str::uuid();
         DB::table('users')->insert([
             'uuid' => $userUuid,
             'restaurant_id' => DB::table('restaurants')->where('uuid', $restaurantUuid)->first()->id,
             'name' => $userName,
-            'email' => $userName . '@test.local',
+            'email' => $userName.'@test.local',
             'role' => 'operator',
             'password' => Hash::make('pass'),
             'created_at' => now(),

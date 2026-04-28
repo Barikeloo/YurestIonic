@@ -1,0 +1,178 @@
+.diners-status-container {
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #E8E8E8;
+  padding: 16px;
+  font-family: 'DM Sans', sans-serif;
+
+  &.compact {
+    padding: 12px;
+  }
+}
+
+.diners-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #F0F0F0;
+}
+
+.diners-status-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0D0D0D;
+}
+
+.diners-status-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: #7A7A7A;
+  background: #F5F5F5;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.amounts-summary {
+  margin-bottom: 14px;
+}
+
+.amount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 14px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &.paid .amount-value {
+    color: #22C55E;
+    font-weight: 600;
+  }
+
+  &.pending .amount-value {
+    color: #FF4D4D;
+    font-weight: 600;
+  }
+}
+
+.amount-label {
+  color: #666;
+}
+
+.amount-value {
+  color: #0D0D0D;
+  font-weight: 500;
+
+  &.paid {
+    color: #22C55E;
+  }
+
+  &.pending {
+    color: #FF4D4D;
+  }
+}
+
+.per-diner-section {
+  margin: 14px 0;
+  padding: 10px 0;
+  border-top: 1px dashed #E0E0E0;
+  border-bottom: 1px dashed #E0E0E0;
+}
+
+.per-diner-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: #7A7A7A;
+}
+
+.per-diner-amount {
+  font-weight: 600;
+  color: #0D0D0D;
+  font-size: 14px;
+}
+
+.diners-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 14px;
+
+  .compact & {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+}
+
+.diner-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 6px;
+  background: #F8F8F8;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  transition: all 0.15s;
+
+  &.paid {
+    background: #DCFCE7;
+    border-color: #22C55E;
+  }
+
+  .compact & {
+    padding: 8px 4px;
+  }
+}
+
+.diner-number {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0D0D0D;
+  margin-bottom: 4px;
+
+  .compact & {
+    font-size: 14px;
+  }
+}
+
+.diner-status {
+  margin-bottom: 4px;
+}
+
+.status-badge {
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  &.paid {
+    color: #22C55E;
+  }
+
+  &.pending {
+    color: #9CA3AF;
+  }
+}
+
+.diner-amount {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+
+  .compact & {
+    font-size: 10px;
+  }
+}
+
+.no-diners-msg {
+  text-align: center;
+  padding: 20px;
+  color: #9CA3AF;
+  font-size: 13px;
+}

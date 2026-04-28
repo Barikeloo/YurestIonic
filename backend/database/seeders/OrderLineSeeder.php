@@ -36,7 +36,7 @@ class OrderLineSeeder extends Seeder
                 $productName = array_rand(['Cafe' => 1, 'Cerveza' => 1, 'Bocadillo' => 1]);
                 $productId = $products[$productName] ?? null;
 
-                if (!$productId) {
+                if (! $productId) {
                     continue;
                 }
 

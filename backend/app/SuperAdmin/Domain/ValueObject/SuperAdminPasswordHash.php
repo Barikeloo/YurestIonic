@@ -5,6 +5,7 @@ namespace App\SuperAdmin\Domain\ValueObject;
 final class SuperAdminPasswordHash
 {
     private const MIN_LENGTH = 60;
+
     private const MAX_LENGTH = 255;
 
     private function __construct(

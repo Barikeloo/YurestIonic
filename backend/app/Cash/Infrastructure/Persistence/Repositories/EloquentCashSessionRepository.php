@@ -51,6 +51,7 @@ final class EloquentCashSessionRepository implements CashSessionRepositoryInterf
     public function findByUuid(Uuid $uuid): ?CashSession
     {
         $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
@@ -62,12 +63,14 @@ final class EloquentCashSessionRepository implements CashSessionRepositoryInterf
             ->where('device_id', $deviceId->value())
             ->where('status', 'open')
             ->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByRestaurantId(Uuid $restaurantId): array
     {
         $restaurantIdInt = EloquentRestaurant::query()->where('uuid', $restaurantId->value())->value('id');
+
         return $this->model->newQuery()
             ->where('restaurant_id', $restaurantIdInt)
             ->get()
@@ -78,6 +81,7 @@ final class EloquentCashSessionRepository implements CashSessionRepositoryInterf
     public function findClosedByRestaurantId(Uuid $restaurantId): array
     {
         $restaurantIdInt = EloquentRestaurant::query()->where('uuid', $restaurantId->value())->value('id');
+
         return $this->model->newQuery()
             ->where('restaurant_id', $restaurantIdInt)
             ->whereIn('status', ['closed', 'abandoned'])
@@ -95,6 +99,7 @@ final class EloquentCashSessionRepository implements CashSessionRepositoryInterf
             ->where('status', 'closed')
             ->orderBy('closed_at', 'desc')
             ->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
@@ -105,6 +110,7 @@ final class EloquentCashSessionRepository implements CashSessionRepositoryInterf
             ->where('restaurant_id', $restaurantIdInt)
             ->where('status', 'abandoned')
             ->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 

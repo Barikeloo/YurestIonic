@@ -13,7 +13,7 @@ class DiningTableSeeder extends Seeder
         $restaurantId = DB::table('restaurants')->first()?->id;
         $zoneIds = DB::table('zones')->pluck('id', 'name');
 
-        if (!$restaurantId || !$zoneIds->has('Salon') || !$zoneIds->has('Terraza')) {
+        if (! $restaurantId || ! $zoneIds->has('Salon') || ! $zoneIds->has('Terraza')) {
             return;
         }
 

@@ -17,15 +17,15 @@ final class PostController
     public function __invoke(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'order_id'           => ['required', 'string', 'uuid'],
-            'opened_by_user_id'  => ['required', 'string', 'uuid'],
-            'closed_by_user_id'  => ['required', 'string', 'uuid'],
-            'device_id'          => ['required', 'string'],
-            'payments'           => ['required', 'array'],
-            'payments.*.method'  => ['required', 'string'],
+            'order_id' => ['required', 'string', 'uuid'],
+            'opened_by_user_id' => ['required', 'string', 'uuid'],
+            'closed_by_user_id' => ['required', 'string', 'uuid'],
+            'device_id' => ['required', 'string'],
+            'payments' => ['required', 'array'],
+            'payments.*.method' => ['required', 'string'],
             'payments.*.amount_cents' => ['required', 'integer', 'min:0'],
-            'order_line_ids'     => ['nullable', 'array'],
-            'order_line_ids.*'   => ['string', 'uuid'],
+            'order_line_ids' => ['nullable', 'array'],
+            'order_line_ids.*' => ['string', 'uuid'],
             'is_partial_payment' => ['nullable', 'boolean'],
         ]);
 
@@ -35,13 +35,13 @@ final class PostController
         }
 
         $response = ($this->createSale)(
-            restaurantId:     $restaurantId,
-            orderId:          $validated['order_id'],
-            openedByUserId:   $validated['opened_by_user_id'],
-            closedByUserId:   $validated['closed_by_user_id'],
-            deviceId:         $validated['device_id'],
-            payments:         $validated['payments'],
-            orderLineIds:     $validated['order_line_ids'] ?? null,
+            restaurantId: $restaurantId,
+            orderId: $validated['order_id'],
+            openedByUserId: $validated['opened_by_user_id'],
+            closedByUserId: $validated['closed_by_user_id'],
+            deviceId: $validated['device_id'],
+            payments: $validated['payments'],
+            orderLineIds: $validated['order_line_ids'] ?? null,
             isPartialPayment: $validated['is_partial_payment'] ?? false,
         );
 

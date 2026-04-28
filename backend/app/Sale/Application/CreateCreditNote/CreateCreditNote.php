@@ -8,8 +8,8 @@ use App\Sale\Domain\Entity\Sale;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Sale\Domain\ValueObject\CustomerFiscalData;
 use App\Sale\Domain\ValueObject\DocumentType;
-use App\Shared\Domain\ValueObject\Uuid;
 use App\Sale\Domain\ValueObject\SaleTotal;
+use App\Shared\Domain\ValueObject\Uuid;
 
 final class CreateCreditNote
 {

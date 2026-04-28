@@ -5,14 +5,14 @@ namespace App\User\Application\GetRestaurantUsers;
 class GetRestaurantUsersResponse
 {
     /**
-     * @param array<array{uuid: string, name: string, email: string, role: string}> $users
+     * @param  array<array{uuid: string, name: string, email: string, role: string}>  $users
      */
     private function __construct(
         private array $users,
     ) {}
 
     /**
-     * @param array<array{uuid: string, name: string, email: string, role: string}> $users
+     * @param  array<array{uuid: string, name: string, email: string, role: string}>  $users
      */
     public static function create(array $users): self
     {

@@ -6,6 +6,7 @@ import { PinAuthModalComponent, PinAuthResult } from '../../../components/pin-au
 import { AuthService, QuickAccessUserResponse } from '../../../services/auth.service';
 import { PinAuthService } from '../../../services/pin-auth.service';
 import { TpvOrder, TpvOrderLine, TpvService, TpvTableItem, TpvZoneItem } from '../../../services/tpv.service';
+import { DinersStatusComponent } from '../../../components/diners-status/diners-status.component';
 
 interface TableWithStatus extends TpvTableItem {
   occupied: boolean;
@@ -23,7 +24,7 @@ const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#
   selector: 'app-mesas',
   templateUrl: './mesas.page.html',
   styleUrls: ['./mesas.page.scss'],
-  imports: [CommonModule, PinAuthModalComponent],
+  imports: [CommonModule, PinAuthModalComponent, DinersStatusComponent],
 })
 export class MesasPage implements OnInit {
   zones: TpvZoneItem[] = [];
@@ -51,6 +52,19 @@ export class MesasPage implements OnInit {
 
   // PIN auth para cobrar
   showPinAuthModalForCharge = false;
+
+  // Menú de opciones de mesa
+  tableMenuOpen = false;
+  tableMenuTable: TableWithStatus | null = null;
+  tableMenuPosition = { x: 0, y: 0 };
+
+  // Modal editar comensales
+  editDinersModalOpen = false;
+  editDinersValue = 1;
+  editDinersLoading = false;
+  editDinersError: string | null = null;
+  editDinersOrderId: string | null = null;
+  editDinersTable: TableWithStatus | null = null;
 
   constructor(
     private readonly tpvService: TpvService,
@@ -357,6 +371,23 @@ export class MesasPage implements OnInit {
     return (cents / 100).toFixed(2).replace('.', ',') + '€';
   }
 
+  // ── Helpers para comensales ─────────────────────
+  getPaidDinersForTable(table: TableWithStatus): number[] {
+    if (!table.diners || !table.total || table.total <= 0) return [];
+
+    const total = table.total ?? 0;
+    const remaining = table.remaining_total ?? 0;
+    const paidTotal = total - remaining;
+    const diners = table.diners;
+
+    // Calcular cuántos comensales han pagado basado en el total pagado
+    const perDiner = Math.floor(total / diners);
+    if (perDiner <= 0) return paidTotal > 0 ? [1] : [];
+
+    const paidCount = Math.min(Math.floor(paidTotal / perDiner), diners);
+    return Array.from({ length: paidCount }, (_, i) => i + 1);
+  }
+
   formatTime(isoDate: string | undefined): string {
     if (!isoDate) return '';
     const diffMin = Math.floor((Date.now() - new Date(isoDate).getTime()) / 60000);
@@ -377,5 +408,171 @@ export class MesasPage implements OnInit {
 
   avatarColor(index: number): string {
     return AVATAR_COLORS[index % AVATAR_COLORS.length];
+  }
+
+  // ── Menú de opciones de mesa ───────────────────
+
+  openTableMenu(event: Event, table: TableWithStatus): void {
+    event.stopPropagation();
+    this.tableMenuTable = table;
+    this.tableMenuOpen = true;
+    // Posicionar el menú cerca del botón clicado
+    const target = event.target as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    this.tableMenuPosition = {
+      x: rect.left + rect.width / 2 - 100, // Centrado aproximado
+      y: rect.bottom + 8,
+    };
+  }
+
+  closeTableMenu(): void {
+    this.tableMenuOpen = false;
+    this.tableMenuTable = null;
+  }
+
+  async onEditDiners(): Promise<void> {
+    // Guardar referencia antes de cerrar el menú
+    const table = this.tableMenuTable;
+    this.closeTableMenu();
+
+    if (!table?.order_id) {
+      console.log('[onEditDiners] No order_id disponible');
+      return;
+    }
+
+    // Buscar tabla actualizada desde el array
+    const updatedTable = this.tables.find((t) => t.id === table.id);
+    this.editDinersTable = updatedTable || table;
+    this.editDinersOrderId = table.order_id;
+
+    // Recargar datos frescos de la orden para obtener remaining_total actualizado
+    try {
+      const freshOrder = await firstValueFrom(this.tpvService.getOrder(table.order_id));
+      if (freshOrder && this.editDinersTable) {
+        this.editDinersTable.total = freshOrder.total;
+        this.editDinersTable.remaining_total = freshOrder.remaining_total ?? freshOrder.total;
+        this.editDinersTable.diners = freshOrder.diners;
+        console.log('[onEditDiners] Datos frescos recargados - total:', freshOrder.total,
+          'remaining:', freshOrder.remaining_total,
+          'diners:', freshOrder.diners);
+      }
+    } catch (e) {
+      console.log('[onEditDiners] Error recargando orden (usando datos locales):', e);
+    }
+
+    this.editDinersValue = this.editDinersTable.diners ?? 1;
+    this.editDinersError = null;
+    this.editDinersModalOpen = true;
+    console.log('[onEditDiners] Modal abierto para', this.editDinersTable?.name,
+      'con', this.editDinersValue, 'comensales');
+  }
+
+  closeEditDinersModal(): void {
+    this.editDinersModalOpen = false;
+    this.editDinersOrderId = null;
+    this.editDinersTable = null;
+    this.editDinersError = null;
+  }
+
+  // ── Validación de edición de comensales ─────────────────────
+
+  get currentPaidDinersCount(): number {
+    if (!this.editDinersTable) return 0;
+    const paidDiners = this.getPaidDinersForTable(this.editDinersTable);
+    console.log('[currentPaidDinersCount] Table:', this.editDinersTable.name, 'total:', this.editDinersTable.total, 'remaining:', this.editDinersTable.remaining_total, 'diners:', this.editDinersTable.diners, 'paidDiners:', paidDiners);
+    return paidDiners.length;
+  }
+
+  get canReduceDiners(): boolean {
+    // Si no hay datos de la mesa, permitir (fallback seguro)
+    if (!this.editDinersTable) return true;
+
+    // Si se intenta reducir comensales
+    if (this.editDinersValue < (this.editDinersTable.diners ?? 1)) {
+      const paidCount = this.currentPaidDinersCount;
+      const canReduce = this.editDinersValue >= paidCount;
+      console.log('[canReduceDiners] editDinersValue:', this.editDinersValue, 'paidCount:', paidCount, 'canReduce:', canReduce);
+      return canReduce;
+    }
+
+    // Si se aumentan o mantienen, siempre permitir
+    return true;
+  }
+
+  get dinersValidationMessage(): string | null {
+    if (!this.editDinersTable) return null;
+    
+    const paidCount = this.currentPaidDinersCount;
+    if (paidCount === 0) return null;
+    
+    if (this.editDinersValue < paidCount) {
+      return `⚠️ Atención: Ya ${paidCount === 1 ? 'ha pagado' : 'han pagado'} ${paidCount} comensal${paidCount === 1 ? '' : 'es'}. Debes mantener al menos ${paidCount} comensales.`;
+    }
+    
+    return null;
+  }
+
+  incrementEditDiners(): void {
+    if (this.editDinersValue < 99) {
+      this.editDinersValue++;
+    }
+  }
+
+  decrementEditDiners(): void {
+    if (this.editDinersValue > 1) {
+      this.editDinersValue--;
+    }
+  }
+
+  async confirmEditDiners(): Promise<void> {
+    if (!this.editDinersOrderId || this.editDinersLoading) return;
+
+    // Validar antes de enviar
+    if (!this.canReduceDiners) {
+      const paidCount = this.currentPaidDinersCount;
+      this.editDinersError = `No puedes reducir a ${this.editDinersValue} comensales porque ya ${paidCount === 1 ? 'ha pagado' : 'han pagado'} ${paidCount}.`;
+      return;
+    }
+
+    this.editDinersLoading = true;
+    this.editDinersError = null;
+
+    try {
+      await firstValueFrom(
+        this.tpvService.updateOrder(this.editDinersOrderId, {
+          diners: this.editDinersValue,
+        })
+      );
+
+      // Recargar datos para reflejar cambio
+      await this.loadData();
+
+      // Actualizar selectedTable con los nuevos datos
+      if (this.selectedTable) {
+        const updatedTable = this.tables.find((t) => t.id === this.selectedTable!.id);
+        if (updatedTable) {
+          this.selectedTable = updatedTable;
+        }
+      }
+
+      this.closeEditDinersModal();
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Error al actualizar comensales';
+      this.editDinersError = errorMsg;
+    } finally {
+      this.editDinersLoading = false;
+    }
+  }
+
+  onJoinTable(): void {
+    console.log('[Menu] Juntar mesa:', this.tableMenuTable?.name);
+    this.closeTableMenu();
+    // TODO: Implementar juntar mesa
+  }
+
+  onTransferAccount(): void {
+    console.log('[Menu] Traspasar cuenta:', this.tableMenuTable?.name);
+    this.closeTableMenu();
+    // TODO: Implementar traspaso de cuenta
   }
 }

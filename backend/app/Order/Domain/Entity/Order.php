@@ -23,8 +23,7 @@ final class Order
         private readonly DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
         private ?DomainDateTime $deletedAt = null,
-    ) {
-    }
+    ) {}
 
     public static function dddCreate(
         Uuid $id,

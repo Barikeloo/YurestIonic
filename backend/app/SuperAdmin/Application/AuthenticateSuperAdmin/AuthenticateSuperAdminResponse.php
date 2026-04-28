@@ -5,6 +5,7 @@ namespace App\SuperAdmin\Application\AuthenticateSuperAdmin;
 final class AuthenticateSuperAdminResponse
 {
     public const SUCCESS = 'success';
+
     public const INVALID_CREDENTIALS = 'invalid_credentials';
 
     private function __construct(

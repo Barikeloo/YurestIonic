@@ -2,9 +2,9 @@
 
 namespace App\Order\Infrastructure\Persistence\Models;
 
-use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
 use App\Product\Infrastructure\Persistence\Models\EloquentProduct;
 use App\Sale\Infrastructure\Persistence\Models\EloquentSaleLine;
+use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;

@@ -10,7 +10,7 @@ final class DocumentType
 
     private function __construct(private readonly string $value)
     {
-        if (!in_array($value, self::VALID_TYPES, true)) {
+        if (! in_array($value, self::VALID_TYPES, true)) {
             throw new \InvalidArgumentException("Invalid document type: {$value}");
         }
     }

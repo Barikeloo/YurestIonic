@@ -8,7 +8,6 @@ use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
 use App\Cash\Domain\ValueObject\MovementReasonCode;
 use App\Cash\Domain\ValueObject\MovementType;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
-use App\Sale\Domain\Entity\Sale;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -80,7 +79,7 @@ final class CancelSale
                     reasonCode: MovementReasonCode::cancellation(),
                     amount: Money::create($totalCash),
                     userId: $cancelledByUuid,
-                    description: 'Devolución por cancelación de venta: ' . $reason,
+                    description: 'Devolución por cancelación de venta: '.$reason,
                 );
                 $this->cashMovementRepository->save($cashMovement);
             }

@@ -142,4 +142,3 @@ final class DeveloperDashboardTest extends TestCase
         $this->assertEquals('OTHER456', $data[2]['tax_id']);
     }
 }
-

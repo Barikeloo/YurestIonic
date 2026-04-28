@@ -61,22 +61,36 @@
     [lines]="selectedTableLines"
     [isPartialPayment]="isPartialPayment"
     [isProcessing]="isProcessingPayment"
+    [diners]="selectedTable?.diners ?? 0"
+    [paidDiners]="paidDiners"
     (closeModal)="showCobrarModal = false"
     (confirmPayment)="onConfirmPayment($event)"
     (splitBill)="onSplitBill()"
   ></app-cobrar-modal>
 
-  <!-- Modal de dividir cuenta -->
-  <app-split-bill-modal
-    [isOpen]="showSplitModal"
-    [total]="selectedTable?.total || 0"
-    [tableLabel]="selectedTable?.table_name || ''"
-    [lines]="selectedTableLines"
-    [diners]="selectedTable?.diners || 2"
-    [paidDiners]="paidDiners"
-    (closeModal)="showSplitModal = false"
-    (confirmSplit)="onConfirmSplit($event)"
-  ></app-split-bill-modal>
+  <!-- Modal de dividir cuenta con DinersStatus a la derecha -->
+  <div class="split-modal-with-sidebar" *ngIf="showSplitModal">
+    <app-split-bill-modal
+      [isOpen]="true"
+      [total]="selectedTable?.total || 0"
+      [tableLabel]="selectedTable?.table_name || ''"
+      [lines]="selectedTableLines"
+      [diners]="selectedTable?.diners || 2"
+      [paidDiners]="paidDiners"
+      [orderId]="selectedTable?.order_id || null"
+      [userId]="currentUser?.id || null"
+      (closeModal)="showSplitModal = false"
+      (confirmSplit)="onConfirmSplit($event)"
+    ></app-split-bill-modal>
+
+    <app-diners-status
+      class="split-modal-sidebar"
+      [diners]="selectedTable?.diners || 0"
+      [total]="selectedTable?.total || 0"
+      [remainingTotal]="(selectedTable?.total || 0) - (paidDiners.length * getPerDinerAmount(selectedTable?.total || 0, selectedTable?.diners || 1))"
+      [paidDiners]="paidDiners"
+    ></app-diners-status>
+  </div>
 
   <!-- Animación de confirmación de pago -->
   <app-payment-success

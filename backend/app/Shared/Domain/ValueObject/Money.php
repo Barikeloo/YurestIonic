@@ -11,9 +11,7 @@ namespace App\Shared\Domain\ValueObject;
  */
 final class Money
 {
-    private function __construct(private readonly int $cents)
-    {
-    }
+    private function __construct(private readonly int $cents) {}
 
     public static function create(int $cents): self
     {

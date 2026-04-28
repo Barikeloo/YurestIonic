@@ -35,8 +35,7 @@ final class CashSession
         private readonly DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
         private ?DomainDateTime $deletedAt = null,
-    ) {
-    }
+    ) {}
 
     public static function dddCreate(
         Uuid $id,
@@ -117,7 +116,7 @@ final class CashSession
 
     public function startClosing(): void
     {
-        if (!$this->status->isOpen()) {
+        if (! $this->status->isOpen()) {
             throw new \DomainException('Only open sessions can start closing.');
         }
 
@@ -127,7 +126,7 @@ final class CashSession
 
     public function cancelClosing(): void
     {
-        if (!$this->status->isClosing()) {
+        if (! $this->status->isClosing()) {
             throw new \DomainException('Only closing sessions can cancel closing.');
         }
 
@@ -144,7 +143,7 @@ final class CashSession
         ?ZReportHash $zReportHash = null,
         ?string $discrepancyReason = null,
     ): void {
-        if (!$this->status->isClosing()) {
+        if (! $this->status->isClosing()) {
             throw new \DomainException('Only closing sessions can be closed.');
         }
 

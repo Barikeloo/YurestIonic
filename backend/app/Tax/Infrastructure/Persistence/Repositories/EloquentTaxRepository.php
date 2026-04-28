@@ -2,9 +2,9 @@
 
 namespace App\Tax\Infrastructure\Persistence\Repositories;
 
+use App\Shared\Infrastructure\Tenant\TenantContext;
 use App\Tax\Domain\Entity\Tax;
 use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
-use App\Shared\Infrastructure\Tenant\TenantContext;
 use App\Tax\Infrastructure\Persistence\Models\EloquentTax;
 
 class EloquentTaxRepository implements TaxRepositoryInterface

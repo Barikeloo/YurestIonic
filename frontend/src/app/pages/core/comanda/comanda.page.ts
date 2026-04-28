@@ -77,7 +77,7 @@ export class ComandaPage implements OnInit, OnDestroy {
     try {
       const [families, products, taxes] = await Promise.all([
         firstValueFrom(this.tpvService.listFamilies()),
-        this.tpvService.listProductsWithAutoImages(), // Con imágenes automáticas
+        firstValueFrom(this.tpvService.listProducts()),
         firstValueFrom(this.tpvService.listTaxes()),
       ]);
 

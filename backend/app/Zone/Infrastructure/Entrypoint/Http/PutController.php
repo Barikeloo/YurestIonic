@@ -2,8 +2,8 @@
 
 namespace App\Zone\Infrastructure\Entrypoint\Http;
 
-use App\Zone\Application\UpdateZone\UpdateZone;
 use App\Shared\Infrastructure\Tenant\TenantContext;
+use App\Zone\Application\UpdateZone\UpdateZone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;

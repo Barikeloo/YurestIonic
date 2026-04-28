@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Cash\Infrastructure\Persistence\Models\EloquentZReport;
 use App\Cash\Infrastructure\Persistence\Models\EloquentCashSession;
+use App\Cash\Infrastructure\Persistence\Models\EloquentZReport;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -15,8 +15,9 @@ class ZReportSeeder extends Seeder
         $restaurant = EloquentRestaurant::first();
         $cashSession = EloquentCashSession::first();
 
-        if (!$restaurant || !$cashSession) {
+        if (! $restaurant || ! $cashSession) {
             $this->command->warn('No restaurant or cash session found. Skipping ZReport seeder.');
+
             return;
         }
 

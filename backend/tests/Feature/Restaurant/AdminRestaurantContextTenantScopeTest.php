@@ -25,7 +25,7 @@ class AdminRestaurantContextTenantScopeTest extends TestCase
             'name' => 'Second Restaurant',
             'legal_name' => 'Second Restaurant S.L.',
             'tax_id' => $linkedRestaurant->tax_id,
-            'email' => 'second-' . Str::lower(Str::random(8)) . '@local.test',
+            'email' => 'second-'.Str::lower(Str::random(8)).'@local.test',
             'password' => Hash::make('password123'),
             'created_at' => now(),
             'updated_at' => now(),

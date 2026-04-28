@@ -14,8 +14,7 @@ final readonly class CreateCreditNoteResponse
         public string $parentSaleId,
         public int $totalCents,
         public string $documentType,
-    ) {
-    }
+    ) {}
 
     public static function create(Sale $sale): self
     {

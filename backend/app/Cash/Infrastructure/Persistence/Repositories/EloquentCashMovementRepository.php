@@ -43,18 +43,21 @@ final class EloquentCashMovementRepository implements CashMovementRepositoryInte
     public function getById(string $id): ?CashMovement
     {
         $model = $this->model->newQuery()->where('uuid', $id)->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findById(Uuid $id): ?CashMovement
     {
         $model = $this->model->newQuery()->where('uuid', $id->value())->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
     public function findByUuid(Uuid $uuid): ?CashMovement
     {
         $model = $this->model->newQuery()->where('uuid', $uuid->value())->first();
+
         return $model ? $this->toDomain($model) : null;
     }
 
@@ -63,6 +66,7 @@ final class EloquentCashMovementRepository implements CashMovementRepositoryInte
         $cashSessionIdInt = EloquentCashSession::query()
             ->where('uuid', $cashSessionId->value())
             ->value('id');
+
         return $this->model->newQuery()
             ->where('cash_session_id', $cashSessionIdInt)
             ->get()

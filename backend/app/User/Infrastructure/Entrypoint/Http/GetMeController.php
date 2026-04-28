@@ -3,10 +3,8 @@
 namespace App\User\Infrastructure\Entrypoint\Http;
 
 use App\User\Application\GetMe\GetMe;
-use App\User\Application\GetMe\GetMeResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
 
 class GetMeController
 {
@@ -28,6 +26,7 @@ class GetMeController
         $response = $this->getMe->__invoke($userId);
         if ($response === null) {
             $request->session()->forget('auth_user_id');
+
             return new JsonResponse([
                 'success' => false,
                 'message' => 'Not authenticated.',

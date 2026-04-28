@@ -1,7 +1,18 @@
-<div class="modal-overlay" [class.open]="isOpen" (click)="onClose()">
-  <div class="modal-box" (click)="$event.stopPropagation()">
+<!-- Wrapper interno del modal (sin overlay - el overlay lo maneja el padre) -->
+<div class="modal-box standalone" *ngIf="isOpen">
     <button class="modal-close-btn" (click)="onClose()">✕</button>
     <div class="modal-title">Dividir cuenta — {{ tableLabel }}</div>
+
+    <!-- Loading state -->
+    <div *ngIf="isLoading" class="loading-state">
+      <span>Cargando sesión de cobro...</span>
+    </div>
+
+    <!-- Error state -->
+    <div *ngIf="error" class="error-state">
+      <span>{{ error }}</span>
+      <button (click)="loadChargeSession()">Reintentar</button>
+    </div>
 
     <div class="mode-selector">
       <button
@@ -27,95 +38,109 @@
       </button>
     </div>
 
-    <div class="modal-content">
-      <!-- Partes iguales -->
-      <div *ngIf="mode === 'equal'" class="equal-mode">
-        <div class="parts-control">
-          <span class="parts-label">Comensales pendientes: {{ remainingDiners }}</span>
-          <span class="total-label">Total: <strong>{{ formatCents(total) }} €</strong></span>
-        </div>
-        <div class="parts-grid">
-          <div *ngFor="let dinerNum of unpaidDinerNumbers; let i = index" class="part-card">
-            <div class="part-label">Comensal {{ dinerNum }}</div>
-            <div class="part-amount">
-              {{ formatCents(equalPart + (i === remainingDiners - 1 ? remainder : 0)) }} €
-              <span *ngIf="remainder > 0 && i === remainingDiners - 1" class="remainder-badge" title="Incluye el redondeo de {{ remainder }} ct">+{{ remainder }}ct</span>
-            </div>
-            <button class="btn-charge" (click)="chargeEqualPart(dinerNum)">Cobrar</button>
+    <div class="modal-content-split">
+      <!-- Contenido principal (izquierda) -->
+      <div class="modal-content-main">
+        <!-- Partes iguales -->
+        <div *ngIf="mode === 'equal'" class="equal-mode">
+          <div class="parts-control">
+            <span class="parts-label">Comensales pendientes: {{ remainingDiners }}</span>
+            <span class="total-label">Total: <strong>{{ formatCents(total) }} €</strong></span>
+            <span *ngIf="chargeSession" class="session-info">Cuota: {{ formatCents(chargeSession.amount_per_diner) }} €</span>
           </div>
-        </div>
-      </div>
-
-      <!-- Por líneas -->
-      <div *ngIf="mode === 'lines'" class="lines-mode">
-        <div class="lines-columns">
-          <div class="lines-column">
-            <div class="section-label">Líneas — toca para asignar</div>
-            <div *ngFor="let line of assignedLines" class="line-item" [class.assigned]="line.diner">
-              <div class="line-info">
-                <div class="line-name">{{ line.name }}</div>
-                <div class="line-price">{{ formatCents(line.price) }} €</div>
-              </div>
-              <div class="diner-buttons">
-                <button
-                  *ngFor="let n of unpaidDinerNumbers"
-                  class="diner-btn"
-                  [class.active]="line.diner === n"
-                  (click)="assignLine(line.id, n)"
-                >
-                  {{ n }}
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="subaccounts-column">
-            <div class="section-label">Subcuentas</div>
-            <div *ngFor="let n of unpaidDinerNumbers" class="subaccount-card" [class.empty]="getSubtotal(n) === 0">
-              <div class="subaccount-header">
-                <span class="subaccount-name">Cuenta {{ n }}</span>
-                <span class="subaccount-amount">{{ formatCents(getSubtotal(n)) }} €</span>
-              </div>
-              <div *ngFor="let line of getSubaccountLines(n)" class="subaccount-line">
-                <span>{{ line.name }}</span>
-                <span>{{ formatCents(line.price) }} €</span>
+          <div class="parts-grid">
+            <div *ngFor="let dinerNum of unpaidDinerNumbers; let i = index" class="part-card" [class.paid]="isDinerPaid(dinerNum)">
+              <div class="part-label">Comensal {{ dinerNum }}</div>
+              <div class="part-amount">
+                <span *ngIf="!isDinerPaid(dinerNum)">
+                  {{ formatCents(getDinerAmount(dinerNum)) }} €
+                </span>
+                <span *ngIf="isDinerPaid(dinerNum)" class="paid-badge">✓ Pagado</span>
               </div>
               <button
-                *ngIf="getSubtotal(n) > 0"
                 class="btn-charge"
-                (click)="chargeDiner(n)"
+                (click)="chargeEqualPart(dinerNum)"
+                [disabled]="isDinerPaid(dinerNum)"
               >
-                Cobrar cuenta {{ n }}
+                {{ isDinerPaid(dinerNum) ? 'Pagado' : 'Cobrar' }}
               </button>
             </div>
           </div>
         </div>
+
+        <!-- Por líneas -->
+        <div *ngIf="mode === 'lines'" class="lines-mode">
+          <div class="lines-columns">
+            <div class="lines-column">
+              <div class="section-label">Líneas — toca para asignar</div>
+              <div *ngFor="let line of assignedLines" class="line-item" [class.assigned]="line.diner">
+                <div class="line-info">
+                  <div class="line-name">{{ line.name }}</div>
+                  <div class="line-price">{{ formatCents(line.price) }} €</div>
+                </div>
+                <div class="diner-buttons">
+                  <button
+                    *ngFor="let n of unpaidDinerNumbers"
+                    class="diner-btn"
+                    [class.active]="line.diner === n"
+                    [disabled]="isDinerPaid(n)"
+                    (click)="assignLine(line.id, n)"
+                  >
+                    {{ n }}
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="subaccounts-column">
+              <div class="section-label">Subcuentas</div>
+              <div *ngFor="let n of unpaidDinerNumbers" class="subaccount-card" [class.empty]="getSubtotal(n) === 0">
+                <div class="subaccount-header">
+                  <span class="subaccount-name">Cuenta {{ n }}</span>
+                  <span class="subaccount-amount">{{ formatCents(getSubtotal(n)) }} €</span>
+                </div>
+                <div *ngFor="let line of getSubaccountLines(n)" class="subaccount-line">
+                  <span>{{ line.name }}</span>
+                  <span>{{ formatCents(line.price) }} €</span>
+                </div>
+                <button
+                  *ngIf="getSubtotal(n) > 0"
+                  class="btn-charge"
+                  [disabled]="isDinerPaid(n)"
+                  (click)="chargeDiner(n)"
+                >
+                  {{ isDinerPaid(n) ? 'Cuenta pagada' : 'Cobrar cuenta ' + n }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Por comensal -->
+        <div *ngIf="mode === 'diner'" class="diner-mode">
+          <div class="diner-cards">
+            <div *ngFor="let d of unpaidDinerNumbers" class="diner-card">
+              <div class="diner-name">Comensal {{ d }}</div>
+              <div *ngFor="let line of getDinerLines(d)" class="diner-line">
+                <span>{{ line.name }}</span>
+                <span>{{ formatCents(line.price) }} €</span>
+              </div>
+              <div class="diner-subtotal">
+                <span>Subtotal</span>
+                <span>{{ formatCents(getSubtotal(d)) }} €</span>
+              </div>
+              <button class="btn-charge" (click)="chargeDiner(d)">Cobrar comensal {{ d }}</button>
+            </div>
+          </div>
+          <div class="common-expenses">
+            <div class="section-label">Gastos comunes — pendiente asignar</div>
+            <div class="common-badges">
+              <span *ngFor="let line of getCommonLines()" class="common-badge">
+                {{ line.name }} · {{ formatCents(line.price) }} €
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Por comensal -->
-      <div *ngIf="mode === 'diner'" class="diner-mode">
-        <div class="diner-cards">
-          <div *ngFor="let d of unpaidDinerNumbers" class="diner-card">
-            <div class="diner-name">Comensal {{ d }}</div>
-            <div *ngFor="let line of getDinerLines(d)" class="diner-line">
-              <span>{{ line.name }}</span>
-              <span>{{ formatCents(line.price) }} €</span>
-            </div>
-            <div class="diner-subtotal">
-              <span>Subtotal</span>
-              <span>{{ formatCents(getSubtotal(d)) }} €</span>
-            </div>
-            <button class="btn-charge" (click)="chargeDiner(d)">Cobrar comensal {{ d }}</button>
-          </div>
-        </div>
-        <div class="common-expenses">
-          <div class="section-label">Gastos comunes — pendiente asignar</div>
-          <div class="common-badges">
-            <span *ngFor="let line of getCommonLines()" class="common-badge">
-              {{ line.name }} · {{ formatCents(line.price) }} €
-            </span>
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
 </div>

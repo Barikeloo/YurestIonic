@@ -14,11 +14,11 @@ class ProductSeeder extends Seeder
         $familyIds = DB::table('families')->pluck('id', 'name');
         $taxIds = DB::table('taxes')->pluck('id', 'name');
 
-        if (!$restaurantId || !$familyIds->has('Bebidas') || !$familyIds->has('Comida') || !$familyIds->has('Postres')) {
+        if (! $restaurantId || ! $familyIds->has('Bebidas') || ! $familyIds->has('Comida') || ! $familyIds->has('Postres')) {
             return;
         }
 
-        if (!$taxIds->has('IVA Reducido') || !$taxIds->has('IVA General')) {
+        if (! $taxIds->has('IVA Reducido') || ! $taxIds->has('IVA General')) {
             return;
         }
 

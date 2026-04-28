@@ -4,14 +4,10 @@ namespace App\Order\Infrastructure\Persistence\Repositories;
 
 use App\Order\Domain\Entity\OrderLine;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
-use App\Order\Domain\ValueObject\OrderLinePrice;
-use App\Order\Domain\ValueObject\OrderLineQuantity;
-use App\Order\Domain\ValueObject\OrderLineTaxPercentage;
-use App\Order\Infrastructure\Persistence\Models\EloquentOrderLine;
 use App\Order\Infrastructure\Persistence\Models\EloquentOrder;
+use App\Order\Infrastructure\Persistence\Models\EloquentOrderLine;
 use App\Product\Infrastructure\Persistence\Models\EloquentProduct;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
-use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
 

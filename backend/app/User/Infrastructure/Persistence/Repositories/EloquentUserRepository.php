@@ -108,7 +108,7 @@ class EloquentUserRepository implements UserRepositoryInterface
             $model->email,
             $model->password,
             $model->role ?? null,
-            $model->restaurant_id ? (string)$model->restaurant_id : null, // integer FK stored as string in RestaurantId VO
+            $model->restaurant_id ? (string) $model->restaurant_id : null, // integer FK stored as string in RestaurantId VO
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),
         );
@@ -128,7 +128,7 @@ class EloquentUserRepository implements UserRepositoryInterface
             $model->email,
             $model->password,
             $model->role ?? null,
-            $model->restaurant_id ? (string)$model->restaurant_id : null, // integer FK stored as string in RestaurantId VO
+            $model->restaurant_id ? (string) $model->restaurant_id : null, // integer FK stored as string in RestaurantId VO
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),
         );
@@ -226,7 +226,7 @@ class EloquentUserRepository implements UserRepositoryInterface
     }
 
     /**
-     * @param array<string, string> $updates
+     * @param  array<string, string>  $updates
      */
     public function updatePartial(string $uuid, array $updates): void
     {

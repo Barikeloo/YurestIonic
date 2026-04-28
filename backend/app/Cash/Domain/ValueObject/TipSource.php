@@ -10,7 +10,7 @@ final class TipSource
 
     private function __construct(private readonly string $value)
     {
-        if (!in_array($value, self::VALID_SOURCES, true)) {
+        if (! in_array($value, self::VALID_SOURCES, true)) {
             throw new \InvalidArgumentException("Invalid tip source: {$value}");
         }
     }

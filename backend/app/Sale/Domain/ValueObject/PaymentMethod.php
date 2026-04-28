@@ -10,7 +10,7 @@ final class PaymentMethod
 
     private function __construct(private readonly string $value)
     {
-        if (!in_array($value, self::VALID_METHODS, true)) {
+        if (! in_array($value, self::VALID_METHODS, true)) {
             throw new \InvalidArgumentException("Invalid payment method: {$value}");
         }
     }

@@ -41,7 +41,7 @@ interface UserRepositoryInterface
     public function getByRestaurantUuid(string $restaurantUuid): array;
 
     /**
-     * @param array<string, string> $updates
+     * @param  array<string, string>  $updates
      */
     public function updatePartial(string $uuid, array $updates): void;
 
@@ -56,5 +56,4 @@ interface UserRepositoryInterface
         string $role = 'operator',
         ?string $pinHash = null,
     ): void;
-
 }

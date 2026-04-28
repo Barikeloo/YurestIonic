@@ -7,13 +7,14 @@ use InvalidArgumentException;
 final class OrderStatus
 {
     private const OPEN = 'open';
+
     private const TO_CHARGE = 'to-charge';
+
     private const CANCELLED = 'cancelled';
+
     private const INVOICED = 'invoiced';
 
-    private function __construct(private readonly string $value)
-    {
-    }
+    private function __construct(private readonly string $value) {}
 
     public static function create(string $value): self
     {

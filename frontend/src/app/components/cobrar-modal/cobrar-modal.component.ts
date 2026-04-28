@@ -6,6 +6,7 @@ import { BtnComponent } from '../btn/btn.component';
 import { ToggleComponent } from '../toggle/toggle.component';
 import { NumpadComponent } from '../numpad/numpad.component';
 import { AmountDisplayComponent } from '../amount-display/amount-display.component';
+import { DinersStatusComponent } from '../diners-status/diners-status.component';
 
 type PaymentMethod = 'cash' | 'card' | 'bizum' | 'mixed' | 'invitation';
 
@@ -20,7 +21,7 @@ export interface OrderLine {
   selector: 'app-cobrar-modal',
   templateUrl: './cobrar-modal.component.html',
   styleUrls: ['./cobrar-modal.component.scss'],
-  imports: [CommonModule, FormsModule, CardComponent, BtnComponent, ToggleComponent, NumpadComponent, AmountDisplayComponent],
+  imports: [CommonModule, FormsModule, CardComponent, BtnComponent, ToggleComponent, NumpadComponent, AmountDisplayComponent, DinersStatusComponent],
   standalone: true,
 })
 export class CobrarModalComponent implements OnChanges {
@@ -30,6 +31,8 @@ export class CobrarModalComponent implements OnChanges {
   @Input() lines: OrderLine[] = [];
   @Input() isPartialPayment = false;
   @Input() isProcessing = false;
+  @Input() diners = 0;
+  @Input() paidDiners: number[] = [];
   @Output() closeModal = new EventEmitter<void>();
   @Output() confirmPayment = new EventEmitter<{ method: PaymentMethod; amount: number; tip?: number }>();
   @Output() splitBill = new EventEmitter<void>();
@@ -39,6 +42,12 @@ export class CobrarModalComponent implements OnChanges {
   public tip = 0;
   public showTip = false;
   public showFiscal = false;
+
+  public get remainingTotal(): number {
+    if (this.diners <= 0) return this.total;
+    const perDiner = Math.floor(this.total / this.diners);
+    return this.total - (this.paidDiners.length * perDiner);
+  }
 
   public ngOnChanges(changes: SimpleChanges): void {
     const justOpened = changes['isOpen'] && this.isOpen && !changes['isOpen'].previousValue;

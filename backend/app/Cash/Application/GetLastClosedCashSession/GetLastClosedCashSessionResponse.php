@@ -11,8 +11,7 @@ final readonly class GetLastClosedCashSessionResponse
     private function __construct(
         public ?array $lastClosed,
         public ?array $orphanSession,
-    ) {
-    }
+    ) {}
 
     public static function create(
         ?CashSession $lastClosed,

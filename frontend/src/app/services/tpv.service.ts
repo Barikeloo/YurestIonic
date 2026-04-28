@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { firstValueFrom, Observable, throwError } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { catchError, shareReplay } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 
@@ -16,7 +16,6 @@ export interface TpvProductItem {
   price: number;
   family_id: string;
   tax_id: string;
-  image_src: string | null;
   active: boolean;
 }
 
@@ -47,6 +46,7 @@ export interface TpvOrder {
   closed_at?: string | null;
   closed_by_user_id?: string | null;
   total: number;
+  remaining_total?: number;
 }
 
 export interface TpvOrderLine {
@@ -159,9 +159,6 @@ interface UpdateOrderPayload {
 })
 export class TpvService {
   private readonly baseUrl: string = environment.apiUrl;
-  
-  // Caché de imágenes automáticas (nombre -> URL) - no persiste en DB
-  private imageCache = new Map<string, string | null>();
 
   constructor(private readonly http: HttpClient) {}
 
@@ -179,63 +176,6 @@ export class TpvService {
     return this.http
       .get<TpvProductItem[]>(`${this.baseUrl}/tpv/products`, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
-  }
-
-  /**
-   * Lista productos con imágenes automáticas (sin guardar en DB).
-   * Si un producto no tiene imagen, busca una automáticamente por su nombre.
-   */
-  public async listProductsWithAutoImages(): Promise<TpvProductItem[]> {
-    const products = await firstValueFrom(this.listProducts());
-    
-    // Enriquecer productos sin imagen con búsqueda automática
-    const enrichedProducts = await Promise.all(
-      products.map(async (product) => {
-        if (product.image_src) {
-          return product; // Ya tiene imagen asignada
-        }
-        
-        // Buscar imagen automática por nombre
-        const autoImage = await this.getAutoImageForProduct(product.name);
-        return {
-          ...product,
-          image_src: autoImage,
-        };
-      })
-    );
-    
-    return enrichedProducts;
-  }
-
-  /**
-   * Obtiene imagen automática para un producto (con caché).
-   */
-  private async getAutoImageForProduct(productName: string): Promise<string | null> {
-    const cacheKey = productName.toLowerCase().trim();
-    
-    // Verificar caché
-    if (this.imageCache.has(cacheKey)) {
-      return this.imageCache.get(cacheKey)!;
-    }
-    
-    try {
-      console.log(`[DEBUG] Buscando imagen para: "${productName}"`);
-      const response = await firstValueFrom(
-        this.searchProductImages(productName, 1)
-      );
-      
-      console.log(`[DEBUG] Respuesta para "${productName}":`, response);
-      
-      const imageUrl = response.images.length > 0 ? response.images[0].url : null;
-      console.log(`[DEBUG] URL imagen para "${productName}":`, imageUrl);
-      
-      this.imageCache.set(cacheKey, imageUrl);
-      return imageUrl;
-    } catch (err) {
-      console.error(`[DEBUG] Error buscando imagen para "${productName}":`, err);
-      this.imageCache.set(cacheKey, null);
-      return null;
-    }
   }
 
   public listZones(): Observable<TpvZoneItem[]> {
@@ -546,24 +486,4 @@ export class TpvService {
     return 'No se pudo completar la petición del TPV.';
   }
 
-  // ── Product Images (Spoonacular) ────────────────────
-
-  public searchProductImages(query: string, limit?: number): Observable<{ query: string; images: ProductImageResult[] }> {
-    let url = `${this.baseUrl}/admin/products/images/search?q=${encodeURIComponent(query)}`;
-    if (limit) {
-      url += `&limit=${limit}`;
-    }
-    return this.http
-      .get<{ query: string; images: ProductImageResult[] }>(url, { withCredentials: true })
-      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
-  }
-}
-
-export interface ProductImageResult {
-  url: string;
-  thumbUrl: string;
-  alt: string;
-  source: string;
-  author: string;
-  authorUrl: string;
 }
