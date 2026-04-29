@@ -14,7 +14,24 @@
       <button (click)="loadChargeSession()">Reintentar</button>
     </div>
 
-    <div class="mode-selector">
+    <!-- Session completed state -->
+    <div *ngIf="isSessionCompleted" class="completed-state">
+      <div class="completed-icon">✓</div>
+      <div class="completed-title">¡Cuenta completada!</div>
+      <div class="completed-subtitle">Todos los comensales han pagado</div>
+      <button class="btn-confirm" (click)="onClose()">Cerrar</button>
+    </div>
+
+    <!-- Progress indicator -->
+    <div *ngIf="chargeSession && !isSessionCompleted && !isLoading" class="progress-bar">
+      <div class="progress-track">
+        <div class="progress-fill" [style.width.%]="(chargeSession.paid_diners_count / chargeSession.diners_count) * 100"></div>
+      </div>
+      <div class="progress-text">{{ chargeSession.paid_diners_count }} de {{ chargeSession.diners_count }} comensales pagados</div>
+    </div>
+
+    <!-- Mode selector — solo visible cuando la sesión está cargada -->
+    <div *ngIf="!isLoading && !error && !isSessionCompleted" class="mode-selector">
       <button
         class="mode-btn"
         [class.active]="mode === 'equal'"
@@ -38,15 +55,16 @@
       </button>
     </div>
 
-    <div class="modal-content-split">
+    <!-- Contenido principal — solo visible cuando la sesión está cargada -->
+    <div *ngIf="!isLoading && !error && !isSessionCompleted" class="modal-content-split">
       <!-- Contenido principal (izquierda) -->
       <div class="modal-content-main">
         <!-- Partes iguales -->
         <div *ngIf="mode === 'equal'" class="equal-mode">
           <div class="parts-control">
             <span class="parts-label">Comensales pendientes: {{ remainingDiners }}</span>
-            <span class="total-label">Total: <strong>{{ formatCents(total) }} €</strong></span>
-            <span *ngIf="chargeSession" class="session-info">Cuota: {{ formatCents(chargeSession.amount_per_diner) }} €</span>
+            <span class="total-label">Total: <strong>{{ formatCents(remainingTotal) }} €</strong></span>
+            <span *ngIf="chargeSession" class="session-info">Cuota fija: {{ formatCents(chargeSession.amount_per_diner) }} €</span>
           </div>
           <div class="parts-grid">
             <div *ngFor="let dinerNum of unpaidDinerNumbers; let i = index" class="part-card" [class.paid]="isDinerPaid(dinerNum)">
@@ -143,4 +161,4 @@
       </div>
 
     </div>
-</div>
+  </div>

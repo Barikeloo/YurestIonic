@@ -1,0 +1,33 @@
+meta {
+  name: 6. Pago comensal 3
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/tpv/charge-sessions/{{session_id}}/payments
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "diner_number": 3,
+    "payment_method": "bizum"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.session_paid_diners_count: eq 3
+  res.body.is_session_complete: eq false
+}

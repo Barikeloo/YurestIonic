@@ -1,0 +1,28 @@
+meta {
+  name: 3. Obtener sesion activa
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/tpv/charge-sessions/active?order_id={{order_id}}
+  body: none
+  auth: bearer
+}
+
+query {
+  order_id: {{order_id}}
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 200
+  res.body.id: eq {{session_id}}
+}

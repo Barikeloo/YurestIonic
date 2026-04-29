@@ -1,0 +1,39 @@
+meta {
+  name: 9. Cancelar sesion
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/tpv/charge-sessions/{{session_id}}/cancel
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "cancelled_by_user_id": "{{user_id}}",
+    "reason": "Prueba de cancelacion"
+  }
+}
+
+script:post-response {
+  const json = res.getBody();
+  if (json.warning_message) {
+    console.log('⚠️ Advertencia:', json.warning_message);
+  }
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq cancelled
+}

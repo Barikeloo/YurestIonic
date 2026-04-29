@@ -1,0 +1,45 @@
+meta {
+  name: 2. Crear sesion
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/tpv/charge-sessions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "order_id": "{{order_id}}",
+    "opened_by_user_id": "{{user_id}}",
+    "diners_count": 4
+  }
+}
+
+script:post-response {
+  const json = res.getBody();
+  if (json.id) {
+    bru.setEnvVar('session_id', json.id);
+    bru.setEnvVar('amount_per_diner', json.amount_per_diner);
+    console.log('✅ Sesión creada:', json.id);
+    console.log('   Comensales:', json.diners_count);
+    console.log('   Cuota:', json.amount_per_diner, 'céntimos');
+  }
+}
+
+assert {
+  res.status: oneOf [200, 201]
+  res.body.id: isDefined
+  res.body.status: eq active
+}

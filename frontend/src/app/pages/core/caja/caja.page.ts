@@ -2,12 +2,12 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject, forkJoin, of, Subject, throwError } from 'rxjs';
-import { catchError, switchMap, takeUntil, map } from 'rxjs/operators';
+import { catchError, finalize, switchMap, take, takeUntil, map } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
 import { PinAuthService, AuthContext, AuthActionType } from '../../../services/pin-auth.service';
 import { PinAuthResult } from '../../../components/pin-auth-modal/pin-auth-modal.component';
 import { TpvService, TpvCashSession, TpvCashSessionListItem, TpvOrder, TpvTableItem } from '../../../services/tpv.service';
-import { ChargeSessionService } from '../../../services/charge-session.service';
+import { ChargeSessionService, ChargeSession } from '../../../services/charge-session.service';
 import { OpenCashModalComponent } from '../../../components/open-cash-modal/open-cash-modal.component';
 import { PinAuthModalComponent } from '../../../components/pin-auth-modal/pin-auth-modal.component';
 import { CashMovementModalComponent } from '../../../components/cash-movement-modal/cash-movement-modal.component';
@@ -165,6 +165,7 @@ export class CajaPage implements OnInit, OnDestroy {
   public isProcessingPayment = false;
   public currentChargeSession: { id: string; amountPerDiner: number } | null = null;
   public currentDinerNumber: number | null = null;
+  public loadedChargeSession: ChargeSession | null = null;
 
   private refreshInterval: any;
   private clockInterval: any;
@@ -913,35 +914,73 @@ export class CajaPage implements OnInit, OnDestroy {
 
   public onSplitBill(): void {
     this.showCobrarModal = false;
-    // Cancel any previous payment flow requests (A7 fix)
-    this.paymentFlowDestroy$.next();
 
-    // Fetch paid total to calculate remaining amount
-    if (this.selectedTable) {
-      const orderId = this.selectedTable.order_id;
-      this.tpvService.getOrderPaidTotal(orderId).pipe(
-        takeUntil(this.destroy$),
-        takeUntil(this.paymentFlowDestroy$)
-      ).subscribe({
-        next: (response) => {
-          const paidTotal = response.total_cents;
-          // Use originalOrderTotal to calculate remaining amount
-          const originalTotal = this.originalOrderTotal || this.selectedTable?.total || 0;
-          const remainingTotal = Math.max(0, originalTotal - paidTotal);
-          // Update the selected table total to remaining amount for split modal
-          if (this.selectedTable) {
-            this.selectedTable.total = remainingTotal;
-          }
-          this.showSplitModal = true;
-        },
-        error: (error) => {
-          console.error('Error fetching paid total:', error);
-          this.showSplitModal = true;
-        },
-      });
-    } else {
+    if (!this.selectedTable) {
       this.showSplitModal = true;
+      return;
     }
+
+    const orderId = this.selectedTable.order_id;
+
+    // take(1) garantiza que cada observable emite exactamente un valor y completa.
+    // finalize actúa como red de seguridad: abre el modal aunque algo falle.
+    forkJoin({
+      paidTotal: this.tpvService.getOrderPaidTotal(orderId).pipe(
+        take(1),
+        catchError(() => of({ total_cents: 0 }))
+      ),
+      chargeSession: this.chargeSessionService.getActiveChargeSession(orderId).pipe(
+        take(1),
+        catchError((error) => {
+          if (error.status === 404) return of(null);
+          console.error('Error fetching charge session in onSplitBill:', error);
+          return of(null);
+        })
+      ),
+    }).pipe(
+      takeUntil(this.destroy$),
+      finalize(() => {
+        // Red de seguridad: si el observable completa sin next (edge case),
+        // abrimos el modal igualmente para no dejar al usuario bloqueado.
+        if (!this.showSplitModal) {
+          console.warn('onSplitBill finalize fallback: forcing showSplitModal = true');
+          this.showSplitModal = true;
+        }
+      })
+    ).subscribe({
+      next: ({ paidTotal, chargeSession }) => {
+        const paidTotalCents = paidTotal.total_cents;
+        const originalTotal = this.originalOrderTotal || 0;
+
+        this.loadedChargeSession = chargeSession;
+
+        if (chargeSession) {
+          // La charge session es la fuente de verdad
+          this.paidDiners = chargeSession.paid_diners.map((p) => p.diner_number);
+          console.log('Synced paidDiners from charge session:', this.paidDiners);
+          if (this.selectedTable) {
+            this.selectedTable.total = chargeSession.remaining_amount;
+          }
+        } else {
+          // Fallback: calcular desde el total pagado
+          const diners = this.selectedTable?.diners ?? 1;
+          const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
+          const paidDinersCount = diners > 1 && partAmount > 0
+            ? Math.floor(paidTotalCents / partAmount)
+            : (paidTotalCents > 0 ? 1 : 0);
+          this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
+          if (this.selectedTable) {
+            this.selectedTable.total = Math.max(0, originalTotal - paidTotalCents);
+          }
+        }
+
+        this.showSplitModal = true;
+      },
+      error: (error) => {
+        console.error('Error in onSplitBill:', error);
+        this.showSplitModal = true;
+      },
+    });
   }
 
   public onConfirmPayment(data: { method: string; amount: number; tip?: number }): void {
@@ -1061,29 +1100,52 @@ export class CajaPage implements OnInit, OnDestroy {
             paymentMethod
           });
 
+          const mappedMethod: 'cash' | 'card' | 'bizum' | 'other' =
+            (paymentMethod === 'cash' || paymentMethod === 'card' || paymentMethod === 'bizum')
+              ? paymentMethod
+              : 'other';
+
           return this.chargeSessionService.recordPayment(
             this.currentChargeSession.id,
             {
               diner_number: this.currentDinerNumber,
-              payment_method: paymentMethod as 'cash' | 'card' | 'bizum' | 'other'
+              payment_method: mappedMethod,
             }
           ).pipe(
             takeUntil(this.paymentFlowDestroy$),
-            map((paymentResponse) => {
+            switchMap((paymentResponse) => {
               console.log('Charge session payment recorded:', paymentResponse);
-              // Agregar el comensal a la lista de pagados
-              if (!this.paidDiners.includes(this.currentDinerNumber!)) {
-                this.paidDiners.push(this.currentDinerNumber!);
-              }
-              // Limpiar sesión actual
+
+              return this.chargeSessionService.getActiveChargeSession(orderId!).pipe(
+                takeUntil(this.paymentFlowDestroy$),
+                map((freshSession) => {
+                  console.log('Charge session reloaded after payment:', freshSession);
+                  this.loadedChargeSession = freshSession;
+                  this.paidDiners = freshSession.paid_diners.map((p) => p.diner_number);
+                  const isComplete = freshSession.paid_diners_count >= freshSession.diners_count;
+                  return { type: 'charge_session' as const, isOrderComplete: isComplete };
+                }),
+                catchError((error) => {
+                  console.warn('Could not reload charge session after payment:', error);
+                  if (!this.paidDiners.includes(this.currentDinerNumber!)) {
+                    this.paidDiners.push(this.currentDinerNumber!);
+                  }
+                  return of({
+                    type: 'charge_session' as const,
+                    isOrderComplete: paymentResponse.is_session_complete,
+                  });
+                })
+              );
+            }),
+            map((result) => {
               this.currentChargeSession = null;
               this.currentDinerNumber = null;
-
-              return { type: 'charge_session' as const, isOrderComplete: paymentResponse.is_session_complete };
+              return result;
             }),
             catchError((error) => {
               console.error('Error recording charge session payment:', error);
-              // Continuar aunque falle el registro en la sesión
+              this.currentChargeSession = null;
+              this.currentDinerNumber = null;
               return of({ type: 'charge_session_error' as const, isOrderComplete: willBeComplete });
             })
           );
@@ -1141,12 +1203,26 @@ export class CajaPage implements OnInit, OnDestroy {
       })
     ).subscribe({
       next: (result) => {
-        if (result.type === 'partial') {
+        if (result.type === 'charge_session') {
           if (result.isOrderComplete) {
-            // Order is complete, show success animation
             this.showPaymentSuccess = true;
           } else {
-            // Return to split modal for equal parts
+            console.log('Charge session payment recorded, returning to split modal');
+            this.onSplitBill();
+          }
+        } else if (result.type === 'charge_session_error') {
+          alert('La venta se registró, pero hubo un problema sincronizando el pago con la sesión de cobro. Revisa los detalles antes de continuar.');
+          if (result.isOrderComplete) {
+            this.showPaymentSuccess = true;
+          } else if (this.selectedTable) {
+            this.onSplitBill();
+          } else {
+            this.loadSessionSummary();
+          }
+        } else if (result.type === 'partial') {
+          if (result.isOrderComplete) {
+            this.showPaymentSuccess = true;
+          } else {
             console.log('Calling onSplitBill to return to split modal');
             this.onSplitBill();
           }
@@ -1204,11 +1280,9 @@ export class CajaPage implements OnInit, OnDestroy {
         // Set flags to indicate this is a partial payment
         this.fromMesas = false;
         this.isPartialPayment = true;
-        // Track paid diner
-        if (data.diner && !this.paidDiners.includes(data.diner)) {
-          this.paidDiners.push(data.diner);
-          console.log('Added paid diner:', data.diner, 'paidDiners now:', this.paidDiners);
-        }
+        // Track paid diner — NO lo añadimos aquí; lo sincronizamos desde el
+        // backend después de registrar el pago en onConfirmPayment.
+        // Añadirlo antes provoca desincronización con el cálculo del último comensal.
       } else {
         // For line-based split, use selected lines
         this.selectedTableLines = selectedLines.map((l) => ({
@@ -1244,6 +1318,9 @@ export class CajaPage implements OnInit, OnDestroy {
     this.fromMesas = false;
     this.isPartialPayment = false;
     this.pendingTableToCharge = null;
+    this.loadedChargeSession = null;
+    this.currentChargeSession = null;
+    this.currentDinerNumber = null;
   }
 
   public getPerDinerAmount(total: number, diners: number): number {

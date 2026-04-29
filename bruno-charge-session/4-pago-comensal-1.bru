@@ -1,0 +1,35 @@
+meta {
+  name: 4. Pago comensal 1
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/tpv/charge-sessions/{{session_id}}/payments
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "diner_number": 1,
+    "payment_method": "cash"
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.diner_number: eq 1
+  res.body.payment_method: eq cash
+  res.body.session_paid_diners_count: eq 1
+  res.body.is_session_complete: eq false
+}

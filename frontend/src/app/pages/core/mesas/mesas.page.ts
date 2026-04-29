@@ -7,6 +7,7 @@ import { AuthService, QuickAccessUserResponse } from '../../../services/auth.ser
 import { PinAuthService } from '../../../services/pin-auth.service';
 import { TpvOrder, TpvOrderLine, TpvService, TpvTableItem, TpvZoneItem } from '../../../services/tpv.service';
 import { DinersStatusComponent } from '../../../components/diners-status/diners-status.component';
+import { ChargeSessionService } from '../../../services/charge-session.service';
 
 interface TableWithStatus extends TpvTableItem {
   occupied: boolean;
@@ -65,11 +66,13 @@ export class MesasPage implements OnInit {
   editDinersError: string | null = null;
   editDinersOrderId: string | null = null;
   editDinersTable: TableWithStatus | null = null;
+  editDinersCheckingChargeSession = false;
 
   constructor(
     private readonly tpvService: TpvService,
     private readonly authService: AuthService,
     private readonly pinAuthService: PinAuthService,
+    private readonly chargeSessionService: ChargeSessionService,
     private readonly router: Router,
   ) {}
 
@@ -460,8 +463,44 @@ export class MesasPage implements OnInit {
       console.log('[onEditDiners] Error recargando orden (usando datos locales):', e);
     }
 
-    this.editDinersValue = this.editDinersTable.diners ?? 1;
+    // Consultar backend si hay charge session con pagos registrados
+    this.editDinersCheckingChargeSession = true;
     this.editDinersError = null;
+
+    try {
+      const chargeSession = await firstValueFrom(
+        this.chargeSessionService.getActiveChargeSession(table.order_id)
+      );
+
+      // Si hay pagos registrados en la charge session, bloquear edición
+      if (chargeSession && chargeSession.paid_diners_count > 0) {
+        this.editDinersError = `Ya hay ${chargeSession.paid_diners_count} pago${chargeSession.paid_diners_count === 1 ? '' : 's'} registrado${chargeSession.paid_diners_count === 1 ? '' : 's'} en la sesión de cobro. No se puede modificar el número de comensales.`;
+        this.editDinersCheckingChargeSession = false;
+        // Mostrar el modal con el mensaje de error (pero deshabilitado)
+        this.editDinersValue = this.editDinersTable.diners ?? 1;
+        this.editDinersModalOpen = true;
+        return;
+      }
+    } catch (error: unknown) {
+      // 404 = no hay sesión activa, es seguro continuar
+      const httpError = error as { status?: number };
+      if (httpError.status !== 404) {
+        console.error('[onEditDiners] Error consultando charge session:', error);
+        // No bloqueamos por errores de red, usamos la validación local como fallback
+      }
+    } finally {
+      this.editDinersCheckingChargeSession = false;
+    }
+
+    // Validación local como respaldo (si no hay charge session o hubo error de red)
+    const paidDiners = this.getPaidDinersForTable(this.editDinersTable);
+    if (paidDiners.length > 0) {
+      this.editDinersError = `Ya hay ${paidDiners.length} pago${paidDiners.length === 1 ? '' : 's'} registrado${paidDiners.length === 1 ? '' : 's'}. No se puede modificar el número de comensales.`;
+    } else {
+      this.editDinersError = null;
+    }
+
+    this.editDinersValue = this.editDinersTable.diners ?? 1;
     this.editDinersModalOpen = true;
     console.log('[onEditDiners] Modal abierto para', this.editDinersTable?.name,
       'con', this.editDinersValue, 'comensales');

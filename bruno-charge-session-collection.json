@@ -1,0 +1,252 @@
+{
+  "name": "Charge Session API",
+  "version": "1",
+  "items": [
+    {
+      "type": "http",
+      "name": "0. Login",
+      "seq": 1,
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/auth/login",
+        "headers": [
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "json",
+          "json": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "1. Verificar NO hay sesion",
+      "seq": 2,
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tpv/charge-sessions/active?order_id={{order_id}}",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "name": "2. Crear sesion",
+      "seq": 3,
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/tpv/charge-sessions",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "json",
+          "json": "{\n  \"order_id\": \"{{order_id}}\",\n  \"opened_by_user_id\": \"{{user_id}}\",\n  \"diners_count\": 4\n}"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "3. Obtener sesion activa",
+      "seq": 4,
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/api/tpv/charge-sessions/active?order_id={{order_id}}",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ]
+      }
+    },
+    {
+      "type": "http",
+      "name": "4. Pago comensal 1",
+      "seq": 5,
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/tpv/charge-sessions/{{session_id}}/payments",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "json",
+          "json": "{\n  \"diner_number\": 1,\n  \"payment_method\": \"cash\"\n}"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "5. Pago comensal 2",
+      "seq": 6,
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/tpv/charge-sessions/{{session_id}}/payments",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "json",
+          "json": "{\n  \"diner_number\": 2,\n  \"payment_method\": \"card\"\n}"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "6. Pago comensal 3",
+      "seq": 7,
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/tpv/charge-sessions/{{session_id}}/payments",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "json",
+          "json": "{\n  \"diner_number\": 3,\n  \"payment_method\": \"bizum\"\n}"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "7. Pago comensal 4 ULTIMO",
+      "seq": 8,
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/tpv/charge-sessions/{{session_id}}/payments",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "json",
+          "json": "{\n  \"diner_number\": 4,\n  \"payment_method\": \"other\"\n}"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "8. Intentar pagar duplicado ERROR",
+      "seq": 9,
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/tpv/charge-sessions/{{session_id}}/payments",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "json",
+          "json": "{\n  \"diner_number\": 1,\n  \"payment_method\": \"cash\"\n}"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "9. Cancelar sesion",
+      "seq": 10,
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/api/tpv/charge-sessions/{{session_id}}/cancel",
+        "headers": [
+          {
+            "name": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "name": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "json",
+          "json": "{\n  \"cancelled_by_user_id\": \"{{user_id}}\",\n  \"reason\": \"Prueba\"\n}"
+        }
+      }
+    }
+  ],
+  "activeEnvironment": "local",
+  "environments": [
+    {
+      "name": "local",
+      "variables": [
+        {
+          "name": "baseUrl",
+          "value": "http://localhost:8000"
+        },
+        {
+          "name": "email",
+          "value": "admin@restaurant.com"
+        },
+        {
+          "name": "password",
+          "value": "password"
+        },
+        {
+          "name": "token",
+          "value": ""
+        },
+        {
+          "name": "user_id",
+          "value": ""
+        },
+        {
+          "name": "order_id",
+          "value": ""
+        },
+        {
+          "name": "session_id",
+          "value": ""
+        }
+      ]
+    }
+  ]
+}

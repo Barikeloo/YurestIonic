@@ -495,3 +495,83 @@
   cursor: not-allowed;
   background: var(--gray-100);
 }
+
+// ── Completed state ─────────────────────────────────────────────────────
+.completed-state {
+  padding: 60px 40px;
+  text-align: center;
+  background: var(--green-soft);
+  border-radius: var(--radius-xl);
+  margin: 24px;
+
+  .completed-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--green);
+    color: var(--white);
+    font-size: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+  }
+
+  .completed-title {
+    font-family: var(--font);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 8px;
+  }
+
+  .completed-subtitle {
+    font-family: var(--font);
+    font-size: 14px;
+    color: var(--gray-600);
+    margin-bottom: 24px;
+  }
+}
+
+// ── Progress bar ────────────────────────────────────────────────────────
+.progress-bar {
+  padding: 16px 24px 0;
+
+  .progress-track {
+    height: 8px;
+    background: var(--gray-200);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--green);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+
+  .progress-text {
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--gray-600);
+    text-align: center;
+    margin-top: 8px;
+  }
+}
+
+// ── Confirm button ─────────────────────────────────────────────────────
+.btn-confirm {
+  padding: 12px 32px;
+  border-radius: 8px;
+  border: none;
+  background: var(--green);
+  color: var(--white);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s;
+
+  &:hover { background: #1bb868; }
+}

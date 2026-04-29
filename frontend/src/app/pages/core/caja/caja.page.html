@@ -86,9 +86,10 @@
     <app-diners-status
       class="split-modal-sidebar"
       [diners]="selectedTable?.diners || 0"
-      [total]="selectedTable?.total || 0"
-      [remainingTotal]="(selectedTable?.total || 0) - (paidDiners.length * getPerDinerAmount(selectedTable?.total || 0, selectedTable?.diners || 1))"
+      [total]="originalOrderTotal"
+      [remainingTotal]="loadedChargeSession?.remaining_amount ?? originalOrderTotal"
       [paidDiners]="paidDiners"
+      [amountPerDiner]="loadedChargeSession?.amount_per_diner ?? null"
     ></app-diners-status>
   </div>
 

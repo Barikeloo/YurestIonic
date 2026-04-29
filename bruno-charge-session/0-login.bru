@@ -1,0 +1,31 @@
+meta {
+  name: 0. Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "{{email}}",
+    "password": "{{password}}"
+  }
+}
+
+script:post-response {
+  const json = res.getBody();
+  if (json.token) {
+    bru.setEnvVar('token', json.token);
+    bru.setEnvVar('user_id', json.user.uuid || json.user.id);
+    console.log('✅ Token guardado');
+  }
+}

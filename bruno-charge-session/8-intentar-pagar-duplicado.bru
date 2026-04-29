@@ -1,0 +1,31 @@
+meta {
+  name: 8. Intentar pagar duplicado ERROR
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/api/tpv/charge-sessions/{{session_id}}/payments
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "diner_number": 1,
+    "payment_method": "cash"
+  }
+}
+
+assert {
+  res.status: eq 409
+}

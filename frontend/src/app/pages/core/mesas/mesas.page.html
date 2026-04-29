@@ -326,6 +326,12 @@
     <!-- Comensales -->
     <div class="modal-section-label">Número de comensales</div>
 
+    <!-- Indicador de carga -->
+    <div *ngIf="editDinersCheckingChargeSession" class="diners-loading">
+      <span class="spinner"></span>
+      Verificando pagos...
+    </div>
+
     <!-- Advertencia de validación -->
     <div *ngIf="dinersValidationMessage" class="diners-warning">
       {{ dinersValidationMessage }}
@@ -335,14 +341,14 @@
       <button
         class="stepper-btn"
         (click)="decrementEditDiners()"
-        [disabled]="editDinersValue <= 1 || editDinersLoading || editDinersValue <= currentPaidDinersCount"
+        [disabled]="editDinersValue <= 1 || editDinersLoading || editDinersCheckingChargeSession || editDinersValue <= currentPaidDinersCount || !!editDinersError"
         aria-label="Disminuir comensales"
       >−</button>
       <div class="diners-display">{{ editDinersValue }}</div>
       <button
         class="stepper-btn"
         (click)="incrementEditDiners()"
-        [disabled]="editDinersValue >= 99 || editDinersLoading"
+        [disabled]="editDinersValue >= 99 || editDinersLoading || editDinersCheckingChargeSession || !!editDinersError"
         aria-label="Aumentar comensales"
       >+</button>
     </div>
@@ -352,18 +358,18 @@
         *ngFor="let n of [1, 2, 3, 4, 5, 6, 7, 8]"
         class="quick-chip"
         [class.active]="editDinersValue === n"
-        [class.disabled]="n < currentPaidDinersCount"
+        [class.disabled]="n < currentPaidDinersCount || !!editDinersError"
         (click)="editDinersValue = n"
-        [disabled]="editDinersLoading || n < currentPaidDinersCount"
+        [disabled]="editDinersLoading || editDinersCheckingChargeSession || n < currentPaidDinersCount || !!editDinersError"
       >{{ n }}</button>
     </div>
 
     <button
       class="diners-confirm"
       (click)="confirmEditDiners()"
-      [disabled]="editDinersLoading || !canReduceDiners"
+      [disabled]="editDinersLoading || editDinersCheckingChargeSession || !canReduceDiners || !!editDinersError"
     >
-      {{ editDinersLoading ? 'Guardando...' : 'Guardar' }}
+      {{ editDinersLoading ? 'Guardando...' : (editDinersError ? 'No se puede modificar' : 'Guardar') }}
     </button>
 
     <div *ngIf="editDinersError" class="modal-error">{{ editDinersError }}</div>

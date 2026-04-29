@@ -1,0 +1,43 @@
+meta {
+  name: 7. Pago comensal 4 ULTIMO
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/api/tpv/charge-sessions/{{session_id}}/payments
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "diner_number": 4,
+    "payment_method": "other"
+  }
+}
+
+script:post-response {
+  const json = res.getBody();
+  if (json.is_session_complete) {
+    console.log('🎉 SESIÓN COMPLETA!');
+    console.log('   Pagados:', json.session_paid_diners_count);
+    console.log('   Estado:', json.session_status);
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.session_paid_diners_count: eq 4
+  res.body.is_session_complete: eq true
+  res.body.session_status: eq completed
+}

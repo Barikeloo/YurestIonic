@@ -56,24 +56,50 @@ export class SplitBillModalComponent implements OnChanges, OnInit {
       this.parts = this.diners;
       console.log('SplitBillModal ngOnChanges - diners:', this.diners, 'paidDiners:', this.paidDiners);
     }
+
+    // Si cambia el orderId (nueva mesa), recargamos la sesión de cobro
+    if (changes['orderId'] && !changes['orderId'].firstChange) {
+      this.chargeSession = null;
+      this.loadChargeSession();
+    }
   }
 
   public get remainingDiners(): number {
+    if (this.chargeSession) {
+      return this.chargeSession.diners_count - this.chargeSession.paid_diners_count;
+    }
     return this.diners - this.paidDiners.length;
   }
 
   public get unpaidDinerNumbers(): number[] {
     const allDiners = Array.from({ length: this.diners }, (_, i) => i + 1);
+    if (this.chargeSession) {
+      const paidNumbers = this.chargeSession.paid_diners.map((p) => p.diner_number);
+      return allDiners.filter((d) => !paidNumbers.includes(d));
+    }
     return allDiners.filter((d) => !this.paidDiners.includes(d));
   }
 
   public get equalPart(): number {
+    if (this.chargeSession) {
+      return this.chargeSession.amount_per_diner;
+    }
     if (this.remainingDiners <= 0) return 0;
     return Math.floor(this.total / this.remainingDiners);
   }
 
   public get remainder(): number {
+    if (this.chargeSession) {
+      return this.chargeSession.remaining_amount - (this.equalPart * this.remainingDiners);
+    }
     return this.total - this.equalPart * this.remainingDiners;
+  }
+
+  public get remainingTotal(): number {
+    if (this.chargeSession) {
+      return this.chargeSession.remaining_amount;
+    }
+    return this.total;
   }
 
   public assignLine(id: string | undefined, diner: number): void {
@@ -116,11 +142,11 @@ export class SplitBillModalComponent implements OnChanges, OnInit {
   }
 
   public chargeEqualPart(dinerNum: number): void {
-    const unpaidNumbers = this.unpaidDinerNumbers;
-    const index = unpaidNumbers.indexOf(dinerNum);
-    const partAmount = this.equalPart + (index === unpaidNumbers.length - 1 ? this.remainder : 0);
-    // For equal parts, emit with all lines for the first part, empty for subsequent parts
-    // This allows the backend to create partial sales
+    // El monto real lo calculamos con getDinerAmount (gestiona correctamente el último comensal)
+    const partAmount = this.getDinerAmount(dinerNum);
+
+    // Para partes iguales emitimos todas las líneas en el primer cobro; en los
+    // siguientes el padre ya tiene la orden cargada y gestiona el parcial.
     this.confirmSplit.emit({
       selectedLines: this.paidDiners.length === 0 ? this.assignedLines : [],
       diner: dinerNum,
@@ -144,6 +170,10 @@ export class SplitBillModalComponent implements OnChanges, OnInit {
 
   public formatCents(cents: number): string {
     return (cents / 100).toFixed(2);
+  }
+
+  private formatCentsToEuros(cents: number): string {
+    return (cents / 100).toFixed(2).replace('.', ',') + ' €';
   }
 
   /**
@@ -171,8 +201,14 @@ export class SplitBillModalComponent implements OnChanges, OnInit {
           // No hay sesión activa, creamos una nueva
           this.createChargeSession();
         } else {
-          console.error('Error loading charge session:', error);
-          this.error = 'Error al cargar la sesión de cobro';
+          console.error('Error loading charge session:', {
+            status: error?.status,
+            message: error?.message,
+            error: error?.error,
+            url: error?.url,
+          });
+          const detail = error?.error?.message || error?.message || `HTTP ${error?.status}`;
+          this.error = `Error al cargar la sesión de cobro (${detail})`;
           this.isLoading = false;
         }
       },
@@ -197,6 +233,25 @@ export class SplitBillModalComponent implements OnChanges, OnInit {
       },
       error: (error) => {
         console.error('Error creating charge session:', error);
+
+        // Backend validation: order already has partial payments
+        const err = error?.error || error;
+        if (err?.error_code === 'order_has_partial_payments') {
+          const amount = this.formatCentsToEuros(err.paid_amount_cents || 0);
+
+          alert(
+            `Esta cuenta ya tiene ${amount} cobrados.\n\n` +
+            `No se puede dividir a partes iguales mientras existan pagos previos.\n\n` +
+            `Opciones:\n` +
+            `• Continúa cobrando manualmente\n` +
+            `• O cancela los pagos previos`
+          );
+
+          this.error = null;
+          this.isLoading = false;
+          return;
+        }
+
         this.error = 'Error al crear la sesión de cobro';
         this.isLoading = false;
       },
@@ -230,8 +285,30 @@ export class SplitBillModalComponent implements OnChanges, OnInit {
       // Fallback al cálculo local
       const unpaidNumbers = this.unpaidDinerNumbers;
       const index = unpaidNumbers.indexOf(dinerNum);
+
       return this.equalPart + (index === unpaidNumbers.length - 1 ? this.remainder : 0);
     }
+
+    // El último comensal no pagado paga el resto acumulado
+    const unpaidNumbers = this.unpaidDinerNumbers;
+    const isLastUnpaid = unpaidNumbers.length > 0 && unpaidNumbers[unpaidNumbers.length - 1] === dinerNum;
+
+    if (isLastUnpaid) {
+      // Cuánto queda después de que paguen los demás pendientes excepto este
+      const othersAmount = this.chargeSession.amount_per_diner * (unpaidNumbers.length - 1);
+      const lastAmount = this.chargeSession.remaining_amount - othersAmount;
+
+      return Math.max(lastAmount, this.chargeSession.amount_per_diner);
+    }
+
     return this.chargeSession.amount_per_diner;
+  }
+
+  /**
+   * Verificar si todos los comensales han pagado (sesión completada)
+   */
+  public get isSessionCompleted(): boolean {
+    if (!this.chargeSession) return false;
+    return this.chargeSession.paid_diners_count >= this.chargeSession.diners_count;
   }
 }

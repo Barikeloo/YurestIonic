@@ -20,12 +20,17 @@ export class DinersStatusComponent {
   @Input() remainingTotal = 0;
   @Input() paidDiners: number[] = [];
   @Input() compact = false;
+  @Input() amountPerDiner: number | null = null;
 
   get paidTotal(): number {
+    if (this.amountPerDiner !== null) {
+      return this.paidDiners.length * this.amountPerDiner;
+    }
     return this.total - this.remainingTotal;
   }
 
   get perDinerAmount(): number {
+    if (this.amountPerDiner !== null) return this.amountPerDiner;
     if (this.diners <= 0) return 0;
     return Math.floor(this.total / this.diners);
   }

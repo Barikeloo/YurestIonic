@@ -9,7 +9,7 @@ use App\Sale\Domain\Entity\ChargeSession;
 final class CreateChargeSessionResponse
 {
     /**
-     * @param  array<int>  $paidDiners
+     * @param  array<array{diner_number: int, amount_cents: int, payment_method: string, paid_at: string}>  $paidDiners
      */
     private function __construct(
         public readonly string $id,
@@ -25,11 +25,15 @@ final class CreateChargeSessionResponse
 
     public static function fromEntity(ChargeSession $chargeSession): self
     {
-        // Obtener números de comensales que ya pagaron
         $paidDiners = [];
         foreach ($chargeSession->payments() as $payment) {
             if ($payment->isCompleted()) {
-                $paidDiners[] = $payment->dinerNumber();
+                $paidDiners[] = [
+                    'diner_number' => $payment->dinerNumber(),
+                    'amount_cents' => $payment->amount(),
+                    'payment_method' => $payment->paymentMethod(),
+                    'paid_at' => $payment->createdAt()->format(\DateTimeInterface::ATOM),
+                ];
             }
         }
 

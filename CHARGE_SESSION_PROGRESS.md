@@ -1,7 +1,7 @@
 # 📋 Progreso: Sistema de Pago a Partes Iguales
 
-> **Fecha:** 28 de abril de 2026  
-> **Estado:** Backend completo, Frontend en integración (70%)
+> **Fecha:** 29 de abril de 2026  
+> **Estado:** Backend completo, Frontend integración finalizada (95%)
 
 ---
 
@@ -71,23 +71,23 @@ POST   /api/tpv/charge-sessions/{id}/cancel   # Cancelar sesión
 
 ## 🚧 Pendiente / Próximos Pasos
 
-### 1. Frontend (30% restante)
+### 1. Frontend (5% restante)
 
-| Tarea | Prioridad | Archivos |
-|-------|-----------|----------|
-| **Verificar compilación** | 🔴 Alta | Todo el frontend |
-| **Manejar error de carga de sesión** | 🟡 Media | `split-bill-modal.component.ts` |
-| **Recargar sesión tras pago** | 🟡 Media | `caja.page.ts` - llamar `getActiveChargeSession` tras pago |
-| **Estado visual de sesión completada** | 🟡 Media | `split-bill-modal.component.html` - mostrar cuando todos pagaron |
-| **Pruebas manuales** | 🔴 Alta | Todo el flujo end-to-end |
+| Tarea | Prioridad | Archivos | Estado |
+|-------|-----------|----------|--------|
+| **Verificar compilación** | 🔴 Alta | Todo el frontend | ✅ Compilación OK |
+| **Manejar error de carga de sesión** | 🟡 Media | `split-bill-modal.component.ts` | ✅ Estados loading/error implementados |
+| **Recargar sesión tras pago** | 🟡 Media | `caja.page.ts` | ✅ Recarga después de `recordPayment` |
+| **Estado visual de sesión completada** | 🟡 Media | `split-bill-modal.component.html` | ✅ `isSessionCompleted` + progress bar |
+| **Pruebas manuales** | 🔴 Alta | Todo el flujo end-to-end | 🚧 Pendiente |
 
-### 2. Validación de "Editar Comensales" en Mesas
+### 2. Validación de "Editar Comensales" en Mesas ✅
 
-| Tarea | Descripción |
-|-------|-------------|
-| **Consultar backend** | Antes de abrir modal de editar comensales, llamar `getActiveChargeSession` |
-| **Bloquear si hay pagos** | Si `paid_diners_count > 0`, mostrar mensaje de error y no permitir edición |
-| **Actualizar mensaje** | Usar mensaje de la especificación: "Ya hay N pago(s) registrado(s)..." |
+| Tarea | Descripción | Estado |
+|-------|-------------|--------|
+| **Consultar backend** | Antes de abrir modal de editar comensales, llamar `getActiveChargeSession` | ✅ `onEditDiners()` consulta backend |
+| **Bloquear si hay pagos** | Si `paid_diners_count > 0`, mostrar mensaje de error y no permitir edición | ✅ Modal bloqueado con mensaje |
+| **Actualizar mensaje** | Usar mensaje: "Ya hay N pago(s) registrado(s)..." | ✅ Mensaje implementado |
 
 ### 3. Testing y Calidad
 
@@ -146,11 +146,14 @@ backend/tests/Feature/Sale/ChargeSessionTest.php                           [CREA
 
 ```
 frontend/src/app/services/charge-session.service.ts                      [CREATE]
-frontend/src/app/components/split-bill-modal/split-bill-modal.component.ts [MODIFY]
-frontend/src/app/components/split-bill-modal/split-bill-modal.component.html [MODIFY]
-frontend/src/app/components/split-bill-modal/split-bill-modal.component.scss [MODIFY]
-frontend/src/app/pages/core/caja/caja.page.ts                             [MODIFY]
+frontend/src/app/components/split-bill-modal/split-bill-modal.component.ts [MODIFY] - isSessionCompleted getter
+frontend/src/app/components/split-bill-modal/split-bill-modal.component.html [MODIFY] - Estado completado + progress bar
+frontend/src/app/components/split-bill-modal/split-bill-modal.component.scss [MODIFY] - Estilos completado/progreso
+frontend/src/app/pages/core/caja/caja.page.ts                             [MODIFY] - Recarga sesión tras pago
 frontend/src/app/pages/core/caja/caja.page.html                           [MODIFY]
+frontend/src/app/pages/core/mesas/mesas.page.ts                           [MODIFY] - Validación charge session
+frontend/src/app/pages/core/mesas/mesas.page.html                         [MODIFY] - Estados de validación
+frontend/src/app/pages/core/mesas/mesas.page.scss                         [MODIFY] - Spinner de carga
 ```
 
 ---
@@ -161,7 +164,7 @@ frontend/src/app/pages/core/caja/caja.page.html                           [MODIF
 |-------|---------|----------|
 | Cuota calculada una sola vez | ✅ `AmountPerDiner` VO | ✅ Usa `chargeSession.amount_per_diner` |
 | Cuota inmutable tras pagos | ✅ `ChargeSession::recordPayment()` valida | ✅ Botones deshabilitados |
-| No modificar comensales con pagos | ✅ `UpdateChargeSessionDiners` lanza excepción | ⏳ Pendiente en "Editar comensales" |
+| No modificar comensales con pagos | ✅ `ChargeSession::recordPayment()` valida | ✅ `mesas.page.ts` consulta backend |
 | Cancelación solo cambia estado | ✅ `ChargeSession::cancel()` | ⏳ No hay UI aún |
 | Último comensal paga el resto | ✅ Lógica en `AmountPerDiner` | ✅ Usa `amount_per_diner` del backend |
 | Persistencia entre navegaciones | ✅ Base de datos | ✅ `loadChargeSession()` en `ngOnInit` |
@@ -213,7 +216,7 @@ curl "http://localhost:8000/api/tpv/charge-sessions/active?order_id=UUID-DE-ORDE
 | Tests de integración fallan | 🟡 Media | Problema con factories de Laravel, necesita fix |
 | No hay manejo de error de carga | 🟡 Media | Modal debería mostrar error si falla carga de sesión |
 | No se recarga sesión tras pago | 🟡 Media | `caja.page.ts` debería llamar `getActiveChargeSession` tras pago para sincronizar |
-| Falta validación en "Editar comensales" | 🔴 Alta | `mesas.page.ts` no consulta backend antes de permitir edición |
+| Falta validación en "Editar comensales" | ✅ Completado | `mesas.page.ts` ahora consulta backend antes de permitir edición |
 
 ---
 

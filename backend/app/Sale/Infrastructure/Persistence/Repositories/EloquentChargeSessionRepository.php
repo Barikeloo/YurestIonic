@@ -99,8 +99,8 @@ final class EloquentChargeSessionRepository implements ChargeSessionRepositoryIn
                 $paymentModel->amount_cents,
                 $paymentModel->payment_method,
                 $paymentModel->status,
-                new \DateTimeImmutable($paymentModel->created_at),
-                new \DateTimeImmutable($paymentModel->updated_at),
+                $this->toImmutable($paymentModel->created_at),
+                $this->toImmutable($paymentModel->updated_at),
             );
         }
 
@@ -114,17 +114,30 @@ final class EloquentChargeSessionRepository implements ChargeSessionRepositoryIn
             $model->amount_per_diner,
             $model->paid_diners_count,
             $model->status,
-            new \DateTimeImmutable($model->created_at),
-            new \DateTimeImmutable($model->updated_at),
-            $model->deleted_at ? new \DateTimeImmutable($model->deleted_at) : null,
+            $this->toImmutable($model->created_at),
+            $this->toImmutable($model->updated_at),
+            $this->toImmutable($model->deleted_at),
             $model->cancelled_by_user_id,
             $model->cancellation_reason,
-            $model->cancelled_at ? new \DateTimeImmutable($model->cancelled_at) : null,
+            $this->toImmutable($model->cancelled_at),
         );
 
-        // Attach payments to entity
         $entity->loadPayments($payments);
 
         return $entity;
+    }
+
+    private function toImmutable(mixed $value): ?\DateTimeImmutable
+    {
+        if ($value === null) {
+            return null;
+        }
+        if ($value instanceof \DateTimeImmutable) {
+            return $value;
+        }
+        if ($value instanceof \DateTimeInterface) {
+            return \DateTimeImmutable::createFromInterface($value);
+        }
+        return new \DateTimeImmutable((string) $value);
     }
 }

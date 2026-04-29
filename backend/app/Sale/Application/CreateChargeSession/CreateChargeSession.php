@@ -6,7 +6,9 @@ namespace App\Sale\Application\CreateChargeSession;
 
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Sale\Application\GetOrderPaidTotal\GetOrderPaidTotal;
 use App\Sale\Domain\Entity\ChargeSession;
+use App\Sale\Domain\Exception\OrderHasPartialPaymentsException;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -23,6 +25,7 @@ final class CreateChargeSession
         private readonly ChargeSessionRepositoryInterface $chargeSessionRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly OrderLineRepositoryInterface $orderLineRepository,
+        private readonly GetOrderPaidTotal $getOrderPaidTotal,
     ) {}
 
     public function __invoke(
@@ -42,7 +45,17 @@ final class CreateChargeSession
             return CreateChargeSessionResponse::fromEntity($existingSession);
         }
 
-        // 2. Obtener datos de la orden
+        // 2. Bloquear creación si la orden ya tiene pagos parciales sin sesión asociada.
+        //    Hoy no podemos atribuir esos pagos a comensales concretos, así que dividir
+        //    a partes iguales el restante daría una cuota arbitraria. Cuando exista el
+        //    flujo "por líneas" / "por comensal" que registre pagos en charge_session,
+        //    este bloqueo debe relajarse para permitir el flujo mixto.
+        $paidCents = ($this->getOrderPaidTotal)($orderId);
+        if ($paidCents > 0) {
+            throw new OrderHasPartialPaymentsException($paidCents);
+        }
+
+        // 3. Obtener datos de la orden
         $order = $this->orderRepository->findByUuid($orderUuid);
 
         if ($order === null) {

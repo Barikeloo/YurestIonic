@@ -1,0 +1,27 @@
+meta {
+  name: 1. Verificar NO hay sesion
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/tpv/charge-sessions/active?order_id={{order_id}}
+  body: none
+  auth: bearer
+}
+
+query {
+  order_id: {{order_id}}
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+assert {
+  res.status: eq 404
+}
