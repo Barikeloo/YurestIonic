@@ -19,6 +19,9 @@ final class SalePayment
         private readonly Uuid $cashSessionId,
         private readonly PaymentMethod $method,
         private readonly Money $amount,
+        private readonly ?int $snapshotTotalCents,
+        private readonly ?int $snapshotPaidCents,
+        private readonly ?int $snapshotRemainingCents,
         private ?array $metadata,
         private readonly Uuid $userId,
         private readonly ?Uuid $chargeSessionId,
@@ -36,6 +39,9 @@ final class SalePayment
         PaymentMethod $method,
         Money $amount,
         Uuid $userId,
+        ?int $snapshotTotalCents = null,
+        ?int $snapshotPaidCents = null,
+        ?int $snapshotRemainingCents = null,
         ?array $metadata = null,
         ?Uuid $chargeSessionId = null,
         ?int $dinerNumber = null,
@@ -52,6 +58,9 @@ final class SalePayment
             cashSessionId: $cashSessionId,
             method: $method,
             amount: $amount,
+            snapshotTotalCents: $snapshotTotalCents,
+            snapshotPaidCents: $snapshotPaidCents,
+            snapshotRemainingCents: $snapshotRemainingCents,
             metadata: $metadata,
             userId: $userId,
             chargeSessionId: $chargeSessionId,
@@ -69,6 +78,9 @@ final class SalePayment
         string $cashSessionId,
         string $method,
         int $amountCents,
+        ?int $snapshotTotalCents,
+        ?int $snapshotPaidCents,
+        ?int $snapshotRemainingCents,
         ?array $metadata,
         string $userId,
         \DateTimeImmutable $createdAt,
@@ -85,6 +97,9 @@ final class SalePayment
             cashSessionId: Uuid::create($cashSessionId),
             method: PaymentMethod::create($method),
             amount: Money::create($amountCents),
+            snapshotTotalCents: $snapshotTotalCents,
+            snapshotPaidCents: $snapshotPaidCents,
+            snapshotRemainingCents: $snapshotRemainingCents,
             metadata: $metadata,
             userId: Uuid::create($userId),
             chargeSessionId: $chargeSessionId !== null ? Uuid::create($chargeSessionId) : null,
@@ -133,6 +148,21 @@ final class SalePayment
     public function metadata(): ?array
     {
         return $this->metadata;
+    }
+
+    public function snapshotTotalCents(): ?int
+    {
+        return $this->snapshotTotalCents;
+    }
+
+    public function snapshotPaidCents(): ?int
+    {
+        return $this->snapshotPaidCents;
+    }
+
+    public function snapshotRemainingCents(): ?int
+    {
+        return $this->snapshotRemainingCents;
     }
 
     public function userId(): Uuid

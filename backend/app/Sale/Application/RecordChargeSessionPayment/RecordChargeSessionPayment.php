@@ -6,6 +6,7 @@ namespace App\Sale\Application\RecordChargeSessionPayment;
 
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
+use App\Sale\Application\CreateOrderFinalTicket\CreateOrderFinalTicket;
 use App\Sale\Application\CreateSale\CreateSale;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -28,6 +29,7 @@ final class RecordChargeSessionPayment
         private readonly ChargeSessionResponseBuilder $responseBuilder,
         private readonly CreateSale $createSale,
         private readonly OrderRepositoryInterface $orderRepository,
+        private readonly CreateOrderFinalTicket $createOrderFinalTicket,
     ) {}
 
     public function __invoke(
@@ -80,7 +82,17 @@ final class RecordChargeSessionPayment
             );
         }
 
-        $payment = ['method' => $paymentMethod, 'amount_cents' => $amountCents];
+        $newPaidCents = $paidCents + $amountCents;
+        $newRemainingCents = max(0, $totalCents - $newPaidCents);
+        $isSessionComplete = $newRemainingCents === 0;
+
+        $payment = [
+            'method' => $paymentMethod,
+            'amount_cents' => $amountCents,
+            'snapshot_total_cents' => $totalCents,
+            'snapshot_paid_cents' => $newPaidCents,
+            'snapshot_remaining_cents' => $newRemainingCents,
+        ];
         if ($dinerNumber !== null) {
             $payment['diner_number'] = $dinerNumber;
         }
@@ -95,10 +107,6 @@ final class RecordChargeSessionPayment
             chargeSessionId: $chargeSessionId,
         );
 
-        $newPaidCents = $paidCents + $amountCents;
-        $newRemainingCents = max(0, $totalCents - $newPaidCents);
-        $isSessionComplete = $newRemainingCents === 0;
-
         $newPaidDinersCount = $dinerNumber !== null && ! in_array($dinerNumber, $paidDinerNumbers, true)
             ? count($paidDinerNumbers) + 1
             : count($paidDinerNumbers);
@@ -112,6 +120,11 @@ final class RecordChargeSessionPayment
                 $order->close(Uuid::create($closedByUserId));
                 $this->orderRepository->save($order);
             }
+
+            ($this->createOrderFinalTicket)(
+                orderId: $session->orderId()->value(),
+                closedByUserId: $closedByUserId,
+            );
         }
 
         return new RecordChargeSessionPaymentResponse(

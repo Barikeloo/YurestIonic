@@ -219,6 +219,26 @@ El precio y el impuesto se guardan en el momento de la venta para preservar el h
 
 ---
 
+### `order_final_tickets`
+Ticket final de mesa (resumen global al cerrar la deuda).
+
+| Campo | Tipo | Descripcion |
+|---|---|---|
+| `id` | BIGINT | Identificador interno |
+| `uuid` | VARCHAR | Identificador publico unico |
+| `restaurant_id` | BIGINT | FK -> `restaurants` |
+| `order_id` | BIGINT | FK -> `orders` |
+| `closed_by_user_id` | BIGINT | FK -> `users` |
+| `ticket_number` | BIGINT | Numero visible del ticket final |
+| `total_consumed_cents` | INT | Total consumido en centimos |
+| `total_paid_cents` | INT | Total pagado en centimos |
+| `payments_snapshot` | JSON | Snapshot de pagos (metodo, importe, fecha) |
+| `created_at` | TIMESTAMP | |
+| `updated_at` | TIMESTAMP | |
+| `deleted_at` | TIMESTAMP | Soft delete |
+
+---
+
 ## Relaciones
 
 ```
@@ -232,12 +252,14 @@ restaurants ──< orders
 restaurants ──< order_lines
 restaurants ──< sales
 restaurants ──< sales_lines
+restaurants ──< order_final_tickets
 families  ──< products
 taxes     ──< products
 zones     ──< tables
 tables    ──< sales
 orders    ──< order_lines
 orders    ──< sales
+orders    ──< order_final_tickets
 order_lines ──< sales_lines
 sales     ──< sales_lines
 products  ──< order_lines
@@ -246,6 +268,7 @@ users     ──< orders (opened_by / closed_by)
 users     ──< order_lines
 users     ──< sales (opened_by / closed_by)
 users     ──< sales_lines
+users     ──< order_final_tickets
 ```
 
 ---

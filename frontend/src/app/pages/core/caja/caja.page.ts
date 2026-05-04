@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { BehaviorSubject, forkJoin, Observable, of, Subject, throwError } from 'rxjs';
-import { catchError, finalize, switchMap, take, takeUntil, map } from 'rxjs/operators';
+import { catchError, finalize, switchMap, take, takeUntil, map, tap } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
 import { PinAuthService, AuthContext, AuthActionType } from '../../../services/pin-auth.service';
 import { PinAuthResult } from '../../../components/pin-auth-modal/pin-auth-modal.component';
@@ -166,6 +166,11 @@ export class CajaPage implements OnInit, OnDestroy {
   public currentChargeSession: { id: string; amountPerDiner: number } | null = null;
   public currentDinerNumber: number | null = null;
   public loadedChargeSession: ChargeSession | null = null;
+  public lastPaymentTicketText: string | null = null;
+  public lastFinalTicketText: string | null = null;
+  public lastPaymentSaleId: string | null = null;
+  public lastFinalOrderId: string | null = null;
+  public lastPaymentClosedOrder = false;
 
   private refreshInterval: any;
   private clockInterval: any;
@@ -1113,6 +1118,10 @@ export class CajaPage implements OnInit, OnDestroy {
     sale$.pipe(
       takeUntil(this.destroy$),
       takeUntil(this.paymentFlowDestroy$),
+      tap((result) => {
+        const saleId = 'payment_id' in result ? result.payment_id : result.id;
+        this.printPaymentTicket(saleId);
+      }),
       switchMap((result) => {
         console.log('Payment registered:', result);
         this.showCobrarModal = false;
@@ -1199,6 +1208,12 @@ export class CajaPage implements OnInit, OnDestroy {
       })
     ).subscribe({
       next: (result) => {
+        this.lastPaymentClosedOrder = result.isOrderComplete;
+
+        if (result.isOrderComplete && orderId) {
+          this.printFinalTicket(orderId);
+        }
+
         if (result.type === 'charge_session') {
           if (result.isOrderComplete) {
             this.showPaymentSuccess = true;
@@ -1236,6 +1251,75 @@ export class CajaPage implements OnInit, OnDestroy {
         this.isProcessingPayment = false;
       },
     });
+  }
+
+  private printPaymentTicket(saleId: string): void {
+    this.tpvService.getPaymentTicketText(saleId, '58').pipe(take(1)).subscribe({
+      next: (text) => {
+        this.lastPaymentTicketText = text;
+        this.lastPaymentSaleId = saleId;
+        this.openPrintWindow(text);
+      },
+      error: (error) => console.error('Error printing payment ticket:', error),
+    });
+  }
+
+  private printFinalTicket(orderId: string): void {
+    this.tpvService.getFinalTicketText(orderId, '58').pipe(take(1)).subscribe({
+      next: (text) => {
+        this.lastFinalTicketText = text;
+        this.lastFinalOrderId = orderId;
+        this.openPrintWindow(text);
+      },
+      error: (error) => console.error('Error printing final ticket:', error),
+    });
+  }
+
+  public onPrintPaymentClick(): void {
+    if (this.lastPaymentTicketText) {
+      this.openPrintWindow(this.lastPaymentTicketText);
+      return;
+    }
+
+    if (this.lastPaymentSaleId) {
+      this.printPaymentTicket(this.lastPaymentSaleId);
+      return;
+    }
+
+    console.warn('No payment ticket text available');
+  }
+
+  public onPrintFinalClick(): void {
+    if (this.lastFinalTicketText) {
+      this.openPrintWindow(this.lastFinalTicketText);
+      return;
+    }
+
+    const orderId = this.lastFinalOrderId ?? this.selectedTable?.order_id ?? null;
+    if (orderId) {
+      this.printFinalTicket(orderId);
+      return;
+    }
+
+    console.warn('No final ticket text available');
+  }
+
+  private openPrintWindow(text: string): void {
+    const win = window.open('', '_blank');
+    if (!win) {
+      console.warn('Unable to open print window');
+      return;
+    }
+
+    const escaped = text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    win.document.write('<pre style="font-family: monospace; font-size: 12px;">' + escaped + '</pre>');
+    win.document.close();
+    win.focus();
+    win.print();
   }
 
   public onConfirmSplit(data: { selectedLines: BillLine[]; diner?: number; amount?: number; isEqualPart?: boolean; chargeSessionId?: string }): void {
@@ -1322,6 +1406,11 @@ export class CajaPage implements OnInit, OnDestroy {
     this.loadedChargeSession = null;
     this.currentChargeSession = null;
     this.currentDinerNumber = null;
+    this.lastPaymentTicketText = null;
+    this.lastFinalTicketText = null;
+    this.lastPaymentSaleId = null;
+    this.lastFinalOrderId = null;
+    this.lastPaymentClosedOrder = false;
   }
 
   public getPerDinerAmount(total: number, diners: number): number {

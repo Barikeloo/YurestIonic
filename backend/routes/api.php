@@ -54,6 +54,9 @@ use App\Sale\Infrastructure\Entrypoint\Http\GetCurrentChargeSessionController;
 use App\Sale\Infrastructure\Entrypoint\Http\GetCollectionController as SaleGetCollectionController;
 use App\Sale\Infrastructure\Entrypoint\Http\GetController as SaleGetController;
 use App\Sale\Infrastructure\Entrypoint\Http\GetOrderPaidTotalController;
+use App\Sale\Infrastructure\Entrypoint\Http\GetOrderFinalTicketController;
+use App\Sale\Infrastructure\Entrypoint\Http\GetFinalTicketPrintController;
+use App\Sale\Infrastructure\Entrypoint\Http\GetPaymentTicketController;
 use App\Sale\Infrastructure\Entrypoint\Http\PostController as SalePostController;
 use App\Sale\Infrastructure\Entrypoint\Http\PutController as SalePutController;
 use App\Sale\Infrastructure\Entrypoint\Http\RecordChargeSessionPaymentController;
@@ -133,6 +136,8 @@ Route::middleware([
     Route::get('/tpv/orders', OrderGetCollectionController::class);
     Route::get('/tpv/orders/{id}', OrderGetController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/total', GetOrderTotalController::class)->whereUuid('id');
+    Route::get('/tpv/orders/{id}/final-ticket', GetOrderFinalTicketController::class)->whereUuid('id');
+        Route::get('/tpv/orders/{id}/final-ticket/print', GetFinalTicketPrintController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/lines', OrderGetLinesController::class)->whereUuid('id');
     Route::put('/tpv/orders/{id}', OrderPutController::class)->whereUuid('id');
     Route::delete('/tpv/orders/{id}', OrderDeleteController::class)->whereUuid('id');
@@ -143,6 +148,7 @@ Route::middleware([
     Route::post('/tpv/sales/credit-note', CreateCreditNoteController::class);
     Route::get('/tpv/sales', SaleGetCollectionController::class);
     Route::get('/tpv/sales/{id}', SaleGetController::class)->whereUuid('id');
+        Route::get('/tpv/sales/{id}/payment-ticket', GetPaymentTicketController::class)->whereUuid('id');
     Route::put('/tpv/sales/{id}', SalePutController::class)->whereUuid('id');
     Route::delete('/tpv/sales/{id}', SaleDeleteController::class)->whereUuid('id');
     Route::get('/tpv/sales/order/{orderId}/paid-total', GetOrderPaidTotalController::class)->whereUuid('orderId');

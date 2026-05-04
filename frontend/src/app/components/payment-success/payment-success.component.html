@@ -1,5 +1,5 @@
 <div *ngIf="isOpen" class="success-overlay" (click)="onOverlayClick()">
-  <div class="success-content">
+  <div class="success-content" (click)="$event.stopPropagation()">
     <div class="success-circle">
       <svg class="success-check" viewBox="0 0 52 52">
         <circle class="success-circle-bg" cx="26" cy="26" r="25" fill="none"></circle>
@@ -7,5 +7,17 @@
       </svg>
     </div>
     <div class="success-text">Pago completado</div>
+
+    <div *ngIf="paymentTicketText || (finalTicketText && showFinalTicket)" class="ticket-preview">
+      <div class="preview-title">Vista previa</div>
+      <pre *ngIf="paymentTicketText" class="preview-box">{{ paymentTicketText }}</pre>
+      <pre *ngIf="finalTicketText && showFinalTicket" class="preview-box">{{ finalTicketText }}</pre>
+    </div>
+
+    <div *ngIf="paymentTicketText || (finalTicketText && showFinalTicket)" class="preview-actions">
+      <button *ngIf="paymentTicketText" class="preview-btn" (click)="onPrintPayment()">Imprimir ticket de pago</button>
+      <button *ngIf="finalTicketText && showFinalTicket" class="preview-btn" (click)="onPrintFinal()">Imprimir ticket final</button>
+      <button class="preview-btn outline" (click)="onCloseClick()">Cerrar</button>
+    </div>
   </div>
 </div>

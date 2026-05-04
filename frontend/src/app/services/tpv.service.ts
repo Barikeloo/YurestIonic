@@ -257,6 +257,28 @@ export class TpvService {
       );
   }
 
+  public getPaymentTicketText(saleId: string, width: '58' | '80' = '58'): Observable<string> {
+    return this.http.get(`${this.baseUrl}/tpv/sales/${saleId}/payment-ticket`, {
+      withCredentials: true,
+      responseType: 'text',
+      params: {
+        format: 'text',
+        width,
+      },
+    });
+  }
+
+  public getFinalTicketText(orderId: string, width: '58' | '80' = '58'): Observable<string> {
+    return this.http.get(`${this.baseUrl}/tpv/orders/${orderId}/final-ticket/print`, {
+      withCredentials: true,
+      responseType: 'text',
+      params: {
+        format: 'text',
+        width,
+      },
+    });
+  }
+
   // ============================================
   // Ventas (transaccional)
   // ============================================

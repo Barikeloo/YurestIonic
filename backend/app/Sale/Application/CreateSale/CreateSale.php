@@ -101,7 +101,10 @@ final class CreateSale
                 $paymentsTotal += $payment['amount_cents'];
             }
 
-            if ($isPartialPayment) {
+            // Filosofía deuda viva: cualquier pago es válido, incluso parcial.
+            // Solo exigimos coincidencia exacta cuando se declara explícitamente
+            // como pago completo (no parcial) y el importe cubre el total.
+            if ($isPartialPayment || $paymentsTotal < $total + $tipCents) {
                 $total = $paymentsTotal;
             } elseif ($paymentsTotal !== $total + $tipCents) {
                 throw new \DomainException(
@@ -166,6 +169,9 @@ final class CreateSale
 
             foreach ($payments as $payment) {
                 $dinerNumber = isset($payment['diner_number']) ? (int) $payment['diner_number'] : null;
+                $snapshotTotalCents = isset($payment['snapshot_total_cents']) ? (int) $payment['snapshot_total_cents'] : null;
+                $snapshotPaidCents = isset($payment['snapshot_paid_cents']) ? (int) $payment['snapshot_paid_cents'] : null;
+                $snapshotRemainingCents = isset($payment['snapshot_remaining_cents']) ? (int) $payment['snapshot_remaining_cents'] : null;
 
                 $salePayment = SalePayment::dddCreate(
                     id: Uuid::generate(),
@@ -175,6 +181,9 @@ final class CreateSale
                     method: PaymentMethod::create($payment['method']),
                     amount: Money::create($payment['amount_cents']),
                     userId: Uuid::create($closedByUserId),
+                    snapshotTotalCents: $snapshotTotalCents,
+                    snapshotPaidCents: $snapshotPaidCents,
+                    snapshotRemainingCents: $snapshotRemainingCents,
                     metadata: $payment['metadata'] ?? null,
                     chargeSessionId: $chargeSessionUuid,
                     dinerNumber: $dinerNumber,

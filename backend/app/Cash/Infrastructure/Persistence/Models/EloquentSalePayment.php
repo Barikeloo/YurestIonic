@@ -28,6 +28,9 @@ final class EloquentSalePayment extends Model
         'diner_number',
         'method',
         'amount_cents',
+        'snapshot_total_cents',
+        'snapshot_paid_cents',
+        'snapshot_remaining_cents',
         'metadata',
         'user_id',
     ];
@@ -35,6 +38,9 @@ final class EloquentSalePayment extends Model
     protected $casts = [
         'amount_cents' => 'integer',
         'diner_number' => 'integer',
+        'snapshot_total_cents' => 'integer',
+        'snapshot_paid_cents' => 'integer',
+        'snapshot_remaining_cents' => 'integer',
         'metadata' => 'array',
     ];
 

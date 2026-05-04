@@ -10,7 +10,12 @@ import { CommonModule } from '@angular/common';
 })
 export class PaymentSuccessComponent {
   @Input() isOpen = false;
+  @Input() paymentTicketText: string | null = null;
+  @Input() finalTicketText: string | null = null;
+  @Input() showFinalTicket = false;
   @Output() complete = new EventEmitter<void>();
+  @Output() printPayment = new EventEmitter<void>();
+  @Output() printFinal = new EventEmitter<void>();
 
   private autoCloseTimeout: any;
   private hasCompleted = false;
@@ -18,22 +23,32 @@ export class PaymentSuccessComponent {
   public ngOnChanges(): void {
     if (this.isOpen) {
       this.hasCompleted = false;
-      this.startAutoClose();
+      if (!this.hasPreview()) {
+        this.startAutoClose();
+      }
     } else {
       this.clearAutoClose();
     }
   }
 
   public onOverlayClick(): void {
-    this.emit();
+    this.onCloseClick();
+  }
+
+  public onPrintPayment(): void {
+    this.printPayment.emit();
+  }
+
+  public onPrintFinal(): void {
+    this.printFinal.emit();
   }
 
   private startAutoClose(): void {
     this.clearAutoClose();
-    this.autoCloseTimeout = setTimeout(() => this.emit(), 2500);
+    this.autoCloseTimeout = setTimeout(() => this.onCloseClick(), 2500);
   }
 
-  private emit(): void {
+  public onCloseClick(): void {
     if (this.hasCompleted) return;
     this.hasCompleted = true;
     this.clearAutoClose();
@@ -45,6 +60,10 @@ export class PaymentSuccessComponent {
       clearTimeout(this.autoCloseTimeout);
       this.autoCloseTimeout = null;
     }
+  }
+
+  private hasPreview(): boolean {
+    return !!this.paymentTicketText || !!this.finalTicketText;
   }
 
   public ngOnDestroy(): void {

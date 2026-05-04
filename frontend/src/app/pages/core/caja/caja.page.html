@@ -99,6 +99,11 @@
   <!-- Animación de confirmación de pago -->
   <app-payment-success
     [isOpen]="showPaymentSuccess"
+    [paymentTicketText]="lastPaymentTicketText"
+    [finalTicketText]="lastFinalTicketText"
+    [showFinalTicket]="lastPaymentClosedOrder"
+    (printPayment)="onPrintPaymentClick()"
+    (printFinal)="onPrintFinalClick()"
     (complete)="onPaymentSuccessComplete()"
   ></app-payment-success>
 
