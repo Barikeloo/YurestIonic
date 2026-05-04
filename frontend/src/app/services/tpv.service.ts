@@ -269,6 +269,7 @@ export class TpvService {
     payments: Array<{ method: string; amount_cents: number; metadata?: Record<string, unknown> }>;
     order_line_ids?: string[];
     is_partial_payment?: boolean;
+    charge_session_id?: string;
   }): Observable<TpvSale> {
     return this.http
       .post<TpvSale>(`${this.baseUrl}/tpv/sales`, payload, { withCredentials: true })

@@ -27,11 +27,15 @@ final class UpdateChargeSessionDinersController
             throw new \RuntimeException('Tenant context is required.');
         }
 
-        $response = ($this->updateDiners)(
-            chargeSessionId: $id,
-            newDinersCount: $validated['diners_count'],
-        );
+        try {
+            $response = ($this->updateDiners)(
+                chargeSessionId: $id,
+                newDinersCount: $validated['diners_count'],
+            );
 
-        return new JsonResponse($response->toArray(), 200);
+            return new JsonResponse($response->toArray(), 200);
+        } catch (\DomainException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 422);
+        }
     }
 }

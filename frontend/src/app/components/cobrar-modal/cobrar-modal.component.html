@@ -15,8 +15,16 @@
               <span class="summary-price">{{ formatCents(line.price) }} €</span>
             </div>
             <div class="summary-total">
-              <span>Total</span>
+              <span>Total pendiente</span>
               <span class="total-amount">{{ formatCents(total) }} €</span>
+            </div>
+            <div *ngIf="effectiveAmount < total" class="summary-partial">
+              <span>A cobrar ahora</span>
+              <span class="partial-amount">{{ formatCents(effectiveAmount) }} €</span>
+            </div>
+            <div *ngIf="effectiveAmount < total" class="summary-remaining">
+              <span>Quedará pendiente</span>
+              <span class="remaining-amount">{{ formatCents(total - effectiveAmount) }} €</span>
             </div>
           </app-card>
 
@@ -80,10 +88,11 @@
         <div class="right-column">
           <!-- Cash method -->
           <ng-container *ngIf="method === 'cash'">
-            <app-amount-display [cents]="cashGiven" label="Cliente entrega" [large]="true"></app-amount-display>
-            <app-numpad [value]="cashGiven" (valueChange)="onCashGivenChange($event)"></app-numpad>
+            <div class="section-label">Importe entregado / a cobrar</div>
+            <app-amount-display [cents]="inputAmount" label="Entregado" [large]="true"></app-amount-display>
+            <app-numpad [value]="inputAmount" (valueChange)="onCashGivenChange($event)"></app-numpad>
 
-            <app-card *ngIf="cashGiven > 0" [class.success]="change >= 0" [class.error]="change < 0">
+            <app-card *ngIf="inputAmount > 0" [class.success]="change >= 0" [class.error]="change < 0">
               <div class="change-row">
                 <span [class.success-text]="change >= 0" [class.error-text]="change < 0">
                   {{ change >= 0 ? '✓ Cambio' : '⚠ Falta' }}
@@ -100,7 +109,7 @@
                 <button
                   *ngFor="let amount of [4000, 5000, 6000, 10000, 20000, 50000]"
                   class="quick-btn"
-                  [class.active]="cashGiven === amount"
+                  [class.active]="inputAmount === amount"
                   (click)="setQuickAmount(amount)"
                 >
                   {{ formatCents(amount) }} €
@@ -111,13 +120,17 @@
 
           <!-- Card method -->
           <ng-container *ngIf="method === 'card'">
+            <div class="section-label">Importe a cobrar (máx {{ formatCents(total) }} €)</div>
+            <app-amount-display [cents]="inputAmount" label="Cobrar" [large]="true"></app-amount-display>
+            <app-numpad [value]="inputAmount" (valueChange)="onCashGivenChange($event)"></app-numpad>
+
             <div class="card-payment">
               <div class="card-icon">💳</div>
               <div class="card-text">Pase la tarjeta por el datáfono</div>
               <app-card class="card-amount-card">
                 <div class="card-amount-row">
                   <span class="card-amount-label">Importe a cobrar</span>
-                  <span class="card-amount-value">{{ formatCents(total) }} €</span>
+                  <span class="card-amount-value">{{ formatCents(effectiveAmount) }} €</span>
                 </div>
                 <div class="tip-toggle-row">
                   <span class="tip-label">Añadir propina</span>
@@ -135,7 +148,7 @@
                 </div>
                 <div *ngIf="showTip && tip > 0" class="card-total-row">
                   <span>Total tarjeta</span>
-                  <span class="card-total-value">{{ formatCents(total + tip) }} €</span>
+                  <span class="card-total-value">{{ formatCents(effectiveAmount + tip) }} €</span>
                 </div>
               </app-card>
             </div>
@@ -143,6 +156,10 @@
 
           <!-- Bizum method -->
           <ng-container *ngIf="method === 'bizum'">
+            <div class="section-label">Importe a cobrar (máx {{ formatCents(total) }} €)</div>
+            <app-amount-display [cents]="inputAmount" label="Cobrar" [large]="true"></app-amount-display>
+            <app-numpad [value]="inputAmount" (valueChange)="onCashGivenChange($event)"></app-numpad>
+
             <div class="bizum-payment">
               <div class="bizum-icon">📱</div>
               <div class="bizum-text">Bizum al número del restaurante</div>
@@ -150,7 +167,7 @@
               <app-card class="bizum-amount-card">
                 <div class="bizum-amount-row">
                   <span class="bizum-amount-label">Importe exacto</span>
-                  <span class="bizum-amount-value">{{ formatCents(total) }} €</span>
+                  <span class="bizum-amount-value">{{ formatCents(effectiveAmount) }} €</span>
                 </div>
               </app-card>
             </div>
@@ -158,13 +175,17 @@
 
           <!-- Invitation method -->
           <ng-container *ngIf="method === 'invitation'">
+            <div class="section-label">Importe a invitar (máx {{ formatCents(total) }} €)</div>
+            <app-amount-display [cents]="inputAmount" label="Invitar" [large]="true"></app-amount-display>
+            <app-numpad [value]="inputAmount" (valueChange)="onCashGivenChange($event)"></app-numpad>
+
             <div class="invitation-payment">
               <div class="invitation-icon">🎁</div>
               <div class="invitation-title">Invitación de la casa</div>
               <div class="invitation-text">Requiere supervisor. Se registra como invitación.</div>
               <app-card class="invitation-value-card">
                 <span class="invitation-label">Valor teórico:</span>
-                <span class="invitation-value">{{ formatCents(total) }} €</span>
+                <span class="invitation-value">{{ formatCents(effectiveAmount) }} €</span>
               </app-card>
             </div>
           </ng-container>
@@ -174,7 +195,7 @@
               Dividir cuenta
             </app-btn>
             <app-btn variant="success" size="lg" [block]="true" [disabled]="isProcessing" (click)="onConfirm()">
-              {{ isProcessing ? 'Procesando...' : 'Confirmar cobro — ' + formatCents(total + (showTip ? tip : 0)) + ' €' }}
+              {{ isProcessing ? 'Procesando...' : (effectiveAmount < total ? 'Cobrar parcial — ' : 'Confirmar cobro — ') + formatCents(effectiveAmount + (showTip ? tip : 0)) + ' €' }}
             </app-btn>
           </div>
         </div>

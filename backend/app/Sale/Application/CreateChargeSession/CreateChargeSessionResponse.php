@@ -9,44 +9,52 @@ use App\Sale\Domain\Entity\ChargeSession;
 final class CreateChargeSessionResponse
 {
     /**
-     * @param  array<array{diner_number: int, amount_cents: int, payment_method: string, paid_at: string}>  $paidDiners
+     * @param  array<int>  $paidDinerNumbers
      */
     private function __construct(
         public readonly string $id,
         public readonly string $orderId,
         public readonly int $dinersCount,
         public readonly int $totalCents,
-        public readonly int $amountPerDiner,
-        public readonly int $paidDinersCount,
-        public readonly int $remainingAmount,
+        public readonly int $paidCents,
+        public readonly int $remainingCents,
+        public readonly int $suggestedPerDinerCents,
+        public readonly array $paidDinerNumbers,
         public readonly string $status,
-        public readonly array $paidDiners,
+        public readonly string $createdAt,
+        public readonly string $updatedAt,
     ) {}
 
-    public static function fromEntity(ChargeSession $chargeSession): self
-    {
-        $paidDiners = [];
-        foreach ($chargeSession->payments() as $payment) {
-            if ($payment->isCompleted()) {
-                $paidDiners[] = [
-                    'diner_number' => $payment->dinerNumber(),
-                    'amount_cents' => $payment->amount(),
-                    'payment_method' => $payment->paymentMethod(),
-                    'paid_at' => $payment->createdAt()->format(\DateTimeInterface::ATOM),
-                ];
-            }
+    /**
+     * @param  array<int>  $paidDinerNumbers
+     */
+    public static function fromLiveDebt(
+        ChargeSession $session,
+        int $totalCents,
+        int $paidCents,
+        array $paidDinerNumbers,
+    ): self {
+        $remainingCents = max(0, $totalCents - $paidCents);
+        $pendingDiners = max(0, $session->dinersCount() - count($paidDinerNumbers));
+        $suggested = 0;
+        if ($pendingDiners > 0 && $remainingCents > 0) {
+            $suggested = $pendingDiners === 1
+                ? $remainingCents
+                : (int) floor($remainingCents / $pendingDiners);
         }
 
         return new self(
-            id: $chargeSession->id()->value(),
-            orderId: $chargeSession->orderId()->value(),
-            dinersCount: $chargeSession->dinersCount(),
-            totalCents: $chargeSession->totalCents(),
-            amountPerDiner: $chargeSession->amountPerDiner()->value(),
-            paidDinersCount: $chargeSession->paidDinersCount(),
-            remainingAmount: $chargeSession->remainingAmount(),
-            status: $chargeSession->status()->value(),
-            paidDiners: $paidDiners,
+            id: $session->id()->value(),
+            orderId: $session->orderId()->value(),
+            dinersCount: $session->dinersCount(),
+            totalCents: $totalCents,
+            paidCents: $paidCents,
+            remainingCents: $remainingCents,
+            suggestedPerDinerCents: $suggested,
+            paidDinerNumbers: array_values(array_unique($paidDinerNumbers)),
+            status: $session->status()->value(),
+            createdAt: $session->createdAt()->format(\DateTimeInterface::ATOM),
+            updatedAt: $session->updatedAt()->format(\DateTimeInterface::ATOM),
         );
     }
 
@@ -60,11 +68,13 @@ final class CreateChargeSessionResponse
             'order_id' => $this->orderId,
             'diners_count' => $this->dinersCount,
             'total_cents' => $this->totalCents,
-            'amount_per_diner' => $this->amountPerDiner,
-            'paid_diners_count' => $this->paidDinersCount,
-            'remaining_amount' => $this->remainingAmount,
+            'paid_cents' => $this->paidCents,
+            'remaining_cents' => $this->remainingCents,
+            'suggested_per_diner_cents' => $this->suggestedPerDinerCents,
+            'paid_diner_numbers' => $this->paidDinerNumbers,
             'status' => $this->status,
-            'paid_diners' => $this->paidDiners,
+            'created_at' => $this->createdAt,
+            'updated_at' => $this->updatedAt,
         ];
     }
 }

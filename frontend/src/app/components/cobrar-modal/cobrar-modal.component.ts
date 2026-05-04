@@ -34,14 +34,25 @@ export class CobrarModalComponent implements OnChanges {
   @Input() diners = 0;
   @Input() paidDiners: number[] = [];
   @Output() closeModal = new EventEmitter<void>();
-  @Output() confirmPayment = new EventEmitter<{ method: PaymentMethod; amount: number; tip?: number }>();
+  @Output() confirmPayment = new EventEmitter<{ method: PaymentMethod; amount: number; tip?: number; isManualPartial?: boolean }>();
   @Output() splitBill = new EventEmitter<void>();
 
+  public Math = Math;
   public method: PaymentMethod = 'cash';
-  public cashGiven = 0;
+  public inputAmount = 0;
   public tip = 0;
   public showTip = false;
   public showFiscal = false;
+
+  /** El importe efectivo a cobrar: nunca será mayor al total */
+  public get effectiveAmount(): number {
+    return Math.min(this.inputAmount, this.total);
+  }
+
+  public get change(): number {
+    if (this.method !== 'cash') return 0;
+    return this.inputAmount - this.effectiveAmount;
+  }
 
   public get remainingTotal(): number {
     if (this.diners <= 0) return this.total;
@@ -53,7 +64,7 @@ export class CobrarModalComponent implements OnChanges {
     const justOpened = changes['isOpen'] && this.isOpen && !changes['isOpen'].previousValue;
     const totalChangedWhileOpen = changes['total'] && this.isOpen;
     if (justOpened || totalChangedWhileOpen) {
-      this.cashGiven = this.total;
+      this.inputAmount = this.total;
     }
   }
 
@@ -75,9 +86,7 @@ export class CobrarModalComponent implements OnChanges {
     ];
   }
 
-  public get change(): number {
-    return this.cashGiven - this.total;
-  }
+
 
   public onClose(): void {
     this.closeModal.emit();
@@ -86,27 +95,32 @@ export class CobrarModalComponent implements OnChanges {
 
   public onConfirm(): void {
     const tip = this.showTip ? this.tip : 0;
+    const amountToPay = this.effectiveAmount;
+
+    if (amountToPay <= 0) {
+      alert('El importe a cobrar debe ser mayor a 0.');
+      return;
+    }
 
     if (this.method === 'cash') {
-      if (this.cashGiven < this.total) {
-        alert('La cantidad entregada es insuficiente. Por favor, ingrese al menos ' + this.formatCents(this.total) + ' €');
-        return;
-      }
-      if (this.cashGiven > this.total * 2) {
+      if (this.inputAmount > this.total * 2 && this.total > 0) {
         alert('El importe introducido parece demasiado alto. Por favor, verifíquelo.');
         return;
       }
     }
 
-    if (tip > this.total) {
-      alert('La propina no puede superar el importe total del pedido.');
+    if (tip > amountToPay) {
+      alert('La propina no puede superar el importe a cobrar.');
       return;
     }
 
+    const isManualPartial = amountToPay < this.total;
+
     this.confirmPayment.emit({
       method: this.method,
-      amount: this.total + tip,
+      amount: amountToPay + tip,
       tip: tip > 0 ? tip : undefined,
+      isManualPartial: isManualPartial,
     });
     this.resetForm();
   }
@@ -116,11 +130,11 @@ export class CobrarModalComponent implements OnChanges {
   }
 
   public onCashGivenChange(value: number): void {
-    this.cashGiven = value;
+    this.inputAmount = value;
   }
 
   public setQuickAmount(amount: number): void {
-    this.cashGiven = amount;
+    this.inputAmount = amount;
   }
 
   public formatCents(cents: number): string {
@@ -133,7 +147,7 @@ export class CobrarModalComponent implements OnChanges {
 
   private resetForm(): void {
     this.method = 'cash';
-    this.cashGiven = 0;
+    this.inputAmount = 0;
     this.tip = 0;
     this.showTip = false;
     this.showFiscal = false;

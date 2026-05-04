@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
 use App\Sale\Application\CreateChargeSession\CreateChargeSession;
-use App\Sale\Domain\Exception\OrderHasPartialPaymentsException;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -37,12 +36,8 @@ final class CreateChargeSessionController
                 openedByUserId: $validated['opened_by_user_id'],
                 dinersCount: $validated['diners_count'] ?? null,
             );
-        } catch (OrderHasPartialPaymentsException $e) {
-            return new JsonResponse([
-                'message' => $e->getMessage(),
-                'error_code' => 'order_has_partial_payments',
-                'paid_amount_cents' => $e->paidCents,
-            ], 422);
+        } catch (\DomainException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 422);
         }
 
         return new JsonResponse($response->toArray(), 201);

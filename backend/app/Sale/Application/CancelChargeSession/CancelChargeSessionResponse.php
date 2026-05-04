@@ -15,32 +15,27 @@ final class CancelChargeSessionResponse
         public readonly string $id,
         public readonly string $status,
         public readonly int $paidDinersCount,
-        public readonly int $totalPaidCents,
+        public readonly int $sessionPaidCents,
         public readonly ?string $warningMessage,
         public readonly array $paidDiners,
     ) {}
 
+    /**
+     * @param array<int> $paidDinerNumbers
+     */
     public static function fromEntity(
         ChargeSession $chargeSession,
-        ?string $warningMessage
+        int $paidCents,
+        array $paidDinerNumbers,
+        ?string $warningMessage,
     ): self {
-        // Obtener comensales que pagaron
-        $paidDiners = [];
-        $totalPaid = 0;
-        foreach ($chargeSession->payments() as $payment) {
-            if ($payment->isCompleted()) {
-                $paidDiners[] = $payment->dinerNumber();
-                $totalPaid += $payment->amount();
-            }
-        }
-
         return new self(
             id: $chargeSession->id()->value(),
             status: $chargeSession->status()->value(),
-            paidDinersCount: $chargeSession->paidDinersCount(),
-            totalPaidCents: $totalPaid,
+            paidDinersCount: count($paidDinerNumbers),
+            sessionPaidCents: $paidCents,
             warningMessage: $warningMessage,
-            paidDiners: $paidDiners,
+            paidDiners: $paidDinerNumbers,
         );
     }
 
@@ -53,7 +48,7 @@ final class CancelChargeSessionResponse
             'id' => $this->id,
             'status' => $this->status,
             'paid_diners_count' => $this->paidDinersCount,
-            'total_paid_cents' => $this->totalPaidCents,
+            'session_paid_cents' => $this->sessionPaidCents,
             'warning_message' => $this->warningMessage,
             'paid_diners' => $this->paidDiners,
         ];

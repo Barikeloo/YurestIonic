@@ -8,39 +8,44 @@ export interface ChargeSession {
   order_id: string;
   diners_count: number;
   total_cents: number;
-  amount_per_diner: number;
-  paid_diners_count: number;
-  remaining_amount: number;
+  paid_cents: number;
+  remaining_cents: number;
+  suggested_per_diner_cents: number;
   status: 'active' | 'completed' | 'cancelled';
-  paid_diners: PaidDiner[];
-}
-
-export interface PaidDiner {
-  diner_number: number;
-  amount_cents: number;
-  payment_method: string;
-  paid_at: string;
+  paid_diner_numbers: number[];
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateChargeSessionRequest {
   order_id: string;
   opened_by_user_id: string;
   diners_count?: number;
+  remaining_cents?: number; // Deuda real (total - pagos previos)
 }
 
 export interface RecordPaymentRequest {
-  diner_number: number;
-  payment_method: 'cash' | 'card' | 'bizum' | 'other';
+  payment_method: 'cash' | 'card' | 'bizum' | 'voucher' | 'invitation' | 'other';
+  opened_by_user_id: string;
+  closed_by_user_id: string;
+  device_id: string;
+  /** Etiqueta visual del comensal. Opcional: en cobro libre puede omitirse. */
+  diner_number?: number;
+  /** Importe libre. Si no se envía, el backend aplica la cuota equitativa sobre la deuda restante. */
+  amount_cents?: number;
 }
 
 export interface RecordPaymentResponse {
-  id: string;
-  diner_number: number;
+  payment_id: string;
+  charge_session_id: string;
+  diner_number: number | null;
   amount_cents: number;
   payment_method: string;
+  status: string;
   session_paid_diners_count: number;
-  is_session_complete: boolean;
   session_status: string;
+  session_remaining_cents: number;
+  is_session_complete: boolean;
 }
 
 export interface UpdateDinersRequest {
@@ -50,7 +55,8 @@ export interface UpdateDinersRequest {
 export interface UpdateDinersResponse {
   id: string;
   diners_count: number;
-  amount_per_diner: number;
+  suggested_per_diner_cents: number;
+  total_cents: number;
   status: string;
 }
 
@@ -62,8 +68,10 @@ export interface CancelChargeSessionRequest {
 export interface CancelChargeSessionResponse {
   id: string;
   status: string;
-  paid_diners_count: number;
+  paid_diners_count: number; // Backend aún usa count en lugar de array
+  session_paid_cents: number;
   warning_message: string | null;
+  paid_diners: number[]; // Backend envía array de números
 }
 
 @Injectable({
@@ -82,10 +90,11 @@ export class ChargeSessionService {
   }
 
   /**
-   * Obtener la sesión de cobro activa para una orden
+   * Obtener la sesión de cobro vigente para una orden (la más reciente,
+   * sin filtrar por status). El cliente lee `status` y decide cómo actuar.
    */
-  getActiveChargeSession(orderId: string): Observable<ChargeSession> {
-    return this.http.get<ChargeSession>(`${this.apiUrl}/tpv/charge-sessions/active`, {
+  getCurrentChargeSession(orderId: string): Observable<ChargeSession> {
+    return this.http.get<ChargeSession>(`${this.apiUrl}/tpv/charge-sessions/current`, {
       params: { order_id: orderId }
     });
   }

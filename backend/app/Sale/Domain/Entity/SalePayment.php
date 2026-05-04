@@ -21,6 +21,8 @@ final class SalePayment
         private readonly Money $amount,
         private ?array $metadata,
         private readonly Uuid $userId,
+        private readonly ?Uuid $chargeSessionId,
+        private readonly ?int $dinerNumber,
         private readonly DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
         private ?DomainDateTime $deletedAt = null,
@@ -35,7 +37,13 @@ final class SalePayment
         Money $amount,
         Uuid $userId,
         ?array $metadata = null,
+        ?Uuid $chargeSessionId = null,
+        ?int $dinerNumber = null,
     ): self {
+        if ($dinerNumber !== null && $dinerNumber < 1) {
+            throw new \InvalidArgumentException('Diner number must be positive');
+        }
+
         return new self(
             id: $id,
             restaurantId: $restaurantId,
@@ -46,6 +54,8 @@ final class SalePayment
             amount: $amount,
             metadata: $metadata,
             userId: $userId,
+            chargeSessionId: $chargeSessionId,
+            dinerNumber: $dinerNumber,
             createdAt: DomainDateTime::now(),
             updatedAt: DomainDateTime::now(),
         );
@@ -64,6 +74,8 @@ final class SalePayment
         \DateTimeImmutable $createdAt,
         \DateTimeImmutable $updatedAt,
         ?\DateTimeImmutable $deletedAt = null,
+        ?string $chargeSessionId = null,
+        ?int $dinerNumber = null,
     ): self {
         return new self(
             id: Uuid::create($id),
@@ -75,13 +87,13 @@ final class SalePayment
             amount: Money::create($amountCents),
             metadata: $metadata,
             userId: Uuid::create($userId),
+            chargeSessionId: $chargeSessionId !== null ? Uuid::create($chargeSessionId) : null,
+            dinerNumber: $dinerNumber,
             createdAt: DomainDateTime::create($createdAt),
             updatedAt: DomainDateTime::create($updatedAt),
             deletedAt: $deletedAt !== null ? DomainDateTime::create($deletedAt) : null,
         );
     }
-
-    // Getters
 
     public function id(): Uuid
     {
@@ -126,6 +138,16 @@ final class SalePayment
     public function userId(): Uuid
     {
         return $this->userId;
+    }
+
+    public function chargeSessionId(): ?Uuid
+    {
+        return $this->chargeSessionId;
+    }
+
+    public function dinerNumber(): ?int
+    {
+        return $this->dinerNumber;
     }
 
     public function createdAt(): DomainDateTime

@@ -4,21 +4,23 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\UpdateChargeSessionDiners;
 
+use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 /**
  * Caso de uso: Modificar el número de comensales en una sesión de cobro.
  *
- * Según la especificación:
- * - Solo permitido si no hay pagos registrados (paidCount === 0)
- * - Recalcula la cuota con el nuevo número
- * - Bloqueado con mensaje claro si hay pagos
+ * Filosofía "Comensales mutables": el número de comensales puede cambiar en
+ * cualquier momento, incluso después de pagos registrados. La entidad solo
+ * impide bajar el contador por debajo de los comensales que ya marcaron pago
+ * (no se pueden "borrar" pagos retroactivamente).
  */
 final class UpdateChargeSessionDiners
 {
     public function __construct(
         private readonly ChargeSessionRepositoryInterface $chargeSessionRepository,
+        private readonly ChargeSessionResponseBuilder $responseBuilder,
     ) {}
 
     public function __invoke(
@@ -31,29 +33,20 @@ final class UpdateChargeSessionDiners
 
         $sessionUuid = Uuid::create($chargeSessionId);
 
-        // 1. Buscar sesión
         $session = $this->chargeSessionRepository->findById($sessionUuid);
 
         if ($session === null) {
             throw new \DomainException('Charge session not found');
         }
 
-        // 2. Verificar que se puede editar (no hay pagos)
-        if (! $session->canEditDinersCount()) {
-            $paidCount = $session->paidDinersCount();
-            throw new \DomainException(
-                "Ya hay {$paidCount} pago(s) registrado(s). ".
-                'No es posible modificar el número de comensales. '.
-                'Si necesitas ajustar el cobro, cancela la sesión y vuelve a abrirla.'
-            );
-        }
+        [$totalCents, $paidCents, $paidDinerNumbers] = $this->responseBuilder->collect($session);
 
-        // 3. Actualizar número de comensales (recalcula cuota automáticamente)
-        $session->updateDinersCount($newDinersCount);
+        // La entity valida que newDinersCount >= paidCount (no se puede bajar
+        // por debajo de comensales que ya marcaron pago).
+        $session->updateDinersCount($newDinersCount, count($paidDinerNumbers));
 
-        // 4. Persistir
         $this->chargeSessionRepository->save($session);
 
-        return UpdateChargeSessionDinersResponse::fromEntity($session);
+        return UpdateChargeSessionDinersResponse::fromLiveDebt($session, $totalCents, $paidCents, $paidDinerNumbers);
     }
 }

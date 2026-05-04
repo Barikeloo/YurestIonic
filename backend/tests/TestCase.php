@@ -67,4 +67,31 @@ abstract class TestCase extends BaseTestCase
             'user_uuid' => $userUuid,
         ];
     }
+
+    /**
+     * Crea una cash session activa para tests de cobros.
+     * @param array<string, mixed> $tenant
+     */
+    protected function createCashSessionForTests(array $tenant, string $deviceId = 'test-device-001'): void
+    {
+        DB::table('cash_sessions')->insert([
+            'restaurant_id' => $tenant['restaurant_id'],
+            'uuid' => (string) Str::uuid(),
+            'device_id' => $deviceId,
+            'opened_by_user_id' => DB::table('users')->where('uuid', $tenant['user_uuid'])->value('id'),
+            'opened_at' => now(),
+            'closed_at' => null,
+            'initial_amount_cents' => 0,
+            'final_amount_cents' => null,
+            'expected_amount_cents' => null,
+            'discrepancy_cents' => null,
+            'discrepancy_reason' => null,
+            'z_report_number' => null,
+            'z_report_hash' => null,
+            'notes' => null,
+            'status' => 'open',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+    }
 }

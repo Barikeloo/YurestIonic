@@ -5,17 +5,14 @@ declare(strict_types=1);
 namespace App\Sale\Infrastructure\Persistence\Repositories;
 
 use App\Sale\Domain\Entity\ChargeSession;
-use App\Sale\Domain\Entity\ChargeSessionPayment;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Sale\Infrastructure\Persistence\Models\ChargeSessionModel;
-use App\Sale\Infrastructure\Persistence\Models\ChargeSessionPaymentModel;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class EloquentChargeSessionRepository implements ChargeSessionRepositoryInterface
 {
     public function save(ChargeSession $chargeSession): void
     {
-        // Save session
         ChargeSessionModel::updateOrCreate(
             ['id' => $chargeSession->id()->value()],
             [
@@ -24,33 +21,17 @@ final class EloquentChargeSessionRepository implements ChargeSessionRepositoryIn
                 'opened_by_user_id' => $chargeSession->openedByUserId()->value(),
                 'diners_count' => $chargeSession->dinersCount(),
                 'total_cents' => $chargeSession->totalCents(),
-                'amount_per_diner' => $chargeSession->amountPerDiner()->value(),
-                'paid_diners_count' => $chargeSession->paidDinersCount(),
                 'status' => $chargeSession->status()->value(),
                 'cancelled_by_user_id' => $chargeSession->cancelledByUserId()?->value(),
                 'cancellation_reason' => $chargeSession->cancellationReason(),
                 'cancelled_at' => $chargeSession->cancelledAt()?->value(),
             ]
         );
-
-        // Save payments
-        foreach ($chargeSession->payments() as $payment) {
-            ChargeSessionPaymentModel::updateOrCreate(
-                ['id' => $payment->id()->value()],
-                [
-                    'charge_session_id' => $payment->chargeSessionId()->value(),
-                    'diner_number' => $payment->dinerNumber(),
-                    'amount_cents' => $payment->amount(),
-                    'payment_method' => $payment->paymentMethod(),
-                    'status' => $payment->status(),
-                ]
-            );
-        }
     }
 
     public function findById(Uuid $id): ?ChargeSession
     {
-        $model = ChargeSessionModel::with('payments')->find($id->value());
+        $model = ChargeSessionModel::find($id->value());
 
         if ($model === null) {
             return null;
@@ -61,7 +42,7 @@ final class EloquentChargeSessionRepository implements ChargeSessionRepositoryIn
 
     public function findActiveByOrderId(Uuid $orderId): ?ChargeSession
     {
-        $model = ChargeSessionModel::with('payments')
+        $model = ChargeSessionModel::query()
             ->where('order_id', $orderId->value())
             ->where('status', 'active')
             ->first();
@@ -73,9 +54,23 @@ final class EloquentChargeSessionRepository implements ChargeSessionRepositoryIn
         return $this->toEntity($model);
     }
 
+    public function findCurrentByOrderId(Uuid $orderId): ?ChargeSession
+    {
+        $model = ChargeSessionModel::query()
+            ->where('order_id', $orderId->value())
+            ->orderByDesc('created_at')
+            ->first();
+
+        if ($model === null) {
+            return null;
+        }
+
+        return $this->toEntity($model);
+    }
+
     public function findByOrderId(Uuid $orderId): array
     {
-        $models = ChargeSessionModel::with('payments')
+        $models = ChargeSessionModel::query()
             ->where('order_id', $orderId->value())
             ->orderBy('created_at', 'desc')
             ->get();
@@ -90,29 +85,13 @@ final class EloquentChargeSessionRepository implements ChargeSessionRepositoryIn
 
     private function toEntity(ChargeSessionModel $model): ChargeSession
     {
-        $payments = [];
-        foreach ($model->payments as $paymentModel) {
-            $payments[] = ChargeSessionPayment::fromPersistence(
-                $paymentModel->id,
-                $paymentModel->charge_session_id,
-                $paymentModel->diner_number,
-                $paymentModel->amount_cents,
-                $paymentModel->payment_method,
-                $paymentModel->status,
-                $this->toImmutable($paymentModel->created_at),
-                $this->toImmutable($paymentModel->updated_at),
-            );
-        }
-
-        $entity = ChargeSession::fromPersistence(
+        return ChargeSession::fromPersistence(
             $model->id,
             $model->restaurant_id,
             $model->order_id,
             $model->opened_by_user_id,
             $model->diners_count,
             $model->total_cents,
-            $model->amount_per_diner,
-            $model->paid_diners_count,
             $model->status,
             $this->toImmutable($model->created_at),
             $this->toImmutable($model->updated_at),
@@ -121,10 +100,6 @@ final class EloquentChargeSessionRepository implements ChargeSessionRepositoryIn
             $model->cancellation_reason,
             $this->toImmutable($model->cancelled_at),
         );
-
-        $entity->loadPayments($payments);
-
-        return $entity;
     }
 
     private function toImmutable(mixed $value): ?\DateTimeImmutable

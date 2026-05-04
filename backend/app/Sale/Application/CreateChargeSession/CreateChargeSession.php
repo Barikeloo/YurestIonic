@@ -6,18 +6,16 @@ namespace App\Sale\Application\CreateChargeSession;
 
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
-use App\Sale\Application\GetOrderPaidTotal\GetOrderPaidTotal;
 use App\Sale\Domain\Entity\ChargeSession;
-use App\Sale\Domain\Exception\OrderHasPartialPaymentsException;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 /**
- * Caso de uso: Crear o recuperar una sesión de cobro para pago a partes iguales.
+ * Caso de uso: crear o recuperar la sesión de cobro activa de una orden.
  *
- * Según la especificación:
- * - Si existe sesión activa → la retorna (sin recalcular)
- * - Si no existe → crea nueva calculando cuota fija
+ * Filosofía de "deuda viva": la sesión solo guarda snapshot de la mesa
+ * (dinersCount + totalCents). La deuda restante y la cuota sugerida se
+ * calculan al vuelo desde los SalePayments tagueados con la sesión.
  */
 final class CreateChargeSession
 {
@@ -25,7 +23,7 @@ final class CreateChargeSession
         private readonly ChargeSessionRepositoryInterface $chargeSessionRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly OrderLineRepositoryInterface $orderLineRepository,
-        private readonly GetOrderPaidTotal $getOrderPaidTotal,
+        private readonly ChargeSessionResponseBuilder $responseBuilder,
     ) {}
 
     public function __invoke(
@@ -37,39 +35,28 @@ final class CreateChargeSession
         $orderUuid = Uuid::create($orderId);
         $restaurantUuid = Uuid::create($restaurantId);
 
-        // 1. Buscar sesión activa existente
         $existingSession = $this->chargeSessionRepository->findActiveByOrderId($orderUuid);
 
         if ($existingSession !== null) {
-            // Retornar sesión existente sin recalcular (regla crítica de la especificación)
-            return CreateChargeSessionResponse::fromEntity($existingSession);
+            return $this->responseBuilder->build($existingSession);
         }
 
-        // 2. Bloquear creación si la orden ya tiene pagos parciales sin sesión asociada.
-        //    Hoy no podemos atribuir esos pagos a comensales concretos, así que dividir
-        //    a partes iguales el restante daría una cuota arbitraria. Cuando exista el
-        //    flujo "por líneas" / "por comensal" que registre pagos en charge_session,
-        //    este bloqueo debe relajarse para permitir el flujo mixto.
-        $paidCents = ($this->getOrderPaidTotal)($orderId);
-        if ($paidCents > 0) {
-            throw new OrderHasPartialPaymentsException($paidCents);
-        }
-
-        // 3. Obtener datos de la orden
         $order = $this->orderRepository->findByUuid($orderUuid);
 
         if ($order === null) {
             throw new \DomainException('Order not found');
         }
 
-        // Usar diners de la orden o el proporcionado
         $finalDinersCount = $dinersCount ?? $order->diners()->value() ?? 1;
 
         if ($finalDinersCount <= 0) {
             throw new \DomainException('Diners count must be greater than 0');
         }
 
-        // 3. Calcular total de la orden sumando líneas
+        // El total snapshot guarda la deuda viva al abrir la sesión
+        // (líneas actuales − pagos previos no tagueados). El response
+        // recalcula deuda en cada lectura, así que el snapshot solo es
+        // referencia histórica para la entidad.
         $orderLines = $this->orderLineRepository->findByOrderId($orderUuid);
         $totalCents = 0;
         foreach ($orderLines as $line) {
@@ -80,7 +67,6 @@ final class CreateChargeSession
             throw new \DomainException('Order has no items or total is zero');
         }
 
-        // 4. Crear nueva sesión
         $chargeSession = ChargeSession::dddCreate(
             Uuid::generate(),
             $restaurantUuid,
@@ -90,9 +76,8 @@ final class CreateChargeSession
             $totalCents,
         );
 
-        // 5. Persistir
         $this->chargeSessionRepository->save($chargeSession);
 
-        return CreateChargeSessionResponse::fromEntity($chargeSession);
+        return $this->responseBuilder->build($chargeSession);
     }
 }

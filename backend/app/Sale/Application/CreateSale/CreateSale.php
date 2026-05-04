@@ -47,6 +47,7 @@ final class CreateSale
         ?array $orderLineIds = null,
         bool $isPartialPayment = false,
         int $tipCents = 0,
+        ?string $chargeSessionId = null,
     ): CreateSaleResponse {
         return $this->transactionManager->run(function () use (
             $restaurantId,
@@ -58,6 +59,7 @@ final class CreateSale
             $orderLineIds,
             $isPartialPayment,
             $tipCents,
+            $chargeSessionId,
         ) {
             $restaurantUuid = Uuid::create($restaurantId);
             $orderUuid = Uuid::create($orderId);
@@ -65,6 +67,13 @@ final class CreateSale
             $activeSession = $this->cashSessionRepository->findActiveByDeviceId(DeviceId::create($deviceId), $restaurantUuid);
             if ($activeSession === null) {
                 throw new \DomainException('No active cash session for this device.');
+            }
+
+            // Filosofía de "deuda viva": cualquier importe vale, simplemente
+            // reduce la deuda de la mesa. Si la sale no cubre el total de las
+            // líneas, es parcial por definición.
+            if ($chargeSessionId !== null) {
+                $isPartialPayment = true;
             }
 
             $sale = Sale::dddCreate(
@@ -77,7 +86,6 @@ final class CreateSale
 
             $orderLines = $this->orderLineRepository->findByOrderId($orderUuid);
 
-            // Filter order lines if orderLineIds is provided (split bill)
             if ($orderLineIds !== null && count($orderLineIds) > 0) {
                 $lineIdSet = array_map(fn ($id) => Uuid::create($id), $orderLineIds);
                 $orderLines = array_filter($orderLines, fn ($line) => in_array($line->uuid(), $lineIdSet, true));
@@ -93,7 +101,6 @@ final class CreateSale
                 $paymentsTotal += $payment['amount_cents'];
             }
 
-            // Validate payment amounts match expected total + tip
             if ($isPartialPayment) {
                 $total = $paymentsTotal;
             } elseif ($paymentsTotal !== $total + $tipCents) {
@@ -112,7 +119,6 @@ final class CreateSale
 
             $this->saleRepository->save($sale);
 
-            // Create sale lines for the selected order lines
             foreach ($orderLines as $line) {
                 $saleLine = SaleLine::dddCreate(
                     id: Uuid::generate(),
@@ -128,9 +134,6 @@ final class CreateSale
                 $this->saleLineRepository->save($saleLine);
             }
 
-            // Close the order (status=invoiced) when cumulative payments across all sales
-            // for this order cover the original total. This unifies full, split-by-lines and
-            // split-by-equal-parts flows, so the order cannot be left stuck after a split.
             $order = $this->orderRepository->findByUuid($orderUuid);
             if ($order !== null) {
                 $originalTotal = 0;
@@ -151,13 +154,19 @@ final class CreateSale
                     }
                 }
 
-                if ($totalPaid >= $originalTotal) {
+                // Solo cerrar la orden si NO es parte de un charge session
+                // (en charge sessions, el cierre se gestiona externamente)
+                if ($chargeSessionId === null && $totalPaid >= $originalTotal) {
                     $order->close(Uuid::create($closedByUserId));
                 }
                 $this->orderRepository->save($order);
             }
 
+            $chargeSessionUuid = $chargeSessionId !== null ? Uuid::create($chargeSessionId) : null;
+
             foreach ($payments as $payment) {
+                $dinerNumber = isset($payment['diner_number']) ? (int) $payment['diner_number'] : null;
+
                 $salePayment = SalePayment::dddCreate(
                     id: Uuid::generate(),
                     restaurantId: $restaurantUuid,
@@ -167,11 +176,12 @@ final class CreateSale
                     amount: Money::create($payment['amount_cents']),
                     userId: Uuid::create($closedByUserId),
                     metadata: $payment['metadata'] ?? null,
+                    chargeSessionId: $chargeSessionUuid,
+                    dinerNumber: $dinerNumber,
                 );
                 $this->salePaymentRepository->save($salePayment);
             }
 
-            // Create tip entity if tip amount is provided
             if ($tipCents > 0) {
                 $tip = Tip::dddCreate(
                     id: Uuid::generate(),
@@ -180,7 +190,7 @@ final class CreateSale
                     cashSessionId: $activeSession->uuid(),
                     amount: Money::create($tipCents),
                     source: 'cash_declared',
-                    beneficiaryUserId: null, // Anonymous tip, can be assigned later
+                    beneficiaryUserId: null,
                 );
                 $this->tipRepository->save($tip);
             }

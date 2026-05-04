@@ -32,6 +32,8 @@ final class EloquentSalePaymentRepository implements SalePaymentRepositoryInterf
                 'restaurant_id' => $restaurantId,
                 'sale_id' => $saleId,
                 'cash_session_id' => $cashSessionId,
+                'charge_session_id' => $salePayment->chargeSessionId()?->value(),
+                'diner_number' => $salePayment->dinerNumber(),
                 'method' => $salePayment->method()->value(),
                 'amount_cents' => $salePayment->amount()->toCents(),
                 'metadata' => $salePayment->metadata(),
@@ -83,6 +85,15 @@ final class EloquentSalePaymentRepository implements SalePaymentRepositoryInterf
             ->all();
     }
 
+    public function findByChargeSessionId(Uuid $chargeSessionId): array
+    {
+        return $this->model->newQuery()
+            ->where('charge_session_id', $chargeSessionId->value())
+            ->get()
+            ->map(fn ($model) => $this->toDomain($model))
+            ->all();
+    }
+
     public function findNonCancelledByCashSessionId(Uuid $cashSessionId): array
     {
         $cashSessionIdInt = EloquentCashSession::query()->where('uuid', $cashSessionId->value())->value('id');
@@ -122,6 +133,8 @@ final class EloquentSalePaymentRepository implements SalePaymentRepositoryInterf
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),
             $model->deleted_at?->toDateTimeImmutable(),
+            $model->charge_session_id,
+            $model->diner_number !== null ? (int) $model->diner_number : null,
         );
     }
 }

@@ -19,8 +19,12 @@ final class RecordChargeSessionPaymentController
     public function __invoke(Request $request, string $id): JsonResponse
     {
         $validated = $request->validate([
-            'diner_number' => ['required', 'integer', 'min:1'],
-            'payment_method' => ['required', 'string', 'in:cash,card,bizum,other'],
+            'diner_number' => ['nullable', 'integer', 'min:1'],
+            'amount_cents' => ['nullable', 'integer', 'min:1'],
+            'payment_method' => ['required', 'string', 'in:cash,card,bizum,voucher,invitation,other'],
+            'opened_by_user_id' => ['required', 'string', 'uuid'],
+            'closed_by_user_id' => ['required', 'string', 'uuid'],
+            'device_id' => ['required', 'string'],
         ]);
 
         $restaurantId = $this->tenantContext->restaurantUuid();
@@ -28,13 +32,20 @@ final class RecordChargeSessionPaymentController
             throw new \RuntimeException('Tenant context is required.');
         }
 
-        $response = ($this->recordPayment)(
-            chargeSessionId: $id,
-            dinerNumber: $validated['diner_number'],
-            paymentMethod: $validated['payment_method'],
-        );
+        try {
+            $response = ($this->recordPayment)(
+                chargeSessionId: $id,
+                paymentMethod: $validated['payment_method'],
+                openedByUserId: $validated['opened_by_user_id'],
+                closedByUserId: $validated['closed_by_user_id'],
+                deviceId: $validated['device_id'],
+                dinerNumber: $validated['diner_number'] ?? null,
+                amountCents: $validated['amount_cents'] ?? null,
+            );
+        } catch (\DomainException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 422);
+        }
 
-        // Si la sesión se completó, devolver 200, si no 201
         $statusCode = $response->isSessionComplete ? 200 : 201;
 
         return new JsonResponse($response->toArray(), $statusCode);

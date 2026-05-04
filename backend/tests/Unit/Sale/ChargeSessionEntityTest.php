@@ -8,6 +8,13 @@ use App\Sale\Domain\Entity\ChargeSession;
 use App\Shared\Domain\ValueObject\Uuid;
 use PHPUnit\Framework\TestCase;
 
+/**
+ * Tests de la entidad ChargeSession con filosofía de "deuda viva".
+ *
+ * La entidad solo guarda snapshot (dinersCount + totalCents).
+ * Los cálculos (remaining, suggested per diner) se hacen al vuelo
+ * pasando los pagos acumulados como parámetro.
+ */
 final class ChargeSessionEntityTest extends TestCase
 {
     public function test_can_create_charge_session(): void
@@ -23,13 +30,10 @@ final class ChargeSessionEntityTest extends TestCase
 
         $this->assertEquals(4, $session->dinersCount());
         $this->assertEquals(10000, $session->totalCents());
-        $this->assertEquals(2500, $session->amountPerDiner()->value()); // 100/4 = 25
-        $this->assertEquals(0, $session->paidDinersCount());
         $this->assertTrue($session->status()->isActive());
-        $this->assertTrue($session->canEditDinersCount());
     }
 
-    public function test_can_record_payment(): void
+    public function test_remaining_amount_with_no_payments(): void
     {
         $session = ChargeSession::dddCreate(
             Uuid::generate(),
@@ -40,45 +44,11 @@ final class ChargeSessionEntityTest extends TestCase
             10000,
         );
 
-        $payment = $session->recordPayment(
-            Uuid::generate(),
-            1, // Diner #1
-            'cash'
-        );
-
-        $this->assertEquals(1, $session->paidDinersCount());
-        $this->assertEquals(2500, $payment->amount());
-        $this->assertFalse($session->canEditDinersCount()); // Cannot edit after payment
+        // Sin pagos, remaining = total
+        $this->assertEquals(10000, $session->remainingAmount(0));
     }
 
-    public function test_last_diner_pays_remainder(): void
-    {
-        $session = ChargeSession::dddCreate(
-            Uuid::generate(),
-            Uuid::generate(),
-            Uuid::generate(),
-            Uuid::generate(),
-            3, // 3 diners
-            10000, // 100.00 EUR - not divisible by 3
-        );
-
-        // First two diners pay 33.33 each
-        $payment1 = $session->recordPayment(Uuid::generate(), 1, 'cash');
-        $payment2 = $session->recordPayment(Uuid::generate(), 2, 'card');
-
-        $this->assertEquals(3333, $payment1->amount());
-        $this->assertEquals(3333, $payment2->amount());
-
-        // Last diner pays the remainder: 100 - 33.33 - 33.33 = 33.34
-        $payment3 = $session->recordPayment(Uuid::generate(), 3, 'cash');
-        $this->assertEquals(3334, $payment3->amount());
-
-        // Total should be exactly 10000
-        $totalPaid = $payment1->amount() + $payment2->amount() + $payment3->amount();
-        $this->assertEquals(10000, $totalPaid);
-    }
-
-    public function test_cannot_edit_diners_after_payment(): void
+    public function test_remaining_amount_with_partial_payments(): void
     {
         $session = ChargeSession::dddCreate(
             Uuid::generate(),
@@ -89,15 +59,97 @@ final class ChargeSessionEntityTest extends TestCase
             10000,
         );
 
-        $session->recordPayment(Uuid::generate(), 1, 'cash');
+        // Con 2500 pagados, remaining = 7500
+        $this->assertEquals(7500, $session->remainingAmount(2500));
+
+        // Con todo pagado, remaining = 0
+        $this->assertEquals(0, $session->remainingAmount(10000));
+    }
+
+    public function test_remaining_amount_never_negative(): void
+    {
+        $session = ChargeSession::dddCreate(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            4,
+            10000,
+        );
+
+        // Si por algún razón pagamos más, no debe quedar negativo
+        $this->assertEquals(0, $session->remainingAmount(12000));
+    }
+
+    public function test_amount_for_next_diner_with_no_payments(): void
+    {
+        $session = ChargeSession::dddCreate(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            4,
+            10000,
+        );
+
+        // 100€ / 4 = 25€ cada uno
+        $this->assertEquals(2500, $session->amountForNextDiner(0, 4));
+    }
+
+    public function test_amount_for_next_diner_with_partial_payments(): void
+    {
+        $session = ChargeSession::dddCreate(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            4,
+            10000,
+        );
+
+        // Si ya pagaron 2500, quedan 7500 por 3 comensales = 2500
+        $this->assertEquals(2500, $session->amountForNextDiner(2500, 3));
+    }
+
+    public function test_last_diner_gets_remainder(): void
+    {
+        $session = ChargeSession::dddCreate(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            3,
+            10000, // 100€ no divisible por 3
+        );
+
+        // Primer comensal: floor(10000/3) = 3333
+        $this->assertEquals(3333, $session->amountForNextDiner(0, 3));
+
+        // Segundo comensal (con 3333 pagados): floor(6667/2) = 3333
+        $this->assertEquals(3333, $session->amountForNextDiner(3333, 2));
+
+        // Tercer comensal (con 6666 pagados): quedan 3334
+        $this->assertEquals(3334, $session->amountForNextDiner(6666, 1));
+    }
+
+    public function test_cannot_get_amount_when_no_pending_diners(): void
+    {
+        $session = ChargeSession::dddCreate(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            4,
+            10000,
+        );
 
         $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Cannot modify diners');
+        $this->expectExceptionMessage('No pending diners to charge');
 
-        $session->updateDinersCount(3);
+        $session->amountForNextDiner(0, 0);
     }
 
-    public function test_can_edit_diners_before_any_payment(): void
+    public function test_can_update_diners_when_no_payments(): void
     {
         $session = ChargeSession::dddCreate(
             Uuid::generate(),
@@ -108,13 +160,12 @@ final class ChargeSessionEntityTest extends TestCase
             10000,
         );
 
-        $session->updateDinersCount(5);
+        $session->updateDinersCount(5, 0);
 
         $this->assertEquals(5, $session->dinersCount());
-        $this->assertEquals(2000, $session->amountPerDiner()->value()); // 100/5 = 20
     }
 
-    public function test_cannot_record_payment_for_same_diner_twice(): void
+    public function test_can_update_diners_below_original_if_not_below_paid(): void
     {
         $session = ChargeSession::dddCreate(
             Uuid::generate(),
@@ -125,29 +176,143 @@ final class ChargeSessionEntityTest extends TestCase
             10000,
         );
 
-        $session->recordPayment(Uuid::generate(), 1, 'cash');
+        // 2 comensales ya pagaron, puedo bajar a 3 o 2, pero no a 1
+        $session->updateDinersCount(3, 2);
+        $this->assertEquals(3, $session->dinersCount());
 
-        $this->expectException(\DomainException::class);
-        $this->expectExceptionMessage('Diner 1 has already paid');
-
-        $session->recordPayment(Uuid::generate(), 1, 'card');
+        $session->updateDinersCount(2, 2);
+        $this->assertEquals(2, $session->dinersCount());
     }
 
-    public function test_session_completes_when_all_diners_pay(): void
+    public function test_cannot_update_diners_below_paid_count(): void
     {
         $session = ChargeSession::dddCreate(
             Uuid::generate(),
             Uuid::generate(),
             Uuid::generate(),
             Uuid::generate(),
-            2,
+            4,
             10000,
         );
 
-        $session->recordPayment(Uuid::generate(), 1, 'cash');
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Cannot reduce diners below already-paid count');
+
+        // 2 comensales pagaron, no puedo bajar a 1
+        $session->updateDinersCount(1, 2);
+    }
+
+    public function test_cannot_update_diners_when_session_not_active(): void
+    {
+        $session = ChargeSession::dddCreate(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            4,
+            10000,
+        );
+
+        $session->markCompleted();
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Cannot modify diners: session is not active');
+
+        $session->updateDinersCount(5, 0);
+    }
+
+    public function test_mark_completed_changes_status(): void
+    {
+        $session = ChargeSession::dddCreate(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            4,
+            10000,
+        );
+
         $this->assertTrue($session->status()->isActive());
 
-        $session->recordPayment(Uuid::generate(), 2, 'card');
+        $session->markCompleted();
+
         $this->assertTrue($session->status()->isCompleted());
+    }
+
+    public function test_mark_completed_is_idempotent(): void
+    {
+        $session = ChargeSession::dddCreate(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            4,
+            10000,
+        );
+
+        $session->markCompleted();
+        $session->markCompleted(); // No debe lanzar excepción
+
+        $this->assertTrue($session->status()->isCompleted());
+    }
+
+    public function test_can_cancel_active_session(): void
+    {
+        $session = ChargeSession::dddCreate(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            4,
+            10000,
+        );
+
+        $cancelledByUserId = Uuid::generate();
+
+        $session->cancel($cancelledByUserId, 'Customer changed mind');
+
+        $this->assertTrue($session->status()->isCancelled());
+        $this->assertEquals($cancelledByUserId->value(), $session->cancelledByUserId()?->value());
+        $this->assertEquals('Customer changed mind', $session->cancellationReason());
+    }
+
+    public function test_cannot_cancel_already_cancelled_session(): void
+    {
+        $session = ChargeSession::dddCreate(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            4,
+            10000,
+        );
+
+        $cancelledByUserId = Uuid::generate();
+        $session->cancel($cancelledByUserId, 'First cancellation');
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Cannot cancel: session is not active');
+
+        $session->cancel($cancelledByUserId, 'Second attempt');
+    }
+
+    public function test_cannot_cancel_completed_session(): void
+    {
+        $session = ChargeSession::dddCreate(
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            Uuid::generate(),
+            4,
+            10000,
+        );
+
+        $session->markCompleted();
+
+        $this->expectException(\DomainException::class);
+        $this->expectExceptionMessage('Cannot cancel: session is not active');
+
+        $cancelledByUserId = Uuid::generate();
+        $session->cancel($cancelledByUserId, 'Attempt to cancel completed');
     }
 }

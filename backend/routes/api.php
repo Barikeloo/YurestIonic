@@ -50,7 +50,7 @@ use App\Sale\Infrastructure\Entrypoint\Http\CancelSaleController;
 use App\Sale\Infrastructure\Entrypoint\Http\CreateChargeSessionController;
 use App\Sale\Infrastructure\Entrypoint\Http\CreateCreditNoteController;
 use App\Sale\Infrastructure\Entrypoint\Http\DeleteController as SaleDeleteController;
-use App\Sale\Infrastructure\Entrypoint\Http\GetActiveChargeSessionController;
+use App\Sale\Infrastructure\Entrypoint\Http\GetCurrentChargeSessionController;
 use App\Sale\Infrastructure\Entrypoint\Http\GetCollectionController as SaleGetCollectionController;
 use App\Sale\Infrastructure\Entrypoint\Http\GetController as SaleGetController;
 use App\Sale\Infrastructure\Entrypoint\Http\GetOrderPaidTotalController;
@@ -161,7 +161,7 @@ Route::middleware([
 
     // Charge Sessions (pago a partes iguales)
     Route::post('/tpv/charge-sessions', CreateChargeSessionController::class);
-    Route::get('/tpv/charge-sessions/active', GetActiveChargeSessionController::class);
+    Route::get('/tpv/charge-sessions/current', GetCurrentChargeSessionController::class);
     Route::put('/tpv/charge-sessions/{id}/diners', UpdateChargeSessionDinersController::class)->whereUuid('id');
     Route::post('/tpv/charge-sessions/{id}/payments', RecordChargeSessionPaymentController::class)->whereUuid('id');
     Route::post('/tpv/charge-sessions/{id}/cancel', CancelChargeSessionController::class)->whereUuid('id');

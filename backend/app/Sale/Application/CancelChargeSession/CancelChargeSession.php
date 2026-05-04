@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\CancelChargeSession;
 
+use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -19,6 +20,7 @@ final class CancelChargeSession
 {
     public function __construct(
         private readonly ChargeSessionRepositoryInterface $chargeSessionRepository,
+        private readonly ChargeSessionResponseBuilder $responseBuilder,
     ) {}
 
     public function __invoke(
@@ -43,27 +45,26 @@ final class CancelChargeSession
             );
         }
 
-        // 3. Preparar mensaje de advertencia si hay pagos
-        $paidCount = $session->paidDinersCount();
+        // 3. Obtener estado actual de pagos (deuda viva)
+        [$totalCents, $paidCents, $paidDinerNumbers] = $this->responseBuilder->collect($session);
+        $paidCount = count($paidDinerNumbers);
+        // (totalCents no se usa aquí; sólo informamos de paid_cents en el warning)
+        unset($totalCents);
+
+        // 4. Preparar mensaje de advertencia si hay pagos
         $warningMessage = null;
         if ($paidCount > 0) {
-            $totalPaid = 0;
-            foreach ($session->payments() as $payment) {
-                if ($payment->isCompleted()) {
-                    $totalPaid += $payment->amount();
-                }
-            }
             $warningMessage = "ATENCIÓN: Hay {$paidCount} pago(s) completado(s) ".
-                'por un total de '.number_format($totalPaid / 100, 2).' €. '.
+                'por un total de '.number_format($paidCents / 100, 2).' €. '.
                 'Se requiere devolución manual al cliente.';
         }
 
-        // 4. Cancelar sesión
+        // 5. Cancelar sesión
         $session->cancel($userUuid, $reason);
 
-        // 5. Persistir
+        // 6. Persistir
         $this->chargeSessionRepository->save($session);
 
-        return CancelChargeSessionResponse::fromEntity($session, $warningMessage);
+        return CancelChargeSessionResponse::fromEntity($session, $paidCents, $paidDinerNumbers, $warningMessage);
     }
 }

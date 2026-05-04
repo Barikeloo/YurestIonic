@@ -1,13 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BehaviorSubject, forkJoin, of, Subject, throwError } from 'rxjs';
+import { BehaviorSubject, forkJoin, Observable, of, Subject, throwError } from 'rxjs';
 import { catchError, finalize, switchMap, take, takeUntil, map } from 'rxjs/operators';
 import { AuthService } from '../../../services/auth.service';
 import { PinAuthService, AuthContext, AuthActionType } from '../../../services/pin-auth.service';
 import { PinAuthResult } from '../../../components/pin-auth-modal/pin-auth-modal.component';
-import { TpvService, TpvCashSession, TpvCashSessionListItem, TpvOrder, TpvTableItem } from '../../../services/tpv.service';
-import { ChargeSessionService, ChargeSession } from '../../../services/charge-session.service';
+import { TpvService, TpvCashSession, TpvCashSessionListItem, TpvOrder, TpvSale, TpvTableItem } from '../../../services/tpv.service';
+import { ChargeSessionService, ChargeSession, RecordPaymentResponse } from '../../../services/charge-session.service';
 import { OpenCashModalComponent } from '../../../components/open-cash-modal/open-cash-modal.component';
 import { PinAuthModalComponent } from '../../../components/pin-auth-modal/pin-auth-modal.component';
 import { CashMovementModalComponent } from '../../../components/cash-movement-modal/cash-movement-modal.component';
@@ -859,15 +859,9 @@ export class CajaPage implements OnInit, OnDestroy {
       }),
       switchMap(({ originalTotal, paidTotal, fallback }) => {
         const remainingTotal = Math.max(0, originalTotal - paidTotal);
-        const diners = mesa.diners ?? 1;
 
-        if (!fallback) {
-          const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
-          const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
-          this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
-        } else {
-          this.paidDiners = [];
-        }
+        // Ya no calculamos paidDiners en base al total pagado para evitar suposiciones erróneas
+        this.paidDiners = [];
 
         // Update selected table total to remaining amount
         if (this.selectedTable) {
@@ -925,11 +919,15 @@ export class CajaPage implements OnInit, OnDestroy {
     // take(1) garantiza que cada observable emite exactamente un valor y completa.
     // finalize actúa como red de seguridad: abre el modal aunque algo falle.
     forkJoin({
+      orderTotal: this.tpvService.getOrderTotal(orderId).pipe(
+        take(1),
+        catchError(() => of({ total_cents: this.originalOrderTotal || 0 }))
+      ),
       paidTotal: this.tpvService.getOrderPaidTotal(orderId).pipe(
         take(1),
         catchError(() => of({ total_cents: 0 }))
       ),
-      chargeSession: this.chargeSessionService.getActiveChargeSession(orderId).pipe(
+      chargeSession: this.chargeSessionService.getCurrentChargeSession(orderId).pipe(
         take(1),
         catchError((error) => {
           if (error.status === 404) return of(null);
@@ -948,32 +946,36 @@ export class CajaPage implements OnInit, OnDestroy {
         }
       })
     ).subscribe({
-      next: ({ paidTotal, chargeSession }) => {
+      next: ({ orderTotal, paidTotal, chargeSession }) => {
         const paidTotalCents = paidTotal.total_cents;
-        const originalTotal = this.originalOrderTotal || 0;
+        const originalTotal = orderTotal.total_cents;
+
+        // Update originalOrderTotal to the true total from backend
+        this.originalOrderTotal = originalTotal;
 
         this.loadedChargeSession = chargeSession;
+        console.log('onSplitBill - chargeSession loaded:', chargeSession);
 
         if (chargeSession) {
           // La charge session es la fuente de verdad
-          this.paidDiners = chargeSession.paid_diners.map((p) => p.diner_number);
-          console.log('Synced paidDiners from charge session:', this.paidDiners);
+          this.paidDiners = chargeSession.paid_diner_numbers;
+          console.log('onSplitBill - synced paidDiners:', this.paidDiners, 'remaining_cents:', chargeSession.remaining_cents);
           if (this.selectedTable) {
-            this.selectedTable.total = chargeSession.remaining_amount;
+            this.selectedTable.total = chargeSession.remaining_cents;
+            this.updatePendingTableTotal(this.selectedTable.order_id, chargeSession.remaining_cents);
           }
         } else {
-          // Fallback: calcular desde el total pagado
-          const diners = this.selectedTable?.diners ?? 1;
-          const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
-          const paidDinersCount = diners > 1 && partAmount > 0
-            ? Math.floor(paidTotalCents / partAmount)
-            : (paidTotalCents > 0 ? 1 : 0);
-          this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
+          // Fallback: no asumimos cuántos han pagado, dejamos que el camarero lo marque manualmente
+          this.paidDiners = [];
           if (this.selectedTable) {
-            this.selectedTable.total = Math.max(0, originalTotal - paidTotalCents);
+            const remaining = Math.max(0, originalTotal - paidTotalCents);
+            this.selectedTable.total = remaining;
+            this.updatePendingTableTotal(this.selectedTable.order_id, remaining);
           }
         }
 
+        // Abrir modal DESPUÉS de actualizar todos los datos
+        console.log('onSplitBill - opening modal with loadedChargeSession:', this.loadedChargeSession);
         this.showSplitModal = true;
       },
       error: (error) => {
@@ -983,7 +985,7 @@ export class CajaPage implements OnInit, OnDestroy {
     });
   }
 
-  public onConfirmPayment(data: { method: string; amount: number; tip?: number }): void {
+  public onConfirmPayment(data: { method: string; amount: number; tip?: number; isManualPartial?: boolean }): void {
     // Prevent double submission
     if (this.isProcessingPayment) {
       console.log('Payment already in progress, ignoring double click');
@@ -1028,7 +1030,7 @@ export class CajaPage implements OnInit, OnDestroy {
     // Calculate based on number of diners, not selectedTable.total
     // selectedTable.total is set to the payment amount in split modal, not the remaining amount
     let willBeComplete = false;
-    if (this.isPartialPayment && this.selectedTable) {
+    if (this.isPartialPayment && this.selectedTable && !data.isManualPartial) {
       const diners = this.selectedTable.diners ?? 1;
       const paidDinersCount = this.paidDiners.length;
       // If this is the last unpaid diner (or single diner), the payment will complete the order
@@ -1041,7 +1043,8 @@ export class CajaPage implements OnInit, OnDestroy {
 
     // For complete payments, send undefined order_line_ids so backend treats it as full payment
     // For partial/split payments, send the specific line IDs
-    const orderLineIds = willBeComplete
+    // If it's a manual partial payment, we don't assign specific lines, so it's undefined
+    const orderLineIds = (willBeComplete || data.isManualPartial)
       ? undefined
       : this.selectedTableLines
           .filter((l) => l.id)
@@ -1053,8 +1056,8 @@ export class CajaPage implements OnInit, OnDestroy {
 
     // When from mesas, calculate if payment is complete based on amount vs remaining total
     // Only send is_partial_payment: true if the payment is actually partial
-    let isPartialPayment = this.isPartialPayment;
-    if (this.fromMesas) {
+    let isPartialPayment = this.isPartialPayment || !!data.isManualPartial;
+    if (this.fromMesas || data.isManualPartial) {
       // If this payment completes the order, send is_partial_payment: false
       // Otherwise send is_partial_payment: true
       isPartialPayment = !willBeComplete;
@@ -1073,80 +1076,71 @@ export class CajaPage implements OnInit, OnDestroy {
     // Cancel any previous payment flow (A7 fix)
     this.paymentFlowDestroy$.next();
 
-    this.tpvService.createSale({
-      order_id: this.selectedTable.order_id,
-      opened_by_user_id: this.currentUser.id,
-      closed_by_user_id: this.currentUser.id,
-      device_id: this.deviceId,
-      payments,
-      order_line_ids: orderLineIds,
-      is_partial_payment: isPartialPayment,
-    }).pipe(
+    const orderId = this.selectedTable?.order_id;
+    const activeSessionId = this.loadedChargeSession?.status === 'active'
+      ? this.loadedChargeSession.id
+      : null;
+
+    const paymentMethod = payments[0].method;
+    const mappedMethod: 'cash' | 'card' | 'bizum' | 'voucher' | 'invitation' | 'other' =
+      (['cash', 'card', 'bizum', 'voucher', 'invitation'] as const).includes(paymentMethod as any)
+        ? (paymentMethod as 'cash' | 'card' | 'bizum' | 'voucher' | 'invitation')
+        : 'other';
+
+    // Cuando hay sesión activa, todo cobro (libre o split) se canaliza por
+    // recordPayment, que crea la Sale internamente y gestiona el ciclo de
+    // vida de la sesión (cierre por deuda 0). Llamar a tpvService.createSale
+    // por separado generaría una Sale duplicada y descuadraría paid_cents.
+    const sale$: Observable<RecordPaymentResponse | TpvSale> = activeSessionId
+      ? this.chargeSessionService.recordPayment(activeSessionId, {
+          payment_method: mappedMethod,
+          amount_cents: data.amount,
+          diner_number: this.currentDinerNumber ?? undefined,
+          opened_by_user_id: this.currentUser?.id ?? '',
+          closed_by_user_id: this.currentUser?.id ?? '',
+          device_id: this.deviceId,
+        })
+      : this.tpvService.createSale({
+          order_id: this.selectedTable!.order_id,
+          opened_by_user_id: this.currentUser!.id,
+          closed_by_user_id: this.currentUser!.id,
+          device_id: this.deviceId,
+          payments,
+          order_line_ids: orderLineIds,
+          is_partial_payment: isPartialPayment,
+        });
+
+    sale$.pipe(
       takeUntil(this.destroy$),
       takeUntil(this.paymentFlowDestroy$),
-      switchMap((sale) => {
-        console.log('Sale created successfully:', sale);
-        console.log('isPartialPayment:', isPartialPayment, 'selectedTable:', this.selectedTable, 'willBeComplete:', willBeComplete);
+      switchMap((result) => {
+        console.log('Payment registered:', result);
         this.showCobrarModal = false;
 
-        const orderId = this.selectedTable?.order_id;
-
-        // Si hay una sesión de cobro activa, registrar el pago del comensal
-        if (this.currentChargeSession && this.currentDinerNumber && payments.length > 0) {
-          const paymentMethod = payments[0].method;
-          console.log('Recording charge session payment:', {
-            sessionId: this.currentChargeSession.id,
-            dinerNumber: this.currentDinerNumber,
-            paymentMethod
-          });
-
-          const mappedMethod: 'cash' | 'card' | 'bizum' | 'other' =
-            (paymentMethod === 'cash' || paymentMethod === 'card' || paymentMethod === 'bizum')
-              ? paymentMethod
-              : 'other';
-
-          return this.chargeSessionService.recordPayment(
-            this.currentChargeSession.id,
-            {
-              diner_number: this.currentDinerNumber,
-              payment_method: mappedMethod,
-            }
-          ).pipe(
+        if (activeSessionId) {
+          const paymentResponse = result as RecordPaymentResponse;
+          return this.chargeSessionService.getCurrentChargeSession(orderId!).pipe(
             takeUntil(this.paymentFlowDestroy$),
-            switchMap((paymentResponse) => {
-              console.log('Charge session payment recorded:', paymentResponse);
-
-              return this.chargeSessionService.getActiveChargeSession(orderId!).pipe(
-                takeUntil(this.paymentFlowDestroy$),
-                map((freshSession) => {
-                  console.log('Charge session reloaded after payment:', freshSession);
-                  this.loadedChargeSession = freshSession;
-                  this.paidDiners = freshSession.paid_diners.map((p) => p.diner_number);
-                  const isComplete = freshSession.paid_diners_count >= freshSession.diners_count;
-                  return { type: 'charge_session' as const, isOrderComplete: isComplete };
-                }),
-                catchError((error) => {
-                  console.warn('Could not reload charge session after payment:', error);
-                  if (!this.paidDiners.includes(this.currentDinerNumber!)) {
-                    this.paidDiners.push(this.currentDinerNumber!);
-                  }
-                  return of({
-                    type: 'charge_session' as const,
-                    isOrderComplete: paymentResponse.is_session_complete,
-                  });
-                })
-              );
-            }),
-            map((result) => {
+            map((freshSession) => {
+              console.log('Charge session reloaded after payment:', freshSession);
+              this.loadedChargeSession = freshSession;
+              this.paidDiners = freshSession.paid_diner_numbers;
+              if (this.selectedTable) {
+                this.selectedTable.total = freshSession.remaining_cents;
+                this.updatePendingTableTotal(this.selectedTable.order_id, freshSession.remaining_cents);
+              }
               this.currentChargeSession = null;
               this.currentDinerNumber = null;
-              return result;
+              return { type: 'charge_session' as const, isOrderComplete: paymentResponse.is_session_complete };
             }),
             catchError((error) => {
-              console.error('Error recording charge session payment:', error);
+              console.warn('Could not reload charge session after payment:', error);
               this.currentChargeSession = null;
               this.currentDinerNumber = null;
-              return of({ type: 'charge_session_error' as const, isOrderComplete: willBeComplete });
+              return of({
+                type: 'charge_session' as const,
+                isOrderComplete: paymentResponse.is_session_complete,
+              });
             })
           );
         }
@@ -1158,19 +1152,21 @@ export class CajaPage implements OnInit, OnDestroy {
             map((paidResponse) => {
               const paidTotal = paidResponse.total_cents;
               const originalTotal = this.originalOrderTotal || this.selectedTable?.total || 0;
-              const diners = this.selectedTable?.diners ?? 1;
-              const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
-              const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
-              // Update paidDiners array based on count
-              this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
-              console.log('Updated paidDiners based on total paid:', this.paidDiners);
+              
+              // Ya no calculamos paidDiners en base al total pagado
+              this.paidDiners = [];
+              console.log('Reset paidDiners for manual partial payment');
 
               const isOrderComplete = paidTotal >= originalTotal;
-              return { type: 'partial' as const, isOrderComplete, orderId };
+              
+              // Record if this was a manual partial payment
+              const isManual = !!data.isManualPartial;
+              
+              return { type: 'partial' as const, isOrderComplete, orderId, isManual };
             }),
             catchError((error) => {
               console.error('Error fetching paid total for diner calculation:', error);
-              return of({ type: 'partial' as const, isOrderComplete: false, orderId });
+              return of({ type: 'partial' as const, isOrderComplete: false, orderId, isManual: !!data.isManualPartial });
             })
           );
         }
@@ -1210,21 +1206,17 @@ export class CajaPage implements OnInit, OnDestroy {
             console.log('Charge session payment recorded, returning to split modal');
             this.onSplitBill();
           }
-        } else if (result.type === 'charge_session_error') {
-          alert('La venta se registró, pero hubo un problema sincronizando el pago con la sesión de cobro. Revisa los detalles antes de continuar.');
-          if (result.isOrderComplete) {
-            this.showPaymentSuccess = true;
-          } else if (this.selectedTable) {
-            this.onSplitBill();
-          } else {
-            this.loadSessionSummary();
-          }
         } else if (result.type === 'partial') {
           if (result.isOrderComplete) {
             this.showPaymentSuccess = true;
           } else {
-            console.log('Calling onSplitBill to return to split modal');
-            this.onSplitBill();
+            if (result.isManual) {
+              console.log('Manual partial payment complete, returning to table overview');
+              this.loadSessionSummary();
+            } else {
+              console.log('Calling onSplitBill to return to split modal');
+              this.onSplitBill();
+            }
           }
         } else {
           if (result.isOrderComplete) {
@@ -1301,6 +1293,15 @@ export class CajaPage implements OnInit, OnDestroy {
     }
   }
 
+  public onChargeSessionUpdated(session: any): void {
+    this.loadedChargeSession = session;
+    if (this.selectedTable && session) {
+      this.selectedTable.diners = session.diners_count;
+      // Actualizar paidDiners de la sesión
+      this.paidDiners = session.paid_diner_numbers || [];
+    }
+  }
+
   public onPaymentSuccessComplete(): void {
     this.resetPaymentState();
     this.loadSessionSummary();
@@ -1326,5 +1327,16 @@ export class CajaPage implements OnInit, OnDestroy {
   public getPerDinerAmount(total: number, diners: number): number {
     if (diners <= 0) return 0;
     return Math.floor(total / diners);
+  }
+
+  /**
+   * Actualizar el total pendiente de una mesa en la lista pendingTables
+   */
+  private updatePendingTableTotal(orderId: string, newTotalCents: number): void {
+    const currentTables = this.pendingTables;
+    const updatedTables = currentTables.map((table) =>
+      table.order_id === orderId ? { ...table, total: newTotalCents } : table
+    );
+    this.setPendingTables(updatedTables);
   }
 }

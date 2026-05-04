@@ -129,20 +129,23 @@ class ChargeSessionTest extends TestCase
         $response->assertJson([
             'diners_count' => 4,
             'total_cents' => 10000,
-            'amount_per_diner' => 2500,
-            'paid_diners_count' => 0,
+            'paid_cents' => 0,
+            'remaining_cents' => 10000,
+            'suggested_per_diner_cents' => 2500,
             'status' => 'active',
+            'paid_diner_numbers' => [],
         ]);
         $response->assertJsonStructure([
             'id',
             'order_id',
             'diners_count',
             'total_cents',
-            'amount_per_diner',
-            'paid_diners_count',
-            'remaining_amount',
+            'paid_cents',
+            'remaining_cents',
+            'suggested_per_diner_cents',
             'status',
-            'paid_diners',
+            'created_at',
+            'updated_at',
         ]);
     }
 
@@ -171,7 +174,7 @@ class ChargeSessionTest extends TestCase
         // Verificar que es la misma sesión con mismos datos
         $this->assertEquals($sessionId, $response2->json('id'));
         $this->assertEquals(4, $response2->json('diners_count')); // No cambió
-        $this->assertEquals(2500, $response2->json('amount_per_diner')); // No recalculó
+        $this->assertEquals(2500, $response2->json('suggested_per_diner_cents')); // No recalculó
     }
 
     public function test_create_charge_session_returns_422_when_missing_fields(): void
@@ -229,7 +232,7 @@ class ChargeSessionTest extends TestCase
 
         // Consultar sesión activa
         $response = $this->withSession($tenant['session'])->getJson(
-            '/api/tpv/charge-sessions/active?order_id=' . $order['uuid']
+            '/api/tpv/charge-sessions/current?order_id=' . $order['uuid']
         );
 
         $response->assertStatus(200);
@@ -239,17 +242,17 @@ class ChargeSessionTest extends TestCase
         ]);
     }
 
-    public function test_get_active_charge_session_returns_404_when_no_session(): void
+    public function test_get_current_charge_session_returns_404_when_no_session(): void
     {
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant);
 
         $response = $this->withSession($tenant['session'])->getJson(
-            '/api/tpv/charge-sessions/active?order_id=' . $order['uuid']
+            '/api/tpv/charge-sessions/current?order_id=' . $order['uuid']
         );
 
         $response->assertStatus(404);
-        $response->assertJson(['message' => 'No active charge session found for this order']);
+        $response->assertJson(['message' => 'No charge session found for this order']);
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -269,12 +272,17 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
-        // Registrar pago
+        // Crear cash session para poder registrar pagos
+        $this->createCashSessionForTests($tenant, 'test-device-001');
+
         $response = $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
                 'diner_number' => 1,
                 'payment_method' => 'cash',
+                'opened_by_user_id' => $tenant['user_uuid'],
+                'closed_by_user_id' => $tenant['user_uuid'],
+                'device_id' => 'test-device-001',
             ]
         );
 
@@ -301,12 +309,18 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
+        // Crear cash session para poder registrar pagos
+        $this->createCashSessionForTests($tenant, 'test-device-001');
+
         // Primer pago
         $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
                 'diner_number' => 1,
                 'payment_method' => 'cash',
+                'opened_by_user_id' => $tenant['user_uuid'],
+                'closed_by_user_id' => $tenant['user_uuid'],
+                'device_id' => 'test-device-001',
             ]
         );
 
@@ -316,6 +330,9 @@ class ChargeSessionTest extends TestCase
             [
                 'diner_number' => 2,
                 'payment_method' => 'card',
+                'opened_by_user_id' => $tenant['user_uuid'],
+                'closed_by_user_id' => $tenant['user_uuid'],
+                'device_id' => 'test-device-001',
             ]
         );
 
@@ -324,41 +341,6 @@ class ChargeSessionTest extends TestCase
             'session_status' => 'completed',
             'is_session_complete' => true,
         ]);
-    }
-
-    public function test_record_payment_returns_422_when_diner_already_paid(): void
-    {
-        $tenant = $this->createTenantSession();
-        $order = $this->createOrderWithLines($tenant);
-
-        // Crear sesión
-        $createResponse = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
-            'order_id' => $order['uuid'],
-            'opened_by_user_id' => $tenant['user_uuid'],
-            'diners_count' => 4,
-        ]);
-        $sessionId = $createResponse->json('id');
-
-        // Primer pago
-        $this->withSession($tenant['session'])->postJson(
-            "/api/tpv/charge-sessions/{$sessionId}/payments",
-            [
-                'diner_number' => 1,
-                'payment_method' => 'cash',
-            ]
-        );
-
-        // Segundo pago del mismo comensal
-        $response = $this->withSession($tenant['session'])->postJson(
-            "/api/tpv/charge-sessions/{$sessionId}/payments",
-            [
-                'diner_number' => 1,
-                'payment_method' => 'card',
-            ]
-        );
-
-        $response->assertStatus(422);
-        $response->assertJson(['message' => 'Diner 1 has already paid']);
     }
 
     public function test_record_payment_returns_422_when_session_completed(): void
@@ -374,12 +356,18 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
+        // Crear cash session para poder registrar pagos
+        $this->createCashSessionForTests($tenant, 'test-device-001');
+
         // Pagar y completar sesión
         $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
                 'diner_number' => 1,
                 'payment_method' => 'cash',
+                'opened_by_user_id' => $tenant['user_uuid'],
+                'closed_by_user_id' => $tenant['user_uuid'],
+                'device_id' => 'test-device-001',
             ]
         );
 
@@ -389,6 +377,9 @@ class ChargeSessionTest extends TestCase
             [
                 'diner_number' => 1,
                 'payment_method' => 'cash',
+                'opened_by_user_id' => $tenant['user_uuid'],
+                'closed_by_user_id' => $tenant['user_uuid'],
+                'device_id' => 'test-device-001',
             ]
         );
 
@@ -422,17 +413,16 @@ class ChargeSessionTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson([
             'diners_count' => 5,
-            'amount_per_diner' => 2000, // 100/5 = 20
+            'suggested_per_diner_cents' => 2000, // 10000/5 = 2000 cents = 20€
             'status' => 'active',
         ]);
     }
 
-    public function test_update_diners_returns_422_when_has_payments(): void
+    public function test_update_diners_succeeds_when_has_payments(): void
     {
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant);
 
-        // Crear sesión
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
@@ -440,25 +430,68 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
-        // Registrar pago
+        $this->createCashSessionForTests($tenant, 'test-device-001');
+
         $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
                 'diner_number' => 1,
                 'payment_method' => 'cash',
+                'opened_by_user_id' => $tenant['user_uuid'],
+                'closed_by_user_id' => $tenant['user_uuid'],
+                'device_id' => 'test-device-001',
             ]
-        );
+        )->assertStatus(201);
 
-        // Intentar actualizar comensales
+        // Filosofía "Comensales mutables": llegan más comensales tras un pago.
         $response = $this->withSession($tenant['session'])->putJson(
             "/api/tpv/charge-sessions/{$sessionId}/diners",
             ['diners_count' => 5]
         );
 
-        $response->assertStatus(422);
+        $response->assertStatus(200);
         $response->assertJson([
-            'message' => 'Ya hay 1 pago(s) registrado(s). No es posible modificar el número de comensales. Si necesitas ajustar el cobro, cancela la sesión y vuelve a abrirla.',
+            'diners_count' => 5,
+            'status' => 'active',
         ]);
+    }
+
+    public function test_update_diners_returns_422_when_below_paid_count(): void
+    {
+        $tenant = $this->createTenantSession();
+        $order = $this->createOrderWithLines($tenant);
+
+        $createResponse = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
+            'order_id' => $order['uuid'],
+            'opened_by_user_id' => $tenant['user_uuid'],
+            'diners_count' => 4,
+        ]);
+        $sessionId = $createResponse->json('id');
+
+        $this->createCashSessionForTests($tenant, 'test-device-001');
+
+        // Marcar dos comensales como pagados
+        foreach ([1, 2] as $diner) {
+            $this->withSession($tenant['session'])->postJson(
+                "/api/tpv/charge-sessions/{$sessionId}/payments",
+                [
+                    'diner_number' => $diner,
+                    'payment_method' => 'cash',
+                    'opened_by_user_id' => $tenant['user_uuid'],
+                    'closed_by_user_id' => $tenant['user_uuid'],
+                    'device_id' => 'test-device-001',
+                ]
+            )->assertStatus(201);
+        }
+
+        // Intento bajar comensales por debajo de los que ya marcaron pago.
+        $response = $this->withSession($tenant['session'])->putJson(
+            "/api/tpv/charge-sessions/{$sessionId}/diners",
+            ['diners_count' => 1]
+        );
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('message', fn ($m) => str_contains($m, 'already-paid count'));
     }
 
     // ═══════════════════════════════════════════════════════════════════════
@@ -508,12 +541,18 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
+        // Crear cash session para poder registrar pagos
+        $this->createCashSessionForTests($tenant, 'test-device-001');
+
         // Registrar pago
         $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
                 'diner_number' => 1,
                 'payment_method' => 'cash',
+                'opened_by_user_id' => $tenant['user_uuid'],
+                'closed_by_user_id' => $tenant['user_uuid'],
+                'device_id' => 'test-device-001',
             ]
         );
 
@@ -585,7 +624,7 @@ class ChargeSessionTest extends TestCase
             'diners_count' => 4,
         ]);
         $createResponse->assertStatus(201);
-        $this->assertEquals(2500, $createResponse->json('amount_per_diner')); // 100/4 = 25€
+        $this->assertEquals(2500, $createResponse->json('suggested_per_diner_cents')); // 100/4 = 25€
         $sessionId = $createResponse->json('id');
 
         // Paso 2: Verificar que podemos editar comensales (sin pagos)
@@ -594,46 +633,80 @@ class ChargeSessionTest extends TestCase
             ['diners_count' => 3]
         );
         $updateResponse->assertStatus(200);
-        $this->assertEquals(3333, $updateResponse->json('amount_per_diner')); // 100/3 ≈ 33.33€
+        $this->assertEquals(3333, $updateResponse->json('suggested_per_diner_cents')); // 100/3 ≈ 33.33€
+
+        // Crear cash session para poder registrar pagos
+        $this->createCashSessionForTests($tenant, 'test-device-001');
 
         // Paso 3: Registrar primer pago
         $payment1Response = $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
-            ['diner_number' => 1, 'payment_method' => 'cash']
+            [
+                'diner_number' => 1,
+                'payment_method' => 'cash',
+                'opened_by_user_id' => $tenant['user_uuid'],
+                'closed_by_user_id' => $tenant['user_uuid'],
+                'device_id' => 'test-device-001',
+            ]
         );
         $payment1Response->assertStatus(201);
         $this->assertEquals(3333, $payment1Response->json('amount_cents'));
 
-        // Paso 4: Verificar que YA NO podemos editar comensales
-        $updateFailResponse = $this->withSession($tenant['session'])->putJson(
+        // Paso 4: La filosofía permite seguir mutando comensales tras un pago
+        // mientras no bajemos por debajo de los que ya marcaron (paidCount=1).
+        $updateOkResponse = $this->withSession($tenant['session'])->putJson(
             "/api/tpv/charge-sessions/{$sessionId}/diners",
             ['diners_count' => 2]
         );
-        $updateFailResponse->assertStatus(422);
-        $this->assertStringContainsString('Ya hay 1 pago(s) registrado', $updateFailResponse->json('message'));
+        $updateOkResponse->assertStatus(200);
+        $this->assertEquals(2, $updateOkResponse->json('diners_count'));
+
+        // Restablecemos a 3 para que el resto del workflow siga teniendo sentido.
+        $this->withSession($tenant['session'])->putJson(
+            "/api/tpv/charge-sessions/{$sessionId}/diners",
+            ['diners_count' => 3]
+        )->assertStatus(200);
 
         // Paso 5: Registrar pagos restantes hasta completar
         $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
-            ['diner_number' => 2, 'payment_method' => 'card']
+            [
+                'diner_number' => 2,
+                'payment_method' => 'card',
+                'opened_by_user_id' => $tenant['user_uuid'],
+                'closed_by_user_id' => $tenant['user_uuid'],
+                'device_id' => 'test-device-001',
+            ]
         );
         $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
-            ['diner_number' => 3, 'payment_method' => 'cash']
+            [
+                'diner_number' => 3,
+                'payment_method' => 'cash',
+                'opened_by_user_id' => $tenant['user_uuid'],
+                'closed_by_user_id' => $tenant['user_uuid'],
+                'device_id' => 'test-device-001',
+            ]
         );
 
         // Paso 6: Verificar que la sesión se completó
         $getResponse = $this->withSession($tenant['session'])->getJson(
-            '/api/tpv/charge-sessions/active?order_id=' . $order['uuid']
+            '/api/tpv/charge-sessions/current?order_id=' . $order['uuid']
         );
         $getResponse->assertStatus(200);
         $this->assertEquals('completed', $getResponse->json('status'));
-        $this->assertEquals(3, $getResponse->json('paid_diners_count'));
+        $this->assertEquals(3, count($getResponse->json('paid_diner_numbers')));
 
-        // Paso 7: Verificar que el último pago fue el resto (100 - 33.33 - 33.33 = 33.34)
+        // Paso 7: Verificar que no se puede pagar más (sesión completada)
         $lastPaymentResponse = $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
-            ['diner_number' => 1, 'payment_method' => 'cash']
+            [
+                'diner_number' => 1,
+                'payment_method' => 'cash',
+                'opened_by_user_id' => $tenant['user_uuid'],
+                'closed_by_user_id' => $tenant['user_uuid'],
+                'device_id' => 'test-device-001',
+            ]
         );
         $lastPaymentResponse->assertStatus(422); // Ya completada, no se puede pagar más
     }

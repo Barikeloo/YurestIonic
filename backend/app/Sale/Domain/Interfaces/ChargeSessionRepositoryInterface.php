@@ -20,9 +20,17 @@ interface ChargeSessionRepositoryInterface
     public function findById(Uuid $id): ?ChargeSession;
 
     /**
-     * Buscar sesión activa por ID de orden
+     * Buscar sesión activa por ID de orden (status = active).
+     * Usado por CreateChargeSession para idempotencia.
      */
     public function findActiveByOrderId(Uuid $orderId): ?ChargeSession;
+
+    /**
+     * Buscar la sesión más reciente para una orden, sin filtrar por status.
+     * Usado por GetCurrentChargeSession para que la UI siga sirviendo la
+     * sesión completada/cancelada hasta abrir una nueva.
+     */
+    public function findCurrentByOrderId(Uuid $orderId): ?ChargeSession;
 
     /**
      * Buscar todas las sesiones de una orden

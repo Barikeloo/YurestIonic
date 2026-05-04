@@ -28,11 +28,15 @@ final class CancelChargeSessionController
             throw new \RuntimeException('Tenant context is required.');
         }
 
-        $response = ($this->cancelChargeSession)(
-            chargeSessionId: $id,
-            cancelledByUserId: $validated['cancelled_by_user_id'],
-            reason: $validated['reason'] ?? null,
-        );
+        try {
+            $response = ($this->cancelChargeSession)(
+                chargeSessionId: $id,
+                cancelledByUserId: $validated['cancelled_by_user_id'],
+                reason: $validated['reason'] ?? null,
+            );
+        } catch (\DomainException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 422);
+        }
 
         return new JsonResponse($response->toArray(), 200);
     }

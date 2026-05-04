@@ -24,6 +24,8 @@ final class EloquentSalePayment extends Model
         'restaurant_id',
         'sale_id',
         'cash_session_id',
+        'charge_session_id',
+        'diner_number',
         'method',
         'amount_cents',
         'metadata',
@@ -32,6 +34,7 @@ final class EloquentSalePayment extends Model
 
     protected $casts = [
         'amount_cents' => 'integer',
+        'diner_number' => 'integer',
         'metadata' => 'array',
     ];
 

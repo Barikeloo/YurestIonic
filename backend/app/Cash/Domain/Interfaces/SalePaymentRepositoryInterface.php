@@ -27,5 +27,12 @@ interface SalePaymentRepositoryInterface
      */
     public function findNonCancelledByCashSessionId(Uuid $cashSessionId): array;
 
+    /**
+     * Find all sale payments tagged with a given charge session id.
+     *
+     * @return array<SalePayment>
+     */
+    public function findByChargeSessionId(Uuid $chargeSessionId): array;
+
     public function delete(Uuid $id): void;
 }

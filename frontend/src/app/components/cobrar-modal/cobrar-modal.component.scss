@@ -461,3 +461,93 @@
   flex-direction: column;
   gap: 8px;
 }
+
+// Partial payment
+.modal-header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.partial-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.partial-toggle-btn {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1.5px dashed var(--gray-300);
+  background: var(--white);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  &.active {
+    border-color: var(--accent);
+    border-style: solid;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+}
+
+.summary-partial {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1.5px dashed var(--accent);
+  font-family: var(--font);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--accent);
+}
+
+.partial-amount {
+  font-family: var(--mono);
+  color: var(--accent);
+}
+
+.summary-remaining {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--gray-500);
+}
+
+.remaining-amount {
+  font-family: var(--mono);
+  color: var(--gray-500);
+}
+
+.partial-quick-amounts {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.partial-cash-label {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--gray-200);
+}

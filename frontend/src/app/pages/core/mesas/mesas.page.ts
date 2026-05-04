@@ -469,12 +469,13 @@ export class MesasPage implements OnInit {
 
     try {
       const chargeSession = await firstValueFrom(
-        this.chargeSessionService.getActiveChargeSession(table.order_id)
+        this.chargeSessionService.getCurrentChargeSession(table.order_id)
       );
 
       // Si hay pagos registrados en la charge session, bloquear edición
-      if (chargeSession && chargeSession.paid_diners_count > 0) {
-        this.editDinersError = `Ya hay ${chargeSession.paid_diners_count} pago${chargeSession.paid_diners_count === 1 ? '' : 's'} registrado${chargeSession.paid_diners_count === 1 ? '' : 's'} en la sesión de cobro. No se puede modificar el número de comensales.`;
+      const paidCount = chargeSession?.paid_diner_numbers?.length ?? 0;
+      if (paidCount > 0) {
+        this.editDinersError = `Ya hay ${paidCount} pago${paidCount === 1 ? '' : 's'} registrado${paidCount === 1 ? '' : 's'} en la sesión de cobro. No se puede modificar el número de comensales.`;
         this.editDinersCheckingChargeSession = false;
         // Mostrar el modal con el mensaje de error (pero deshabilitado)
         this.editDinersValue = this.editDinersTable.diners ?? 1;
