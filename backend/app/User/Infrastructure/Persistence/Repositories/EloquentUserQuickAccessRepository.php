@@ -49,4 +49,28 @@ final class EloquentUserQuickAccessRepository implements UserQuickAccessReposito
             ])
             ->all();
     }
+
+    public function recordAccess(string $userUuid, string $deviceId): void
+    {
+        $user = EloquentUser::query()
+            ->select('id', 'restaurant_id')
+            ->where('uuid', $userUuid)
+            ->first();
+
+        if ($user === null || ! is_numeric($user->restaurant_id)) {
+            return;
+        }
+
+        EloquentUserQuickAccess::query()->updateOrCreate(
+            [
+                'restaurant_id' => (int) $user->restaurant_id,
+                'user_id' => (int) $user->id,
+                'device_id' => $deviceId,
+            ],
+            [
+                'last_login_at' => now(),
+                'updated_at' => now(),
+            ],
+        );
+    }
 }

@@ -4,7 +4,11 @@ namespace App\User\Application\AuthenticateForDeviceLink;
 
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Shared\Domain\ValueObject\Email;
+use App\User\Domain\Exception\InvalidCredentialsException;
+use App\User\Domain\Exception\OnlyAdminsCanLinkDeviceException;
+use App\User\Domain\Exception\UserNotFoundException;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
+use App\User\Domain\Interfaces\UserQuickAccessRepositoryInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 
 class AuthenticateForDeviceLink
@@ -13,27 +17,21 @@ class AuthenticateForDeviceLink
         private UserRepositoryInterface $userRepository,
         private RestaurantRepositoryInterface $restaurantRepository,
         private PasswordHasherInterface $passwordHasher,
+        private UserQuickAccessRepositoryInterface $userQuickAccessRepository,
     ) {}
 
-    public function __invoke(string $email, string $plainPassword): AuthenticateForDeviceLinkResponse
+    public function __invoke(AuthenticateForDeviceLinkCommand $command): AuthenticateForDeviceLinkResponse
     {
-        $emailVO = Email::create($email);
-        $user = $this->userRepository->findByEmail($emailVO);
+        $user = $this->userRepository->findByEmail(Email::create($command->email))
+            ?? throw UserNotFoundException::withEmail($command->email);
 
-        if ($user === null) {
-            return AuthenticateForDeviceLinkResponse::notFound();
-        }
-
-        $isValidPassword = $this->passwordHasher->verify($plainPassword, $user->passwordHash()->value());
-
-        if (! $isValidPassword) {
-            return AuthenticateForDeviceLinkResponse::invalidCredentials();
+        if (! $user->verifyPassword($command->password, $this->passwordHasher)) {
+            throw new InvalidCredentialsException();
         }
 
         $role = $user->role();
-
         if ($role === null || ! $role->isAdmin()) {
-            return AuthenticateForDeviceLinkResponse::forbidden();
+            throw new OnlyAdminsCanLinkDeviceException();
         }
 
         $restaurantId = null;
@@ -48,12 +46,16 @@ class AuthenticateForDeviceLink
             }
         }
 
-        return AuthenticateForDeviceLinkResponse::authenticated(
-            $user->id()->value(),
-            $user->name()->value(),
-            $user->email()->value(),
-            $restaurantId,
-            $restaurantName,
+        if ($command->deviceId !== null && $command->deviceId !== '') {
+            $this->userQuickAccessRepository->recordAccess($user->id()->value(), $command->deviceId);
+        }
+
+        return new AuthenticateForDeviceLinkResponse(
+            id: $user->id()->value(),
+            name: $user->name()->value(),
+            email: $user->email()->value(),
+            restaurantId: $restaurantId,
+            restaurantName: $restaurantName,
         );
     }
 }

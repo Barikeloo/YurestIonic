@@ -5,6 +5,7 @@ namespace App\User\Domain\Entity;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\User\Domain\Interfaces\PasswordHasherInterface;
 use App\User\Domain\ValueObject\PasswordHash;
 use App\User\Domain\ValueObject\RestaurantInternalId;
 use App\User\Domain\ValueObject\Role;
@@ -89,6 +90,11 @@ class User
     public function passwordHash(): PasswordHash
     {
         return $this->passwordHash;
+    }
+
+    public function verifyPassword(string $plainPassword, PasswordHasherInterface $hasher): bool
+    {
+        return $hasher->verify($plainPassword, $this->passwordHash->value());
     }
 
     public function createdAt(): DomainDateTime
