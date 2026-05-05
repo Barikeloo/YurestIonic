@@ -25,9 +25,6 @@ final readonly class ListFamiliesItemResponse
         );
     }
 
-    /**
-     * @return array<string, bool|string>
-     */
     public function toArray(): array
     {
         return [

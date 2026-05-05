@@ -44,7 +44,6 @@ export class CobrarModalComponent implements OnChanges {
   public showTip = false;
   public showFiscal = false;
 
-  /** El importe efectivo a cobrar: nunca será mayor al total */
   public get effectiveAmount(): number {
     return Math.min(this.inputAmount, this.total);
   }

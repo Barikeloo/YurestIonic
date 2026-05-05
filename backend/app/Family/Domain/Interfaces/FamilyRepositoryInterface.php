@@ -10,9 +10,6 @@ interface FamilyRepositoryInterface
 
     public function findById(string $id): ?Family;
 
-    /**
-     * @return array<int, Family>
-     */
     public function findAll(bool $includeDeleted = false): array;
 
     public function deleteById(string $id): bool;

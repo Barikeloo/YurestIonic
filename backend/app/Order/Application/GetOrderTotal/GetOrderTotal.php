@@ -22,7 +22,6 @@ final class GetOrderTotal
 
         $total = 0;
         foreach ($orderLines as $line) {
-            // Prices are stored as gross (VAT included) - consistent with CreateSale
             $total += $line->price()->value() * $line->quantity()->value();
         }
 

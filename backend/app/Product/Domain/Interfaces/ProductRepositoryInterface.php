@@ -10,9 +10,6 @@ interface ProductRepositoryInterface
 
     public function findById(string $id): ?Product;
 
-    /**
-     * @return array<int, Product>
-     */
     public function findAll(bool $includeDeleted = false): array;
 
     public function deleteById(string $id): bool;

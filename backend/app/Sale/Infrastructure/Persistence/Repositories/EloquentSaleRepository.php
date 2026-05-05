@@ -11,6 +11,8 @@ use App\Sale\Infrastructure\Persistence\Models\EloquentSale;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
 
+
+
 final class EloquentSaleRepository implements SaleRepositoryInterface
 {
     public function __construct(
@@ -144,7 +146,6 @@ final class EloquentSaleRepository implements SaleRepositoryInterface
 
     private function toDomain(EloquentSale $model): Sale
     {
-        // Use eager-loaded relationships to avoid N+1 queries
         $restaurantUuid = $model->restaurant?->uuid ?? '';
         $orderUuid = $model->order?->uuid ?? '';
         $openedByUserUuid = $model->openedByUser?->uuid ?? $model->user?->uuid ?? '';

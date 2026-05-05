@@ -101,8 +101,6 @@ export class ComandaPage implements OnInit, OnDestroy {
     }
   }
 
-  // ── Catalogue ──────────────────────────────────
-
   get filteredProducts(): TpvProductItem[] {
     let result = this.activeFamilyId
       ? this.products.filter((p) => p.family_id === this.activeFamilyId)
@@ -117,8 +115,6 @@ export class ComandaPage implements OnInit, OnDestroy {
   setFamily(familyId: string | null): void {
     this.activeFamilyId = familyId;
   }
-
-  // ── Cart ────────────────────────────────────────
 
   addToCart(product: TpvProductItem): void {
     const existing = this.cartLines.find((l) => l.productId === product.id);
@@ -149,8 +145,6 @@ export class ComandaPage implements OnInit, OnDestroy {
   get cartCount(): number {
     return this.cartLines.reduce((acc, l) => acc + l.quantity, 0);
   }
-
-  // ── Send comanda ────────────────────────────────
 
   async sendComanda(): Promise<void> {
     if (!this.orderId || this.cartLines.length === 0 || this.sendingOrder) return;
@@ -191,7 +185,6 @@ export class ComandaPage implements OnInit, OnDestroy {
       const updated = await firstValueFrom(this.tpvService.updateOrder(this.orderId, { diners: next }));
       this.order = updated;
     } catch {
-      // silently ignore — the displayed value won't update
     }
   }
 
@@ -208,8 +201,6 @@ export class ComandaPage implements OnInit, OnDestroy {
   clearCart(): void {
     this.cartLines = [];
   }
-
-  // ── Close order modal ───────────────────────────
 
   async openCloseModal(): Promise<void> {
     this.selectedCloser = null;
@@ -254,13 +245,9 @@ export class ComandaPage implements OnInit, OnDestroy {
     }
   }
 
-  // ── Navigation ──────────────────────────────────
-
   goBack(): void {
     void this.router.navigate(['/app/mesas']);
   }
-
-  // ── Totals ─────────────────────────────────────
 
   get existingSubtotal(): number {
     return this.existingLines.reduce(
@@ -288,8 +275,6 @@ export class ComandaPage implements OnInit, OnDestroy {
     const existingCount = this.existingLines.reduce((acc, l) => acc + l.quantity, 0);
     return existingCount + this.cartCount;
   }
-
-  // ── Helpers ─────────────────────────────────────
 
   formatCents(cents: number): string {
     return (cents / 100).toFixed(2).replace('.', ',') + '€';

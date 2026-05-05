@@ -162,10 +162,6 @@ export class TpvService {
 
   constructor(private readonly http: HttpClient) {}
 
-  // ============================================
-  // Catálogo (solo lectura, listados ligeros)
-  // ============================================
-
   public listFamilies(): Observable<TpvFamilyItem[]> {
     return this.http
       .get<TpvFamilyItem[]>(`${this.baseUrl}/tpv/families`, { withCredentials: true })
@@ -198,10 +194,6 @@ export class TpvService {
       .get<TpvTaxItem[]>(`${this.baseUrl}/tpv/taxes`, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
-
-  // ============================================
-  // Órdenes (transaccional)
-  // ============================================
 
   public createOrder(payload: { table_id: string; opened_by_user_id: string; diners: number }): Observable<TpvOrder> {
     return this.http
@@ -279,10 +271,6 @@ export class TpvService {
     });
   }
 
-  // ============================================
-  // Ventas (transaccional)
-  // ============================================
-
   public createSale(payload: {
     order_id: string;
     opened_by_user_id: string;
@@ -352,10 +340,6 @@ export class TpvService {
       .post(`${this.baseUrl}/tpv/sales/lines`, payload, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
-
-  // ============================================
-  // Sesiones de Caja
-  // ============================================
 
   public openCashSession(payload: {
     device_id: string;

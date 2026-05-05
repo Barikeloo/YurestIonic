@@ -9,38 +9,15 @@ use App\Shared\Domain\ValueObject\Uuid;
 
 interface ChargeSessionRepositoryInterface
 {
-    /**
-     * Guardar una sesión de cobro
-     */
     public function save(ChargeSession $chargeSession): void;
 
-    /**
-     * Buscar sesión por ID
-     */
     public function findById(Uuid $id): ?ChargeSession;
 
-    /**
-     * Buscar sesión activa por ID de orden (status = active).
-     * Usado por CreateChargeSession para idempotencia.
-     */
     public function findActiveByOrderId(Uuid $orderId): ?ChargeSession;
 
-    /**
-     * Buscar la sesión más reciente para una orden, sin filtrar por status.
-     * Usado por GetCurrentChargeSession para que la UI siga sirviendo la
-     * sesión completada/cancelada hasta abrir una nueva.
-     */
     public function findCurrentByOrderId(Uuid $orderId): ?ChargeSession;
 
-    /**
-     * Buscar todas las sesiones de una orden
-     *
-     * @return array<ChargeSession>
-     */
     public function findByOrderId(Uuid $orderId): array;
 
-    /**
-     * Eliminar sesión (soft delete)
-     */
     public function delete(Uuid $id): void;
 }

@@ -21,7 +21,7 @@ export interface CreateChargeSessionRequest {
   order_id: string;
   opened_by_user_id: string;
   diners_count?: number;
-  remaining_cents?: number; // Deuda real (total - pagos previos)
+  remaining_cents?: number;
 }
 
 export interface RecordPaymentRequest {
@@ -29,9 +29,7 @@ export interface RecordPaymentRequest {
   opened_by_user_id: string;
   closed_by_user_id: string;
   device_id: string;
-  /** Etiqueta visual del comensal. Opcional: en cobro libre puede omitirse. */
   diner_number?: number;
-  /** Importe libre. Si no se envía, el backend aplica la cuota equitativa sobre la deuda restante. */
   amount_cents?: number;
 }
 
@@ -82,26 +80,16 @@ export class ChargeSessionService {
 
   constructor(private http: HttpClient) {}
 
-  /**
-   * Crear o recuperar una sesión de cobro para una orden
-   */
   createChargeSession(request: CreateChargeSessionRequest): Observable<ChargeSession> {
     return this.http.post<ChargeSession>(`${this.apiUrl}/tpv/charge-sessions`, request);
   }
 
-  /**
-   * Obtener la sesión de cobro vigente para una orden (la más reciente,
-   * sin filtrar por status). El cliente lee `status` y decide cómo actuar.
-   */
   getCurrentChargeSession(orderId: string): Observable<ChargeSession> {
     return this.http.get<ChargeSession>(`${this.apiUrl}/tpv/charge-sessions/current`, {
       params: { order_id: orderId }
     });
   }
 
-  /**
-   * Registrar un pago de un comensal
-   */
   recordPayment(sessionId: string, request: RecordPaymentRequest): Observable<RecordPaymentResponse> {
     return this.http.post<RecordPaymentResponse>(
       `${this.apiUrl}/tpv/charge-sessions/${sessionId}/payments`,
@@ -109,9 +97,6 @@ export class ChargeSessionService {
     );
   }
 
-  /**
-   * Actualizar el número de comensales (solo si no hay pagos)
-   */
   updateDiners(sessionId: string, request: UpdateDinersRequest): Observable<UpdateDinersResponse> {
     return this.http.put<UpdateDinersResponse>(
       `${this.apiUrl}/tpv/charge-sessions/${sessionId}/diners`,
@@ -119,9 +104,6 @@ export class ChargeSessionService {
     );
   }
 
-  /**
-   * Cancelar la sesión de cobro
-   */
   cancelChargeSession(
     sessionId: string,
     request: CancelChargeSessionRequest

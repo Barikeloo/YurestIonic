@@ -50,10 +50,6 @@ class GetAdminRestaurantCollection
         );
     }
 
-    /**
-     * @param  array<Restaurant>  $restaurants
-     * @return array<array{uuid: string, name: string, legal_name: string|null, tax_id: string|null, email: string, users: int, zones: int, products: int}>
-     */
     private function mapRestaurants(array $restaurants): array
     {
         usort(

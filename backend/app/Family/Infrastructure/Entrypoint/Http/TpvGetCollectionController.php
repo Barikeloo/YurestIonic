@@ -7,9 +7,6 @@ namespace App\Family\Infrastructure\Entrypoint\Http;
 use App\Family\Application\ListActiveFamilies\ListActiveFamilies;
 use Illuminate\Http\JsonResponse;
 
-/**
- * Controller for TPV endpoint that returns only active families.
- */
 final class TpvGetCollectionController
 {
     public function __construct(

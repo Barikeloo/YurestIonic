@@ -21,19 +21,11 @@ export abstract class BaseApiService {
   }
 
 
-  /**
-   * Hacer una llamada http
-   *
-   */
   public httpCall(endpoint: string, params: any = null, method: HttpMethod): Observable<ApiResponse> {
     return this.makeHttpCall(endpoint, params, method);
   }
 
 
-  /**
-   * Ejecuta una petición HTTP
-   *
-   */
   makeHttpCall(endpoint: string, params: any = null, method: HttpMethod): Observable<ApiResponse> {
     switch (method) {
       case 'get':
@@ -60,60 +52,36 @@ export abstract class BaseApiService {
   }
 
 
-  /**
-   * Llamada http tipo 'post'
-   *
-   */
   private postHttpCall(endpoint: string, params: any): Observable<ApiResponse> {
     return this.http.post<ApiResponse>(this.apiUrl + endpoint, params)
       .pipe(catchError((error) => this.handleError(error)));
   }
 
 
-  /**
-   * Llamada http tipo 'put'
-   *
-   */
   private putHttpCall(endpoint: string, params: any): Observable<ApiResponse> {
     return this.http.put<ApiResponse>(this.apiUrl + endpoint, params)
       .pipe(catchError((error) => this.handleError(error)));
   }
 
 
-  /**
-   * Llamada http tipo 'patch'
-   *
-   */
   private patchHttpCall(endpoint: string, params?: any): Observable<ApiResponse> {
     return this.http.patch<ApiResponse>(this.apiUrl + endpoint, params)
       .pipe(catchError((error) => this.handleError(error)));
   }
 
 
-  /**
-   * Llamada http tipo 'delete'
-   *
-   */
   private deleteHttpCall(endpoint: string, params?: any): Observable<ApiResponse> {
     return this.http.delete<ApiResponse>(this.apiUrl + endpoint, {params})
       .pipe(catchError((error) => this.handleError(error)));
   }
 
 
-  /**
-   * Llamada http tipo 'get'
-   *
-   */
   private getHttpCall(endpoint: string, params?: any): Observable<ApiResponse> {
     return this.http.get<ApiResponse>(this.apiUrl + endpoint, {params})
       .pipe(catchError((error) => this.handleError(error)));
   }
 
 
-  /**
-   * Manejar errores HTTP
-   *
-   */
   private handleError(error: HttpErrorResponse): Observable<never> {
     return throwError(() => new Error(error.message));
   }

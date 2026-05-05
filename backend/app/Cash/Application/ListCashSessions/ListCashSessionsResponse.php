@@ -10,7 +10,6 @@ final class ListCashSessionsResponse
 {
     private function __construct(private readonly array $sessions) {}
 
-    /** @param array{session: CashSession, tickets: int, diners: int, gross: int, discounts: int, invitations: int, invValue: int, cancellations: int, net: int, movIn: int, movOut: int}[] $sessions */
     public static function create(array $sessions): self
     {
         return new self($sessions);

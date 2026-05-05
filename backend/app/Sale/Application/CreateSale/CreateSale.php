@@ -69,9 +69,6 @@ final class CreateSale
                 throw new \DomainException('No active cash session for this device.');
             }
 
-            // Filosofía de "deuda viva": cualquier importe vale, simplemente
-            // reduce la deuda de la mesa. Si la sale no cubre el total de las
-            // líneas, es parcial por definición.
             if ($chargeSessionId !== null) {
                 $isPartialPayment = true;
             }
@@ -157,8 +154,6 @@ final class CreateSale
                     }
                 }
 
-                // Solo cerrar la orden si NO es parte de un charge session
-                // (en charge sessions, el cierre se gestiona externamente)
                 if ($chargeSessionId === null && $totalPaid >= $originalTotal) {
                     $order->close(Uuid::create($closedByUserId));
                 }

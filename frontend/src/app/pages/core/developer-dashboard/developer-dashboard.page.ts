@@ -32,11 +32,9 @@ export class DeveloperDashboardPage implements OnInit {
     public isLoading: boolean = true;
     public error: string | null = null;
 
-    // Restaurant modal
     public restaurantModalOpen = false;
     public restaurantModalData: any = { mode: 'create' };
 
-    // User modal
     public userModalOpen = false;
     public userModalData: any = { mode: 'list', restaurantUuid: '', restaurantName: '' };
 
@@ -93,7 +91,6 @@ export class DeveloperDashboardPage implements OnInit {
     }
 
     public onUserSaved(): void {
-        // Reload users for the current restaurant
     }
 
     public logout(): void {
@@ -136,19 +133,15 @@ export class DeveloperDashboardPage implements OnInit {
 
         return Array.from(grouped.entries())
             .map(([taxId, restaurants]) => {
-                // Use legal_name from first restaurant in group (all should have same tax_id)
                 const firstRestaurant = restaurants[0];
                 let companyLegalName = 'Compañía';
 
-                // If all restaurants in the group are from the same company, extract legal name pattern
                 if (firstRestaurant && firstRestaurant.legal_name) {
-                    // For companies with one restaurant, use the full legal name
                     if (restaurants.length === 1) {
                         companyLegalName = firstRestaurant.legal_name;
                     } else {
-                        // For companies with multiple restaurants, find common part of legal names
                         const legalNames = restaurants.map(r => r.legal_name);
-                        const commonStart = legalNames[0].split(' ')[0]; // Get first word as company identifier
+                        const commonStart = legalNames[0].split(' ')[0];
                         companyLegalName = commonStart;
                     }
                 }

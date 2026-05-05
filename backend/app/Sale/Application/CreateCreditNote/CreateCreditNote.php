@@ -34,22 +34,20 @@ final class CreateCreditNote
             ? CustomerFiscalData::fromArray($customerFiscalData)
             : $parentSale->customerFiscalData();
 
-        // Create credit note as a negative sale
         $creditNote = Sale::dddCreate(
             id: Uuid::generate(),
             restaurantId: Uuid::create($restaurantId),
             orderId: Uuid::create($orderId),
             openedByUserId: Uuid::create($openedByUserId),
-            cashSessionId: null, // Credit notes can be created without active cash session
+            cashSessionId: null,
             parentSaleId: Uuid::create($parentSaleId),
             documentType: DocumentType::creditNote(),
             customerFiscalData: $fiscalData,
         );
 
-        // Set total for credit note (positive value; sign is implicit via DocumentType::creditNote)
         $creditNote->close(
             closedByUserId: Uuid::create($openedByUserId),
-            ticketNumber: $parentSale->ticketNumber(), // Use same ticket number as parent
+            ticketNumber: $parentSale->ticketNumber(),
             total: SaleTotal::create(abs($totalCents)),
         );
 

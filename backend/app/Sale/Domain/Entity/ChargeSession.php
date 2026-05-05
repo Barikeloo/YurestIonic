@@ -8,14 +8,6 @@ use App\Sale\Domain\ValueObject\ChargeSessionStatus;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 
-/**
- * ChargeSession — sesión de cobro con filosofía de "deuda viva".
- *
- * La entidad solo guarda el snapshot de la mesa (dinersCount, totalCents) y
- * su ciclo de vida. Los pagos viven en SalePayment; la deuda restante y la
- * cuota sugerida se calculan al vuelo a partir de los pagos acumulados que
- * el caso de uso le inyecta como parámetro.
- */
 final class ChargeSession
 {
     private function __construct(
@@ -95,11 +87,6 @@ final class ChargeSession
         );
     }
 
-    /**
-     * Cambiar el número de comensales activos. Permitido en cualquier momento
-     * mientras la sesión esté activa, siempre que el nuevo recuento no quede
-     * por debajo de los comensales que ya han marcado pago.
-     */
     public function updateDinersCount(int $newDinersCount, int $paidDinersCount = 0): void
     {
         if (! $this->status->isActive()) {
@@ -120,19 +107,11 @@ final class ChargeSession
         $this->updatedAt = DomainDateTime::now();
     }
 
-    /**
-     * Deuda viva = total snapshot − cobrado acumulado. Nunca negativa.
-     */
     public function remainingAmount(int $paidCents): int
     {
         return max(0, $this->totalCents - $paidCents);
     }
 
-    /**
-     * Cuota sugerida para el próximo comensal sobre la deuda viva.
-     * Si solo queda un comensal pendiente, paga el resto entero (cubre el
-     * redondeo y evita que sobre/falte 1 céntimo).
-     */
     public function amountForNextDiner(int $paidCents, int $pendingDinersCount): int
     {
         if ($pendingDinersCount <= 0) {

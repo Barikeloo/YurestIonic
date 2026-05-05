@@ -662,7 +662,6 @@ export class GestionPage {
       return;
     }
 
-    // Productos
     if (entityKey === 'products') {
       const product = rows[idx] as ProductRow;
       if (!product.uuid) {
@@ -771,7 +770,6 @@ export class GestionPage {
 
       const selectedUser = idx >= 0 && idx < rows.length ? (rows[idx] as UserRow) : null;
 
-      // New user requires password
       if (!selectedUser && !password) {
         window.alert('Contraseña requerida para nuevos usuarios.');
 
@@ -785,7 +783,6 @@ export class GestionPage {
       }
 
       if (selectedUser?.uuid) {
-        // Update existing user
         this.isSavingUser = true;
         this.restaurantService
           .updateRestaurantUser(this.selectedRestaurant.uuid, selectedUser.uuid, {
@@ -814,7 +811,6 @@ export class GestionPage {
             },
           });
       } else {
-        // Create new user
         this.isSavingUser = true;
         this.restaurantService
           .createRestaurantUser(this.selectedRestaurant.uuid, {
@@ -959,7 +955,6 @@ export class GestionPage {
       this.isSavingProduct = true;
 
       if (selectedProduct?.uuid) {
-        // Update existing product
         this.productService
           .updateProduct(selectedProduct.uuid, { name, family_id: familyId, tax_id: taxId, price, stock, active })
           .pipe(take(1))
@@ -983,7 +978,6 @@ export class GestionPage {
             },
           });
       } else {
-        // Create new product
         this.productService
           .createProduct({ name, family_id: familyId, tax_id: taxId, price, stock, active })
           .pipe(take(1))
@@ -1080,7 +1074,6 @@ export class GestionPage {
       this.isSavingTax = true;
 
       if (selectedTax?.uuid) {
-        // Update existing tax
         this.taxService
           .updateTax(selectedTax.uuid, { name, percentage })
           .pipe(take(1))
@@ -1100,7 +1093,6 @@ export class GestionPage {
             },
           });
       } else {
-        // Create new tax
         this.taxService
           .createTax({ name, percentage })
           .pipe(take(1))
@@ -1165,7 +1157,6 @@ export class GestionPage {
     const idx = this.managementState.selectedIndex.tables;
     const selectedTable = idx >= 0 && idx < zone.tables.length ? zone.tables[idx] : null;
 
-    // Validar que no exista otra mesa con el mismo nombre en esta zona
     const existingTableWithSameName = zone.tables.find(
       (table, tableIdx) => table.name.toLowerCase() === name.toLowerCase() && tableIdx !== idx
     );
@@ -1562,7 +1553,6 @@ export class GestionPage {
 
         this.updateRestaurantKpis(restaurant.id);
       } catch {
-        // Background preload is best-effort and should not block management UX.
       }
     }
 
@@ -1579,7 +1569,6 @@ export class GestionPage {
     try {
       await firstValueFrom(this.restaurantService.selectAdminRestaurantContext(currentlySelected.uuid));
     } catch {
-      // Keep current in-memory data even if context restore fails.
     }
   }
 

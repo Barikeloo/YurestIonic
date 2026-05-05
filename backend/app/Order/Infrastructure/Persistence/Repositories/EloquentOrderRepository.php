@@ -79,7 +79,6 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
 
     private function toDomain(EloquentOrder $model): Order
     {
-        // Use eager-loaded relationships to avoid N+1 queries
         $restaurantUuid = $model->restaurant?->uuid ?? '';
         $tableUuid = $model->table?->uuid ?? '';
         $openedByUserUuid = $model->openedByUser?->uuid ?? '';

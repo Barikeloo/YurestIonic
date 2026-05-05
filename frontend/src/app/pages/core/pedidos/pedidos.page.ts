@@ -54,12 +54,10 @@ export class PedidosPage implements OnInit {
       this.users = usersResponse.users;
       this.tables = tables;
 
-      // Auto-seleccionar pedido si viene en query params (desde mesas)
       const queryOrderId = this.route.snapshot.queryParams['orderId'];
       if (queryOrderId) {
         const order = this.orders.find((o) => o.id === queryOrderId);
         if (order) {
-          // Cambiar al tab correspondiente si es necesario
           if (this.activeTab !== 'all' && this.activeTab !== order.status) {
             this.activeTab = order.status as TabId;
           }
@@ -71,15 +69,11 @@ export class PedidosPage implements OnInit {
     }
   }
 
-  // ── Tabs ───────────────────────────────────────
-
   setTab(tab: TabId): void {
     this.activeTab = tab;
     this.selectedOrder = null;
     this.selectedLines = [];
   }
-
-  // ── Filtering ──────────────────────────────────
 
   get filteredOrders(): TpvOrder[] {
     let result = [...this.orders];
@@ -117,8 +111,6 @@ export class PedidosPage implements OnInit {
     this.filterSearch = '';
   }
 
-  // ── KPIs ───────────────────────────────────────
-
   get kpiOpen(): number {
     return this.orders.filter((o) => o.status === 'open').length;
   }
@@ -141,8 +133,6 @@ export class PedidosPage implements OnInit {
     const totalSum = closed.reduce((acc, o) => acc + o.total, 0);
     return totalSum / closed.length;
   }
-
-  // ── Detail ─────────────────────────────────────
 
   async selectOrder(order: TpvOrder): Promise<void> {
     this.selectedOrder = order;
@@ -210,8 +200,6 @@ export class PedidosPage implements OnInit {
     );
     await this.ngOnInit();
   }
-
-  // ── Helpers ────────────────────────────────────
 
   getTableName(tableId: string): string {
     const table = this.tables.find((t) => t.id === tableId);

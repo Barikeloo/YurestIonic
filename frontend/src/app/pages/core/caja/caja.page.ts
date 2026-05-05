@@ -115,7 +115,6 @@ interface MethodBreakdownRow {
   standalone: true,
 })
 export class CajaPage implements OnInit, OnDestroy {
-  // BehaviorSubjects para estado reactivo
   public readonly state$ = new BehaviorSubject<CajaState>('pre-apertura');
   public readonly activeSession$ = new BehaviorSubject<TpvCashSession | null>(null);
   public readonly loading$ = new BehaviorSubject<boolean>(true);
@@ -123,7 +122,6 @@ export class CajaPage implements OnInit, OnDestroy {
   public readonly movements$ = new BehaviorSubject<CashMovementItem[]>([]);
   public readonly sessionSummary$ = new BehaviorSubject<CashSessionSummary | null>(null);
 
-  // Getters para compatibilidad con templates existentes
   public get state(): CajaState { return this.state$.value; }
   public get activeSession(): TpvCashSession | null { return this.activeSession$.value; }
   public get loading(): boolean { return this.loading$.value; }
@@ -131,7 +129,6 @@ export class CajaPage implements OnInit, OnDestroy {
   public get movements(): CashMovementItem[] { return this.movements$.value; }
   public get sessionSummary(): CashSessionSummary | null { return this.sessionSummary$.value; }
 
-  // Setters para actualizar BehaviorSubjects
   private setState(value: CajaState): void { this.state$.next(value); }
   private setActiveSession(value: TpvCashSession | null): void { this.activeSession$.next(value); }
   private setLoading(value: boolean): void { this.loading$.next(value); }
@@ -175,9 +172,7 @@ export class CajaPage implements OnInit, OnDestroy {
   private refreshInterval: any;
   private clockInterval: any;
   private readonly destroy$ = new Subject<void>();
-  // Subject para cancelar peticiones de carga de orden en curso (A7 fix)
   private readonly loadOrderDestroy$ = new Subject<void>();
-  // Subject para cancelar flujos de pago previos (A7 fix)
   private readonly paymentFlowDestroy$ = new Subject<void>();
   public readonly deviceId: string;
 
@@ -198,12 +193,9 @@ export class CajaPage implements OnInit, OnDestroy {
     this.authService.currentUser$.pipe(takeUntil(this.destroy$)).subscribe((user) => { this.currentUser = user; });
     this.loadActiveSession();
 
-    // Check if coming from mesas to open payment modal
-    // Clear URL params after opening to prevent modal from opening on reload
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe((params) => {
       if (params['orderId'] && params['fromMesas'] === 'true') {
         this.loadOrderForPayment(params['orderId']);
-        // Clear URL params to prevent modal from opening on page reload
         this.router.navigate([], {
           relativeTo: this.route,
           queryParams: {},
@@ -222,7 +214,6 @@ export class CajaPage implements OnInit, OnDestroy {
     this.paymentFlowDestroy$.complete();
     this.stopRefreshInterval();
     if (this.clockInterval) clearInterval(this.clockInterval);
-    // Complete BehaviorSubjects to prevent memory leaks
     this.state$.complete();
     this.activeSession$.complete();
     this.loading$.complete();
@@ -232,12 +223,10 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   private loadOrderForPayment(orderId: string): void {
-    // Cancel any previous load order request (A7 fix - cancel previous subscriptions)
     this.loadOrderDestroy$.next();
     this.resetPaymentState();
     this.fromMesas = true;
 
-    // Use switchMap chain to avoid nested subscriptions (A7 fix)
     this.tpvService.getOrder(orderId).pipe(
       takeUntil(this.destroy$),
       takeUntil(this.loadOrderDestroy$),
@@ -274,7 +263,6 @@ export class CajaPage implements OnInit, OnDestroy {
           })),
           catchError((error) => {
             console.error('Error fetching paid total:', error);
-            // Fallback: assume no payments made
             return of({
               order,
               tableName,
@@ -293,13 +281,11 @@ export class CajaPage implements OnInit, OnDestroy {
       next: ({ order, tableName, lines, originalTotal, paidTotal }) => {
         const remainingTotal = Math.max(0, originalTotal - paidTotal);
 
-        // Calculate paid diners based on total paid (handle single diner case)
         const diners = order.diners ?? 1;
         const partAmount = diners > 1 ? Math.floor(originalTotal / diners) : originalTotal;
         const paidDinersCount = diners > 1 && partAmount > 0 ? Math.floor(paidTotal / partAmount) : (paidTotal > 0 ? 1 : 0);
         this.paidDiners = Array.from({ length: paidDinersCount }, (_, i) => i + 1);
 
-        // Create a temporary selectedTable from the order with remaining total
         this.selectedTable = {
           order_id: orderId,
           table_name: tableName,
@@ -313,7 +299,6 @@ export class CajaPage implements OnInit, OnDestroy {
           name: l.product_name || 'Producto',
           price: l.price * l.quantity,
         }));
-        // Set the payment amount to the remaining total
         this.currentPaymentAmount = remainingTotal;
         this.showCobrarModal = true;
       },
@@ -423,7 +408,6 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   public onOpenModal(): void {
-    // Abrir caja es acción CRÍTICA - siempre requiere PIN (pero extiende sesión para otras acciones)
     if (this.pinAuthService.requiresPin('critical')) {
       this.showPinAuthModal = true;
     } else {
@@ -432,7 +416,6 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   public onPinAuthenticated(result: PinAuthResult): void {
-    // Guardar contexto completo para sesión con timeout
     this.pinAuthService.setAuthContext({
       userId: result.userId,
       userName: result.userName,
@@ -499,7 +482,6 @@ export class CajaPage implements OnInit, OnDestroy {
       next: (response) => {
         this.setState('arqueo');
         this.showWizard = true;
-        // Actualizar el estado de la sesión activa para que onWizardClose funcione correctamente
         this.setActiveSession({ ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' });
         this.loadSessionSummary();
         this.stopRefreshInterval();
@@ -518,7 +500,6 @@ export class CajaPage implements OnInit, OnDestroy {
       next: (response) => {
         this.setState('activa');
         this.showWizard = false;
-        // Actualizar el estado de la sesión activa
         this.setActiveSession({ ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' });
         this.startRefreshInterval();
       },
@@ -528,7 +509,6 @@ export class CajaPage implements OnInit, OnDestroy {
 
   public onWizardClose(): void {
     this.showWizard = false;
-    // Don't cancel if closing is already in progress
     if (this.isClosingInProgress) {
       console.log('Closing is in progress, skipping cancel');
       return;
@@ -537,7 +517,6 @@ export class CajaPage implements OnInit, OnDestroy {
       this.tpvService.cancelClosingCashSession({ cash_session_id: this.activeSession.uuid }).pipe(takeUntil(this.destroy$)).subscribe({
         next: (response) => {
           this.setState('activa');
-          // Actualizar el estado de la sesión activa
           this.setActiveSession({ ...this.activeSession!, status: response.status as 'open' | 'closing' | 'closed' | 'abandoned' });
           this.startRefreshInterval();
         },
@@ -556,7 +535,6 @@ export class CajaPage implements OnInit, OnDestroy {
   public onCompleteClosing(data: { countedAmount: number; discrepancyReason?: string }): void {
     if (!this.activeSession) return;
 
-    // Verify session is in 'closing' status before attempting to close
     if (this.activeSession.status !== 'closing') {
       console.warn('Session is not in closing status, reloading active session...');
       this.tpvService.getActiveCashSession(this.deviceId).pipe(takeUntil(this.destroy$)).subscribe({
@@ -689,7 +667,6 @@ export class CajaPage implements OnInit, OnDestroy {
     return average.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  // Getters for new components
   public get movementsList(): CashMovement[] {
     return this.movements.map((m) => ({
       id: m.uuid,
@@ -711,11 +688,9 @@ export class CajaPage implements OnInit, OnDestroy {
     };
   }
 
-  // Modal handlers for charging tables
   public onCobrarMesa(mesa: PendingTable): void {
     this.pendingTableToCharge = mesa;
 
-    // Cobrar mesa es acción NORMAL - usa sesión con timeout
     if (this.pinAuthService.requiresPin('normal')) {
       this.showPinAuthModalForCobrarMesa = true;
     } else {
@@ -727,14 +702,12 @@ export class CajaPage implements OnInit, OnDestroy {
     const mesa = this.pendingTableToCharge;
     if (!mesa) return;
 
-    // Cancel any previous payment flow (A7 fix)
     this.paymentFlowDestroy$.next();
     this.resetPaymentState();
 
     this.selectedTable = mesa;
-    this.isPartialPayment = false; // Reset to false for direct payment from caja page
+    this.isPartialPayment = false;
 
-    // Use switchMap chain to avoid nested subscriptions (A7 fix)
     forkJoin({
       order: this.tpvService.getOrder(mesa.order_id).pipe(takeUntil(this.paymentFlowDestroy$)),
       orderTotal: this.tpvService.getOrderTotal(mesa.order_id).pipe(takeUntil(this.paymentFlowDestroy$)),
@@ -755,7 +728,6 @@ export class CajaPage implements OnInit, OnDestroy {
           })),
           catchError((error) => {
             console.error('Error fetching paid total:', error);
-            // Fallback to original total and no paid diners
             return of({ originalTotal, paidTotal: 0, fallback: true });
           })
         );
@@ -772,7 +744,6 @@ export class CajaPage implements OnInit, OnDestroy {
           this.paidDiners = [];
         }
 
-        // Update selected table total to remaining amount
         if (this.selectedTable) {
           this.selectedTable.total = remainingTotal;
         }
@@ -806,19 +777,16 @@ export class CajaPage implements OnInit, OnDestroy {
     ).subscribe({
       next: ({ lines, remainingTotal }) => {
         this.selectedTableLines = lines;
-        // Set currentPaymentAmount to remaining total for direct payment
         this.currentPaymentAmount = remainingTotal;
         this.showCobrarModal = true;
-        this.pendingTableToCharge = null; // Clear pending after loading
+        this.pendingTableToCharge = null;
       },
       error: () => {
-        // Error already handled in catchError
       },
     });
   }
 
   public onPinAuthenticatedForCobrarMesa(result: PinAuthResult): void {
-    // Guardar contexto completo para sesión con timeout
     const now = Date.now();
     this.pinAuthService.setAuthContext({
       userId: result.userId,
@@ -832,13 +800,10 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   public onSplitMesa(mesa: PendingTable): void {
-    // Cancel any previous payment flow (A7 fix)
     this.paymentFlowDestroy$.next();
     this.resetPaymentState();
-    // Always recalculate paidDiners based on actual paid total
     this.selectedTable = mesa;
 
-    // Use switchMap chain to avoid nested subscriptions (A7 fix)
     forkJoin({
       order: this.tpvService.getOrder(mesa.order_id).pipe(takeUntil(this.paymentFlowDestroy$)),
       orderTotal: this.tpvService.getOrderTotal(mesa.order_id).pipe(takeUntil(this.paymentFlowDestroy$)),
@@ -865,10 +830,8 @@ export class CajaPage implements OnInit, OnDestroy {
       switchMap(({ originalTotal, paidTotal, fallback }) => {
         const remainingTotal = Math.max(0, originalTotal - paidTotal);
 
-        // Ya no calculamos paidDiners en base al total pagado para evitar suposiciones erróneas
         this.paidDiners = [];
 
-        // Update selected table total to remaining amount
         if (this.selectedTable) {
           this.selectedTable.total = remainingTotal;
         }
@@ -906,7 +869,6 @@ export class CajaPage implements OnInit, OnDestroy {
         this.showSplitModal = true;
       },
       error: () => {
-        // Error already handled in catchError
       },
     });
   }
@@ -921,8 +883,6 @@ export class CajaPage implements OnInit, OnDestroy {
 
     const orderId = this.selectedTable.order_id;
 
-    // take(1) garantiza que cada observable emite exactamente un valor y completa.
-    // finalize actúa como red de seguridad: abre el modal aunque algo falle.
     forkJoin({
       orderTotal: this.tpvService.getOrderTotal(orderId).pipe(
         take(1),
@@ -943,8 +903,6 @@ export class CajaPage implements OnInit, OnDestroy {
     }).pipe(
       takeUntil(this.destroy$),
       finalize(() => {
-        // Red de seguridad: si el observable completa sin next (edge case),
-        // abrimos el modal igualmente para no dejar al usuario bloqueado.
         if (!this.showSplitModal) {
           console.warn('onSplitBill finalize fallback: forcing showSplitModal = true');
           this.showSplitModal = true;
@@ -955,14 +913,12 @@ export class CajaPage implements OnInit, OnDestroy {
         const paidTotalCents = paidTotal.total_cents;
         const originalTotal = orderTotal.total_cents;
 
-        // Update originalOrderTotal to the true total from backend
         this.originalOrderTotal = originalTotal;
 
         this.loadedChargeSession = chargeSession;
         console.log('onSplitBill - chargeSession loaded:', chargeSession);
 
         if (chargeSession) {
-          // La charge session es la fuente de verdad
           this.paidDiners = chargeSession.paid_diner_numbers;
           console.log('onSplitBill - synced paidDiners:', this.paidDiners, 'remaining_cents:', chargeSession.remaining_cents);
           if (this.selectedTable) {
@@ -970,7 +926,6 @@ export class CajaPage implements OnInit, OnDestroy {
             this.updatePendingTableTotal(this.selectedTable.order_id, chargeSession.remaining_cents);
           }
         } else {
-          // Fallback: no asumimos cuántos han pagado, dejamos que el camarero lo marque manualmente
           this.paidDiners = [];
           if (this.selectedTable) {
             const remaining = Math.max(0, originalTotal - paidTotalCents);
@@ -979,7 +934,6 @@ export class CajaPage implements OnInit, OnDestroy {
           }
         }
 
-        // Abrir modal DESPUÉS de actualizar todos los datos
         console.log('onSplitBill - opening modal with loadedChargeSession:', this.loadedChargeSession);
         this.showSplitModal = true;
       },
@@ -991,7 +945,6 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   public onConfirmPayment(data: { method: string; amount: number; tip?: number; isManualPartial?: boolean }): void {
-    // Prevent double submission
     if (this.isProcessingPayment) {
       console.log('Payment already in progress, ignoring double click');
       return;
@@ -1031,14 +984,10 @@ export class CajaPage implements OnInit, OnDestroy {
       },
     ];
 
-    // For partial payments, check if this payment will complete the order
-    // Calculate based on number of diners, not selectedTable.total
-    // selectedTable.total is set to the payment amount in split modal, not the remaining amount
     let willBeComplete = false;
     if (this.isPartialPayment && this.selectedTable && !data.isManualPartial) {
       const diners = this.selectedTable.diners ?? 1;
       const paidDinersCount = this.paidDiners.length;
-      // If this is the last unpaid diner (or single diner), the payment will complete the order
       willBeComplete = diners === 1 || paidDinersCount === diners - 1;
       console.log('Partial payment - Diners:', diners, 'Paid diners:', paidDinersCount, 'Will be complete:', willBeComplete);
     } else {
@@ -1046,9 +995,6 @@ export class CajaPage implements OnInit, OnDestroy {
       willBeComplete = (currentPaid + data.amount) >= this.originalOrderTotal;
     }
 
-    // For complete payments, send undefined order_line_ids so backend treats it as full payment
-    // For partial/split payments, send the specific line IDs
-    // If it's a manual partial payment, we don't assign specific lines, so it's undefined
     const orderLineIds = (willBeComplete || data.isManualPartial)
       ? undefined
       : this.selectedTableLines
@@ -1059,12 +1005,8 @@ export class CajaPage implements OnInit, OnDestroy {
 
     console.log('Payment calculation - This payment:', data.amount, 'Original total:', this.originalOrderTotal, 'Will be complete:', willBeComplete);
 
-    // When from mesas, calculate if payment is complete based on amount vs remaining total
-    // Only send is_partial_payment: true if the payment is actually partial
     let isPartialPayment = this.isPartialPayment || !!data.isManualPartial;
     if (this.fromMesas || data.isManualPartial) {
-      // If this payment completes the order, send is_partial_payment: false
-      // Otherwise send is_partial_payment: true
       isPartialPayment = !willBeComplete;
     }
 
@@ -1078,7 +1020,6 @@ export class CajaPage implements OnInit, OnDestroy {
       is_partial_payment: isPartialPayment,
     });
 
-    // Cancel any previous payment flow (A7 fix)
     this.paymentFlowDestroy$.next();
 
     const orderId = this.selectedTable?.order_id;
@@ -1092,10 +1033,6 @@ export class CajaPage implements OnInit, OnDestroy {
         ? (paymentMethod as 'cash' | 'card' | 'bizum' | 'voucher' | 'invitation')
         : 'other';
 
-    // Cuando hay sesión activa, todo cobro (libre o split) se canaliza por
-    // recordPayment, que crea la Sale internamente y gestiona el ciclo de
-    // vida de la sesión (cierre por deuda 0). Llamar a tpvService.createSale
-    // por separado generaría una Sale duplicada y descuadraría paid_cents.
     const sale$: Observable<RecordPaymentResponse | TpvSale> = activeSessionId
       ? this.chargeSessionService.recordPayment(activeSessionId, {
           payment_method: mappedMethod,
@@ -1154,7 +1091,6 @@ export class CajaPage implements OnInit, OnDestroy {
           );
         }
 
-        // For partial payments, get paid total to check if order is complete
         if (isPartialPayment && orderId) {
           return this.tpvService.getOrderPaidTotal(orderId).pipe(
             takeUntil(this.paymentFlowDestroy$),
@@ -1162,13 +1098,11 @@ export class CajaPage implements OnInit, OnDestroy {
               const paidTotal = paidResponse.total_cents;
               const originalTotal = this.originalOrderTotal || this.selectedTable?.total || 0;
               
-              // Ya no calculamos paidDiners en base al total pagado
               this.paidDiners = [];
               console.log('Reset paidDiners for manual partial payment');
 
               const isOrderComplete = paidTotal >= originalTotal;
               
-              // Record if this was a manual partial payment
               const isManual = !!data.isManualPartial;
               
               return { type: 'partial' as const, isOrderComplete, orderId, isManual };
@@ -1180,7 +1114,6 @@ export class CajaPage implements OnInit, OnDestroy {
           );
         }
 
-        // For non-partial payments, verify with fresh GET from backend
         if (orderId) {
           return forkJoin({
             paidTotal: this.tpvService.getOrderPaidTotal(orderId).pipe(takeUntil(this.paymentFlowDestroy$)),
@@ -1191,13 +1124,11 @@ export class CajaPage implements OnInit, OnDestroy {
               return { type: 'full' as const, isOrderComplete };
             }),
             catchError(() => {
-              // Fallback to willBeComplete on error
               return of({ type: 'full' as const, isOrderComplete: willBeComplete });
             })
           );
         }
 
-        // Fallback if no orderId
         return of({ type: 'full' as const, isOrderComplete: willBeComplete });
       }),
       catchError((error) => {
@@ -1247,7 +1178,6 @@ export class CajaPage implements OnInit, OnDestroy {
         this.isProcessingPayment = false;
       },
       error: () => {
-        // Error already handled in catchError
         this.isProcessingPayment = false;
       },
     });
@@ -1326,7 +1256,6 @@ export class CajaPage implements OnInit, OnDestroy {
     console.log('Split confirmed:', data);
     console.log('Before - paidDiners:', this.paidDiners);
 
-    // Guardar sesión y comensal para registro posterior
     if (data.chargeSessionId) {
       this.currentChargeSession = {
         id: data.chargeSessionId,
@@ -1339,28 +1268,20 @@ export class CajaPage implements OnInit, OnDestroy {
     const total = data.amount || selectedLines.reduce((sum, l) => sum + l.price, 0);
 
     if (total > 0) {
-      // For equal parts, use all lines for the first part, adjust total
       if (data.isEqualPart) {
         this.selectedTableLines = this.selectedTableLines.map((l) => ({
           id: l.id,
           name: l.name,
           price: l.price,
         }));
-        // Set the current payment amount to the part amount
         this.currentPaymentAmount = data.amount || total;
         console.log('Set currentPaymentAmount:', this.currentPaymentAmount);
-        // Adjust the selected table total to the part amount
         if (this.selectedTable) {
           this.selectedTable.total = data.amount || total;
         }
-        // Set flags to indicate this is a partial payment
         this.fromMesas = false;
         this.isPartialPayment = true;
-        // Track paid diner — NO lo añadimos aquí; lo sincronizamos desde el
-        // backend después de registrar el pago en onConfirmPayment.
-        // Añadirlo antes provoca desincronización con el cálculo del último comensal.
       } else {
-        // For line-based split, use selected lines
         this.selectedTableLines = selectedLines.map((l) => ({
           id: l.id,
           name: l.name,
@@ -1381,7 +1302,6 @@ export class CajaPage implements OnInit, OnDestroy {
     this.loadedChargeSession = session;
     if (this.selectedTable && session) {
       this.selectedTable.diners = session.diners_count;
-      // Actualizar paidDiners de la sesión
       this.paidDiners = session.paid_diner_numbers || [];
     }
   }

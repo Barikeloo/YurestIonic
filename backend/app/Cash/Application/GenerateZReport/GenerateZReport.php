@@ -36,25 +36,21 @@ final class GenerateZReport
             throw new \DomainException('Cash session not found.');
         }
 
-        // State guard: Z can only be generated on a session that is closing or already closed.
         if (! $cashSession->status()->isClosing() && ! $cashSession->status()->isClosed()) {
             throw new \DomainException(
                 'Cannot generate Z-Report on a session with status '.$cashSession->status()->value().'.',
             );
         }
 
-        // Idempotency guard: a session has at most one Z.
         if ($this->zReportRepository->findByCashSessionId($cashSessionUuid) !== null) {
             throw new \DomainException('A Z-Report already exists for this cash session.');
         }
 
-        // Final amount: either provided (in-flight close) or taken from an already-closed session.
         $finalAmount = $finalAmountOverride ?? $cashSession->finalAmount();
         if ($finalAmount === null) {
             throw new \DomainException('Final amount is required to generate the Z-Report.');
         }
 
-        // 1. Totals by payment method (only non-cancelled sales count for Z-Report).
         $payments = $this->salePaymentRepository->findNonCancelledByCashSessionId($cashSessionUuid);
         $totalCash = Money::zero();
         $totalCard = Money::zero();
@@ -75,7 +71,6 @@ final class GenerateZReport
             }
         }
 
-        // 2. Manual cash movements (entradas/salidas).
         $movements = $this->cashMovementRepository->findByCashSessionId($cashSessionUuid);
         $cashIn = Money::zero();
         $cashOut = Money::zero();
@@ -88,17 +83,14 @@ final class GenerateZReport
             }
         }
 
-        // 3. Tips (informational; do not mix into cash reconciliation).
         $tips = $this->tipRepository->findByCashSessionId($cashSessionUuid);
         $totalTips = Money::zero();
         foreach ($tips as $tip) {
             $totalTips = $totalTips->add($tip->amount());
         }
 
-        // 4. Total sales = sum of all payments, any method.
         $totalSales = $totalCash->add($totalCard)->add($totalOther);
 
-        // 5. Sale counts.
         $sales = $this->saleRepository->findByCashSessionId($cashSessionUuid);
         $salesCount = count($sales);
         $cancelledSalesCount = 0;
@@ -108,21 +100,15 @@ final class GenerateZReport
             }
         }
 
-        // 6. Teorico efectivo = fondo + cash_payments + cash_in - cash_out
-        //    Propinas card_added no tocan el efectivo (están en el TPV bancario).
-        //    Propinas cash_declared deben haberse materializado como CashMovement(type=in) y ya están en cashIn.
         $expectedCash = $cashSession->initialAmount()
             ->add($totalCash)
             ->add($cashIn)
             ->subtract($cashOut);
 
-        // 7. Discrepancia con signo: contado - teorico. Positivo = sobrante, negativo = faltante.
         $discrepancy = $finalAmount->subtract($expectedCash);
 
-        // 8. Numeracion correlativa por restaurante.
         $reportNumber = $this->zReportRepository->nextReportNumber($cashSession->restaurantId());
 
-        // 9. Build and persist Z.
         $zReport = ZReport::generate(
             restaurantId: $cashSession->restaurantId(),
             cashSessionId: $cashSessionUuid,

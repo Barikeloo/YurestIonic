@@ -12,14 +12,10 @@ class ListFamilies
         private FamilyRepositoryInterface $familyRepository,
     ) {}
 
-    /**
-     * @return array<int, array<string, bool|string>>
-     */
     public function __invoke(bool $includeDeleted = false, bool $onlyActive = false): array
     {
         $families = $this->familyRepository->findAll($includeDeleted);
 
-        // Filter only active families for TPV endpoints
         if ($onlyActive) {
             $families = array_filter($families, fn ($f) => $f->isActive());
         }

@@ -399,7 +399,6 @@ export class AuthService {
     return 'No se pudo completar la peticion.';
   }
 
-  // Restaurant Management (Superadmin)
   public createRestaurant(data: {
     name: string;
     legal_name: string;
@@ -449,7 +448,6 @@ export class AuthService {
       );
   }
 
-  // User Management for Restaurants (Superadmin)
   public getRestaurantUsers(restaurantUuid: string): Observable<AuthUser[]> {
     return this.http
       .get<GetRestaurantUsersResponse>(

@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\RecordChargeSessionPayment;
 
-/**
- * DTO de respuesta para RecordChargeSessionPayment.
- * Construido directamente por el caso de uso (no usa fromEntities).
- */
 final class RecordChargeSessionPaymentResponse
 {
     public function __construct(
@@ -23,9 +19,6 @@ final class RecordChargeSessionPaymentResponse
         public readonly bool $isSessionComplete,
     ) {}
 
-    /**
-     * @return array<string, mixed>
-     */
     public function toArray(): array
     {
         return [

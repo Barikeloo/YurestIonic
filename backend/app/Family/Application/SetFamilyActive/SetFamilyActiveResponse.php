@@ -25,9 +25,6 @@ final readonly class SetFamilyActiveResponse
         );
     }
 
-    /**
-     * @return array<string, bool|string>
-     */
     public function toArray(): array
     {
         return [

@@ -82,8 +82,6 @@ final class CashMovement
         );
     }
 
-    // Getters
-
     public function id(): Uuid
     {
         return $this->id;

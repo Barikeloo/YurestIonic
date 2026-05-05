@@ -8,7 +8,6 @@ use App\Cash\Domain\Entity\CashMovement;
 
 final class ListCashMovementsResponse
 {
-    /** @param CashMovement[] $movements */
     public function __construct(private array $movements) {}
 
     public function toArray(): array

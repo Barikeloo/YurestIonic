@@ -11,17 +11,6 @@ use App\Sale\Application\CreateSale\CreateSale;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
-/**
- * Caso de uso: Registrar un pago dentro de una sesión de cobro.
- *
- * Filosofía "deuda viva":
- * - El pago pertenece a la mesa, no al comensal. `dinerNumber` es solo
- *   etiqueta visual para el ticket / UX.
- * - El importe es libre; si no se proporciona, se sugiere la cuota equitativa
- *   sobre la deuda restante.
- * - La sesión se cierra cuando la deuda viva llega a 0, no cuando todos los
- *   comensales han marcado pago.
- */
 final class RecordChargeSessionPayment
 {
     public function __construct(

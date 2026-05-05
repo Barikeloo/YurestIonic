@@ -59,7 +59,6 @@ export class PinAuthModalComponent implements OnDestroy {
       this.enteredPin += key;
       this.pinError = null;
 
-      // Auto-verificar cuando se completan 4 dígitos
       if (this.enteredPin.length === 4) {
         void this.verifyPin();
       }
@@ -79,7 +78,6 @@ export class PinAuthModalComponent implements OnDestroy {
     this.pinError = null;
 
     try {
-      // Obtener usuario actual de la sesión
       const currentUser = await firstValueFrom(this.authService.currentUser$);
       if (!currentUser) {
         this.pinError = 'No hay sesión activa';
@@ -88,17 +86,14 @@ export class PinAuthModalComponent implements OnDestroy {
         return;
       }
 
-      // Verificar el PIN del usuario actual
       const deviceId = this.authService.getDeviceId();
       await firstValueFrom(
         this.authService.loginWithPin(currentUser.id, this.enteredPin, deviceId),
       );
 
-      // PIN correcto - mostrar animación de éxito
       this.showSuccess = true;
       this.isVerifying = false;
 
-      // Emitir evento de autenticación después de la animación
       this.successTimeout = setTimeout(() => {
         this.successTimeout = null;
         this.authenticated.emit({

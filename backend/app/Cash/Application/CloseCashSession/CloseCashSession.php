@@ -41,7 +41,6 @@ final class CloseCashSession
                 throw new \DomainException('Cash session not found.');
             }
 
-            // Pre-check: no sales with pending status
             $sales = $this->saleRepository->findByCashSessionId($cashSessionUuid);
             foreach ($sales as $sale) {
                 if ($sale->status()->isPending()) {
@@ -51,17 +50,11 @@ final class CloseCashSession
 
             $finalAmount = Money::create($finalAmountCents);
 
-            // 1. Generate the Z-Report first. It computes totals, teorico and signed discrepancy
-            //    server-side and is the source of truth. If the session is not in 'closing'
-            //    state, GenerateZReport will reject.
             $zReportResponse = ($this->generateZReport)($cashSessionId, $finalAmount);
 
-            // Expected is derived algebraically so this use case does not depend on the
-            // internal expected-cash formula in GenerateZReport.
             $discrepancy = Money::create($zReportResponse->discrepancyCents);
             $expectedAmount = $finalAmount->subtract($discrepancy);
 
-            // 2. Apply the close on the session with the numbers from the Z.
             $cashSession->close(
                 closedByUserId: Uuid::create($closedByUserId),
                 finalAmount: $finalAmount,

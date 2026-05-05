@@ -8,9 +8,6 @@ use App\Sale\Domain\Entity\ChargeSession;
 
 final class CancelChargeSessionResponse
 {
-    /**
-     * @param  array<int>  $paidDiners
-     */
     public function __construct(
         public readonly string $id,
         public readonly string $status,
@@ -20,9 +17,6 @@ final class CancelChargeSessionResponse
         public readonly array $paidDiners,
     ) {}
 
-    /**
-     * @param array<int> $paidDinerNumbers
-     */
     public static function fromEntity(
         ChargeSession $chargeSession,
         int $paidCents,
@@ -39,9 +33,6 @@ final class CancelChargeSessionResponse
         );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function toArray(): array
     {
         return [

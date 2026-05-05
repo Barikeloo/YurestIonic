@@ -37,7 +37,6 @@ export class MesasPage implements OnInit {
   loadingLines = false;
   loading = true;
 
-  // Modal apertura
   modalOpen = false;
   showPinAuthModal = false;
   diners = 1;
@@ -45,21 +44,17 @@ export class MesasPage implements OnInit {
   openingError: string | null = null;
   cajaError: string | null = null;
 
-  // Modal cerrar cuenta (mark-to-charge)
   showPinAuthModalForCloseAccount = false;
   closeAccountModalOpen = false;
   closingAccount = false;
   closeAccountError: string | null = null;
 
-  // PIN auth para cobrar
   showPinAuthModalForCharge = false;
 
-  // Menú de opciones de mesa
   tableMenuOpen = false;
   tableMenuTable: TableWithStatus | null = null;
   tableMenuPosition = { x: 0, y: 0 };
 
-  // Modal editar comensales
   editDinersModalOpen = false;
   editDinersValue = 1;
   editDinersLoading = false;
@@ -97,7 +92,6 @@ export class MesasPage implements OnInit {
       const orderByTable = new Map<string, TpvOrder>();
       for (const order of activeOrders) orderByTable.set(order.table_id, order);
 
-      // Fetch paid totals for all active orders
       const paidTotals = new Map<string, number>();
       for (const order of activeOrders) {
         try {
@@ -157,7 +151,6 @@ export class MesasPage implements OnInit {
     }
   }
 
-  // ── Modal apertura ────────────────────────────
   async openModal(): Promise<void> {
     this.cajaError = null;
     const deviceId = this.authService.getDeviceId();
@@ -172,11 +165,9 @@ export class MesasPage implements OnInit {
       return;
     }
 
-    // Abrir mesa es acción NORMAL - verificar sesión con timeout
     if (this.pinAuthService.requiresPin('normal')) {
       this.showPinAuthModal = true;
     } else {
-      // Sesión activa, abrir directamente
       this.modalOpen = true;
       this.openingError = null;
       this.diners = 1;
@@ -184,7 +175,6 @@ export class MesasPage implements OnInit {
   }
 
   onPinAuthenticated(result: PinAuthResult): void {
-    // Guardar contexto para sesión con timeout
     const now = Date.now();
     this.pinAuthService.setAuthContext({
       userId: result.userId,
@@ -218,7 +208,6 @@ export class MesasPage implements OnInit {
     this.openingError = null;
 
     try {
-      // Obtener el usuario actual
       const currentUser = await firstValueFrom(this.authService.currentUser$);
       if (!currentUser) {
         this.openingError = 'No hay sesión activa';
@@ -226,7 +215,6 @@ export class MesasPage implements OnInit {
         return;
       }
 
-      // Abrir la mesa
       const order = await firstValueFrom(this.tpvService.createOrder({
         table_id: this.selectedTable.id,
         opened_by_user_id: currentUser.id,
@@ -243,11 +231,9 @@ export class MesasPage implements OnInit {
     }
   }
 
-  // ── Modal cerrar cuenta ───────────────────────
   async openCloseAccountModal(): Promise<void> {
     if (!this.selectedTable?.order_id) return;
 
-    // Cerrar cuenta es acción NORMAL - verificar sesión con timeout
     if (this.pinAuthService.requiresPin('normal')) {
       this.showPinAuthModalForCloseAccount = true;
     } else {
@@ -257,7 +243,6 @@ export class MesasPage implements OnInit {
   }
 
   onPinAuthenticatedForCloseAccount(result: PinAuthResult): void {
-    // Guardar contexto para sesión con timeout
     const now = Date.now();
     this.pinAuthService.setAuthContext({
       userId: result.userId,
@@ -282,7 +267,6 @@ export class MesasPage implements OnInit {
     this.closeAccountError = null;
 
     try {
-      // Obtener el usuario actual
       const currentUser = await firstValueFrom(this.authService.currentUser$);
       if (!currentUser) {
         this.closeAccountError = 'No hay sesión activa';
@@ -309,11 +293,9 @@ export class MesasPage implements OnInit {
     }
   }
 
-  // ── Ir a cobrar (navega a caja) ───────────────────
   goToCobrar(): void {
     if (!this.selectedTable?.order_id) return;
 
-    // Cobrar es acción NORMAL - verificar sesión con timeout
     if (this.pinAuthService.requiresPin('normal')) {
       this.showPinAuthModalForCharge = true;
     } else {
@@ -324,7 +306,6 @@ export class MesasPage implements OnInit {
   }
 
   onPinAuthenticatedForCharge(result: PinAuthResult): void {
-    // Guardar contexto para sesión con timeout
     const now = Date.now();
     this.pinAuthService.setAuthContext({
       userId: result.userId,
@@ -340,7 +321,6 @@ export class MesasPage implements OnInit {
     });
   }
 
-  // ── Panel ──────────────────────────────────────
   goToComanda(): void {
     if (this.selectedTable?.order_id) {
       void this.router.navigate(['/app/comanda'], {
@@ -357,7 +337,6 @@ export class MesasPage implements OnInit {
     }
   }
 
-  // ── Helpers ───────────────────────────────────
   get linesSubtotal(): number {
     return this.orderLines.reduce((acc, l) => acc + Math.round((l.price * l.quantity) / (1 + l.tax_percentage / 100)), 0);
   }
@@ -374,7 +353,6 @@ export class MesasPage implements OnInit {
     return (cents / 100).toFixed(2).replace('.', ',') + '€';
   }
 
-  // ── Helpers para comensales ─────────────────────
   getPaidDinersForTable(table: TableWithStatus): number[] {
     if (!table.diners || !table.total || table.total <= 0) return [];
 
@@ -383,7 +361,6 @@ export class MesasPage implements OnInit {
     const paidTotal = total - remaining;
     const diners = table.diners;
 
-    // Calcular cuántos comensales han pagado basado en el total pagado
     const perDiner = Math.floor(total / diners);
     if (perDiner <= 0) return paidTotal > 0 ? [1] : [];
 
@@ -413,17 +390,14 @@ export class MesasPage implements OnInit {
     return AVATAR_COLORS[index % AVATAR_COLORS.length];
   }
 
-  // ── Menú de opciones de mesa ───────────────────
-
   openTableMenu(event: Event, table: TableWithStatus): void {
     event.stopPropagation();
     this.tableMenuTable = table;
     this.tableMenuOpen = true;
-    // Posicionar el menú cerca del botón clicado
     const target = event.target as HTMLElement;
     const rect = target.getBoundingClientRect();
     this.tableMenuPosition = {
-      x: rect.left + rect.width / 2 - 100, // Centrado aproximado
+      x: rect.left + rect.width / 2 - 100,
       y: rect.bottom + 8,
     };
   }
@@ -434,7 +408,6 @@ export class MesasPage implements OnInit {
   }
 
   async onEditDiners(): Promise<void> {
-    // Guardar referencia antes de cerrar el menú
     const table = this.tableMenuTable;
     this.closeTableMenu();
 
@@ -443,12 +416,10 @@ export class MesasPage implements OnInit {
       return;
     }
 
-    // Buscar tabla actualizada desde el array
     const updatedTable = this.tables.find((t) => t.id === table.id);
     this.editDinersTable = updatedTable || table;
     this.editDinersOrderId = table.order_id;
 
-    // Recargar datos frescos de la orden para obtener remaining_total actualizado
     try {
       const freshOrder = await firstValueFrom(this.tpvService.getOrder(table.order_id));
       if (freshOrder && this.editDinersTable) {
@@ -463,7 +434,6 @@ export class MesasPage implements OnInit {
       console.log('[onEditDiners] Error recargando orden (usando datos locales):', e);
     }
 
-    // Consultar backend si hay charge session con pagos registrados
     this.editDinersCheckingChargeSession = true;
     this.editDinersError = null;
 
@@ -472,28 +442,23 @@ export class MesasPage implements OnInit {
         this.chargeSessionService.getCurrentChargeSession(table.order_id)
       );
 
-      // Si hay pagos registrados en la charge session, bloquear edición
       const paidCount = chargeSession?.paid_diner_numbers?.length ?? 0;
       if (paidCount > 0) {
         this.editDinersError = `Ya hay ${paidCount} pago${paidCount === 1 ? '' : 's'} registrado${paidCount === 1 ? '' : 's'} en la sesión de cobro. No se puede modificar el número de comensales.`;
         this.editDinersCheckingChargeSession = false;
-        // Mostrar el modal con el mensaje de error (pero deshabilitado)
         this.editDinersValue = this.editDinersTable.diners ?? 1;
         this.editDinersModalOpen = true;
         return;
       }
     } catch (error: unknown) {
-      // 404 = no hay sesión activa, es seguro continuar
       const httpError = error as { status?: number };
       if (httpError.status !== 404) {
         console.error('[onEditDiners] Error consultando charge session:', error);
-        // No bloqueamos por errores de red, usamos la validación local como fallback
       }
     } finally {
       this.editDinersCheckingChargeSession = false;
     }
 
-    // Validación local como respaldo (si no hay charge session o hubo error de red)
     const paidDiners = this.getPaidDinersForTable(this.editDinersTable);
     if (paidDiners.length > 0) {
       this.editDinersError = `Ya hay ${paidDiners.length} pago${paidDiners.length === 1 ? '' : 's'} registrado${paidDiners.length === 1 ? '' : 's'}. No se puede modificar el número de comensales.`;
@@ -514,8 +479,6 @@ export class MesasPage implements OnInit {
     this.editDinersError = null;
   }
 
-  // ── Validación de edición de comensales ─────────────────────
-
   get currentPaidDinersCount(): number {
     if (!this.editDinersTable) return 0;
     const paidDiners = this.getPaidDinersForTable(this.editDinersTable);
@@ -524,10 +487,8 @@ export class MesasPage implements OnInit {
   }
 
   get canReduceDiners(): boolean {
-    // Si no hay datos de la mesa, permitir (fallback seguro)
     if (!this.editDinersTable) return true;
 
-    // Si se intenta reducir comensales
     if (this.editDinersValue < (this.editDinersTable.diners ?? 1)) {
       const paidCount = this.currentPaidDinersCount;
       const canReduce = this.editDinersValue >= paidCount;
@@ -535,7 +496,6 @@ export class MesasPage implements OnInit {
       return canReduce;
     }
 
-    // Si se aumentan o mantienen, siempre permitir
     return true;
   }
 
@@ -567,7 +527,6 @@ export class MesasPage implements OnInit {
   async confirmEditDiners(): Promise<void> {
     if (!this.editDinersOrderId || this.editDinersLoading) return;
 
-    // Validar antes de enviar
     if (!this.canReduceDiners) {
       const paidCount = this.currentPaidDinersCount;
       this.editDinersError = `No puedes reducir a ${this.editDinersValue} comensales porque ya ${paidCount === 1 ? 'ha pagado' : 'han pagado'} ${paidCount}.`;
@@ -584,10 +543,8 @@ export class MesasPage implements OnInit {
         })
       );
 
-      // Recargar datos para reflejar cambio
       await this.loadData();
 
-      // Actualizar selectedTable con los nuevos datos
       if (this.selectedTable) {
         const updatedTable = this.tables.find((t) => t.id === this.selectedTable!.id);
         if (updatedTable) {
@@ -607,12 +564,10 @@ export class MesasPage implements OnInit {
   onJoinTable(): void {
     console.log('[Menu] Juntar mesa:', this.tableMenuTable?.name);
     this.closeTableMenu();
-    // TODO: Implementar juntar mesa
   }
 
   onTransferAccount(): void {
     console.log('[Menu] Traspasar cuenta:', this.tableMenuTable?.name);
     this.closeTableMenu();
-    // TODO: Implementar traspaso de cuenta
   }
 }

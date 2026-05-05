@@ -171,8 +171,6 @@ final class CashSession
         $this->updatedAt = DomainDateTime::now();
     }
 
-    // Getters
-
     public function id(): Uuid
     {
         return $this->id;

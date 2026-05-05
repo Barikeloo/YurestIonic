@@ -8,14 +8,6 @@ use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
-/**
- * Caso de uso: Cancelar una sesión de cobro.
- *
- * Según la especificación:
- * - Cambia estado a 'cancelled'
- * - No elimina pagos ya registrados (trazabilidad)
- * - Alerta al camarero si hay pagos que requieren devolución manual
- */
 final class CancelChargeSession
 {
     public function __construct(
@@ -31,27 +23,22 @@ final class CancelChargeSession
         $sessionUuid = Uuid::create($chargeSessionId);
         $userUuid = Uuid::create($cancelledByUserId);
 
-        // 1. Buscar sesión
         $session = $this->chargeSessionRepository->findById($sessionUuid);
 
         if ($session === null) {
             throw new \DomainException('Charge session not found');
         }
 
-        // 2. Verificar que está activa
         if (! $session->status()->isActive()) {
             throw new \DomainException(
                 'Cannot cancel charge session: status is '.$session->status()->value()
             );
         }
 
-        // 3. Obtener estado actual de pagos (deuda viva)
         [$totalCents, $paidCents, $paidDinerNumbers] = $this->responseBuilder->collect($session);
         $paidCount = count($paidDinerNumbers);
-        // (totalCents no se usa aquí; sólo informamos de paid_cents en el warning)
         unset($totalCents);
 
-        // 4. Preparar mensaje de advertencia si hay pagos
         $warningMessage = null;
         if ($paidCount > 0) {
             $warningMessage = "ATENCIÓN: Hay {$paidCount} pago(s) completado(s) ".
@@ -59,10 +46,8 @@ final class CancelChargeSession
                 'Se requiere devolución manual al cliente.';
         }
 
-        // 5. Cancelar sesión
         $session->cancel($userUuid, $reason);
 
-        // 6. Persistir
         $this->chargeSessionRepository->save($session);
 
         return CancelChargeSessionResponse::fromEntity($session, $paidCents, $paidDinerNumbers, $warningMessage);

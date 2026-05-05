@@ -66,7 +66,6 @@ final class GetCashSessionSummary
 
         $expectedAmount = $cashSession->initialAmount()->toCents() + $totalCashPayments + $totalInMovements - $totalOutMovements;
 
-        // Contar tickets únicos (sale_ids distintos) - B5 fix
         $uniqueSaleIds = [];
         foreach ($payments as $payment) {
             $saleId = $payment->saleId()->value();
@@ -74,8 +73,6 @@ final class GetCashSessionSummary
         }
         $ticketsCount = count($uniqueSaleIds);
 
-        // TODO: B6 - Implementar conteo de diners y tipsCard
-        // Requiere inyección de OrderRepository y TipRepository
         $dinersCount = 0;
         $tipsCard = 0;
 

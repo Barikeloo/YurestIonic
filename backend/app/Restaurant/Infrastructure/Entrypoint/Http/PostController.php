@@ -63,7 +63,6 @@ final class PostController
             password: $validated['password'],
         );
 
-        // Create admin user for this restaurant
         ($this->createRestaurantUser)(
             name: $validated['name'],
             email: $validated['email'],

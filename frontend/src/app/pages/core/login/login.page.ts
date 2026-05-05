@@ -40,7 +40,6 @@ export class LoginPage {
 
   public linkedRestaurant: LinkedRestaurant | null = null;
 
-  // View states for linked device
   public showPinPanel: boolean = false;
   public showEmailForm: boolean = false;
 
@@ -70,7 +69,6 @@ export class LoginPage {
     }
   }
 
-  // Employee list view
   public loadEmployees(): void {
     this.isLoading = true;
     this.errorMessage = null;
@@ -131,7 +129,6 @@ export class LoginPage {
     this.showEmailForm = true;
   }
 
-  // PIN panel
   public isPinDotFilled(index: number): boolean {
     return index < this.pinValue.length;
   }
@@ -174,7 +171,6 @@ export class LoginPage {
     this.loginWithPinApi(this.selectedEmployee.userUuid, this.pinValue);
   }
 
-  // Email/password form
   public submit(): void {
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();

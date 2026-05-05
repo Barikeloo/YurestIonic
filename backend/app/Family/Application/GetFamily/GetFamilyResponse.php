@@ -25,9 +25,6 @@ final readonly class GetFamilyResponse
         );
     }
 
-    /**
-     * @return array<string, bool|string>
-     */
     public function toArray(): array
     {
         return [

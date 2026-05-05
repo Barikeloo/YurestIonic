@@ -16,9 +16,6 @@ final class UpdateChargeSessionDinersResponse
         public readonly string $status,
     ) {}
 
-    /**
-     * @param array<int> $paidDinerNumbers
-     */
     public static function fromLiveDebt(
         ChargeSession $chargeSession,
         int $totalCents,
@@ -43,9 +40,6 @@ final class UpdateChargeSessionDinersResponse
         );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function toArray(): array
     {
         return [

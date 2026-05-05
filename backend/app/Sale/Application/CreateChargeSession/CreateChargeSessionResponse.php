@@ -8,9 +8,6 @@ use App\Sale\Domain\Entity\ChargeSession;
 
 final class CreateChargeSessionResponse
 {
-    /**
-     * @param  array<int>  $paidDinerNumbers
-     */
     private function __construct(
         public readonly string $id,
         public readonly string $orderId,
@@ -25,9 +22,6 @@ final class CreateChargeSessionResponse
         public readonly string $updatedAt,
     ) {}
 
-    /**
-     * @param  array<int>  $paidDinerNumbers
-     */
     public static function fromLiveDebt(
         ChargeSession $session,
         int $totalCents,
@@ -58,9 +52,6 @@ final class CreateChargeSessionResponse
         );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function toArray(): array
     {
         return [

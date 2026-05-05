@@ -60,9 +60,6 @@ final class GetFinalTicketPrint
         );
     }
 
-    /**
-     * @return array<int, array<string, int>>
-     */
     private function buildTaxBreakdown(string $orderId): array
     {
         $lines = $this->orderLineRepository->findByOrderId(Uuid::create($orderId));

@@ -67,12 +67,12 @@ final class ListCashSessions
             $sessionsWithDetails[] = [
                 'session' => $session,
                 'tickets' => $paymentsCount,
-                'diners' => 0, // TODO: Calcular desde las órdenes
+                'diners' => 0,
                 'gross' => $totalSales,
-                'discounts' => 0, // TODO: Calcular desde las órdenes
-                'invitations' => 0, // TODO: Calcular desde las órdenes
-                'invValue' => 0, // TODO: Calcular desde las órdenes
-                'cancellations' => 0, // TODO: Calcular desde las órdenes
+                'discounts' => 0,
+                'invitations' => 0,
+                'invValue' => 0,
+                'cancellations' => 0,
                 'net' => $totalSales,
                 'movIn' => $totalInMovements,
                 'movOut' => $totalOutMovements,

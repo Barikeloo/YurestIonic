@@ -32,8 +32,6 @@ final class GetCurrentChargeSessionController
 
         $orderId = Uuid::create($validated['order_id']);
 
-        // Devuelve la sesión más reciente para esta orden, sin filtrar status.
-        // El cliente lee `status` (active|completed|cancelled) y decide.
         $session = $this->chargeSessionRepository->findCurrentByOrderId($orderId);
 
         if ($session === null) {

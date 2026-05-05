@@ -15,7 +15,7 @@ final class UpdateOrder
     public function __invoke(
         string $id,
         ?int $diners = null,
-        ?string $action = null, // 'mark-to-charge', 'close', 'cancel'
+        ?string $action = null,
         ?string $closedByUserId = null,
     ): ?UpdateOrderResponse {
         $order = $this->orderRepository->findByUuid(Uuid::create($id));

@@ -35,9 +35,6 @@ final readonly class ListProductsItemResponse
         );
     }
 
-    /**
-     * @return array<string, bool|int|string|null>
-     */
     public function toArray(): array
     {
         return [

@@ -10,13 +10,6 @@ use App\Sale\Domain\Entity\ChargeSession;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
-/**
- * Caso de uso: crear o recuperar la sesión de cobro activa de una orden.
- *
- * Filosofía de "deuda viva": la sesión solo guarda snapshot de la mesa
- * (dinersCount + totalCents). La deuda restante y la cuota sugerida se
- * calculan al vuelo desde los SalePayments tagueados con la sesión.
- */
 final class CreateChargeSession
 {
     public function __construct(
@@ -53,10 +46,6 @@ final class CreateChargeSession
             throw new \DomainException('Diners count must be greater than 0');
         }
 
-        // El total snapshot guarda la deuda viva al abrir la sesión
-        // (líneas actuales − pagos previos no tagueados). El response
-        // recalcula deuda en cada lectura, así que el snapshot solo es
-        // referencia histórica para la entidad.
         $orderLines = $this->orderLineRepository->findByOrderId($orderUuid);
         $totalCents = 0;
         foreach ($orderLines as $line) {

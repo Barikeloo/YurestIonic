@@ -229,8 +229,6 @@ export class UserModalComponent implements OnChanges {
       role: user.role ?? 'operator',
       pin: user.pin ?? '',
     });
-
-    // In edit mode, email and password are not editable.
     this.form.get('email')?.disable();
     this.form.get('password')?.disable();
     this.form.get('password')?.clearAsyncValidators();

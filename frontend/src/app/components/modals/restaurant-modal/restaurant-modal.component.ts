@@ -73,8 +73,6 @@ export class RestaurantModalComponent implements OnChanges {
         this.form.reset();
         this.form.get('tax_id')?.enable();
         this.form.get('email')?.enable();
-
-        // Poblar el form
         this.form.patchValue({
             name: restaurant.name,
             legal_name: restaurant.legal_name,
@@ -83,8 +81,6 @@ export class RestaurantModalComponent implements OnChanges {
             password: '',
             pin: '',
         });
-
-        // Desactivar campos
         this.form.get('tax_id')?.disable();
         this.form.get('email')?.disable();
         this.form.get('password')?.clearValidators();
