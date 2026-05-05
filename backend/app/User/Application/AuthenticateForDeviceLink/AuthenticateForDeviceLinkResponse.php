@@ -18,8 +18,8 @@ final readonly class AuthenticateForDeviceLinkResponse
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'restaurant_id' => $this->restaurantId,
-            'restaurant_name' => $this->restaurantName,
+            'restaurantId' => $this->restaurantId,
+            'restaurantName' => $this->restaurantName,
         ];
     }
 }

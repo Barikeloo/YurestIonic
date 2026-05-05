@@ -6,6 +6,8 @@ use App\Restaurant\Application\CreateRestaurant\CreateRestaurant;
 use App\Restaurant\Application\ValidateRestaurantCompanyMode\ValidateRestaurantCompanyMode;
 use App\Restaurant\Application\ValidateRestaurantCompanyMode\ValidateRestaurantCompanyModeResponse;
 use App\User\Application\CreateRestaurantUser\CreateRestaurantUser;
+use App\User\Application\CreateRestaurantUser\CreateRestaurantUserCommand;
+use App\User\Domain\Exception\PinAlreadyInUseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -63,14 +65,18 @@ final class PostController
             password: $validated['password'],
         );
 
-        ($this->createRestaurantUser)(
-            name: $validated['name'],
-            email: $validated['email'],
-            plainPassword: $validated['password'],
-            restaurantUuid: $response->uuid,
-            role: 'admin',
-            plainPin: $adminPin,
-        );
+        try {
+            ($this->createRestaurantUser)(new CreateRestaurantUserCommand(
+                name: $validated['name'],
+                email: $validated['email'],
+                plainPassword: $validated['password'],
+                restaurantUuid: $response->uuid,
+                role: 'admin',
+                plainPin: $adminPin,
+            ));
+        } catch (PinAlreadyInUseException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 409);
+        }
 
         return new JsonResponse([
             ...$response->toArray(),

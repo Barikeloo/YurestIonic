@@ -2,12 +2,12 @@
 
 namespace App\User\Infrastructure\Entrypoint\Http;
 
+use App\User\Infrastructure\Entrypoint\Http\Requests\LogoutRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
-class LogoutController
+final class LogoutController
 {
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(LogoutRequest $request): JsonResponse
     {
         $request->session()->forget('auth_user_id');
         $request->session()->forget('tenant_restaurant_uuid');

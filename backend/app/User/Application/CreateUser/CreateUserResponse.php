@@ -2,8 +2,6 @@
 
 namespace App\User\Application\CreateUser;
 
-use App\User\Domain\Entity\User;
-
 final readonly class CreateUserResponse
 {
     public function __construct(
@@ -13,17 +11,6 @@ final readonly class CreateUserResponse
         public string $createdAt,
         public string $updatedAt,
     ) {}
-
-    public static function create(User $user): self
-    {
-        return new self(
-            id: $user->id()->value(),
-            name: $user->name()->value(),
-            email: $user->email()->value(),
-            createdAt: $user->createdAt()->format(\DateTimeInterface::ATOM),
-            updatedAt: $user->updatedAt()->format(\DateTimeInterface::ATOM),
-        );
-    }
 
     /**
      * @return array<string, string>

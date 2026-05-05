@@ -10,8 +10,11 @@ use App\Restaurant\Domain\ValueObject\RestaurantTaxId;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\User\Application\AuthorizeRestaurantAccess\AuthorizeRestaurantAccess;
+use App\User\Application\AuthorizeRestaurantAccess\AuthorizeRestaurantAccessCommand;
 use App\User\Application\AuthorizeRestaurantAccess\AuthorizeRestaurantAccessResponse;
 use App\User\Domain\Entity\User;
+use App\User\Domain\Exception\ForbiddenRestaurantAccessException;
+use App\User\Domain\Exception\NotAuthenticatedException;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 use Mockery;
 use PHPUnit\Framework\TestCase;
@@ -49,9 +52,12 @@ class AuthorizeRestaurantAccessTest extends TestCase
         $restaurantRepository->shouldReceive('findByInternalId')->once()->with(10)->andReturn($linked);
         $restaurantRepository->shouldReceive('findByUuid')->once()->andReturn($target);
 
-        $response = $useCase('11111111-1111-4111-8111-111111111111', 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb');
+        $response = $useCase(new AuthorizeRestaurantAccessCommand(
+            authUserUuid: '11111111-1111-4111-8111-111111111111',
+            targetRestaurantUuid: 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb',
+        ));
 
-        $this->assertSame(AuthorizeRestaurantAccessResponse::AUTHORIZED, $response->status());
+        $this->assertInstanceOf(AuthorizeRestaurantAccessResponse::class, $response);
     }
 
     public function test_authorizes_when_linked_restaurant_has_no_tax_id_but_target_is_same_restaurant(): void
@@ -79,9 +85,12 @@ class AuthorizeRestaurantAccessTest extends TestCase
         $restaurantRepository->shouldReceive('findByInternalId')->once()->with(11)->andReturn($linked);
         $restaurantRepository->shouldReceive('findByUuid')->once()->andReturn($target);
 
-        $response = $useCase('22222222-2222-4222-8222-222222222222', 'cccccccc-cccc-4ccc-8ccc-cccccccccccc');
+        $response = $useCase(new AuthorizeRestaurantAccessCommand(
+            authUserUuid: '22222222-2222-4222-8222-222222222222',
+            targetRestaurantUuid: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+        ));
 
-        $this->assertSame(AuthorizeRestaurantAccessResponse::AUTHORIZED, $response->status());
+        $this->assertInstanceOf(AuthorizeRestaurantAccessResponse::class, $response);
     }
 
     public function test_forbids_when_linked_restaurant_has_no_tax_id_and_target_is_different_restaurant(): void
@@ -109,9 +118,27 @@ class AuthorizeRestaurantAccessTest extends TestCase
         $restaurantRepository->shouldReceive('findByInternalId')->once()->with(12)->andReturn($linked);
         $restaurantRepository->shouldReceive('findByUuid')->once()->andReturn($target);
 
-        $response = $useCase('33333333-3333-4333-8333-333333333333', 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee');
+        $this->expectException(ForbiddenRestaurantAccessException::class);
 
-        $this->assertSame(AuthorizeRestaurantAccessResponse::FORBIDDEN, $response->status());
+        $useCase(new AuthorizeRestaurantAccessCommand(
+            authUserUuid: '33333333-3333-4333-8333-333333333333',
+            targetRestaurantUuid: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+        ));
+    }
+
+    public function test_throws_not_authenticated_when_auth_user_uuid_is_empty(): void
+    {
+        $userRepository = Mockery::mock(UserRepositoryInterface::class);
+        $restaurantRepository = Mockery::mock(RestaurantRepositoryInterface::class);
+
+        $useCase = new AuthorizeRestaurantAccess($userRepository, $restaurantRepository);
+
+        $this->expectException(NotAuthenticatedException::class);
+
+        $useCase(new AuthorizeRestaurantAccessCommand(
+            authUserUuid: '',
+            targetRestaurantUuid: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+        ));
     }
 
     private function makeRestaurant(string $uuid, ?string $taxId): Restaurant

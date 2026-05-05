@@ -16,14 +16,20 @@ class CreateUser
         private PasswordHasherInterface $passwordHasher,
     ) {}
 
-    public function __invoke(string $email, string $name, string $plainPassword): CreateUserResponse
+    public function __invoke(CreateUserCommand $command): CreateUserResponse
     {
-        $emailVO = Email::create($email);
-        $nameVO = UserName::create($name);
-        $passwordHashVO = PasswordHash::create($this->passwordHasher->hash($plainPassword));
+        $emailVO = Email::create($command->email);
+        $nameVO = UserName::create($command->name);
+        $passwordHashVO = PasswordHash::create($this->passwordHasher->hash($command->plainPassword));
         $user = User::dddCreate($emailVO, $nameVO, $passwordHashVO);
         $this->userRepository->save($user);
 
-        return CreateUserResponse::create($user);
+        return new CreateUserResponse(
+            id: $user->id()->value(),
+            name: $user->name()->value(),
+            email: $user->email()->value(),
+            createdAt: $user->createdAt()->format(\DateTimeInterface::ATOM),
+            updatedAt: $user->updatedAt()->format(\DateTimeInterface::ATOM),
+        );
     }
 }

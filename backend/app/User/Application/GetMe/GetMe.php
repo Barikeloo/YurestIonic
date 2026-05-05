@@ -3,6 +3,7 @@
 namespace App\User\Application\GetMe;
 
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
+use App\User\Domain\Exception\UserNotFoundException;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 
 class GetMe
@@ -12,27 +13,30 @@ class GetMe
         private RestaurantRepositoryInterface $restaurantRepository,
     ) {}
 
-    public function __invoke(string $userId): ?GetMeResponse
+    public function __invoke(GetMeCommand $command): GetMeResponse
     {
-        $user = $this->userRepository->findById($userId);
-        if ($user === null) {
-            return null;
-        }
+        $user = $this->userRepository->findById($command->userId)
+            ?? throw UserNotFoundException::withId($command->userId);
 
-        $role = $user->role()?->value();
-        $restaurantId = $user->restaurantId()?->toInt();
+        $restaurantInternalId = $user->restaurantId()?->toInt();
         $restaurantUuid = null;
         $restaurantName = null;
 
-        if ($restaurantId !== null) {
-            // Usar el repositorio para obtener el restaurante por id interno
-            $restaurant = $this->restaurantRepository->findByInternalId($restaurantId);
+        if ($restaurantInternalId !== null) {
+            $restaurant = $this->restaurantRepository->findByInternalId($restaurantInternalId);
             if ($restaurant !== null) {
                 $restaurantUuid = $restaurant->uuid()->value();
                 $restaurantName = $restaurant->name()->value();
             }
         }
 
-        return GetMeResponse::create($user, $role, $restaurantUuid, $restaurantName);
+        return new GetMeResponse(
+            id: $user->id()->value(),
+            name: $user->name()->value(),
+            email: $user->email()->value(),
+            role: $user->role()?->value(),
+            restaurantId: $restaurantUuid,
+            restaurantName: $restaurantName,
+        );
     }
 }

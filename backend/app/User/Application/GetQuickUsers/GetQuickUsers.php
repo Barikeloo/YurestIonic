@@ -10,10 +10,10 @@ class GetQuickUsers
         private UserQuickAccessRepositoryInterface $userQuickAccessRepository,
     ) {}
 
-    public function __invoke(string $deviceId, ?string $restaurantUuid = null): GetQuickUsersResponse
+    public function __invoke(GetQuickUsersCommand $command): GetQuickUsersResponse
     {
-        $users = $this->userQuickAccessRepository->getQuickUsersByDeviceId($deviceId, $restaurantUuid);
+        $users = $this->userQuickAccessRepository->getQuickUsersByDeviceId($command->deviceId, $command->restaurantUuid);
 
-        return GetQuickUsersResponse::create($users);
+        return new GetQuickUsersResponse($users);
     }
 }

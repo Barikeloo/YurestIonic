@@ -2,8 +2,12 @@
 
 namespace App\User\Application\UpdateRestaurantUser;
 
+use App\User\Domain\Exception\CannotDemoteSelfAdminException;
+use App\User\Domain\Exception\PinAlreadyInUseException;
+use App\User\Domain\Exception\UserNotFoundException;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
+use App\User\Domain\ValueObject\Role;
 
 class UpdateRestaurantUser
 {
@@ -12,57 +16,61 @@ class UpdateRestaurantUser
         private PasswordHasherInterface $passwordHasher,
     ) {}
 
-    public function __invoke(
-        string $restaurantUuid,
-        string $uuid,
-        ?string $name = null,
-        ?string $email = null,
-        ?string $plainPassword = null,
-        ?string $role = null,
-        ?string $plainPin = null,
-    ): UpdateRestaurantUserResponse {
-        $user = $this->userRepository->findById($uuid);
+    public function __invoke(UpdateRestaurantUserCommand $command): UpdateRestaurantUserResponse
+    {
+        $user = $this->userRepository->findById($command->userUuid);
 
         if ($user === null) {
-            return UpdateRestaurantUserResponse::notFound();
+            throw UserNotFoundException::withId($command->userUuid);
         }
 
-        if (! $this->userRepository->userBelongsToRestaurant($uuid, $restaurantUuid)) {
-            return UpdateRestaurantUserResponse::notFound();
+        if (! $this->userRepository->userBelongsToRestaurant($command->userUuid, $command->restaurantUuid)) {
+            throw UserNotFoundException::withId($command->userUuid);
+        }
+
+        if (
+            is_string($command->actorUserUuid)
+            && $command->actorUserUuid !== ''
+            && $command->actorUserUuid === $command->userUuid
+            && is_string($command->role)
+            && $command->role !== ''
+            && ! Role::create($command->role)->isAdmin()
+        ) {
+            throw new CannotDemoteSelfAdminException();
         }
 
         $updates = [];
 
-        if ($name !== null) {
-            $updates['name'] = $name;
+        if ($command->name !== null) {
+            $updates['name'] = $command->name;
         }
 
-        if ($email !== null) {
-            $updates['email'] = $email;
+        if ($command->email !== null) {
+            $updates['email'] = $command->email;
         }
 
-        if ($plainPassword !== null) {
-            $updates['password'] = $this->passwordHasher->hash($plainPassword);
+        if ($command->plainPassword !== null) {
+            $updates['password'] = $this->passwordHasher->hash($command->plainPassword);
         }
 
-        if ($role !== null) {
-            $updates['role'] = $role;
+        if ($command->role !== null) {
+            $updates['role'] = $command->role;
         }
 
-        if ($plainPin !== null) {
-            $pinHash = $this->passwordHasher->hash($plainPin);
-            if ($this->userRepository->pinHashExistsForRestaurant($pinHash, $restaurantUuid, $uuid)) {
-                return UpdateRestaurantUserResponse::pinConflict();
+        if ($command->plainPin !== null) {
+            $pinHash = $this->passwordHasher->hash($command->plainPin);
+            if ($this->userRepository->pinHashExistsForRestaurant($pinHash, $command->restaurantUuid, $command->userUuid)) {
+                throw new PinAlreadyInUseException();
             }
             $updates['pin'] = $pinHash;
         }
 
         if (empty($updates)) {
-            return UpdateRestaurantUserResponse::success($uuid);
+            return new UpdateRestaurantUserResponse($command->userUuid);
         }
 
-        $this->userRepository->updatePartial($uuid, $updates);
+        $this->userRepository->updatePartial($command->userUuid, $updates);
 
-        return UpdateRestaurantUserResponse::success($uuid);
+        return new UpdateRestaurantUserResponse($command->userUuid);
     }
 }

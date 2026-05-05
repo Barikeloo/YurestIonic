@@ -10,10 +10,10 @@ class GetRestaurantUsers
         private UserRepositoryInterface $userRepository,
     ) {}
 
-    public function __invoke(string $restaurantUuid): GetRestaurantUsersResponse
+    public function __invoke(GetRestaurantUsersCommand $command): GetRestaurantUsersResponse
     {
-        $users = $this->userRepository->getByRestaurantUuid($restaurantUuid);
+        $users = $this->userRepository->getByRestaurantUuid($command->restaurantUuid);
 
-        return GetRestaurantUsersResponse::create($users);
+        return new GetRestaurantUsersResponse($users);
     }
 }

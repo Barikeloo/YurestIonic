@@ -3,19 +3,23 @@
 namespace App\User\Infrastructure\Entrypoint\Http\Admin;
 
 use App\User\Application\AuthorizeRestaurantAccess\AuthorizeRestaurantAccess;
-use App\User\Application\AuthorizeRestaurantAccess\AuthorizeRestaurantAccessResponse;
+use App\User\Application\AuthorizeRestaurantAccess\AuthorizeRestaurantAccessCommand;
 use App\User\Application\CreateRestaurantUser\CreateRestaurantUser;
+use App\User\Domain\Exception\ForbiddenRestaurantAccessException;
+use App\User\Domain\Exception\NotAuthenticatedException;
+use App\User\Domain\Exception\PinAlreadyInUseException;
+use App\User\Domain\Exception\RestaurantNotFoundException;
+use App\User\Infrastructure\Entrypoint\Http\Requests\CreateRestaurantUserRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
-class AdminPostController
+final class AdminPostController
 {
     public function __construct(
         private AuthorizeRestaurantAccess $authorizeRestaurantAccess,
         private CreateRestaurantUser $createRestaurantUser,
     ) {}
 
-    public function __invoke(Request $request, string $uuid): JsonResponse
+    public function __invoke(CreateRestaurantUserRequest $request, string $uuid): JsonResponse
     {
         $superAdminUuid = $request->session()->get('super_admin_id');
 
@@ -29,46 +33,33 @@ class AdminPostController
                 ], 401);
             }
 
-            $authorization = $this->authorizeRestaurantAccess->__invoke($authUserUuid, $uuid);
+            try {
+                $this->authorizeRestaurantAccess->__invoke(new AuthorizeRestaurantAccessCommand(
+                    authUserUuid: $authUserUuid,
+                    targetRestaurantUuid: $uuid,
+                ));
+            } catch (NotAuthenticatedException $e) {
+                return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 401);
+            } catch (RestaurantNotFoundException $e) {
+                return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 404);
+            } catch (ForbiddenRestaurantAccessException $e) {
+                return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 403);
+            } catch (\Throwable $e) {
+                report($e);
 
-            if ($authorization->status() === AuthorizeRestaurantAccessResponse::NOT_AUTHENTICATED) {
-                return new JsonResponse([
-                    'success' => false,
-                    'message' => 'Not authenticated.',
-                ], 401);
-            }
-
-            if ($authorization->status() === AuthorizeRestaurantAccessResponse::RESTAURANT_NOT_FOUND) {
-                return new JsonResponse([
-                    'success' => false,
-                    'message' => 'Restaurant not found.',
-                ], 404);
-            }
-
-            if ($authorization->status() === AuthorizeRestaurantAccessResponse::FORBIDDEN) {
-                return new JsonResponse([
-                    'success' => false,
-                    'message' => 'Forbidden.',
-                ], 403);
+                return new JsonResponse(['success' => false, 'message' => 'Internal error.'], 500);
             }
         }
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255'],
-            'password' => ['required', 'string', 'min:8'],
-            'role' => ['sometimes', 'string', 'in:operator,supervisor,admin'],
-            'pin' => ['sometimes', 'nullable', 'digits:4'],
-        ]);
+        try {
+            $response = ($this->createRestaurantUser)($request->toCommand($uuid));
+        } catch (PinAlreadyInUseException $e) {
+            return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 409);
+        } catch (\Throwable $e) {
+            report($e);
 
-        $response = ($this->createRestaurantUser)(
-            $validated['name'],
-            $validated['email'],
-            $validated['password'],
-            $uuid,
-            $validated['role'] ?? 'operator',
-            $validated['pin'] ?? null,
-        );
+            return new JsonResponse(['success' => false, 'message' => 'Internal error.'], 500);
+        }
 
         return new JsonResponse($response->toArray(), 201);
     }

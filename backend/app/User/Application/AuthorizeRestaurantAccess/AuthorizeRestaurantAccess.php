@@ -4,6 +4,9 @@ namespace App\User\Application\AuthorizeRestaurantAccess;
 
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\User\Domain\Exception\ForbiddenRestaurantAccessException;
+use App\User\Domain\Exception\NotAuthenticatedException;
+use App\User\Domain\Exception\RestaurantNotFoundException;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 
 class AuthorizeRestaurantAccess
@@ -13,23 +16,23 @@ class AuthorizeRestaurantAccess
         private RestaurantRepositoryInterface $restaurantRepository,
     ) {}
 
-    public function __invoke(string $authUserUuid, string $targetRestaurantUuid): AuthorizeRestaurantAccessResponse
+    public function __invoke(AuthorizeRestaurantAccessCommand $command): AuthorizeRestaurantAccessResponse
     {
-        if ($authUserUuid === '') {
-            return AuthorizeRestaurantAccessResponse::notAuthenticated();
+        if ($command->authUserUuid === '') {
+            throw new NotAuthenticatedException();
         }
 
-        $user = $this->userRepository->findById($authUserUuid);
+        $user = $this->userRepository->findById($command->authUserUuid);
 
         if ($user === null || $user->restaurantId() === null) {
-            return AuthorizeRestaurantAccessResponse::notAuthenticated();
+            throw new NotAuthenticatedException();
         }
 
         $linkedRestaurant = $this->restaurantRepository->findByInternalId($user->restaurantId()->toInt());
-        $targetRestaurant = $this->restaurantRepository->findByUuid(Uuid::create($targetRestaurantUuid));
+        $targetRestaurant = $this->restaurantRepository->findByUuid(Uuid::create($command->targetRestaurantUuid));
 
         if ($linkedRestaurant === null || $targetRestaurant === null) {
-            return AuthorizeRestaurantAccessResponse::restaurantNotFound();
+            throw new RestaurantNotFoundException();
         }
 
         $linkedTaxId = $linkedRestaurant->taxId()?->value();
@@ -37,16 +40,16 @@ class AuthorizeRestaurantAccess
 
         if (! is_string($linkedTaxId) || $linkedTaxId === '') {
             if ($targetRestaurant->uuid()->value() !== $linkedRestaurant->uuid()->value()) {
-                return AuthorizeRestaurantAccessResponse::forbidden();
+                throw new ForbiddenRestaurantAccessException();
             }
 
-            return AuthorizeRestaurantAccessResponse::authorized();
+            return new AuthorizeRestaurantAccessResponse();
         }
 
         if ($linkedTaxId !== $targetTaxId) {
-            return AuthorizeRestaurantAccessResponse::forbidden();
+            throw new ForbiddenRestaurantAccessException();
         }
 
-        return AuthorizeRestaurantAccessResponse::authorized();
+        return new AuthorizeRestaurantAccessResponse();
     }
 }

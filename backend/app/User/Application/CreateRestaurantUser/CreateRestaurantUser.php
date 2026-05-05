@@ -3,6 +3,7 @@
 namespace App\User\Application\CreateRestaurantUser;
 
 use App\Shared\Domain\ValueObject\Uuid;
+use App\User\Domain\Exception\PinAlreadyInUseException;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 
@@ -13,34 +14,33 @@ class CreateRestaurantUser
         private PasswordHasherInterface $passwordHasher,
     ) {}
 
-    public function __invoke(
-        string $name,
-        string $email,
-        string $plainPassword,
-        string $restaurantUuid,
-        string $role = 'operator',
-        ?string $plainPin = null,
-    ): CreateRestaurantUserResponse {
+    public function __invoke(CreateRestaurantUserCommand $command): CreateRestaurantUserResponse
+    {
         $userUuid = Uuid::generate()->value();
-        $passwordHash = $this->passwordHasher->hash($plainPassword);
-        $pinHash = is_string($plainPin) && $plainPin !== ''
-            ? $this->passwordHasher->hash($plainPin)
+        $passwordHash = $this->passwordHasher->hash($command->plainPassword);
+        $pinHash = is_string($command->plainPin) && $command->plainPin !== ''
+            ? $this->passwordHasher->hash($command->plainPin)
             : null;
 
-        if ($pinHash !== null && $this->userRepository->pinHashExistsForRestaurant($pinHash, $restaurantUuid)) {
-            throw new \DomainException('Este PIN ya está en uso en este restaurante.');
+        if ($pinHash !== null && $this->userRepository->pinHashExistsForRestaurant($pinHash, $command->restaurantUuid)) {
+            throw new PinAlreadyInUseException();
         }
 
         $this->userRepository->saveWithRestaurant(
             $userUuid,
-            $name,
-            $email,
+            $command->name,
+            $command->email,
             $passwordHash,
-            $restaurantUuid,
-            $role,
+            $command->restaurantUuid,
+            $command->role,
             $pinHash,
         );
 
-        return CreateRestaurantUserResponse::create($userUuid, $name, $email, $role);
+        return new CreateRestaurantUserResponse(
+            uuid: $userUuid,
+            name: $command->name,
+            email: $command->email,
+            role: $command->role,
+        );
     }
 }
