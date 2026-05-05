@@ -1,8 +1,8 @@
 <?php
 
-namespace App\User\Application\AuthenticateUser;
+namespace App\User\Application\AuthenticateUserByPin;
 
-final readonly class AuthenticateUserResponse
+final readonly class AuthenticateUserByPinResponse
 {
     public function __construct(
         public string $id,
@@ -13,9 +13,6 @@ final readonly class AuthenticateUserResponse
         public ?string $restaurantName = null,
     ) {}
 
-    /**
-     * @return array<string, bool|string|null>
-     */
     public function toArray(): array
     {
         return [

@@ -3,42 +3,34 @@
 namespace App\User\Infrastructure\Entrypoint\Http;
 
 use App\User\Application\AuthenticateUserByPin\AuthenticateUserByPin;
-use App\User\Infrastructure\Services\QuickAccessRecorder;
+use App\User\Domain\Exception\InvalidCredentialsException;
+use App\User\Domain\Exception\UserNotFoundException;
+use App\User\Infrastructure\Entrypoint\Http\Requests\LoginByPinRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class LoginByPinController
 {
     public function __construct(
         private readonly AuthenticateUserByPin $authenticateUserByPin,
-        private readonly QuickAccessRecorder $quickAccessRecorder,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(LoginByPinRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'user_uuid' => ['required', 'string', 'uuid'],
-            'pin' => ['required', 'string', 'size:4'],
-            'device_id' => ['sometimes', 'string', 'max:100'],
-            'restaurant_id' => ['sometimes', 'nullable', 'string', 'uuid'],
-        ]);
+        try {
+            $response = ($this->authenticateUserByPin)($request->toCommand());
+        } catch (UserNotFoundException $e) {
+            return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 404);
+        } catch (InvalidCredentialsException $e) {
+            return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 401);
+        } catch (\Throwable $e) {
+            report($e);
 
-        $response = ($this->authenticateUserByPin)(
-            $validated['user_uuid'],
-            $validated['pin'],
-            $validated['restaurant_id'] ?? null,
-        );
-
-        if ($response->success) {
-            $request->session()->regenerate();
-            $request->session()->put('auth_user_id', $response->id);
-
-            $deviceId = $validated['device_id'] ?? $request->header('X-Device-Id');
-            if (is_string($deviceId) && $deviceId !== '') {
-                $this->quickAccessRecorder->record($response->id, $deviceId);
-            }
+            return new JsonResponse(['success' => false, 'message' => 'Internal error.'], 500);
         }
 
-        return new JsonResponse($response->toArray(), $response->statusCode);
+        $request->session()->regenerate();
+        $request->session()->put('auth_user_id', $response->id);
+
+        return new JsonResponse(array_merge(['success' => true], $response->toArray()), 200);
     }
 }

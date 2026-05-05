@@ -4,7 +4,10 @@ namespace App\User\Application\AuthenticateUser;
 
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Shared\Domain\ValueObject\Email;
+use App\User\Domain\Exception\InvalidCredentialsException;
+use App\User\Domain\Exception\UserNotFoundException;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
+use App\User\Domain\Interfaces\UserQuickAccessRepositoryInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 
 class AuthenticateUser
@@ -13,21 +16,16 @@ class AuthenticateUser
         private UserRepositoryInterface $userRepository,
         private RestaurantRepositoryInterface $restaurantRepository,
         private PasswordHasherInterface $passwordHasher,
+        private UserQuickAccessRepositoryInterface $userQuickAccessRepository,
     ) {}
 
-    public function __invoke(string $email, string $plainPassword): AuthenticateUserResponse
+    public function __invoke(AuthenticateUserCommand $command): AuthenticateUserResponse
     {
-        $emailVO = Email::create($email);
-        $user = $this->userRepository->findByEmail($emailVO);
+        $user = $this->userRepository->findByEmail(Email::create($command->email))
+            ?? throw UserNotFoundException::withEmail($command->email);
 
-        if ($user === null) {
-            return AuthenticateUserResponse::notFound();
-        }
-
-        $isValidPassword = $this->passwordHasher->verify($plainPassword, $user->passwordHash()->value());
-
-        if (! $isValidPassword) {
-            return AuthenticateUserResponse::invalidCredentials();
+        if (! $user->verifyPassword($command->plainPassword, $this->passwordHasher)) {
+            throw new InvalidCredentialsException();
         }
 
         $role = $user->role()?->value();
@@ -43,11 +41,17 @@ class AuthenticateUser
             }
         }
 
-        return AuthenticateUserResponse::authenticated(
-            $user,
-            $role,
-            $restaurantId,
-            $restaurantName,
+        if ($command->deviceId !== null && $command->deviceId !== '') {
+            $this->userQuickAccessRepository->recordAccess($user->id()->value(), $command->deviceId);
+        }
+
+        return new AuthenticateUserResponse(
+            id: $user->id()->value(),
+            name: $user->name()->value(),
+            email: $user->email()->value(),
+            role: $role,
+            restaurantId: $restaurantId,
+            restaurantName: $restaurantName,
         );
     }
 }

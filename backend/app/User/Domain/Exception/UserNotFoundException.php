@@ -8,4 +8,9 @@ final class UserNotFoundException extends \DomainException
     {
         return new self("User with email {$email} not found.");
     }
+
+    public static function withId(string $userId): self
+    {
+        return new self("User with id {$userId} not found.");
+    }
 }

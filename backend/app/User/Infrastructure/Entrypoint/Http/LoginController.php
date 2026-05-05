@@ -3,39 +3,34 @@
 namespace App\User\Infrastructure\Entrypoint\Http;
 
 use App\User\Application\AuthenticateUser\AuthenticateUser;
-use App\User\Infrastructure\Services\QuickAccessRecorder;
+use App\User\Domain\Exception\InvalidCredentialsException;
+use App\User\Domain\Exception\UserNotFoundException;
+use App\User\Infrastructure\Entrypoint\Http\Requests\LoginRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
-class LoginController
+final class LoginController
 {
     public function __construct(
         private AuthenticateUser $authenticateUser,
-        private QuickAccessRecorder $quickAccessRecorder,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(LoginRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'email' => ['required', 'string', 'email', 'max:255'],
-            'password' => ['required', 'string'],
-        ]);
+        try {
+            $response = ($this->authenticateUser)($request->toCommand());
+        } catch (UserNotFoundException $e) {
+            return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 404);
+        } catch (InvalidCredentialsException $e) {
+            return new JsonResponse(['success' => false, 'message' => $e->getMessage()], 401);
+        } catch (\Throwable $e) {
+            report($e);
 
-        $response = ($this->authenticateUser)(
-            $validated['email'],
-            $validated['password'],
-        );
-
-        if ($response->success) {
-            $request->session()->regenerate();
-            $request->session()->put('auth_user_id', $response->id);
-
-            $deviceId = $request->input('device_id', $request->header('X-Device-Id'));
-            if (is_string($deviceId) && $deviceId !== '') {
-                $this->quickAccessRecorder->record($response->id, $deviceId);
-            }
+            return new JsonResponse(['success' => false, 'message' => 'Internal error.'], 500);
         }
 
-        return new JsonResponse($response->toArray(), $response->statusCode);
+        $request->session()->regenerate();
+        $request->session()->put('auth_user_id', $response->id);
+
+        return new JsonResponse(array_merge(['success' => true], $response->toArray()), 200);
     }
 }
