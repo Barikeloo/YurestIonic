@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
+import { OrderStatus } from '../../../core/enums/order-status.enum';
 
 export interface TpvFamilyItem {
   id: string;
@@ -39,7 +40,7 @@ export interface TpvTaxItem {
 export interface TpvOrder {
   id: string;
   table_id: string;
-  status: 'open' | 'to-charge' | 'cancelled' | 'invoiced';
+  status: OrderStatus;
   diners: number;
   opened_at: string;
   opened_by_user_id: string;

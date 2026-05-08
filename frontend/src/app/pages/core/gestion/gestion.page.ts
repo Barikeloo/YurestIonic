@@ -28,7 +28,7 @@ import { ProductsManagementComponent } from '../../../components/gestion/product
 import { ZonesManagementComponent } from '../../../components/gestion/zones-management/zones-management.component';
 import { TaxesManagementComponent } from '../../../components/gestion/taxes-management/taxes-management.component';
 import { ZReportsManagementComponent, ZReportRow } from '../../../components/gestion/zreports-management/zreports-management.component';
-import { ManagementEntityKey } from '../../../components/gestion/entity-tabs/entity-tabs.component';
+import { ManagementEntityKey } from '../../../core/enums/management-entity-key.enum';
 import { TpvService } from '../../../features/cash/services/tpv.service';
 
 interface ManagementRestaurant {
@@ -137,13 +137,13 @@ export class GestionPage {
   public readonly managementData: Record<number, ManagementDataRow> = {};
 
   public readonly managementEntities: Array<{ key: ManagementEntityKey; label: string }> = [
-    { key: 'restaurant', label: 'Restaurante' },
-    { key: 'users', label: 'Usuarios' },
-    { key: 'families', label: 'Familias' },
-    { key: 'products', label: 'Productos' },
-    { key: 'zones', label: 'Zonas y Mesas' },
-    { key: 'taxes', label: 'Impuestos' },
-    { key: 'zreports', label: 'Z Reports' },
+    { key: ManagementEntityKey.RESTAURANT, label: 'Restaurante' },
+    { key: ManagementEntityKey.USERS, label: 'Usuarios' },
+    { key: ManagementEntityKey.FAMILIES, label: 'Familias' },
+    { key: ManagementEntityKey.PRODUCTS, label: 'Productos' },
+    { key: ManagementEntityKey.ZONES, label: 'Zonas y Mesas' },
+    { key: ManagementEntityKey.TAXES, label: 'Impuestos' },
+    { key: ManagementEntityKey.ZREPORTS, label: 'Z Reports' },
   ];
 
   public managementState: {
@@ -152,7 +152,7 @@ export class GestionPage {
     selectedIndex: Record<'users' | 'families' | 'products' | 'zones' | 'tables' | 'taxes' | 'zreports', number>;
   } = {
     restaurantId: 0,
-    entity: 'restaurant',
+    entity: ManagementEntityKey.RESTAURANT,
     selectedIndex: {
       users: 0,
       families: 0,
@@ -484,43 +484,47 @@ export class GestionPage {
 
   public selectManagementItem(entityKey: keyof ManagementDataRow, index: number): void {
     this.managementState.selectedIndex[entityKey] = index;
-    if (entityKey === 'zones') {
-      this.managementState.selectedIndex.tables = 0;
-      this.zonesFacade.selectZone(index);
-    }
-    if (entityKey === 'families') {
-      this.familiesFacade.select(index);
-    }
-    if (entityKey === 'taxes') {
-      this.taxesFacade.select(index);
-    }
-    if (entityKey === 'products') {
-      this.productsFacade.select(index);
-    }
-    if (entityKey === 'users') {
-      this.usersFacade.select(index);
+    switch (entityKey) {
+      case ManagementEntityKey.ZONES:
+        this.managementState.selectedIndex.tables = 0;
+        this.zonesFacade.selectZone(index);
+        break;
+      case ManagementEntityKey.FAMILIES:
+        this.familiesFacade.select(index);
+        break;
+      case ManagementEntityKey.TAXES:
+        this.taxesFacade.select(index);
+        break;
+      case ManagementEntityKey.PRODUCTS:
+        this.productsFacade.select(index);
+        break;
+      case ManagementEntityKey.USERS:
+        this.usersFacade.select(index);
+        break;
     }
     this.syncForms();
   }
 
   public startCreateManagementItem(entityKey: keyof ManagementDataRow): void {
     this.managementState.selectedIndex[entityKey] = -1;
-    if (entityKey === 'zones') {
-      this.managementState.selectedIndex.tables = -1;
-      this.tableForm = { name: '' };
-      this.zonesFacade.startCreateZone();
-    }
-    if (entityKey === 'families') {
-      this.familiesFacade.startCreate();
-    }
-    if (entityKey === 'taxes') {
-      this.taxesFacade.startCreate();
-    }
-    if (entityKey === 'products') {
-      this.productsFacade.startCreate();
-    }
-    if (entityKey === 'users') {
-      this.usersFacade.startCreate();
+    switch (entityKey) {
+      case ManagementEntityKey.ZONES:
+        this.managementState.selectedIndex.tables = -1;
+        this.tableForm = { name: '' };
+        this.zonesFacade.startCreateZone();
+        break;
+      case ManagementEntityKey.FAMILIES:
+        this.familiesFacade.startCreate();
+        break;
+      case ManagementEntityKey.TAXES:
+        this.taxesFacade.startCreate();
+        break;
+      case ManagementEntityKey.PRODUCTS:
+        this.productsFacade.startCreate();
+        break;
+      case ManagementEntityKey.USERS:
+        this.usersFacade.startCreate();
+        break;
     }
     this.syncForms();
   }
@@ -534,150 +538,147 @@ export class GestionPage {
       return;
     }
 
-    if (entityKey === 'families') {
-      const family = rows[idx] as FamilyRow;
-      if (!family.uuid) {
-        this.toastService.presentError('No se puede eliminar: familia sin identificador.');
-        return;
-      }
-
-      const familyName = family.name || 'Sin nombre';
-      if (!window.confirm(`¿Eliminar familia "${familyName}"? Esta acción no se puede deshacer.`)) {
-        return;
-      }
-
-      this.familiesFacade.delete(family.uuid).then((result) => {
-        if (result.ok) {
-          this.syncFamiliesMirror();
-          this.updateRestaurantKpis(this.managementState.restaurantId);
-          this.syncForms();
-          this.apiErrorMessage = null;
-          this.toastService.presentSuccess('Familia eliminada.');
-        } else {
-          this.apiErrorMessage = result.error || 'No se pudo eliminar la familia.';
+    switch (entityKey) {
+      case ManagementEntityKey.FAMILIES: {
+        const family = rows[idx] as FamilyRow;
+        if (!family.uuid) {
+          this.toastService.presentError('No se puede eliminar: familia sin identificador.');
+          return;
         }
-      });
 
-      return;
-    }
-
-    if (entityKey === 'users') {
-      const user = rows[idx] as UserRow;
-      if (!user.uuid || !this.selectedRestaurant?.uuid) {
-        this.toastService.presentError('No se puede eliminar: usuario sin identificador.');
-        return;
-      }
-
-      const userName = user.name || user.email || 'Sin nombre';
-      if (!window.confirm(`¿Eliminar usuario "${userName}"? Esta acción no se puede deshacer.`)) {
-        return;
-      }
-
-      const restaurant = this.selectedRestaurant;
-      if (!restaurant?.uuid) {
-        this.toastService.presentError('No hay restaurante seleccionado.');
-        return;
-      }
-
-      this.usersFacade.delete(restaurant.uuid, user.uuid).then((result) => {
-        if (result.ok) {
-          this.syncUsersMirror(restaurant.uuid!);
-          this.updateRestaurantKpis(this.managementState.restaurantId);
-          this.syncForms();
-          this.apiErrorMessage = null;
-          this.toastService.presentSuccess('Usuario eliminado.');
-        } else {
-          this.apiErrorMessage = result.error || 'No se pudo eliminar el usuario.';
+        const familyName = family.name || 'Sin nombre';
+        if (!window.confirm(`¿Eliminar familia "${familyName}"? Esta acción no se puede deshacer.`)) {
+          return;
         }
-      });
 
-      return;
-    }
-
-    if (entityKey === 'zones') {
-      const selectedZone = rows[idx] as ZoneRow;
-      if (selectedZone.tables.length > 0) {
-        this.toastService.presentError('No puedes eliminar una zona con mesas. Elimina o reasigna primero sus mesas.');
-        return;
+        this.familiesFacade.delete(family.uuid).then((result) => {
+          if (result.ok) {
+            this.syncFamiliesMirror();
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            this.toastService.presentSuccess('Familia eliminada.');
+          } else {
+            this.apiErrorMessage = result.error || 'No se pudo eliminar la familia.';
+          }
+        });
+        break;
       }
 
-      if (!selectedZone.uuid) {
-        this.toastService.presentError('No se puede eliminar: zona sin identificador.');
-        return;
-      }
-
-      const zoneName = selectedZone.name || 'Sin nombre';
-      if (!window.confirm(`¿Eliminar zona "${zoneName}"? Esta acción no se puede deshacer.`)) {
-        return;
-      }
-
-      this.zonesFacade.deleteZone(selectedZone.uuid).then((result) => {
-        if (result.ok) {
-          this.syncZonesMirror();
-          this.updateRestaurantKpis(this.managementState.restaurantId);
-          this.syncForms();
-          this.apiErrorMessage = null;
-          this.toastService.presentSuccess('Zona eliminada.');
-        } else {
-          this.apiErrorMessage = result.error || 'No se pudo eliminar la zona.';
+      case ManagementEntityKey.USERS: {
+        const user = rows[idx] as UserRow;
+        if (!user.uuid || !this.selectedRestaurant?.uuid) {
+          this.toastService.presentError('No se puede eliminar: usuario sin identificador.');
+          return;
         }
-      });
 
-      return;
-    }
-
-    if (entityKey === 'taxes') {
-      const tax = rows[idx] as TaxRow;
-      if (!tax.uuid) {
-        this.toastService.presentError('No se puede eliminar: impuesto sin identificador.');
-        return;
-      }
-
-      const taxName = tax.name || 'Sin nombre';
-      if (!window.confirm(`¿Eliminar impuesto "${taxName}"? Esta acción no se puede deshacer.`)) {
-        return;
-      }
-
-      this.taxesFacade.delete(tax.uuid).then((result) => {
-        if (result.ok) {
-          this.syncTaxesMirror();
-          this.updateRestaurantKpis(this.managementState.restaurantId);
-          this.syncForms();
-          this.apiErrorMessage = null;
-          this.toastService.presentSuccess('Impuesto eliminado.');
-        } else {
-          this.apiErrorMessage = result.error || 'No se pudo eliminar el impuesto.';
+        const userName = user.name || user.email || 'Sin nombre';
+        if (!window.confirm(`¿Eliminar usuario "${userName}"? Esta acción no se puede deshacer.`)) {
+          return;
         }
-      });
 
-      return;
-    }
-
-    if (entityKey === 'products') {
-      const product = rows[idx] as ProductRow;
-      if (!product.uuid) {
-        this.toastService.presentError('No se puede eliminar: producto sin identificador.');
-        return;
-      }
-
-      const productName = product.name || 'Sin nombre';
-      if (!window.confirm(`¿Eliminar producto "${productName}"? Esta acción no se puede deshacer.`)) {
-        return;
-      }
-
-      this.productsFacade.delete(product.uuid).then((result) => {
-        if (result.ok) {
-          this.syncProductsMirror();
-          this.updateRestaurantKpis(this.managementState.restaurantId);
-          this.syncForms();
-          this.apiErrorMessage = null;
-          this.toastService.presentSuccess('Producto eliminado.');
-        } else {
-          this.apiErrorMessage = result.error || 'No se pudo eliminar el producto.';
+        const restaurant = this.selectedRestaurant;
+        if (!restaurant?.uuid) {
+          this.toastService.presentError('No hay restaurante seleccionado.');
+          return;
         }
-      });
 
-      return;
+        this.usersFacade.delete(restaurant.uuid, user.uuid).then((result) => {
+          if (result.ok) {
+            this.syncUsersMirror(restaurant.uuid!);
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            this.toastService.presentSuccess('Usuario eliminado.');
+          } else {
+            this.apiErrorMessage = result.error || 'No se pudo eliminar el usuario.';
+          }
+        });
+        break;
+      }
+
+      case ManagementEntityKey.ZONES: {
+        const selectedZone = rows[idx] as ZoneRow;
+        if (selectedZone.tables.length > 0) {
+          this.toastService.presentError('No puedes eliminar una zona con mesas. Elimina o reasigna primero sus mesas.');
+          return;
+        }
+
+        if (!selectedZone.uuid) {
+          this.toastService.presentError('No se puede eliminar: zona sin identificador.');
+          return;
+        }
+
+        const zoneName = selectedZone.name || 'Sin nombre';
+        if (!window.confirm(`¿Eliminar zona "${zoneName}"? Esta acción no se puede deshacer.`)) {
+          return;
+        }
+
+        this.zonesFacade.deleteZone(selectedZone.uuid).then((result) => {
+          if (result.ok) {
+            this.syncZonesMirror();
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            this.toastService.presentSuccess('Zona eliminada.');
+          } else {
+            this.apiErrorMessage = result.error || 'No se pudo eliminar la zona.';
+          }
+        });
+        break;
+      }
+
+      case ManagementEntityKey.TAXES: {
+        const tax = rows[idx] as TaxRow;
+        if (!tax.uuid) {
+          this.toastService.presentError('No se puede eliminar: impuesto sin identificador.');
+          return;
+        }
+
+        const taxName = tax.name || 'Sin nombre';
+        if (!window.confirm(`¿Eliminar impuesto "${taxName}"? Esta acción no se puede deshacer.`)) {
+          return;
+        }
+
+        this.taxesFacade.delete(tax.uuid).then((result) => {
+          if (result.ok) {
+            this.syncTaxesMirror();
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            this.toastService.presentSuccess('Impuesto eliminado.');
+          } else {
+            this.apiErrorMessage = result.error || 'No se pudo eliminar el impuesto.';
+          }
+        });
+        break;
+      }
+
+      case ManagementEntityKey.PRODUCTS: {
+        const product = rows[idx] as ProductRow;
+        if (!product.uuid) {
+          this.toastService.presentError('No se puede eliminar: producto sin identificador.');
+          return;
+        }
+
+        const productName = product.name || 'Sin nombre';
+        if (!window.confirm(`¿Eliminar producto "${productName}"? Esta acción no se puede deshacer.`)) {
+          return;
+        }
+
+        this.productsFacade.delete(product.uuid).then((result) => {
+          if (result.ok) {
+            this.syncProductsMirror();
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            this.toastService.presentSuccess('Producto eliminado.');
+          } else {
+            this.apiErrorMessage = result.error || 'No se pudo eliminar el producto.';
+          }
+        });
+        break;
+      }
     }
   }
 
@@ -732,188 +733,185 @@ export class GestionPage {
     const rows = this.selectedData[entityKey];
     const idx = this.managementState.selectedIndex[entityKey];
 
-    if (entityKey === 'users') {
-      const name = this.userForm.name.trim();
-      const email = this.userForm.email.trim();
-      const role = this.normalizeRole(this.userForm.role);
-      const password = this.userForm.password.trim();
-      const pin = this.userForm.pin.trim();
+    switch (entityKey) {
+      case ManagementEntityKey.USERS: {
+        const name = this.userForm.name.trim();
+        const email = this.userForm.email.trim();
+        const role = this.normalizeRole(this.userForm.role);
+        const password = this.userForm.password.trim();
+        const pin = this.userForm.pin.trim();
 
-      if (!name || !email || !role) {
-        this.toastService.presentError('Completa los campos requeridos (nombre, email, rol).');
-        return;
-      }
-
-      if (pin !== '' && !/^\d{4}$/.test(pin)) {
-        this.toastService.presentError('El PIN debe tener 4 digitos.');
-        return;
-      }
-
-      const selectedUser = idx >= 0 && idx < rows.length ? (rows[idx] as UserRow) : null;
-
-      if (!selectedUser && !password) {
-        this.toastService.presentError('Contraseña requerida para nuevos usuarios.');
-        return;
-      }
-
-      if (!this.selectedRestaurant?.uuid) {
-        this.toastService.presentError('No se puede guardar: restaurante sin identificador.');
-        return;
-      }
-
-      const restaurantUuid = this.selectedRestaurant.uuid;
-
-      if (selectedUser?.uuid) {
-        this.usersFacade.select(idx);
-      } else {
-        this.usersFacade.startCreate();
-      }
-
-      this.usersFacade.setForm({ name, email, role, pin, password });
-      this.usersFacade.save(restaurantUuid).then((result) => {
-        if (result.ok) {
-          this.syncUsersMirror(restaurantUuid);
-          this.updateRestaurantKpis(this.managementState.restaurantId);
-          this.syncForms();
-          this.apiErrorMessage = null;
-          this.toastService.presentSuccess(result.message || 'Usuario guardado.');
-        } else {
-          this.apiErrorMessage = result.error || 'No se pudo guardar el usuario.';
+        if (!name || !email || !role) {
+          this.toastService.presentError('Completa los campos requeridos (nombre, email, rol).');
+          return;
         }
-      });
 
-      return;
-    }
-
-    if (entityKey === 'families') {
-      const name = this.familyForm.name.trim();
-      if (!name) {
-        this.toastService.presentError('Indica el nombre de la familia.');
-        return;
-      }
-
-      const selectedFamily = idx >= 0 && idx < rows.length ? (rows[idx] as FamilyRow) : null;
-
-      if (selectedFamily?.uuid) {
-        this.familiesFacade.select(idx);
-      } else {
-        this.familiesFacade.startCreate();
-      }
-
-      this.familiesFacade.setForm({ name, active: this.familyForm.active });
-      this.familiesFacade.save().then((result) => {
-        if (result.ok) {
-          this.syncFamiliesMirror();
-          this.updateRestaurantKpis(this.managementState.restaurantId);
-          this.syncForms();
-          this.apiErrorMessage = null;
-          this.toastService.presentSuccess(result.message || 'Familia guardada.');
-        } else {
-          this.apiErrorMessage = result.error || 'No se pudo guardar la familia.';
+        if (pin !== '' && !/^\d{4}$/.test(pin)) {
+          this.toastService.presentError('El PIN debe tener 4 digitos.');
+          return;
         }
-      });
 
-      return;
-    }
+        const selectedUser = idx >= 0 && idx < rows.length ? (rows[idx] as UserRow) : null;
 
-    if (entityKey === 'products') {
-      const name = this.productForm.name.trim();
-      const familyId = this.productForm.family_id;
-      const taxId = this.productForm.tax_id;
-      const price = this.euroToCents(this.productForm.price);
-      const stock = Number(this.productForm.stock);
-      const active = this.productForm.active;
-
-      if (!name || !familyId || !taxId || price <= 0 || !Number.isFinite(stock) || stock < 0) {
-        this.toastService.presentError('Revisa los datos del producto.');
-        return;
-      }
-
-      const selectedProduct = idx >= 0 && idx < rows.length ? (rows[idx] as ProductRow) : null;
-
-      if (selectedProduct?.uuid) {
-        this.productsFacade.select(idx);
-      } else {
-        this.productsFacade.startCreate();
-      }
-
-      this.productsFacade.setForm({ name, family_id: familyId, tax_id: taxId, price, stock, active });
-      this.productsFacade.save().then((result) => {
-        if (result.ok) {
-          this.syncProductsMirror();
-          this.updateRestaurantKpis(this.managementState.restaurantId);
-          this.syncForms();
-          this.apiErrorMessage = null;
-          this.toastService.presentSuccess(result.message || 'Producto guardado.');
-        } else {
-          this.apiErrorMessage = result.error || 'No se pudo guardar el producto.';
+        if (!selectedUser && !password) {
+          this.toastService.presentError('Contraseña requerida para nuevos usuarios.');
+          return;
         }
-      });
 
-      return;
-    }
-
-    if (entityKey === 'zones') {
-      const name = this.zoneForm.name.trim();
-      if (!name) {
-        this.toastService.presentError('Revisa los datos de la zona.');
-        return;
-      }
-
-      const selectedZone = idx >= 0 && idx < rows.length ? (rows[idx] as ZoneRow) : null;
-
-      if (selectedZone?.uuid) {
-        this.zonesFacade.selectZone(idx);
-      } else {
-        this.zonesFacade.startCreateZone();
-      }
-
-      this.zonesFacade.setZoneForm({ name });
-      this.zonesFacade.saveZone().then((result) => {
-        if (result.ok) {
-          this.syncZonesMirror();
-          this.updateRestaurantKpis(this.managementState.restaurantId);
-          this.syncForms();
-          this.apiErrorMessage = null;
-          this.toastService.presentSuccess(result.message || 'Zona guardada.');
-        } else {
-          this.apiErrorMessage = result.error || 'No se pudo guardar la zona.';
+        if (!this.selectedRestaurant?.uuid) {
+          this.toastService.presentError('No se puede guardar: restaurante sin identificador.');
+          return;
         }
-      });
 
-      return;
-    }
+        const restaurantUuid = this.selectedRestaurant.uuid;
 
-    if (entityKey === 'taxes') {
-      const name = this.taxForm.name.trim();
-      const percentage = Number(this.taxForm.percentage);
-      if (!name || !Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
-        this.toastService.presentError('Revisa los datos del impuesto.');
-        return;
-      }
-
-      const selectedTax = idx >= 0 && idx < rows.length ? (rows[idx] as TaxRow) : null;
-
-      if (selectedTax?.uuid) {
-        this.taxesFacade.select(idx);
-      } else {
-        this.taxesFacade.startCreate();
-      }
-
-      this.taxesFacade.setForm({ name, percentage });
-      this.taxesFacade.save().then((result) => {
-        if (result.ok) {
-          this.syncTaxesMirror();
-          this.updateRestaurantKpis(this.managementState.restaurantId);
-          this.syncForms();
-          this.apiErrorMessage = null;
-          this.toastService.presentSuccess(result.message || 'Impuesto guardado.');
+        if (selectedUser?.uuid) {
+          this.usersFacade.select(idx);
         } else {
-          this.apiErrorMessage = result.error || 'No se pudo guardar el impuesto.';
+          this.usersFacade.startCreate();
         }
-      });
 
-      return;
+        this.usersFacade.setForm({ name, email, role, pin, password });
+        this.usersFacade.save(restaurantUuid).then((result) => {
+          if (result.ok) {
+            this.syncUsersMirror(restaurantUuid);
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            this.toastService.presentSuccess(result.message || 'Usuario guardado.');
+          } else {
+            this.apiErrorMessage = result.error || 'No se pudo guardar el usuario.';
+          }
+        });
+        break;
+      }
+
+      case ManagementEntityKey.FAMILIES: {
+        const name = this.familyForm.name.trim();
+        if (!name) {
+          this.toastService.presentError('Indica el nombre de la familia.');
+          return;
+        }
+
+        const selectedFamily = idx >= 0 && idx < rows.length ? (rows[idx] as FamilyRow) : null;
+
+        if (selectedFamily?.uuid) {
+          this.familiesFacade.select(idx);
+        } else {
+          this.familiesFacade.startCreate();
+        }
+
+        this.familiesFacade.setForm({ name, active: this.familyForm.active });
+        this.familiesFacade.save().then((result) => {
+          if (result.ok) {
+            this.syncFamiliesMirror();
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            this.toastService.presentSuccess(result.message || 'Familia guardada.');
+          } else {
+            this.apiErrorMessage = result.error || 'No se pudo guardar la familia.';
+          }
+        });
+        break;
+      }
+
+      case ManagementEntityKey.PRODUCTS: {
+        const name = this.productForm.name.trim();
+        const familyId = this.productForm.family_id;
+        const taxId = this.productForm.tax_id;
+        const price = this.euroToCents(this.productForm.price);
+        const stock = Number(this.productForm.stock);
+        const active = this.productForm.active;
+
+        if (!name || !familyId || !taxId || price <= 0 || !Number.isFinite(stock) || stock < 0) {
+          this.toastService.presentError('Revisa los datos del producto.');
+          return;
+        }
+
+        const selectedProduct = idx >= 0 && idx < rows.length ? (rows[idx] as ProductRow) : null;
+
+        if (selectedProduct?.uuid) {
+          this.productsFacade.select(idx);
+        } else {
+          this.productsFacade.startCreate();
+        }
+
+        this.productsFacade.setForm({ name, family_id: familyId, tax_id: taxId, price, stock, active });
+        this.productsFacade.save().then((result) => {
+          if (result.ok) {
+            this.syncProductsMirror();
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            this.toastService.presentSuccess(result.message || 'Producto guardado.');
+          } else {
+            this.apiErrorMessage = result.error || 'No se pudo guardar el producto.';
+          }
+        });
+        break;
+      }
+
+      case ManagementEntityKey.ZONES: {
+        const name = this.zoneForm.name.trim();
+        if (!name) {
+          this.toastService.presentError('Revisa los datos de la zona.');
+          return;
+        }
+
+        const selectedZone = idx >= 0 && idx < rows.length ? (rows[idx] as ZoneRow) : null;
+
+        if (selectedZone?.uuid) {
+          this.zonesFacade.selectZone(idx);
+        } else {
+          this.zonesFacade.startCreateZone();
+        }
+
+        this.zonesFacade.setZoneForm({ name });
+        this.zonesFacade.saveZone().then((result) => {
+          if (result.ok) {
+            this.syncZonesMirror();
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            this.toastService.presentSuccess(result.message || 'Zona guardada.');
+          } else {
+            this.apiErrorMessage = result.error || 'No se pudo guardar la zona.';
+          }
+        });
+        break;
+      }
+
+      case ManagementEntityKey.TAXES: {
+        const name = this.taxForm.name.trim();
+        const percentage = Number(this.taxForm.percentage);
+        if (!name || !Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
+          this.toastService.presentError('Revisa los datos del impuesto.');
+          return;
+        }
+
+        const selectedTax = idx >= 0 && idx < rows.length ? (rows[idx] as TaxRow) : null;
+
+        if (selectedTax?.uuid) {
+          this.taxesFacade.select(idx);
+        } else {
+          this.taxesFacade.startCreate();
+        }
+
+        this.taxesFacade.setForm({ name, percentage });
+        this.taxesFacade.save().then((result) => {
+          if (result.ok) {
+            this.syncTaxesMirror();
+            this.updateRestaurantKpis(this.managementState.restaurantId);
+            this.syncForms();
+            this.apiErrorMessage = null;
+            this.toastService.presentSuccess(result.message || 'Impuesto guardado.');
+          } else {
+            this.apiErrorMessage = result.error || 'No se pudo guardar el impuesto.';
+          }
+        });
+        break;
+      }
     }
   }
 
@@ -1081,7 +1079,7 @@ export class GestionPage {
     };
 
     const selectedUser = this.selectedItem('users', this.selectedData.users);
-    if (this.managementState.entity === 'users') {
+    if (this.managementState.entity === ManagementEntityKey.USERS) {
       const facadeForm = this.usersFacade.formData();
       this.userForm = {
         name: facadeForm.name,
@@ -1101,7 +1099,7 @@ export class GestionPage {
     }
 
     const selectedFamily = this.selectedItem('families', this.selectedData.families);
-    if (this.managementState.entity === 'families') {
+    if (this.managementState.entity === ManagementEntityKey.FAMILIES) {
       const facadeForm = this.familiesFacade.formData();
       this.familyForm = {
         name: facadeForm.name,
@@ -1115,7 +1113,7 @@ export class GestionPage {
     }
 
     const selectedProduct = this.selectedItem('products', this.selectedData.products);
-    if (this.managementState.entity === 'products') {
+    if (this.managementState.entity === ManagementEntityKey.PRODUCTS) {
       const facadeForm = this.productsFacade.formData();
       this.productForm = {
         name: facadeForm.name,
@@ -1137,7 +1135,7 @@ export class GestionPage {
     }
 
     const selectedZone = this.selectedItem('zones', this.selectedData.zones);
-    if (this.managementState.entity === 'zones') {
+    if (this.managementState.entity === ManagementEntityKey.ZONES) {
       const facadeForm = this.zonesFacade.zoneFormData();
       this.zoneForm = {
         name: facadeForm.name,
@@ -1148,7 +1146,7 @@ export class GestionPage {
       };
     }
 
-    if (this.managementState.entity === 'zones') {
+    if (this.managementState.entity === ManagementEntityKey.ZONES) {
       const facadeForm = this.zonesFacade.tableFormData();
       this.tableForm = {
         name: facadeForm.name,
@@ -1160,7 +1158,7 @@ export class GestionPage {
     }
 
     const selectedTax = this.selectedItem('taxes', this.selectedData.taxes);
-    if (this.managementState.entity === 'taxes') {
+    if (this.managementState.entity === ManagementEntityKey.TAXES) {
       const facadeForm = this.taxesFacade.formData();
       this.taxForm = {
         name: facadeForm.name,

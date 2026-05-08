@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
+import { AuthActionType } from '../enums/auth-action-type.enum';
+
+export { AuthActionType };
 
 export interface AuthContext {
   userId: string;
@@ -9,8 +12,6 @@ export interface AuthContext {
   authenticatedAt: number;
   lastActivityAt: number;
 }
-
-export type AuthActionType = 'normal' | 'critical';
 
 export const DEFAULT_SESSION_TIMEOUT_MIN = 5;
 
@@ -29,12 +30,12 @@ export class PinAuthService {
     this.sessionTimeoutMs = minutes * 60 * 1000;
   }
 
-  public requiresPin(actionType: AuthActionType = 'normal', requiredRole?: string): boolean {
+  public requiresPin(actionType: AuthActionType = AuthActionType.NORMAL, requiredRole?: string): boolean {
     const context = this.authContextSubject.value;
 
     if (!context) return true;
 
-    if (actionType === 'critical') {
+    if (actionType === AuthActionType.CRITICAL) {
       if (requiredRole && !this.hasRequiredRole(context.userRole, requiredRole)) {
         return true;
       }

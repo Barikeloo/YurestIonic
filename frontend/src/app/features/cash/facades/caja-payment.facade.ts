@@ -3,6 +3,7 @@ import { Observable, Subject, takeUntil } from 'rxjs';
 import { ChargeSessionService, ChargeSession, RecordPaymentRequest, RecordPaymentResponse, CreateChargeSessionRequest, UpdateDinersRequest, UpdateDinersResponse, CancelChargeSessionRequest, CancelChargeSessionResponse } from '../services/charge-session.service';
 import { TpvService, TpvOrder, TpvOrderLine } from '../services/tpv.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { PaymentState } from '../../../core/enums/payment-state.enum';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,7 @@ export class CajaPaymentFacade {
   private readonly destroy$ = new Subject<void>();
 
   // Signals for payment state
-  private readonly state = signal<'idle' | 'loading' | 'processing' | 'success' | 'error'>('idle');
+  private readonly state = signal<PaymentState>(PaymentState.IDLE);
   private readonly currentChargeSession = signal<{ id: string; amountPerDiner: number } | null>(null);
   private readonly currentDinerNumber = signal<number | null>(null);
   private readonly loadedChargeSession = signal<ChargeSession | null>(null);
@@ -23,9 +24,9 @@ export class CajaPaymentFacade {
   private readonly error = signal<string | null>(null);
 
   // Readonly signals for external consumption
-  public readonly loading = computed(() => this.state() === 'loading');
-  public readonly processing = computed(() => this.state() === 'processing');
-  public readonly success = computed(() => this.state() === 'success');
+  public readonly loading = computed(() => this.state() === PaymentState.LOADING);
+  public readonly processing = computed(() => this.state() === PaymentState.PROCESSING);
+  public readonly success = computed(() => this.state() === PaymentState.SUCCESS);
   public readonly paymentState = computed(() => this.state());
   public readonly chargeSession = computed(() => this.currentChargeSession());
   public readonly dinerNumber = computed(() => this.currentDinerNumber());
@@ -51,7 +52,7 @@ export class CajaPaymentFacade {
   }
 
   // State setters
-  public setState(value: 'idle' | 'loading' | 'processing' | 'success' | 'error'): void {
+  public setState(value: PaymentState): void {
     this.state.set(value);
   }
 
@@ -77,7 +78,7 @@ export class CajaPaymentFacade {
 
   // Payment methods
   public createChargeSession(request: CreateChargeSessionRequest): Observable<ChargeSession> {
-    this.setState('loading');
+    this.setState(PaymentState.LOADING);
     return this.chargeSessionService.createChargeSession(request);
   }
 
@@ -86,7 +87,7 @@ export class CajaPaymentFacade {
   }
 
   public recordPayment(sessionId: string, request: RecordPaymentRequest): Observable<RecordPaymentResponse> {
-    this.setState('processing');
+    this.setState(PaymentState.PROCESSING);
     this.setIsProcessingPayment(true);
     return this.chargeSessionService.recordPayment(sessionId, request).pipe(
       takeUntil(this.destroy$)
@@ -123,7 +124,7 @@ export class CajaPaymentFacade {
   }
 
   public reset(): void {
-    this.setState('idle');
+    this.setState(PaymentState.IDLE);
     this.setCurrentChargeSession(null);
     this.setCurrentDinerNumber(null);
     this.setLoadedChargeSession(null);

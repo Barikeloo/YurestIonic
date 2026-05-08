@@ -3,5 +3,7 @@ export enum PaymentMethod {
   CARD = 'card',
   BIZUM = 'bizum',
   MIXED = 'mixed',
-  INVITATION = 'invitation'
+  INVITATION = 'invitation',
+  VOUCHER = 'voucher',
+  OTHER = 'other',
 }

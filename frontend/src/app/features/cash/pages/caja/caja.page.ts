@@ -26,6 +26,10 @@ import { SegmentComponent } from '../../../../shared/components/segment/segment.
 import { PaymentSuccessComponent } from '../../ui/payment-success/payment-success.component';
 import { DinersStatusComponent } from '../../../../shared/components/diners-status/diners-status.component';
 import { CajaState } from '../../../../core/enums/caja-state.enum';
+import { PaymentMethod } from '../../../../core/enums/payment-method.enum';
+import { OrderStatus } from '../../../../core/enums/order-status.enum';
+import { CashMovementType } from '../../../../core/enums/cash-movement-type.enum';
+import { CashMovementReason } from '../../../../core/enums/cash-movement-reason.enum';
 
 interface LastClosedData {
   id: string;
@@ -42,30 +46,10 @@ interface LastClosedData {
   diners: number;
 }
 
-interface OrphanSessionData {
-  id: string;
-  opened_by_user_id: string;
-  opened_at: string;
-  device_id: string;
-}
-
-interface CashSessionSummary {
-  initial_amount_cents: number;
-  total_sales: number;
-  total_cash_payments: number;
-  total_card_payments: number;
-  total_bizum_payments: number;
-  total_other_payments: number;
-  total_in_movements: number;
-  total_out_movements: number;
-  expected_amount: number;
-  movements_count: number;
-  payments_count: number;
-}
 
 interface CashMovementItem {
   uuid: string;
-  type: 'in' | 'out';
+  type: CashMovementType;
   reason_code: string;
   amount_cents: number;
   description: string | null;
@@ -81,13 +65,6 @@ interface PendingTableRow {
   total: number;
 }
 
-interface MethodBreakdownRow {
-  key: string;
-  label: string;
-  color: string;
-  amount_cents: number;
-  percentage: number;
-}
 
 @Component({
   selector: 'app-caja',
@@ -374,7 +351,7 @@ export class CajaPage implements OnInit, OnDestroy {
     }).pipe(takeUntil(this.destroy$)).subscribe(({ orders, tables }) => {
       const tableNameById = new Map(tables.map((t) => [t.id, t.name] as const));
       this.setPendingTables(orders
-        .filter((o) => o.status === 'open' || o.status === 'to-charge')
+        .filter((o) => o.status === OrderStatus.OPEN || o.status === OrderStatus.TO_CHARGE)
         .map((o) => ({
           order_id: o.id,
           table_name: tableNameById.get(o.table_id) ?? 'Mesa',
@@ -398,7 +375,7 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   public onOpenModal(): void {
-    if (this.pinAuthService.requiresPin('critical')) {
+    if (this.pinAuthService.requiresPin(AuthActionType.CRITICAL)) {
       this.showPinAuthModal = true;
     } else {
       this.showOpenModal = true;
@@ -444,8 +421,8 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   public onRegisterMovement(data: {
-    type: string;
-    reasonCode: string;
+    type: CashMovementType;
+    reasonCode: CashMovementReason;
     amountCents: number;
     description?: string;
   }): void {
@@ -678,7 +655,7 @@ export class CajaPage implements OnInit, OnDestroy {
   public onCobrarMesa(mesa: PendingTable): void {
     this.pendingTableToCharge = mesa;
 
-    if (this.pinAuthService.requiresPin('normal')) {
+    if (this.pinAuthService.requiresPin(AuthActionType.NORMAL)) {
       this.showPinAuthModalForCobrarMesa = true;
     } else {
       this.loadOrderForCobrarMesa();
@@ -1015,10 +992,10 @@ export class CajaPage implements OnInit, OnDestroy {
       : null;
 
     const paymentMethod = payments[0].method;
-    const mappedMethod: 'cash' | 'card' | 'bizum' | 'voucher' | 'invitation' | 'other' =
-      (['cash', 'card', 'bizum', 'voucher', 'invitation'] as const).includes(paymentMethod as any)
-        ? (paymentMethod as 'cash' | 'card' | 'bizum' | 'voucher' | 'invitation')
-        : 'other';
+    const directMethods = [PaymentMethod.CASH, PaymentMethod.CARD, PaymentMethod.BIZUM, PaymentMethod.VOUCHER, PaymentMethod.INVITATION];
+    const mappedMethod: PaymentMethod = directMethods.includes(paymentMethod as PaymentMethod)
+      ? (paymentMethod as PaymentMethod)
+      : PaymentMethod.OTHER;
 
     const sale$: Observable<RecordPaymentResponse | TpvSale> = activeSessionId
       ? this.paymentFacade.recordPayment(activeSessionId, {

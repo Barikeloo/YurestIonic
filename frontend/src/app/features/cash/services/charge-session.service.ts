@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { PaymentMethod } from '../../../core/enums/payment-method.enum';
 
 export interface ChargeSession {
   id: string;
@@ -25,7 +26,7 @@ export interface CreateChargeSessionRequest {
 }
 
 export interface RecordPaymentRequest {
-  payment_method: 'cash' | 'card' | 'bizum' | 'voucher' | 'invitation' | 'other';
+  payment_method: PaymentMethod;
   opened_by_user_id: string;
   closed_by_user_id: string;
   device_id: string;

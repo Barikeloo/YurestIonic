@@ -2,8 +2,10 @@ import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { TpvOrder, TpvOrderLine, TpvService, TpvTableItem } from '../../cash/services/tpv.service';
+import { OrderStatus } from '../../../core/enums/order-status.enum';
 
-export type OrderTabId = 'all' | 'open' | 'to-charge' | 'invoiced' | 'cancelled';
+export { OrderStatus };
+export type OrderTabId = 'all' | OrderStatus;
 
 export interface OrdersFilters {
   status: string;
@@ -77,23 +79,23 @@ export class PedidosFacade {
   });
 
   public readonly kpiOpen: Signal<number> = computed(
-    () => this._orders().filter((order) => order.status === 'open').length,
+    () => this._orders().filter((order) => order.status === OrderStatus.OPEN).length,
   );
 
   public readonly kpiInvoiced: Signal<number> = computed(
-    () => this._orders().filter((order) => order.status === 'invoiced').length,
+    () => this._orders().filter((order) => order.status === OrderStatus.INVOICED).length,
   );
 
   public readonly kpiCancelled: Signal<number> = computed(
-    () => this._orders().filter((order) => order.status === 'cancelled').length,
+    () => this._orders().filter((order) => order.status === OrderStatus.CANCELLED).length,
   );
 
   public readonly kpiToCharge: Signal<number> = computed(
-    () => this._orders().filter((order) => order.status === 'to-charge').length,
+    () => this._orders().filter((order) => order.status === OrderStatus.TO_CHARGE).length,
   );
 
   public readonly kpiTicketMedium: Signal<number> = computed(() => {
-    const closed = this._orders().filter((order) => order.status === 'invoiced');
+    const closed = this._orders().filter((order) => order.status === OrderStatus.INVOICED);
 
     if (closed.length === 0) {
       return 0;
@@ -146,7 +148,7 @@ export class PedidosFacade {
 
         if (order) {
           if (this._activeTab() !== 'all' && this._activeTab() !== order.status) {
-            this._activeTab.set(order.status as OrderTabId);
+            this._activeTab.set(order.status);
           }
 
           await this.selectOrder(order);

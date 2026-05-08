@@ -1,7 +1,8 @@
 
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ManagementEntityKey } from '../../../core/enums/management-entity-key.enum';
 
-export type ManagementEntityKey = 'restaurant' | 'users' | 'families' | 'products' | 'zones' | 'taxes' | 'zreports';
+export { ManagementEntityKey };
 
 export interface ManagementEntity {
   key: ManagementEntityKey;
@@ -17,7 +18,7 @@ export interface ManagementEntity {
 })
 export class EntityTabsComponent {
   @Input() entities: ManagementEntity[] = [];
-  @Input() activeEntity: ManagementEntityKey = 'restaurant';
+  @Input() activeEntity: ManagementEntityKey = ManagementEntityKey.RESTAURANT;
   @Output() selectEntity = new EventEmitter<ManagementEntityKey>();
 
   isActive(entityKey: ManagementEntityKey): boolean {

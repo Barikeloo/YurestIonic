@@ -26,14 +26,14 @@
             @for (table of facade.tables() | filterBy:'zone_id':facade.activeZoneId(); track table) {
               <button
                 class="mesa"
-                [class.occupied]="table.occupied && table.status === 'open'"
-                [class.cobrar]="table.status === 'to-charge'"
+                [class.occupied]="table.occupied && table.status === OrderStatus.OPEN"
+                [class.cobrar]="table.status === OrderStatus.TO_CHARGE"
                 [class.selected]="facade.selectedTable()?.id === table.id"
                 (click)="selectTable(table)"
                 >
                 <span class="mesa-zone-label">{{ getZoneName(table.zone_id) }}</span>
                 <span class="mesa-name">{{ table.name }}</span>
-                @if (table.status === 'to-charge') {
+                @if (table.status === OrderStatus.TO_CHARGE) {
                   <span class="mesa-cobrar-tag">COBRAR</span>
                 }
                 @if (table.occupied && facade.selectedTable()?.id === table.id && (table.remaining_total ?? 0) > 0) {
@@ -134,7 +134,7 @@
             {{ cajaError }}
           </div>
         }
-        @if (selectedTable.status === 'to-charge') {
+        @if (selectedTable.status === OrderStatus.TO_CHARGE) {
           <button
             class="btn-cobrar"
             (click)="goToCobrar()"
@@ -145,10 +145,10 @@
             Cobrar
           </button>
         }
-        @if (selectedTable.status !== 'to-charge') {
+        @if (selectedTable.status !== OrderStatus.TO_CHARGE) {
           <button
             class="btn-comanda"
-            (click)="selectedTable.status === 'open' ? goToComanda() : (!selectedTable.occupied ? openModal() : null)"
+            (click)="selectedTable.status === OrderStatus.OPEN ? goToComanda() : (!selectedTable.occupied ? openModal() : null)"
             >
             @if (!selectedTable.occupied) {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -162,7 +162,7 @@
           <div class="btn-row">
             <button
               class="btn-outline"
-              [disabled]="selectedTable.status !== 'open'"
+              [disabled]="selectedTable.status !== OrderStatus.OPEN"
               (click)="openCloseAccountModal()"
               >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>

@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TpvOrder } from '../../../cash/services/tpv.service';
-import { OrdersFilters, OrderTabId, PedidosFacade } from '../../services/pedidos.facade';
+import { OrdersFilters, OrderStatus, OrderTabId, PedidosFacade } from '../../facades/pedidos.facade';
 
 @Component({
   selector: 'app-pedidos',
@@ -13,6 +13,7 @@ import { OrdersFilters, OrderTabId, PedidosFacade } from '../../services/pedidos
 })
 export class PedidosPage implements OnInit {
   protected readonly facade = inject(PedidosFacade);
+  protected readonly OrderStatus = OrderStatus;
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
 
@@ -92,13 +93,13 @@ export class PedidosPage implements OnInit {
   }
 
   public statusLabel(status: string): string {
-    const map: Record<string, string> = {
-      open: 'Abierto',
-      'to-charge': 'Para cobrar',
-      invoiced: 'Cerrado',
-      cancelled: 'Cancelado',
+    const map: Partial<Record<OrderStatus, string>> = {
+      [OrderStatus.OPEN]: 'Abierto',
+      [OrderStatus.TO_CHARGE]: 'Para cobrar',
+      [OrderStatus.INVOICED]: 'Cerrado',
+      [OrderStatus.CANCELLED]: 'Cancelado',
     };
 
-    return map[status] ?? status;
+    return map[status as OrderStatus] ?? status;
   }
 }

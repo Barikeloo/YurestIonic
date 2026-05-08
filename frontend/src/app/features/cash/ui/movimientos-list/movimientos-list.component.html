@@ -6,16 +6,16 @@
     @for (movement of movements; track movement) {
       <div class="movement-row">
         <div class="movement-info">
-          <div class="movement-icon" [class.in]="movement.type === 'in'" [class.out]="movement.type === 'out'">
-            {{ movement.type === 'in' ? '↑' : '↓' }}
+          <div class="movement-icon" [class.in]="movement.type === CashMovementType.IN" [class.out]="movement.type === CashMovementType.OUT">
+            {{ movement.type === CashMovementType.IN ? '↑' : '↓' }}
           </div>
           <div class="movement-details">
             <div class="movement-reason">{{ movement.reason }}</div>
             <div class="movement-meta">{{ movement.time }} · {{ movement.user }}</div>
           </div>
         </div>
-        <span class="movement-amount" [class.in]="movement.type === 'in'" [class.out]="movement.type === 'out'">
-          {{ movement.type === 'in' ? '+' : '−' }}{{ formatCents(movement.amount) }}
+        <span class="movement-amount" [class.in]="movement.type === CashMovementType.IN" [class.out]="movement.type === CashMovementType.OUT">
+          {{ movement.type === CashMovementType.IN ? '+' : '−' }}{{ formatCents(movement.amount) }}
         </span>
       </div>
     }

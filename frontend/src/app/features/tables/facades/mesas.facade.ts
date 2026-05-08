@@ -3,10 +3,11 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ChargeSessionService } from '../../cash/services/charge-session.service';
 import { TpvOrder, TpvOrderLine, TpvService, TpvTableItem, TpvZoneItem } from '../../cash/services/tpv.service';
+import { OrderStatus } from '../../../core/enums/order-status.enum';
 
 export interface TableWithStatus extends TpvTableItem {
   occupied: boolean;
-  status?: 'open' | 'to-charge';
+  status?: OrderStatus;
   order_id?: string;
   diners?: number;
   opened_at?: string;
@@ -73,7 +74,7 @@ export class MesasFacade {
         this._activeZoneId.set(zones[0].id);
       }
 
-      const activeOrders = orders.filter((order) => order.status === 'open' || order.status === 'to-charge');
+      const activeOrders = orders.filter((order) => order.status === OrderStatus.OPEN || order.status === OrderStatus.TO_CHARGE);
       this._openOrders.set(activeOrders);
 
       const orderByTable = new Map<string, TpvOrder>();
@@ -92,7 +93,7 @@ export class MesasFacade {
         return {
           ...table,
           occupied: !!order,
-          status: order?.status as 'open' | 'to-charge' | undefined,
+          status: order?.status,
           order_id: order?.id,
           diners: order?.diners,
           opened_at: order?.opened_at,

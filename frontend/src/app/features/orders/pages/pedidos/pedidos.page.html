@@ -11,10 +11,10 @@
         <!-- Tabs -->
         <div class="pedidos-tabs">
           <button class="pedidos-tab" [class.active]="facade.activeTab() === 'all'" (click)="setTab('all')">Todo el turno</button>
-          <button class="pedidos-tab" [class.active]="facade.activeTab() === 'open'" (click)="setTab('open')">Activos</button>
-          <button class="pedidos-tab" [class.active]="facade.activeTab() === 'to-charge'" (click)="setTab('to-charge')">Para cobrar</button>
-          <button class="pedidos-tab" [class.active]="facade.activeTab() === 'invoiced'" (click)="setTab('invoiced')">Cerrados hoy</button>
-          <button class="pedidos-tab" [class.active]="facade.activeTab() === 'cancelled'" (click)="setTab('cancelled')">Cancelados</button>
+          <button class="pedidos-tab" [class.active]="facade.activeTab() === OrderStatus.OPEN" (click)="setTab(OrderStatus.OPEN)">Activos</button>
+          <button class="pedidos-tab" [class.active]="facade.activeTab() === OrderStatus.TO_CHARGE" (click)="setTab(OrderStatus.TO_CHARGE)">Para cobrar</button>
+          <button class="pedidos-tab" [class.active]="facade.activeTab() === OrderStatus.INVOICED" (click)="setTab(OrderStatus.INVOICED)">Cerrados hoy</button>
+          <button class="pedidos-tab" [class.active]="facade.activeTab() === OrderStatus.CANCELLED" (click)="setTab(OrderStatus.CANCELLED)">Cancelados</button>
         </div>
         <!-- KPIs -->
         <div class="summary-strip">
@@ -135,10 +135,10 @@
           <div class="pedido-detail-actions">
             <button class="btn-small" (click)="goToMesa()">Abrir en mesa</button>
             <button class="btn-small">Imprimir ticket</button>
-            <button class="btn-small primary" (click)="markAsCharged()" [disabled]="selectedOrder.status !== 'open'">
+            <button class="btn-small primary" (click)="markAsCharged()" [disabled]="selectedOrder.status !== OrderStatus.OPEN">
               Marcar cobrado
             </button>
-            <button class="btn-small" (click)="cancelOrder()" [disabled]="selectedOrder.status === 'invoiced' || selectedOrder.status === 'cancelled'">
+            <button class="btn-small" (click)="cancelOrder()" [disabled]="selectedOrder.status === OrderStatus.INVOICED || selectedOrder.status === OrderStatus.CANCELLED">
               Cancelar pedido
             </button>
           </div>

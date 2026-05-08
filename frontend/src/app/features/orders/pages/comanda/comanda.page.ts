@@ -7,7 +7,7 @@ import { takeUntil } from 'rxjs/operators';
 import { AuthService, AuthUser, QuickAccessUserResponse } from '../../../../core/services/auth.service';
 import { FilterByPipe, SearchPipe } from '../../../../pipes';
 import { TpvOrderLine, TpvProductItem } from '../../../cash/services/tpv.service';
-import { CartLine, ComandaFacade } from '../../services/comanda.facade';
+import { CartLine, ComandaFacade } from '../../facades/comanda.facade';
 
 const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#E74C3C'];
 

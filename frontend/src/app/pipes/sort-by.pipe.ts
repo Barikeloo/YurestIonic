@@ -1,6 +1,7 @@
 import { Pipe, PipeTransform } from '@angular/core';
+import { SortDirection } from '../core/enums/sort-direction.enum';
 
-export type SortDirection = 'asc' | 'desc';
+export { SortDirection };
 
 @Pipe({
   name: 'sortBy',
@@ -8,7 +9,7 @@ export type SortDirection = 'asc' | 'desc';
   pure: true,
 })
 export class SortByPipe implements PipeTransform {
-  public transform<T>(items: T[] | null | undefined, property: keyof T, direction: SortDirection = 'asc'): T[] {
+  public transform<T>(items: T[] | null | undefined, property: keyof T, direction: SortDirection = SortDirection.ASC): T[] {
     if (!items) {
       return [];
     }
@@ -30,7 +31,7 @@ export class SortByPipe implements PipeTransform {
       }
 
       if (typeof valueA === 'number' && typeof valueB === 'number') {
-        return direction === 'asc' ? valueA - valueB : valueB - valueA;
+        return direction === SortDirection.ASC ? valueA - valueB : valueB - valueA;
       }
 
       const stringA = String(valueA).toLowerCase();
@@ -38,7 +39,7 @@ export class SortByPipe implements PipeTransform {
 
       const comparison = stringA.localeCompare(stringB);
 
-      return direction === 'asc' ? comparison : -comparison;
+      return direction === SortDirection.ASC ? comparison : -comparison;
     });
 
     return sorted;

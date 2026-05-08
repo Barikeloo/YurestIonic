@@ -5,9 +5,11 @@ import { NumpadComponent } from '../../../../shared/components/numpad/numpad.com
 import { AmountDisplayComponent } from '../../../../shared/components/amount-display/amount-display.component';
 import { BtnComponent } from '../../../../shared/components/btn/btn.component';
 import { SegmentComponent, SegmentOption } from '../../../../shared/components/segment/segment.component';
+import { CashMovementType } from '../../../../core/enums/cash-movement-type.enum';
+import { CashMovementReason } from '../../../../core/enums/cash-movement-reason.enum';
 
 export interface MovementReason {
-  value: string;
+  value: CashMovementReason;
   label: string;
 }
 
@@ -151,38 +153,40 @@ export interface MovementReason {
   standalone: true,
 })
 export class CashMovementModalComponent {
+  protected readonly CashMovementType = CashMovementType;
+
   @Input() isOpen = false;
   @Output() closeModal = new EventEmitter<void>();
   @Output() registerMovement = new EventEmitter<{
-    type: string;
-    reasonCode: string;
+    type: CashMovementType;
+    reasonCode: CashMovementReason;
     amountCents: number;
     description?: string;
   }>();
 
-  public type: 'in' | 'out' = 'in';
-  public reasonCode = 'change_refill';
+  public type: CashMovementType = CashMovementType.IN;
+  public reasonCode: CashMovementReason = CashMovementReason.CHANGE_REFILL;
   public amountCents = 0;
   public description = '';
 
   public typeOptions: SegmentOption[] = [
-    { value: 'in', label: '↑ Entrada' },
-    { value: 'out', label: '↓ Salida' },
+    { value: CashMovementType.IN, label: '↑ Entrada' },
+    { value: CashMovementType.OUT, label: '↓ Salida' },
   ];
 
-  public reasons: { in: MovementReason[]; out: MovementReason[] } = {
-    in: [
-      { value: 'change_refill', label: 'Reposición cambio' },
-      { value: 'tip_declared', label: 'Propina declarada' },
-      { value: 'adjustment', label: 'Ajuste' },
-      { value: 'other', label: 'Otro' },
+  public reasons: Record<CashMovementType, MovementReason[]> = {
+    [CashMovementType.IN]: [
+      { value: CashMovementReason.CHANGE_REFILL, label: 'Reposición cambio' },
+      { value: CashMovementReason.TIP_DECLARED, label: 'Propina declarada' },
+      { value: CashMovementReason.ADJUSTMENT, label: 'Ajuste' },
+      { value: CashMovementReason.OTHER, label: 'Otro' },
     ],
-    out: [
-      { value: 'sangria', label: 'Sangría al banco' },
-      { value: 'supplier_payment', label: 'Pago proveedor' },
-      { value: 'tip_declared', label: 'Propina camarero' },
-      { value: 'adjustment', label: 'Ajuste' },
-      { value: 'other', label: 'Otro' },
+    [CashMovementType.OUT]: [
+      { value: CashMovementReason.SANGRIA, label: 'Sangría al banco' },
+      { value: CashMovementReason.SUPPLIER_PAYMENT, label: 'Pago proveedor' },
+      { value: CashMovementReason.TIP_DECLARED, label: 'Propina camarero' },
+      { value: CashMovementReason.ADJUSTMENT, label: 'Ajuste' },
+      { value: CashMovementReason.OTHER, label: 'Otro' },
     ],
   };
 
@@ -191,7 +195,7 @@ export class CashMovementModalComponent {
   }
 
   public get accentColor(): string {
-    return this.type === 'in' ? '#1a9e5a' : '#ff4d4d';
+    return this.type === CashMovementType.IN ? '#1a9e5a' : '#ff4d4d';
   }
 
   public onClose(): void {
@@ -212,11 +216,11 @@ export class CashMovementModalComponent {
   }
 
   public onTypeChange(value: string): void {
-    this.type = value as 'in' | 'out';
-    this.reasonCode = this.type === 'in' ? 'change_refill' : 'sangria';
+    this.type = value as CashMovementType;
+    this.reasonCode = this.type === CashMovementType.IN ? CashMovementReason.CHANGE_REFILL : CashMovementReason.SANGRIA;
   }
 
-  public selectReason(code: string): void {
+  public selectReason(code: CashMovementReason): void {
     this.reasonCode = code;
   }
 
@@ -225,8 +229,8 @@ export class CashMovementModalComponent {
   }
 
   private resetForm(): void {
-    this.type = 'in';
-    this.reasonCode = 'change_refill';
+    this.type = CashMovementType.IN;
+    this.reasonCode = CashMovementReason.CHANGE_REFILL;
     this.amountCents = 0;
     this.description = '';
   }

@@ -1,8 +1,9 @@
 
 import { Component, Input } from '@angular/core';
+import { BtnVariant } from '../../../core/enums/btn-variant.enum';
+import { BtnSize } from '../../../core/enums/btn-size.enum';
 
-export type BtnVariant = 'fill' | 'outline' | 'ghost' | 'gray' | 'success' | 'danger';
-export type BtnSize = 'sm' | 'md' | 'lg';
+export { BtnVariant, BtnSize };
 
 @Component({
   selector: 'app-btn',
@@ -12,9 +13,12 @@ export type BtnSize = 'sm' | 'md' | 'lg';
   standalone: true,
 })
 export class BtnComponent {
-  @Input() variant: BtnVariant = 'fill';
+  protected readonly BtnVariant = BtnVariant;
+  protected readonly BtnSize = BtnSize;
+
+  @Input() variant: BtnVariant = BtnVariant.FILL;
   @Input() color = '#ff4d4d';
-  @Input() size: BtnSize = 'md';
+  @Input() size: BtnSize = BtnSize.MD;
   @Input() disabled = false;
   @Input() block = false;
 }
