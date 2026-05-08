@@ -1,11 +1,12 @@
 
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { AppContextService } from '../../services/app-context.service';
 import { AuthService, AuthUser } from '../../services/auth.service';
 import { TpvService } from '../../../features/cash/services/tpv.service';
+import { AppLayoutFacade } from '../facades/app-layout.facade';
 
 @Component({
   selector: 'app-layout-page',
@@ -26,6 +27,8 @@ export class AppLayoutPage implements OnInit, OnDestroy {
   private userSubscription?: Subscription;
   private contextSubscription?: Subscription;
   private routerSubscription?: Subscription;
+
+  protected readonly layoutFacade = inject(AppLayoutFacade);
 
   constructor(
     private readonly authService: AuthService,
@@ -85,10 +88,8 @@ export class AppLayoutPage implements OnInit, OnDestroy {
   }
 
   private refreshCajaStatus(): void {
-    const deviceId = this.authService.getDeviceId();
-    if (!deviceId) return;
-    this.tpvService.getActiveCashSession(deviceId).pipe(take(1)).subscribe({
-      next: (session) => {
+    this.layoutFacade.refreshCajaStatus().subscribe({
+      next: (session: any) => {
         this.isCajaOpen = session?.status === 'open';
         this.cajaLoaded = true;
       },
@@ -127,23 +128,23 @@ export class AppLayoutPage implements OnInit, OnDestroy {
     return `${datePart} · ${timePart}`;
   }
 
-  public goToCaja(): void {
-    this.router.navigateByUrl('/app/caja');
-  }
-
   public logout(): void {
-    this.authService.logout().pipe(take(1)).subscribe({
+    this.layoutFacade.logout().subscribe({
       next: () => {
-        this.contextService.clearActiveRestaurant();
+        this.layoutFacade.clearActiveRestaurant();
         this.isAdminUser = false;
         this.router.navigateByUrl('/login');
       },
       error: () => {
-        this.contextService.clearActiveRestaurant();
+        this.layoutFacade.clearActiveRestaurant();
         this.isAdminUser = false;
         this.router.navigateByUrl('/login');
       },
     });
+  }
+
+  public goToCaja(): void {
+    this.layoutFacade.goToCaja();
   }
 
 }

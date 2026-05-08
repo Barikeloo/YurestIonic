@@ -1,7 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionUsersFacade, UserRow, UserFormData } from '../../../pages/core/gestion/facades/gestion-users.facade';
+import { ToastService } from '../../../core/services/toast.service';
 
 export type UserRole = 'operator' | 'supervisor' | 'admin';
 
@@ -21,6 +22,7 @@ export class UsersManagementComponent {
   public readonly facade = input.required<GestionUsersFacade>();
   public readonly restaurantUuid = input.required<string>();
   public readonly roleOptions = input.required<RoleOption[]>();
+  protected readonly toastService = inject(ToastService);
 
   public readonly users = computed(() => this.facade().users());
   public readonly formData = computed(() => this.facade().formData());
@@ -42,18 +44,18 @@ export class UsersManagementComponent {
   async onDelete(): Promise<void> {
     const result = await this.facade().deleteSelected(this.restaurantUuid());
     if (result.ok) {
-      window.alert(result.message || 'Usuario eliminado.');
+      this.toastService.presentSuccess(result.message || 'Usuario eliminado.');
     } else {
-      window.alert(result.error || 'No se pudo eliminar el usuario.');
+      this.toastService.presentError(result.error || 'No se pudo eliminar el usuario.');
     }
   }
 
   async onSubmit(): Promise<void> {
     const result = await this.facade().save(this.restaurantUuid());
     if (result.ok) {
-      window.alert(result.message || 'Usuario guardado.');
+      this.toastService.presentSuccess(result.message || 'Usuario guardado.');
     } else {
-      window.alert(result.error || 'No se pudo guardar el usuario.');
+      this.toastService.presentError(result.error || 'No se pudo guardar el usuario.');
     }
   }
 

@@ -1,7 +1,8 @@
 
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionProductsFacade, ProductRow, ProductFormData } from '../../../pages/core/gestion/facades/gestion-products.facade';
+import { ToastService } from '../../../core/services/toast.service';
 
 export interface TaxOption {
   uuid?: string;
@@ -25,6 +26,7 @@ export class ProductsManagementComponent {
   public readonly facade = input.required<GestionProductsFacade>();
   public readonly families = input.required<FamilyOption[]>();
   public readonly taxes = input.required<TaxOption[]>();
+  protected readonly toastService = inject(ToastService);
 
   public readonly products = computed(() => this.facade().products());
   public readonly formData = computed(() => this.facade().formData());
@@ -46,18 +48,18 @@ export class ProductsManagementComponent {
   async onDelete(): Promise<void> {
     const result = await this.facade().deleteSelected();
     if (result.ok) {
-      window.alert(result.message || 'Producto eliminado.');
+      this.toastService.presentSuccess(result.message || 'Producto eliminado.');
     } else {
-      window.alert(result.error || 'No se pudo eliminar el producto.');
+      this.toastService.presentError(result.error || 'No se pudo eliminar el producto.');
     }
   }
 
   async onSubmit(): Promise<void> {
     const result = await this.facade().save();
     if (result.ok) {
-      window.alert(result.message || 'Producto guardado.');
+      this.toastService.presentSuccess(result.message || 'Producto guardado.');
     } else {
-      window.alert(result.error || 'No se pudo guardar el producto.');
+      this.toastService.presentError(result.error || 'No se pudo guardar el producto.');
     }
   }
 

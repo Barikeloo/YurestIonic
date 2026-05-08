@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { AppContextService } from '../../../core/services/app-context.service';
 import { DeviceStorageService } from '../../../core/services/device-storage.service';
+import { ToastService } from '../../../core/services/toast.service';
 import { FamilyItem, FamilyService } from '../../../services/family.service';
 import { GestionFamiliesFacade } from './facades/gestion-families.facade';
 import { GestionTaxesFacade } from './facades/gestion-taxes.facade';
@@ -120,6 +121,7 @@ export class GestionPage {
   protected readonly productsFacade = inject(GestionProductsFacade);
   protected readonly usersFacade = inject(GestionUsersFacade);
   protected readonly zreportsFacade = inject(GestionZReportsFacade);
+  protected readonly toastService = inject(ToastService);
 
   public apiErrorMessage: string | null = null;
   public isSavingRestaurant: boolean = false;
@@ -528,16 +530,14 @@ export class GestionPage {
     const idx = this.managementState.selectedIndex[entityKey];
 
     if (!rows.length || idx < 0 || idx >= rows.length) {
-      window.alert('No hay un registro seleccionado para eliminar.');
-
+      this.toastService.presentError('No hay un registro seleccionado para eliminar.');
       return;
     }
 
     if (entityKey === 'families') {
       const family = rows[idx] as FamilyRow;
       if (!family.uuid) {
-        window.alert('No se puede eliminar: familia sin identificador.');
-
+        this.toastService.presentError('No se puede eliminar: familia sin identificador.');
         return;
       }
 
@@ -552,7 +552,7 @@ export class GestionPage {
           this.updateRestaurantKpis(this.managementState.restaurantId);
           this.syncForms();
           this.apiErrorMessage = null;
-          window.alert('Familia eliminada.');
+          this.toastService.presentSuccess('Familia eliminada.');
         } else {
           this.apiErrorMessage = result.error || 'No se pudo eliminar la familia.';
         }
@@ -564,8 +564,7 @@ export class GestionPage {
     if (entityKey === 'users') {
       const user = rows[idx] as UserRow;
       if (!user.uuid || !this.selectedRestaurant?.uuid) {
-        window.alert('No se puede eliminar: usuario sin identificador.');
-
+        this.toastService.presentError('No se puede eliminar: usuario sin identificador.');
         return;
       }
 
@@ -576,8 +575,7 @@ export class GestionPage {
 
       const restaurant = this.selectedRestaurant;
       if (!restaurant?.uuid) {
-        window.alert('No hay restaurante seleccionado.');
-
+        this.toastService.presentError('No hay restaurante seleccionado.');
         return;
       }
 
@@ -587,7 +585,7 @@ export class GestionPage {
           this.updateRestaurantKpis(this.managementState.restaurantId);
           this.syncForms();
           this.apiErrorMessage = null;
-          window.alert('Usuario eliminado.');
+          this.toastService.presentSuccess('Usuario eliminado.');
         } else {
           this.apiErrorMessage = result.error || 'No se pudo eliminar el usuario.';
         }
@@ -599,14 +597,12 @@ export class GestionPage {
     if (entityKey === 'zones') {
       const selectedZone = rows[idx] as ZoneRow;
       if (selectedZone.tables.length > 0) {
-        window.alert('No puedes eliminar una zona con mesas. Elimina o reasigna primero sus mesas.');
-
+        this.toastService.presentError('No puedes eliminar una zona con mesas. Elimina o reasigna primero sus mesas.');
         return;
       }
 
       if (!selectedZone.uuid) {
-        window.alert('No se puede eliminar: zona sin identificador.');
-
+        this.toastService.presentError('No se puede eliminar: zona sin identificador.');
         return;
       }
 
@@ -621,7 +617,7 @@ export class GestionPage {
           this.updateRestaurantKpis(this.managementState.restaurantId);
           this.syncForms();
           this.apiErrorMessage = null;
-          window.alert('Zona eliminada.');
+          this.toastService.presentSuccess('Zona eliminada.');
         } else {
           this.apiErrorMessage = result.error || 'No se pudo eliminar la zona.';
         }
@@ -633,8 +629,7 @@ export class GestionPage {
     if (entityKey === 'taxes') {
       const tax = rows[idx] as TaxRow;
       if (!tax.uuid) {
-        window.alert('No se puede eliminar: impuesto sin identificador.');
-
+        this.toastService.presentError('No se puede eliminar: impuesto sin identificador.');
         return;
       }
 
@@ -649,7 +644,7 @@ export class GestionPage {
           this.updateRestaurantKpis(this.managementState.restaurantId);
           this.syncForms();
           this.apiErrorMessage = null;
-          window.alert('Impuesto eliminado.');
+          this.toastService.presentSuccess('Impuesto eliminado.');
         } else {
           this.apiErrorMessage = result.error || 'No se pudo eliminar el impuesto.';
         }
@@ -661,8 +656,7 @@ export class GestionPage {
     if (entityKey === 'products') {
       const product = rows[idx] as ProductRow;
       if (!product.uuid) {
-        window.alert('No se puede eliminar: producto sin identificador.');
-
+        this.toastService.presentError('No se puede eliminar: producto sin identificador.');
         return;
       }
 
@@ -677,7 +671,7 @@ export class GestionPage {
           this.updateRestaurantKpis(this.managementState.restaurantId);
           this.syncForms();
           this.apiErrorMessage = null;
-          window.alert('Producto eliminado.');
+          this.toastService.presentSuccess('Producto eliminado.');
         } else {
           this.apiErrorMessage = result.error || 'No se pudo eliminar el producto.';
         }
@@ -698,14 +692,12 @@ export class GestionPage {
     const password = this.restaurantForm.password.trim();
 
     if (!name || !email) {
-      window.alert('Completa todos los campos obligatorios.');
-
+      this.toastService.presentError('Completa todos los campos obligatorios.');
       return;
     }
 
     if (!restaurant.uuid) {
-      window.alert('No se puede actualizar: restaurante sin identificador.');
-
+      this.toastService.presentError('No se puede actualizar: restaurante sin identificador.');
       return;
     }
 
@@ -727,7 +719,7 @@ export class GestionPage {
 
           this.syncForms();
           this.isSavingRestaurant = false;
-          window.alert('Restaurante actualizado.');
+          this.toastService.presentSuccess('Restaurante actualizado.');
         },
         error: (error: unknown) => {
           this.apiErrorMessage = error instanceof Error ? error.message : 'No se pudo actualizar el restaurante.';
@@ -748,28 +740,24 @@ export class GestionPage {
       const pin = this.userForm.pin.trim();
 
       if (!name || !email || !role) {
-        window.alert('Completa los campos requeridos (nombre, email, rol).');
-
+        this.toastService.presentError('Completa los campos requeridos (nombre, email, rol).');
         return;
       }
 
       if (pin !== '' && !/^\d{4}$/.test(pin)) {
-        window.alert('El PIN debe tener 4 digitos.');
-
+        this.toastService.presentError('El PIN debe tener 4 digitos.');
         return;
       }
 
       const selectedUser = idx >= 0 && idx < rows.length ? (rows[idx] as UserRow) : null;
 
       if (!selectedUser && !password) {
-        window.alert('Contraseña requerida para nuevos usuarios.');
-
+        this.toastService.presentError('Contraseña requerida para nuevos usuarios.');
         return;
       }
 
       if (!this.selectedRestaurant?.uuid) {
-        window.alert('No se puede guardar: restaurante sin identificador.');
-
+        this.toastService.presentError('No se puede guardar: restaurante sin identificador.');
         return;
       }
 
@@ -788,7 +776,7 @@ export class GestionPage {
           this.updateRestaurantKpis(this.managementState.restaurantId);
           this.syncForms();
           this.apiErrorMessage = null;
-          window.alert(result.message || 'Usuario guardado.');
+          this.toastService.presentSuccess(result.message || 'Usuario guardado.');
         } else {
           this.apiErrorMessage = result.error || 'No se pudo guardar el usuario.';
         }
@@ -800,8 +788,7 @@ export class GestionPage {
     if (entityKey === 'families') {
       const name = this.familyForm.name.trim();
       if (!name) {
-        window.alert('Indica el nombre de la familia.');
-
+        this.toastService.presentError('Indica el nombre de la familia.');
         return;
       }
 
@@ -820,7 +807,7 @@ export class GestionPage {
           this.updateRestaurantKpis(this.managementState.restaurantId);
           this.syncForms();
           this.apiErrorMessage = null;
-          window.alert(result.message || 'Familia guardada.');
+          this.toastService.presentSuccess(result.message || 'Familia guardada.');
         } else {
           this.apiErrorMessage = result.error || 'No se pudo guardar la familia.';
         }
@@ -838,8 +825,7 @@ export class GestionPage {
       const active = this.productForm.active;
 
       if (!name || !familyId || !taxId || price <= 0 || !Number.isFinite(stock) || stock < 0) {
-        window.alert('Revisa los datos del producto.');
-
+        this.toastService.presentError('Revisa los datos del producto.');
         return;
       }
 
@@ -858,7 +844,7 @@ export class GestionPage {
           this.updateRestaurantKpis(this.managementState.restaurantId);
           this.syncForms();
           this.apiErrorMessage = null;
-          window.alert(result.message || 'Producto guardado.');
+          this.toastService.presentSuccess(result.message || 'Producto guardado.');
         } else {
           this.apiErrorMessage = result.error || 'No se pudo guardar el producto.';
         }
@@ -870,8 +856,7 @@ export class GestionPage {
     if (entityKey === 'zones') {
       const name = this.zoneForm.name.trim();
       if (!name) {
-        window.alert('Revisa los datos de la zona.');
-
+        this.toastService.presentError('Revisa los datos de la zona.');
         return;
       }
 
@@ -890,7 +875,7 @@ export class GestionPage {
           this.updateRestaurantKpis(this.managementState.restaurantId);
           this.syncForms();
           this.apiErrorMessage = null;
-          window.alert(result.message || 'Zona guardada.');
+          this.toastService.presentSuccess(result.message || 'Zona guardada.');
         } else {
           this.apiErrorMessage = result.error || 'No se pudo guardar la zona.';
         }
@@ -903,8 +888,7 @@ export class GestionPage {
       const name = this.taxForm.name.trim();
       const percentage = Number(this.taxForm.percentage);
       if (!name || !Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
-        window.alert('Revisa los datos del impuesto.');
-
+        this.toastService.presentError('Revisa los datos del impuesto.');
         return;
       }
 
@@ -923,7 +907,7 @@ export class GestionPage {
           this.updateRestaurantKpis(this.managementState.restaurantId);
           this.syncForms();
           this.apiErrorMessage = null;
-          window.alert(result.message || 'Impuesto guardado.');
+          this.toastService.presentSuccess(result.message || 'Impuesto guardado.');
         } else {
           this.apiErrorMessage = result.error || 'No se pudo guardar el impuesto.';
         }
@@ -949,21 +933,18 @@ export class GestionPage {
   public async saveManagementTable(): Promise<void> {
     const zone = this.selectedZone;
     if (!zone) {
-      window.alert('Selecciona una zona antes de gestionar mesas.');
-
+      this.toastService.presentError('Selecciona una zona antes de gestionar mesas.');
       return;
     }
 
     const name = this.tableForm.name.trim();
     if (!name) {
-      window.alert('Indica el nombre de la mesa.');
-
+      this.toastService.presentError('Indica el nombre de la mesa.');
       return;
     }
 
     if (!zone.uuid) {
-      window.alert('Guarda primero la zona antes de crear mesas.');
-
+      this.toastService.presentError('Guarda primero la zona antes de crear mesas.');
       return;
     }
 
@@ -974,8 +955,7 @@ export class GestionPage {
       (table, tableIdx) => table.name.toLowerCase() === name.toLowerCase() && tableIdx !== idx
     );
     if (existingTableWithSameName) {
-      window.alert('Ya existe una mesa con ese nombre en esta zona.');
-
+      this.toastService.presentError('Ya existe una mesa con ese nombre en esta zona.');
       return;
     }
 
@@ -986,7 +966,7 @@ export class GestionPage {
       this.syncZonesMirror();
       this.syncForms();
       this.apiErrorMessage = null;
-      window.alert(result.message || 'Mesa guardada.');
+      this.toastService.presentSuccess(result.message || 'Mesa guardada.');
     } else {
       this.apiErrorMessage = result.error || 'No se pudo guardar la mesa.';
     }
@@ -995,22 +975,23 @@ export class GestionPage {
   public async deleteSelectedManagementTable(): Promise<void> {
     const zone = this.selectedZone;
     if (!zone) {
-      window.alert('No hay zona seleccionada.');
-
+      this.toastService.presentError('No hay zona seleccionada.');
       return;
     }
 
     const idx = this.managementState.selectedIndex.tables;
     if (idx < 0 || idx >= zone.tables.length) {
-      window.alert('No hay mesa seleccionada para eliminar.');
-
+      this.toastService.presentError('No hay mesa seleccionada para eliminar.');
       return;
     }
 
-    const selectedTable = zone.tables[idx];
-    if (!selectedTable.uuid) {
-      window.alert('No se puede eliminar: mesa sin identificador.');
+    const table = zone.tables[idx];
+    if (!table.uuid) {
+      this.toastService.presentError('No se puede eliminar: mesa sin identificador.');
+      return;
+    }
 
+    if (!window.confirm(`¿Eliminar mesa "${table.name}"? Esta acción no se puede deshacer.`)) {
       return;
     }
 
@@ -1018,10 +999,9 @@ export class GestionPage {
 
     if (result.ok) {
       this.syncZonesMirror();
-      this.tableForm = { name: '' };
-      this.apiErrorMessage = null;
       this.syncForms();
-      window.alert('Mesa eliminada.');
+      this.apiErrorMessage = null;
+      this.toastService.presentSuccess('Mesa eliminada.');
     } else {
       this.apiErrorMessage = result.error || 'No se pudo eliminar la mesa.';
     }
@@ -1081,7 +1061,7 @@ export class GestionPage {
 
     this.updateRestaurantKpis(this.managementState.restaurantId);
     this.syncForms();
-    window.alert('Cambios guardados.');
+    this.toastService.presentSuccess('Cambios guardados.');
   }
 
   private syncForms(): void {

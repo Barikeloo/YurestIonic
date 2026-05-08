@@ -1,7 +1,8 @@
 
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionFamiliesFacade, FamilyRow, FamilyFormData } from '../../../pages/core/gestion/facades/gestion-families.facade';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-families-management',
@@ -12,6 +13,7 @@ import { GestionFamiliesFacade, FamilyRow, FamilyFormData } from '../../../pages
 })
 export class FamiliesManagementComponent {
   public readonly facade = input.required<GestionFamiliesFacade>();
+  protected readonly toastService = inject(ToastService);
 
   public readonly families = computed(() => this.facade().families());
   public readonly formData = computed(() => this.facade().formData());
@@ -33,18 +35,18 @@ export class FamiliesManagementComponent {
   async onDelete(): Promise<void> {
     const result = await this.facade().deleteSelected();
     if (result.ok) {
-      window.alert(result.message || 'Familia eliminada.');
+      this.toastService.presentSuccess(result.message || 'Familia eliminada.');
     } else {
-      window.alert(result.error || 'No se pudo eliminar la familia.');
+      this.toastService.presentError(result.error || 'No se pudo eliminar la familia.');
     }
   }
 
   async onSubmit(): Promise<void> {
     const result = await this.facade().save();
     if (result.ok) {
-      window.alert(result.message || 'Familia guardada.');
+      this.toastService.presentSuccess(result.message || 'Familia guardada.');
     } else {
-      window.alert(result.error || 'No se pudo guardar la familia.');
+      this.toastService.presentError(result.error || 'No se pudo guardar la familia.');
     }
   }
 

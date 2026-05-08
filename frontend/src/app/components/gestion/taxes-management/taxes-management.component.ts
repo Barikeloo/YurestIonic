@@ -1,7 +1,8 @@
 
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionTaxesFacade, TaxRow, TaxFormData } from '../../../pages/core/gestion/facades/gestion-taxes.facade';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-taxes-management',
@@ -12,6 +13,7 @@ import { GestionTaxesFacade, TaxRow, TaxFormData } from '../../../pages/core/ges
 })
 export class TaxesManagementComponent {
   public readonly facade = input.required<GestionTaxesFacade>();
+  protected readonly toastService = inject(ToastService);
 
   public readonly taxes = computed(() => this.facade().taxes());
   public readonly formData = computed(() => this.facade().formData());
@@ -33,18 +35,18 @@ export class TaxesManagementComponent {
   async onDelete(): Promise<void> {
     const result = await this.facade().deleteSelected();
     if (result.ok) {
-      window.alert(result.message || 'Impuesto eliminado.');
+      this.toastService.presentSuccess(result.message || 'Impuesto eliminado.');
     } else {
-      window.alert(result.error || 'No se pudo eliminar el impuesto.');
+      this.toastService.presentError(result.error || 'No se pudo eliminar el impuesto.');
     }
   }
 
   async onSubmit(): Promise<void> {
     const result = await this.facade().save();
     if (result.ok) {
-      window.alert(result.message || 'Impuesto guardado.');
+      this.toastService.presentSuccess(result.message || 'Impuesto guardado.');
     } else {
-      window.alert(result.error || 'No se pudo guardar el impuesto.');
+      this.toastService.presentError(result.error || 'No se pudo guardar el impuesto.');
     }
   }
 

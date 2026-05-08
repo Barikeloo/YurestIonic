@@ -1,7 +1,8 @@
 
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionZonesFacade, TableRow, ZoneRow, ZoneFormData, TableFormData } from '../../../pages/core/gestion/facades/gestion-zones.facade';
+import { ToastService } from '../../../core/services/toast.service';
 
 @Component({
   selector: 'app-zones-management',
@@ -12,6 +13,7 @@ import { GestionZonesFacade, TableRow, ZoneRow, ZoneFormData, TableFormData } fr
 })
 export class ZonesManagementComponent {
   public readonly facade = input.required<GestionZonesFacade>();
+  protected readonly toastService = inject(ToastService);
 
   public readonly zones = computed(() => this.facade().zones());
   public readonly selectedZone = computed(() => this.facade().selectedZone());
@@ -41,18 +43,18 @@ export class ZonesManagementComponent {
   async onDeleteZone(): Promise<void> {
     const result = await this.facade().deleteSelectedZone();
     if (result.ok) {
-      window.alert(result.message || 'Zona eliminada.');
+      this.toastService.presentSuccess(result.message || 'Zona eliminada.');
     } else {
-      window.alert(result.error || 'No se pudo eliminar la zona.');
+      this.toastService.presentError(result.error || 'No se pudo eliminar la zona.');
     }
   }
 
   async onSubmitZone(): Promise<void> {
     const result = await this.facade().saveZone();
     if (result.ok) {
-      window.alert(result.message || 'Zona guardada.');
+      this.toastService.presentSuccess(result.message || 'Zona guardada.');
     } else {
-      window.alert(result.error || 'No se pudo guardar la zona.');
+      this.toastService.presentError(result.error || 'No se pudo guardar la zona.');
     }
   }
 
@@ -67,18 +69,18 @@ export class ZonesManagementComponent {
   async onDeleteTable(): Promise<void> {
     const result = await this.facade().deleteSelectedTable();
     if (result.ok) {
-      window.alert(result.message || 'Mesa eliminada.');
+      this.toastService.presentSuccess(result.message || 'Mesa eliminada.');
     } else {
-      window.alert(result.error || 'No se pudo eliminar la mesa.');
+      this.toastService.presentError(result.error || 'No se pudo eliminar la mesa.');
     }
   }
 
   async onSubmitTable(): Promise<void> {
     const result = await this.facade().saveTable();
     if (result.ok) {
-      window.alert(result.message || 'Mesa guardada.');
+      this.toastService.presentSuccess(result.message || 'Mesa guardada.');
     } else {
-      window.alert(result.error || 'No se pudo guardar la mesa.');
+      this.toastService.presentError(result.error || 'No se pudo guardar la mesa.');
     }
   }
 
