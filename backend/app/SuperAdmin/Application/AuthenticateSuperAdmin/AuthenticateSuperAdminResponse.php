@@ -2,46 +2,32 @@
 
 namespace App\SuperAdmin\Application\AuthenticateSuperAdmin;
 
-final class AuthenticateSuperAdminResponse
+final readonly class AuthenticateSuperAdminResponse
 {
-    public const SUCCESS = 'success';
-
-    public const INVALID_CREDENTIALS = 'invalid_credentials';
-
     private function __construct(
-        private string $status,
-        private ?string $id,
-        private ?string $name,
-        private ?string $email,
+        public string $id,
+        public string $name,
+        public string $email,
     ) {}
 
-    public static function success(string $id, string $name, string $email): self
-    {
-        return new self(self::SUCCESS, $id, $name, $email);
+    public static function create(
+        string $id,
+        string $name,
+        string $email,
+    ): self {
+        return new self(
+            id: $id,
+            name: $name,
+            email: $email,
+        );
     }
 
-    public static function invalidCredentials(): self
+    public function toArray(): array
     {
-        return new self(self::INVALID_CREDENTIALS, null, null, null);
-    }
-
-    public function status(): string
-    {
-        return $this->status;
-    }
-
-    public function id(): ?string
-    {
-        return $this->id;
-    }
-
-    public function name(): ?string
-    {
-        return $this->name;
-    }
-
-    public function email(): ?string
-    {
-        return $this->email;
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'email' => $this->email,
+        ];
     }
 }

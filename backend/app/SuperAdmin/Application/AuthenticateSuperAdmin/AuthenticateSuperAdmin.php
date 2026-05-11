@@ -3,37 +3,38 @@
 namespace App\SuperAdmin\Application\AuthenticateSuperAdmin;
 
 use App\Shared\Domain\ValueObject\Email;
+use App\SuperAdmin\Domain\Exception\InvalidSuperAdminCredentialsException;
 use App\SuperAdmin\Domain\Interfaces\SuperAdminRepositoryInterface;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
 use InvalidArgumentException;
 
-final class AuthenticateSuperAdmin
+class AuthenticateSuperAdmin
 {
     public function __construct(
         private SuperAdminRepositoryInterface $superAdminRepository,
         private PasswordHasherInterface $passwordHasher,
     ) {}
 
-    public function __invoke(string $email, string $plainPassword): AuthenticateSuperAdminResponse
+    public function __invoke(AuthenticateSuperAdminCommand $command): AuthenticateSuperAdminResponse
     {
         try {
-            $superAdmin = $this->superAdminRepository->findByEmail(Email::create($email));
+            $superAdmin = $this->superAdminRepository->findByEmail(Email::create($command->email));
         } catch (InvalidArgumentException) {
-            return AuthenticateSuperAdminResponse::invalidCredentials();
+            throw InvalidSuperAdminCredentialsException::create();
         }
 
         if ($superAdmin === null) {
-            return AuthenticateSuperAdminResponse::invalidCredentials();
+            throw InvalidSuperAdminCredentialsException::create();
         }
 
-        if (! $this->passwordHasher->verify($plainPassword, $superAdmin->passwordHash()->value())) {
-            return AuthenticateSuperAdminResponse::invalidCredentials();
+        if (! $this->passwordHasher->verify($command->plainPassword, $superAdmin->passwordHash()->value())) {
+            throw InvalidSuperAdminCredentialsException::create();
         }
 
-        return AuthenticateSuperAdminResponse::success(
-            $superAdmin->id()->value(),
-            $superAdmin->name()->value(),
-            $superAdmin->email()->value(),
+        return AuthenticateSuperAdminResponse::create(
+            id: $superAdmin->id()->value(),
+            name: $superAdmin->name()->value(),
+            email: $superAdmin->email()->value(),
         );
     }
 }

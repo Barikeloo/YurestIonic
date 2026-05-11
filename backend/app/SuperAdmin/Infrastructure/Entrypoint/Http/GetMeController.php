@@ -3,9 +3,9 @@
 namespace App\SuperAdmin\Infrastructure\Entrypoint\Http;
 
 use App\SuperAdmin\Application\GetSuperAdminMe\GetSuperAdminMe;
-use App\SuperAdmin\Application\GetSuperAdminMe\GetSuperAdminMeResponse;
+use App\SuperAdmin\Domain\Exception\SuperAdminNotAuthenticatedException;
+use App\SuperAdmin\Infrastructure\Entrypoint\Http\Requests\GetMeRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class GetMeController
 {
@@ -13,25 +13,20 @@ final class GetMeController
         private GetSuperAdminMe $getSuperAdminMe,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(GetMeRequest $request): JsonResponse
     {
-        $superAdminUuid = $request->session()->get('super_admin_id');
-        $response = $this->getSuperAdminMe->__invoke(is_string($superAdminUuid) ? $superAdminUuid : null);
-
-        if ($response->status() === GetSuperAdminMeResponse::NOT_AUTHENTICATED) {
+        try {
+            $response = ($this->getSuperAdminMe)($request->toCommand());
+        } catch (SuperAdminNotAuthenticatedException $e) {
             $request->session()->forget('super_admin_id');
 
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Not authenticated as superadmin.',
-            ], 401);
+            return new JsonResponse(['message' => $e->getMessage()], 401);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
-        return new JsonResponse([
-            'success' => true,
-            'id' => $response->id(),
-            'name' => $response->name(),
-            'email' => $response->email(),
-        ]);
+        return new JsonResponse($response->toArray());
     }
 }

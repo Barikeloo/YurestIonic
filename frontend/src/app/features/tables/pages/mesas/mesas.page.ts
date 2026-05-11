@@ -7,6 +7,7 @@ import { DinersStatusComponent } from '../../../../shared/components/diners-stat
 import { FilterByPipe } from '../../../../pipes';
 import { MesasFacade, TableWithStatus } from '../../facades/mesas.facade';
 import { OrderStatus } from '../../../../core/enums/order-status.enum';
+import { AuthActionType } from '../../../../core/enums/auth-action-type.enum';
 
 const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#E74C3C'];
 
@@ -79,7 +80,7 @@ export class MesasPage implements OnInit {
       return;
     }
 
-    if (this.pinAuthService.requiresPin('normal')) {
+    if (this.pinAuthService.requiresPin(AuthActionType.NORMAL)) {
       this.showPinAuthModal = true;
     } else {
       this.openOpenTableModal();
@@ -141,7 +142,7 @@ export class MesasPage implements OnInit {
       return;
     }
 
-    if (this.pinAuthService.requiresPin('normal')) {
+    if (this.pinAuthService.requiresPin(AuthActionType.NORMAL)) {
       this.showPinAuthModalForCloseAccount = true;
     } else {
       this.closeAccountModalOpen = true;
@@ -188,7 +189,7 @@ export class MesasPage implements OnInit {
       return;
     }
 
-    if (this.pinAuthService.requiresPin('normal')) {
+    if (this.pinAuthService.requiresPin(AuthActionType.NORMAL)) {
       this.showPinAuthModalForCharge = true;
     } else {
       this.navigateToCaja();
