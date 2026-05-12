@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Sale\Application\UpdateChargeSessionDiners;
 
 use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
+use App\Sale\Domain\Exception\ChargeSessionNotFoundException;
+use App\Sale\Domain\Exception\InvalidDinerCountException;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -15,25 +17,20 @@ final class UpdateChargeSessionDiners
         private readonly ChargeSessionResponseBuilder $responseBuilder,
     ) {}
 
-    public function __invoke(
-        string $chargeSessionId,
-        int $newDinersCount,
-    ): UpdateChargeSessionDinersResponse {
-        if ($newDinersCount <= 0) {
-            throw new \DomainException('Diners count must be greater than 0');
+    public function __invoke(UpdateChargeSessionDinersCommand $command): UpdateChargeSessionDinersResponse
+    {
+        if ($command->newDinersCount <= 0) {
+            throw InvalidDinerCountException::create();
         }
 
-        $sessionUuid = Uuid::create($chargeSessionId);
+        $sessionUuid = Uuid::create($command->chargeSessionId);
 
-        $session = $this->chargeSessionRepository->findById($sessionUuid);
-
-        if ($session === null) {
-            throw new \DomainException('Charge session not found');
-        }
+        $session = $this->chargeSessionRepository->findById($sessionUuid)
+            ?? throw ChargeSessionNotFoundException::withId($command->chargeSessionId);
 
         [$totalCents, $paidCents, $paidDinerNumbers] = $this->responseBuilder->collect($session);
 
-        $session->updateDinersCount($newDinersCount, count($paidDinerNumbers));
+        $session->updateDinersCount($command->newDinersCount, count($paidDinerNumbers));
 
         $this->chargeSessionRepository->save($session);
 

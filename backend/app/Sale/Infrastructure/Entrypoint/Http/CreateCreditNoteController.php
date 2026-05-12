@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
 use App\Sale\Application\CreateCreditNote\CreateCreditNote;
+use App\Sale\Domain\Exception\ParentSaleNotFoundException;
+use App\Sale\Infrastructure\Entrypoint\Http\Requests\CreateCreditNoteRequest;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class CreateCreditNoteController
 {
@@ -16,24 +17,19 @@ final class CreateCreditNoteController
         private readonly TenantContext $tenantContext,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(CreateCreditNoteRequest $request): JsonResponse
     {
-        $request->validate([
-            'order_id' => ['required', 'string', 'uuid'],
-            'parent_sale_id' => ['required', 'string', 'uuid'],
-            'opened_by_user_id' => ['required', 'string', 'uuid'],
-            'total_cents' => ['required', 'integer', 'min:1'],
-            'customer_fiscal_data' => ['sometimes', 'array', 'nullable'],
-        ]);
+        try {
+            $response = ($this->createCreditNote)(
+                $request->toCommand($this->tenantContext->restaurantUuid())
+            );
+        } catch (ParentSaleNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            report($e);
 
-        $response = ($this->createCreditNote)(
-            restaurantId: $this->tenantContext->restaurantUuid(),
-            orderId: $request->input('order_id'),
-            parentSaleId: $request->input('parent_sale_id'),
-            openedByUserId: $request->input('opened_by_user_id'),
-            totalCents: $request->input('total_cents'),
-            customerFiscalData: $request->input('customer_fiscal_data'),
-        );
+            return new JsonResponse(['message' => 'Internal error.'], 500);
+        }
 
         return new JsonResponse($response->toArray(), 201);
     }

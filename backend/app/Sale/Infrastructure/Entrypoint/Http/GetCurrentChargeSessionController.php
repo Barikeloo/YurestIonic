@@ -4,44 +4,28 @@ declare(strict_types=1);
 
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
-use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
-use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
-use App\Shared\Domain\ValueObject\Uuid;
-use App\Shared\Infrastructure\Tenant\TenantContext;
+use App\Sale\Application\GetCurrentChargeSession\GetCurrentChargeSession;
+use App\Sale\Domain\Exception\ChargeSessionNotFoundException;
+use App\Sale\Infrastructure\Entrypoint\Http\Requests\GetCurrentChargeSessionRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class GetCurrentChargeSessionController
 {
     public function __construct(
-        private readonly ChargeSessionRepositoryInterface $chargeSessionRepository,
-        private readonly ChargeSessionResponseBuilder $responseBuilder,
-        private readonly TenantContext $tenantContext,
+        private readonly GetCurrentChargeSession $getCurrentChargeSession,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(GetCurrentChargeSessionRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'order_id' => ['required', 'string', 'uuid'],
-        ]);
+        try {
+            $response = ($this->getCurrentChargeSession)($request->toCommand());
+        } catch (ChargeSessionNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            report($e);
 
-        $restaurantId = $this->tenantContext->restaurantUuid();
-        if ($restaurantId === null) {
-            throw new \RuntimeException('Tenant context is required.');
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
-
-        $orderId = Uuid::create($validated['order_id']);
-
-        $session = $this->chargeSessionRepository->findCurrentByOrderId($orderId);
-
-        if ($session === null) {
-            return new JsonResponse(
-                ['message' => 'No charge session found for this order'],
-                404
-            );
-        }
-
-        $response = $this->responseBuilder->build($session);
 
         return new JsonResponse($response->toArray(), 200);
     }

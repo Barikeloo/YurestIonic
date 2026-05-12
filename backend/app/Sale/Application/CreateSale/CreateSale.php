@@ -207,7 +207,7 @@ final class CreateSale
                 );
             }
 
-            return CreateSaleResponse::create($sale);
+            return CreateSaleResponse::fromSale($sale);
         });
     }
 }

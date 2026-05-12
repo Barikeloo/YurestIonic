@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Application\CancelSale;
 
 use App\Cash\Domain\Entity\CashMovement;
@@ -8,6 +10,8 @@ use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
 use App\Cash\Domain\ValueObject\MovementReasonCode;
 use App\Cash\Domain\ValueObject\MovementType;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Sale\Domain\Exception\SaleAlreadyCancelledException;
+use App\Sale\Domain\Exception\SaleNotFoundException;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -21,28 +25,21 @@ final class CancelSale
         private readonly CashMovementRepositoryInterface $cashMovementRepository,
     ) {}
 
-    public function __invoke(
-        string $saleId,
-        string $cancelledByUserId,
-        string $reason,
-    ): CancelSaleResponse {
-        $saleUuid = Uuid::create($saleId);
-        $sale = $this->saleRepository->findByUuid($saleUuid);
-
-        if ($sale === null) {
-            throw new \DomainException('Sale not found.');
-        }
+    public function __invoke(CancelSaleCommand $command): CancelSaleResponse
+    {
+        $sale = $this->saleRepository->findByUuid(Uuid::create($command->saleId))
+            ?? throw SaleNotFoundException::withId($command->saleId);
 
         if ($sale->isCancelled()) {
-            throw new \DomainException('Sale is already cancelled.');
+            throw SaleAlreadyCancelledException::create();
         }
 
-        $cancelledByUuid = Uuid::create($cancelledByUserId);
+        $cancelledByUuid = Uuid::create($command->cancelledByUserId);
 
         // 1. Cancelar la venta
         $sale->cancel(
             cancelledByUserId: $cancelledByUuid,
-            reason: $reason,
+            reason: $command->reason,
         );
 
         $this->saleRepository->save($sale);
@@ -79,7 +76,7 @@ final class CancelSale
                     reasonCode: MovementReasonCode::cancellation(),
                     amount: Money::create($totalCash),
                     userId: $cancelledByUuid,
-                    description: 'Devolución por cancelación de venta: '.$reason,
+                    description: 'Devolución por cancelación de venta: '.$command->reason,
                 );
                 $this->cashMovementRepository->save($cashMovement);
             }

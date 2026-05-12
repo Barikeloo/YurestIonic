@@ -6,15 +6,31 @@ namespace App\Sale\Application\UpdateChargeSessionDiners;
 
 use App\Sale\Domain\Entity\ChargeSession;
 
-final class UpdateChargeSessionDinersResponse
+final readonly class UpdateChargeSessionDinersResponse
 {
-    public function __construct(
-        public readonly string $id,
-        public readonly int $dinersCount,
-        public readonly int $suggestedPerDinerCents,
-        public readonly int $totalCents,
-        public readonly string $status,
+    private function __construct(
+        public string $id,
+        public int $dinersCount,
+        public int $suggestedPerDinerCents,
+        public int $totalCents,
+        public string $status,
     ) {}
+
+    public static function create(
+        string $id,
+        int $dinersCount,
+        int $suggestedPerDinerCents,
+        int $totalCents,
+        string $status,
+    ): self {
+        return new self(
+            id: $id,
+            dinersCount: $dinersCount,
+            suggestedPerDinerCents: $suggestedPerDinerCents,
+            totalCents: $totalCents,
+            status: $status,
+        );
+    }
 
     public static function fromLiveDebt(
         ChargeSession $chargeSession,

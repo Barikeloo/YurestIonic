@@ -4,20 +4,46 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\RecordChargeSessionPayment;
 
-final class RecordChargeSessionPaymentResponse
+final readonly class RecordChargeSessionPaymentResponse
 {
-    public function __construct(
-        public readonly string $paymentId,
-        public readonly string $chargeSessionId,
-        public readonly ?int $dinerNumber,
-        public readonly int $amountCents,
-        public readonly string $paymentMethod,
-        public readonly string $status,
-        public readonly int $sessionPaidDinersCount,
-        public readonly string $sessionStatus,
-        public readonly int $sessionRemainingCents,
-        public readonly bool $isSessionComplete,
+    private function __construct(
+        public string $paymentId,
+        public string $chargeSessionId,
+        public ?int $dinerNumber,
+        public int $amountCents,
+        public string $paymentMethod,
+        public string $status,
+        public int $sessionPaidDinersCount,
+        public string $sessionStatus,
+        public int $sessionRemainingCents,
+        public bool $isSessionComplete,
     ) {}
+
+    public static function create(
+        string $paymentId,
+        string $chargeSessionId,
+        ?int $dinerNumber,
+        int $amountCents,
+        string $paymentMethod,
+        string $status,
+        int $sessionPaidDinersCount,
+        string $sessionStatus,
+        int $sessionRemainingCents,
+        bool $isSessionComplete,
+    ): self {
+        return new self(
+            paymentId: $paymentId,
+            chargeSessionId: $chargeSessionId,
+            dinerNumber: $dinerNumber,
+            amountCents: $amountCents,
+            paymentMethod: $paymentMethod,
+            status: $status,
+            sessionPaidDinersCount: $sessionPaidDinersCount,
+            sessionStatus: $sessionStatus,
+            sessionRemainingCents: $sessionRemainingCents,
+            isSessionComplete: $isSessionComplete,
+        );
+    }
 
     public function toArray(): array
     {

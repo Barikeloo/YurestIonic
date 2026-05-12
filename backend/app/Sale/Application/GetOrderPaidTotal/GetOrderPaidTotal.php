@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Application\GetOrderPaidTotal;
 
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
@@ -11,20 +13,15 @@ final class GetOrderPaidTotal
         private readonly SaleRepositoryInterface $saleRepository,
     ) {}
 
-    public function __invoke(string $orderId): int
+    public function __invoke(GetOrderPaidTotalCommand $command): GetOrderPaidTotalResponse
     {
-        $orderUuid = Uuid::create($orderId);
-        $sales = $this->saleRepository->findAllByOrderId($orderUuid);
-
-        if (empty($sales)) {
-            return 0;
-        }
+        $sales = $this->saleRepository->findAllByOrderId(Uuid::create($command->orderId));
 
         $total = 0;
         foreach ($sales as $sale) {
             $total += $sale->total()->value();
         }
 
-        return $total;
+        return GetOrderPaidTotalResponse::create(totalCents: $total);
     }
 }

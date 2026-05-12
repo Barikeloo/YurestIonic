@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
 use App\Sale\Application\GetFinalTicketPrint\GetFinalTicketPrint;
+use App\Sale\Domain\Exception\OrderFinalTicketNotFoundException;
+use App\Sale\Infrastructure\Entrypoint\Http\Requests\GetFinalTicketPrintRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 final class GetFinalTicketPrintController
@@ -16,12 +17,16 @@ final class GetFinalTicketPrintController
         private readonly TicketTextFormatter $ticketTextFormatter,
     ) {}
 
-    public function __invoke(Request $request, string $id): JsonResponse|Response
+    public function __invoke(GetFinalTicketPrintRequest $request): JsonResponse|Response
     {
-        $response = ($this->getFinalTicketPrint)($id);
+        try {
+            $response = ($this->getFinalTicketPrint)($request->toCommand());
+        } catch (OrderFinalTicketNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            report($e);
 
-        if ($response === null) {
-            return new JsonResponse(['message' => 'Final ticket not found.'], 404);
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
         $format = strtolower((string) $request->query('format', 'json'));
@@ -32,6 +37,6 @@ final class GetFinalTicketPrintController
             return new Response($text, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
         }
 
-        return new JsonResponse($response->toArray());
+        return new JsonResponse($response->toArray(), 200);
     }
 }

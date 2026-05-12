@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
 use App\Sale\Application\AddLineToSale\AddLineToSale;
+use App\Sale\Domain\Exception\OrderLineNotFoundException;
+use App\Sale\Domain\Exception\ProductNotActiveException;
+use App\Sale\Infrastructure\Entrypoint\Http\Requests\AddLineToSaleRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use InvalidArgumentException;
 
 final class AddLineController
 {
@@ -13,32 +16,18 @@ final class AddLineController
         private readonly AddLineToSale $addLineToSale,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(AddLineToSaleRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'restaurant_id' => ['required', 'string', 'uuid'],
-            'sale_id' => ['required', 'string', 'uuid'],
-            'order_line_id' => ['required', 'string', 'uuid'],
-            'user_id' => ['required', 'string', 'uuid'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'price' => ['required', 'integer', 'min:0'],
-            'tax_percentage' => ['required', 'integer', 'min:0', 'max:100'],
-        ]);
-
         try {
-            $response = ($this->addLineToSale)(
-                restaurantId: $validated['restaurant_id'],
-                saleId: $validated['sale_id'],
-                orderLineId: $validated['order_line_id'],
-                userId: $validated['user_id'],
-                quantity: $validated['quantity'],
-                price: $validated['price'],
-                taxPercentage: $validated['tax_percentage'],
-            );
-        } catch (InvalidArgumentException $exception) {
-            return new JsonResponse([
-                'message' => $exception->getMessage(),
-            ], 422);
+            $response = ($this->addLineToSale)($request->toCommand());
+        } catch (OrderLineNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (ProductNotActiveException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
         return new JsonResponse($response->toArray(), 201);

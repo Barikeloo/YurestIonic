@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
 use App\Sale\Application\DeleteSale\DeleteSale;
+use App\Sale\Domain\Exception\SaleNotFoundException;
+use App\Sale\Infrastructure\Entrypoint\Http\Requests\DeleteSaleRequest;
 use Illuminate\Http\JsonResponse;
 
 final class DeleteController
@@ -11,12 +15,16 @@ final class DeleteController
         private readonly DeleteSale $deleteSale,
     ) {}
 
-    public function __invoke(string $id): JsonResponse
+    public function __invoke(DeleteSaleRequest $request): JsonResponse
     {
-        $deleted = ($this->deleteSale)($id);
+        try {
+            ($this->deleteSale)($request->toCommand());
+        } catch (SaleNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            report($e);
 
-        if (! $deleted) {
-            return new JsonResponse(['message' => 'Sale not found.'], 404);
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
         return new JsonResponse(status: 204);

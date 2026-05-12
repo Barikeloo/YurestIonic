@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
 use App\Sale\Application\GetPaymentTicket\GetPaymentTicket;
+use App\Sale\Domain\Exception\SaleNotFoundException;
+use App\Sale\Domain\Exception\SalePaymentsNotFoundException;
+use App\Sale\Infrastructure\Entrypoint\Http\Requests\GetPaymentTicketRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 final class GetPaymentTicketController
@@ -16,12 +18,18 @@ final class GetPaymentTicketController
         private readonly TicketTextFormatter $ticketTextFormatter,
     ) {}
 
-    public function __invoke(Request $request, string $id): JsonResponse|Response
+    public function __invoke(GetPaymentTicketRequest $request): JsonResponse|Response
     {
-        $response = ($this->getPaymentTicket)($id);
+        try {
+            $response = ($this->getPaymentTicket)($request->toCommand());
+        } catch (SaleNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (SalePaymentsNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 409);
+        } catch (\Throwable $e) {
+            report($e);
 
-        if ($response === null) {
-            return new JsonResponse(['message' => 'Payment ticket not found.'], 404);
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
         $format = strtolower((string) $request->query('format', 'json'));
@@ -32,6 +40,6 @@ final class GetPaymentTicketController
             return new Response($text, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
         }
 
-        return new JsonResponse($response->toArray());
+        return new JsonResponse($response->toArray(), 200);
     }
 }

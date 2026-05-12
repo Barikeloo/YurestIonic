@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Sale\Application\CreateCreditNote;
 
 use App\Sale\Domain\Entity\Sale;
+use App\Sale\Domain\Exception\ParentSaleNotFoundException;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Sale\Domain\ValueObject\CustomerFiscalData;
 use App\Sale\Domain\ValueObject\DocumentType;
@@ -17,38 +18,30 @@ final class CreateCreditNote
         private readonly SaleRepositoryInterface $saleRepository,
     ) {}
 
-    public function __invoke(
-        string $restaurantId,
-        string $orderId,
-        string $parentSaleId,
-        string $openedByUserId,
-        int $totalCents,
-        ?array $customerFiscalData = null,
-    ): CreateCreditNoteResponse {
-        $parentSale = $this->saleRepository->findByUuid(Uuid::create($parentSaleId));
-        if ($parentSale === null) {
-            throw new \DomainException('Parent sale not found.');
-        }
+    public function __invoke(CreateCreditNoteCommand $command): CreateCreditNoteResponse
+    {
+        $parentSale = $this->saleRepository->findByUuid(Uuid::create($command->parentSaleId))
+            ?? throw ParentSaleNotFoundException::withId($command->parentSaleId);
 
-        $fiscalData = $customerFiscalData !== null
-            ? CustomerFiscalData::fromArray($customerFiscalData)
+        $fiscalData = $command->customerFiscalData !== null
+            ? CustomerFiscalData::fromArray($command->customerFiscalData)
             : $parentSale->customerFiscalData();
 
         $creditNote = Sale::dddCreate(
             id: Uuid::generate(),
-            restaurantId: Uuid::create($restaurantId),
-            orderId: Uuid::create($orderId),
-            openedByUserId: Uuid::create($openedByUserId),
+            restaurantId: Uuid::create($command->restaurantId),
+            orderId: Uuid::create($command->orderId),
+            openedByUserId: Uuid::create($command->openedByUserId),
             cashSessionId: null,
-            parentSaleId: Uuid::create($parentSaleId),
+            parentSaleId: Uuid::create($command->parentSaleId),
             documentType: DocumentType::creditNote(),
             customerFiscalData: $fiscalData,
         );
 
         $creditNote->close(
-            closedByUserId: Uuid::create($openedByUserId),
+            closedByUserId: Uuid::create($command->openedByUserId),
             ticketNumber: $parentSale->ticketNumber(),
-            total: SaleTotal::create(abs($totalCents)),
+            total: SaleTotal::create(abs($command->totalCents)),
         );
 
         $this->saleRepository->save($creditNote);

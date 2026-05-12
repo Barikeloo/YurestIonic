@@ -4,27 +4,67 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\GetPaymentTicket;
 
-final class GetPaymentTicketResponse
+final readonly class GetPaymentTicketResponse
 {
     private function __construct(
-        public readonly string $type,
-        public readonly string $saleId,
-        public readonly string $orderId,
-        public readonly ?int $ticketNumber,
-        public readonly ?array $restaurant,
-        public readonly ?array $table,
-        public readonly ?int $totalConsumedCents,
-        public readonly int $totalPaidCents,
-        public readonly ?int $remainingCents,
-        public readonly array $payments,
-        public readonly ?string $issuedAt,
-        public readonly ?string $issuedTime,
-        public readonly ?array $lines,
-        public readonly ?array $taxBreakdown,
-        public readonly ?int $zReportNumber,
-        public readonly ?string $operator,
-        public readonly ?array $snapshot,
+        public string $type,
+        public string $saleId,
+        public string $orderId,
+        public ?int $ticketNumber,
+        public ?array $restaurant,
+        public ?array $table,
+        public ?int $totalConsumedCents,
+        public int $totalPaidCents,
+        public ?int $remainingCents,
+        public array $payments,
+        public ?string $issuedAt,
+        public ?string $issuedTime,
+        public ?array $lines,
+        public ?array $taxBreakdown,
+        public ?int $zReportNumber,
+        public ?string $operator,
+        public ?array $snapshot,
     ) {}
+
+    public static function create(
+        string $type,
+        string $saleId,
+        string $orderId,
+        ?int $ticketNumber,
+        ?array $restaurant,
+        ?array $table,
+        ?int $totalConsumedCents,
+        int $totalPaidCents,
+        ?int $remainingCents,
+        array $payments,
+        ?string $issuedAt,
+        ?string $issuedTime,
+        ?array $lines,
+        ?array $taxBreakdown,
+        ?int $zReportNumber,
+        ?string $operator,
+        ?array $snapshot,
+    ): self {
+        return new self(
+            type: $type,
+            saleId: $saleId,
+            orderId: $orderId,
+            ticketNumber: $ticketNumber,
+            restaurant: $restaurant,
+            table: $table,
+            totalConsumedCents: $totalConsumedCents,
+            totalPaidCents: $totalPaidCents,
+            remainingCents: $remainingCents,
+            payments: $payments,
+            issuedAt: $issuedAt,
+            issuedTime: $issuedTime,
+            lines: $lines,
+            taxBreakdown: $taxBreakdown,
+            zReportNumber: $zReportNumber,
+            operator: $operator,
+            snapshot: $snapshot,
+        );
+    }
 
     public static function fromPayload(
         string $saleId,

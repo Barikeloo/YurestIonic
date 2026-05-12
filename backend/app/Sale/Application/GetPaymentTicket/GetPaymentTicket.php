@@ -9,6 +9,8 @@ use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
+use App\Sale\Domain\Exception\SaleNotFoundException;
+use App\Sale\Domain\Exception\SalePaymentsNotFoundException;
 use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -29,17 +31,14 @@ final class GetPaymentTicket
         private readonly CashSessionRepositoryInterface $cashSessionRepository,
     ) {}
 
-    public function __invoke(string $saleId): ?GetPaymentTicketResponse
+    public function __invoke(GetPaymentTicketCommand $command): GetPaymentTicketResponse
     {
-        $sale = $this->saleRepository->findByUuid(Uuid::create($saleId));
-
-        if ($sale === null) {
-            return null;
-        }
+        $sale = $this->saleRepository->findByUuid(Uuid::create($command->saleId))
+            ?? throw SaleNotFoundException::withId($command->saleId);
 
         $payments = $this->salePaymentRepository->findBySaleId($sale->uuid());
         if (count($payments) === 0) {
-            throw new \DomainException('No payments found for this sale');
+            throw SalePaymentsNotFoundException::create();
         }
 
         $order = $this->orderRepository->findByUuid($sale->orderId());

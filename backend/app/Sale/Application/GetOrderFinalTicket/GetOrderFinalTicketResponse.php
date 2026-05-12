@@ -6,20 +6,46 @@ namespace App\Sale\Application\GetOrderFinalTicket;
 
 use App\Sale\Domain\Entity\OrderFinalTicket;
 
-final class GetOrderFinalTicketResponse
+final readonly class GetOrderFinalTicketResponse
 {
     private function __construct(
-        public readonly string $id,
-        public readonly string $restaurantId,
-        public readonly string $orderId,
-        public readonly string $closedByUserId,
-        public readonly int $ticketNumber,
-        public readonly int $totalConsumedCents,
-        public readonly int $totalPaidCents,
-        public readonly array $paymentsSnapshot,
-        public readonly string $createdAt,
-        public readonly string $updatedAt,
+        public string $id,
+        public string $restaurantId,
+        public string $orderId,
+        public string $closedByUserId,
+        public int $ticketNumber,
+        public int $totalConsumedCents,
+        public int $totalPaidCents,
+        public array $paymentsSnapshot,
+        public string $createdAt,
+        public string $updatedAt,
     ) {}
+
+    public static function create(
+        string $id,
+        string $restaurantId,
+        string $orderId,
+        string $closedByUserId,
+        int $ticketNumber,
+        int $totalConsumedCents,
+        int $totalPaidCents,
+        array $paymentsSnapshot,
+        string $createdAt,
+        string $updatedAt,
+    ): self {
+        return new self(
+            id: $id,
+            restaurantId: $restaurantId,
+            orderId: $orderId,
+            closedByUserId: $closedByUserId,
+            ticketNumber: $ticketNumber,
+            totalConsumedCents: $totalConsumedCents,
+            totalPaidCents: $totalPaidCents,
+            paymentsSnapshot: $paymentsSnapshot,
+            createdAt: $createdAt,
+            updatedAt: $updatedAt,
+        );
+    }
 
     public static function fromEntity(OrderFinalTicket $ticket): self
     {

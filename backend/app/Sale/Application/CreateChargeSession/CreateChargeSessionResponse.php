@@ -6,21 +6,49 @@ namespace App\Sale\Application\CreateChargeSession;
 
 use App\Sale\Domain\Entity\ChargeSession;
 
-final class CreateChargeSessionResponse
+final readonly class CreateChargeSessionResponse
 {
     private function __construct(
-        public readonly string $id,
-        public readonly string $orderId,
-        public readonly int $dinersCount,
-        public readonly int $totalCents,
-        public readonly int $paidCents,
-        public readonly int $remainingCents,
-        public readonly int $suggestedPerDinerCents,
-        public readonly array $paidDinerNumbers,
-        public readonly string $status,
-        public readonly string $createdAt,
-        public readonly string $updatedAt,
+        public string $id,
+        public string $orderId,
+        public int $dinersCount,
+        public int $totalCents,
+        public int $paidCents,
+        public int $remainingCents,
+        public int $suggestedPerDinerCents,
+        public array $paidDinerNumbers,
+        public string $status,
+        public string $createdAt,
+        public string $updatedAt,
     ) {}
+
+    public static function create(
+        string $id,
+        string $orderId,
+        int $dinersCount,
+        int $totalCents,
+        int $paidCents,
+        int $remainingCents,
+        int $suggestedPerDinerCents,
+        array $paidDinerNumbers,
+        string $status,
+        string $createdAt,
+        string $updatedAt,
+    ): self {
+        return new self(
+            id: $id,
+            orderId: $orderId,
+            dinersCount: $dinersCount,
+            totalCents: $totalCents,
+            paidCents: $paidCents,
+            remainingCents: $remainingCents,
+            suggestedPerDinerCents: $suggestedPerDinerCents,
+            paidDinerNumbers: $paidDinerNumbers,
+            status: $status,
+            createdAt: $createdAt,
+            updatedAt: $updatedAt,
+        );
+    }
 
     public static function fromLiveDebt(
         ChargeSession $session,

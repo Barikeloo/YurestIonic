@@ -1,8 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
 use App\Sale\Application\GetSale\GetSale;
+use App\Sale\Domain\Exception\SaleNotFoundException;
+use App\Sale\Infrastructure\Entrypoint\Http\Requests\GetSaleRequest;
 use Illuminate\Http\JsonResponse;
 
 final class GetController
@@ -11,14 +15,18 @@ final class GetController
         private readonly GetSale $getSale,
     ) {}
 
-    public function __invoke(string $id): JsonResponse
+    public function __invoke(GetSaleRequest $request): JsonResponse
     {
-        $response = ($this->getSale)($id);
+        try {
+            $response = ($this->getSale)($request->toCommand());
+        } catch (SaleNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            report($e);
 
-        if ($response === null) {
-            return new JsonResponse(['message' => 'Sale not found.'], 404);
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
-        return new JsonResponse($response->toArray());
+        return new JsonResponse($response->toArray(), 200);
     }
 }

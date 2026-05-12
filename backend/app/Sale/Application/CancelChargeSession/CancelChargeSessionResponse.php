@@ -6,16 +6,34 @@ namespace App\Sale\Application\CancelChargeSession;
 
 use App\Sale\Domain\Entity\ChargeSession;
 
-final class CancelChargeSessionResponse
+final readonly class CancelChargeSessionResponse
 {
-    public function __construct(
-        public readonly string $id,
-        public readonly string $status,
-        public readonly int $paidDinersCount,
-        public readonly int $sessionPaidCents,
-        public readonly ?string $warningMessage,
-        public readonly array $paidDiners,
+    private function __construct(
+        public string $id,
+        public string $status,
+        public int $paidDinersCount,
+        public int $sessionPaidCents,
+        public ?string $warningMessage,
+        public array $paidDiners,
     ) {}
+
+    public static function create(
+        string $id,
+        string $status,
+        int $paidDinersCount,
+        int $sessionPaidCents,
+        ?string $warningMessage,
+        array $paidDiners,
+    ): self {
+        return new self(
+            id: $id,
+            status: $status,
+            paidDinersCount: $paidDinersCount,
+            sessionPaidCents: $sessionPaidCents,
+            warningMessage: $warningMessage,
+            paidDiners: $paidDiners,
+        );
+    }
 
     public static function fromEntity(
         ChargeSession $chargeSession,

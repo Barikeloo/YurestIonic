@@ -1,25 +1,53 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Application\CreateSale;
 
 use App\Sale\Domain\Entity\Sale;
 
-final class CreateSaleResponse
+final readonly class CreateSaleResponse
 {
     private function __construct(
-        public readonly string $id,
-        public readonly string $uuid,
-        public readonly string $restaurantId,
-        public readonly string $orderId,
-        public readonly string $openedByUserId,
-        public readonly ?string $closedByUserId,
-        public readonly ?int $ticketNumber,
-        public readonly string $valueDate,
-        public readonly int $total,
-        public readonly string $status,
+        public string $id,
+        public string $uuid,
+        public string $restaurantId,
+        public string $orderId,
+        public string $openedByUserId,
+        public ?string $closedByUserId,
+        public ?int $ticketNumber,
+        public string $valueDate,
+        public int $total,
+        public string $status,
     ) {}
 
-    public static function create(Sale $sale): self
+    public static function create(
+        string $id,
+        string $uuid,
+        string $restaurantId,
+        string $orderId,
+        string $openedByUserId,
+        ?string $closedByUserId,
+        ?int $ticketNumber,
+        string $valueDate,
+        int $total,
+        string $status,
+    ): self {
+        return new self(
+            id: $id,
+            uuid: $uuid,
+            restaurantId: $restaurantId,
+            orderId: $orderId,
+            openedByUserId: $openedByUserId,
+            closedByUserId: $closedByUserId,
+            ticketNumber: $ticketNumber,
+            valueDate: $valueDate,
+            total: $total,
+            status: $status,
+        );
+    }
+
+    public static function fromSale(Sale $sale): self
     {
         return new self(
             id: $sale->id()->value(),

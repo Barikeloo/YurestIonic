@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Application\DeleteSale;
 
+use App\Sale\Domain\Exception\SaleNotFoundException;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -11,17 +14,11 @@ final class DeleteSale
         private readonly SaleRepositoryInterface $saleRepository,
     ) {}
 
-    public function __invoke(string $id): bool
+    public function __invoke(DeleteSaleCommand $command): void
     {
-        $saleId = Uuid::create($id);
-        $sale = $this->saleRepository->findByUuid($saleId);
-
-        if ($sale === null) {
-            return false;
-        }
+        $sale = $this->saleRepository->findByUuid(Uuid::create($command->id))
+            ?? throw SaleNotFoundException::withId($command->id);
 
         $this->saleRepository->delete($sale->id());
-
-        return true;
     }
 }

@@ -1,23 +1,47 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Application\AddLineToSale;
 
 use App\Sale\Domain\Entity\SaleLine;
 
-final class AddLineToSaleResponse
+final readonly class AddLineToSaleResponse
 {
     private function __construct(
-        public readonly string $id,
-        public readonly string $uuid,
-        public readonly string $saleId,
-        public readonly string $orderLineId,
-        public readonly string $productId,
-        public readonly int $quantity,
-        public readonly int $price,
-        public readonly int $taxPercentage,
+        public string $id,
+        public string $uuid,
+        public string $saleId,
+        public string $orderLineId,
+        public string $productId,
+        public int $quantity,
+        public int $price,
+        public int $taxPercentage,
     ) {}
 
-    public static function create(SaleLine $saleLine): self
+    public static function create(
+        string $id,
+        string $uuid,
+        string $saleId,
+        string $orderLineId,
+        string $productId,
+        int $quantity,
+        int $price,
+        int $taxPercentage,
+    ): self {
+        return new self(
+            id: $id,
+            uuid: $uuid,
+            saleId: $saleId,
+            orderLineId: $orderLineId,
+            productId: $productId,
+            quantity: $quantity,
+            price: $price,
+            taxPercentage: $taxPercentage,
+        );
+    }
+
+    public static function fromSaleLine(SaleLine $saleLine): self
     {
         return new self(
             id: $saleLine->id()->value(),

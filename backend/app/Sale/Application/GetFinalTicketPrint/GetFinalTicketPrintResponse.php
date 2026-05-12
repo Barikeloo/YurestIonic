@@ -4,25 +4,61 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\GetFinalTicketPrint;
 
-final class GetFinalTicketPrintResponse
+final readonly class GetFinalTicketPrintResponse
 {
     private function __construct(
-        public readonly string $type,
-        public readonly string $ticketId,
-        public readonly string $orderId,
-        public readonly int $ticketNumber,
-        public readonly ?array $restaurant,
-        public readonly ?array $table,
-        public readonly int $totalConsumedCents,
-        public readonly int $totalPaidCents,
-        public readonly array $taxBreakdown,
-        public readonly array $paymentsSnapshot,
-        public readonly string $createdAt,
-        public readonly ?string $createdTime,
-        public readonly ?array $orderLines,
-        public readonly ?int $zReportNumber,
-        public readonly ?string $operator,
+        public string $type,
+        public string $ticketId,
+        public string $orderId,
+        public int $ticketNumber,
+        public ?array $restaurant,
+        public ?array $table,
+        public int $totalConsumedCents,
+        public int $totalPaidCents,
+        public array $taxBreakdown,
+        public array $paymentsSnapshot,
+        public string $createdAt,
+        public ?string $createdTime,
+        public ?array $orderLines,
+        public ?int $zReportNumber,
+        public ?string $operator,
     ) {}
+
+    public static function create(
+        string $type,
+        string $ticketId,
+        string $orderId,
+        int $ticketNumber,
+        ?array $restaurant,
+        ?array $table,
+        int $totalConsumedCents,
+        int $totalPaidCents,
+        array $taxBreakdown,
+        array $paymentsSnapshot,
+        string $createdAt,
+        ?string $createdTime,
+        ?array $orderLines,
+        ?int $zReportNumber,
+        ?string $operator,
+    ): self {
+        return new self(
+            type: $type,
+            ticketId: $ticketId,
+            orderId: $orderId,
+            ticketNumber: $ticketNumber,
+            restaurant: $restaurant,
+            table: $table,
+            totalConsumedCents: $totalConsumedCents,
+            totalPaidCents: $totalPaidCents,
+            taxBreakdown: $taxBreakdown,
+            paymentsSnapshot: $paymentsSnapshot,
+            createdAt: $createdAt,
+            createdTime: $createdTime,
+            orderLines: $orderLines,
+            zReportNumber: $zReportNumber,
+            operator: $operator,
+        );
+    }
 
     public static function fromPayload(
         string $ticketId,

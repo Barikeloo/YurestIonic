@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Application\ListSales;
 
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
@@ -10,12 +12,12 @@ final class ListSales
         private readonly SaleRepositoryInterface $saleRepository,
     ) {}
 
-    public function __invoke(): array
+    public function __invoke(ListSalesCommand $command): array
     {
         $sales = $this->saleRepository->all();
 
         return array_map(
-            static fn ($sale): array => ListSalesResponse::create($sale)->toArray(),
+            static fn ($sale): ListSalesResponse => ListSalesResponse::fromSale($sale),
             $sales,
         );
     }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Sale\Application\CancelChargeSession;
 
 use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
+use App\Sale\Domain\Exception\ChargeSessionNotActiveException;
+use App\Sale\Domain\Exception\ChargeSessionNotFoundException;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -15,24 +17,16 @@ final class CancelChargeSession
         private readonly ChargeSessionResponseBuilder $responseBuilder,
     ) {}
 
-    public function __invoke(
-        string $chargeSessionId,
-        string $cancelledByUserId,
-        ?string $reason = null,
-    ): CancelChargeSessionResponse {
-        $sessionUuid = Uuid::create($chargeSessionId);
-        $userUuid = Uuid::create($cancelledByUserId);
+    public function __invoke(CancelChargeSessionCommand $command): CancelChargeSessionResponse
+    {
+        $sessionUuid = Uuid::create($command->chargeSessionId);
+        $userUuid = Uuid::create($command->cancelledByUserId);
 
-        $session = $this->chargeSessionRepository->findById($sessionUuid);
-
-        if ($session === null) {
-            throw new \DomainException('Charge session not found');
-        }
+        $session = $this->chargeSessionRepository->findById($sessionUuid)
+            ?? throw ChargeSessionNotFoundException::withId($command->chargeSessionId);
 
         if (! $session->status()->isActive()) {
-            throw new \DomainException(
-                'Cannot cancel charge session: status is '.$session->status()->value()
-            );
+            throw ChargeSessionNotActiveException::create();
         }
 
         [$totalCents, $paidCents, $paidDinerNumbers] = $this->responseBuilder->collect($session);
@@ -46,7 +40,7 @@ final class CancelChargeSession
                 'Se requiere devolución manual al cliente.';
         }
 
-        $session->cancel($userUuid, $reason);
+        $session->cancel($userUuid, $command->reason);
 
         $this->chargeSessionRepository->save($session);
 

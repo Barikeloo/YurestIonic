@@ -9,6 +9,7 @@ use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
+use App\Sale\Domain\Exception\OrderFinalTicketNotFoundException;
 use App\Sale\Domain\Interfaces\OrderFinalTicketRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
@@ -27,14 +28,11 @@ final class GetFinalTicketPrint
         private readonly ProductRepositoryInterface $productRepository,
     ) {}
 
-    public function __invoke(string $orderId): ?GetFinalTicketPrintResponse
+    public function __invoke(GetFinalTicketPrintCommand $command): GetFinalTicketPrintResponse
     {
-        $orderUuid = Uuid::create($orderId);
-        $ticket = $this->orderFinalTicketRepository->findByOrderId($orderUuid);
-
-        if ($ticket === null) {
-            return null;
-        }
+        $orderUuid = Uuid::create($command->orderId);
+        $ticket = $this->orderFinalTicketRepository->findByOrderId($orderUuid)
+            ?? throw OrderFinalTicketNotFoundException::withOrderId($command->orderId);
 
         $order = $this->orderRepository->findByUuid($orderUuid);
         $table = $order !== null

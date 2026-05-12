@@ -2,6 +2,7 @@
 
 namespace App\Sale\Application\GetSale;
 
+use App\Sale\Domain\Exception\SaleNotFoundException;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -11,15 +12,11 @@ final class GetSale
         private readonly SaleRepositoryInterface $saleRepository,
     ) {}
 
-    public function __invoke(string $id): ?GetSaleResponse
+    public function __invoke(GetSaleCommand $command): GetSaleResponse
     {
-        $saleId = Uuid::create($id);
-        $sale = $this->saleRepository->findByUuid($saleId);
+        $sale = $this->saleRepository->findByUuid(Uuid::create($command->id))
+            ?? throw SaleNotFoundException::withId($command->id);
 
-        if ($sale === null) {
-            return null;
-        }
-
-        return GetSaleResponse::create($sale);
+        return GetSaleResponse::fromSale($sale);
     }
 }

@@ -1,10 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
 use App\Sale\Application\CancelSale\CancelSale;
+use App\Sale\Domain\Exception\SaleAlreadyCancelledException;
+use App\Sale\Domain\Exception\SaleNotFoundException;
+use App\Sale\Infrastructure\Entrypoint\Http\Requests\CancelSaleRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class CancelSaleController
 {
@@ -12,19 +16,19 @@ final class CancelSaleController
         private readonly CancelSale $cancelSale,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(CancelSaleRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'sale_id' => ['required', 'string', 'uuid'],
-            'cancelled_by_user_id' => ['required', 'string', 'uuid'],
-            'reason' => ['required', 'string'],
-        ]);
+        try {
+            $response = ($this->cancelSale)($request->toCommand());
+        } catch (SaleNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (SaleAlreadyCancelledException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 409);
+        } catch (\Throwable $e) {
+            report($e);
 
-        $response = ($this->cancelSale)(
-            saleId: $validated['sale_id'],
-            cancelledByUserId: $validated['cancelled_by_user_id'],
-            reason: $validated['reason'],
-        );
+            return new JsonResponse(['message' => 'Internal error.'], 500);
+        }
 
         return new JsonResponse($response->toArray(), 200);
     }

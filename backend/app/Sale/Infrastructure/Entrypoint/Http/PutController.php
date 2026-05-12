@@ -1,11 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
 use App\Sale\Application\UpdateSale\UpdateSale;
+use App\Sale\Domain\Exception\SaleAlreadyClosedException;
+use App\Sale\Domain\Exception\SaleMustHaveLinesException;
+use App\Sale\Domain\Exception\SaleNotFoundException;
+use App\Sale\Infrastructure\Entrypoint\Http\Requests\UpdateSaleRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use InvalidArgumentException;
 
 final class PutController
 {
@@ -13,29 +17,22 @@ final class PutController
         private readonly UpdateSale $updateSale,
     ) {}
 
-    public function __invoke(Request $request, string $id): JsonResponse
+    public function __invoke(UpdateSaleRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'closed_by_user_id' => ['required', 'string', 'uuid'],
-            'ticket_number' => ['required', 'integer', 'min:1'],
-        ]);
-
         try {
-            $response = ($this->updateSale)(
-                id: $id,
-                closedByUserId: $validated['closed_by_user_id'],
-                ticketNumber: $validated['ticket_number'],
-            );
-        } catch (InvalidArgumentException $exception) {
-            return new JsonResponse([
-                'message' => $exception->getMessage(),
-            ], 422);
+            $response = ($this->updateSale)($request->toCommand());
+        } catch (SaleNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (SaleAlreadyClosedException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 409);
+        } catch (SaleMustHaveLinesException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
-        if ($response === null) {
-            return new JsonResponse(['message' => 'Sale not found.'], 404);
-        }
-
-        return new JsonResponse($response->toArray());
+        return new JsonResponse($response->toArray(), 200);
     }
 }

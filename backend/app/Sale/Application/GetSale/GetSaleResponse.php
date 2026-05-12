@@ -4,31 +4,55 @@ namespace App\Sale\Application\GetSale;
 
 use App\Sale\Domain\Entity\Sale;
 
-final class GetSaleResponse
+final readonly class GetSaleResponse
 {
-    public function __construct(
-        public readonly string $id,
-        public readonly string $uuid,
-        public readonly string $restaurant_id,
-        public readonly string $order_id,
-        public readonly string $opened_by_user_id,
-        public readonly ?string $closed_by_user_id,
-        public readonly ?int $ticket_number,
-        public readonly string $value_date,
-        public readonly int $total,
+    private function __construct(
+        public string $id,
+        public string $uuid,
+        public string $restaurantId,
+        public string $orderId,
+        public string $openedByUserId,
+        public ?string $closedByUserId,
+        public ?int $ticketNumber,
+        public string $valueDate,
+        public int $total,
     ) {}
 
-    public static function create(Sale $sale): self
-    {
+    public static function create(
+        string $id,
+        string $uuid,
+        string $restaurantId,
+        string $orderId,
+        string $openedByUserId,
+        ?string $closedByUserId,
+        ?int $ticketNumber,
+        string $valueDate,
+        int $total,
+    ): self {
         return new self(
+            id: $id,
+            uuid: $uuid,
+            restaurantId: $restaurantId,
+            orderId: $orderId,
+            openedByUserId: $openedByUserId,
+            closedByUserId: $closedByUserId,
+            ticketNumber: $ticketNumber,
+            valueDate: $valueDate,
+            total: $total,
+        );
+    }
+
+    public static function fromSale(Sale $sale): self
+    {
+        return self::create(
             id: $sale->id()->value(),
             uuid: $sale->uuid()->value(),
-            restaurant_id: $sale->restaurantId()->value(),
-            order_id: $sale->orderId()->value(),
-            opened_by_user_id: $sale->openedByUserId()->value(),
-            closed_by_user_id: $sale->closedByUserId()?->value(),
-            ticket_number: $sale->ticketNumber()?->value(),
-            value_date: $sale->valueDate()->format('Y-m-d H:i:s'),
+            restaurantId: $sale->restaurantId()->value(),
+            orderId: $sale->orderId()->value(),
+            openedByUserId: $sale->openedByUserId()->value(),
+            closedByUserId: $sale->closedByUserId()?->value(),
+            ticketNumber: $sale->ticketNumber()?->value(),
+            valueDate: $sale->valueDate()->format('Y-m-d H:i:s'),
             total: $sale->total()->value(),
         );
     }
@@ -38,12 +62,12 @@ final class GetSaleResponse
         return [
             'id' => $this->id,
             'uuid' => $this->uuid,
-            'restaurant_id' => $this->restaurant_id,
-            'order_id' => $this->order_id,
-            'opened_by_user_id' => $this->opened_by_user_id,
-            'closed_by_user_id' => $this->closed_by_user_id,
-            'ticket_number' => $this->ticket_number,
-            'value_date' => $this->value_date,
+            'restaurant_id' => $this->restaurantId,
+            'order_id' => $this->orderId,
+            'opened_by_user_id' => $this->openedByUserId,
+            'closed_by_user_id' => $this->closedByUserId,
+            'ticket_number' => $this->ticketNumber,
+            'value_date' => $this->valueDate,
             'total' => $this->total,
         ];
     }

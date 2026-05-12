@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Sale\Infrastructure\Entrypoint\Http;
 
 use App\Sale\Application\GetOrderFinalTicket\GetOrderFinalTicket;
+use App\Sale\Domain\Exception\OrderFinalTicketNotFoundException;
+use App\Sale\Infrastructure\Entrypoint\Http\Requests\GetOrderFinalTicketRequest;
 use Illuminate\Http\JsonResponse;
 
 final class GetOrderFinalTicketController
@@ -13,14 +15,18 @@ final class GetOrderFinalTicketController
         private readonly GetOrderFinalTicket $getOrderFinalTicket,
     ) {}
 
-    public function __invoke(string $id): JsonResponse
+    public function __invoke(GetOrderFinalTicketRequest $request): JsonResponse
     {
-        $response = ($this->getOrderFinalTicket)($id);
+        try {
+            $response = ($this->getOrderFinalTicket)($request->toCommand());
+        } catch (OrderFinalTicketNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            report($e);
 
-        if ($response === null) {
-            return new JsonResponse(['message' => 'Final ticket not found.'], 404);
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
-        return new JsonResponse($response->toArray());
+        return new JsonResponse($response->toArray(), 200);
     }
 }

@@ -1,13 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Application\UpdateSale;
 
+use App\Sale\Domain\Exception\SaleAlreadyClosedException;
+use App\Sale\Domain\Exception\SaleMustHaveLinesException;
+use App\Sale\Domain\Exception\SaleNotFoundException;
 use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Sale\Domain\ValueObject\SaleTicketNumber;
 use App\Sale\Domain\ValueObject\SaleTotal;
 use App\Shared\Domain\ValueObject\Uuid;
-use InvalidArgumentException;
 
 final class UpdateSale
 {
@@ -16,25 +20,19 @@ final class UpdateSale
         private readonly SaleLineRepositoryInterface $saleLineRepository,
     ) {}
 
-    public function __invoke(
-        string $id,
-        string $closedByUserId,
-        int $ticketNumber,
-    ): ?UpdateSaleResponse {
-        $sale = $this->saleRepository->findByUuid(Uuid::create($id));
-
-        if ($sale === null) {
-            return null;
-        }
+    public function __invoke(UpdateSaleCommand $command): UpdateSaleResponse
+    {
+        $sale = $this->saleRepository->findByUuid(Uuid::create($command->id))
+            ?? throw SaleNotFoundException::withId($command->id);
 
         if ($sale->closedByUserId() !== null) {
-            throw new InvalidArgumentException('Sale is already closed.');
+            throw SaleAlreadyClosedException::create();
         }
 
         $saleLines = $this->saleLineRepository->findBySaleId($sale->id());
 
         if ($saleLines === []) {
-            throw new InvalidArgumentException('A sale must have at least one line before closing.');
+            throw SaleMustHaveLinesException::create();
         }
 
         $total = 0;
@@ -43,13 +41,13 @@ final class UpdateSale
         }
 
         $sale->close(
-            closedByUserId: Uuid::create($closedByUserId),
-            ticketNumber: SaleTicketNumber::create($ticketNumber),
+            closedByUserId: Uuid::create($command->closedByUserId),
+            ticketNumber: SaleTicketNumber::create($command->ticketNumber),
             total: SaleTotal::create($total),
         );
 
         $this->saleRepository->save($sale);
 
-        return UpdateSaleResponse::create($sale);
+        return UpdateSaleResponse::fromSale($sale);
     }
 }

@@ -8,6 +8,12 @@ use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
 use App\Sale\Application\CreateOrderFinalTicket\CreateOrderFinalTicket;
 use App\Sale\Application\CreateSale\CreateSale;
+use App\Sale\Domain\Exception\ChargeSessionHasNoRemainingDebtException;
+use App\Sale\Domain\Exception\ChargeSessionNotActiveException;
+use App\Sale\Domain\Exception\ChargeSessionNotFoundException;
+use App\Sale\Domain\Exception\InvalidDinerCountException;
+use App\Sale\Domain\Exception\PaymentAmountExceedsDebtException;
+use App\Sale\Domain\Exception\PaymentAmountMustBePositiveException;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -21,29 +27,19 @@ final class RecordChargeSessionPayment
         private readonly CreateOrderFinalTicket $createOrderFinalTicket,
     ) {}
 
-    public function __invoke(
-        string $chargeSessionId,
-        string $paymentMethod,
-        string $openedByUserId,
-        string $closedByUserId,
-        string $deviceId,
-        ?int $dinerNumber = null,
-        ?int $amountCents = null,
-    ): RecordChargeSessionPaymentResponse {
-        $sessionUuid = Uuid::create($chargeSessionId);
+    public function __invoke(RecordChargeSessionPaymentCommand $command): RecordChargeSessionPaymentResponse
+    {
+        $sessionUuid = Uuid::create($command->chargeSessionId);
 
-        $session = $this->chargeSessionRepository->findById($sessionUuid);
-
-        if ($session === null) {
-            throw new \DomainException('Charge session not found');
-        }
+        $session = $this->chargeSessionRepository->findById($sessionUuid)
+            ?? throw ChargeSessionNotFoundException::withId($command->chargeSessionId);
 
         if (! $session->status()->isActive()) {
-            throw new \DomainException('Charge session is not active');
+            throw ChargeSessionNotActiveException::create();
         }
 
-        if ($dinerNumber !== null && ($dinerNumber < 1 || $dinerNumber > $session->dinersCount())) {
-            throw new \DomainException('Invalid diner number');
+        if ($command->dinerNumber !== null && ($command->dinerNumber < 1 || $command->dinerNumber > $session->dinersCount())) {
+            throw InvalidDinerCountException::invalidDinerNumber();
         }
 
         [$totalCents, $paidCents, $paidDinerNumbers] = $this->responseBuilder->collect($session);
@@ -51,9 +47,10 @@ final class RecordChargeSessionPayment
         $remainingCents = max(0, $totalCents - $paidCents);
 
         if ($remainingCents <= 0) {
-            throw new \DomainException('Charge session has no remaining debt');
+            throw ChargeSessionHasNoRemainingDebtException::create();
         }
 
+        $amountCents = $command->amountCents;
         if ($amountCents === null) {
             $unpaidDinersCount = max(1, $session->dinersCount() - count($paidDinerNumbers));
             $amountCents = $unpaidDinersCount === 1
@@ -62,13 +59,11 @@ final class RecordChargeSessionPayment
         }
 
         if ($amountCents <= 0) {
-            throw new \DomainException('Payment amount must be greater than 0');
+            throw PaymentAmountMustBePositiveException::create();
         }
 
         if ($amountCents > $remainingCents) {
-            throw new \DomainException(
-                "Payment amount ({$amountCents}) exceeds remaining debt ({$remainingCents})"
-            );
+            throw PaymentAmountExceedsDebtException::create($amountCents, $remainingCents);
         }
 
         $newPaidCents = $paidCents + $amountCents;
@@ -76,27 +71,27 @@ final class RecordChargeSessionPayment
         $isSessionComplete = $newRemainingCents === 0;
 
         $payment = [
-            'method' => $paymentMethod,
+            'method' => $command->paymentMethod,
             'amount_cents' => $amountCents,
             'snapshot_total_cents' => $totalCents,
             'snapshot_paid_cents' => $newPaidCents,
             'snapshot_remaining_cents' => $newRemainingCents,
         ];
-        if ($dinerNumber !== null) {
-            $payment['diner_number'] = $dinerNumber;
+        if ($command->dinerNumber !== null) {
+            $payment['diner_number'] = $command->dinerNumber;
         }
 
         $saleResponse = ($this->createSale)(
             restaurantId: $session->restaurantId()->value(),
             orderId: $session->orderId()->value(),
-            openedByUserId: $openedByUserId,
-            closedByUserId: $closedByUserId,
-            deviceId: $deviceId,
+            openedByUserId: $command->openedByUserId,
+            closedByUserId: $command->closedByUserId,
+            deviceId: $command->deviceId,
             payments: [$payment],
-            chargeSessionId: $chargeSessionId,
+            chargeSessionId: $command->chargeSessionId,
         );
 
-        $newPaidDinersCount = $dinerNumber !== null && ! in_array($dinerNumber, $paidDinerNumbers, true)
+        $newPaidDinersCount = $command->dinerNumber !== null && ! in_array($command->dinerNumber, $paidDinerNumbers, true)
             ? count($paidDinerNumbers) + 1
             : count($paidDinerNumbers);
 
@@ -106,22 +101,22 @@ final class RecordChargeSessionPayment
 
             $order = $this->orderRepository->findByUuid($session->orderId());
             if ($order !== null) {
-                $order->close(Uuid::create($closedByUserId));
+                $order->close(Uuid::create($command->closedByUserId));
                 $this->orderRepository->save($order);
             }
 
             ($this->createOrderFinalTicket)(
                 orderId: $session->orderId()->value(),
-                closedByUserId: $closedByUserId,
+                closedByUserId: $command->closedByUserId,
             );
         }
 
-        return new RecordChargeSessionPaymentResponse(
+        return RecordChargeSessionPaymentResponse::create(
             paymentId: $saleResponse->id,
-            chargeSessionId: $chargeSessionId,
-            dinerNumber: $dinerNumber,
+            chargeSessionId: $command->chargeSessionId,
+            dinerNumber: $command->dinerNumber,
             amountCents: $amountCents,
-            paymentMethod: $paymentMethod,
+            paymentMethod: $command->paymentMethod,
             status: 'completed',
             sessionPaidDinersCount: $newPaidDinersCount,
             sessionStatus: $isSessionComplete ? 'completed' : 'active',

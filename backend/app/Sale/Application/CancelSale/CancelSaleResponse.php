@@ -20,7 +20,7 @@ final class CancelSaleResponse
         return new self(
             uuid: $sale->uuid()->value(),
             orderId: $sale->orderId()->value(),
-            status: $sale->status(),
+            status: $sale->status()->value(),
             totalCents: $sale->total()->value(),
             cancelledByUserId: $sale->cancelledByUserId()?->value(),
             cancellationReason: $sale->cancellationReason(),

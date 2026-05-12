@@ -1,16 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Sale\Application\AddLineToSale;
 
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Sale\Domain\Entity\SaleLine;
+use App\Sale\Domain\Exception\OrderLineNotFoundException;
+use App\Sale\Domain\Exception\ProductNotActiveException;
 use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
 use App\Sale\Domain\ValueObject\SaleLinePrice;
 use App\Sale\Domain\ValueObject\SaleLineQuantity;
 use App\Sale\Domain\ValueObject\SaleLineTaxPercentage;
 use App\Shared\Domain\ValueObject\Uuid;
-use InvalidArgumentException;
 
 final class AddLineToSale
 {
@@ -20,46 +23,36 @@ final class AddLineToSale
         private readonly ProductRepositoryInterface $productRepository,
     ) {}
 
-    public function __invoke(
-        string $restaurantId,
-        string $saleId,
-        string $orderLineId,
-        string $userId,
-        int $quantity,
-        int $price,
-        int $taxPercentage,
-    ): AddLineToSaleResponse {
-        $orderLine = $this->orderLineRepository->findByUuid(Uuid::create($orderLineId));
+    public function __invoke(AddLineToSaleCommand $command): AddLineToSaleResponse
+    {
+        $orderLine = $this->orderLineRepository->findByUuid(Uuid::create($command->orderLineId))
+            ?? throw OrderLineNotFoundException::withId($command->orderLineId);
 
-        if ($orderLine === null) {
-            throw new InvalidArgumentException('Order line not found.');
-        }
-
-        $productId = $orderLine->getProductId()->value();
+        $productId = $orderLine->productId()->value();
         $product = $this->productRepository->findById($productId);
 
         if ($product === null) {
-            throw new InvalidArgumentException('Product not found.');
+            throw OrderLineNotFoundException::withId($command->orderLineId);
         }
 
         if (! $product->isActive()) {
-            throw new InvalidArgumentException('Only active products can be sold.');
+            throw ProductNotActiveException::create();
         }
 
         $saleLine = SaleLine::dddCreate(
             id: Uuid::generate(),
-            restaurantId: Uuid::create($restaurantId),
-            saleId: Uuid::create($saleId),
-            orderLineId: Uuid::create($orderLineId),
+            restaurantId: Uuid::create($command->restaurantId),
+            saleId: Uuid::create($command->saleId),
+            orderLineId: Uuid::create($command->orderLineId),
             productId: Uuid::create($productId),
-            userId: Uuid::create($userId),
-            quantity: SaleLineQuantity::create($quantity),
-            price: SaleLinePrice::create($price),
-            taxPercentage: SaleLineTaxPercentage::create($taxPercentage),
+            userId: Uuid::create($command->userId),
+            quantity: SaleLineQuantity::create($command->quantity),
+            price: SaleLinePrice::create($command->price),
+            taxPercentage: SaleLineTaxPercentage::create($command->taxPercentage),
         );
 
         $this->saleLineRepository->save($saleLine);
 
-        return AddLineToSaleResponse::create($saleLine);
+        return AddLineToSaleResponse::fromSaleLine($saleLine);
     }
 }
