@@ -4,50 +4,67 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\CloseCashSession;
 
-use App\Cash\Domain\Entity\CashSession;
+use App\Cash\Application\GenerateZReport\GenerateZReportResponse;
 
-final class CloseCashSessionResponse
+final readonly class CloseCashSessionResponse
 {
     private function __construct(
-        public readonly string $id,
-        public readonly string $uuid,
-        public readonly string $restaurantId,
-        public readonly string $deviceId,
-        public readonly string $openedByUserId,
-        public readonly ?string $closedByUserId,
-        public readonly string $openedAt,
-        public readonly ?string $closedAt,
-        public readonly int $initialAmountCents,
-        public readonly int $finalAmountCents,
-        public readonly int $expectedAmountCents,
-        public readonly int $discrepancyCents,
-        public readonly ?string $discrepancyReason,
-        public readonly int $zReportNumber,
-        public readonly string $zReportHash,
-        public readonly string $status,
-        public readonly array $zReport,
+        public string $id,
+        public string $uuid,
+        public string $restaurantId,
+        public string $deviceId,
+        public string $openedByUserId,
+        public ?string $closedByUserId,
+        public string $openedAt,
+        public ?string $closedAt,
+        public int $initialAmountCents,
+        public int $finalAmountCents,
+        public int $expectedAmountCents,
+        public int $discrepancyCents,
+        public ?string $discrepancyReason,
+        public int $zReportNumber,
+        public string $zReportHash,
+        public string $status,
+        public GenerateZReportResponse $zReport,
     ) {}
 
-    public static function create(CashSession $cashSession, $zReportResponse = null): self
-    {
+    public static function create(
+        string $id,
+        string $uuid,
+        string $restaurantId,
+        string $deviceId,
+        string $openedByUserId,
+        ?string $closedByUserId,
+        string $openedAt,
+        ?string $closedAt,
+        int $initialAmountCents,
+        int $finalAmountCents,
+        int $expectedAmountCents,
+        int $discrepancyCents,
+        ?string $discrepancyReason,
+        int $zReportNumber,
+        string $zReportHash,
+        string $status,
+        GenerateZReportResponse $zReport,
+    ): self {
         return new self(
-            id: $cashSession->id()->value(),
-            uuid: $cashSession->uuid()->value(),
-            restaurantId: $cashSession->restaurantId()->value(),
-            deviceId: $cashSession->deviceId()->value(),
-            openedByUserId: $cashSession->openedByUserId()->value(),
-            closedByUserId: $cashSession->closedByUserId()?->value(),
-            openedAt: $cashSession->openedAt()->format('Y-m-d H:i:s'),
-            closedAt: $cashSession->closedAt()?->format('Y-m-d H:i:s'),
-            initialAmountCents: $cashSession->initialAmount()->toCents(),
-            finalAmountCents: $cashSession->finalAmount()?->toCents() ?? 0,
-            expectedAmountCents: $cashSession->expectedAmount()?->toCents() ?? 0,
-            discrepancyCents: $cashSession->discrepancy()?->toCents() ?? 0,
-            discrepancyReason: $cashSession->discrepancyReason(),
-            zReportNumber: $cashSession->zReportNumber()?->value() ?? 0,
-            zReportHash: $cashSession->zReportHash()?->value() ?? '',
-            status: $cashSession->status()->value(),
-            zReport: $zReportResponse ? $zReportResponse->toArray() : [],
+            id: $id,
+            uuid: $uuid,
+            restaurantId: $restaurantId,
+            deviceId: $deviceId,
+            openedByUserId: $openedByUserId,
+            closedByUserId: $closedByUserId,
+            openedAt: $openedAt,
+            closedAt: $closedAt,
+            initialAmountCents: $initialAmountCents,
+            finalAmountCents: $finalAmountCents,
+            expectedAmountCents: $expectedAmountCents,
+            discrepancyCents: $discrepancyCents,
+            discrepancyReason: $discrepancyReason,
+            zReportNumber: $zReportNumber,
+            zReportHash: $zReportHash,
+            status: $status,
+            zReport: $zReport,
         );
     }
 
@@ -70,7 +87,7 @@ final class CloseCashSessionResponse
             'z_report_number' => $this->zReportNumber,
             'z_report_hash' => $this->zReportHash,
             'status' => $this->status,
-            'z_report' => $this->zReport,
+            'z_report' => $this->zReport->toArray(),
         ];
     }
 }

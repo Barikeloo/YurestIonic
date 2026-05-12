@@ -19,6 +19,6 @@ final class ListActiveFamiliesRequest extends FormRequest
 
     public function toCommand(): ListActiveFamiliesCommand
     {
-        return new ListActiveFamiliesCommand();
+        return new ListActiveFamiliesCommand;
     }
 }

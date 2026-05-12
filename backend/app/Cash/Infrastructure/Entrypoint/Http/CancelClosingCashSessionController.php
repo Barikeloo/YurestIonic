@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Cash\Infrastructure\Entrypoint\Http;
 
 use App\Cash\Application\CancelClosingCashSession\CancelClosingCashSession;
+use App\Cash\Domain\Exception\CashSessionCannotCancelClosingException;
+use App\Cash\Domain\Exception\CashSessionNotFoundException;
+use App\Cash\Infrastructure\Entrypoint\Http\Requests\CancelClosingCashSessionRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class CancelClosingCashSessionController
 {
@@ -14,15 +16,19 @@ final class CancelClosingCashSessionController
         private readonly CancelClosingCashSession $cancelClosingCashSession,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(CancelClosingCashSessionRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'cash_session_id' => ['required', 'string', 'uuid'],
-        ]);
+        try {
+            $response = ($this->cancelClosingCashSession)($request->toCommand());
+        } catch (CashSessionNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (CashSessionCannotCancelClosingException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 409);
+        } catch (\Throwable $e) {
+            report($e);
 
-        $response = ($this->cancelClosingCashSession)(
-            cashSessionId: $validated['cash_session_id'],
-        );
+            return new JsonResponse(['message' => 'Internal error.'], 500);
+        }
 
         return new JsonResponse($response->toArray(), 200);
     }

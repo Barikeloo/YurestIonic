@@ -4,34 +4,41 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\RegisterCashMovement;
 
-use App\Cash\Domain\Entity\CashMovement;
-
-final class RegisterCashMovementResponse
+final readonly class RegisterCashMovementResponse
 {
     private function __construct(
-        public readonly string $id,
-        public readonly string $uuid,
-        public readonly string $restaurantId,
-        public readonly string $cashSessionId,
-        public readonly string $type,
-        public readonly string $reasonCode,
-        public readonly int $amountCents,
-        public readonly ?string $description,
-        public readonly string $userId,
+        public string $id,
+        public string $uuid,
+        public string $restaurantId,
+        public string $cashSessionId,
+        public string $type,
+        public string $reasonCode,
+        public int $amountCents,
+        public ?string $description,
+        public string $userId,
     ) {}
 
-    public static function create(CashMovement $cashMovement): self
-    {
+    public static function create(
+        string $id,
+        string $uuid,
+        string $restaurantId,
+        string $cashSessionId,
+        string $type,
+        string $reasonCode,
+        int $amountCents,
+        ?string $description,
+        string $userId,
+    ): self {
         return new self(
-            id: $cashMovement->id()->value(),
-            uuid: $cashMovement->uuid()->value(),
-            restaurantId: $cashMovement->restaurantId()->value(),
-            cashSessionId: $cashMovement->cashSessionId()->value(),
-            type: $cashMovement->type()->value(),
-            reasonCode: $cashMovement->reasonCode()->value(),
-            amountCents: $cashMovement->amount()->toCents(),
-            description: $cashMovement->description(),
-            userId: $cashMovement->userId()->value(),
+            id: $id,
+            uuid: $uuid,
+            restaurantId: $restaurantId,
+            cashSessionId: $cashSessionId,
+            type: $type,
+            reasonCode: $reasonCode,
+            amountCents: $amountCents,
+            description: $description,
+            userId: $userId,
         );
     }
 

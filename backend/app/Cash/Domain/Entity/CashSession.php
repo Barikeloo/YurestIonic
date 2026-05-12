@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Cash\Domain\Entity;
 
+use App\Cash\Domain\Exception\CashSessionAlreadyClosedException;
+use App\Cash\Domain\Exception\CashSessionCannotCancelClosingException;
+use App\Cash\Domain\Exception\CashSessionCannotCloseException;
+use App\Cash\Domain\Exception\CashSessionCannotStartClosingException;
 use App\Cash\Domain\ValueObject\CashSessionStatus;
 use App\Cash\Domain\ValueObject\DeviceId;
 use App\Cash\Domain\ValueObject\ZReportHash;
@@ -117,7 +121,7 @@ final class CashSession
     public function startClosing(): void
     {
         if (! $this->status->isOpen()) {
-            throw new \DomainException('Only open sessions can start closing.');
+            throw new CashSessionCannotStartClosingException;
         }
 
         $this->status = CashSessionStatus::closing();
@@ -127,7 +131,7 @@ final class CashSession
     public function cancelClosing(): void
     {
         if (! $this->status->isClosing()) {
-            throw new \DomainException('Only closing sessions can cancel closing.');
+            throw new CashSessionCannotCancelClosingException;
         }
 
         $this->status = CashSessionStatus::open();
@@ -144,7 +148,7 @@ final class CashSession
         ?string $discrepancyReason = null,
     ): void {
         if (! $this->status->isClosing()) {
-            throw new \DomainException('Only closing sessions can be closed.');
+            throw new CashSessionCannotCloseException;
         }
 
         $this->closedByUserId = $closedByUserId;
@@ -162,7 +166,7 @@ final class CashSession
     public function forceClose(Uuid $closedByUserId): void
     {
         if ($this->status->isClosed() || $this->status->isAbandoned()) {
-            throw new \DomainException('Session is already closed or abandoned.');
+            throw CashSessionAlreadyClosedException::create();
         }
 
         $this->closedByUserId = $closedByUserId;

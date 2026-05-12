@@ -2,8 +2,6 @@
 
 namespace App\Product\Application\GetProduct;
 
-use App\Product\Domain\Entity\Product;
-
 final readonly class GetProductResponse
 {
     private function __construct(
@@ -30,8 +28,7 @@ final readonly class GetProductResponse
         bool $active,
         string $createdAt,
         string $updatedAt,
-    ): self
-    {
+    ): self {
         return new self(
             id: $id,
             familyId: $familyId,

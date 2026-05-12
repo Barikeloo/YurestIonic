@@ -2,8 +2,6 @@
 
 namespace App\Product\Application\SetProductActive;
 
-use App\Product\Domain\Entity\Product;
-
 final readonly class SetProductActiveResponse
 {
     private function __construct(
@@ -30,8 +28,7 @@ final readonly class SetProductActiveResponse
         bool $active,
         string $createdAt,
         string $updatedAt,
-    ): self
-    {
+    ): self {
         return new self(
             id: $id,
             familyId: $familyId,

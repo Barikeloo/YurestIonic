@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\GetPaymentTicket;
 
+use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
@@ -13,7 +14,6 @@ use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
-use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 
 final class GetPaymentTicket
 {

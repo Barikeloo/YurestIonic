@@ -4,32 +4,33 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\GetCashSessionSummary;
 
-use App\Cash\Domain\Entity\CashSession;
-
-final class GetCashSessionSummaryResponse
+final readonly class GetCashSessionSummaryResponse
 {
     private function __construct(
-        public readonly string $id,
-        public readonly string $uuid,
-        public readonly string $status,
-        public readonly int $initialAmountCents,
-        public readonly int $totalSales,
-        public readonly int $totalCashPayments,
-        public readonly int $totalCardPayments,
-        public readonly int $totalBizumPayments,
-        public readonly int $totalOtherPayments,
-        public readonly int $totalInMovements,
-        public readonly int $totalOutMovements,
-        public readonly int $expectedAmount,
-        public readonly int $movementsCount,
-        public readonly int $paymentsCount,
-        public readonly int $ticketsCount,
-        public readonly int $dinersCount,
-        public readonly int $tipsCard,
+        public string $id,
+        public string $uuid,
+        public string $status,
+        public int $initialAmountCents,
+        public int $totalSales,
+        public int $totalCashPayments,
+        public int $totalCardPayments,
+        public int $totalBizumPayments,
+        public int $totalOtherPayments,
+        public int $totalInMovements,
+        public int $totalOutMovements,
+        public int $expectedAmount,
+        public int $movementsCount,
+        public int $paymentsCount,
+        public int $ticketsCount,
+        public int $dinersCount,
+        public int $tipsCard,
     ) {}
 
     public static function create(
-        CashSession $cashSession,
+        string $id,
+        string $uuid,
+        string $status,
+        int $initialAmountCents,
         int $totalSales,
         int $totalCashPayments,
         int $totalCardPayments,
@@ -45,10 +46,10 @@ final class GetCashSessionSummaryResponse
         int $tipsCard,
     ): self {
         return new self(
-            id: $cashSession->id()->value(),
-            uuid: $cashSession->uuid()->value(),
-            status: $cashSession->status()->value(),
-            initialAmountCents: $cashSession->initialAmount()->toCents(),
+            id: $id,
+            uuid: $uuid,
+            status: $status,
+            initialAmountCents: $initialAmountCents,
             totalSales: $totalSales,
             totalCashPayments: $totalCashPayments,
             totalCardPayments: $totalCardPayments,

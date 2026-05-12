@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Cash\Application\GenerateZReport;
 
 use App\Cash\Domain\Entity\ZReport;
+use App\Cash\Domain\Exception\CashSessionCannotGenerateZReportException;
+use App\Cash\Domain\Exception\CashSessionNotFoundException;
+use App\Cash\Domain\Exception\ZReportAlreadyExistsException;
 use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
@@ -25,30 +28,27 @@ final class GenerateZReport
         private readonly SaleRepositoryInterface $saleRepository,
     ) {}
 
-    public function __invoke(
-        string $cashSessionId,
-        ?Money $finalAmountOverride = null,
-    ): GenerateZReportResponse {
-        $cashSessionUuid = Uuid::create($cashSessionId);
-        $cashSession = $this->cashSessionRepository->findByUuid($cashSessionUuid);
+    public function __invoke(GenerateZReportCommand $command): GenerateZReportResponse
+    {
+        $cashSessionUuid = Uuid::create($command->cashSessionId);
 
-        if ($cashSession === null) {
-            throw new \DomainException('Cash session not found.');
-        }
+        $cashSession = $this->cashSessionRepository->findByUuid($cashSessionUuid)
+            ?? throw CashSessionNotFoundException::withId($command->cashSessionId);
 
         if (! $cashSession->status()->isClosing() && ! $cashSession->status()->isClosed()) {
-            throw new \DomainException(
-                'Cannot generate Z-Report on a session with status '.$cashSession->status()->value().'.',
-            );
+            throw CashSessionCannotGenerateZReportException::withStatus($cashSession->status()->value());
         }
 
         if ($this->zReportRepository->findByCashSessionId($cashSessionUuid) !== null) {
-            throw new \DomainException('A Z-Report already exists for this cash session.');
+            throw ZReportAlreadyExistsException::create();
         }
 
-        $finalAmount = $finalAmountOverride ?? $cashSession->finalAmount();
+        $finalAmount = $command->finalAmountCents !== null
+            ? Money::create($command->finalAmountCents)
+            : $cashSession->finalAmount();
+
         if ($finalAmount === null) {
-            throw new \DomainException('Final amount is required to generate the Z-Report.');
+            throw CashSessionCannotGenerateZReportException::finalAmountRequired();
         }
 
         $payments = $this->salePaymentRepository->findNonCancelledByCashSessionId($cashSessionUuid);

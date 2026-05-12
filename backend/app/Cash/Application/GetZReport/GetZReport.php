@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\GetZReport;
 
+use App\Cash\Domain\Exception\ZReportNotFoundException;
 use App\Cash\Domain\Interfaces\ZReportRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -13,15 +14,12 @@ final class GetZReport
         private readonly ZReportRepositoryInterface $zReportRepository,
     ) {}
 
-    public function __invoke(string $zReportId): ?GetZReportResponse
+    public function __invoke(GetZReportCommand $command): GetZReportResponse
     {
-        $zReportUuid = Uuid::create($zReportId);
-        $zReport = $this->zReportRepository->findByUuid($zReportUuid);
+        $zReportUuid = Uuid::create($command->zReportId);
+        $zReport = $this->zReportRepository->findByUuid($zReportUuid)
+            ?? throw ZReportNotFoundException::withId($command->zReportId);
 
-        if ($zReport === null) {
-            return null;
-        }
-
-        return GetZReportResponse::create($zReport);
+        return GetZReportResponse::fromZReport($zReport);
     }
 }

@@ -14,17 +14,27 @@ final class GetActiveCashSession
         private readonly CashSessionRepositoryInterface $cashSessionRepository,
     ) {}
 
-    public function __invoke(
-        string $restaurantId,
-        string $deviceId,
-    ): ?GetActiveCashSessionResponse {
-        $restaurantUuid = Uuid::create($restaurantId);
-        $cashSession = $this->cashSessionRepository->findActiveByDeviceId(DeviceId::create($deviceId), $restaurantUuid);
+    public function __invoke(GetActiveCashSessionCommand $command): ?GetActiveCashSessionResponse
+    {
+        $cashSession = $this->cashSessionRepository->findActiveByDeviceId(
+            DeviceId::create($command->deviceId),
+            Uuid::create($command->restaurantId),
+        );
 
         if ($cashSession === null) {
             return null;
         }
 
-        return GetActiveCashSessionResponse::create($cashSession);
+        return GetActiveCashSessionResponse::create(
+            id: $cashSession->id()->value(),
+            uuid: $cashSession->uuid()->value(),
+            restaurantId: $cashSession->restaurantId()->value(),
+            deviceId: $cashSession->deviceId()->value(),
+            openedByUserId: $cashSession->openedByUserId()->value(),
+            openedAt: $cashSession->openedAt()->format('Y-m-d H:i:s'),
+            initialAmountCents: $cashSession->initialAmount()->toCents(),
+            status: $cashSession->status()->value(),
+            notes: $cashSession->notes(),
+        );
     }
 }

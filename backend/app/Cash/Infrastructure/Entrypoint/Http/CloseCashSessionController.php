@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Cash\Infrastructure\Entrypoint\Http;
 
 use App\Cash\Application\CloseCashSession\CloseCashSession;
+use App\Cash\Domain\Exception\CashSessionCannotCloseException;
+use App\Cash\Domain\Exception\CashSessionNotFoundException;
+use App\Cash\Domain\Exception\PendingSalesPreventClosingException;
+use App\Cash\Infrastructure\Entrypoint\Http\Requests\CloseCashSessionRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class CloseCashSessionController
 {
@@ -14,21 +17,21 @@ final class CloseCashSessionController
         private readonly CloseCashSession $closeCashSession,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(CloseCashSessionRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'cash_session_id' => ['required', 'string', 'uuid'],
-            'closed_by_user_id' => ['required', 'string', 'uuid'],
-            'final_amount_cents' => ['required', 'integer', 'min:0'],
-            'discrepancy_reason' => ['nullable', 'string'],
-        ]);
+        try {
+            $response = ($this->closeCashSession)($request->toCommand());
+        } catch (CashSessionNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (PendingSalesPreventClosingException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 409);
+        } catch (CashSessionCannotCloseException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 409);
+        } catch (\Throwable $e) {
+            report($e);
 
-        $response = ($this->closeCashSession)(
-            cashSessionId: $validated['cash_session_id'],
-            closedByUserId: $validated['closed_by_user_id'],
-            finalAmountCents: $validated['final_amount_cents'],
-            discrepancyReason: $validated['discrepancy_reason'] ?? null,
-        );
+            return new JsonResponse(['message' => 'Internal error.'], 500);
+        }
 
         return new JsonResponse($response->toArray(), 200);
     }

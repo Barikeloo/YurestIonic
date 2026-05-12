@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\StartClosingCashSession;
 
-use App\Cash\Domain\Entity\CashSession;
-
 final readonly class StartClosingCashSessionResponse
 {
     private function __construct(
@@ -13,11 +11,13 @@ final readonly class StartClosingCashSessionResponse
         public string $status,
     ) {}
 
-    public static function create(CashSession $cashSession): self
-    {
+    public static function create(
+        string $id,
+        string $status,
+    ): self {
         return new self(
-            id: $cashSession->id()->value(),
-            status: $cashSession->status()->value(),
+            id: $id,
+            status: $status,
         );
     }
 

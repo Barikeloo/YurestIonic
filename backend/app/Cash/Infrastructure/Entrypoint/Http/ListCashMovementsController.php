@@ -5,21 +5,25 @@ declare(strict_types=1);
 namespace App\Cash\Infrastructure\Entrypoint\Http;
 
 use App\Cash\Application\ListCashMovements\ListCashMovements;
+use App\Cash\Infrastructure\Entrypoint\Http\Requests\ListCashMovementsRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class ListCashMovementsController
 {
-    public function __construct(private ListCashMovements $listCashMovements) {}
+    public function __construct(
+        private readonly ListCashMovements $listCashMovements,
+    ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(ListCashMovementsRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'cash_session_id' => ['required', 'string', 'uuid'],
-        ]);
+        try {
+            $response = ($this->listCashMovements)($request->toCommand());
+        } catch (\Throwable $e) {
+            report($e);
 
-        $response = ($this->listCashMovements)($validated['cash_session_id']);
+            return new JsonResponse(['message' => 'Internal error.'], 500);
+        }
 
-        return new JsonResponse($response->toArray());
+        return new JsonResponse($response->toArray(), 200);
     }
 }

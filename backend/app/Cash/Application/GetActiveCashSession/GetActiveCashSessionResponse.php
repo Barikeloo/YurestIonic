@@ -4,34 +4,41 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\GetActiveCashSession;
 
-use App\Cash\Domain\Entity\CashSession;
-
-final class GetActiveCashSessionResponse
+final readonly class GetActiveCashSessionResponse
 {
     private function __construct(
-        public readonly string $id,
-        public readonly string $uuid,
-        public readonly string $restaurantId,
-        public readonly string $deviceId,
-        public readonly string $openedByUserId,
-        public readonly string $openedAt,
-        public readonly int $initialAmountCents,
-        public readonly string $status,
-        public readonly ?string $notes,
+        public string $id,
+        public string $uuid,
+        public string $restaurantId,
+        public string $deviceId,
+        public string $openedByUserId,
+        public string $openedAt,
+        public int $initialAmountCents,
+        public string $status,
+        public ?string $notes,
     ) {}
 
-    public static function create(CashSession $cashSession): self
-    {
+    public static function create(
+        string $id,
+        string $uuid,
+        string $restaurantId,
+        string $deviceId,
+        string $openedByUserId,
+        string $openedAt,
+        int $initialAmountCents,
+        string $status,
+        ?string $notes,
+    ): self {
         return new self(
-            id: $cashSession->id()->value(),
-            uuid: $cashSession->uuid()->value(),
-            restaurantId: $cashSession->restaurantId()->value(),
-            deviceId: $cashSession->deviceId()->value(),
-            openedByUserId: $cashSession->openedByUserId()->value(),
-            openedAt: $cashSession->openedAt()->format('Y-m-d H:i:s'),
-            initialAmountCents: $cashSession->initialAmount()->toCents(),
-            status: $cashSession->status()->value(),
-            notes: $cashSession->notes(),
+            id: $id,
+            uuid: $uuid,
+            restaurantId: $restaurantId,
+            deviceId: $deviceId,
+            openedByUserId: $openedByUserId,
+            openedAt: $openedAt,
+            initialAmountCents: $initialAmountCents,
+            status: $status,
+            notes: $notes,
         );
     }
 

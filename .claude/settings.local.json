@@ -32,7 +32,10 @@
       "Bash(grep -En \"\\\\\\\\\\\\\\\\App\\\\\\\\\\\\\\\\\" \"/c/Users/barik/Desktop/YurestTPV/backend/app/Cash/**/*.php\")",
       "Bash(grep *)",
       "Bash(git stash *)",
-      "Bash(xargs -I {} find {} -maxdepth 2 -type d)"
+      "Bash(xargs -I {} find {} -maxdepth 2 -type d)",
+      "Bash(php -l app/Cash/Infrastructure/Entrypoint/Http/StartClosingCashSessionController.php app/Cash/Application/StartClosingCashSession/StartClosingCashSession.php app/Cash/Application/StartClosingCashSession/StartClosingCashSessionCommand.php app/Cash/Application/StartClosingCashSession/StartClosingCashSessionResponse.php app/Cash/Infrastructure/Entrypoint/Http/Requests/StartClosingCashSessionRequest.php app/Cash/Domain/Exception/CashSessionNotFoundException.php app/Cash/Domain/Exception/CashSessionCannotStartClosingException.php app/Cash/Domain/Entity/CashSession.php)",
+      "Read(//Applications/MAMP/bin/**)",
+      "Read(//opt/homebrew/bin/**)"
     ]
   }
 }

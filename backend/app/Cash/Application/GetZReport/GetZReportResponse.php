@@ -6,29 +6,65 @@ namespace App\Cash\Application\GetZReport;
 
 use App\Cash\Domain\Entity\ZReport;
 
-final class GetZReportResponse
+final readonly class GetZReportResponse
 {
-    public function __construct(
-        public readonly string $id,
-        public readonly string $cashSessionId,
-        public readonly int $reportNumber,
-        public readonly string $reportHash,
-        public readonly int $totalSalesCents,
-        public readonly int $totalCashCents,
-        public readonly int $totalCardCents,
-        public readonly int $totalOtherCents,
-        public readonly int $cashInCents,
-        public readonly int $cashOutCents,
-        public readonly int $tipsCents,
-        public readonly int $discrepancyCents,
-        public readonly int $salesCount,
-        public readonly int $cancelledSalesCount,
-        public readonly string $generatedAt,
+    private function __construct(
+        public string $id,
+        public string $cashSessionId,
+        public int $reportNumber,
+        public string $reportHash,
+        public int $totalSalesCents,
+        public int $totalCashCents,
+        public int $totalCardCents,
+        public int $totalOtherCents,
+        public int $cashInCents,
+        public int $cashOutCents,
+        public int $tipsCents,
+        public int $discrepancyCents,
+        public int $salesCount,
+        public int $cancelledSalesCount,
+        public string $generatedAt,
     ) {}
 
-    public static function create(ZReport $zReport): self
-    {
+    public static function create(
+        string $id,
+        string $cashSessionId,
+        int $reportNumber,
+        string $reportHash,
+        int $totalSalesCents,
+        int $totalCashCents,
+        int $totalCardCents,
+        int $totalOtherCents,
+        int $cashInCents,
+        int $cashOutCents,
+        int $tipsCents,
+        int $discrepancyCents,
+        int $salesCount,
+        int $cancelledSalesCount,
+        string $generatedAt,
+    ): self {
         return new self(
+            id: $id,
+            cashSessionId: $cashSessionId,
+            reportNumber: $reportNumber,
+            reportHash: $reportHash,
+            totalSalesCents: $totalSalesCents,
+            totalCashCents: $totalCashCents,
+            totalCardCents: $totalCardCents,
+            totalOtherCents: $totalOtherCents,
+            cashInCents: $cashInCents,
+            cashOutCents: $cashOutCents,
+            tipsCents: $tipsCents,
+            discrepancyCents: $discrepancyCents,
+            salesCount: $salesCount,
+            cancelledSalesCount: $cancelledSalesCount,
+            generatedAt: $generatedAt,
+        );
+    }
+
+    public static function fromZReport(ZReport $zReport): self
+    {
+        return self::create(
             id: $zReport->id()->value(),
             cashSessionId: $zReport->cashSessionId()->value(),
             reportNumber: $zReport->reportNumber()->value(),

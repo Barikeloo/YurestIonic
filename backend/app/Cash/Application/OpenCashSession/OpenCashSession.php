@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Cash\Application\OpenCashSession;
 
 use App\Cash\Domain\Entity\CashSession;
+use App\Cash\Domain\Exception\ActiveCashSessionAlreadyExistsException;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\ValueObject\DeviceId;
 use App\Shared\Domain\ValueObject\Money;
@@ -16,32 +17,36 @@ final class OpenCashSession
         private readonly CashSessionRepositoryInterface $cashSessionRepository,
     ) {}
 
-    public function __invoke(
-        string $restaurantId,
-        string $deviceId,
-        string $openedByUserId,
-        int $initialAmountCents,
-        ?string $notes = null,
-    ): OpenCashSessionResponse {
-        $restaurantUuid = Uuid::create($restaurantId);
-        $device = DeviceId::create($deviceId);
+    public function __invoke(OpenCashSessionCommand $command): OpenCashSessionResponse
+    {
+        $restaurantUuid = Uuid::create($command->restaurantId);
+        $device = DeviceId::create($command->deviceId);
 
-        $activeSession = $this->cashSessionRepository->findActiveByDeviceId($device, $restaurantUuid);
-        if ($activeSession !== null) {
-            throw new \DomainException('An active cash session already exists for this device.');
+        if ($this->cashSessionRepository->findActiveByDeviceId($device, $restaurantUuid) !== null) {
+            throw ActiveCashSessionAlreadyExistsException::forDevice($command->deviceId);
         }
 
         $cashSession = CashSession::dddCreate(
             id: Uuid::generate(),
             restaurantId: $restaurantUuid,
             deviceId: $device,
-            openedByUserId: Uuid::create($openedByUserId),
-            initialAmount: Money::create($initialAmountCents),
-            notes: $notes,
+            openedByUserId: Uuid::create($command->openedByUserId),
+            initialAmount: Money::create($command->initialAmountCents),
+            notes: $command->notes,
         );
 
         $this->cashSessionRepository->save($cashSession);
 
-        return OpenCashSessionResponse::create($cashSession);
+        return OpenCashSessionResponse::create(
+            id: $cashSession->id()->value(),
+            uuid: $cashSession->uuid()->value(),
+            restaurantId: $cashSession->restaurantId()->value(),
+            deviceId: $cashSession->deviceId()->value(),
+            openedByUserId: $cashSession->openedByUserId()->value(),
+            openedAt: $cashSession->openedAt()->format('Y-m-d H:i:s'),
+            initialAmountCents: $cashSession->initialAmount()->toCents(),
+            status: $cashSession->status()->value(),
+            notes: $cashSession->notes(),
+        );
     }
 }

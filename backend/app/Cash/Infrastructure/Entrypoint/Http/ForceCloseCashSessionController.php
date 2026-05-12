@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Cash\Infrastructure\Entrypoint\Http;
 
 use App\Cash\Application\ForceCloseCashSession\ForceCloseCashSession;
+use App\Cash\Domain\Exception\CashSessionAlreadyClosedException;
+use App\Cash\Domain\Exception\CashSessionNotFoundException;
+use App\Cash\Infrastructure\Entrypoint\Http\Requests\ForceCloseCashSessionRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class ForceCloseCashSessionController
 {
@@ -14,18 +16,20 @@ final class ForceCloseCashSessionController
         private readonly ForceCloseCashSession $forceCloseCashSession,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(ForceCloseCashSessionRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'cash_session_id' => ['required', 'string', 'uuid'],
-            'closed_by_user_id' => ['required', 'string', 'uuid'],
-        ]);
+        try {
+            $response = ($this->forceCloseCashSession)($request->toCommand());
+        } catch (CashSessionNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (CashSessionAlreadyClosedException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 409);
+        } catch (\Throwable $e) {
+            report($e);
 
-        ($this->forceCloseCashSession)(
-            cashSessionId: $validated['cash_session_id'],
-            closedByUserId: $validated['closed_by_user_id'],
-        );
+            return new JsonResponse(['message' => 'Internal error.'], 500);
+        }
 
-        return new JsonResponse(['message' => 'Session force closed'], 200);
+        return new JsonResponse($response->toArray(), 200);
     }
 }

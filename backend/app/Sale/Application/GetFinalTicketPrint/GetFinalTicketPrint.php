@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\GetFinalTicketPrint;
 
+use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
@@ -12,7 +13,6 @@ use App\Sale\Domain\Interfaces\OrderFinalTicketRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
-use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 
 final class GetFinalTicketPrint
 {

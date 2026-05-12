@@ -2,7 +2,6 @@
 
 namespace App\Product\Application\UpdateProduct;
 
-
 final readonly class UpdateProductResponse
 {
     private function __construct(
@@ -29,8 +28,7 @@ final readonly class UpdateProductResponse
         bool $active,
         string $createdAt,
         string $updatedAt,
-    ): self
-    {
+    ): self {
         return new self(
             id: $id,
             familyId: $familyId,

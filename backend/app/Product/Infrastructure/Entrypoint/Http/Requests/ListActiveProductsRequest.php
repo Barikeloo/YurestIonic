@@ -19,6 +19,6 @@ final class ListActiveProductsRequest extends FormRequest
 
     public function toCommand(): ListActiveProductsCommand
     {
-        return new ListActiveProductsCommand();
+        return new ListActiveProductsCommand;
     }
 }

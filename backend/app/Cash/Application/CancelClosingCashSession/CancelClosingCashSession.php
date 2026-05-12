@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\CancelClosingCashSession;
 
+use App\Cash\Domain\Exception\CashSessionNotFoundException;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -13,19 +14,17 @@ final class CancelClosingCashSession
         private readonly CashSessionRepositoryInterface $cashSessionRepository,
     ) {}
 
-    public function __invoke(
-        string $cashSessionId,
-    ): CancelClosingCashSessionResponse {
-        $cashSessionUuid = Uuid::create($cashSessionId);
-        $cashSession = $this->cashSessionRepository->findByUuid($cashSessionUuid);
-
-        if ($cashSession === null) {
-            throw new \DomainException('Cash session not found.');
-        }
+    public function __invoke(CancelClosingCashSessionCommand $command): CancelClosingCashSessionResponse
+    {
+        $cashSession = $this->cashSessionRepository->findByUuid(Uuid::create($command->cashSessionId))
+            ?? throw CashSessionNotFoundException::withId($command->cashSessionId);
 
         $cashSession->cancelClosing();
         $this->cashSessionRepository->save($cashSession);
 
-        return CancelClosingCashSessionResponse::create($cashSession);
+        return CancelClosingCashSessionResponse::create(
+            id: $cashSession->id()->value(),
+            status: $cashSession->status()->value(),
+        );
     }
 }

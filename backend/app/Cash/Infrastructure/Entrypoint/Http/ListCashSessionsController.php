@@ -5,22 +5,24 @@ declare(strict_types=1);
 namespace App\Cash\Infrastructure\Entrypoint\Http;
 
 use App\Cash\Application\ListCashSessions\ListCashSessions;
-use App\Shared\Infrastructure\Tenant\TenantContext;
+use App\Cash\Infrastructure\Entrypoint\Http\Requests\ListCashSessionsRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class ListCashSessionsController
 {
     public function __construct(
         private readonly ListCashSessions $listCashSessions,
-        private readonly TenantContext $tenantContext,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(ListCashSessionsRequest $request): JsonResponse
     {
-        $response = ($this->listCashSessions)(
-            restaurantId: $this->tenantContext->restaurantUuid(),
-        );
+        try {
+            $response = ($this->listCashSessions)($request->toCommand());
+        } catch (\Throwable $e) {
+            report($e);
+
+            return new JsonResponse(['message' => 'Internal error.'], 500);
+        }
 
         return new JsonResponse($response->toArray(), 200);
     }

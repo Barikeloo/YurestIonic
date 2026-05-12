@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\GetCashSessionSummary;
 
+use App\Cash\Domain\Exception\CashSessionNotFoundException;
 use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
@@ -17,15 +18,12 @@ final class GetCashSessionSummary
         private readonly SalePaymentRepositoryInterface $salePaymentRepository,
     ) {}
 
-    public function __invoke(
-        string $cashSessionId,
-    ): ?GetCashSessionSummaryResponse {
-        $cashSessionUuid = Uuid::create($cashSessionId);
-        $cashSession = $this->cashSessionRepository->findByUuid($cashSessionUuid);
+    public function __invoke(GetCashSessionSummaryCommand $command): GetCashSessionSummaryResponse
+    {
+        $cashSessionUuid = Uuid::create($command->cashSessionId);
 
-        if ($cashSession === null) {
-            return null;
-        }
+        $cashSession = $this->cashSessionRepository->findByUuid($cashSessionUuid)
+            ?? throw CashSessionNotFoundException::withId($command->cashSessionId);
 
         $movements = $this->cashMovementRepository->findByCashSessionId($cashSessionUuid);
         $payments = $this->salePaymentRepository->findNonCancelledByCashSessionId($cashSessionUuid);
@@ -45,7 +43,6 @@ final class GetCashSessionSummary
         $totalCardPayments = 0;
         $totalBizumPayments = 0;
         $totalOtherPayments = 0;
-
         foreach ($payments as $payment) {
             $totalSales += $payment->amount()->toCents();
             switch ($payment->method()->value()) {
@@ -68,16 +65,14 @@ final class GetCashSessionSummary
 
         $uniqueSaleIds = [];
         foreach ($payments as $payment) {
-            $saleId = $payment->saleId()->value();
-            $uniqueSaleIds[$saleId] = true;
+            $uniqueSaleIds[$payment->saleId()->value()] = true;
         }
-        $ticketsCount = count($uniqueSaleIds);
-
-        $dinersCount = 0;
-        $tipsCard = 0;
 
         return GetCashSessionSummaryResponse::create(
-            cashSession: $cashSession,
+            id: $cashSession->id()->value(),
+            uuid: $cashSession->uuid()->value(),
+            status: $cashSession->status()->value(),
+            initialAmountCents: $cashSession->initialAmount()->toCents(),
             totalSales: $totalSales,
             totalCashPayments: $totalCashPayments,
             totalCardPayments: $totalCardPayments,
@@ -88,9 +83,9 @@ final class GetCashSessionSummary
             expectedAmount: $expectedAmount,
             movementsCount: count($movements),
             paymentsCount: count($payments),
-            ticketsCount: $ticketsCount,
-            dinersCount: $dinersCount,
-            tipsCard: $tipsCard,
+            ticketsCount: count($uniqueSaleIds),
+            dinersCount: 0,
+            tipsCard: 0,
         );
     }
 }

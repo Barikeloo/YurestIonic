@@ -5,27 +5,24 @@ declare(strict_types=1);
 namespace App\Cash\Infrastructure\Entrypoint\Http;
 
 use App\Cash\Application\GetActiveCashSession\GetActiveCashSession;
-use App\Shared\Infrastructure\Tenant\TenantContext;
+use App\Cash\Infrastructure\Entrypoint\Http\Requests\GetActiveCashSessionRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class GetActiveCashSessionController
 {
     public function __construct(
         private readonly GetActiveCashSession $getActiveCashSession,
-        private readonly TenantContext $tenantContext,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(GetActiveCashSessionRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'device_id' => ['required', 'string', 'max:100'],
-        ]);
+        try {
+            $response = ($this->getActiveCashSession)($request->toCommand());
+        } catch (\Throwable $e) {
+            report($e);
 
-        $response = ($this->getActiveCashSession)(
-            restaurantId: $this->tenantContext->restaurantUuid(),
-            deviceId: $validated['device_id'],
-        );
+            return new JsonResponse(['message' => 'Internal error.'], 500);
+        }
 
         if ($response === null) {
             return new JsonResponse(null, 204);
