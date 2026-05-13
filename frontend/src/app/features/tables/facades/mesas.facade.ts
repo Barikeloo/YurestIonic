@@ -3,6 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { ChargeSessionService } from '../../cash/services/charge-session.service';
 import { TpvOrder, TpvOrderLine, TpvService, TpvTableItem, TpvZoneItem } from '../../cash/services/tpv.service';
+import { TableService } from '../../../services/table.service';
 import { OrderStatus } from '../../../core/enums/order-status.enum';
 
 export interface TableWithStatus extends TpvTableItem {
@@ -13,6 +14,7 @@ export interface TableWithStatus extends TpvTableItem {
   opened_at?: string;
   total?: number;
   remaining_total?: number;
+  merged_table_group_id?: string | null;
 }
 
 @Injectable()
@@ -20,6 +22,7 @@ export class MesasFacade {
   private readonly tpvService = inject(TpvService);
   private readonly authService = inject(AuthService);
   private readonly chargeSessionService = inject(ChargeSessionService);
+  private readonly tableService = inject(TableService);
 
   private readonly _zones = signal<TpvZoneItem[]>([]);
   private readonly _tables = signal<TableWithStatus[]>([]);
@@ -57,6 +60,20 @@ export class MesasFacade {
   public readonly linesTotal: Signal<number> = computed(() =>
     this._orderLines().reduce((acc, line) => acc + line.price * line.quantity, 0),
   );
+
+  public readonly tablesByMergedGroup: Signal<Map<string, TableWithStatus[]>> = computed(() => {
+    const groups = new Map<string, TableWithStatus[]>();
+    const tables = this._tables();
+
+    for (const table of tables) {
+      if (table.merged_table_group_id) {
+        const existing = groups.get(table.merged_table_group_id) ?? [];
+        groups.set(table.merged_table_group_id, [...existing, table]);
+      }
+    }
+
+    return groups;
+  });
 
   public async loadData(): Promise<void> {
     this._loading.set(true);
@@ -99,6 +116,7 @@ export class MesasFacade {
           opened_at: order?.opened_at,
           total,
           remaining_total: remainingTotal,
+          merged_table_group_id: table.merged_table_group_id,
         };
       });
 
@@ -264,6 +282,14 @@ export class MesasFacade {
       const refreshed = this._tables().find((candidate) => candidate.id === previousId) ?? null;
       this._selectedTable.set(refreshed);
     }
+  }
+
+  public async mergeTables(tableIds: string[]): Promise<void> {
+    await firstValueFrom(this.tableService.mergeTables(tableIds));
+  }
+
+  public async unmergeTables(groupId: string): Promise<void> {
+    await firstValueFrom(this.tableService.unmergeTables(groupId));
   }
 
   private async fetchPaidTotals(orders: TpvOrder[]): Promise<Map<string, number>> {

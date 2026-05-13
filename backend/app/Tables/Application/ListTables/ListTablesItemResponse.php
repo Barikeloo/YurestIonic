@@ -10,6 +10,7 @@ final readonly class ListTablesItemResponse
         public string $name,
         public string $createdAt,
         public string $updatedAt,
+        public ?string $mergedTableGroupId,
     ) {}
 
     public static function create(
@@ -18,6 +19,7 @@ final readonly class ListTablesItemResponse
         string $name,
         string $createdAt,
         string $updatedAt,
+        ?string $mergedTableGroupId = null,
     ): self {
         return new self(
             id: $id,
@@ -25,11 +27,12 @@ final readonly class ListTablesItemResponse
             name: $name,
             createdAt: $createdAt,
             updatedAt: $updatedAt,
+            mergedTableGroupId: $mergedTableGroupId,
         );
     }
 
     /**
-     * @return array<string, string>
+     * @return array<string, mixed>
      */
     public function toArray(): array
     {
@@ -39,6 +42,7 @@ final readonly class ListTablesItemResponse
             'name' => $this->name,
             'created_at' => $this->createdAt,
             'updated_at' => $this->updatedAt,
+            'merged_table_group_id' => $this->mergedTableGroupId,
         ];
     }
 }

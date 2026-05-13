@@ -12,6 +12,7 @@ class Table
         private Uuid $id,
         private Uuid $zoneId,
         private TableName $name,
+        private ?Uuid $mergedTableGroupId,
         private DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
     ) {}
@@ -24,6 +25,7 @@ class Table
             id: Uuid::generate(),
             zoneId: $zoneId,
             name: $name,
+            mergedTableGroupId: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -33,6 +35,7 @@ class Table
         string $id,
         string $zoneId,
         string $name,
+        ?string $mergedTableGroupId,
         \DateTimeImmutable $createdAt,
         \DateTimeImmutable $updatedAt,
     ): self {
@@ -40,6 +43,7 @@ class Table
             id: Uuid::create($id),
             zoneId: Uuid::create($zoneId),
             name: TableName::create($name),
+            mergedTableGroupId: $mergedTableGroupId !== null ? Uuid::create($mergedTableGroupId) : null,
             createdAt: DomainDateTime::create($createdAt),
             updatedAt: DomainDateTime::create($updatedAt),
         );
@@ -65,6 +69,28 @@ class Table
     public function name(): TableName
     {
         return $this->name;
+    }
+
+    public function mergedTableGroupId(): ?Uuid
+    {
+        return $this->mergedTableGroupId;
+    }
+
+    public function isMerged(): bool
+    {
+        return $this->mergedTableGroupId !== null;
+    }
+
+    public function mergeWith(Uuid $groupId): void
+    {
+        $this->mergedTableGroupId = $groupId;
+        $this->touch();
+    }
+
+    public function unmerge(): void
+    {
+        $this->mergedTableGroupId = null;
+        $this->touch();
     }
 
     public function createdAt(): DomainDateTime

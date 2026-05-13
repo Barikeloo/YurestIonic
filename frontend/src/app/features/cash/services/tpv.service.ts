@@ -29,6 +29,7 @@ export interface TpvTableItem {
   id: string;
   name: string;
   zone_id: string;
+  merged_table_group_id?: string | null;
 }
 
 export interface TpvTaxItem {
@@ -159,7 +160,7 @@ interface UpdateOrderPayload {
   providedIn: 'root',
 })
 export class TpvService {
-  private readonly baseUrl: string = environment.apiUrl;
+  private readonly baseUrl: string = `${environment.apiUrl}/api`;
 
   constructor(private readonly http: HttpClient) {}
 

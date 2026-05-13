@@ -22,6 +22,7 @@ class ListTables
                 name: $table->name()->value(),
                 createdAt: $table->createdAt()->format(\DateTimeInterface::ATOM),
                 updatedAt: $table->updatedAt()->format(\DateTimeInterface::ATOM),
+                mergedTableGroupId: $table->mergedTableGroupId()?->value(),
             )->toArray(),
             $tables,
         );

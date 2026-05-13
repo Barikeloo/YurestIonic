@@ -77,7 +77,7 @@ export interface CancelChargeSessionResponse {
   providedIn: 'root'
 })
 export class ChargeSessionService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl = `${environment.apiUrl}/api`;
 
   constructor(private http: HttpClient) {}
 

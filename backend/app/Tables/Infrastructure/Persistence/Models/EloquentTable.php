@@ -20,6 +20,7 @@ class EloquentTable extends Model
         'uuid',
         'zone_id',
         'name',
+        'merged_table_group_id',
     ];
 
     protected function casts(): array

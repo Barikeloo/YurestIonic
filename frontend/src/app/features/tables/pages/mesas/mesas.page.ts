@@ -54,6 +54,11 @@ export class MesasPage implements OnInit {
   public editDinersTable: TableWithStatus | null = null;
   public editDinersCheckingChargeSession = false;
 
+  // ----- UI state: merge tables mode -----
+  public isMergeMode = false;
+  public selectedTablesForMerge: string[] = [];
+  public mergingTables = false;
+
   public async ngOnInit(): Promise<void> {
     await this.facade.loadData();
   }
@@ -361,11 +366,83 @@ export class MesasPage implements OnInit {
   }
 
   public onJoinTable(): void {
+    const tableToSelect = this.tableMenuTable;
     this.closeTableMenu();
+    this.enterMergeMode(tableToSelect);
+  }
+
+  public onUnmergeTable(): void {
+    const groupId = this.tableMenuTable?.merged_table_group_id;
+    this.closeTableMenu();
+
+    if (groupId) {
+      void this.unmergeTable(groupId);
+    }
   }
 
   public onTransferAccount(): void {
     this.closeTableMenu();
+  }
+
+  // ----- Merge tables mode -----
+  public enterMergeMode(tableToSelect?: TableWithStatus | null): void {
+    this.isMergeMode = true;
+    // Preseleccionar la mesa desde la que se abrió el menú
+    if (tableToSelect) {
+      this.selectedTablesForMerge = [tableToSelect.id];
+    } else if (this.tableMenuTable) {
+      this.selectedTablesForMerge = [this.tableMenuTable.id];
+    } else {
+      this.selectedTablesForMerge = [];
+    }
+  }
+
+  public exitMergeMode(): void {
+    this.isMergeMode = false;
+    this.selectedTablesForMerge = [];
+  }
+
+  public toggleTableForMerge(tableId: string): void {
+    if (this.selectedTablesForMerge.includes(tableId)) {
+      this.selectedTablesForMerge = this.selectedTablesForMerge.filter(id => id !== tableId);
+    } else {
+      this.selectedTablesForMerge = [...this.selectedTablesForMerge, tableId];
+    }
+  }
+
+  public isTableSelectedForMerge(tableId: string): boolean {
+    return this.selectedTablesForMerge.includes(tableId);
+  }
+
+  public async confirmMergeTables(): Promise<void> {
+    if (this.mergingTables || this.selectedTablesForMerge.length < 2) {
+      return;
+    }
+
+    this.mergingTables = true;
+
+    try {
+      await this.facade.mergeTables(this.selectedTablesForMerge);
+      this.toastService.presentSuccess('Mesas fusionadas correctamente');
+      await this.facade.loadData();
+      this.exitMergeMode();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudieron fusionar las mesas.';
+      this.toastService.presentError(message);
+    } finally {
+      this.mergingTables = false;
+    }
+  }
+
+  public async unmergeTable(groupId: string): Promise<void> {
+    try {
+      await this.facade.unmergeTables(groupId);
+      this.toastService.presentSuccess('Mesas separadas correctamente');
+      await this.facade.loadData();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'No se pudieron separar las mesas.';
+      this.toastService.presentError(message);
+    }
   }
 
   // ----- Pure UI helpers -----
@@ -409,6 +486,33 @@ export class MesasPage implements OnInit {
 
   public avatarColor(index: number): string {
     return AVATAR_COLORS[index % AVATAR_COLORS.length];
+  }
+
+  public getMergedTableName(mergedTables: TableWithStatus[]): string {
+    return mergedTables.map(t => t.name).join(' + ');
+  }
+
+  public getMergedTableTotal(mergedTables: TableWithStatus[]): number {
+    return mergedTables.reduce((sum, t) => sum + (t.remaining_total ?? 0), 0);
+  }
+
+  public getMergedTableStatus(mergedTables: TableWithStatus[]): OrderStatus | undefined {
+    // Priorizar TO_CHARGE sobre OPEN
+    const toChargeTable = mergedTables.find(t => t.status === OrderStatus.TO_CHARGE);
+    if (toChargeTable) {
+      return toChargeTable.status;
+    }
+
+    const openTable = mergedTables.find(t => t.status === OrderStatus.OPEN);
+    if (openTable) {
+      return openTable.status;
+    }
+
+    return undefined;
+  }
+
+  public isAnyMergedTableOccupied(mergedTables: TableWithStatus[]): boolean {
+    return mergedTables.some(t => t.occupied);
   }
 
   // ----- Private helpers -----

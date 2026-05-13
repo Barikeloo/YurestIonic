@@ -22,4 +22,16 @@ interface TableRepositoryInterface
      * Find a table by zone ID and name (case-insensitive).
      */
     public function findByZoneIdAndName(Uuid $zoneId, string $name, ?string $excludeId = null): ?Table;
+
+    /**
+     * Find multiple tables by their IDs.
+     * @return array<int, Table>
+     */
+    public function findByIds(array $ids): array;
+
+    /**
+     * Find tables by merged table group ID.
+     * @return array<int, Table>
+     */
+    public function findByMergedGroupId(string $groupId): array;
 }

@@ -24,6 +24,7 @@ class EloquentTableRepository implements TableRepositoryInterface
                 'restaurant_id' => $zone->restaurant_id,
                 'zone_id' => $zone->id,
                 'name' => $table->name()->value(),
+                'merged_table_group_id' => $table->mergedTableGroupId()?->value(),
                 'created_at' => $table->createdAt()->value(),
                 'updated_at' => $table->updatedAt()->value(),
             ],
@@ -42,6 +43,7 @@ class EloquentTableRepository implements TableRepositoryInterface
             id: $model->uuid,
             zoneId: $model->zone->uuid,
             name: $model->name,
+            mergedTableGroupId: $model->merged_table_group_id,
             createdAt: $model->created_at->toDateTimeImmutable(),
             updatedAt: $model->updated_at->toDateTimeImmutable(),
         );
@@ -63,6 +65,7 @@ class EloquentTableRepository implements TableRepositoryInterface
                 id: $model->uuid,
                 zoneId: $model->zone->uuid,
                 name: $model->name,
+                mergedTableGroupId: $model->merged_table_group_id,
                 createdAt: $model->created_at->toDateTimeImmutable(),
                 updatedAt: $model->updated_at->toDateTimeImmutable(),
             ))
@@ -104,8 +107,51 @@ class EloquentTableRepository implements TableRepositoryInterface
             id: $model->uuid,
             zoneId: $model->zone->uuid,
             name: $model->name,
+            mergedTableGroupId: $model->merged_table_group_id,
             createdAt: $model->created_at->toDateTimeImmutable(),
             updatedAt: $model->updated_at->toDateTimeImmutable(),
         );
+    }
+
+    public function findByIds(array $ids): array
+    {
+        $models = $this->model->newQuery()
+            ->with('zone')
+            ->whereIn('uuid', $ids)
+            ->get();
+
+        return $models
+            ->filter(static fn (EloquentTable $model): bool => $model->zone !== null)
+            ->map(static fn (EloquentTable $model): Table => Table::fromPersistence(
+                id: $model->uuid,
+                zoneId: $model->zone->uuid,
+                name: $model->name,
+                mergedTableGroupId: $model->merged_table_group_id,
+                createdAt: $model->created_at->toDateTimeImmutable(),
+                updatedAt: $model->updated_at->toDateTimeImmutable(),
+            ))
+            ->values()
+            ->all();
+    }
+
+    public function findByMergedGroupId(string $groupId): array
+    {
+        $models = $this->model->newQuery()
+            ->with('zone')
+            ->where('merged_table_group_id', $groupId)
+            ->get();
+
+        return $models
+            ->filter(static fn (EloquentTable $model): bool => $model->zone !== null)
+            ->map(static fn (EloquentTable $model): Table => Table::fromPersistence(
+                id: $model->uuid,
+                zoneId: $model->zone->uuid,
+                name: $model->name,
+                mergedTableGroupId: $model->merged_table_group_id,
+                createdAt: $model->created_at->toDateTimeImmutable(),
+                updatedAt: $model->updated_at->toDateTimeImmutable(),
+            ))
+            ->values()
+            ->all();
     }
 }

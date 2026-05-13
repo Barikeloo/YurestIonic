@@ -51,6 +51,79 @@
   }
 }
 
+// ── Merge mode bar ──────────────────────────────────
+.merge-mode-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: #FF4D4D;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(255, 77, 77, 0.2);
+}
+
+.merge-mode-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.merge-mode-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.merge-mode-count {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.merge-mode-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-cancel {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.35);
+    border-color: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.btn-confirm {
+  padding: 10px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+  background: #22C55E;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover:not(:disabled) {
+    background: #16A34A;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    background: rgba(255, 255, 255, 0.15);
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+}
+
 // ── Main layout ────────────────────────────────
 .main-layout {
   flex: 1;
@@ -131,6 +204,70 @@
     border-color: #FF4D4D;
     border-width: 3px;
     box-shadow: 0 0 0 4px rgba(255, 77, 77, 0.15);
+  }
+
+  // ── Merge mode styles ─────────────────────────
+  &.vibrating {
+    animation: vibrate 0.3s ease-in-out infinite;
+  }
+
+  &.merge-selected {
+    border-color: #FF4D4D;
+    border-width: 3px;
+    background: rgba(255, 77, 77, 0.05);
+    box-shadow: 0 0 0 4px rgba(255, 77, 77, 0.2);
+  }
+
+  @keyframes vibrate {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-2deg); }
+    75% { transform: rotate(2deg); }
+  }
+
+  &.mesa-merged {
+    border-radius: 18px;
+    aspect-ratio: 2 / 1;
+    min-height: 150px;
+    grid-column: span 2;
+
+    .mesa-zone-label { color: #A0A0A0; }
+    .mesa-name { color: #0D0D0D; font-size: 28px; }
+    .mesa-cobrar-tag { color: #fff; background: rgba(255, 255, 255, 0.18); }
+    .mesa-amount { color: #0D0D0D; }
+
+    &.occupied {
+      background: #0D0D0D;
+      border-color: #0D0D0D;
+
+      .mesa-zone-label { color: rgba(255, 255, 255, 0.55); }
+      .mesa-name { color: #fff; }
+      .mesa-amount { color: rgba(255, 255, 255, 0.75); }
+    }
+
+    &.cobrar {
+      background: #1A6FE8;
+      border-color: #1A6FE8;
+
+      .mesa-zone-label { color: rgba(255, 255, 255, 0.6); }
+      .mesa-name { color: #fff; }
+      .mesa-cobrar-tag { color: #fff; background: rgba(255, 255, 255, 0.18); }
+      .mesa-amount { color: rgba(255, 255, 255, 0.95); }
+    }
+
+    &:hover {
+      background: #F5F5F5;
+      border-color: #A0A0A0;
+    }
+
+    &.occupied:hover {
+      background: #1A1A1A;
+      border-color: #1A1A1A;
+    }
+
+    &.cobrar:hover {
+      background: #1558C8;
+      border-color: #1558C8;
+    }
   }
 }
 

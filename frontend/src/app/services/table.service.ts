@@ -8,6 +8,7 @@ export interface TableItem {
   name: string;
   created_at: string;
   updated_at: string;
+  merged_table_group_id?: string;
 }
 
 interface CreateTablePayload {
@@ -18,6 +19,23 @@ interface CreateTablePayload {
 interface UpdateTablePayload {
   zone_id: string;
   name: string;
+}
+
+interface MergeTablesPayload {
+  table_ids: string[];
+}
+
+interface UnmergeTablesPayload {
+  group_id: string;
+}
+
+interface MergeTablesResponse {
+  group_id: string;
+  merged_table_ids: string[];
+}
+
+interface UnmergeTablesResponse {
+  unmerged_table_ids: string[];
 }
 
 @Injectable({
@@ -40,5 +58,13 @@ export class TableService extends BaseApiService {
 
   public deleteTable(id: string): Observable<void> {
     return this.delete<void>(`/admin/tables/${id}`);
+  }
+
+  public mergeTables(tableIds: string[]): Observable<MergeTablesResponse> {
+    return this.post<MergeTablesResponse>('/api/tpv/tables/merge', { table_ids: tableIds });
+  }
+
+  public unmergeTables(groupId: string): Observable<UnmergeTablesResponse> {
+    return this.post<UnmergeTablesResponse>('/api/tpv/tables/unmerge', { group_id: groupId });
   }
 }

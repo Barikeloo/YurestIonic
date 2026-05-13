@@ -72,8 +72,10 @@ use App\SuperAdmin\Infrastructure\Entrypoint\Http\LogoutController as SuperAdmin
 use App\Tables\Infrastructure\Entrypoint\Http\DeleteController as TableDeleteController;
 use App\Tables\Infrastructure\Entrypoint\Http\GetCollectionController as TableGetCollectionController;
 use App\Tables\Infrastructure\Entrypoint\Http\GetController as TableGetController;
+use App\Tables\Infrastructure\Entrypoint\Http\MergeTablesController;
 use App\Tables\Infrastructure\Entrypoint\Http\PostController as TablePostController;
 use App\Tables\Infrastructure\Entrypoint\Http\PutController as TablePutController;
+use App\Tables\Infrastructure\Entrypoint\Http\UnmergeTablesController;
 use App\Tax\Infrastructure\Entrypoint\Http\DeleteController as TaxDeleteController;
 use App\Tax\Infrastructure\Entrypoint\Http\GetCollectionController as TaxGetCollectionController;
 use App\Tax\Infrastructure\Entrypoint\Http\GetController as TaxGetController;
@@ -129,6 +131,8 @@ Route::middleware([
     Route::get('/tpv/products', ProductTpvGetCollectionController::class);
     Route::get('/tpv/zones', ZoneGetCollectionController::class);
     Route::get('/tpv/tables', TableGetCollectionController::class);
+    Route::post('/tpv/tables/merge', MergeTablesController::class);
+    Route::post('/tpv/tables/unmerge', UnmergeTablesController::class);
     Route::get('/tpv/taxes', TaxGetCollectionController::class);
 
     Route::post('/tpv/orders', OrderPostController::class);
@@ -217,6 +221,8 @@ Route::middleware([
     Route::post('/admin/tables', TablePostController::class);
     Route::put('/admin/tables/{id}', TablePutController::class)->whereUuid('id');
     Route::delete('/admin/tables/{id}', TableDeleteController::class)->whereUuid('id');
+    Route::post('/admin/tables/merge', MergeTablesController::class);
+    Route::post('/admin/tables/unmerge', UnmergeTablesController::class);
 
     Route::get('/admin/products', ProductGetCollectionController::class);
     Route::get('/admin/products/{id}', ProductGetController::class)->whereUuid('id');

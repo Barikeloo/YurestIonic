@@ -95,7 +95,7 @@ export class AuthService {
 
   public readonly currentUser$: Observable<AuthUser | null> = this.currentUserSubject.asObservable();
 
-  private readonly authBaseUrl: string = `${environment.apiUrl}/auth`;
+  private readonly authBaseUrl: string = `${environment.apiUrl}/api/auth`;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -289,7 +289,7 @@ export class AuthService {
   public superAdminLogin(email: string, password: string): Observable<void> {
     return this.http
       .post<SuperAdminLoginResponse>(
-        `${environment.apiUrl}/superadmin/login`,
+        `${environment.apiUrl}/api/superadmin/login`,
         { email, password },
         { withCredentials: true },
       )
@@ -306,7 +306,7 @@ export class AuthService {
   }
 
   public superAdminLogout(): Observable<void> {
-    return this.http.post(`${environment.apiUrl}/superadmin/logout`, {}, { withCredentials: true }).pipe(
+    return this.http.post(`${environment.apiUrl}/api/superadmin/logout`, {}, { withCredentials: true }).pipe(
       map(() => undefined),
       catchError((error: unknown) => {
         return throwError(() => error);
@@ -316,7 +316,7 @@ export class AuthService {
 
   public getSuperAdminRestaurants(): Observable<Restaurant[]> {
     return this.http
-      .get<GetRestaurantsResponse>(`${environment.apiUrl}/admin/restaurants`, { withCredentials: true })
+      .get<GetRestaurantsResponse>(`${environment.apiUrl}/api/admin/restaurants`, { withCredentials: true })
       .pipe(
         map((response: GetRestaurantsResponse) => response.data ?? []),
         catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
@@ -407,7 +407,7 @@ export class AuthService {
   }): Observable<Restaurant> {
     return this.http
       .post<{ data: Restaurant }>(
-        `${environment.apiUrl}/superadmin/restaurants`,
+        `${environment.apiUrl}/api/superadmin/restaurants`,
         data,
         { withCredentials: true },
       )
@@ -424,7 +424,7 @@ export class AuthService {
   }): Observable<Restaurant> {
     return this.http
       .put<{ data: Restaurant }>(
-        `${environment.apiUrl}/superadmin/restaurants/${uuid}`,
+        `${environment.apiUrl}/api/superadmin/restaurants/${uuid}`,
         data,
         { withCredentials: true },
       )
@@ -437,7 +437,7 @@ export class AuthService {
   public deleteRestaurant(uuid: string): Observable<void> {
     return this.http
       .delete<void>(
-        `${environment.apiUrl}/superadmin/restaurants/${uuid}`,
+        `${environment.apiUrl}/api/superadmin/restaurants/${uuid}`,
         { withCredentials: true },
       )
       .pipe(
@@ -448,7 +448,7 @@ export class AuthService {
   public getRestaurantUsers(restaurantUuid: string): Observable<AuthUser[]> {
     return this.http
       .get<GetRestaurantUsersResponse>(
-        `${environment.apiUrl}/superadmin/restaurants/${restaurantUuid}/users`,
+        `${environment.apiUrl}/api/superadmin/restaurants/${restaurantUuid}/users`,
         { withCredentials: true },
       )
       .pipe(
@@ -474,7 +474,7 @@ export class AuthService {
   }): Observable<AuthUser> {
     return this.http
       .post<RestaurantUserApi>(
-        `${environment.apiUrl}/superadmin/restaurants/${restaurantUuid}/users`,
+        `${environment.apiUrl}/api/superadmin/restaurants/${restaurantUuid}/users`,
         data,
         { withCredentials: true },
       )
@@ -497,7 +497,7 @@ export class AuthService {
   }): Observable<void> {
     return this.http
       .put<{ uuid: string; found: boolean }>(
-        `${environment.apiUrl}/superadmin/restaurants/${restaurantUuid}/users/${userUuid}`,
+        `${environment.apiUrl}/api/superadmin/restaurants/${restaurantUuid}/users/${userUuid}`,
         data,
         { withCredentials: true },
       )
@@ -510,7 +510,7 @@ export class AuthService {
   public deleteRestaurantUser(restaurantUuid: string, userUuid: string): Observable<void> {
     return this.http
       .delete<void>(
-        `${environment.apiUrl}/superadmin/restaurants/${restaurantUuid}/users/${userUuid}`,
+        `${environment.apiUrl}/api/superadmin/restaurants/${restaurantUuid}/users/${userUuid}`,
         { withCredentials: true },
       )
       .pipe(
@@ -520,7 +520,7 @@ export class AuthService {
 
   public getAdminRestaurants(): Observable<Restaurant[]> {
     return this.http
-      .get<{ data: Restaurant[] }>(`${environment.apiUrl}/admin/restaurants`, { withCredentials: true })
+      .get<{ data: Restaurant[] }>(`${environment.apiUrl}/api/admin/restaurants`, { withCredentials: true })
       .pipe(
         map((response) => response.data ?? []),
         catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
