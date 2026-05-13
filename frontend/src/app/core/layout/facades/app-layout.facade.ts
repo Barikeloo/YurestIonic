@@ -3,16 +3,20 @@ import { Observable, of, take } from 'rxjs';
 import { Router } from '@angular/router';
 import { AppContextService } from '../../services/app-context.service';
 import { AuthService } from '../../services/auth.service';
+import { RestaurantContextFacade } from '../../facades/restaurant-context.facade';
 import { TpvService } from '../../../features/cash/services/tpv.service';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class AppLayoutFacade {
   private readonly authService = inject(AuthService);
   private readonly contextService = inject(AppContextService);
+  private readonly restaurantContextFacade = inject(RestaurantContextFacade);
   private readonly tpvService = inject(TpvService);
   private readonly router = inject(Router);
+
+  private restaurantNameCache: Map<string, string> = new Map();
 
   // Métodos de negocio
   public refreshCajaStatus(): Observable<any> {
@@ -33,6 +37,11 @@ export class AppLayoutFacade {
 
   public clearActiveRestaurant(): void {
     this.contextService.clearActiveRestaurant();
+    this.restaurantContextFacade.clearRestaurantContext();
+  }
+
+  public setAdminSelectedContext(name: string): void {
+    this.contextService.setActiveRestaurant({ id: '', name });
   }
 
   public getDeviceId(): string {

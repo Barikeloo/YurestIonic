@@ -5,6 +5,7 @@ import { Subscription, interval } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
 import { AppContextService } from '../../services/app-context.service';
 import { AuthService, AuthUser } from '../../services/auth.service';
+import { RestaurantContextFacade } from '../../facades/restaurant-context.facade';
 import { TpvService } from '../../../features/cash/services/tpv.service';
 import { AppLayoutFacade } from '../facades/app-layout.facade';
 import { UserRole } from '../../enums/user-role.enum';
@@ -28,8 +29,10 @@ export class AppLayoutPage implements OnInit, OnDestroy {
   private userSubscription?: Subscription;
   private contextSubscription?: Subscription;
   private routerSubscription?: Subscription;
+  private adminSelectedContext: boolean = false;
 
   protected readonly layoutFacade = inject(AppLayoutFacade);
+  protected readonly restaurantContextFacade = inject(RestaurantContextFacade);
 
   constructor(
     private readonly authService: AuthService,
@@ -47,7 +50,15 @@ export class AppLayoutPage implements OnInit, OnDestroy {
       this.currentUser = user;
       this.isAdminUser = user?.role === UserRole.ADMIN;
 
-      if (user?.restaurantName) {
+      // Limpiar contexto persistido si el usuario no es admin
+      if (!this.isAdminUser) {
+        this.adminSelectedContext = false;
+        this.restaurantContextFacade.clearRestaurantContext();
+        localStorage.removeItem('gestion_selected_restaurant_uuid');
+      }
+
+      // Solo establecer el contexto del usuario autenticado si no ha sido seleccionado manualmente por admin
+      if (user?.restaurantName && !this.adminSelectedContext) {
         this.contextService.setActiveRestaurant({
           id: user.restaurantId,
           name: user.restaurantName,
@@ -60,7 +71,13 @@ export class AppLayoutPage implements OnInit, OnDestroy {
     });
 
     this.contextSubscription = this.contextService.activeRestaurant$.subscribe((context) => {
-      this.activeRestaurantName = context?.name ?? 'Sin restaurante';
+      if (context?.name) {
+        this.activeRestaurantName = context.name;
+        // Marcar que el contexto ha sido seleccionado manualmente
+        if (this.isAdminUser) {
+          this.adminSelectedContext = true;
+        }
+      }
     });
 
     this.routerSubscription = this.router.events

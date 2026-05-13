@@ -3,11 +3,15 @@ import { Observable, throwError } from 'rxjs';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { RestaurantContextFacade } from '../facades/restaurant-context.facade';
 
 @Injectable()
 export class InterceptorProvider implements HttpInterceptor {
 
-  constructor(private readonly router: Router) {}
+  constructor(
+    private readonly router: Router,
+    private readonly restaurantContextFacade: RestaurantContextFacade,
+  ) {}
 
   intercept(request: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     return next.handle(this.setHeader(request)).pipe(
@@ -29,14 +33,21 @@ export class InterceptorProvider implements HttpInterceptor {
 
   private setHeader(request: HttpRequest<any>): HttpRequest<any> {
     const deviceId = this.getOrCreateDeviceId();
+    const restaurantUuid = this.restaurantContextFacade.selectedRestaurantUuid;
+
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      'Accept-Language': 'es',
+      'X-Device-Id': deviceId,
+    };
+
+    if (restaurantUuid) {
+      headers['X-Restaurant-Id'] = restaurantUuid;
+    }
 
     return request.clone({
       withCredentials: true,
-      setHeaders: {
-        Accept: 'application/json',
-        'Accept-Language': 'es',
-        'X-Device-Id': deviceId,
-      }
+      setHeaders: headers,
     });
   }
 

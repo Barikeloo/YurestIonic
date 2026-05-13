@@ -1,12 +1,15 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { AppContextService } from '../../../core/services/app-context.service';
 import { DeviceStorageService } from '../../../core/services/device-storage.service';
+import { RestaurantContextFacade } from '../../../core/facades/restaurant-context.facade';
 import { ToastService } from '../../../core/services/toast.service';
+import { AppLayoutFacade } from '../../../core/layout/facades/app-layout.facade';
 import { UserRole } from '../../../core/enums/user-role.enum';
+import { AuthService } from '../../../core/services/auth.service';
 import { FamilyItem, FamilyService } from '../../../services/family.service';
 import { GestionFamiliesFacade } from './facades/gestion-families.facade';
 import { GestionTaxesFacade } from './facades/gestion-taxes.facade';
@@ -33,7 +36,7 @@ import { TpvService } from '../../../features/cash/services/tpv.service';
 
 interface ManagementRestaurant {
   id: number;
-  uuid?: string;
+  uuid: string;
   name: string;
   legalName: string;
   taxId: string;
@@ -122,6 +125,8 @@ export class GestionPage {
   protected readonly usersFacade = inject(GestionUsersFacade);
   protected readonly zreportsFacade = inject(GestionZReportsFacade);
   protected readonly toastService = inject(ToastService);
+  protected readonly restaurantContextFacade = inject(RestaurantContextFacade);
+  protected readonly layoutFacade = inject(AppLayoutFacade);
 
   public isSavingRestaurant: boolean = false;
   public isSavingUser: boolean = false;
@@ -129,9 +134,12 @@ export class GestionPage {
   public isSavingTax: boolean = false;
   public isSavingProduct: boolean = false;
   public isLoadingZReports: boolean = false;
+  public isAdminUser: boolean = false;
   private preloadRunId: number = 0;
 
-  public managementRestaurants: ManagementRestaurant[] = [];
+  private readonly _managementRestaurants = signal<ManagementRestaurant[]>([]);
+
+  public readonly managementRestaurants = this._managementRestaurants.asReadonly();
 
   public readonly managementData: Record<number, ManagementDataRow> = {};
 
@@ -213,17 +221,27 @@ export class GestionPage {
   };
 
   constructor(
+    private readonly authService: AuthService,
     private readonly contextService: AppContextService,
-    private readonly router: Router,
     private readonly deviceStorageService: DeviceStorageService,
-    private readonly familyService: FamilyService,
-    private readonly productService: ProductService,
     private readonly restaurantService: RestaurantService,
-    private readonly tableService: TableService,
+    private readonly familyService: FamilyService,
     private readonly taxService: TaxService,
+    private readonly productService: ProductService,
     private readonly zoneService: ZoneService,
-    private readonly tpvService: TpvService,
+    private readonly tableService: TableService,
+    private readonly router: Router,
   ) {
+    // Suscribirse al usuario actual para determinar si es admin
+    this.authService.currentUser$.pipe(take(1)).subscribe((user) => {
+      this.isAdminUser = user?.role === UserRole.ADMIN;
+
+      // Limpiar contexto persistido si el usuario no es admin
+      if (!this.isAdminUser) {
+        this.clearPersistedSelectedRestaurant();
+      }
+    });
+
     this.syncForms();
     if (this.selectedRestaurant) {
       this.contextService.setActiveRestaurant({ name: this.selectedRestaurant.name });
@@ -357,7 +375,7 @@ export class GestionPage {
   }
 
   public get selectedRestaurant(): ManagementRestaurant | null {
-    return this.managementRestaurants.find((restaurant) => restaurant.id === this.managementState.restaurantId) ?? null;
+    return this.managementRestaurants().find((restaurant) => restaurant.id === this.managementState.restaurantId) ?? null;
   }
 
   public get selectedData(): ManagementDataRow {
@@ -428,13 +446,19 @@ export class GestionPage {
     this.preloadRunId++;
     this.managementState.restaurantId = restaurantId;
     if (this.selectedRestaurant) {
-      this.contextService.setActiveRestaurant({ name: this.selectedRestaurant.name });
+      this.layoutFacade.setAdminSelectedContext(this.selectedRestaurant.name);
+      this.contextService.setActiveRestaurant({
+        id: this.selectedRestaurant.uuid || '',
+        name: this.selectedRestaurant.name,
+      });
       if (this.selectedRestaurant.uuid) {
         this.restaurantService
           .selectAdminRestaurantContext(this.selectedRestaurant.uuid)
           .pipe(take(1))
           .subscribe({
             next: () => {
+              this.restaurantContextFacade.setRestaurantContext(this.selectedRestaurant!.uuid!);
+              this.persistSelectedRestaurant(restaurantId);
               this.loadRestaurantUsers(this.selectedRestaurant!.uuid!);
               this.loadFamilies();
               this.loadTaxes();
@@ -1006,16 +1030,23 @@ export class GestionPage {
   }
 
   private updateRestaurantKpis(restaurantId: number): void {
-    const restaurant = this.managementRestaurants.find((row) => row.id === restaurantId);
+    const restaurants = this.managementRestaurants();
+    const restaurantIndex = restaurants.findIndex((row) => row.id === restaurantId);
     const data = this.managementData[restaurantId];
 
-    if (!restaurant || !data) {
+    if (restaurantIndex === -1 || !data) {
       return;
     }
 
-    restaurant.users = data.users.length;
-    restaurant.zones = data.zones.length;
-    restaurant.products = data.products.length;
+    const updatedRestaurants = [...restaurants];
+    updatedRestaurants[restaurantIndex] = {
+      ...updatedRestaurants[restaurantIndex],
+      users: data.users.length,
+      zones: data.zones.length,
+      products: data.products.length,
+    };
+
+    this._managementRestaurants.set(updatedRestaurants);
   }
 
   private upsertRow(rows: unknown[], idx: number, payload: unknown, entityKey: keyof ManagementDataRow): void {
@@ -1141,6 +1172,28 @@ export class GestionPage {
     }
   }
 
+  private persistSelectedRestaurant(restaurantId: number): void {
+    // Solo persistir si el usuario es admin
+    if (this.isAdminUser) {
+      const restaurant = this.managementRestaurants().find((r) => r.id === restaurantId);
+      if (restaurant?.uuid) {
+        localStorage.setItem('gestion_selected_restaurant_uuid', restaurant.uuid);
+      }
+    }
+  }
+
+  private getPersistedSelectedRestaurantUuid(): string | null {
+    // Solo restaurar si el usuario es admin
+    if (this.isAdminUser) {
+      return localStorage.getItem('gestion_selected_restaurant_uuid');
+    }
+    return null;
+  }
+
+  private clearPersistedSelectedRestaurant(): void {
+    localStorage.removeItem('gestion_selected_restaurant_uuid');
+  }
+
   private loadRestaurantsFromApi(): void {
     this.restaurantService
       .getAdminRestaurants()
@@ -1148,63 +1201,62 @@ export class GestionPage {
       .subscribe({
         next: (response) => {
           if (!response.data.length) {
-            this.managementRestaurants = [];
+            this._managementRestaurants.set([]);
             for (const key of Object.keys(this.managementData)) {
               delete this.managementData[Number(key)];
             }
-            this.managementState.restaurantId = 0;
-            this.contextService.clearActiveRestaurant();
-            this.syncForms();
-
             return;
           }
 
-          this.managementRestaurants.splice(
-            0,
-            this.managementRestaurants.length,
-            ...response.data.map((row, index) => ({
-              id: index + 1,
-              uuid: row.uuid,
-              name: row.name,
-              legalName: row.legal_name,
-              taxId: row.tax_id,
-              email: row.email,
-              status: 'active' as const,
-              users: row.users,
-              zones: row.zones,
-              products: row.products,
-            })),
-          );
+          const restaurants = response.data.map((item, index) => ({
+            id: index + 1,
+            uuid: item.uuid,
+            name: item.name,
+            legalName: item.legal_name,
+            taxId: item.tax_id,
+            email: item.email,
+            status: 'active' as const,
+            users: item.users,
+            zones: item.zones,
+            products: item.products,
+          }));
 
-          for (const key of Object.keys(this.managementData)) {
-            delete this.managementData[Number(key)];
-          }
+          this._managementRestaurants.set(restaurants);
 
-          for (const restaurant of this.managementRestaurants) {
-            this.managementData[restaurant.id] = {
-              users: [],
-              families: [],
-              taxes: [],
-              zones: [],
-              products: [],
-              zreports: [],
-            };
+          for (const restaurant of restaurants) {
+            if (!this.managementData[restaurant.id]) {
+              this.managementData[restaurant.id] = {
+                users: [],
+                families: [],
+                taxes: [],
+                zones: [],
+                products: [],
+                zreports: [],
+              };
 
-            if (restaurant.uuid) {
-              this.loadRestaurantUsers(restaurant.uuid, true);
+              if (restaurant.uuid) {
+                this.loadRestaurantUsers(restaurant.uuid, true);
+              }
             }
           }
 
-          this.managementState.restaurantId = this.managementRestaurants[0].id;
+          const persistedUuid = this.getPersistedSelectedRestaurantUuid();
+          const selectedId = persistedUuid && restaurants.find((r) => r.uuid === persistedUuid)
+            ? restaurants.find((r) => r.uuid === persistedUuid)!.id
+            : restaurants[0].id;
+
+          this.managementState.restaurantId = selectedId;
           this.syncForms();
 
-          const firstRestaurant = this.managementRestaurants[0];
-          if (firstRestaurant?.uuid) {
+          // Solo establecer el contexto si es el primer restaurante y no hay selección persistida
+          const firstRestaurant = restaurants[0];
+          if (firstRestaurant?.uuid && !persistedUuid) {
             this.restaurantService
               .selectAdminRestaurantContext(firstRestaurant.uuid)
               .pipe(take(1))
               .subscribe({
                 next: () => {
+                  this.restaurantContextFacade.setRestaurantContext(firstRestaurant.uuid);
                   this.loadFamilies(true);
                   this.loadTaxes();
                   this.loadProducts();
@@ -1216,17 +1268,20 @@ export class GestionPage {
                   this.toastService.presentError(message);
                 },
               });
+          } else if (persistedUuid) {
+            const persistedRestaurant = restaurants.find((r) => r.uuid === persistedUuid);
+            if (persistedRestaurant?.uuid) {
+              this.restaurantContextFacade.setRestaurantContext(persistedRestaurant.uuid);
+              this.loadFamilies(true);
+              this.loadTaxes();
+              this.loadProducts();
+              this.loadZonesAndTables();
+              this.startBackgroundPreload();
+            }
           }
         },
         error: (error: unknown) => {
-          this.managementRestaurants = [];
-          for (const key of Object.keys(this.managementData)) {
-            delete this.managementData[Number(key)];
-          }
-          this.managementState.restaurantId = 0;
-          this.contextService.clearActiveRestaurant();
-          this.syncForms();
-          const message = error instanceof Error ? error.message : 'No se pudieron cargar restaurantes.';
+          const message = error instanceof Error ? error.message : 'No se pudieron cargar los restaurantes.';
           this.toastService.presentError(message);
         },
       });
@@ -1244,7 +1299,7 @@ export class GestionPage {
   }
 
   private async preloadRestaurantsInBackground(runId: number, selectedRestaurantUuid: string): Promise<void> {
-    for (const restaurant of this.managementRestaurants) {
+    for (const restaurant of this.managementRestaurants()) {
       if (runId !== this.preloadRunId) {
         return;
       }
@@ -1371,13 +1426,14 @@ export class GestionPage {
   }
 
   private syncUsersMirror(restaurantUuid: string): void {
-    const restaurant = this.managementRestaurants.find((r) => r.uuid === restaurantUuid);
-    if (!restaurant) {
+    const restaurants = this.managementRestaurants();
+    const restaurantIndex = restaurants.findIndex((r) => r.uuid === restaurantUuid);
+    if (restaurantIndex === -1) {
       return;
     }
 
     const users = this.usersFacade.users();
-    this.managementData[restaurant.id].users = users.map((user): UserRow => ({
+    this.managementData[restaurants[restaurantIndex].id].users = users.map((user): UserRow => ({
       uuid: user.uuid,
       name: user.name,
       email: user.email,
@@ -1435,17 +1491,12 @@ export class GestionPage {
 
     try {
       await this.zreportsFacade.load();
-      this.syncZReportsMirror(restaurant.id);
+      this.managementData[restaurant.id].zreports = this.zreportsFacade.reports();
       this.isLoadingZReports = false;
     } catch (error) {
       this.isLoadingZReports = false;
       const message = error instanceof Error ? error.message : 'No se pudieron cargar los Z-Reports.';
       this.toastService.presentError(message);
     }
-  }
-
-  private syncZReportsMirror(restaurantId: number): void {
-    const reports = this.zreportsFacade.reports();
-    this.managementData[restaurantId].zreports = reports;
   }
 }

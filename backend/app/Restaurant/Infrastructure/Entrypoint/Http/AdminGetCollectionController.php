@@ -3,9 +3,10 @@
 namespace App\Restaurant\Infrastructure\Entrypoint\Http;
 
 use App\Restaurant\Application\GetAdminRestaurantCollection\GetAdminRestaurantCollection;
-use App\Restaurant\Application\GetAdminRestaurantCollection\GetAdminRestaurantCollectionResponse;
+use App\Restaurant\Domain\Exception\LinkedRestaurantNotFoundException;
+use App\Restaurant\Domain\Exception\NotAuthenticatedException;
+use App\Restaurant\Infrastructure\Entrypoint\Http\Requests\GetAdminRestaurantCollectionRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class AdminGetCollectionController
 {
@@ -13,36 +14,22 @@ final class AdminGetCollectionController
         private GetAdminRestaurantCollection $getAdminRestaurantCollection,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(GetAdminRestaurantCollectionRequest $request): JsonResponse
     {
-        $superAdminUuid = $request->session()->get('super_admin_id');
-        $authUserUuid = $request->session()->get('auth_user_id');
+        try {
+            $response = ($this->getAdminRestaurantCollection)($request->toCommand());
+        } catch (NotAuthenticatedException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 401);
+        } catch (LinkedRestaurantNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            report($e);
 
-        $response = $this->getAdminRestaurantCollection->__invoke(
-            is_string($authUserUuid) ? $authUserUuid : null,
-            is_string($superAdminUuid) && $superAdminUuid !== '',
-        );
-
-        if ($response->status() === GetAdminRestaurantCollectionResponse::NOT_AUTHENTICATED) {
-            return new JsonResponse([
-                'message' => 'Not authenticated.',
-            ], 401);
-        }
-
-        if ($response->status() === GetAdminRestaurantCollectionResponse::LINKED_RESTAURANT_NOT_FOUND) {
-            return new JsonResponse([
-                'message' => 'Linked restaurant not found.',
-            ], 404);
-        }
-
-        if ($response->status() === GetAdminRestaurantCollectionResponse::LINKED_RESTAURANT_WITHOUT_TAX_ID) {
-            return new JsonResponse([
-                'message' => 'Linked restaurant has no tax id.',
-            ], 422);
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
         return new JsonResponse([
             'data' => $response->data(),
-        ]);
+        ], 200);
     }
 }

@@ -2,6 +2,10 @@
 
 namespace App\Restaurant\Application\SelectRestaurantContext;
 
+use App\Restaurant\Domain\Exception\ForbiddenException;
+use App\Restaurant\Domain\Exception\LinkedRestaurantNotFoundException;
+use App\Restaurant\Domain\Exception\NotAuthenticatedException;
+use App\Restaurant\Domain\Exception\RestaurantNotFoundException;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
@@ -13,58 +17,55 @@ class SelectRestaurantContext
         private RestaurantRepositoryInterface $restaurantRepository,
     ) {}
 
-    public function __invoke(
-        ?string $authUserUuid,
-        string $targetRestaurantUuid,
-        bool $isSuperAdmin,
-    ): SelectRestaurantContextResponse {
-        $targetRestaurant = $this->restaurantRepository->findByUuid(Uuid::create($targetRestaurantUuid));
+    public function __invoke(SelectRestaurantContextCommand $command): SelectRestaurantContextResponse
+    {
+        $targetRestaurant = $this->restaurantRepository->findByUuid(Uuid::create($command->targetRestaurantUuid));
 
         if ($targetRestaurant === null) {
-            return SelectRestaurantContextResponse::restaurantNotFound();
+            throw RestaurantNotFoundException::withUuid($command->targetRestaurantUuid);
         }
 
-        if ($isSuperAdmin) {
-            return SelectRestaurantContextResponse::success(
+        if ($command->isSuperAdmin) {
+            return SelectRestaurantContextResponse::create(
                 $targetRestaurant->uuid()->value(),
                 $targetRestaurant->name()->value(),
             );
         }
 
-        if (! is_string($authUserUuid) || $authUserUuid === '') {
-            return SelectRestaurantContextResponse::notAuthenticated();
+        if (! is_string($command->authUserUuid) || $command->authUserUuid === '') {
+            throw NotAuthenticatedException::create();
         }
 
-        $user = $this->userRepository->findById($authUserUuid);
+        $user = $this->userRepository->findById($command->authUserUuid);
 
         if ($user === null || $user->restaurantId() === null) {
-            return SelectRestaurantContextResponse::notAuthenticated();
+            throw NotAuthenticatedException::create();
         }
 
         $linkedRestaurant = $this->restaurantRepository->findByInternalId($user->restaurantId()->toInt());
 
         if ($linkedRestaurant === null) {
-            return SelectRestaurantContextResponse::linkedRestaurantNotFound();
+            throw LinkedRestaurantNotFoundException::create();
         }
 
         $linkedTaxId = $linkedRestaurant->taxId()?->value();
 
         if (! is_string($linkedTaxId) || $linkedTaxId === '') {
             if ($targetRestaurant->uuid()->value() !== $linkedRestaurant->uuid()->value()) {
-                return SelectRestaurantContextResponse::forbidden();
+                throw ForbiddenException::create();
             }
 
-            return SelectRestaurantContextResponse::success(
+            return SelectRestaurantContextResponse::create(
                 $targetRestaurant->uuid()->value(),
                 $targetRestaurant->name()->value(),
             );
         }
 
         if ($targetRestaurant->taxId()?->value() !== $linkedTaxId) {
-            return SelectRestaurantContextResponse::forbidden();
+            throw ForbiddenException::create();
         }
 
-        return SelectRestaurantContextResponse::success(
+        return SelectRestaurantContextResponse::create(
             $targetRestaurant->uuid()->value(),
             $targetRestaurant->name()->value(),
         );

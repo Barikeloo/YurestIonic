@@ -3,7 +3,7 @@
     <div class="page-container">
       <div class="gestion-layout">
         <app-restaurant-list
-          [restaurants]="managementRestaurants"
+          [restaurants]="managementRestaurants()"
           [selectedRestaurantId]="managementState.restaurantId"
           (selectRestaurant)="selectRestaurant($event)"
           />

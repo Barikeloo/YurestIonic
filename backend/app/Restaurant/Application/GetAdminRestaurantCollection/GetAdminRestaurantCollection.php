@@ -3,6 +3,8 @@
 namespace App\Restaurant\Application\GetAdminRestaurantCollection;
 
 use App\Restaurant\Domain\Entity\Restaurant;
+use App\Restaurant\Domain\Exception\LinkedRestaurantNotFoundException;
+use App\Restaurant\Domain\Exception\NotAuthenticatedException;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 
@@ -13,39 +15,39 @@ class GetAdminRestaurantCollection
         private RestaurantRepositoryInterface $restaurantRepository,
     ) {}
 
-    public function __invoke(?string $authUserUuid, bool $isSuperAdmin): GetAdminRestaurantCollectionResponse
+    public function __invoke(GetAdminRestaurantCollectionCommand $command): GetAdminRestaurantCollectionResponse
     {
-        if ($isSuperAdmin) {
-            return GetAdminRestaurantCollectionResponse::success(
+        if ($command->isSuperAdmin) {
+            return GetAdminRestaurantCollectionResponse::create(
                 $this->mapRestaurants($this->restaurantRepository->all()),
             );
         }
 
-        if (! is_string($authUserUuid) || $authUserUuid === '') {
-            return GetAdminRestaurantCollectionResponse::notAuthenticated();
+        if (! is_string($command->authUserUuid) || $command->authUserUuid === '') {
+            throw NotAuthenticatedException::create();
         }
 
-        $user = $this->userRepository->findById($authUserUuid);
+        $user = $this->userRepository->findById($command->authUserUuid);
 
         if ($user === null || $user->restaurantId() === null) {
-            return GetAdminRestaurantCollectionResponse::notAuthenticated();
+            throw NotAuthenticatedException::create();
         }
 
         $linkedRestaurant = $this->restaurantRepository->findByInternalId($user->restaurantId()->toInt());
 
         if ($linkedRestaurant === null) {
-            return GetAdminRestaurantCollectionResponse::linkedRestaurantNotFound();
+            throw LinkedRestaurantNotFoundException::create();
         }
 
         $taxId = $linkedRestaurant->taxId()?->value();
 
         if (! is_string($taxId) || $taxId === '') {
-            return GetAdminRestaurantCollectionResponse::success(
+            return GetAdminRestaurantCollectionResponse::create(
                 $this->mapRestaurants([$linkedRestaurant]),
             );
         }
 
-        return GetAdminRestaurantCollectionResponse::success(
+        return GetAdminRestaurantCollectionResponse::create(
             $this->mapRestaurants($this->restaurantRepository->findByTaxId($taxId)),
         );
     }
