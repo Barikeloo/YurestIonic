@@ -296,6 +296,33 @@ export class ProductModifiersFacade implements OnDestroy {
     );
   }
 
+  public reorderModifiers(type: 'extra' | 'accompaniment', reordered: ProductModifierItem[]): Observable<void> {
+    const product = this._product();
+    if (!product?.uuid) {
+      return throwError(() => new Error('Producto no válido.'));
+    }
+
+    const previous = this._modifiers();
+    const others = previous.filter((m) => m.type !== type);
+    this._modifiers.set([...others, ...reordered]);
+    this._isSaving.set(true);
+    this._error.set(null);
+
+    const items = reordered.map((m, index) => ({ id: m.id, sort_order: index }));
+
+    return this.modifierService.reorderModifiers(product.uuid, items).pipe(
+      tap(() => this._isSaving.set(false)),
+      catchError((err) => {
+        this._modifiers.set(previous);
+        this._isSaving.set(false);
+        const message = err instanceof Error ? err.message : 'No se pudo reordenar.';
+        this._error.set(message);
+        return throwError(() => new Error(message));
+      }),
+      takeUntil(this.destroy$),
+    );
+  }
+
   public removeModifier(modifierId: string): Observable<void> {
     const product = this._product();
     if (!product?.uuid) {

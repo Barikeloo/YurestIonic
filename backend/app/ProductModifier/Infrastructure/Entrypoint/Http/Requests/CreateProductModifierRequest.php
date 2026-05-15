@@ -5,6 +5,7 @@ namespace App\ProductModifier\Infrastructure\Entrypoint\Http\Requests;
 use App\ProductModifier\Application\CreateProductModifier\CreateProductModifierCommand;
 use App\ProductModifier\Domain\ValueObject\ModifierType;
 use App\ProductModifier\Domain\ValueObject\ModifierSelectionType;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -26,6 +27,15 @@ final class CreateProductModifierRequest extends FormRequest
             'active' => ['sometimes', 'boolean'],
             'sort_order' => ['sometimes', 'integer', 'min:0'],
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(function (Validator $v): void {
+            if ($this->input('type') === ModifierType::extra()->value() && (bool) $this->input('is_required')) {
+                $v->errors()->add('is_required', 'Un extra no puede ser obligatorio.');
+            }
+        });
     }
 
     public function toCommand(string $productId): CreateProductModifierCommand

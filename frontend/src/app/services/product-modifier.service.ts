@@ -60,4 +60,8 @@ export class ProductModifierService extends BaseApiService {
   public deleteModifier(productId: string, modifierId: string): Observable<void> {
     return this.delete<void>(`/admin/products/${productId}/modifiers/${modifierId}`);
   }
+
+  public reorderModifiers(productId: string, items: Array<{ id: string; sort_order: number }>): Observable<void> {
+    return this.put<void>(`/admin/products/${productId}/modifiers/reorder`, { items });
+  }
 }

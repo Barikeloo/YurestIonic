@@ -23,7 +23,16 @@ class ProductModifier
         private int $sortOrder,
         private DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
-    ) {}
+    ) {
+        self::assertConsistent($type, $isRequired);
+    }
+
+    private static function assertConsistent(ModifierType $type, bool $isRequired): void
+    {
+        if ($type->value() === ModifierType::extra()->value() && $isRequired) {
+            throw new \InvalidArgumentException('An extra modifier cannot be marked as required.');
+        }
+    }
 
     public static function dddCreate(
         Uuid $productId,
@@ -89,12 +98,24 @@ class ProductModifier
         bool $active,
         int $sortOrder,
     ): void {
+        self::assertConsistent($type, $isRequired);
+
         $this->name = $name;
         $this->type = $type;
         $this->isRequired = $isRequired;
         $this->selectionType = $selectionType;
         $this->price = $price;
         $this->active = $active;
+        $this->sortOrder = $sortOrder;
+        $this->touch();
+    }
+
+    public function reorder(int $sortOrder): void
+    {
+        if ($this->sortOrder === $sortOrder) {
+            return;
+        }
+
         $this->sortOrder = $sortOrder;
         $this->touch();
     }

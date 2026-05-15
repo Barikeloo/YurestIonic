@@ -113,6 +113,7 @@
         } @else if (activeTab === 'extras' || activeTab === 'accompaniments') {
           @let modifierList = activeTab === 'extras' ? extras() : accompaniments();
           @let modifierType = activeTab === 'extras' ? 'extra' : 'accompaniment';
+          @let showRequired = activeTab === 'accompaniments';
           <div class="modifiers-section">
             <div class="variants-header">
               <button type="button" class="btn-small" (click)="addModifierRow(modifierType)" [disabled]="isSaving() || hasEditingModifier()">
@@ -124,38 +125,58 @@
               <div class="variants-empty">No hay {{ activeTab === 'extras' ? 'extras' : 'acompañamientos' }} para este producto.</div>
             } @else {
               <div class="variants-table">
-                <div class="variants-row modifiers-row modifiers-row-header">
+                <div class="variants-row modifiers-row modifiers-row-header" [class.modifiers-row-extras]="!showRequired">
+                  <span></span>
                   <span>Nombre</span>
                   <span>Precio (€)</span>
-                  <span>Oblig.</span>
+                  @if (showRequired) {
+                    <span>Oblig.</span>
+                  }
                   <span>Selección</span>
                   <span>Activo</span>
                   <span></span>
                 </div>
-                @for (modifier of modifierList; track modifier.id) {
-                  <div class="variants-row modifiers-row">
-                    <span>{{ modifier.name }}</span>
-                    <span>{{ (modifier.price / 100).toFixed(2) }}</span>
-                    <span>{{ modifier.is_required ? 'Sí' : 'No' }}</span>
-                    <span>{{ modifier.selection_type === 'single' ? 'Una' : 'Varias' }}</span>
-                    <span>
-                      <span class="variant-status" [class.active]="modifier.active">
-                        {{ modifier.active ? 'Sí' : 'No' }}
+                <div
+                  cdkDropList
+                  (cdkDropListDropped)="onModifierDrop($event, modifierType)"
+                  [cdkDropListDisabled]="isSaving() || hasEditingModifier()"
+                >
+                  @for (modifier of modifierList; track modifier.id) {
+                    <div
+                      class="variants-row modifiers-row"
+                      [class.modifiers-row-extras]="!showRequired"
+                      cdkDrag
+                      [cdkDragDisabled]="isSaving() || hasEditingModifier()"
+                    >
+                      <span class="drag-handle" cdkDragHandle title="Arrastrar para reordenar">☰</span>
+                      <span>{{ modifier.name }}</span>
+                      <span>{{ (modifier.price / 100).toFixed(2) }}</span>
+                      @if (showRequired) {
+                        <span>{{ modifier.is_required ? 'Sí' : 'No' }}</span>
+                      }
+                      <span>{{ modifier.selection_type === 'single' ? 'Una' : 'Varias' }}</span>
+                      <span>
+                        <span class="variant-status" [class.active]="modifier.active">
+                          {{ modifier.active ? 'Sí' : 'No' }}
+                        </span>
                       </span>
-                    </span>
-                    <span class="variants-actions">
-                      <button type="button" class="btn-icon" (click)="startEditModifier(modifier)" [disabled]="isSaving() || hasEditingModifier()">✎</button>
-                      <button type="button" class="btn-icon btn-danger" (click)="deleteModifier(modifier.id)" [disabled]="isSaving()">🗑</button>
-                    </span>
-                  </div>
-                }
+                      <span class="variants-actions">
+                        <button type="button" class="btn-icon" (click)="startEditModifier(modifier)" [disabled]="isSaving() || hasEditingModifier()">✎</button>
+                        <button type="button" class="btn-icon btn-danger" (click)="deleteModifier(modifier.id)" [disabled]="isSaving()">🗑</button>
+                      </span>
+                    </div>
+                  }
+                </div>
                 @if (editingModifier(); as editing) {
-                  <div class="variants-row modifiers-row-editing">
+                  <div class="variants-row modifiers-row-editing" [class.modifiers-row-extras]="!showRequired">
+                    <span></span>
                     <input type="text" class="form-input" [(ngModel)]="editing.name" placeholder="Nombre" />
                     <input type="number" step="0.01" class="form-input" [ngModel]="editing.price > 0 ? (editing.price / 100).toFixed(2) : ''" (ngModelChange)="editing.price = euroToCents($event)" placeholder="0,00" />
-                    <label class="variant-toggle">
-                      <input type="checkbox" [(ngModel)]="editing.is_required" />
-                    </label>
+                    @if (showRequired) {
+                      <label class="variant-toggle">
+                        <input type="checkbox" [(ngModel)]="editing.is_required" />
+                      </label>
+                    }
                     <select class="form-input" [(ngModel)]="editing.selection_type">
                       <option value="single">Una</option>
                       <option value="multi">Varias</option>
@@ -171,12 +192,6 @@
                 }
               </div>
             }
-          </div>
-        } @else {
-          <div class="tab-placeholder">
-            <div class="placeholder-icon">🚧</div>
-            <div class="placeholder-text">Próximamente</div>
-            <div class="placeholder-sub">Esta sección se implementará en la siguiente fase.</div>
           </div>
         }
       </div>

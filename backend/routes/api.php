@@ -41,6 +41,7 @@ use App\Product\Infrastructure\Entrypoint\Http\TpvGetCollectionController as Pro
 use App\ProductModifier\Infrastructure\Entrypoint\Http\CreateProductModifierController;
 use App\ProductModifier\Infrastructure\Entrypoint\Http\DeleteProductModifierController;
 use App\ProductModifier\Infrastructure\Entrypoint\Http\ListProductModifiersController;
+use App\ProductModifier\Infrastructure\Entrypoint\Http\ReorderProductModifiersController;
 use App\ProductModifier\Infrastructure\Entrypoint\Http\UpdateProductModifierController;
 use App\ProductVariant\Infrastructure\Entrypoint\Http\CreateProductVariantController;
 use App\ProductVariant\Infrastructure\Entrypoint\Http\DeleteProductVariantController;
@@ -245,6 +246,7 @@ Route::middleware([
     Route::delete('/admin/products/{productId}/variants/{variantId}', DeleteProductVariantController::class)->whereUuid('productId')->whereUuid('variantId');
     Route::get('/admin/products/{id}/modifiers', ListProductModifiersController::class)->whereUuid('id');
     Route::post('/admin/products/{id}/modifiers', CreateProductModifierController::class)->whereUuid('id');
+    Route::put('/admin/products/{productId}/modifiers/reorder', ReorderProductModifiersController::class)->whereUuid('productId');
     Route::put('/admin/products/{productId}/modifiers/{modifierId}', UpdateProductModifierController::class)->whereUuid('productId')->whereUuid('modifierId');
     Route::delete('/admin/products/{productId}/modifiers/{modifierId}', DeleteProductModifierController::class)->whereUuid('productId')->whereUuid('modifierId');
     Route::post('/tpv/cash-sessions/force-close', ForceCloseCashSessionController::class);

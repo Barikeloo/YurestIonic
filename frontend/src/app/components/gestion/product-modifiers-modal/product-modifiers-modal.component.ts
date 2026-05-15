@@ -1,5 +1,6 @@
 import { Component, computed, EventEmitter, inject, Input, OnChanges, Output, signal, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { AllergenCode, ProductItem } from '../../../services/product.service';
@@ -9,7 +10,7 @@ import { ProductRow } from '../../../pages/core/gestion/facades/gestion-products
 import { ALLERGEN_CATALOG } from './allergen-catalog';
 import { ProductModifiersFacade } from './facades/product-modifiers.facade';
 
-export type ProductModifierTab = 'allergens' | 'variants' | 'extras' | 'accompaniments' | 'notes';
+export type ProductModifierTab = 'allergens' | 'variants' | 'extras' | 'accompaniments';
 
 interface TabItem {
   key: ProductModifierTab;
@@ -40,7 +41,7 @@ interface ModifierFormData {
 @Component({
   selector: 'app-product-modifiers-modal',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, DragDropModule],
   templateUrl: './product-modifiers-modal.component.html',
   styleUrls: ['./product-modifiers-modal.component.scss'],
   providers: [ProductModifiersFacade],
@@ -76,7 +77,6 @@ export class ProductModifiersModalComponent implements OnChanges {
     { key: 'variants', label: 'Variantes', description: 'Tamaños/formatos con precio y stock propio (caña, tanque, copa, botella).' },
     { key: 'extras', label: 'Extras', description: 'Extras opcionales que suman al precio (queso, bacon...).' },
     { key: 'accompaniments', label: 'Acompañamientos', description: 'Opciones obligatorias sin coste (patata, arroz, ensalada).' },
-    { key: 'notes', label: 'Notas', description: 'Notas libres que el camarero puede añadir al hacer la comanda.' },
   ];
 
   public readonly allergenCatalog = ALLERGEN_CATALOG;
@@ -266,6 +266,21 @@ export class ProductModifiersModalComponent implements OnChanges {
       .removeModifier(modifierId)
       .pipe(takeUntil(this.destroy$))
       .subscribe();
+  }
+
+  public onModifierDrop(event: CdkDragDrop<ProductModifierItem[]>, type: ModifierType): void {
+    if (event.previousIndex === event.currentIndex) {
+      return;
+    }
+
+    const source = type === 'extra' ? this.extras() : this.accompaniments();
+    const reordered = [...source];
+    moveItemInArray(reordered, event.previousIndex, event.currentIndex);
+
+    this.facade
+      .reorderModifiers(type, reordered)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({ error: () => {} });
   }
 
   public onSave(): void {
