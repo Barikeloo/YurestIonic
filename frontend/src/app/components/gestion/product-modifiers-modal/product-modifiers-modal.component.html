@@ -47,6 +47,59 @@
           <div class="allergen-summary">
             {{ selectedAllergens().length }} de {{ allergenCatalog.length }} seleccionados
           </div>
+        } @else if (activeTab === 'variants') {
+          <div class="variants-section">
+            <div class="variants-header">
+              <button type="button" class="btn-small" (click)="addVariantRow()" [disabled]="isSaving() || hasEditingVariant()">
+                + Añadir variante
+              </button>
+            </div>
+
+            @if (variants().length === 0 && !hasEditingVariant()) {
+              <div class="variants-empty">Este producto no tiene variantes. Añade una para empezar.</div>
+            } @else {
+              <div class="variants-table">
+                <div class="variants-row variants-row-header">
+                  <span>Nombre</span>
+                  <span>Precio (€)</span>
+                  <span>Stock</span>
+                  <span>Activo</span>
+                  <span></span>
+                </div>
+                @for (variant of variants(); track variant.id) {
+                  <div class="variants-row">
+                    <span>{{ variant.name }}</span>
+                    <span>{{ (variant.price / 100).toFixed(2) }}</span>
+                    <span>{{ variant.stock }}</span>
+                    <span>
+                      <span class="variant-status" [class.active]="variant.active">
+                        {{ variant.active ? 'Sí' : 'No' }}
+                      </span>
+                    </span>
+                    <span class="variants-actions">
+                      <button type="button" class="btn-icon" (click)="startEditVariant(variant)" [disabled]="isSaving() || hasEditingVariant()">✎</button>
+                      <button type="button" class="btn-icon btn-danger" (click)="deleteVariant(variant.id)" [disabled]="isSaving()">🗑</button>
+                    </span>
+                  </div>
+                }
+                @if (editingVariant(); as editing) {
+                  <div class="variants-row variants-row-editing">
+                    <input type="text" class="form-input" [(ngModel)]="editing.name" placeholder="Nombre" />
+                    <input type="number" step="0.01" class="form-input" [ngModel]="editing.price > 0 ? (editing.price / 100).toFixed(2) : ''" (ngModelChange)="editing.price = euroToCents($event)" placeholder="0,00" />
+                    <input type="number" class="form-input" [(ngModel)]="editing.stock" placeholder="0" />
+                    <label class="variant-toggle">
+                      <input type="checkbox" [(ngModel)]="editing.active" />
+                      {{ editing.active ? 'Sí' : 'No' }}
+                    </label>
+                    <span class="variants-actions">
+                      <button type="button" class="btn-icon btn-success" (click)="saveEditingVariant()" [disabled]="!editing.name || isSaving()">✓</button>
+                      <button type="button" class="btn-icon" (click)="cancelEditVariant()" [disabled]="isSaving()">✕</button>
+                    </span>
+                  </div>
+                }
+              </div>
+            }
+          </div>
         } @else {
           <div class="tab-placeholder">
             <div class="placeholder-icon">🚧</div>

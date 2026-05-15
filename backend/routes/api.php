@@ -38,6 +38,10 @@ use App\Product\Infrastructure\Entrypoint\Http\GetController as ProductGetContro
 use App\Product\Infrastructure\Entrypoint\Http\PostController as ProductPostController;
 use App\Product\Infrastructure\Entrypoint\Http\PutController as ProductPutController;
 use App\Product\Infrastructure\Entrypoint\Http\TpvGetCollectionController as ProductTpvGetCollectionController;
+use App\ProductVariant\Infrastructure\Entrypoint\Http\CreateProductVariantController;
+use App\ProductVariant\Infrastructure\Entrypoint\Http\DeleteProductVariantController;
+use App\ProductVariant\Infrastructure\Entrypoint\Http\ListProductVariantsController;
+use App\ProductVariant\Infrastructure\Entrypoint\Http\UpdateProductVariantController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\AdminGetCollectionController as RestaurantAdminGetCollectionController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\AdminSelectRestaurantContextController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\DeleteController as RestaurantDeleteController;
@@ -231,6 +235,10 @@ Route::middleware([
     Route::delete('/admin/products/{id}', ProductDeleteController::class)->whereUuid('id');
     Route::patch('/admin/products/{id}/activate', ProductActivateController::class)->whereUuid('id');
     Route::patch('/admin/products/{id}/deactivate', ProductDeactivateController::class)->whereUuid('id');
+    Route::get('/admin/products/{id}/variants', ListProductVariantsController::class)->whereUuid('id');
+    Route::post('/admin/products/{id}/variants', CreateProductVariantController::class)->whereUuid('id');
+    Route::put('/admin/products/{productId}/variants/{variantId}', UpdateProductVariantController::class)->whereUuid('productId')->whereUuid('variantId');
+    Route::delete('/admin/products/{productId}/variants/{variantId}', DeleteProductVariantController::class)->whereUuid('productId')->whereUuid('variantId');
     Route::post('/tpv/cash-sessions/force-close', ForceCloseCashSessionController::class);
     Route::post('/tpv/z-reports/generate', GenerateZReportController::class);
 });

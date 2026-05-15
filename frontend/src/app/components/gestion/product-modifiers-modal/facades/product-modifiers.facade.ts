@@ -2,22 +2,28 @@ import { computed, inject, Injectable, OnDestroy, Signal, signal } from '@angula
 import { Observable, Subject, throwError } from 'rxjs';
 import { catchError, takeUntil, tap } from 'rxjs/operators';
 import { AllergenCode, ProductItem, ProductService } from '../../../../services/product.service';
+import { ProductVariantItem, ProductVariantService } from '../../../../services/product-variant.service';
 import { ProductRow } from '../../../../pages/core/gestion/facades/gestion-products.facade';
 
 @Injectable()
 export class ProductModifiersFacade implements OnDestroy {
   private readonly productService = inject(ProductService);
+  private readonly variantService = inject(ProductVariantService);
   private readonly destroy$ = new Subject<void>();
 
   // Signals privados — estado
   private readonly _product = signal<ProductRow | null>(null);
   private readonly _selectedAllergens = signal<AllergenCode[]>([]);
+  private readonly _variants = signal<ProductVariantItem[]>([]);
+  private readonly _variantsLoading = signal<boolean>(false);
   private readonly _isSaving = signal<boolean>(false);
   private readonly _error = signal<string | null>(null);
 
   // Signals públicos — solo lectura
   public readonly product: Signal<ProductRow | null> = this._product.asReadonly();
   public readonly selectedAllergens: Signal<AllergenCode[]> = this._selectedAllergens.asReadonly();
+  public readonly variants: Signal<ProductVariantItem[]> = this._variants.asReadonly();
+  public readonly variantsLoading: Signal<boolean> = this._variantsLoading.asReadonly();
   public readonly isSaving: Signal<boolean> = this._isSaving.asReadonly();
   public readonly error: Signal<string | null> = this._error.asReadonly();
 
@@ -41,6 +47,7 @@ export class ProductModifiersFacade implements OnDestroy {
   public setProduct(product: ProductRow | null): void {
     this._product.set(product);
     this._selectedAllergens.set(product ? [...product.allergens] : []);
+    this._variants.set([]);
     this._error.set(null);
   }
 
@@ -66,6 +73,8 @@ export class ProductModifiersFacade implements OnDestroy {
   public reset(): void {
     this._product.set(null);
     this._selectedAllergens.set([]);
+    this._variants.set([]);
+    this._variantsLoading.set(false);
     this._isSaving.set(false);
     this._error.set(null);
   }
@@ -102,6 +111,105 @@ export class ProductModifiersFacade implements OnDestroy {
         }),
         takeUntil(this.destroy$),
       );
+  }
+
+  // --- Variants ---
+  public loadVariants(): Observable<{ variants: ProductVariantItem[] }> {
+    const product = this._product();
+    if (!product?.uuid) {
+      return throwError(() => new Error('Producto no válido para cargar variantes.'));
+    }
+
+    this._variantsLoading.set(true);
+    this._error.set(null);
+
+    return this.variantService.listVariants(product.uuid).pipe(
+      tap((response) => {
+        this._variants.set(response.variants);
+        this._variantsLoading.set(false);
+      }),
+      catchError((err) => {
+        this._variantsLoading.set(false);
+        const message = err instanceof Error ? err.message : 'No se pudieron cargar las variantes.';
+        this._error.set(message);
+        return throwError(() => new Error(message));
+      }),
+      takeUntil(this.destroy$),
+    );
+  }
+
+  public addVariant(payload: Omit<ProductVariantItem, 'id' | 'product_id' | 'created_at' | 'updated_at'>): Observable<ProductVariantItem> {
+    const product = this._product();
+    if (!product?.uuid) {
+      return throwError(() => new Error('Producto no válido.'));
+    }
+
+    this._isSaving.set(true);
+    this._error.set(null);
+
+    return this.variantService.createVariant(product.uuid, payload).pipe(
+      tap((variant) => {
+        this._variants.update((current) => [...current, variant]);
+        this._isSaving.set(false);
+      }),
+      catchError((err) => {
+        this._isSaving.set(false);
+        const message = err instanceof Error ? err.message : 'No se pudo crear la variante.';
+        this._error.set(message);
+        return throwError(() => new Error(message));
+      }),
+      takeUntil(this.destroy$),
+    );
+  }
+
+  public updateVariant(variantId: string, payload: Omit<ProductVariantItem, 'id' | 'product_id' | 'created_at' | 'updated_at'>): Observable<ProductVariantItem> {
+    const product = this._product();
+    if (!product?.uuid) {
+      return throwError(() => new Error('Producto no válido.'));
+    }
+
+    this._isSaving.set(true);
+    this._error.set(null);
+
+    return this.variantService.updateVariant(product.uuid, variantId, payload).pipe(
+      tap((updated) => {
+        this._variants.update((current) =>
+          current.map((v) => (v.id === variantId ? updated : v)),
+        );
+        this._isSaving.set(false);
+      }),
+      catchError((err) => {
+        this._isSaving.set(false);
+        const message = err instanceof Error ? err.message : 'No se pudo actualizar la variante.';
+        this._error.set(message);
+        return throwError(() => new Error(message));
+      }),
+      takeUntil(this.destroy$),
+    );
+  }
+
+  public removeVariant(variantId: string): Observable<void> {
+    const product = this._product();
+    if (!product?.uuid) {
+      return throwError(() => new Error('Producto no válido.'));
+    }
+
+    this._isSaving.set(true);
+    this._error.set(null);
+
+    return this.variantService.deleteVariant(product.uuid, variantId).pipe(
+      tap(() => {
+        this._variants.update((current) => current.filter((v) => v.id !== variantId));
+        this._isSaving.set(false);
+      }),
+      catchError((err) => {
+        this._isSaving.set(false);
+        const message = err instanceof Error ? err.message : 'No se pudo eliminar la variante.';
+        this._error.set(message);
+        return throwError(() => new Error(message));
+      }),
+      takeUntil(this.destroy$),
+    );
   }
 
   public ngOnDestroy(): void {
