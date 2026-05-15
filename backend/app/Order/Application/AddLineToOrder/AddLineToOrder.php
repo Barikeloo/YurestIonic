@@ -3,16 +3,22 @@
 namespace App\Order\Application\AddLineToOrder;
 
 use App\Order\Domain\Entity\OrderLine;
+use App\Order\Domain\Exception\OrderIsNotOpenException;
+use App\Order\Domain\Exception\OrderNotFoundException;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Order\Domain\ValueObject\OrderLineDinerNumber;
 use App\Order\Domain\ValueObject\OrderLinePrice;
 use App\Order\Domain\ValueObject\OrderLineQuantity;
 use App\Order\Domain\ValueObject\OrderLineTaxPercentage;
+use App\Family\Domain\Exception\FamilyNotActiveException;
+use App\Family\Domain\Interfaces\FamilyRepositoryInterface;
+use App\Product\Domain\Exception\InsufficientStockException;
+use App\Product\Domain\Exception\ProductNotActiveException;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\Tax\Domain\Exception\TaxNotFoundException;
 use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
-use InvalidArgumentException;
 
 final class AddLineToOrder
 {
@@ -21,48 +27,57 @@ final class AddLineToOrder
         private readonly ProductRepositoryInterface $productRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly TaxRepositoryInterface $taxRepository,
+        private readonly FamilyRepositoryInterface $familyRepository,
     ) {}
 
-    public function __invoke(
-        string $restaurantId,
-        string $orderId,
-        string $productId,
-        string $userId,
-        OrderLineQuantity $quantity,
-        ?int $dinerNumber = null,
-    ): AddLineToOrderResponse {
-        $order = $this->orderRepository->findByUuid(Uuid::create($orderId));
+    public function __invoke(AddLineToOrderCommand $command): AddLineToOrderResponse
+    {
+        $order = $this->orderRepository->findByUuid(Uuid::create($command->orderId));
 
         if ($order === null) {
-            throw new InvalidArgumentException('Order not found.');
+            throw OrderNotFoundException::withId($command->orderId);
         }
 
         if (! $order->status()->isOpen()) {
-            throw new InvalidArgumentException('Cannot add lines to an order that is not open.');
+            throw OrderIsNotOpenException::create();
         }
 
-        $product = $this->productRepository->findById($productId);
+        $product = $this->productRepository->findById($command->productId);
 
         if ($product === null) {
-            throw new InvalidArgumentException('Product not found.');
+            throw \App\Product\Domain\Exception\ProductNotFoundException::withId($command->productId);
         }
 
         if (! $product->isActive()) {
-            throw new InvalidArgumentException('Only active products can be sold.');
+            throw ProductNotActiveException::withId($command->productId);
+        }
+
+        $family = $this->familyRepository->findById($product->familyId()->value());
+
+        if ($family === null) {
+            throw \App\Family\Domain\Exception\FamilyNotFoundException::withId($product->familyId()->value());
+        }
+
+        if (! $family->isActive()) {
+            throw FamilyNotActiveException::withId($product->familyId()->value());
         }
 
         $tax = $this->taxRepository->findById($product->taxId()->value());
 
         if ($tax === null) {
-            throw new InvalidArgumentException('Tax not found for product.');
+            throw TaxNotFoundException::withId($product->taxId()->value());
         }
 
         $price = $product->price()->value();
         $taxPercentage = $tax->percentage()->value();
+        $quantity = OrderLineQuantity::create($command->quantity);
+
+        $product->decreaseStock($quantity->value());
+        $this->productRepository->save($product);
 
         $existing = $this->orderLineRepository->findMatchingMergeableLine(
-            orderId: Uuid::create($orderId),
-            productId: Uuid::create($productId),
+            orderId: Uuid::create($command->orderId),
+            productId: Uuid::create($command->productId),
             price: $price,
             taxPercentage: $taxPercentage,
         );
@@ -76,14 +91,14 @@ final class AddLineToOrder
 
         $orderLine = OrderLine::dddCreate(
             id: Uuid::generate(),
-            restaurantId: Uuid::create($restaurantId),
-            orderId: Uuid::create($orderId),
-            productId: Uuid::create($productId),
-            userId: Uuid::create($userId),
+            restaurantId: Uuid::create($command->restaurantId),
+            orderId: Uuid::create($command->orderId),
+            productId: Uuid::create($command->productId),
+            userId: Uuid::create($command->userId),
             quantity: $quantity,
             price: OrderLinePrice::create($price),
             taxPercentage: OrderLineTaxPercentage::create($taxPercentage),
-            dinerNumber: $dinerNumber !== null ? OrderLineDinerNumber::create($dinerNumber) : null,
+            dinerNumber: $command->dinerNumber !== null ? OrderLineDinerNumber::create($command->dinerNumber) : null,
         );
 
         $this->orderLineRepository->save($orderLine);

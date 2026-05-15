@@ -24,7 +24,6 @@ final class UpdateProductRequest extends FormRequest
                 'required',
                 'uuid',
                 Rule::exists('families', 'uuid')
-                    ->ignore($id, 'uuid')
                     ->where('restaurant_id', $tenantContext->requireRestaurantId())
                     ->whereNull('deleted_at'),
             ],
@@ -32,7 +31,6 @@ final class UpdateProductRequest extends FormRequest
                 'required',
                 'uuid',
                 Rule::exists('taxes', 'uuid')
-                    ->ignore($id, 'uuid')
                     ->where('restaurant_id', $tenantContext->requireRestaurantId())
                     ->whereNull('deleted_at'),
             ],

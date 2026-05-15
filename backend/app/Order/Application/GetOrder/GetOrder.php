@@ -2,6 +2,7 @@
 
 namespace App\Order\Application\GetOrder;
 
+use App\Order\Domain\Exception\OrderNotFoundException;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -11,13 +12,13 @@ final class GetOrder
         private readonly OrderRepositoryInterface $orderRepository,
     ) {}
 
-    public function __invoke(string $id): ?GetOrderResponse
+    public function __invoke(GetOrderCommand $command): GetOrderResponse
     {
-        $orderId = Uuid::create($id);
+        $orderId = Uuid::create($command->id);
         $order = $this->orderRepository->findByUuid($orderId);
 
         if ($order === null) {
-            return null;
+            throw OrderNotFoundException::withId($command->id);
         }
 
         return GetOrderResponse::create($order);

@@ -19,17 +19,14 @@
       <div class="gestion-form-actions form-actions-start">
         <button type="button" class="btn-small" (click)="onCreate()">Nueva familia</button>
         <button type="button" class="btn-small" (click)="onDelete()">Eliminar</button>
+        <div class="toggle-wrapper-inline">
+          <app-toggle [value]="formData().active" (valueChange)="updateForm('active', $event)"></app-toggle>
+          <span class="toggle-label-inline" [class.active]="formData().active">{{ formData().active ? 'Activa' : 'Inactiva' }}</span>
+        </div>
       </div>
       <div>
         <label class="form-label" for="mg-family-name">Nombre de la familia</label>
         <input id="mg-family-name" class="form-input" [ngModel]="formData().name" (ngModelChange)="updateForm('name', $event)" name="mg-family-name" placeholder="Ej. Entrantes" required />
-      </div>
-      <div>
-        <label class="form-label" for="mg-family-active">Estado</label>
-        <select id="mg-family-active" class="form-input" [ngModel]="formData().active" (ngModelChange)="updateForm('active', $event)" name="mg-family-active" required>
-          <option [ngValue]="true">Activa</option>
-          <option [ngValue]="false">Inactiva</option>
-        </select>
       </div>
       <div class="gestion-form-actions">
         <button class="btn-login btn-login-inline" type="submit" [disabled]="isSaving()">

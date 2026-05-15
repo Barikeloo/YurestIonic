@@ -106,8 +106,11 @@ export class ComandaFacade {
       const products = Array.isArray(productsResponse) ? productsResponse : (productsResponse as any).items || [];
       const familiesArray = Array.isArray(families) ? families : (families as any).items || [];
 
-      this._families.set(familiesArray.filter((family: TpvFamilyItem) => family.active));
-      this._products.set(products.filter((product: TpvProductItem) => product.active));
+      const activeFamilies = familiesArray.filter((family: TpvFamilyItem) => family.active);
+      const activeFamilyIds = new Set(activeFamilies.map((family: TpvFamilyItem) => family.id));
+
+      this._families.set(activeFamilies);
+      this._products.set(products.filter((product: TpvProductItem) => product.active && activeFamilyIds.has(product.family_id)));
       this._taxes.set(taxes);
 
       if (orderId) {
@@ -131,8 +134,32 @@ export class ComandaFacade {
     this._searchQuery.set(query);
   }
 
+  private getCartQuantity(productId: string): number {
+    return this._cartLines()
+      .filter((line) => line.productId === productId)
+      .reduce((acc, line) => acc + line.quantity, 0);
+  }
+
+  public canAddToCart(product: TpvProductItem): boolean {
+    return product.stock > this.getCartQuantity(product.id);
+  }
+
+  public getAvailableStock(product: TpvProductItem): number {
+    return Math.max(0, product.stock - this.getCartQuantity(product.id));
+  }
+
+  public canIncreaseQty(line: CartLine): boolean {
+    const product = this._products().find((p) => p.id === line.productId);
+    if (!product) return false;
+    return product.stock > this.getCartQuantity(line.productId);
+  }
+
   // ----- Cart -----
   public addToCart(product: TpvProductItem): void {
+    if (!this.canAddToCart(product)) {
+      return;
+    }
+
     const lines = this._cartLines();
     const existing = lines.find((line) => line.productId === product.id);
 
@@ -159,6 +186,10 @@ export class ComandaFacade {
   }
 
   public changeQty(target: CartLine, delta: number): void {
+    if (delta > 0 && !this.canIncreaseQty(target)) {
+      return;
+    }
+
     this._cartLines.update((lines) =>
       lines
         .map((line) => (line === target ? { ...line, quantity: line.quantity + delta } : line))
@@ -237,6 +268,12 @@ export class ComandaFacade {
     try {
       await firstValueFrom(this.tpvService.deleteOrderLine(line.id));
       this._existingLines.update((current) => current.filter((existing) => existing.id !== line.id));
+
+      this._products.update((products) =>
+        products.map((p) =>
+          p.id === line.product_id ? { ...p, stock: p.stock + line.quantity } : p,
+        ),
+      );
     } catch (err) {
       this._sendError.set(err instanceof Error ? err.message : 'No se pudo eliminar la linea.');
     }

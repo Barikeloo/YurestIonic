@@ -12,12 +12,12 @@ final class ListOrders
         private readonly OrderLineRepositoryInterface $orderLineRepository,
     ) {}
 
-    public function __invoke(): array
+    public function __invoke(ListOrdersCommand $command): array
     {
         $orders = $this->orderRepository->all();
 
         return array_map(
-            function ($order): array {
+            function ($order): ListOrdersResponse {
                 $orderLines = $this->orderLineRepository->findByOrderId($order->id());
                 $total = array_reduce(
                     $orderLines,
@@ -25,7 +25,7 @@ final class ListOrders
                     0,
                 );
 
-                return ListOrdersResponse::create($order, $total)->toArray();
+                return ListOrdersResponse::create($order, $total);
             },
             $orders,
         );

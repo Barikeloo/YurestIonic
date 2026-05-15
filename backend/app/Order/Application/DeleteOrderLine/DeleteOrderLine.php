@@ -2,8 +2,12 @@
 
 namespace App\Order\Application\DeleteOrderLine;
 
+use App\Order\Domain\Exception\OrderIsNotOpenException;
+use App\Order\Domain\Exception\OrderLineNotFoundException;
+use App\Order\Domain\Exception\OrderNotFoundException;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class DeleteOrderLine
@@ -11,29 +15,35 @@ final class DeleteOrderLine
     public function __construct(
         private readonly OrderLineRepositoryInterface $orderLineRepository,
         private readonly OrderRepositoryInterface $orderRepository,
+        private readonly ProductRepositoryInterface $productRepository,
     ) {}
 
-    public function __invoke(string $lineId): bool
+    public function __invoke(DeleteOrderLineCommand $command): void
     {
-        $orderLineId = Uuid::create($lineId);
+        $orderLineId = Uuid::create($command->lineId);
         $line = $this->orderLineRepository->findByUuid($orderLineId);
 
         if ($line === null) {
-            return false;
+            throw OrderLineNotFoundException::withId($command->lineId);
         }
 
         $order = $this->orderRepository->findByUuid($line->orderId());
 
         if ($order === null) {
-            return false;
+            throw OrderNotFoundException::withId($line->orderId()->value());
         }
 
         if (! $order->status()->isOpen()) {
-            throw new \DomainException('Solo se pueden eliminar líneas de órdenes abiertas');
+            throw OrderIsNotOpenException::create();
+        }
+
+        $product = $this->productRepository->findById($line->productId()->value());
+
+        if ($product !== null) {
+            $product->increaseStock($line->quantity()->value());
+            $this->productRepository->save($product);
         }
 
         $this->orderLineRepository->delete($line->id());
-
-        return true;
     }
 }

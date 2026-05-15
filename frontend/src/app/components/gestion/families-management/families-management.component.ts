@@ -3,11 +3,12 @@ import { Component, computed, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionFamiliesFacade, FamilyRow, FamilyFormData } from '../../../pages/core/gestion/facades/gestion-families.facade';
 import { ToastService } from '../../../core/services/toast.service';
+import { ToggleComponent } from '../../../shared/components/toggle/toggle.component';
 
 @Component({
   selector: 'app-families-management',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ToggleComponent],
   templateUrl: './families-management.component.html',
   styleUrls: ['./families-management.component.scss'],
 })

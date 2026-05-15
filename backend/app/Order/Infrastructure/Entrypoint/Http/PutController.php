@@ -3,8 +3,9 @@
 namespace App\Order\Infrastructure\Entrypoint\Http;
 
 use App\Order\Application\UpdateOrder\UpdateOrder;
+use App\Order\Domain\Exception\OrderNotFoundException;
+use App\Order\Infrastructure\Entrypoint\Http\Requests\UpdateOrderRequest;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 final class PutController
 {
@@ -12,29 +13,20 @@ final class PutController
         private readonly UpdateOrder $updateOrder,
     ) {}
 
-    public function __invoke(Request $request, string $id): JsonResponse
+    public function __invoke(UpdateOrderRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'diners' => ['sometimes', 'integer', 'min:1'],
-            'action' => ['sometimes', 'string', 'in:mark-to-charge,close,cancel'],
-            'closed_by_user_id' => ['sometimes', 'string', 'uuid'],
-        ]);
-
         try {
-            $response = ($this->updateOrder)(
-                id: $id,
-                diners: $validated['diners'] ?? null,
-                action: $validated['action'] ?? null,
-                closedByUserId: $validated['closed_by_user_id'] ?? null,
-            );
-        } catch (\DomainException $exception) {
-            return new JsonResponse(['message' => $exception->getMessage()], 422);
+            $response = ($this->updateOrder)($request->toCommand());
+        } catch (OrderNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (\DomainException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 422);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
-        if ($response === null) {
-            return new JsonResponse(['message' => 'Order not found.'], 404);
-        }
-
-        return new JsonResponse($response->toArray());
+        return new JsonResponse($response->toArray(), 200);
     }
 }

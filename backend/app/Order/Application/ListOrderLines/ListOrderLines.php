@@ -13,18 +13,18 @@ final class ListOrderLines
         private readonly ProductRepositoryInterface $productRepository,
     ) {}
 
-    public function __invoke(string $orderId): array
+    public function __invoke(ListOrderLinesCommand $command): array
     {
-        $orderLines = $this->orderLineRepository->findByOrderId(Uuid::create($orderId));
+        $orderLines = $this->orderLineRepository->findByOrderId(Uuid::create($command->orderId));
 
         return array_map(
-            function ($orderLine): array {
+            function ($orderLine): ListOrderLinesResponse {
                 $product = $this->productRepository->findById($orderLine->productId()->value());
 
                 return ListOrderLinesResponse::create(
                     orderLine: $orderLine,
                     productName: $product?->name()->value(),
-                )->toArray();
+                );
             },
             $orderLines,
         );

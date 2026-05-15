@@ -57,8 +57,20 @@ export class ComandaPage implements OnInit, OnDestroy {
     this.facade.addToCart(product);
   }
 
+  public isOutOfStock(product: TpvProductItem): boolean {
+    return !this.facade.canAddToCart(product);
+  }
+
+  public getAvailableStock(product: TpvProductItem): number {
+    return this.facade.getAvailableStock(product);
+  }
+
   public changeQty(line: CartLine, delta: number): void {
     this.facade.changeQty(line, delta);
+  }
+
+  public canIncreaseQty(line: CartLine): boolean {
+    return this.facade.canIncreaseQty(line);
   }
 
   public clearCart(): void {

@@ -150,6 +150,30 @@ class Product
         return $this->active;
     }
 
+    public function decreaseStock(int $amount): void
+    {
+        if (! $this->stock->isSufficientFor($amount)) {
+            throw \App\Product\Domain\Exception\InsufficientStockException::forProduct(
+                $this->id->value(),
+                $this->stock->value(),
+                $amount,
+            );
+        }
+
+        $this->stock = $this->stock->decrease($amount);
+        $this->touch();
+    }
+
+    public function increaseStock(int $amount): void
+    {
+        if ($amount < 0) {
+            throw new \InvalidArgumentException('Amount must be greater than or equal to 0.');
+        }
+
+        $this->stock = $this->stock->increase($amount);
+        $this->touch();
+    }
+
     public function createdAt(): DomainDateTime
     {
         return $this->createdAt;

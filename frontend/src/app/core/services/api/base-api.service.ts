@@ -56,7 +56,9 @@ export abstract class BaseApiService {
       return endpoint;
     }
 
-    return `${this.apiUrl}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
+    const base = this.apiUrl.endsWith('/api') ? this.apiUrl : `${this.apiUrl}/api`;
+
+    return `${base}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
   }
 
   private handleError(error: HttpErrorResponse): Observable<never> {

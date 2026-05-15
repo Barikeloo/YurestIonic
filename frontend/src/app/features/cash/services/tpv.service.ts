@@ -18,6 +18,7 @@ export interface TpvProductItem {
   family_id: string;
   tax_id: string;
   active: boolean;
+  stock: number;
 }
 
 export interface TpvZoneItem {
@@ -160,7 +161,9 @@ interface UpdateOrderPayload {
   providedIn: 'root',
 })
 export class TpvService {
-  private readonly baseUrl: string = `${environment.apiUrl}/api`;
+  private readonly baseUrl: string = environment.apiUrl.endsWith('/api')
+    ? environment.apiUrl
+    : `${environment.apiUrl}/api`;
 
   constructor(private readonly http: HttpClient) {}
 

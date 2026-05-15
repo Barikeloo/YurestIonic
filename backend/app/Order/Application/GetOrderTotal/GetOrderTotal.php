@@ -11,9 +11,9 @@ final class GetOrderTotal
         private readonly OrderLineRepositoryInterface $orderLineRepository,
     ) {}
 
-    public function __invoke(string $orderId): int
+    public function __invoke(GetOrderTotalCommand $command): int
     {
-        $orderUuid = Uuid::create($orderId);
+        $orderUuid = Uuid::create($command->orderId);
         $orderLines = $this->orderLineRepository->findByOrderId($orderUuid);
 
         if (empty($orderLines)) {

@@ -3,6 +3,7 @@
 namespace App\Order\Application\CreateOrder;
 
 use App\Order\Domain\Entity\Order;
+use App\Order\Domain\Exception\TableAlreadyHasOpenOrderException;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Order\Domain\ValueObject\OrderDiners;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -13,23 +14,19 @@ final class CreateOrder
         private readonly OrderRepositoryInterface $orderRepository,
     ) {}
 
-    public function __invoke(
-        string $restaurantId,
-        string $tableId,
-        string $openedByUserId,
-        int $diners,
-    ): CreateOrderResponse {
-        $tableUuid = Uuid::create($tableId);
+    public function __invoke(CreateOrderCommand $command): CreateOrderResponse
+    {
+        $tableUuid = Uuid::create($command->tableId);
         if ($this->orderRepository->findByTableId($tableUuid) !== null) {
-            throw new \DomainException('La mesa ya tiene una comanda abierta.');
+            throw TableAlreadyHasOpenOrderException::create();
         }
 
         $order = Order::dddCreate(
             id: Uuid::generate(),
-            restaurantId: Uuid::create($restaurantId),
+            restaurantId: Uuid::create($command->restaurantId),
             tableId: $tableUuid,
-            openedByUserId: Uuid::create($openedByUserId),
-            diners: OrderDiners::create($diners),
+            openedByUserId: Uuid::create($command->openedByUserId),
+            diners: OrderDiners::create($command->diners),
         );
 
         $this->orderRepository->save($order);

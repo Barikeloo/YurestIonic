@@ -53,8 +53,15 @@
             @for (product of facade.products() | filterBy:'family_id':facade.activeFamilyId() | search:facade.searchQuery():['name']; track product) {
               <button
                 class="product-card"
+                [class.out-of-stock]="isOutOfStock(product)"
+                [disabled]="isOutOfStock(product)"
                 (click)="addToCart(product)"
                 >
+                @if (isOutOfStock(product) || getAvailableStock(product) <= 15) {
+                  <div class="stock-badge" [class.stock-low]="getAvailableStock(product) <= 15 && getAvailableStock(product) > 0" [class.stock-zero]="isOutOfStock(product)">
+                    {{ isOutOfStock(product) ? '0' : getAvailableStock(product) }}
+                  </div>
+                }
                 <div class="product-initial">{{ product.name[0] }}</div>
                 <div class="product-name">{{ product.name }}</div>
                 <div class="product-price">{{ formatCents(product.price) }}</div>
@@ -111,7 +118,7 @@
               <div class="cart-qty-controls">
                 <button class="qty-btn" (click)="changeQty(line, -1)" aria-label="Quitar una unidad">−</button>
                 <div class="qty-value">{{ line.quantity }}</div>
-                <button class="qty-btn" (click)="changeQty(line, 1)" aria-label="Añadir una unidad">+</button>
+                <button class="qty-btn" [disabled]="!canIncreaseQty(line)" (click)="changeQty(line, 1)" aria-label="Añadir una unidad">+</button>
               </div>
               <div class="order-line-price">{{ formatCents(line.price * line.quantity) }}</div>
             </div>

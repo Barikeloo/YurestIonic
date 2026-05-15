@@ -2,6 +2,8 @@
 
 namespace App\Order\Application\DeleteOrder;
 
+use App\Order\Domain\Exception\OrderIsNotOpenException;
+use App\Order\Domain\Exception\OrderNotFoundException;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -11,21 +13,19 @@ final class DeleteOrder
         private readonly OrderRepositoryInterface $orderRepository,
     ) {}
 
-    public function __invoke(string $id): bool
+    public function __invoke(DeleteOrderCommand $command): void
     {
-        $orderId = Uuid::create($id);
+        $orderId = Uuid::create($command->id);
         $order = $this->orderRepository->findByUuid($orderId);
 
         if ($order === null) {
-            return false;
+            throw OrderNotFoundException::withId($command->id);
         }
 
         if (! $order->status()->isOpen()) {
-            throw new \DomainException('Solo se pueden eliminar órdenes abiertas');
+            throw OrderIsNotOpenException::create();
         }
 
         $this->orderRepository->delete($order->id());
-
-        return true;
     }
 }

@@ -3,54 +3,43 @@
 namespace App\Order\Infrastructure\Entrypoint\Http;
 
 use App\Order\Application\AddLineToOrder\AddLineToOrder;
-use App\Order\Domain\ValueObject\OrderLineQuantity;
-use App\Shared\Infrastructure\Tenant\TenantContext;
+use App\Family\Domain\Exception\FamilyNotActiveException;
+use App\Family\Domain\Exception\FamilyNotFoundException;
+use App\Order\Domain\Exception\OrderIsNotOpenException;
+use App\Order\Domain\Exception\OrderNotFoundException;
+use App\Order\Infrastructure\Entrypoint\Http\Requests\AddLineToOrderRequest;
+use App\Product\Domain\Exception\InsufficientStockException;
+use App\Product\Domain\Exception\ProductNotActiveException;
+use App\Product\Domain\Exception\ProductNotFoundException;
+use App\Tax\Domain\Exception\TaxNotFoundException;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use InvalidArgumentException;
-use RuntimeException;
 
 final class AddLineController
 {
     public function __construct(
         private readonly AddLineToOrder $addLineToOrder,
-        private readonly TenantContext $tenantContext,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(AddLineToOrderRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'order_id' => ['required', 'string', 'uuid'],
-            'product_id' => ['required', 'string', 'uuid'],
-            'quantity' => ['required', 'integer', 'min:1'],
-            'diner_number' => ['nullable', 'integer', 'min:1'],
-        ]);
-
-        $restaurantId = $this->tenantContext->restaurantUuid();
-        if ($restaurantId === null) {
-            throw new RuntimeException('Tenant context is required.');
-        }
-
-        $userId = $request->session()->get('auth_user_id');
-        if (! is_string($userId) || $userId === '') {
-            return new JsonResponse([
-                'message' => 'Authenticated user is required.',
-            ], 401);
-        }
-
         try {
-            $response = ($this->addLineToOrder)(
-                restaurantId: $restaurantId,
-                orderId: $validated['order_id'],
-                productId: $validated['product_id'],
-                userId: $userId,
-                quantity: OrderLineQuantity::create($validated['quantity']),
-                dinerNumber: $validated['diner_number'] ?? null,
-            );
-        } catch (InvalidArgumentException $exception) {
-            return new JsonResponse([
-                'message' => $exception->getMessage(),
-            ], 422);
+            $response = ($this->addLineToOrder)($request->toCommand());
+        } catch (OrderNotFoundException | ProductNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (
+            OrderIsNotOpenException |
+            ProductNotActiveException |
+            FamilyNotActiveException |
+            InsufficientStockException |
+            TaxNotFoundException $e
+        ) {
+            return new JsonResponse(['message' => $e->getMessage()], 422);
+        } catch (FamilyNotFoundException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
         return new JsonResponse($response->toArray(), 201);

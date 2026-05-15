@@ -3,6 +3,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionProductsFacade, ProductRow, ProductFormData } from '../../../pages/core/gestion/facades/gestion-products.facade';
 import { ToastService } from '../../../core/services/toast.service';
+import { ToggleComponent } from '../../../shared/components/toggle/toggle.component';
 
 export interface TaxOption {
   uuid?: string;
@@ -18,7 +19,7 @@ export interface FamilyOption {
 @Component({
   selector: 'app-products-management',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, ToggleComponent],
   templateUrl: './products-management.component.html',
   styleUrls: ['./products-management.component.scss'],
 })

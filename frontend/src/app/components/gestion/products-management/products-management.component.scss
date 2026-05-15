@@ -188,3 +188,21 @@
     grid-template-columns: 1fr;
   }
 }
+
+.toggle-wrapper-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.toggle-label-inline {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-500);
+  transition: color 0.2s;
+}
+
+.toggle-label-inline.active {
+  color: #1a9e5a;
+}
