@@ -20,6 +20,12 @@ final class AddLineToOrderRequest extends FormRequest
             'product_id' => ['required', 'string', 'uuid'],
             'quantity' => ['required', 'integer', 'min:1'],
             'diner_number' => ['nullable', 'integer', 'min:1'],
+            'variant_id' => ['nullable', 'string', 'uuid'],
+            'modifiers' => ['nullable', 'array'],
+            'modifiers.*.id' => ['required_with:modifiers', 'string'],
+            'modifiers.*.name' => ['required_with:modifiers', 'string'],
+            'modifiers.*.price' => ['required_with:modifiers', 'integer', 'min:0'],
+            'modifiers.*.type' => ['required_with:modifiers', 'string', 'in:extra,accompaniment'],
         ];
     }
 
@@ -44,6 +50,8 @@ final class AddLineToOrderRequest extends FormRequest
             userId: $userId,
             quantity: (int) $this->input('quantity'),
             dinerNumber: $this->input('diner_number') !== null ? (int) $this->input('diner_number') : null,
+            variantId: $this->input('variant_id') !== null ? (string) $this->input('variant_id') : null,
+            modifiers: $this->input('modifiers') !== null ? $this->input('modifiers') : null,
         );
     }
 }

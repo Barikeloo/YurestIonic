@@ -13,12 +13,18 @@ use App\Shared\Domain\ValueObject\Uuid;
 
 final class OrderLine
 {
+    /**
+     * @param array<int, array{id: string, name: string, price: int, type: string}>|null $modifiers
+     */
     private function __construct(
         private readonly Uuid $id,
         private readonly Uuid $restaurantId,
         private readonly Uuid $uuid,
         private readonly Uuid $orderId,
         private readonly Uuid $productId,
+        private readonly ?Uuid $variantId,
+        private readonly ?string $variantName,
+        private readonly ?array $modifiers,
         private readonly Uuid $userId,
         private readonly OrderLineQuantity $quantity,
         private readonly OrderLinePrice $price,
@@ -35,11 +41,17 @@ final class OrderLine
         private readonly ?DomainDateTime $deletedAt = null,
     ) {}
 
+    /**
+     * @param array<int, array{id: string, name: string, price: int, type: string}>|null $modifiers
+     */
     public static function dddCreate(
         Uuid $id,
         Uuid $restaurantId,
         Uuid $orderId,
         Uuid $productId,
+        ?Uuid $variantId,
+        ?string $variantName,
+        ?array $modifiers,
         Uuid $userId,
         OrderLineQuantity $quantity,
         OrderLinePrice $price,
@@ -58,6 +70,9 @@ final class OrderLine
             uuid: $id,
             orderId: $orderId,
             productId: $productId,
+            variantId: $variantId,
+            variantName: $variantName,
+            modifiers: $modifiers,
             userId: $userId,
             quantity: $quantity,
             price: $price,
@@ -74,12 +89,18 @@ final class OrderLine
         );
     }
 
+    /**
+     * @param array<int, array{id: string, name: string, price: int, type: string}>|null $modifiers
+     */
     public static function fromPersistence(
         string $id,
         string $restaurantId,
         string $uuid,
         string $orderId,
         string $productId,
+        ?string $variantId,
+        ?string $variantName,
+        ?array $modifiers,
         string $userId,
         int $quantity,
         int $price,
@@ -101,6 +122,9 @@ final class OrderLine
             uuid: Uuid::create($uuid),
             orderId: Uuid::create($orderId),
             productId: Uuid::create($productId),
+            variantId: $variantId !== null ? Uuid::create($variantId) : null,
+            variantName: $variantName,
+            modifiers: $modifiers,
             userId: Uuid::create($userId),
             quantity: OrderLineQuantity::create($quantity),
             price: OrderLinePrice::create($price),
@@ -141,6 +165,24 @@ final class OrderLine
     public function productId(): Uuid
     {
         return $this->productId;
+    }
+
+    public function variantId(): ?Uuid
+    {
+        return $this->variantId;
+    }
+
+    public function variantName(): ?string
+    {
+        return $this->variantName;
+    }
+
+    /**
+     * @return array<int, array{id: string, name: string, price: int, type: string}>|null
+     */
+    public function modifiers(): ?array
+    {
+        return $this->modifiers;
     }
 
     public function userId(): Uuid
@@ -221,6 +263,9 @@ final class OrderLine
             uuid: $this->uuid,
             orderId: $this->orderId,
             productId: $this->productId,
+            variantId: $this->variantId,
+            variantName: $this->variantName,
+            modifiers: $this->modifiers,
             userId: $this->userId,
             quantity: OrderLineQuantity::create($this->quantity->value() + $delta),
             price: $this->price,

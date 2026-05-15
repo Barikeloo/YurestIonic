@@ -1,0 +1,130 @@
+@if (isOpen && product) {
+  <div class="modal-overlay" (click)="onClose()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title">{{ product.name }}</div>
+        <button class="modal-close" type="button" (click)="onClose()">✕</button>
+      </div>
+
+      @if (hasVariants()) {
+        <div class="config-section">
+          <div class="section-label">Elige una opción</div>
+          <div class="variant-list">
+            @for (variant of variants(); track variant.id) {
+              <button
+                type="button"
+                class="variant-option"
+                [class.selected]="selectedVariantId() === variant.id"
+                (click)="selectVariant(variant)"
+                [disabled]="variant.stock <= 0"
+                >
+                <span class="option-check" [class.checked]="selectedVariantId() === variant.id">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </span>
+                <span class="option-name">{{ variant.name }}</span>
+                <span class="option-price">{{ (variant.price / 100).toFixed(2) }} €</span>
+                @if (variant.stock <= 0) {
+                  <span class="option-badge out">Sin stock</span>
+                }
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (hasAccompaniments()) {
+        <div class="config-section">
+          <div class="section-label">
+            Acompañamiento
+            @if (hasRequiredAccompaniments()) {
+              <span class="required-tag">Obligatorio</span>
+            }
+          </div>
+          <div class="modifier-list">
+            @for (modifier of accompaniments(); track modifier.id) {
+              <label class="modifier-option" [class.selected]="isModifierSelected(modifier.id)">
+                <span class="input-indicator">
+                  @if (isSingle(modifier)) {
+                    <span class="radio-dot" [class.checked]="isModifierSelected(modifier.id)"></span>
+                  } @else {
+                    <span class="checkbox-square" [class.checked]="isModifierSelected(modifier.id)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </span>
+                  }
+                </span>
+                <input
+                  class="sr-only"
+                  [type]="modifier.selection_type === 'single' ? 'radio' : 'checkbox'"
+                  [name]="modifier.selection_type === 'single' ? 'accompaniment-single' : null"
+                  [checked]="isModifierSelected(modifier.id)"
+                  (click)="onModifierClick($event, modifier)"
+                  />
+                <span class="option-name">{{ modifier.name }}</span>
+                @if (modifier.price > 0) {
+                  <span class="option-price">+{{ (modifier.price / 100).toFixed(2) }} €</span>
+                }
+                @if (modifier.is_required) {
+                  <span class="option-badge required">Obligatorio</span>
+                }
+              </label>
+            }
+          </div>
+        </div>
+      }
+
+      @if (hasExtras()) {
+        <div class="config-section">
+          <div class="section-label">Extras</div>
+          <div class="modifier-list">
+            @for (modifier of extras(); track modifier.id) {
+              <label class="modifier-option" [class.selected]="isModifierSelected(modifier.id)">
+                <span class="input-indicator">
+                  @if (isSingle(modifier)) {
+                    <span class="radio-dot" [class.checked]="isModifierSelected(modifier.id)"></span>
+                  } @else {
+                    <span class="checkbox-square" [class.checked]="isModifierSelected(modifier.id)">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </span>
+                  }
+                </span>
+                <input
+                  class="sr-only"
+                  [type]="modifier.selection_type === 'single' ? 'radio' : 'checkbox'"
+                  [name]="modifier.selection_type === 'single' ? 'extra-single' : null"
+                  [checked]="isModifierSelected(modifier.id)"
+                  (click)="onModifierClick($event, modifier)"
+                  />
+                <span class="option-name">{{ modifier.name }}</span>
+                <span class="option-price">+{{ (modifier.price / 100).toFixed(2) }} €</span>
+              </label>
+            }
+          </div>
+        </div>
+      }
+
+      <div class="modal-footer">
+        <div class="total-row">
+          <span>Total</span>
+          <span class="total-price">{{ (totalPrice() / 100).toFixed(2) }} €</span>
+        </div>
+        <button
+          type="button"
+          class="btn-confirm"
+          (click)="onConfirm()"
+          [disabled]="!canConfirm()"
+          >
+          Añadir a la comanda
+        </button>
+        @if (blockReason(); as reason) {
+          <div class="block-hint">{{ reason }}</div>
+        }
+      </div>
+    </div>
+  </div>
+}

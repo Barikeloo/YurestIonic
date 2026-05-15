@@ -95,13 +95,28 @@
             <div class="order-section-label">Confirmadas</div>
           }
           @for (line of facade.existingLines(); track line) {
-            <div class="order-line order-line-confirmed">
+            <div class="order-line order-line-confirmed" (click)="openLineDetail(line)">
               <div class="order-line-qty">{{ line.quantity }}</div>
               <div class="order-line-info">
                 <div class="order-line-name">{{ line.product_name ?? 'Producto' }}</div>
+                @if (line.variant_name || (line.modifiers ?? []).length > 0) {
+                  <div class="order-line-tags-row">
+                    @if (line.variant_name) {
+                      <span class="line-variant">{{ line.variant_name }}</span>
+                    }
+                    @if ((line.modifiers ?? []).length > 0) {
+                      <span class="line-modifiers-count">+{{ line.modifiers!.length }} {{ line.modifiers!.length === 1 ? 'extra' : 'extras' }}</span>
+                    }
+                  </div>
+                }
+                @if ((line.modifiers ?? []).length > 0) {
+                  <div class="order-line-meta">
+                    <span class="line-modifiers-mini">{{ formatModifiers(line.modifiers ?? []) }}</span>
+                  </div>
+                }
               </div>
-              <div class="cart-line-right">
-                <div class="order-line-price">{{ formatCents(line.price * line.quantity) }}</div>
+              <div class="cart-line-right" (click)="$event.stopPropagation()">
+                <div class="order-line-price">{{ formatCents(getExistingLineTotal(line)) }}</div>
                 <button class="btn-remove-cart" (click)="deleteLine(line)" title="Eliminar">×</button>
               </div>
             </div>
@@ -110,17 +125,32 @@
             <div class="order-section-label">Sin enviar</div>
           }
           @for (line of facade.cartLines(); track line) {
-            <div class="order-line order-line-cart">
+            <div class="order-line order-line-cart" (click)="openLineDetail(line)">
               <div class="order-line-info">
                 <div class="order-line-name">{{ line.productName }}</div>
-                <div class="order-line-unit">{{ formatCents(line.price) }} / ud.</div>
+                @if (line.variantName || line.modifiers.length > 0) {
+                  <div class="order-line-tags-row">
+                    @if (line.variantName) {
+                      <span class="line-variant">{{ line.variantName }}</span>
+                    }
+                    @if (line.modifiers.length > 0) {
+                      <span class="line-modifiers-count">+{{ line.modifiers.length }} {{ line.modifiers.length === 1 ? 'extra' : 'extras' }}</span>
+                    }
+                  </div>
+                }
+                <div class="order-line-meta">
+                  <span class="order-line-unit">{{ formatCents(line.price) }} / ud.</span>
+                  @if (line.modifiers.length > 0) {
+                    <span class="line-modifiers-mini">{{ formatModifiers(line.modifiers) }}</span>
+                  }
+                </div>
               </div>
-              <div class="cart-qty-controls">
+              <div class="cart-qty-controls" (click)="$event.stopPropagation()">
                 <button class="qty-btn" (click)="changeQty(line, -1)" aria-label="Quitar una unidad">−</button>
                 <div class="qty-value">{{ line.quantity }}</div>
                 <button class="qty-btn" [disabled]="!canIncreaseQty(line)" (click)="changeQty(line, 1)" aria-label="Añadir una unidad">+</button>
               </div>
-              <div class="order-line-price">{{ formatCents(line.price * line.quantity) }}</div>
+              <div class="order-line-price">{{ formatCents(getLineTotal(line)) }}</div>
             </div>
           }
         </div>
@@ -142,6 +172,85 @@
           @if (facade.sendError(); as error) {
             <div class="send-error">{{ error }}</div>
           }
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<app-product-config-modal
+  [isOpen]="configModalOpen"
+  [product]="selectedProduct"
+  (confirm)="onConfigConfirm($event)"
+  (closeModal)="onConfigClose()"
+></app-product-config-modal>
+
+<!-- Modal detalle de línea -->
+<div class="modal-overlay" [class.open]="detailModalOpen" (click)="closeLineDetail()">
+  @if (selectedLine; as line) {
+    <div class="modal-box line-detail-box" (click)="$event.stopPropagation()">
+      <button class="modal-close-btn" (click)="closeLineDetail()">✕</button>
+
+      <div class="line-detail-header">
+        <div class="line-detail-qty">{{ line.quantity }}×</div>
+        <div class="line-detail-title-wrap">
+          <div class="line-detail-title">{{ lineProductName(line) }}</div>
+          @if (lineVariantName(line); as variantName) {
+            <span class="line-detail-variant">{{ variantName }}</span>
+          }
+        </div>
+      </div>
+
+      @if (lineAccompaniments(line).length > 0) {
+        <div class="line-detail-section">
+          <div class="section-title">Acompañamientos</div>
+          @for (mod of lineAccompaniments(line); track mod.id) {
+            <div class="line-modifier-item">
+              <span class="modifier-name">{{ mod.name }}</span>
+              <span class="modifier-price" [class.free]="mod.price === 0">
+                {{ mod.price === 0 ? 'Gratis' : '+' + formatCents(mod.price) }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+
+      @if (lineExtras(line).length > 0) {
+        <div class="line-detail-section">
+          <div class="section-title">Extras</div>
+          @for (mod of lineExtras(line); track mod.id) {
+            <div class="line-modifier-item">
+              <span class="modifier-name">{{ mod.name }}</span>
+              <span class="modifier-price" [class.free]="mod.price === 0">
+                {{ mod.price === 0 ? 'Gratis' : '+' + formatCents(mod.price) }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+
+      @if (lineLegacyModifiers(line).length > 0) {
+        <div class="line-detail-section">
+          <div class="section-title">Modificadores</div>
+          @for (mod of lineLegacyModifiers(line); track mod.id) {
+            <div class="line-modifier-item">
+              <span class="modifier-name">{{ mod.name }}</span>
+              <span class="modifier-price" [class.free]="mod.price === 0">
+                {{ mod.price === 0 ? 'Gratis' : '+' + formatCents(mod.price) }}
+              </span>
+            </div>
+          }
+        </div>
+      }
+
+      <div class="line-detail-summary">
+        <div class="summary-row">
+          <span class="summary-label">Precio unitario</span>
+          <span class="summary-value">{{ formatCents(lineUnitPrice(line)) }}</span>
+        </div>
+        <div class="summary-row total">
+          <span class="summary-label">Total</span>
+          <span class="summary-value">{{ formatCents(lineDetailTotal(line)) }}</span>
         </div>
       </div>
     </div>

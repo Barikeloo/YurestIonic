@@ -11,6 +11,24 @@ export interface TpvFamilyItem {
   active: boolean;
 }
 
+export interface TpvVariantItem {
+  id: string;
+  name: string;
+  price: number;
+  stock: number;
+  active: boolean;
+}
+
+export interface TpvModifierItem {
+  id: string;
+  name: string;
+  type: 'extra' | 'accompaniment';
+  is_required: boolean;
+  selection_type: 'single' | 'multi';
+  price: number;
+  active: boolean;
+}
+
 export interface TpvProductItem {
   id: string;
   name: string;
@@ -19,6 +37,8 @@ export interface TpvProductItem {
   tax_id: string;
   active: boolean;
   stock: number;
+  variants?: TpvVariantItem[];
+  modifiers?: TpvModifierItem[];
 }
 
 export interface TpvZoneItem {
@@ -60,6 +80,9 @@ export interface TpvOrderLine {
   price: number;
   tax_percentage: number;
   diner_number?: number | null;
+  variant_id?: string | null;
+  variant_name?: string | null;
+  modifiers?: Array<{ id: string; name: string; price: number; type?: 'extra' | 'accompaniment' }> | null;
 }
 
 export interface TpvSale {
@@ -149,6 +172,8 @@ interface AddLinePayload {
   product_id: string;
   quantity: number;
   diner_number?: number | null;
+  variant_id?: string | null;
+  modifiers?: Array<{ id: string; name: string; price: number; type: 'extra' | 'accompaniment' }> | null;
 }
 
 interface UpdateOrderPayload {

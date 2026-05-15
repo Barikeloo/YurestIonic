@@ -10,6 +10,7 @@ import { MesasFacade, TableWithStatus } from '../../facades/mesas.facade';
 import { OrderStatus } from '../../../../core/enums/order-status.enum';
 import { AuthActionType } from '../../../../core/enums/auth-action-type.enum';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { TpvOrderLine } from '../../../cash/services/tpv.service';
 
 const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#E74C3C'];
 
@@ -54,6 +55,10 @@ export class MesasPage implements OnInit {
   public editDinersOrderId: string | null = null;
   public editDinersTable: TableWithStatus | null = null;
   public editDinersCheckingChargeSession = false;
+
+  // ----- UI state: line detail modal -----
+  public detailModalOpen = false;
+  public selectedLine: TpvOrderLine | null = null;
 
   // ----- UI state: merge tables mode -----
   public isMergeMode = false;
@@ -630,6 +635,38 @@ export class MesasPage implements OnInit {
       const message = err instanceof Error ? err.message : 'No se pudieron separar las mesas.';
       this.toastService.presentError(message);
     }
+  }
+
+  // ----- Line detail modal -----
+  public openLineDetail(line: TpvOrderLine): void {
+    this.selectedLine = line;
+    this.detailModalOpen = true;
+  }
+
+  public closeLineDetail(): void {
+    this.detailModalOpen = false;
+    this.selectedLine = null;
+  }
+
+  public formatModifiers(modifiers: { name: string }[]): string {
+    return modifiers.map((m) => m.name).join(', ');
+  }
+
+  public getLineTotal(line: TpvOrderLine): number {
+    const modTotal = (line.modifiers ?? []).reduce((acc, m) => acc + m.price, 0);
+    return (line.price + modTotal) * line.quantity;
+  }
+
+  public lineAccompaniments(line: TpvOrderLine): { id: string; name: string; price: number }[] {
+    return (line.modifiers ?? []).filter((m) => m.type === 'accompaniment');
+  }
+
+  public lineExtras(line: TpvOrderLine): { id: string; name: string; price: number }[] {
+    return (line.modifiers ?? []).filter((m) => m.type === 'extra');
+  }
+
+  public lineLegacyModifiers(line: TpvOrderLine): { id: string; name: string; price: number }[] {
+    return (line.modifiers ?? []).filter((m) => m.type !== 'extra' && m.type !== 'accompaniment');
   }
 
   // ----- Pure UI helpers -----

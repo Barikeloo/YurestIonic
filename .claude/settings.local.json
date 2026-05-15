@@ -35,7 +35,9 @@
       "Bash(xargs -I {} find {} -maxdepth 2 -type d)",
       "Bash(php -l app/Cash/Infrastructure/Entrypoint/Http/StartClosingCashSessionController.php app/Cash/Application/StartClosingCashSession/StartClosingCashSession.php app/Cash/Application/StartClosingCashSession/StartClosingCashSessionCommand.php app/Cash/Application/StartClosingCashSession/StartClosingCashSessionResponse.php app/Cash/Infrastructure/Entrypoint/Http/Requests/StartClosingCashSessionRequest.php app/Cash/Domain/Exception/CashSessionNotFoundException.php app/Cash/Domain/Exception/CashSessionCannotStartClosingException.php app/Cash/Domain/Entity/CashSession.php)",
       "Read(//Applications/MAMP/bin/**)",
-      "Read(//opt/homebrew/bin/**)"
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(php -l app/Order/Domain/Entity/OrderLine.php app/Order/Application/AddLineToOrder/AddLineToOrder.php app/Order/Application/AddLineToOrder/AddLineToOrderCommand.php app/Order/Application/ListOrderLines/ListOrderLinesResponse.php app/Order/Infrastructure/Persistence/Repositories/EloquentOrderLineRepository.php app/Order/Infrastructure/Persistence/Models/EloquentOrderLine.php database/migrations/2026_05_15_130000_add_variant_and_modifiers_to_order_lines.php)",
+      "Bash(docker exec *)"
     ]
   }
 }

@@ -69,6 +69,31 @@ final class AddLineToOrder
         }
 
         $price = $product->price()->value();
+        $variantName = null;
+
+        if ($command->variantId !== null) {
+            $variant = \App\ProductVariant\Infrastructure\Persistence\Models\EloquentProductVariant::query()
+                ->where('uuid', $command->variantId)
+                ->whereHas('product', function ($q) use ($product): void {
+                    $q->where('uuid', $product->id()->value());
+                })
+                ->first();
+
+            if ($variant !== null) {
+                $price = (int) $variant->price;
+                $variantName = (string) $variant->name;
+            }
+        }
+
+        // Añadir precio de modifiers al precio base
+        $modifierTotal = 0;
+        if ($command->modifiers !== null) {
+            foreach ($command->modifiers as $modifier) {
+                $modifierTotal += $modifier['price'] ?? 0;
+            }
+        }
+        $price += $modifierTotal;
+
         $taxPercentage = $tax->percentage()->value();
         $quantity = OrderLineQuantity::create($command->quantity);
 
@@ -94,6 +119,9 @@ final class AddLineToOrder
             restaurantId: Uuid::create($command->restaurantId),
             orderId: Uuid::create($command->orderId),
             productId: Uuid::create($command->productId),
+            variantId: $command->variantId !== null ? Uuid::create($command->variantId) : null,
+            variantName: $variantName,
+            modifiers: $command->modifiers,
             userId: Uuid::create($command->userId),
             quantity: $quantity,
             price: OrderLinePrice::create($price),

@@ -6,6 +6,8 @@ final readonly class ListProductsItemResponse
 {
     /**
      * @param string[] $allergens
+     * @param array<int, array<string, mixed>> $variants
+     * @param array<int, array<string, mixed>> $modifiers
      */
     private function __construct(
         public string $id,
@@ -19,10 +21,14 @@ final readonly class ListProductsItemResponse
         public array $allergens,
         public string $createdAt,
         public string $updatedAt,
+        public array $variants = [],
+        public array $modifiers = [],
     ) {}
 
     /**
      * @param string[] $allergens
+     * @param array<int, array<string, mixed>> $variants
+     * @param array<int, array<string, mixed>> $modifiers
      */
     public static function create(
         string $id,
@@ -36,6 +42,8 @@ final readonly class ListProductsItemResponse
         array $allergens,
         string $createdAt,
         string $updatedAt,
+        array $variants = [],
+        array $modifiers = [],
     ): self {
         return new self(
             id: $id,
@@ -49,6 +57,8 @@ final readonly class ListProductsItemResponse
             allergens: $allergens,
             createdAt: $createdAt,
             updatedAt: $updatedAt,
+            variants: $variants,
+            modifiers: $modifiers,
         );
     }
 
@@ -66,6 +76,8 @@ final readonly class ListProductsItemResponse
             'allergens' => $this->allergens,
             'created_at' => $this->createdAt,
             'updated_at' => $this->updatedAt,
+            'variants' => $this->variants,
+            'modifiers' => $this->modifiers,
         ];
     }
 }

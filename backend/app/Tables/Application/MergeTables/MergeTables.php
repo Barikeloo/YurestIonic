@@ -97,6 +97,8 @@ final class MergeTables
                         restaurantId: $primaryOrder->restaurantId(),
                         orderId: $primaryOrder->id(),
                         productId: $line->productId(),
+                        variantId: $line->variantId(),
+                        modifiers: $line->modifiers(),
                         userId: $line->userId(),
                         quantity: $line->quantity(),
                         price: $line->price(),

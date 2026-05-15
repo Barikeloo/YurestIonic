@@ -10,12 +10,22 @@ import {
   TpvTaxItem,
 } from '../../cash/services/tpv.service';
 
+export interface SelectedModifier {
+  id: string;
+  name: string;
+  price: number;
+  type: 'extra' | 'accompaniment';
+}
+
 export interface CartLine {
   productId: string;
   productName: string;
   price: number;
   taxId: string;
   quantity: number;
+  variantId?: string;
+  variantName?: string;
+  modifiers: SelectedModifier[];
 }
 
 @Injectable()
@@ -58,7 +68,10 @@ export class ComandaFacade {
   public readonly closeError: Signal<string | null> = this._closeError.asReadonly();
 
   public readonly cartTotal: Signal<number> = computed(() =>
-    this._cartLines().reduce((acc, line) => acc + line.price * line.quantity, 0),
+    this._cartLines().reduce((acc, line) => {
+      const modifierTotal = line.modifiers.reduce((mAcc, m) => mAcc + m.price, 0);
+      return acc + (line.price + modifierTotal) * line.quantity;
+    }, 0),
   );
 
   public readonly cartCount: Signal<number> = computed(() =>
@@ -155,32 +168,44 @@ export class ComandaFacade {
   }
 
   // ----- Cart -----
-  public addToCart(product: TpvProductItem): void {
+  public addToCart(
+    product: TpvProductItem,
+    config?: { variantId?: string; variantName?: string; variantPrice?: number; modifiers?: SelectedModifier[] },
+  ): void {
     if (!this.canAddToCart(product)) {
       return;
     }
 
     const lines = this._cartLines();
-    const existing = lines.find((line) => line.productId === product.id);
+
+    // Si hay config con variant, buscar línea con mismo product+variant
+    const existing = config?.variantId
+      ? lines.find((line) => line.productId === product.id && line.variantId === config.variantId)
+      : lines.find((line) => line.productId === product.id && !line.variantId);
 
     if (existing) {
       this._cartLines.set(
         lines.map((line) =>
-          line.productId === product.id ? { ...line, quantity: line.quantity + 1 } : line,
+          line === existing ? { ...line, quantity: line.quantity + 1 } : line,
         ),
       );
 
       return;
     }
 
+    const price = config?.variantPrice ?? product.price;
+
     this._cartLines.set([
       ...lines,
       {
         productId: product.id,
         productName: product.name,
-        price: product.price,
+        price,
         taxId: product.tax_id,
         quantity: 1,
+        variantId: config?.variantId,
+        variantName: config?.variantName,
+        modifiers: config?.modifiers ?? [],
       },
     ]);
   }
@@ -224,6 +249,8 @@ export class ComandaFacade {
             order_id: this.orderId,
             product_id: line.productId,
             quantity: line.quantity,
+            variant_id: line.variantId ?? null,
+            modifiers: line.modifiers.length > 0 ? line.modifiers : null,
           }),
         );
       }

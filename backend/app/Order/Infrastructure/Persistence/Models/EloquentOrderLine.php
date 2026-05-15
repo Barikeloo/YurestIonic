@@ -23,6 +23,9 @@ final class EloquentOrderLine extends Model
         'uuid',
         'order_id',
         'product_id',
+        'variant_id',
+        'variant_name',
+        'modifiers',
         'user_id',
         'quantity',
         'price',
@@ -36,6 +39,17 @@ final class EloquentOrderLine extends Model
         'notes',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'modifiers' => 'array',
+            'quantity' => 'integer',
+            'price' => 'integer',
+            'tax_percentage' => 'integer',
+            'is_invitation' => 'boolean',
+        ];
+    }
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(EloquentOrder::class, 'order_id');
@@ -44,6 +58,11 @@ final class EloquentOrderLine extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(EloquentProduct::class, 'product_id');
+    }
+
+    public function variant(): BelongsTo
+    {
+        return $this->belongsTo(\App\ProductVariant\Infrastructure\Persistence\Models\EloquentProductVariant::class, 'variant_id', 'uuid');
     }
 
     public function user(): BelongsTo

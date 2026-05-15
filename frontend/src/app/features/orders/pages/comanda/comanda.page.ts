@@ -8,6 +8,10 @@ import { AuthService, AuthUser, QuickAccessUserResponse } from '../../../../core
 import { FilterByPipe, SearchPipe } from '../../../../pipes';
 import { TpvOrderLine, TpvProductItem } from '../../../cash/services/tpv.service';
 import { CartLine, ComandaFacade } from '../../facades/comanda.facade';
+import {
+  ProductConfigModalComponent,
+  ProductConfigResult,
+} from '../../components/product-config-modal/product-config-modal.component';
 
 const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#E74C3C'];
 
@@ -15,7 +19,7 @@ const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#
   selector: 'app-comanda',
   templateUrl: './comanda.page.html',
   styleUrls: ['./comanda.page.scss'],
-  imports: [FormsModule, FilterByPipe, SearchPipe],
+  imports: [FormsModule, FilterByPipe, SearchPipe, ProductConfigModalComponent],
   providers: [ComandaFacade],
 })
 export class ComandaPage implements OnInit, OnDestroy {
@@ -28,6 +32,10 @@ export class ComandaPage implements OnInit, OnDestroy {
   public tableId: string | null = null;
   public currentUser: AuthUser | null = null;
   public closeModalOpen = false;
+  public configModalOpen = false;
+  public selectedProduct: TpvProductItem | null = null;
+  public detailModalOpen = false;
+  public selectedLine: CartLine | TpvOrderLine | null = null;
 
   private readonly destroy$ = new Subject<void>();
 
@@ -54,7 +62,35 @@ export class ComandaPage implements OnInit, OnDestroy {
   }
 
   public addToCart(product: TpvProductItem): void {
+    const hasConfig = (product.variants && product.variants.length > 0)
+      || (product.modifiers && product.modifiers.length > 0);
+
+    if (hasConfig) {
+      this.selectedProduct = product;
+      this.configModalOpen = true;
+      return;
+    }
+
     this.facade.addToCart(product);
+  }
+
+  public onConfigConfirm(result: ProductConfigResult): void {
+    if (!this.selectedProduct) return;
+
+    this.facade.addToCart(this.selectedProduct, {
+      variantId: result.variantId,
+      variantName: result.variantName,
+      variantPrice: result.variantPrice,
+      modifiers: result.modifiers,
+    });
+
+    this.selectedProduct = null;
+    this.configModalOpen = false;
+  }
+
+  public onConfigClose(): void {
+    this.selectedProduct = null;
+    this.configModalOpen = false;
   }
 
   public isOutOfStock(product: TpvProductItem): boolean {
@@ -121,6 +157,67 @@ export class ComandaPage implements OnInit, OnDestroy {
 
   public formatCents(cents: number): string {
     return (cents / 100).toFixed(2).replace('.', ',') + '€';
+  }
+
+  public formatModifiers(modifiers: { name: string }[]): string {
+    return modifiers.map((m) => m.name).join(', ');
+  }
+
+  public getLineTotal(line: CartLine): number {
+    const modifierTotal = line.modifiers.reduce((acc, m) => acc + m.price, 0);
+    return (line.price + modifierTotal) * line.quantity;
+  }
+
+  public getExistingLineTotal(line: TpvOrderLine): number {
+    const modTotal = (line.modifiers ?? []).reduce((acc, m) => acc + m.price, 0);
+    return (line.price + modTotal) * line.quantity;
+  }
+
+  public openLineDetail(line: CartLine | TpvOrderLine): void {
+    this.selectedLine = line;
+    this.detailModalOpen = true;
+  }
+
+  public closeLineDetail(): void {
+    this.detailModalOpen = false;
+    this.selectedLine = null;
+  }
+
+  public lineProductName(line: CartLine | TpvOrderLine): string {
+    return this.isCartLine(line) ? line.productName : (line.product_name ?? 'Producto');
+  }
+
+  public lineVariantName(line: CartLine | TpvOrderLine): string | null {
+    const name = this.isCartLine(line) ? line.variantName : line.variant_name;
+    return name ?? null;
+  }
+
+  public lineModifiers(line: CartLine | TpvOrderLine): { id: string; name: string; price: number; type?: 'extra' | 'accompaniment' }[] {
+    return (this.isCartLine(line) ? line.modifiers : line.modifiers) ?? [];
+  }
+
+  public lineAccompaniments(line: CartLine | TpvOrderLine): { id: string; name: string; price: number }[] {
+    return this.lineModifiers(line).filter((m) => m.type === 'accompaniment');
+  }
+
+  public lineExtras(line: CartLine | TpvOrderLine): { id: string; name: string; price: number }[] {
+    return this.lineModifiers(line).filter((m) => m.type === 'extra');
+  }
+
+  public lineLegacyModifiers(line: CartLine | TpvOrderLine): { id: string; name: string; price: number }[] {
+    return this.lineModifiers(line).filter((m) => m.type !== 'extra' && m.type !== 'accompaniment');
+  }
+
+  public lineUnitPrice(line: CartLine | TpvOrderLine): number {
+    return line.price;
+  }
+
+  public lineDetailTotal(line: CartLine | TpvOrderLine): number {
+    return this.isCartLine(line) ? this.getLineTotal(line) : this.getExistingLineTotal(line);
+  }
+
+  private isCartLine(line: CartLine | TpvOrderLine): line is CartLine {
+    return 'productId' in line;
   }
 
   public getUserInitials(name: string): string {
