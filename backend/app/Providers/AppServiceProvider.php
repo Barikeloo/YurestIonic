@@ -20,6 +20,8 @@ use App\Order\Infrastructure\Persistence\Repositories\EloquentOrderLineRepositor
 use App\Order\Infrastructure\Persistence\Repositories\EloquentOrderRepository;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Product\Infrastructure\Persistence\Repositories\EloquentProductRepository;
+use App\ProductModifier\Domain\Interfaces\ProductModifierRepositoryInterface;
+use App\ProductModifier\Infrastructure\Persistence\Repositories\EloquentProductModifierRepository;
 use App\ProductVariant\Domain\Interfaces\ProductVariantRepositoryInterface;
 use App\ProductVariant\Infrastructure\Persistence\Repositories\EloquentProductVariantRepository;
 use App\Restaurant\Domain\Interfaces\RestaurantCascadeDeleteInterface;
@@ -60,6 +62,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(FamilyRepositoryInterface::class, EloquentFamilyRepository::class);
         $this->app->bind(ProductRepositoryInterface::class, EloquentProductRepository::class);
         $this->app->bind(ProductVariantRepositoryInterface::class, EloquentProductVariantRepository::class);
+        $this->app->bind(ProductModifierRepositoryInterface::class, EloquentProductModifierRepository::class);
         $this->app->bind(TableRepositoryInterface::class, EloquentTableRepository::class);
         $this->app->bind(TaxRepositoryInterface::class, EloquentTaxRepository::class);
         $this->app->bind(ZoneRepositoryInterface::class, EloquentZoneRepository::class);

@@ -4,6 +4,7 @@ import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { AllergenCode, ProductItem } from '../../../services/product.service';
 import { ProductVariantItem } from '../../../services/product-variant.service';
+import { ProductModifierItem, ModifierType, ModifierSelectionType } from '../../../services/product-modifier.service';
 import { ProductRow } from '../../../pages/core/gestion/facades/gestion-products.facade';
 import { ALLERGEN_CATALOG } from './allergen-catalog';
 import { ProductModifiersFacade } from './facades/product-modifiers.facade';
@@ -21,6 +22,17 @@ interface VariantFormData {
   name: string;
   price: number;
   stock: number;
+  active: boolean;
+  sort_order: number;
+}
+
+interface ModifierFormData {
+  id?: string;
+  name: string;
+  type: ModifierType;
+  is_required: boolean;
+  selection_type: ModifierSelectionType;
+  price: number;
   active: boolean;
   sort_order: number;
 }
@@ -47,12 +59,17 @@ export class ProductModifiersModalComponent implements OnChanges {
   public readonly selectedAllergens = computed(() => this.facade.selectedAllergens());
   public readonly variants = computed(() => this.facade.variants());
   public readonly variantsLoading = computed(() => this.facade.variantsLoading());
+  public readonly modifiers = computed(() => this.facade.modifiers());
+  public readonly modifiersLoading = computed(() => this.facade.modifiersLoading());
+  public readonly extras = computed(() => this.facade.modifiers().filter((m) => m.type === 'extra'));
+  public readonly accompaniments = computed(() => this.facade.modifiers().filter((m) => m.type === 'accompaniment'));
   public readonly isSaving = computed(() => this.facade.isSaving());
   public readonly error = computed(() => this.facade.error());
   public readonly hasChanges = computed(() => this.facade.hasChanges());
 
-  // Estado local para edición inline de variantes
+  // Estado local para edición inline de variantes y modificadores
   public readonly editingVariant = signal<VariantFormData | null>(null);
+  public readonly editingModifier = signal<ModifierFormData | null>(null);
 
   public readonly tabs: TabItem[] = [
     { key: 'allergens', label: 'Alérgenos', description: 'Marca los 14 alérgenos oficiales presentes en este producto.' },
@@ -87,6 +104,9 @@ export class ProductModifiersModalComponent implements OnChanges {
     this.activeTab = tab;
     if (tab === 'variants' && this.product?.uuid) {
       this.facade.loadVariants().pipe(takeUntil(this.destroy$)).subscribe();
+    }
+    if ((tab === 'extras' || tab === 'accompaniments') && this.product?.uuid) {
+      this.facade.loadModifiers().pipe(takeUntil(this.destroy$)).subscribe();
     }
   }
 
@@ -167,6 +187,83 @@ export class ProductModifiersModalComponent implements OnChanges {
   public deleteVariant(variantId: string): void {
     this.facade
       .removeVariant(variantId)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe();
+  }
+
+  // --- Modifiers ---
+  public hasEditingModifier(): boolean {
+    return this.editingModifier() !== null;
+  }
+
+  public addModifierRow(type: ModifierType): void {
+    const list = type === 'extra' ? this.extras() : this.accompaniments();
+    this.editingModifier.set({
+      name: '',
+      type,
+      is_required: type === 'accompaniment',
+      selection_type: type === 'extra' ? 'multi' : 'single',
+      price: type === 'extra' ? 0 : 0,
+      active: true,
+      sort_order: list.length,
+    });
+  }
+
+  public startEditModifier(modifier: ProductModifierItem): void {
+    this.editingModifier.set({
+      id: modifier.id,
+      name: modifier.name,
+      type: modifier.type,
+      is_required: modifier.is_required,
+      selection_type: modifier.selection_type,
+      price: modifier.price,
+      active: modifier.active,
+      sort_order: modifier.sort_order,
+    });
+  }
+
+  public saveEditingModifier(): void {
+    const editing = this.editingModifier();
+    if (!editing?.name) {
+      return;
+    }
+
+    const payload = {
+      name: editing.name,
+      type: editing.type,
+      is_required: editing.is_required,
+      selection_type: editing.selection_type,
+      price: editing.price,
+      active: editing.active,
+      sort_order: editing.sort_order,
+    };
+
+    if (editing.id) {
+      this.facade
+        .updateModifier(editing.id, payload)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => this.editingModifier.set(null),
+          error: () => {},
+        });
+    } else {
+      this.facade
+        .addModifier(payload)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => this.editingModifier.set(null),
+          error: () => {},
+        });
+    }
+  }
+
+  public cancelEditModifier(): void {
+    this.editingModifier.set(null);
+  }
+
+  public deleteModifier(modifierId: string): void {
+    this.facade
+      .removeModifier(modifierId)
       .pipe(takeUntil(this.destroy$))
       .subscribe();
   }
