@@ -1,0 +1,244 @@
+<div class="caja">
+
+  <!-- View selector -->
+  <div class="view-selector-row">
+    <div class="seg-group">
+      @for (v of [['session','Sesión actual'],['preclose','Pre-cierre'],['cancellations','Anulaciones']]; track v[0]) {
+        <button class="seg-btn" [class.active]="view() === v[0]" (click)="view.set($any(v[0]))">{{ v[1] }}</button>
+      }
+    </div>
+  </div>
+
+  <!-- ── SESIÓN ACTUAL ──────────────────────────────────────────────────── -->
+  @if (view() === 'session') {
+    <!-- Session header card -->
+    <div class="session-card card">
+      <div class="session-header">
+        <div class="session-left">
+          <div class="session-icon">💼</div>
+          <div>
+            <div class="session-title-row">
+              <span class="session-title">Sesión #{{ s.id }}</span>
+              <span class="session-badge">● Abierta</span>
+            </div>
+            <div class="session-sub">{{ s.operator }} · Apertura {{ s.opened }} · 14h 38m transcurridas</div>
+          </div>
+        </div>
+        <div class="session-actions">
+          <button class="btn-outline green">+ Entrada</button>
+          <button class="btn-outline red">− Salida</button>
+          <button class="btn-success">🔒 Cerrar caja</button>
+        </div>
+      </div>
+
+      <div class="session-kpis">
+        <div class="session-main-kpi">
+          <div class="skpi-label">Efectivo teórico</div>
+          <div class="skpi-value">{{ fmt(theoretical()) }}</div>
+          <div class="skpi-sub">Pendiente arqueo al cierre</div>
+        </div>
+        @for (b of sessionBreakdown(); track b.label) {
+          <div class="session-kpi">
+            <div class="skpi-label">{{ b.label }}</div>
+            <div class="skpi-val" [style.color]="b.color">{{ b.value }}</div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Movements + History -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Movimientos</div>
+            <div class="card-sub">{{ filteredMovements().length }} en sesión actual</div>
+          </div>
+          <div class="seg-group sm">
+            @for (f of [['all','Todos'],['in','↑ Entrada'],['out','↓ Salida']]; track f[0]) {
+              <button class="seg-btn" [class.active]="movFilter() === f[0]" (click)="movFilter.set($any(f[0]))">{{ f[1] }}</button>
+            }
+          </div>
+        </div>
+        <div class="movements-list">
+          @for (m of filteredMovements(); track m.id; let last = $last) {
+            <div class="movement-row" [class.last]="last">
+              <div class="mov-icon" [class.in]="m.type === 'in'" [class.out]="m.type === 'out'">
+                {{ m.type === 'in' ? '↑' : '↓' }}
+              </div>
+              <div class="mov-info">
+                <span class="mov-reason">{{ m.reason }}</span>
+                <span class="mov-meta">{{ m.time }} · {{ m.user }}</span>
+              </div>
+              <span class="mov-amount" [class.in]="m.type === 'in'" [class.out]="m.type === 'out'">
+                {{ m.type === 'in' ? '+' : '−' }} {{ fmt(m.amount) }}
+              </span>
+            </div>
+          }
+          @if (filteredMovements().length === 0) {
+            <div class="empty-state">No hay movimientos con este filtro</div>
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Historial de sesiones</div>
+            <div class="card-sub">Últimas {{ facade.cashHistory.length }} sesiones cerradas</div>
+          </div>
+          <button class="btn-ver-todas">Ver todas →</button>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Sesión</th>
+                <th>Operador</th>
+                <th class="ar">Ventas</th>
+                <th class="ar">Teórico</th>
+                <th class="ar">Contado</th>
+                <th class="ar">Diferencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (h of facade.cashHistory; track h.id) {
+                <tr class="hist-row">
+                  <td>
+                    <div class="hist-id">#{{ h.id }}</div>
+                    <div class="hist-date">{{ h.opened.slice(0,5) }}</div>
+                  </td>
+                  <td>{{ h.operator }}</td>
+                  <td class="ar mono">{{ fmt(h.sales) }}</td>
+                  <td class="ar mono grey">{{ fmt(h.theoretical) }}</td>
+                  <td class="ar mono bold">{{ fmt(h.counted) }}</td>
+                  <td class="ar">
+                    <span class="diff-chip" [style.color]="diffColor(h.diff)" [style.background]="diffBg(h.diff)">
+                      {{ h.diff === 0 ? '✓ 0,00 €' : (h.diff > 0 ? '+' : '') + fmt(h.diff) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── PRE-CIERRE ───────────────────────────────────────────────────────── -->
+  @if (view() === 'preclose') {
+    <div class="preclose-layout">
+      <!-- Mini KPIs -->
+      <div class="preclose-kpis">
+        <div class="preclose-kpi" [class.warn]="facade.preClose.openTablesCount > 0">
+          <div class="pk-val">{{ fmtInt(facade.preClose.openTablesCount) }}</div>
+          <div class="pk-lbl">Mesas abiertas</div>
+          <div class="pk-sub">{{ fmt(facade.preClose.openTablesAmount) }}</div>
+        </div>
+        <div class="preclose-kpi" [class.warn]="facade.preClose.unprintedTickets > 0">
+          <div class="pk-val">{{ fmtInt(facade.preClose.unprintedTickets) }}</div>
+          <div class="pk-lbl">Sin imprimir</div>
+          <div class="pk-sub">{{ fmt(facade.preClose.unprintedAmount) }}</div>
+        </div>
+        <div class="preclose-kpi">
+          <div class="pk-val" style="color:#1a9e5a">{{ fmt(facade.preClose.undeclaredTips) }}</div>
+          <div class="pk-lbl">Propinas</div>
+          <div class="pk-sub">Pendientes declarar</div>
+        </div>
+        <div class="preclose-kpi" [class.warn]="facade.preClose.projectedDiff !== 0">
+          <div class="pk-val" [style.color]="diffColor(facade.preClose.projectedDiff)">{{ fmt(facade.preClose.projectedDiff) }}</div>
+          <div class="pk-lbl">Descuadre est.</div>
+          <div class="pk-sub">Antes de arqueo</div>
+        </div>
+      </div>
+
+      <!-- Checklist -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Checklist de cierre</div>
+            <div class="card-sub">{{ checklistDone() }} de {{ facade.preClose.checklist.length }} pasos completados</div>
+          </div>
+          <div class="progress-circle">
+            <span>{{ checklistDone() }}/{{ facade.preClose.checklist.length }}</span>
+          </div>
+        </div>
+        <div class="checklist">
+          @for (item of facade.preClose.checklist; track item.id) {
+            <div class="checklist-item" [class.done]="item.done" [class.blocking]="item.blocking && !item.done">
+              <div class="check-icon" [class.done]="item.done">{{ item.done ? '✓' : item.blocking ? '!' : '○' }}</div>
+              <span class="check-label">{{ item.label }}</span>
+              @if (item.blocking && !item.done) {
+                <span class="blocking-tag">Bloqueante</span>
+              }
+            </div>
+          }
+        </div>
+        <div class="checklist-footer">
+          <button class="close-caja-btn" [class.disabled]="!canClose()" [disabled]="!canClose()">
+            🔒 Cerrar caja
+            @if (!canClose()) { <span class="disabled-hint">· Resuelve bloqueantes primero</span> }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ── ANULACIONES ──────────────────────────────────────────────────────── -->
+  @if (view() === 'cancellations') {
+    <div class="cancellations">
+      <!-- Category filters -->
+      <div class="cat-filters">
+        @for (cat of ['all','error','queja','fuga','devolucion','cancelacion']; track cat) {
+          <button class="cat-chip" [class.active]="cancelCat() === cat"
+            [style.background]="cancelCat() === cat ? categoryBg(cat) : '#f4f4f4'"
+            [style.color]="cancelCat() === cat ? categoryColor(cat) : '#7a7a7a'"
+            (click)="cancelCat.set(cat)">
+            {{ categoryLabel(cat) }}
+          </button>
+        }
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Anulaciones y devoluciones</div>
+          <div class="card-sub">{{ filteredCancellations().length }} registros · {{ fmt(filteredCancellations().reduce(sumAmt, 0)) }} total</div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Ticket</th>
+                <th>Fecha</th>
+                <th>Zona</th>
+                <th>Motivo</th>
+                <th>Quién</th>
+                <th>Autoriza</th>
+                <th>Categ.</th>
+                <th class="ar">Importe</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of filteredCancellations(); track c.id) {
+                <tr>
+                  <td><span class="ticket-id mono">{{ c.id }}</span></td>
+                  <td><span class="grey-text">{{ c.date }}</span></td>
+                  <td>{{ c.zone }}</td>
+                  <td class="reason-cell">{{ c.reason }}</td>
+                  <td>{{ c.who }}</td>
+                  <td>{{ c.authorizedBy }}</td>
+                  <td>
+                    <span class="cat-chip-sm" [style.color]="categoryColor(c.category)" [style.background]="categoryBg(c.category)">{{ categoryLabel(c.category) }}</span>
+                  </td>
+                  <td class="ar"><span class="mono bold red">{{ fmt(c.amount) }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

@@ -1,0 +1,287 @@
+<div class="impuestos">
+
+  <!-- ── Top row: 1.4fr 1fr ────────────────────────────────────────────────── -->
+  <div class="top-row">
+
+    <!-- Desglose por tramo de IVA -->
+    <div class="card">
+      <div class="section-header">
+        <div class="card-title">Desglose por tramo de IVA</div>
+        <div class="card-sub">Periodo seleccionado · base imponible + cuota</div>
+      </div>
+
+      <div class="vat-rows">
+        @for (t of breakdown; track t.rate) {
+          <div class="vat-row">
+            <div class="rate-badge" [style.color]="colorByRate[t.rate]" [style.background]="colorByRate[t.rate] + '15'">{{ t.rate }}%</div>
+            <div class="row-mid">
+              <div class="row-label">{{ t.label }}</div>
+              <div class="row-note">{{ t.note }}</div>
+              <div class="row-bar-track">
+                <div class="row-bar-fill" [style.width.%]="barPct(t.total)" [style.background]="colorByRate[t.rate]"></div>
+              </div>
+            </div>
+            <div class="col-r">
+              <div class="col-r-lbl">Base</div>
+              <div class="col-r-val mono">{{ fmt(t.base) }}</div>
+            </div>
+            <div class="col-r col-r--iva">
+              <div class="col-r-lbl" [style.color]="colorByRate[t.rate]">IVA</div>
+              <div class="col-r-val mono" [style.color]="colorByRate[t.rate]">{{ fmt(t.tax) }}</div>
+            </div>
+          </div>
+        }
+
+        <!-- Dark total row -->
+        <div class="vat-row vat-row--total">
+          <div class="rate-badge rate-badge--total">Total</div>
+          <div class="row-mid"></div>
+          <div class="col-r">
+            <div class="col-r-lbl col-r-lbl--dim">Base total</div>
+            <div class="col-r-val mono">{{ fmt(totalBase) }}</div>
+          </div>
+          <div class="col-r col-r--iva">
+            <div class="col-r-lbl col-r-lbl--dim">IVA repercutido</div>
+            <div class="col-r-val mono">{{ fmt(totalTax) }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Resumen periodo -->
+    <div class="card">
+      <div class="section-header">
+        <div class="card-title">Resumen periodo</div>
+        <div class="card-sub">Tickets y comensales del filtro</div>
+      </div>
+
+      <div class="resumen-body">
+        <div>
+          <div class="bruta-lbl">Facturación bruta</div>
+          <div class="bruta-val mono">{{ fmt(totalGross) }}</div>
+          <div class="bruta-sub">Base + IVA repercutido</div>
+        </div>
+
+        <div class="resumen-lines">
+          <div class="res-line">
+            <span class="res-line-lbl">Base imponible</span>
+            <span class="res-line-val mono">{{ fmt(totalBase) }}</span>
+          </div>
+          <div class="res-line">
+            <span class="res-line-lbl">IVA repercutido</span>
+            <span class="res-line-val mono res-line-val--red">+ {{ fmt(totalTax) }}</span>
+          </div>
+          <div class="res-line">
+            <span class="res-line-lbl">Propinas declaradas</span>
+            <span class="res-line-val mono res-line-val--green">+ {{ fmt(facade.summary.tipsCard.v) }}</span>
+          </div>
+        </div>
+
+        <div class="nota-box">
+          <strong>Nota:</strong> el IVA repercutido se acumula al Modelo 303 trimestral. Las propinas no forman parte de la base imponible.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Modelo 303 card ────────────────────────────────────────────────────── -->
+  <div class="m303-card">
+
+    <!-- Header -->
+    <div class="m303-head">
+      <div class="m303-head-l">
+        <div class="m303-icon mono">303</div>
+        <div>
+          <div class="m303-title">Modelo 303 — IVA repercutido</div>
+          <div class="m303-sub">Listo para copiar al impreso simplificado de Hacienda</div>
+        </div>
+      </div>
+      <div class="segment">
+        @for (opt of [['T1','T1 · ene-mar'],['T2','T2 · abr-jun'],['T3','T3 · jul-sep'],['T4','T4 · oct-dic']]; track opt[0]) {
+          <button class="seg-btn" [class.seg-btn--active]="activeQ() === opt[0]" (click)="setQ($any(opt[0]))">{{ opt[1] }}</button>
+        }
+      </div>
+    </div>
+
+    <!-- Quarter progress row -->
+    <div class="m303-progress-row">
+      <span class="m303-q-label">Trimestre</span>
+      <span class="m303-q-period">{{ q().period }}</span>
+      <div class="m303-q-bar-track">
+        <div class="m303-q-bar-fill" [style.width.%]="q().elapsed"></div>
+      </div>
+      <span class="m303-q-pct mono">{{ q().elapsed }}% transcurrido</span>
+    </div>
+
+    <!-- 3-col rate cards -->
+    <div class="m303-rate-grid">
+      @for (r of m303Rates(); track r.rate) {
+        <div class="rate-card" [style.border-color]="r.color + '33'">
+          <div class="rc-head">
+            <div class="rc-badge" [style.color]="r.color" [style.background]="r.color + '15'">{{ r.rate }}%</div>
+            <span class="rc-casillas">Casillas {{ r.casillas.join(' / ') }}</span>
+          </div>
+
+          <div class="rc-section">
+            <div class="rc-sec-head">
+              <span class="rc-sec-lbl">Base imponible</span>
+              <button class="copy-btn" [class.copy-btn--ok]="copied() === 'b' + r.rate" (click)="copyField('b' + r.rate, r.base)">
+                {{ copied() === 'b' + r.rate ? '✓ Copiado' : '⧉ Copiar' }}
+              </button>
+            </div>
+            <div class="rc-val mono">{{ fmt(r.base) }}</div>
+          </div>
+
+          <div class="rc-divider"></div>
+
+          <div class="rc-section">
+            <div class="rc-sec-head">
+              <span class="rc-sec-lbl" [style.color]="r.color">Cuota IVA</span>
+              <button class="copy-btn" [class.copy-btn--ok]="copied() === 't' + r.rate" (click)="copyField('t' + r.rate, r.tax)">
+                {{ copied() === 't' + r.rate ? '✓ Copiado' : '⧉ Copiar' }}
+              </button>
+            </div>
+            <div class="rc-val mono" [style.color]="r.color">{{ fmt(r.tax) }}</div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Dark total bar -->
+    <div class="m303-total-bar">
+      <div>
+        <div class="m303-total-lbl">Cuota IVA a ingresar (acumulado trimestre)</div>
+        <div class="m303-total-val mono">{{ fmt(qTotalTax()) }}</div>
+      </div>
+      <div class="m303-total-actions">
+        <button class="btn-borrador" (click)="show303.set(true)">📄 Borrador 303</button>
+        <button class="btn-pdf">⤓ PDF para gestor</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ── Modelo 303 Modal ───────────────────────────────────────────────────── -->
+@if (show303()) {
+  <div class="modal-backdrop" (click)="show303.set(false)">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
+
+      <!-- Modal header -->
+      <div class="modal-head">
+        <div class="modal-head-l">
+          <div class="m303-icon mono">303</div>
+          <div>
+            <div class="modal-title">Borrador Modelo 303 — {{ q().period }}</div>
+            <div class="modal-sub">Listo para firmar y presentar en AEAT</div>
+          </div>
+        </div>
+        <button class="modal-close-btn" (click)="show303.set(false)">×</button>
+      </div>
+
+      <!-- PDF preview body -->
+      <div class="modal-body">
+        <div class="pdf-preview">
+
+          <!-- PDF header -->
+          <div class="pdf-head">
+            <div>
+              <div class="pdf-agency">Agencia Tributaria</div>
+              <div class="pdf-model-title">Modelo 303 — IVA Autoliquidación</div>
+              <div class="pdf-model-sub">Régimen general · Trimestre 2 · 2026</div>
+            </div>
+            <div class="pdf-borrador-badge">BORRADOR</div>
+          </div>
+
+          <!-- Company fields 2×2 -->
+          <div class="pdf-fields-grid">
+            <div class="pdf-field">
+              <div class="pdf-field-lbl">Razón social</div>
+              <div class="pdf-field-val">La Tasca de Miguel SL</div>
+            </div>
+            <div class="pdf-field">
+              <div class="pdf-field-lbl">NIF</div>
+              <div class="pdf-field-val">B-87654321</div>
+            </div>
+            <div class="pdf-field">
+              <div class="pdf-field-lbl">Domicilio fiscal</div>
+              <div class="pdf-field-val">C/ San Andrés 18, 28004 Madrid</div>
+            </div>
+            <div class="pdf-field">
+              <div class="pdf-field-lbl">Periodo</div>
+              <div class="pdf-field-val">2T · 2026 (abr-jun)</div>
+            </div>
+          </div>
+
+          <!-- IVA devengado section -->
+          <div class="pdf-section-head">IVA DEVENGADO</div>
+          <table class="pdf-table">
+            <thead>
+              <tr>
+                <th>Casilla</th>
+                <th>Concepto</th>
+                <th class="ar">Base imponible</th>
+                <th class="ar">Tipo</th>
+                <th class="ar">Cuota</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of pdfRows(); track row.rate) {
+                <tr>
+                  <td>
+                    <div class="pdf-casillas">
+                      @for (c of row.casillas; track c) {
+                        <span class="pdf-casilla-badge">{{ c }}</span>
+                      }
+                    </div>
+                  </td>
+                  <td>{{ row.concepto }}</td>
+                  <td class="ar mono">{{ fmt(row.base) }}</td>
+                  <td class="ar mono gray">{{ row.rate }}%</td>
+                  <td class="ar mono bold">{{ fmt(row.cuota) }}</td>
+                </tr>
+              }
+              <tr class="pdf-total-row">
+                <td colspan="2">
+                  Total IVA devengado
+                  <span class="pdf-casilla-badge pdf-casilla-badge--inline">27</span>
+                </td>
+                <td class="ar mono">{{ fmt(qTotalBase()) }}</td>
+                <td></td>
+                <td class="ar mono bold red">{{ fmt(qTotalTax()) }}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Resultado section -->
+          <div class="pdf-section-head">RESULTADO</div>
+          <div class="pdf-resultado">
+            <div class="pdf-resultado-l">
+              <span class="pdf-resultado-lbl">Resultado a ingresar</span>
+              <span class="pdf-casilla-badge pdf-casilla-badge--inline">71</span>
+            </div>
+            <div class="pdf-resultado-val mono red">{{ fmt(qTotalTax()) }}</div>
+          </div>
+
+          <!-- Disclaimer -->
+          <div class="pdf-disclaimer">
+            Documento generado automáticamente desde Yurest a partir de las operaciones registradas en el trimestre. Debe ser revisado por su asesor fiscal antes de la presentación. Esta versión es un borrador y no tiene validez como autoliquidación oficial.
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Modal footer -->
+      <div class="modal-foot">
+        <button class="btn-ghost" (click)="show303.set(false)">Cerrar</button>
+        <div class="modal-foot-actions">
+          <button class="btn-outline-sm">📧 Enviar al gestor</button>
+          <button class="btn-dark">⤓ Descargar PDF</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+}

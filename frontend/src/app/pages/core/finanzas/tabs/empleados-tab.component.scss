@@ -1,0 +1,377 @@
+.empleados {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+// ── KPI Strip ─────────────────────────────────────────────────────────────────
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.kpi-card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-top: 3px solid transparent;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.05);
+
+  &--green { border-top-color: #1a9e5a; }
+  &--red   { border-top-color: #ff4d4d; }
+  &--amber { border-top-color: #d18a1c; }
+}
+
+.kpi-label {
+  font-size: 11px;
+  color: #7a7a7a;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 600;
+}
+
+.kpi-value {
+  font-size: 22px;
+  font-family: 'DM Mono', monospace;
+  font-weight: 700;
+  color: #0d0d0d;
+  margin-top: 4px;
+  letter-spacing: -0.4px;
+
+  &--green { color: #1a9e5a; }
+}
+
+.kpi-sub {
+  font-size: 11px;
+  color: #a0a0a0;
+  margin-top: 2px;
+}
+
+// ── Sort Row ──────────────────────────────────────────────────────────────────
+.sort-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sort-count {
+  font-size: 13px;
+  color: #7a7a7a;
+}
+
+.segment {
+  display: flex;
+  background: #f4f4f4;
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.seg-btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a7a7a;
+  cursor: pointer;
+  transition: all 0.12s;
+  white-space: nowrap;
+  font-family: 'DM Sans', sans-serif;
+
+  &--active {
+    background: #fff;
+    color: #0d0d0d;
+    box-shadow: 0 1px 3px rgba(0,0,0,.10);
+  }
+
+  &:hover:not(.seg-btn--active) { color: #0d0d0d; }
+}
+
+// ── Main Layout ────────────────────────────────────────────────────────────────
+.main-row {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+// ── Cards Grid ────────────────────────────────────────────────────────────────
+.cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.emp-card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 14px;
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  position: relative;
+
+  &:hover { box-shadow: 0 4px 12px rgba(0,0,0,.08); }
+
+  &--selected {
+    border: 1.5px solid #ff4d4d;
+    background: #fff5f5;
+  }
+}
+
+.emp-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.emp-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  flex-shrink: 0;
+
+  &--lg {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+  }
+}
+
+.emp-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.emp-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.emp-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0d0d0d;
+}
+
+.active-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #1a9e5a;
+  flex-shrink: 0;
+}
+
+.emp-role-shift {
+  font-size: 11px;
+  color: #7a7a7a;
+}
+
+// ── Stats (2×2 grid) ──────────────────────────────────────────────────────────
+.emp-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.emp-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.st-lbl {
+  font-size: 9.5px;
+  color: #a0a0a0;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 2px;
+}
+
+.st-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: #0d0d0d;
+
+  &--sm    { font-size: 14px; font-weight: 600; }
+  &--green { color: #1a9e5a; }
+}
+
+.mono { font-family: 'DM Mono', monospace; }
+
+// ── Sparkline ─────────────────────────────────────────────────────────────────
+.emp-spark {
+  height: 28px;
+  margin-bottom: 10px;
+
+  svg { width: 100%; height: 100%; display: block; }
+}
+
+// ── Flag Chips ────────────────────────────────────────────────────────────────
+.emp-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+
+  &--warn     { background: rgba(209,138,28,.10); color: #d18a1c; }
+  &--critical { background: rgba(255,77,77,.10);  color: #ff4d4d; }
+}
+
+// ── Detail Panel ──────────────────────────────────────────────────────────────
+.detail-card {
+  background: #fff;
+  border: 1px solid #e8e8e8;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  position: sticky;
+  top: 0;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.detail-meta { flex: 1; min-width: 0; }
+
+.detail-name {
+  font-size: 19px;
+  font-weight: 700;
+  color: #0d0d0d;
+  letter-spacing: -0.3px;
+}
+
+.detail-role-shift {
+  font-size: 12px;
+  color: #7a7a7a;
+  margin-top: 2px;
+}
+
+.btn-tickets {
+  padding: 6px 12px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5a5a5a;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: 'DM Sans', sans-serif;
+  transition: all 0.12s;
+
+  &:hover {
+    background: #f0f0f0;
+    border-color: #d0d0d0;
+  }
+}
+
+// ── Detail KPIs (4-col) ───────────────────────────────────────────────────────
+.detail-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.dkpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dkpi-lbl {
+  font-size: 9.5px;
+  color: #a0a0a0;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 600;
+  margin-bottom: 1px;
+}
+
+.dkpi-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0d0d0d;
+
+  &--green { color: #1a9e5a; }
+}
+
+.dkpi-sub {
+  font-size: 10.5px;
+  color: #7a7a7a;
+}
+
+// ── Detail sparkline ──────────────────────────────────────────────────────────
+.detail-spark-wrap { margin-bottom: 18px; }
+
+.detail-spark-label {
+  font-size: 10px;
+  color: #7a7a7a;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.detail-spark {
+  height: 60px;
+
+  svg { width: 100%; height: 100%; display: block; }
+}
+
+// ── Stat Boxes ────────────────────────────────────────────────────────────────
+.detail-stat-boxes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat-box {
+  padding: 12px;
+  background: #fafafa;
+  border-radius: 10px;
+  border: 1px solid #f4f4f4;
+}
+
+.stat-box-lbl {
+  font-size: 10px;
+  color: #a0a0a0;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.stat-box-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: #5a5a5a;
+}

@@ -224,6 +224,34 @@
   line-height: 1.4;
 }
 
+.gestion-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.btn-finanzas {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  background: #fff;
+  color: #0077cc;
+  border: 1.5px solid #0077cc;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+
+  &:hover {
+    background: #e8f0fb;
+  }
+}
+
 .btn-unlink-device {
   padding: 10px 20px;
   background: var(--accent);

@@ -1,0 +1,510 @@
+<div class="resumen-tab">
+
+  <!-- ── KPI row ──────────────────────────────────────────────────────────── -->
+  <div class="kpi-row">
+
+    <!-- Ingresos totales -->
+    <div class="kpi-card" (click)="facade.setTab('ventas')">
+      <div class="kpi-head">
+        <span class="kpi-label">Ingresos totales</span>
+        @if (facade.showCompare()) {
+          <span class="trend-chip"
+                [style.background]="trendBg(s.revenue.deltaPct)"
+                [style.color]="trendColor(s.revenue.deltaPct)">
+            <span class="trend-arrow">{{ trendArrow(s.revenue.deltaPct) }}</span>
+            {{ fmtPct(s.revenue.deltaPct) }}
+          </span>
+        }
+      </div>
+      <div class="kpi-value">{{ fmtNum(s.revenue.v) }} <span class="kpi-unit">€</span></div>
+      @if (facade.showCompare()) {
+        <div class="kpi-sub">vs {{ fmt(s.revenue.prev) }} ayer</div>
+      }
+      <div class="kpi-spark">
+        <svg viewBox="0 0 100 24" preserveAspectRatio="none" class="spark-svg">
+          <defs>
+            <linearGradient id="sg-rev" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ff4d4d" stop-opacity="0.2"/>
+              <stop offset="100%" stop-color="#ff4d4d" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path [attr.d]="sparkArea(facade.sparks.revenue)" fill="url(#sg-rev)"/>
+          <path [attr.d]="sparkPath(facade.sparks.revenue)" fill="none" stroke="#ff4d4d" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle [attr.cx]="sparkDot(facade.sparks.revenue).cx" [attr.cy]="sparkDot(facade.sparks.revenue).cy" r="2" fill="#ff4d4d"/>
+        </svg>
+      </div>
+      <div class="kpi-accent" style="background:#ff4d4d"></div>
+    </div>
+
+    <!-- Tickets -->
+    <div class="kpi-card" (click)="facade.setTab('ventas')">
+      <div class="kpi-head">
+        <span class="kpi-label">Tickets</span>
+        @if (facade.showCompare()) {
+          <span class="trend-chip"
+                [style.background]="trendBg(s.tickets.deltaPct)"
+                [style.color]="trendColor(s.tickets.deltaPct)">
+            <span class="trend-arrow">{{ trendArrow(s.tickets.deltaPct) }}</span>
+            {{ fmtPct(s.tickets.deltaPct) }}
+          </span>
+        }
+      </div>
+      <div class="kpi-value">{{ fmtInt(s.tickets.v) }}</div>
+      @if (facade.showCompare()) {
+        <div class="kpi-sub">vs {{ s.tickets.prev }} ayer</div>
+      }
+      <div class="kpi-spark">
+        <svg viewBox="0 0 100 24" preserveAspectRatio="none" class="spark-svg">
+          <defs>
+            <linearGradient id="sg-tix" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#1a9e5a" stop-opacity="0.2"/>
+              <stop offset="100%" stop-color="#1a9e5a" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path [attr.d]="sparkArea(facade.sparks.tickets)" fill="url(#sg-tix)"/>
+          <path [attr.d]="sparkPath(facade.sparks.tickets)" fill="none" stroke="#1a9e5a" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle [attr.cx]="sparkDot(facade.sparks.tickets).cx" [attr.cy]="sparkDot(facade.sparks.tickets).cy" r="2" fill="#1a9e5a"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Ticket medio -->
+    <div class="kpi-card" (click)="facade.setTab('ventas')">
+      <div class="kpi-head">
+        <span class="kpi-label">Ticket medio</span>
+        @if (facade.showCompare()) {
+          <span class="trend-chip"
+                [style.background]="trendBg(s.avgTicket.deltaPct)"
+                [style.color]="trendColor(s.avgTicket.deltaPct)">
+            <span class="trend-arrow">{{ trendArrow(s.avgTicket.deltaPct) }}</span>
+            {{ fmtPct(s.avgTicket.deltaPct) }}
+          </span>
+        }
+      </div>
+      <div class="kpi-value">{{ fmtNum(s.avgTicket.v) }} <span class="kpi-unit">€</span></div>
+      @if (facade.showCompare()) {
+        <div class="kpi-sub">vs {{ fmt(s.avgTicket.prev) }} ayer</div>
+      }
+      <div class="kpi-spark">
+        <svg viewBox="0 0 100 24" preserveAspectRatio="none" class="spark-svg">
+          <defs>
+            <linearGradient id="sg-avg" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#0077cc" stop-opacity="0.2"/>
+              <stop offset="100%" stop-color="#0077cc" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path [attr.d]="sparkArea(facade.sparks.avgTicket)" fill="url(#sg-avg)"/>
+          <path [attr.d]="sparkPath(facade.sparks.avgTicket)" fill="none" stroke="#0077cc" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle [attr.cx]="sparkDot(facade.sparks.avgTicket).cx" [attr.cy]="sparkDot(facade.sparks.avgTicket).cy" r="2" fill="#0077cc"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Productos vendidos -->
+    <div class="kpi-card" (click)="facade.setTab('productos')">
+      <div class="kpi-head">
+        <span class="kpi-label">Productos vendidos</span>
+        @if (facade.showCompare()) {
+          <span class="trend-chip"
+                [style.background]="trendBg(s.itemsSold.deltaPct)"
+                [style.color]="trendColor(s.itemsSold.deltaPct)">
+            <span class="trend-arrow">{{ trendArrow(s.itemsSold.deltaPct) }}</span>
+            {{ fmtPct(s.itemsSold.deltaPct) }}
+          </span>
+        }
+      </div>
+      <div class="kpi-value">{{ fmtInt(s.itemsSold.v) }}</div>
+      <div class="kpi-sub">{{ fmtInt(s.diners.v) }} comensales</div>
+      <div class="kpi-spark">
+        <svg viewBox="0 0 100 24" preserveAspectRatio="none" class="spark-svg">
+          <defs>
+            <linearGradient id="sg-itm" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#d18a1c" stop-opacity="0.2"/>
+              <stop offset="100%" stop-color="#d18a1c" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <path [attr.d]="sparkArea(facade.sparks.items)" fill="url(#sg-itm)"/>
+          <path [attr.d]="sparkPath(facade.sparks.items)" fill="none" stroke="#d18a1c" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle [attr.cx]="sparkDot(facade.sparks.items).cx" [attr.cy]="sparkDot(facade.sparks.items).cy" r="2" fill="#d18a1c"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Caja actual -->
+    <div class="kpi-card" (click)="facade.setTab('caja')">
+      <div class="kpi-head">
+        <span class="kpi-label">Caja actual</span>
+        <span class="badge-live">● Abierta</span>
+      </div>
+      <div class="kpi-value kpi-value--green">{{ fmtNum(s.cashOpen.v) }} <span class="kpi-unit">€</span></div>
+      <div class="kpi-sub">Sesión abierta · 14h 38m</div>
+      <div class="kpi-accent" style="background:#1a9e5a"></div>
+    </div>
+
+  </div>
+
+  <!-- ── Charts row: bar chart + top products ──────────────────────────────── -->
+  <div class="charts-grid">
+
+    <!-- Bar chart card -->
+    <div class="card">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Ventas por hora</div>
+          <div class="section-sub">Identifica picos y valles para reforzar turnos</div>
+        </div>
+        <div class="chart-legend">
+          <span class="legend-item">
+            <span class="legend-ghost"></span>Ayer
+          </span>
+          <span class="legend-item">
+            <span class="legend-avg"></span>Media
+          </span>
+          <span class="legend-item">
+            <span class="legend-bar"></span>Hoy
+          </span>
+        </div>
+      </div>
+
+      <div class="bar-chart-wrap">
+        <svg viewBox="0 0 100 100" preserveAspectRatio="none" class="bar-chart-svg">
+          <defs>
+            <linearGradient id="bar-grad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ff4d4d" stop-opacity="0.95"/>
+              <stop offset="100%" stop-color="#ff4d4d" stop-opacity="0.6"/>
+            </linearGradient>
+          </defs>
+
+          <line x1="2" x2="98" y1="25" y2="25" stroke="#f4f4f4" stroke-width="0.2"/>
+          <line x1="2" x2="98" y1="50" y2="50" stroke="#f4f4f4" stroke-width="0.2"/>
+          <line x1="2" x2="98" y1="75" y2="75" stroke="#f4f4f4" stroke-width="0.2"/>
+
+          <line x1="2" x2="98"
+                [attr.y1]="avgLine" [attr.y2]="avgLine"
+                stroke="#a0a0a0" stroke-width="0.3" stroke-dasharray="0.8 0.8"/>
+
+          @if (facade.showCompare()) {
+            @for (bar of barItems; track bar.label) {
+              <rect
+                [attr.x]="bar.x + bar.w * 0.05"
+                [attr.y]="100 - bar.hPrev"
+                [attr.width]="bar.w * 0.9"
+                [attr.height]="bar.hPrev > 0.3 ? bar.hPrev : 0.3"
+                rx="0.6"
+                fill="none"
+                stroke="#a0a0a0"
+                stroke-width="0.25"
+                stroke-dasharray="0.6 0.6"
+                opacity="0.7"/>
+            }
+          }
+
+          @for (bar of barItems; track bar.label; let i = $index) {
+            <g (mouseenter)="setHoveredBar(i)" (mouseleave)="setHoveredBar(null)">
+              <rect
+                [attr.x]="bar.x + bar.w * 0.12"
+                [attr.y]="100 - bar.h"
+                [attr.width]="bar.w * 0.76"
+                [attr.height]="bar.h > 0.3 ? bar.h : 0.3"
+                rx="0.6"
+                [attr.fill]="hoveredBar() === i ? '#ff4d4d' : (bar.isPeak ? 'url(#bar-grad)' : (bar.v > 0 ? '#ff4d4dcc' : '#ff4d4d33'))"
+                class="bar-rect"/>
+              <rect [attr.x]="bar.x" y="0" [attr.width]="bar.w" height="100" fill="transparent"/>
+            </g>
+          }
+        </svg>
+
+        <div class="bar-labels">
+          @for (bar of barItems; track bar.label; let i = $index) {
+            <span [class.bar-label--peak]="bar.isPeak"
+                  [class.bar-label--hover]="hoveredBar() === i">
+              {{ bar.label }}
+            </span>
+          }
+        </div>
+
+        @if (tooltipInfo; as tip) {
+          <div class="bar-tooltip" [style.left]="tip.leftPct">
+            <div class="bar-tooltip__hour">{{ tip.bar.label }}h</div>
+            <div class="bar-tooltip__val">{{ fmt(tip.bar.v) }}</div>
+            @if (tip.bar.n > 0) {
+              <div class="bar-tooltip__sub">{{ tip.bar.n }} tickets</div>
+            }
+            @if (tip.compare && tip.bar.vPrev > 0) {
+              <div class="bar-tooltip__prev">
+                Ayer: <span>{{ fmt(tip.bar.vPrev) }}</span>
+                @if (tip.bar.v !== tip.bar.vPrev) {
+                  <span [style.color]="tip.bar.v >= tip.bar.vPrev ? '#86efac' : '#fca5a5'">
+                    {{ tip.bar.v >= tip.bar.vPrev ? '+' : '' }}{{ fmt(tip.bar.v - tip.bar.vPrev) }}
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        @if (hoveredBar() === null && barItems.length > 0) {
+          <div class="peak-label"
+               [style.left]="((barItems[peakIdx].x + barItems[peakIdx].w / 2) / 100 * 100) + '%'">
+            ★ Pico
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Top products card -->
+    <div class="card">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Top productos</div>
+          <div class="section-sub">Más vendidos hoy</div>
+        </div>
+        <button class="ghost-btn" (click)="facade.setTab('productos')">Ver todo →</button>
+      </div>
+
+      <div class="top-products">
+        @for (p of facade.topProducts.slice(0, 5); track p.name; let i = $index) {
+          <div class="product-row" [class.product-row--last]="i === 4">
+            <span class="product-rank" [class.product-rank--first]="i === 0">{{ i + 1 }}</span>
+            <div class="product-info">
+              <div class="product-name">{{ p.name }}</div>
+              <div class="product-sub">{{ p.family }} · {{ p.units }} uds</div>
+            </div>
+            <div class="product-bar-wrap">
+              <div class="product-bar-fill"
+                   [style.width.%]="(p.units / facade.topProducts[0].units) * 100"
+                   [style.background]="p.color"></div>
+            </div>
+            <span class="product-rev">{{ fmt(p.revenue) }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Middle row: donut + cash + insights ───────────────────────────────── -->
+  <div class="mid-row">
+
+    <!-- Donut chart card -->
+    <div class="card">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Distribución por familia</div>
+          <div class="section-sub">% sobre ingresos del día</div>
+        </div>
+      </div>
+
+      <div class="donut-wrap">
+        <div class="donut-svg-wrap">
+          <svg [attr.width]="donutSize" [attr.height]="donutSize"
+               [attr.viewBox]="'0 0 ' + donutSize + ' ' + donutSize">
+            <circle [attr.cx]="donutCenter" [attr.cy]="donutCenter" [attr.r]="donutRad"
+                    fill="none" stroke="#f4f4f4" [attr.stroke-width]="donutThickness"/>
+            @for (seg of donutSegs; track seg.label; let i = $index) {
+              <circle
+                [attr.cx]="donutCenter" [attr.cy]="donutCenter" [attr.r]="donutRad"
+                fill="none"
+                [attr.stroke]="seg.color"
+                [attr.stroke-width]="getDonutStrokeW(i)"
+                [attr.stroke-dasharray]="seg.dashArray"
+                [attr.stroke-dashoffset]="seg.dashOffset"
+                [attr.transform]="'rotate(-90 ' + donutCenter + ' ' + donutCenter + ')'"
+                style="cursor:pointer;transition:stroke-width 0.15s"
+                (mouseenter)="hoveredDonut.set(i)"
+                (mouseleave)="hoveredDonut.set(null)"/>
+            }
+            <text [attr.x]="donutCenter" [attr.y]="donutCenter - 5"
+                  text-anchor="middle" dominant-baseline="auto"
+                  font-family="'DM Mono',monospace" font-weight="700" font-size="11" fill="#0d0d0d">
+              {{ fmtNum(donutTotal) }}
+            </text>
+            <text [attr.x]="donutCenter" [attr.y]="donutCenter + 9"
+                  text-anchor="middle" dominant-baseline="auto"
+                  font-family="'DM Sans',sans-serif" font-size="9" fill="#7a7a7a">
+              Total ventas
+            </text>
+          </svg>
+        </div>
+
+        <div class="donut-legend">
+          @for (seg of donutSegs; track seg.label; let i = $index) {
+            <div class="donut-leg-row"
+                 (mouseenter)="hoveredDonut.set(i)"
+                 (mouseleave)="hoveredDonut.set(null)"
+                 [class.donut-leg-row--hover]="hoveredDonut() === i">
+              <div class="donut-leg-left">
+                <span class="donut-dot" [style.background]="seg.color"></span>
+                <span class="donut-leg-label">{{ seg.label }}</span>
+              </div>
+              <div class="donut-leg-right">
+                <div class="donut-leg-val">{{ fmt(seg.v) }}</div>
+                <div class="donut-leg-pct">{{ (seg.frac * 100).toFixed(1).replace('.', ',') }}%</div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Cash status card -->
+    <div class="card cash-card" (click)="facade.setTab('caja')">
+      <div class="section-head">
+        <div>
+          <div class="cash-head-labels">
+            <span class="kpi-label">Caja actual</span>
+            <span class="badge-green-sm">● Abierta</span>
+          </div>
+          <div class="section-sub">{{ facade.cashSession.operator }} · desde {{ facade.cashSession.opened }}</div>
+        </div>
+        <button class="outline-btn" (click)="$event.stopPropagation(); facade.setTab('caja')">Cerrar caja →</button>
+      </div>
+
+      <div class="cash-total-box">
+        <div class="cash-total-label">Efectivo en caja (teórico)</div>
+        <div class="cash-total-val">{{ fmtNum(facade.cashTheoretical()) }} <span class="cash-unit">€</span></div>
+      </div>
+
+      <div class="cash-grid">
+        <div class="cash-stat">
+          <span class="cash-stat-label">Fondo inicial</span>
+          <span class="cash-stat-val">{{ fmt(facade.cashSession.initial) }}</span>
+        </div>
+        <div class="cash-stat">
+          <span class="cash-stat-label">Ventas efectivo</span>
+          <span class="cash-stat-val cash-stat-val--green">{{ fmt(facade.byMethod.cash.v) }}</span>
+        </div>
+        <div class="cash-stat">
+          <span class="cash-stat-label">Entradas</span>
+          <span class="cash-stat-val cash-stat-val--green">+ {{ fmt(facade.cashSession.cashIn) }}</span>
+        </div>
+        <div class="cash-stat">
+          <span class="cash-stat-label">Salidas</span>
+          <span class="cash-stat-val cash-stat-val--red">− {{ fmt(facade.cashSession.cashOut) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Insights card -->
+    <div class="card">
+      <div class="section-title" style="margin-bottom:10px">Insights del día</div>
+      <div class="insights-list">
+        @for (ins of insights; track ins.icon) {
+          <div class="insight-item"
+               [style.background]="ins.color + '0c'"
+               [style.border-left]="'2px solid ' + ins.color">
+            <span class="insight-icon" [style.color]="ins.color">{{ ins.icon }}</span>
+            <span class="insight-text">{{ ins.text }}</span>
+          </div>
+        }
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Operational row ───────────────────────────────────────────────────── -->
+  <div class="ops-row">
+
+    <!-- Forecast card -->
+    <div class="card card--blue">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Predicción de cierre</div>
+          <div class="section-sub">Confianza {{ facade.forecast.confidence }}%</div>
+        </div>
+        <span class="badge-ai">IA</span>
+      </div>
+      <div class="forecast-label">Cerrarás sobre</div>
+      <div class="forecast-val">{{ fmtNum(facade.forecast.projection) }} <span class="forecast-unit">€</span></div>
+      <div class="forecast-range">Rango: <strong>{{ fmt(facade.forecast.rangeMin) }} — {{ fmt(facade.forecast.rangeMax) }}</strong></div>
+
+      <div class="forecast-progress-wrap">
+        <div class="forecast-progress-head">
+          <span>Ya en caja · {{ fmt(facade.forecast.closed) }}</span>
+          <span class="forecast-pct">{{ forecastProgress.toFixed(0) }}%</span>
+        </div>
+        <div class="forecast-bar">
+          <div class="forecast-bar-fill" [style.width.%]="forecastProgress"></div>
+          <div class="forecast-bar-rest" [style.width.%]="100 - forecastProgress"></div>
+        </div>
+      </div>
+
+      <div class="forecast-note">
+        Basado en patrón de jueves últimas 4 semanas, ritmo actual y meteorología.
+      </div>
+    </div>
+
+    <!-- Open tables card -->
+    <div class="card">
+      <div class="section-head">
+        <div>
+          <div class="section-title">Mesas abiertas</div>
+          <div class="section-sub">{{ facade.openTables.length }} en curso · {{ fmt(openTablesTotal) }} acumulado</div>
+        </div>
+        <span class="badge-live">● LIVE</span>
+      </div>
+
+      <div class="tables-list">
+        @for (t of facade.openTables; track t.id; let i = $index) {
+          <div class="table-row" [class.table-row--last]="i === facade.openTables.length - 1">
+            <div class="table-icon"
+                 [class.table-icon--long]="t.alert === 'long'"
+                 [class.table-icon--idle]="t.alert === 'idle'">
+              {{ t.diners }}p
+            </div>
+            <div class="table-info">
+              <div class="table-name-row">
+                <span class="table-zone">{{ t.zone }}</span>
+                <span class="state-badge"
+                      [style.background]="tableStateColor(t.state) + '18'"
+                      [style.color]="tableStateColor(t.state)">
+                  {{ tableStateLabel(t.state) }}
+                </span>
+                @if (t.alert === 'long') {
+                  <span class="table-alert table-alert--amber">⏱ {{ t.minutesOpen }}m</span>
+                }
+                @if (t.alert === 'idle') {
+                  <span class="table-alert table-alert--red">⚠ inactiva</span>
+                }
+              </div>
+              <div class="table-sub">{{ t.waiter }} · {{ t.lastEvent }}</div>
+            </div>
+            <div class="table-amount">{{ fmt(t.current) }}</div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Pending payments card -->
+    @if (facade.pendingPayments.length > 0) {
+      <div class="card card--amber">
+        <div class="section-head">
+          <div>
+            <div class="section-title">Pendientes de cobro</div>
+            <div class="section-sub">{{ facade.pendingPayments.length }} tickets · {{ fmt(pendingTotal) }} sin cerrar</div>
+          </div>
+          <span class="badge-count">{{ facade.pendingPayments.length }}</span>
+        </div>
+
+        <div class="pending-list">
+          @for (p of facade.pendingPayments; track p.id; let i = $index) {
+            <div class="pending-row" [class.pending-row--last]="i === facade.pendingPayments.length - 1">
+              <div class="pending-info">
+                <div class="pending-id-row">
+                  <span class="pending-id">{{ p.id }}</span>
+                  <span class="pending-zone">{{ p.zone }}</span>
+                </div>
+                <div class="pending-sub">
+                  {{ p.issue === 'cuenta_pedida' ? 'Cuenta pedida ' + p.since : 'Sin imprimir desde ' + p.since }}
+                </div>
+              </div>
+              <span class="pending-amount">{{ fmt(p.total) }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+  </div>
+
+</div>

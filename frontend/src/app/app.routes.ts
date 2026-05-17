@@ -5,47 +5,56 @@ import { RoleGuard } from './core/guards/role.guard';
 export const routes: Routes = [
   {
     path: 'app',
-    loadComponent: () => import('./core/layout/app-layout/app-layout.page').then((m) => m.AppLayoutPage),
     children: [
       {
-        path: 'gestion',
-        canActivate: [AuthGuard, RoleGuard],
-        data: { role: 'admin' },
-        loadComponent: () => import('./pages/core/gestion/gestion.page').then((m) => m.GestionPage),
-      },
-      {
-        path: 'mesas',
-        canActivate: [AuthGuard],
-        loadComponent: () => import('./features/tables/pages/mesas/mesas.page').then((m) => m.MesasPage),
-      },
-      {
-        path: 'pedidos',
-        canActivate: [AuthGuard],
-        loadComponent: () => import('./features/orders/pages/pedidos/pedidos.page').then((m) => m.PedidosPage),
-      },
-      {
-        path: 'comanda',
-        canActivate: [AuthGuard],
-        loadComponent: () => import('./features/orders/pages/comanda/comanda.page').then((m) => m.ComandaPage),
-      },
-      {
-        path: 'autoservicio',
-        canActivate: [AuthGuard],
-        loadComponent: () => import('./pages/core/autoservicio/autoservicio.page').then((m) => m.AutoservicioPage),
-      },
-      {
-        path: 'caja',
-        canActivate: [AuthGuard],
-        loadComponent: () => import('./features/cash/pages/caja/caja.page').then((m) => m.CajaPage),
-      },
-      {
-        path: 'developer-dashboard',
-        loadComponent: () => import('./pages/core/developer-dashboard/developer-dashboard.page').then((m) => m.DeveloperDashboardPage),
-      },
-      {
         path: '',
-        redirectTo: 'mesas',
-        pathMatch: 'full',
+        loadComponent: () => import('./core/layout/app-layout/app-layout.page').then((m) => m.AppLayoutPage),
+        children: [
+          {
+            path: 'gestion',
+            canActivate: [AuthGuard, RoleGuard],
+            data: { role: 'admin' },
+            loadComponent: () => import('./pages/core/gestion/gestion.page').then((m) => m.GestionPage),
+          },
+          {
+            path: 'mesas',
+            canActivate: [AuthGuard],
+            loadComponent: () => import('./features/tables/pages/mesas/mesas.page').then((m) => m.MesasPage),
+          },
+          {
+            path: 'pedidos',
+            canActivate: [AuthGuard],
+            loadComponent: () => import('./features/orders/pages/pedidos/pedidos.page').then((m) => m.PedidosPage),
+          },
+          {
+            path: 'comanda',
+            canActivate: [AuthGuard],
+            loadComponent: () => import('./features/orders/pages/comanda/comanda.page').then((m) => m.ComandaPage),
+          },
+          {
+            path: 'autoservicio',
+            canActivate: [AuthGuard],
+            loadComponent: () => import('./pages/core/autoservicio/autoservicio.page').then((m) => m.AutoservicioPage),
+          },
+          {
+            path: 'caja',
+            canActivate: [AuthGuard],
+            loadComponent: () => import('./features/cash/pages/caja/caja.page').then((m) => m.CajaPage),
+          },
+          {
+            path: 'developer-dashboard',
+            loadComponent: () => import('./pages/core/developer-dashboard/developer-dashboard.page').then((m) => m.DeveloperDashboardPage),
+          },
+          {
+            path: '',
+            redirectTo: 'mesas',
+            pathMatch: 'full',
+          },
+        ],
+      },
+      {
+        path: 'finanzas',
+        loadComponent: () => import('./pages/core/finanzas/finanzas.page').then((m) => m.FinanzasPage),
       },
     ],
   },

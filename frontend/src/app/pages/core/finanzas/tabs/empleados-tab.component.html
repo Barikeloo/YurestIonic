@@ -1,0 +1,162 @@
+<div class="empleados">
+
+  <!-- ── KPI strip ─────────────────────────────────────────────────────────── -->
+  <div class="kpi-strip">
+    <div class="kpi-card kpi-card--green">
+      <div class="kpi-label">Empleados activos</div>
+      <div class="kpi-value kpi-value--green">{{ activeCount() }} / {{ facade.employees.length }}</div>
+      <div class="kpi-sub">En turno actual</div>
+    </div>
+    <div class="kpi-card kpi-card--red">
+      <div class="kpi-label">Ingresos atribuidos</div>
+      <div class="kpi-value">{{ fmt(totalRevenue()) }}</div>
+      <div class="kpi-sub">{{ totalTickets() }} tickets servidos</div>
+    </div>
+    <div class="kpi-card kpi-card--green">
+      <div class="kpi-label">Propinas declaradas</div>
+      <div class="kpi-value kpi-value--green">{{ fmt(totalTips()) }}</div>
+      <div class="kpi-sub">{{ tipsRatioPct() }}% s/ventas</div>
+    </div>
+    <div class="kpi-card" [class.kpi-card--amber]="totalDiscount() > 2000">
+      <div class="kpi-label">Descuentos aplicados</div>
+      <div class="kpi-value" [style.color]="totalDiscount() > 2000 ? '#d18a1c' : '#0d0d0d'">{{ fmt(totalDiscount()) }}</div>
+      <div class="kpi-sub">Suma del turno</div>
+    </div>
+  </div>
+
+  <!-- ── Sort row ───────────────────────────────────────────────────────────── -->
+  <div class="sort-row">
+    <span class="sort-count">{{ facade.employees.length }} empleados · selecciona uno para ver detalle</span>
+    <div class="segment">
+      <button class="seg-btn" [class.seg-btn--active]="sortKey() === 'revenue'" (click)="setSort('revenue')">Por ingresos</button>
+      <button class="seg-btn" [class.seg-btn--active]="sortKey() === 'tickets'" (click)="setSort('tickets')">Tickets</button>
+      <button class="seg-btn" [class.seg-btn--active]="sortKey() === 'avg'"     (click)="setSort('avg')">Ticket medio</button>
+      <button class="seg-btn" [class.seg-btn--active]="sortKey() === 'tips'"    (click)="setSort('tips')">Propinas</button>
+    </div>
+  </div>
+
+  <!-- ── Main grid ──────────────────────────────────────────────────────────── -->
+  <div class="main-row">
+
+    <!-- Employee cards (2-col inner grid) -->
+    <div class="cards-grid">
+      @for (e of sortedEmps(); track e.id) {
+        <div class="emp-card" [class.emp-card--selected]="selectedId() === e.id" (click)="select(e.id)">
+
+          <div class="emp-header">
+            <div class="emp-avatar" [style.background]="e.color">{{ e.initials }}</div>
+            <div class="emp-meta">
+              <div class="emp-name-row">
+                <span class="emp-name">{{ e.name }}</span>
+                @if (e.active) { <span class="active-dot"></span> }
+              </div>
+              <div class="emp-role-shift">{{ e.role }} · {{ e.shift }}</div>
+            </div>
+          </div>
+
+          <div class="emp-stats">
+            <div class="emp-stat">
+              <div class="st-lbl">Ingresos</div>
+              <div class="st-val mono">{{ fmt(e.revenue) }}</div>
+            </div>
+            <div class="emp-stat">
+              <div class="st-lbl">Tickets</div>
+              <div class="st-val mono">{{ e.tickets }}</div>
+            </div>
+            <div class="emp-stat">
+              <div class="st-lbl">Ticket medio</div>
+              <div class="st-val st-val--sm mono">{{ fmt(e.avgTicket) }}</div>
+            </div>
+            <div class="emp-stat">
+              <div class="st-lbl">Propinas</div>
+              <div class="st-val st-val--sm st-val--green mono">{{ fmt(e.tips) }}</div>
+            </div>
+          </div>
+
+          <div class="emp-spark">
+            <svg viewBox="0 0 100 28" preserveAspectRatio="none">
+              <path [attr.d]="sparkArea(e.sparkRevenue)" [attr.fill]="e.color" fill-opacity="0.15"/>
+              <path [attr.d]="sparkPath(e.sparkRevenue)" fill="none" [attr.stroke]="e.color" stroke-width="1.2" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <div class="emp-flags">
+            @if (e.discounts > 1500) {
+              <span class="flag flag--warn">⚑ Mucho dto.</span>
+            }
+            @if (e.cancellations > 0) {
+              <span class="flag flag--critical">⚑ Anulaciones</span>
+            }
+            @if (e.comp > 500) {
+              <span class="flag flag--warn">⚑ Invitaciones</span>
+            }
+          </div>
+
+        </div>
+      }
+    </div>
+
+    <!-- Detail panel -->
+    @if (selectedEmp()) {
+      @let e = selectedEmp()!;
+      <div class="detail-card">
+
+        <div class="detail-header">
+          <div class="emp-avatar emp-avatar--lg" [style.background]="e.color">{{ e.initials }}</div>
+          <div class="detail-meta">
+            <div class="detail-name">{{ e.name }}</div>
+            <div class="detail-role-shift">{{ e.role }} · {{ e.shift }}</div>
+          </div>
+          <button class="btn-tickets">Ver tickets →</button>
+        </div>
+
+        <div class="detail-kpis">
+          <div class="dkpi">
+            <div class="dkpi-lbl">Ingresos</div>
+            <div class="dkpi-val mono" [style.color]="e.color">{{ fmt(e.revenue) }}</div>
+            <div class="dkpi-sub">{{ e.tickets }} tickets</div>
+          </div>
+          <div class="dkpi">
+            <div class="dkpi-lbl">Ticket medio</div>
+            <div class="dkpi-val mono">{{ fmt(e.avgTicket) }}</div>
+            <div class="dkpi-sub">{{ e.items }} productos</div>
+          </div>
+          <div class="dkpi">
+            <div class="dkpi-lbl">Propinas</div>
+            <div class="dkpi-val mono dkpi-val--green">{{ fmt(e.tips) }}</div>
+            <div class="dkpi-sub">{{ tipsRatio(e) }}% s/ventas</div>
+          </div>
+          <div class="dkpi">
+            <div class="dkpi-lbl">Descuentos</div>
+            <div class="dkpi-val mono" [style.color]="discRatioNum(e) > 3 ? '#d18a1c' : '#5a5a5a'">{{ fmt(e.discounts) }}</div>
+            <div class="dkpi-sub">{{ discRatio(e) }}% s/ventas</div>
+          </div>
+        </div>
+
+        <div class="detail-spark-wrap">
+          <div class="detail-spark-label">Tendencia ingresos · 14 días</div>
+          <div class="detail-spark">
+            <svg viewBox="0 0 100 60" preserveAspectRatio="none">
+              <path [attr.d]="sparkAreaLg(e.sparkRevenue)" [attr.fill]="e.color" fill-opacity="0.15"/>
+              <path [attr.d]="sparkPathLg(e.sparkRevenue)" fill="none" [attr.stroke]="e.color" stroke-width="1.4" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="detail-stat-boxes">
+          <div class="stat-box">
+            <div class="stat-box-lbl">Anulaciones</div>
+            <div class="stat-box-val mono" [style.color]="e.cancellations > 0 ? '#ff4d4d' : '#1a9e5a'">{{ e.cancellations }}</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-lbl">Invitaciones</div>
+            <div class="stat-box-val mono" [style.color]="e.comp > 500 ? '#d18a1c' : '#5a5a5a'">{{ fmt(e.comp) }}</div>
+          </div>
+        </div>
+
+      </div>
+    }
+
+  </div>
+
+</div>

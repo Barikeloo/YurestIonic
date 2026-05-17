@@ -250,6 +250,10 @@ export class GestionPage {
     this.loadRestaurantsFromApi();
   }
 
+  public goToFinanzas(): void {
+    this.router.navigateByUrl('/app/finanzas');
+  }
+
   public unlinkDevice(): void {
     if (confirm('¿Estás seguro de que deseas desvincular este dispositivo?')) {
       console.log('Before clear - isDeviceLinked:', this.deviceStorageService.isDeviceLinked());

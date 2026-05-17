@@ -1,0 +1,242 @@
+<div class="informes">
+
+  <!-- ── Segment selector ────────────────────────────────────────────────── -->
+  <div class="seg-row">
+    <div class="seg-group">
+      @for (s of [['predefinidos','Predefinidos'],['integraciones','Integraciones'],['programados','Programados']]; track s[0]) {
+        <button class="seg-btn" [class.active]="activeSection() === s[0]" (click)="activeSection.set($any(s[0]))">{{ s[1] }}</button>
+      }
+    </div>
+  </div>
+
+  <!-- ══ PREDEFINIDOS ══════════════════════════════════════════════════════ -->
+  @if (activeSection() === 'predefinidos') {
+
+    <!-- Report cards -->
+    <div class="card">
+      <div class="section-head">
+        <div class="section-title">Informes predefinidos</div>
+        <div class="section-sub">Genera y descarga al instante · siempre del periodo seleccionado</div>
+      </div>
+      <div class="reports-grid">
+        @for (r of templates; track r.id) {
+          <div class="report-card"
+               [class.report-card--selected]="lastSelected() === r.id"
+               [style.--accent]="r.color"
+               [style.border-color]="lastSelected() === r.id ? r.color : '#e8e8e8'"
+               [style.background]="lastSelected() === r.id ? r.color + '08' : '#fff'"
+               (click)="selectReport(r.id)">
+
+            <!-- Icon + title -->
+            <div class="report-top">
+              <div class="report-icon-box" [style.background]="r.color + '15'">{{ r.icon }}</div>
+              <div class="report-head">
+                <div class="report-title-text">{{ r.title }}</div>
+                <div class="report-sub">{{ r.sub }}</div>
+              </div>
+            </div>
+
+            <!-- Preview items -->
+            <div class="report-preview">
+              <span class="preview-label">Incluye</span>
+              {{ r.preview.join(' · ') }}
+            </div>
+
+            <!-- Format buttons -->
+            <div class="report-actions">
+              @for (f of r.formats; track f) {
+                <button class="fmt-btn" [style.background]="r.color" [style.border-color]="r.color">
+                  ⤓ {{ f }}
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Export history -->
+    <div class="card">
+      <div class="section-head">
+        <div class="section-title">Historial de exportaciones</div>
+        <div class="section-sub">Últimos archivos generados · 30 días</div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Archivo</th>
+              <th>Formato</th>
+              <th class="align-right">Tamaño</th>
+              <th>Generado</th>
+              <th>Usuario</th>
+              <th class="align-right" style="width:80px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (h of history; track h.name) {
+              <tr>
+                <td class="td-file">
+                  <span class="file-icon">{{ h.format === 'PDF' ? '📄' : '📊' }}</span>
+                  {{ h.name }}
+                </td>
+                <td>
+                  <span class="fmt-badge" [style.background]="formatBadgeColor(h.format) + '1a'" [style.color]="formatBadgeColor(h.format)">
+                    {{ h.format }}
+                  </span>
+                </td>
+                <td class="align-right td-mono">{{ h.size }}</td>
+                <td class="td-muted">{{ h.date }}</td>
+                <td class="td-muted">{{ h.user }}</td>
+                <td class="align-right">
+                  <button class="dl-btn">⤓ Descargar</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  }
+
+  <!-- ══ INTEGRACIONES ═════════════════════════════════════════════════════ -->
+  @if (activeSection() === 'integraciones') {
+
+    <!-- Banner -->
+    <div class="banner-card banner-card--blue">
+      <div class="banner-icon">⇆</div>
+      <div class="banner-body">
+        <div class="banner-title" style="color:#0077cc">Envía datos directamente a tu contabilidad</div>
+        <div class="banner-sub">En vez de PDFs, conecta Yurest con tu ERP o gestoría. La sincronización es nocturna · sin esfuerzo manual.</div>
+      </div>
+      <button class="ghost-btn" style="color:#0077cc">¿Cómo funciona? →</button>
+    </div>
+
+    <!-- Integration cards grid -->
+    <div class="intg-grid">
+      @for (it of integrations; track it.id) {
+        <div class="intg-card"
+             [style.border-color]="it.connected ? it.color : '#e8e8e8'"
+             [style.background]="it.connected ? it.color + '06' : '#fff'">
+
+          <!-- Connected badge -->
+          @if (it.connected) {
+            <div class="conn-badge-abs" style="background:#1a9e5a">
+              <span class="conn-dot"></span>Conectado
+            </div>
+          }
+
+          <!-- Logo + name -->
+          <div class="intg-header">
+            <div class="intg-logo" [style.background]="it.color">{{ it.logo }}</div>
+            <div>
+              <div class="intg-name">{{ it.name }}</div>
+              <div class="intg-desc">{{ it.desc }}</div>
+            </div>
+          </div>
+
+          <!-- Feature list -->
+          <div class="intg-features">
+            @for (f of it.features; track f) {
+              <div class="feature-row">
+                <span class="feature-check" [style.color]="it.color">✓</span>
+                {{ f }}
+              </div>
+            }
+          </div>
+
+          <!-- Plan badge -->
+          @if (it.plan) {
+            <div class="plan-badge">Disponible en plan {{ it.plan }}</div>
+          }
+
+          <!-- Actions -->
+          @if (it.connected) {
+            <div class="intg-actions">
+              <button class="sync-btn">Sincronizar ahora</button>
+              <button class="icon-btn">⚙</button>
+            </div>
+            <div class="sync-status">
+              Última sincronización: <strong style="color:#1a9e5a">hace 12 min</strong> · 84 tickets enviados
+            </div>
+          } @else {
+            <button class="connect-btn" [style.color]="it.color" [style.border-color]="it.color"
+                    (click)="connectIntegration(it.id)">
+              + Conectar
+            </button>
+          }
+
+        </div>
+      }
+    </div>
+
+  }
+
+  <!-- ══ PROGRAMADOS ════════════════════════════════════════════════════════ -->
+  @if (activeSection() === 'programados') {
+
+    <!-- Banner -->
+    <div class="banner-card banner-card--green">
+      <div class="banner-icon">⏱</div>
+      <div class="banner-body">
+        <div class="banner-title" style="color:#1a9e5a">Configura una vez. Recibe el informe siempre.</div>
+        <div class="banner-sub">Diario, semanal o mensual. El gerente nunca tiene que volver a entrar al panel.</div>
+      </div>
+      <button class="success-btn">+ Nueva programación</button>
+    </div>
+
+    <!-- Scheduled reports table -->
+    <div class="card">
+      <div class="section-head">
+        <div class="section-title">Informes programados</div>
+        <div class="section-sub">{{ activeCount }} activos · {{ scheduledReports.length }} en total</div>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:50px">Estado</th>
+              <th>Informe</th>
+              <th>Frecuencia</th>
+              <th>Destinatarios</th>
+              <th>Formato</th>
+              <th>Próximo envío</th>
+              <th class="align-right" style="width:120px"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (s of scheduledReports; track s.id) {
+              <tr [class.row-inactive]="!s.active">
+                <td>
+                  <!-- Toggle switch -->
+                  <div class="toggle" [class.toggle--on]="s.active" (click)="toggleScheduled(s.id)">
+                    <div class="toggle-thumb"></div>
+                  </div>
+                </td>
+                <td class="td-bold">{{ s.name }}</td>
+                <td class="td-muted">{{ s.when }}</td>
+                <td class="td-mono">{{ s.to }}</td>
+                <td>
+                  <span class="fmt-badge" [style.background]="formatBadgeColor(s.format) + '1a'" [style.color]="formatBadgeColor(s.format)">
+                    {{ s.format }}
+                  </span>
+                </td>
+                <td [class.td-muted]="!s.active" [class.td-bold-sm]="s.active">{{ s.next }}</td>
+                <td class="align-right">
+                  <div class="row-actions">
+                    <button class="icon-btn">✎</button>
+                    <button class="icon-btn">⤓</button>
+                    <button class="icon-btn icon-btn--danger">×</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  }
+
+</div>
