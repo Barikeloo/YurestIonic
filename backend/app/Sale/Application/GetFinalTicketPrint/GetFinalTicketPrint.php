@@ -60,6 +60,8 @@ final class GetFinalTicketPrint
                 'quantity' => $line->quantity()->value(),
                 'price_cents' => $line->price()->value(),
                 'total_cents' => $line->price()->value() * $line->quantity()->value(),
+                'variant_name' => $line->variantName(),
+                'modifiers' => $line->modifiers(),
             ];
         }
 

@@ -111,57 +111,150 @@
           }
           <!-- Por líneas -->
           @if (mode === 'lines') {
-            <div class="lines-mode">
-              <div class="lines-columns">
-                <div class="lines-column">
-                  <div class="section-label">Líneas — toca para asignar</div>
-                  @for (line of assignedLines; track line) {
-                    <div class="line-item" [class.assigned]="line.diner">
-                      <div class="line-info">
-                        <div class="line-name">{{ line.name }}</div>
-                        <div class="line-price">{{ formatCents(line.price) }} €</div>
+            <div class="lines-mode-v2">
+              <!-- Progreso global -->
+              <div class="lines-progress">
+                <div class="lines-progress-bar">
+                  <div class="lines-progress-fill" [style.width.%]="assignmentProgress"></div>
+                </div>
+                <div class="lines-progress-text">
+                  <strong>{{ formatCents(assignedTotal) }} €</strong> asignados
+                  · {{ formatCents(unassignedTotal) }} € por asignar
+                  · {{ assignmentProgress }}%
+                </div>
+              </div>
+
+              <!-- Hint contextual -->
+              @if (selectedLineId) {
+                <div class="lines-hint selected">
+                  Toca el comensal al que asignar la línea seleccionada.
+                  <button class="hint-cancel" (click)="clearSelection()">Cancelar</button>
+                </div>
+              } @else if (unassignedLines.length > 0) {
+                <div class="lines-hint">
+                  Toca una línea para seleccionarla y luego al comensal.
+                </div>
+              } @else {
+                <div class="lines-hint ok">
+                  ✓ Todas las líneas asignadas. Cobra cada comensal pulsando su tarjeta.
+                </div>
+              }
+
+              <!-- Pool de líneas sin asignar -->
+              @if (unassignedLines.length > 0) {
+                <div class="lines-pool">
+                  <div class="section-label">Líneas por asignar ({{ unassignedLines.length }})</div>
+                  <div class="line-pool-list">
+                    @for (line of unassignedLines; track line.id) {
+                      <button
+                        type="button"
+                        class="pool-line"
+                        [class.selected]="selectedLineId === line.id"
+                        (click)="selectLine(line.id)"
+                        >
+                        <div class="pool-line-info">
+                          <div class="pool-line-name">
+                            {{ line.name }}@if (line.variantName) { <span class="line-variant">({{ line.variantName }})</span> }
+                          </div>
+                          @if ((line.modifiers ?? []).length > 0) {
+                            <div class="line-modifiers-mini">{{ formatLineModifiers(line) }}</div>
+                          }
+                        </div>
+                        <div class="pool-line-price">{{ formatCents(line.price) }} €</div>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Grid de comensales -->
+              <div class="section-label">Comensales</div>
+              <div class="diner-grid">
+                @for (n of allDinerNumbers; track n) {
+                  <div
+                    class="diner-tile"
+                    [class.paid]="isDinerPaid(n)"
+                    [class.reopened]="reopenedDiners.has(n)"
+                    [class.empty]="getDinerLineCount(n) === 0 && !isDinerPaid(n)"
+                    [class.targetable]="selectedLineId && !isDinerLocked(n)"
+                    [style.--diner-color]="dinerColor(n)"
+                    (click)="placeOnDiner(n)"
+                    >
+                    <div class="diner-tile-header">
+                      <div class="diner-avatar">{{ n }}</div>
+                      <div class="diner-tile-meta">
+                        <div class="diner-tile-title">Comensal {{ n }}</div>
+                        @if (isDinerPaid(n) && !reopenedDiners.has(n)) {
+                          <div class="diner-tile-state paid">✓ Pagado</div>
+                        } @else if (isDinerPaid(n) && reopenedDiners.has(n)) {
+                          <div class="diner-tile-state paid">✓ Pagado · añadiendo más</div>
+                        } @else if (getDinerLineCount(n) === 0) {
+                          <div class="diner-tile-state">Sin líneas</div>
+                        } @else {
+                          <div class="diner-tile-state">
+                            {{ getDinerLineCount(n) }} {{ getDinerLineCount(n) === 1 ? 'línea' : 'líneas' }}
+                          </div>
+                        }
                       </div>
-                      <div class="diner-buttons">
-                        @for (n of unpaidDinerNumbers; track n) {
+                      <div class="diner-tile-actions">
+                        <div class="diner-tile-amount">{{ formatCents(getSubtotal(n)) }} €</div>
+                        @if (isDinerPaid(n) && !reopenedDiners.has(n)) {
                           <button
-                            class="diner-btn"
-                            [class.active]="line.diner === n"
-                            [disabled]="isDinerPaid(n)"
-                            (click)="assignLine(line.id, n)"
+                            type="button"
+                            class="diner-tile-reopen"
+                            title="Reabrir comensal para añadir más consumiciones"
+                            (click)="reopenDiner(n, $event)"
                             >
-                            {{ n }}
+                            ↺ Reabrir
                           </button>
                         }
                       </div>
                     </div>
-                  }
-                </div>
-                <div class="subaccounts-column">
-                  <div class="section-label">Subcuentas</div>
-                  @for (n of unpaidDinerNumbers; track n) {
-                    <div class="subaccount-card" [class.empty]="getSubtotal(n) === 0">
-                      <div class="subaccount-header">
-                        <span class="subaccount-name">Cuenta {{ n }}</span>
-                        <span class="subaccount-amount">{{ formatCents(getSubtotal(n)) }} €</span>
+
+                    @if (getDinerLineCount(n) > 0) {
+                      <div class="diner-tile-lines">
+                        @for (line of getDinerLines(n); track line.id) {
+                          <div class="diner-tile-line" [class.paid-line]="line.isPaidLine">
+                            @if (!line.isPaidLine) {
+                              <button
+                                type="button"
+                                class="diner-tile-line-remove"
+                                [disabled]="isDinerLocked(n)"
+                                title="Devolver al pool"
+                                (click)="unassignLine(line.id); $event.stopPropagation()"
+                                >
+                                ✕
+                              </button>
+                            } @else {
+                              <button
+                                type="button"
+                                class="diner-tile-line-refund"
+                                title="Reembolsar línea"
+                                (click)="requestRefund(line, $event)"
+                                >
+                                ↶
+                              </button>
+                            }
+                            <span class="diner-tile-line-name">
+                              {{ line.name }}@if (line.variantName) { <span class="line-variant">({{ line.variantName }})</span> }
+                            </span>
+                            <span class="diner-tile-line-price">{{ formatCents(line.price) }} €</span>
+                          </div>
+                        }
                       </div>
-                      @for (line of getSubaccountLines(n); track line) {
-                        <div class="subaccount-line">
-                          <span>{{ line.name }}</span>
-                          <span>{{ formatCents(line.price) }} €</span>
-                        </div>
-                      }
-                      @if (getSubtotal(n) > 0) {
-                        <button
-                          class="btn-charge"
-                          [disabled]="isDinerPaid(n)"
-                          (click)="chargeDiner(n)"
-                          >
-                          {{ isDinerPaid(n) ? 'Cuenta pagada' : 'Cobrar cuenta ' + n }}
-                        </button>
-                      }
-                    </div>
-                  }
-                </div>
+                    }
+
+                    @if (getSubtotal(n) > 0 && !isDinerLocked(n)) {
+                      <button
+                        type="button"
+                        class="btn-charge diner-tile-charge"
+                        (click)="chargeDiner(n); $event.stopPropagation()"
+                        >
+                        Cobrar comensal {{ n }}
+                      </button>
+                    }
+                  </div>
+                }
               </div>
             </div>
           }
@@ -173,8 +266,16 @@
                   <div class="diner-card">
                     <div class="diner-name">Comensal {{ d }}</div>
                     @for (line of getDinerLines(d); track line) {
-                      <div class="diner-line">
-                        <span>{{ line.name }}</span>
+                      <div class="diner-line" [class.paid-line]="line.isPaidLine">
+                        <span>
+                          {{ line.name }}@if (line.variantName) { <span class="line-variant">({{ line.variantName }})</span> }
+                          @if ((line.modifiers ?? []).length > 0) {
+                            <span class="line-modifiers-mini">{{ formatLineModifiers(line) }}</span>
+                          }
+                          @if (line.isPaidLine) {
+                            <span class="paid-badge-mini" title="Línea ya cobrada">🔒</span>
+                          }
+                        </span>
                         <span>{{ formatCents(line.price) }} €</span>
                       </div>
                     }
@@ -191,7 +292,7 @@
                 <div class="common-badges">
                   @for (line of getCommonLines(); track line) {
                     <span class="common-badge">
-                      {{ line.name }} · {{ formatCents(line.price) }} €
+                      {{ line.name }}@if (line.variantName) { ({{ line.variantName }}) } · {{ formatCents(line.price) }} €
                     </span>
                   }
                 </div>

@@ -86,11 +86,13 @@
         [lines]="selectedTableLines"
         [diners]="selectedTable?.diners || 2"
         [paidDiners]="paidDiners"
+        [paidOrderLineIds]="paymentFacade.paidLineIds()"
         [orderId]="selectedTable?.order_id || null"
         [userId]="currentUser?.id || null"
         (closeModal)="showSplitModal = false"
         (confirmSplit)="onConfirmSplit($event)"
         (sessionUpdated)="onChargeSessionUpdated($event)"
+        (refundLine)="onRefundLine($event)"
       ></app-split-bill-modal>
       <app-diners-status
         class="split-modal-sidebar"
@@ -99,6 +101,7 @@
         [remainingTotal]="loadedChargeSession()?.remaining_cents ?? originalOrderTotal"
         [paidDiners]="paidDiners"
         [amountPerDiner]="loadedChargeSession()?.suggested_per_diner_cents ?? null"
+        [dinerAmounts]="dinerAmountsByLines()"
       ></app-diners-status>
     </div>
   }

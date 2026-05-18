@@ -34,7 +34,7 @@
   <!-- Grid de comensales -->
   @if (diners > 0) {
     <div class="diners-grid">
-      @for (diner of getDinerPayments(); track diner) {
+      @for (diner of getDinerPayments(); track diner.number) {
         <div
           class="diner-card"
           [class.paid]="diner.paid"

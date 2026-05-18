@@ -137,6 +137,20 @@ final class ChargeSession
         $this->updatedAt = DomainDateTime::now();
     }
 
+    public function reactivate(): void
+    {
+        if ($this->status->isActive()) {
+            return;
+        }
+
+        if ($this->status->isCancelled()) {
+            throw new \DomainException('Cannot reactivate a cancelled session');
+        }
+
+        $this->status = ChargeSessionStatus::active();
+        $this->updatedAt = DomainDateTime::now();
+    }
+
     public function cancel(Uuid $cancelledByUserId, ?string $reason = null): void
     {
         if (! $this->status->isActive()) {

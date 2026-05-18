@@ -100,6 +100,7 @@ final class TicketTextFormatter
                 $qty = (int) ($line['quantity'] ?? 0);
                 $total = (int) ($line['total_cents'] ?? 0);
                 $lines[] = $this->lineItem($name, $qty, $total, $width);
+                $lines = array_merge($lines, $this->lineDetails($line, $width));
             }
             $lines[] = $this->divider($width);
         }
@@ -235,6 +236,33 @@ final class TicketTextFormatter
         $total = $this->formatCents($totalCents);
 
         return $this->padRight($name, $descWidth).$this->padLeft((string) $qty, 4).$this->padLeft($total, 9);
+    }
+
+    /**
+     * Sub-renglones para una línea de consumo: variante (· Para 2) y modifiers
+     * (+ Salsa BBQ). Se imprimen indentados bajo el producto.
+     *
+     * @return list<string>
+     */
+    private function lineDetails(array $line, int $width): array
+    {
+        $details = [];
+        $indent = '   ';
+        $maxText = max(0, $width - mb_strlen($indent, 'UTF-8'));
+
+        $variantName = isset($line['variant_name']) ? trim((string) $line['variant_name']) : '';
+        if ($variantName !== '') {
+            $details[] = $indent.$this->truncate('· '.$variantName, $maxText);
+        }
+
+        foreach ($line['modifiers'] ?? [] as $modifier) {
+            $modName = isset($modifier['name']) ? trim((string) $modifier['name']) : '';
+            if ($modName !== '') {
+                $details[] = $indent.$this->truncate('+ '.$modName, $maxText);
+            }
+        }
+
+        return $details;
     }
 
     private function taxBlock(array $taxBreakdown, int $width): array

@@ -4,6 +4,11 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { PaymentMethod } from '../../../core/enums/payment-method.enum';
 
+export interface ChargeSessionLineAssignment {
+  order_line_id: string;
+  diner_number: number;
+}
+
 export interface ChargeSession {
   id: string;
   order_id: string;
@@ -14,8 +19,14 @@ export interface ChargeSession {
   suggested_per_diner_cents: number;
   status: 'active' | 'completed' | 'cancelled';
   paid_diner_numbers: number[];
+  line_assignments: ChargeSessionLineAssignment[];
+  paid_order_line_ids: string[];
   created_at: string;
   updated_at: string;
+}
+
+export interface UpdateLineAssignmentsRequest {
+  assignments: ChargeSessionLineAssignment[];
 }
 
 export interface CreateChargeSessionRequest {
@@ -73,6 +84,12 @@ export interface CancelChargeSessionResponse {
   paid_diners: number[];
 }
 
+export interface RefundLineRequest {
+  order_line_id: string;
+  refunded_by_user_id: string;
+  reason?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -112,6 +129,23 @@ export class ChargeSessionService {
     return this.http.post<CancelChargeSessionResponse>(
       `${this.apiUrl}/tpv/charge-sessions/${sessionId}/cancel`,
       request
+    );
+  }
+
+  updateLineAssignments(
+    sessionId: string,
+    request: UpdateLineAssignmentsRequest,
+  ): Observable<ChargeSession> {
+    return this.http.put<ChargeSession>(
+      `${this.apiUrl}/tpv/charge-sessions/${sessionId}/assignments`,
+      request,
+    );
+  }
+
+  refundLine(sessionId: string, request: RefundLineRequest): Observable<ChargeSession> {
+    return this.http.post<ChargeSession>(
+      `${this.apiUrl}/tpv/charge-sessions/${sessionId}/refund-line`,
+      request,
     );
   }
 }

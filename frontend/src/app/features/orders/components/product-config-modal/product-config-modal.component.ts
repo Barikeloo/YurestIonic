@@ -22,17 +22,25 @@ export interface ProductConfigResult {
 })
 export class ProductConfigModalComponent {
   @Input() isOpen = false;
-  @Input() product: TpvProductItem | null = null;
   @Output() confirm = new EventEmitter<ProductConfigResult>();
   @Output() closeModal = new EventEmitter<void>();
 
+  private readonly _product = signal<TpvProductItem | null>(null);
   private readonly _selectedVariantId = signal<string | null>(null);
   private readonly _selectedModifierIds = signal<Set<string>>(new Set());
+
+  @Input() set product(value: TpvProductItem | null) {
+    this._product.set(value);
+  }
+
+  get product(): TpvProductItem | null {
+    return this._product();
+  }
 
   public readonly selectedVariantId = computed(() => this._selectedVariantId());
 
   public readonly variants = computed(() => {
-    const p = this.product;
+    const p = this._product();
     if (!p?.variants) return [];
     return p.variants.filter((v) => v.active);
   });
@@ -40,7 +48,7 @@ export class ProductConfigModalComponent {
   public readonly hasVariants = computed(() => this.variants().length > 0);
 
   public readonly extras = computed(() => {
-    const p = this.product;
+    const p = this._product();
     if (!p?.modifiers) return [];
     return p.modifiers.filter((m) => m.type === 'extra' && m.active);
   });
@@ -48,7 +56,7 @@ export class ProductConfigModalComponent {
   public readonly hasExtras = computed(() => this.extras().length > 0);
 
   public readonly accompaniments = computed(() => {
-    const p = this.product;
+    const p = this._product();
     if (!p?.modifiers) return [];
     return p.modifiers.filter((m) => m.type === 'accompaniment' && m.active);
   });
@@ -66,7 +74,7 @@ export class ProductConfigModalComponent {
   });
 
   public readonly totalPrice = computed(() => {
-    const p = this.product;
+    const p = this._product();
     if (!p) return 0;
 
     let total = p.price;
@@ -86,7 +94,7 @@ export class ProductConfigModalComponent {
   });
 
   public readonly canConfirm = computed(() => {
-    if (!this.product) return false;
+    if (!this._product()) return false;
     if (this.hasVariants() && !this._selectedVariantId()) return false;
 
     // Si hay acompañamientos obligatorios, verificar que se seleccionó uno
@@ -119,7 +127,7 @@ export class ProductConfigModalComponent {
   }
 
   public readonly blockReason = computed(() => {
-    if (!this.product) return '';
+    if (!this._product()) return '';
     if (this.hasVariants() && !this._selectedVariantId()) {
       return 'Selecciona una opción';
     }
@@ -198,7 +206,7 @@ export class ProductConfigModalComponent {
     this.confirm.emit({
       variantId: variant?.id,
       variantName: variant?.name,
-      variantPrice: variant?.price ?? this.product?.price ?? 0,
+      variantPrice: variant?.price ?? this._product()?.price ?? 0,
       modifiers,
     });
     this.closeModal.emit();

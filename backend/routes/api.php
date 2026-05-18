@@ -69,6 +69,8 @@ use App\Sale\Infrastructure\Entrypoint\Http\GetPaymentTicketController;
 use App\Sale\Infrastructure\Entrypoint\Http\PostController as SalePostController;
 use App\Sale\Infrastructure\Entrypoint\Http\PutController as SalePutController;
 use App\Sale\Infrastructure\Entrypoint\Http\RecordChargeSessionPaymentController;
+use App\Sale\Infrastructure\Entrypoint\Http\RefundChargeSessionLineController;
+use App\Sale\Infrastructure\Entrypoint\Http\AssignChargeSessionLinesController;
 use App\Sale\Infrastructure\Entrypoint\Http\UpdateChargeSessionDinersController;
 use App\Shared\Infrastructure\Http\Middleware\RequireAdminSession;
 use App\Shared\Infrastructure\Http\Middleware\RequireManagementSession;
@@ -182,7 +184,9 @@ Route::middleware([
     Route::post('/tpv/charge-sessions', CreateChargeSessionController::class);
     Route::get('/tpv/charge-sessions/current', GetCurrentChargeSessionController::class);
     Route::put('/tpv/charge-sessions/{id}/diners', UpdateChargeSessionDinersController::class)->whereUuid('id');
+    Route::put('/tpv/charge-sessions/{id}/assignments', AssignChargeSessionLinesController::class)->whereUuid('id');
     Route::post('/tpv/charge-sessions/{id}/payments', RecordChargeSessionPaymentController::class)->whereUuid('id');
+    Route::post('/tpv/charge-sessions/{id}/refund-line', RefundChargeSessionLineController::class)->whereUuid('id');
     Route::post('/tpv/charge-sessions/{id}/cancel', CancelChargeSessionController::class)->whereUuid('id');
 });
 

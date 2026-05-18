@@ -22,6 +22,9 @@ export class CajaPaymentFacade {
   private readonly loadedChargeSession = signal<ChargeSession | null>(null);
   private readonly isProcessingPayment = signal<boolean>(false);
   private readonly error = signal<string | null>(null);
+  private readonly paidOrderLineIds = signal<Set<string>>(new Set());
+
+  public readonly paidLineIds = computed(() => Array.from(this.paidOrderLineIds()));
 
   // Readonly signals for external consumption
   public readonly loading = computed(() => this.state() === PaymentState.LOADING);
@@ -74,6 +77,17 @@ export class CajaPaymentFacade {
 
   public setError(value: string | null): void {
     this.error.set(value);
+  }
+
+  public addPaidOrderLineIds(ids: string[]): void {
+    this.paidOrderLineIds.update((set) => {
+      ids.forEach((id) => set.add(id));
+      return new Set(set);
+    });
+  }
+
+  public clearPaidOrderLineIds(): void {
+    this.paidOrderLineIds.set(new Set());
   }
 
   // Payment methods

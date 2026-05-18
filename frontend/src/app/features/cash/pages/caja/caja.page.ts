@@ -119,6 +119,30 @@ export class CajaPage implements OnInit, OnDestroy {
   public readonly currentDinerNumber = computed(() => this.paymentFacade.dinerNumber());
   public readonly loadedChargeSession = computed(() => this.paymentFacade.session());
 
+  /**
+   * Importe real (en céntimos) por comensal, calculado sobre las líneas que el
+   * cajero ha asignado en la charge session. Sólo incluye comensales que tienen
+   * al menos una línea asignada — el resto delega en el reparto equitativo de
+   * `diners-status`. Permite que la sidebar muestre lo realmente cobrado por
+   * cada comensal en split por líneas, en lugar de un reparto equitativo
+   * engañoso.
+   */
+  public readonly dinerAmountsByLines = computed<Record<number, number> | null>(() => {
+    const session = this.loadedChargeSession();
+    if (!session || !session.line_assignments?.length) return null;
+    const priceByLineId = new Map<string, number>();
+    for (const line of this.selectedTableLines) {
+      if (line.id) priceByLineId.set(line.id, line.price);
+    }
+    const amounts: Record<number, number> = {};
+    for (const a of session.line_assignments) {
+      const price = priceByLineId.get(a.order_line_id);
+      if (price == null) continue;
+      amounts[a.diner_number] = (amounts[a.diner_number] ?? 0) + price;
+    }
+    return Object.keys(amounts).length > 0 ? amounts : null;
+  });
+
   public showOpenModal = false;
   public showPinAuthModal = false;
   public showPinAuthModalForCobrarMesa = false;
@@ -268,6 +292,8 @@ export class CajaPage implements OnInit, OnDestroy {
           id: l.id,
           name: l.product_name || 'Producto',
           price: l.price * l.quantity,
+          variantName: l.variant_name ?? null,
+          modifiers: l.modifiers?.map((m) => ({ name: m.name })) ?? null,
         }));
         this.currentPaymentAmount = remainingTotal;
         this.showCobrarModal = true;
@@ -725,6 +751,8 @@ export class CajaPage implements OnInit, OnDestroy {
               id: l.id,
               name: l.product_name || 'Producto',
               price: l.price * l.quantity,
+              variantName: l.variant_name ?? null,
+              modifiers: l.modifiers?.map((m) => ({ name: m.name })) ?? null,
             })),
             remainingTotal,
           })),
@@ -814,6 +842,8 @@ export class CajaPage implements OnInit, OnDestroy {
               name: l.product_name || 'Producto',
               price: l.price * l.quantity,
               diner: l.diner_number,
+              variantName: l.variant_name ?? null,
+              modifiers: l.modifiers?.map((m) => ({ name: m.name })) ?? null,
             })),
             remainingTotal,
           })),
@@ -863,8 +893,18 @@ export class CajaPage implements OnInit, OnDestroy {
         catchError((error) => {
           if (error.status === 404) return of(null);
           console.error('Error fetching charge session in onSplitBill:', error);
-          return of(null);
+          // Si falla por otro motivo (transitorio), preservamos la sesión que
+          // ya tengamos cargada para no perder paidDiners ni remaining_cents.
+          return of(this.loadedChargeSession());
         })
+      ),
+      // Recargamos SIEMPRE las líneas del pedido al reabrir el split modal:
+      // tras un cobro parcial, `selectedTableLines` queda con sólo las líneas
+      // del comensal cobrado, así que sin esto el modal se reabriría con un
+      // pool vacío y mostraría "todas las líneas asignadas" erróneamente.
+      orderLines: this.tpvService.getOrderLines(orderId).pipe(
+        take(1),
+        catchError(() => of([])),
       ),
     }).pipe(
       takeUntil(this.destroy$),
@@ -875,24 +915,46 @@ export class CajaPage implements OnInit, OnDestroy {
         }
       })
     ).subscribe({
-      next: ({ orderTotal, paidTotal, chargeSession }) => {
+      next: ({ orderTotal, paidTotal, chargeSession, orderLines }) => {
         const paidTotalCents = paidTotal.total_cents;
         const originalTotal = orderTotal.total_cents;
 
+        this.selectedTableLines = (orderLines ?? []).map((l) => ({
+          id: l.id,
+          name: l.product_name || 'Producto',
+          price: l.price * l.quantity,
+          diner: l.diner_number,
+          variantName: l.variant_name ?? null,
+          modifiers: l.modifiers?.map((m) => ({ name: m.name })) ?? null,
+        }));
+
         this.originalOrderTotal = originalTotal;
 
-        this.paymentFacade.setLoadedChargeSession(chargeSession);
-        console.log('onSplitBill - chargeSession loaded:', chargeSession);
+        // Evitamos que una recarga "stale" (por ejemplo, por race condition
+        // tras un cobro) sobrescriba datos más recientes que ya teníamos.
+        const loaded = this.loadedChargeSession();
+        const useSession = chargeSession && loaded
+          ? (new Date(chargeSession.updated_at) >= new Date(loaded.updated_at)
+            ? chargeSession
+            : loaded)
+          : (chargeSession ?? loaded ?? null);
 
-        if (chargeSession) {
-          this.paidDiners = chargeSession.paid_diner_numbers;
-          console.log('onSplitBill - synced paidDiners:', this.paidDiners, 'remaining_cents:', chargeSession.remaining_cents);
+        this.paymentFacade.setLoadedChargeSession(useSession);
+        console.log('onSplitBill - chargeSession loaded:', useSession);
+
+        if (useSession) {
+          this.paidDiners = useSession.paid_diner_numbers;
+          console.log('onSplitBill - synced paidDiners:', this.paidDiners, 'remaining_cents:', useSession.remaining_cents);
           if (this.selectedTable) {
-            this.selectedTable.total = chargeSession.remaining_cents;
-            this.updatePendingTableTotal(this.selectedTable.order_id, chargeSession.remaining_cents);
+            this.selectedTable.total = useSession.remaining_cents;
+            this.updatePendingTableTotal(this.selectedTable.order_id, useSession.remaining_cents);
           }
         } else {
-          this.paidDiners = [];
+          // Solo reseteamos paidDiners si no teníamos charge session previa
+          // (evita perder estado por un error transitorio de red).
+          if (!loaded) {
+            this.paidDiners = [];
+          }
           if (this.selectedTable) {
             const remaining = Math.max(0, originalTotal - paidTotalCents);
             this.selectedTable.total = remaining;
@@ -993,11 +1055,17 @@ export class CajaPage implements OnInit, OnDestroy {
       ? this.loadedChargeSession()?.id
       : null;
 
+    console.log('onConfirmPayment - activeSessionId:', activeSessionId, 'loadedChargeSession:', this.loadedChargeSession(), 'currentDinerNumber:', this.currentDinerNumber());
+
     const paymentMethod = payments[0].method;
     const directMethods = [PaymentMethod.CASH, PaymentMethod.CARD, PaymentMethod.BIZUM, PaymentMethod.VOUCHER, PaymentMethod.INVITATION];
     const mappedMethod: PaymentMethod = directMethods.includes(paymentMethod as PaymentMethod)
       ? (paymentMethod as PaymentMethod)
       : PaymentMethod.OTHER;
+
+    if (orderLineIds && orderLineIds.length > 0) {
+      this.paymentFacade.addPaidOrderLineIds(orderLineIds);
+    }
 
     const sale$: Observable<RecordPaymentResponse | TpvSale> = activeSessionId
       ? this.paymentFacade.recordPayment(activeSessionId, {
@@ -1017,6 +1085,8 @@ export class CajaPage implements OnInit, OnDestroy {
           order_line_ids: orderLineIds,
           is_partial_payment: isPartialPayment,
         });
+
+    console.log('Using', activeSessionId ? 'recordPayment' : 'createSale', 'with diner_number:', this.currentDinerNumber());
 
     sale$.pipe(
       takeUntil(this.destroy$),
@@ -1235,26 +1305,29 @@ export class CajaPage implements OnInit, OnDestroy {
 
     if (total > 0) {
       if (data.isEqualPart) {
-        this.selectedTableLines = this.selectedTableLines.map((l) => ({
-          id: l.id,
-          name: l.name,
-          price: l.price,
-        }));
+        // Mantenemos todas las líneas de la mesa para que el cobrar-modal
+        // muestre el resumen completo en reparto equitativo.
+        this.selectedTableLines = this.selectedTableLines.map((l) => ({ ...l }));
         this.currentPaymentAmount = data.amount || total;
         console.log('Set currentPaymentAmount:', this.currentPaymentAmount);
-        if (this.selectedTable) {
-          this.selectedTable.total = data.amount || total;
-        }
+        // NO mutamos selectedTable.total aquí: es el total pendiente de la
+        // mesa completa, no solo la cuota de este comensal.
         this.fromMesas = false;
         this.isPartialPayment = true;
       } else {
-        this.selectedTableLines = selectedLines.map((l) => ({
-          id: l.id,
-          name: l.name,
-          price: l.price,
-        }));
+        // Cobro por líneas: sólo las líneas del comensal actual.
+        // Preservamos variantName, modifiers y diner para no perder info.
+        this.selectedTableLines = selectedLines.map((l) => ({ ...l }));
         this.currentPaymentAmount = total;
-        this.isPartialPayment = false;
+        // Es un cobro parcial siempre que haya una charge session activa
+        // o haya más de un comensal en la mesa.
+        this.isPartialPayment = !!data.chargeSessionId || (this.selectedTable?.diners ?? 1) > 1;
+        // Trackeamos las líneas pagadas para que el split-bill-modal las marque
+        // como bloqueadas cuando reabra el comensal.
+        const paidIds = selectedLines.map((l) => l.id).filter((id): id is string => !!id);
+        if (paidIds.length > 0) {
+          this.paymentFacade.addPaidOrderLineIds(paidIds);
+        }
       }
       this.showSplitModal = false;
       this.showCobrarModal = true;
@@ -1270,6 +1343,32 @@ export class CajaPage implements OnInit, OnDestroy {
       this.selectedTable.diners = session.diners_count;
       this.paidDiners = session.paid_diner_numbers || [];
     }
+  }
+
+  public onRefundLine(event: { orderLineId: string; lineName: string; price: number }): void {
+    const session = this.loadedChargeSession();
+    const userId = this.currentUser?.id;
+    if (!session || !userId) {
+      console.warn('onRefundLine: missing session or user', { session, userId });
+      return;
+    }
+
+    this.chargeSessionService
+      .refundLine(session.id, {
+        order_line_id: event.orderLineId,
+        refunded_by_user_id: userId,
+        reason: `Reembolso de "${event.lineName}"`,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.onChargeSessionUpdated(updated);
+        },
+        error: (err) => {
+          console.error('Error refunding line', err);
+          const detail = err?.error?.message || err?.message || 'Error desconocido';
+          alert(`No se pudo reembolsar la línea: ${detail}`);
+        },
+      });
   }
 
   public onPaymentSuccessComplete(): void {

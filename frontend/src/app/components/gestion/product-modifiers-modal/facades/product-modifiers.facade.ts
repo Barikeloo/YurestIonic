@@ -49,7 +49,6 @@ export class ProductModifiersFacade implements OnDestroy {
     return !current.every((code) => original.includes(code));
   });
 
-  // Setters explícitos
   public setProduct(product: ProductRow | null): void {
     this._product.set(product);
     this._selectedAllergens.set(product ? [...product.allergens] : []);
@@ -66,7 +65,6 @@ export class ProductModifiersFacade implements OnDestroy {
     this._error.set(value);
   }
 
-  // Métodos de UI
   public toggleAllergen(code: AllergenCode): void {
     this._selectedAllergens.update((current) =>
       current.includes(code) ? current.filter((c) => c !== code) : [...current, code],
@@ -122,7 +120,6 @@ export class ProductModifiersFacade implements OnDestroy {
       );
   }
 
-  // --- Variants ---
   public loadVariants(): Observable<{ variants: ProductVariantItem[] }> {
     const product = this._product();
     if (!product?.uuid) {
@@ -221,7 +218,6 @@ export class ProductModifiersFacade implements OnDestroy {
     );
   }
 
-  // --- Modifiers (extras & accompaniments) ---
   public loadModifiers(): Observable<{ modifiers: ProductModifierItem[] }> {
     const product = this._product();
     if (!product?.uuid) {

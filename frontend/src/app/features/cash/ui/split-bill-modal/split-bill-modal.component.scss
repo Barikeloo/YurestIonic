@@ -1,5 +1,11 @@
 @import 'variables.scss';
 
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -208,110 +214,367 @@
   }
 }
 
-// Lines mode
-.lines-mode {
-  .lines-columns {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+// Lines mode v2 — Tap & Place
+.lines-mode-v2 {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  // Barra de progreso global
+  .lines-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
   }
 
-  .line-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px 10px;
-    border-radius: 8px;
-    border: 1.5px solid var(--gray-200);
-    margin-bottom: 6px;
-    background: var(--white);
+  .lines-progress-bar {
+    height: 8px;
+    background: var(--gray-100);
+    border-radius: 999px;
+    overflow: hidden;
+  }
 
-    &.assigned {
-      background: var(--gray-50);
+  .lines-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 200ms ease;
+  }
+
+  .lines-progress-text {
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--gray-600);
+
+    strong {
+      color: var(--black);
+      font-family: var(--mono);
     }
   }
 
-  .line-info {
-    .line-name {
-      font-family: var(--font);
-      font-size: 13px;
-      color: var(--black);
+  // Hint contextual
+  .lines-hint {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--gray-50);
+    color: var(--gray-700);
+    font-family: var(--font);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    &.selected {
+      background: var(--accent);
+      color: var(--white);
       font-weight: 600;
     }
 
-    .line-price {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--gray-400);
+    &.ok {
+      background: #e8f6ec;
+      color: #1f7a3a;
+      font-weight: 600;
     }
   }
 
-  .diner-buttons {
-    display: flex;
-    gap: 4px;
-  }
-
-  .diner-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    border: 1.5px solid var(--gray-200);
-    background: var(--white);
-    color: var(--gray-600);
-    font-size: 12px;
-    font-weight: 700;
+  .hint-cancel {
+    background: transparent;
+    border: 1px solid currentColor;
+    color: inherit;
+    padding: 3px 10px;
+    border-radius: 999px;
     cursor: pointer;
+    font-size: 11px;
     font-family: var(--font);
-
-    &.active {
-      border-color: var(--accent);
-      background: var(--accent);
-      color: var(--white);
-    }
   }
 
-  .subaccount-card {
-    margin-bottom: 10px;
-    border: 1.5px solid var(--gray-200);
-    background: var(--white);
-    border-radius: 12px;
-    padding: 12px;
-
-    &.empty {
-      border-style: dashed;
-      background: var(--gray-50);
-    }
-  }
-
-  .subaccount-header {
+  // Pool de líneas
+  .lines-pool {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
+    flex-direction: column;
+    gap: 6px;
   }
 
-  .subaccount-name {
+  .line-pool-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .pool-line {
+    appearance: none;
+    width: 100%;
+    text-align: left;
+    background: var(--white);
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+
+    &:hover {
+      border-color: var(--gray-400);
+    }
+
+    &.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
+      transform: translateY(-1px);
+    }
+  }
+
+  .pool-line-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pool-line-name {
     font-family: var(--font);
     font-size: 13px;
     font-weight: 600;
     color: var(--black);
   }
 
-  .subaccount-amount {
+  .pool-line-price {
     font-family: var(--mono);
-    font-size: 18px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--black);
+    white-space: nowrap;
+  }
+
+  .line-variant {
+    font-weight: 500;
+    color: var(--gray-500);
+    margin-left: 2px;
+  }
+
+  .line-modifiers-mini {
+    font-family: var(--font);
+    font-size: 11px;
+    color: var(--gray-500);
+    font-weight: 400;
+    margin-top: 1px;
+  }
+
+  // Grid de comensales
+  .diner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .diner-tile {
+    --diner-color: var(--accent);
+
+    background: var(--white);
+    border: 1.5px solid var(--gray-200);
+    border-left: 4px solid var(--diner-color);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    cursor: default;
+    transition: border-color 120ms ease, box-shadow 120ms ease, transform 120ms ease;
+
+    &.empty {
+      background: var(--gray-50);
+    }
+
+    &.paid {
+      opacity: 0.65;
+      border-left-color: var(--gray-300);
+    }
+
+    // Un comensal reabierto vuelve a verse activo para el cajero
+    // (puede recibir nuevas líneas y cobrar de nuevo) pero
+    // mantenemos el border-left gris como recordatorio visual de
+    // que ya pagó en una ronda anterior.
+    &.reopened {
+      opacity: 1;
+      border-left-color: var(--gray-300);
+      background: var(--gray-50);
+      border-style: dashed;
+    }
+
+    &.targetable {
+      cursor: pointer;
+      border-color: var(--diner-color);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--diner-color) 20%, transparent);
+
+      &:hover {
+        transform: translateY(-1px);
+      }
+    }
+  }
+
+  .diner-tile-header {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .diner-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--diner-color);
+    color: var(--white);
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-family: var(--font);
+    font-size: 14px;
+  }
+
+  .diner-tile-title {
+    font-family: var(--font);
+    font-size: 13px;
     font-weight: 700;
     color: var(--black);
   }
 
-  .subaccount-line {
-    font-size: 11px;
+  .diner-tile-state {
     font-family: var(--font);
-    color: var(--gray-600);
+    font-size: 11px;
+    color: var(--gray-500);
+
+    &.paid {
+      color: #1f7a3a;
+      font-weight: 600;
+    }
+  }
+
+  .diner-tile-actions {
     display: flex;
-    justify-content: space-between;
-    border-top: 1px solid var(--gray-100);
-    padding: 3px 0;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .diner-tile-amount {
+    font-family: var(--mono);
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--black);
+    text-align: right;
+  }
+
+  .diner-tile-reopen {
+    appearance: none;
+    border: 1px solid var(--accent);
+    background: var(--white);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 120ms ease, color 120ms ease;
+
+    &:hover {
+      background: var(--accent);
+      color: var(--white);
+    }
+  }
+
+  .diner-tile-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .diner-tile-line {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 6px;
+    align-items: center;
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--gray-700);
+    border-top: 1px dashed var(--gray-100);
+    padding-top: 4px;
+  }
+
+  .diner-tile-line-remove {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    cursor: pointer;
+    font-size: 10px;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+
+    &:hover:not(:disabled) {
+      background: var(--gray-200);
+      color: var(--black);
+    }
+
+    &:disabled {
+      visibility: hidden;
+    }
+  }
+
+  .diner-tile-line.paid-line {
+    color: var(--gray-400);
+    text-decoration: line-through;
+    opacity: 0.8;
+  }
+
+  .diner-tile-line-paid-icon {
+    font-size: 10px;
+    width: 18px;
+    text-align: center;
+    user-select: none;
+  }
+
+  .diner-tile-line-refund {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: none;
+    background: #fde2e2;
+    color: #c0392b;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    display: grid;
+    place-items: center;
+
+    &:hover {
+      background: #f8c5c5;
+      color: #922b21;
+    }
+  }
+
+  .diner-tile-line-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .diner-tile-line-price {
+    font-family: var(--mono);
+    color: var(--gray-700);
+    white-space: nowrap;
+  }
+
+  .diner-tile-charge {
+    margin-top: 4px;
   }
 }
 
@@ -347,6 +610,19 @@
 
     span:first-child { color: var(--gray-700); }
     span:last-child { font-family: var(--mono); }
+
+    &.paid-line {
+      opacity: 0.6;
+      text-decoration: line-through;
+      span:first-child { color: var(--gray-400); }
+      span:last-child { color: var(--gray-400); }
+    }
+  }
+
+  .paid-badge-mini {
+    margin-left: 4px;
+    font-size: 10px;
+    user-select: none;
   }
 
   .diner-subtotal {
@@ -402,6 +678,8 @@
 
 // ── Standalone mode (cuando se usa con wrapper externo) ───────────────
 .modal-box.standalone {
+  width: 100%;
+  max-width: 100%;
   max-height: 90vh;
   overflow: hidden;
 }

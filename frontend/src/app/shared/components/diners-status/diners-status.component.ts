@@ -21,8 +21,17 @@ export class DinersStatusComponent {
   @Input() paidDiners: number[] = [];
   @Input() compact = false;
   @Input() amountPerDiner: number | null = null;
+  /**
+   * Importe real (céntimos) por comensal cuando se cobra por líneas
+   * asignadas. Si está presente, sobrescribe el reparto equitativo. El padre
+   * (caja.page) puede calcularlo a partir de `line_assignments` + precios.
+   */
+  @Input() dinerAmounts: Record<number, number> | null = null;
 
   get paidTotal(): number {
+    if (this.dinerAmounts) {
+      return this.paidDiners.reduce((sum, n) => sum + (this.dinerAmounts?.[n] ?? 0), 0);
+    }
     if (this.amountPerDiner !== null) {
       return this.paidDiners.length * this.amountPerDiner;
     }
@@ -44,7 +53,7 @@ export class DinersStatusComponent {
     return allDiners.map((number) => ({
       number,
       paid: this.paidDiners.includes(number),
-      amount: this.perDinerAmount,
+      amount: this.dinerAmounts?.[number] ?? this.perDinerAmount,
     }));
   }
 

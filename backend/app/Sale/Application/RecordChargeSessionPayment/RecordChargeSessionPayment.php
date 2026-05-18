@@ -14,6 +14,7 @@ use App\Sale\Domain\Exception\ChargeSessionNotFoundException;
 use App\Sale\Domain\Exception\InvalidDinerCountException;
 use App\Sale\Domain\Exception\PaymentAmountExceedsDebtException;
 use App\Sale\Domain\Exception\PaymentAmountMustBePositiveException;
+use App\Sale\Domain\Interfaces\ChargeSessionLineAssignmentRepositoryInterface;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -25,6 +26,7 @@ final class RecordChargeSessionPayment
         private readonly CreateSale $createSale,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly CreateOrderFinalTicket $createOrderFinalTicket,
+        private readonly ChargeSessionLineAssignmentRepositoryInterface $assignmentRepository,
     ) {}
 
     public function __invoke(RecordChargeSessionPaymentCommand $command): RecordChargeSessionPaymentResponse
@@ -81,6 +83,26 @@ final class RecordChargeSessionPayment
             $payment['diner_number'] = $command->dinerNumber;
         }
 
+        // Sólo "consumimos" como sale_lines las order_lines explícitamente
+        // asignadas a este comensal en la sesión. En split equitativo (o si el
+        // comensal no tiene líneas asignadas) pasamos un array vacío para que
+        // CreateSale registre el pago monetario sin marcar líneas como pagadas.
+        $orderLineIds = [];
+        if ($command->dinerNumber !== null) {
+            $paidLineIds = array_flip($this->responseBuilder->collectPaidOrderLineIds($session));
+            $assignments = $this->assignmentRepository->findBySessionId($session->id());
+            foreach ($assignments as $assignment) {
+                if ($assignment->dinerNumber() === $command->dinerNumber) {
+                    $lineId = $assignment->orderLineId()->value();
+                    // Si la línea ya fue pagada en una venta anterior, la
+                    // excluimos para no cobrarla dos veces al reabrir el comensal.
+                    if (! isset($paidLineIds[$lineId])) {
+                        $orderLineIds[] = $lineId;
+                    }
+                }
+            }
+        }
+
         $saleResponse = ($this->createSale)(
             restaurantId: $session->restaurantId()->value(),
             orderId: $session->orderId()->value(),
@@ -88,6 +110,7 @@ final class RecordChargeSessionPayment
             closedByUserId: $command->closedByUserId,
             deviceId: $command->deviceId,
             payments: [$payment],
+            orderLineIds: $orderLineIds,
             chargeSessionId: $command->chargeSessionId,
         );
 

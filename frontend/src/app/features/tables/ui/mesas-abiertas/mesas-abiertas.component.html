@@ -4,7 +4,7 @@
     <app-badge [text]="mesas.length + ' abiertas'" color="#ff4d4d"></app-badge>
   </div>
   <div class="mesas-list">
-    @for (mesa of mesas; track mesa) {
+    @for (mesa of mesas; track mesa.order_id) {
       <div class="mesa-row">
         <div class="mesa-info">
           <div class="mesa-name">{{ mesa.table_name }}</div>
