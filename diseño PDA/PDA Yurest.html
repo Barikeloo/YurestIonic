@@ -26,6 +26,7 @@
   --gray-400: #A0A0A0;
   --gray-300: #C8C8C8;
   --gray-200: #E8E8E8;
+  --gray-150: #EFEFEF;
   --gray-100: #F4F4F4;
   --gray-50:  #FAFAFA;
   --white: #FFFFFF;
@@ -579,6 +580,29 @@ html, body {
   30%, 50%, 70% { transform: translateX(-5px); }
   40%, 60% { transform: translateX(5px); }
 }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* ── Sonar / ping effect por tipo de aviso KDS ── */
+@keyframes sonar-listo {
+  0%   { box-shadow: 0 0 0 0   rgba(26,158,90,.55); }
+  70%  { box-shadow: 0 0 0 9px rgba(26,158,90,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(26,158,90,0);   }
+}
+@keyframes sonar-demora {
+  0%   { box-shadow: 0 0 0 0   rgba(232,158,26,.55); }
+  70%  { box-shadow: 0 0 0 9px rgba(232,158,26,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(232,158,26,0);   }
+}
+@keyframes sonar-rotura {
+  0%   { box-shadow: 0 0 0 0   rgba(255,77,77,.55); }
+  70%  { box-shadow: 0 0 0 9px rgba(255,77,77,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(255,77,77,0);   }
+}
+@keyframes sonar-collecting {
+  0%   { box-shadow: 0 0 0 0   rgba(26,111,232,.45); }
+  70%  { box-shadow: 0 0 0 9px rgba(26,111,232,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(26,111,232,0);   }
+}
   </style>
   <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
@@ -917,11 +941,12 @@ const ACTIVE_ORDERS = [
 
 // ─── Avisos de cocina (real-time) ───────────────────
 const AVISOS_COCINA = [
-  { id: 'a1', mesa: 'T5', tipo: 'listo', plato: 'Solomillo a la pimienta ×2', hora: 'hace 30s', urgente: true },
-  { id: 'a2', mesa: 'S5', tipo: 'listo', plato: 'Tagliatelle carbonara', hora: 'hace 1 min', urgente: false },
-  { id: 'a3', mesa: 'T2', tipo: 'listo', plato: 'Pizza margarita', hora: 'hace 2 min', urgente: false },
-  { id: 'a4', mesa: 'S1', tipo: 'demora', plato: 'Tarta de queso · 8 min en cola', hora: 'hace 3 min', urgente: true },
-  { id: 'a5', mesa: 'T3', tipo: 'rotura', plato: 'Sin Ribera del Duero', hora: 'hace 5 min', urgente: false },
+  { id: 'a1', mesa: 'T5', tipo: 'listo', plato: 'Solomillo a la pimienta ×2', hora: 'hace 30s', urgente: true, line_ids: [] },
+  { id: 'a2', mesa: 'S5', tipo: 'listo', plato: 'Tagliatelle carbonara', hora: 'hace 1 min', urgente: false, line_ids: [] },
+  { id: 'a3', mesa: 'T2', tipo: 'listo', plato: 'Pizza margarita', hora: 'hace 2 min', urgente: false, line_ids: [] },
+  { id: 'a4', mesa: 'S1', tipo: 'demora', plato: 'Tarta de queso · 8 min en cola', hora: 'hace 3 min', urgente: true, line_ids: [] },
+  { id: 'a5', mesa: 'T3', tipo: 'rotura', plato: 'Sin Ribera del Duero', hora: 'hace 5 min', urgente: false, line_ids: [] },
+  { id: 'a6', mesa: 'T3', tipo: 'listo', plato: 'Coulant de choc. ×2, Café cortado ×2, Café con leche', hora: 'hace 2 min', urgente: false, line_ids: ['l8', 'l9', 'l10'] },
 ];
 
 // ─── Charge session de ejemplo (split bill) ─────────
@@ -1243,6 +1268,7 @@ function Icon({ name, size = 20, color = 'currentColor', strokeWidth = 2 }) {
     unmerge: <><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>,
     transfer: <><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><line x1="12" y1="11" x2="16" y2="11"/><line x1="12" y1="16" x2="16" y2="16"/><line x1="8" y1="11" x2="8.01" y2="11"/><line x1="8" y1="16" x2="8.01" y2="16"/></>,
     flame: <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"/>,
+    alert: <><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
     refresh: <><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></>,
     settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></>,
     logout: <><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
@@ -1256,6 +1282,8 @@ function Icon({ name, size = 20, color = 'currentColor', strokeWidth = 2 }) {
     arrowUp: <><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></>,
     gear: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></>,
     chart: <><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>,
+    mail: <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></>,
+    wifi: <><path d="M5 12.55a11 11 0 0114.08 0"/><path d="M1.42 9a16 16 0 0121.16 0"/><path d="M8.53 16.11a6 6 0 016.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></>,
   };
   return <svg {...common}>{P[name] || null}</svg>;
 }
@@ -1619,8 +1647,255 @@ const { useState: useStateM, useEffect: useEffectM, useMemo: useMemoM, useRef: u
 // ════════════════════════════════════════════════════════
 // LOGIN — PIN del operario
 // ════════════════════════════════════════════════════════
-function ScreenLogin({ nav }) {
+// ════════════════════════════════════════════════════════
+// OPERADOR — selección de usuario antes del PIN
+// ════════════════════════════════════════════════════════
+function ScreenOperador({ nav }) {
+  const { USERS_QUICK, RESTAURANTE, DEVICE } = window.YDATA;
+  const avatarColors = ['#FF4D4D','#1A6FE8','#1A9E5A','#E89E1A','#9B59B6','#00B5A0'];
+  const roleLabel = (r) => r === 'admin' ? 'Admin' : r === 'supervisor' ? 'Supervisor' : 'Operador';
+  const roleBg = (r) => r === 'admin' ? 'var(--accent-soft)' : r === 'supervisor' ? 'var(--blue-soft)' : 'var(--gray-100)';
+  const roleColor = (r) => r === 'admin' ? 'var(--accent)' : r === 'supervisor' ? 'var(--blue)' : 'var(--gray-500)';
+
+  return (
+    <div className="pda-screen" style={{background:'var(--white)'}}>
+      {/* Brand header */}
+      <div style={{
+        padding: '32px 24px 22px', textAlign: 'center',
+        background: 'var(--black)', color: 'var(--white)', flexShrink: 0,
+      }}>
+        <div style={{
+          width: 48, height: 48, borderRadius: 14,
+          background: 'var(--accent)',
+          margin: '0 auto 12px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 8px 24px rgba(255,77,77,.4)',
+        }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round">
+            <path d="M3 11l8-7 8 7v9a2 2 0 01-2 2h-4v-7H9v7H5a2 2 0 01-2-2v-9z"/>
+          </svg>
+        </div>
+        <div style={{fontSize: 10, fontWeight: 600, letterSpacing: 3,
+          textTransform: 'uppercase', color: 'var(--accent-light)', marginBottom: 6}}>
+          YUREST · PDA
+        </div>
+        <div style={{fontSize: 18, fontWeight: 300, letterSpacing: '-.4px', lineHeight: 1.2}}>
+          {RESTAURANTE.name.split(' ')[0]}{' '}
+          <strong style={{fontWeight: 600}}>{RESTAURANTE.name.split(' ').slice(1).join(' ')}</strong>
+        </div>
+        <div style={{fontSize: 10.5, color: 'rgba(255,255,255,.45)', marginTop: 3}}>
+          {DEVICE.name}
+        </div>
+      </div>
+
+      {/* Subtitle */}
+      <div style={{
+        padding: '18px 24px 12px', textAlign: 'center', flexShrink: 0,
+      }}>
+        <div style={{fontSize: 13, fontWeight: 600, color: 'var(--gray-600)',
+          textTransform: 'uppercase', letterSpacing: 1.5}}>
+          ¿Quién eres?
+        </div>
+      </div>
+
+      {/* User grid */}
+      <div style={{flex: 1, overflow: 'auto', padding: '0 16px 12px'}}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 10,
+        }}>
+          {USERS_QUICK.map((u, i) => (
+            <button key={u.user_uuid}
+              onClick={() => nav.push({ name: 'login', user: u })}
+              style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center',
+                gap: 8, padding: '16px 8px 14px',
+                background: 'var(--white)', border: '1.5px solid var(--gray-200)',
+                borderRadius: 'var(--radius-lg)', cursor: 'pointer',
+                transition: 'border-color .15s, box-shadow .15s',
+                boxShadow: 'var(--shadow-sm)',
+              }}>
+              <div style={{
+                width: 48, height: 48, borderRadius: '50%',
+                background: avatarColors[i % avatarColors.length],
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 15, fontWeight: 700, color: 'white',
+                letterSpacing: '-.5px', flexShrink: 0,
+              }}>
+                {u.initials}
+              </div>
+              <div style={{textAlign: 'center'}}>
+                <div style={{fontSize: 11.5, fontWeight: 600, color: 'var(--black)', lineHeight: 1.3}}>
+                  {u.name.split(' ')[0]}
+                </div>
+                <div style={{fontSize: 11, color: 'var(--gray-500)', lineHeight: 1.2}}>
+                  {u.name.split(' ').slice(1).join(' ')}
+                </div>
+              </div>
+              <div style={{
+                fontSize: 9, fontWeight: 700, letterSpacing: .8,
+                textTransform: 'uppercase',
+                color: roleColor(u.role),
+                padding: '2px 7px',
+                background: roleBg(u.role),
+                borderRadius: 10,
+              }}>
+                {roleLabel(u.role)}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Email login link */}
+      <div style={{padding: '10px 24px 20px', textAlign: 'center', flexShrink: 0,
+        borderTop: '1px solid var(--gray-100)'}}>
+        <button
+          onClick={() => nav.push({ name: 'email-login' })}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            background: 'transparent', border: 'none',
+            color: 'var(--gray-500)', fontSize: 13, fontWeight: 500,
+            cursor: 'pointer', padding: '8px 12px',
+          }}>
+          <Icon name="mail" size={15}/>
+          Entrar con correo y contraseña
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════
+// EMAIL LOGIN — correo + contraseña
+// ════════════════════════════════════════════════════════
+function ScreenEmailLogin({ nav, toast }) {
+  const [email, setEmail] = useStateM('');
+  const [password, setPassword] = useStateM('');
+  const [loading, setLoading] = useStateM(false);
+  const [showPw, setShowPw] = useStateM(false);
+
+  const handleLogin = () => {
+    if (!email || !password) { toast('Completa todos los campos'); return; }
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      nav.replace({ name: 'tabs', tab: 'mesas' });
+    }, 1200);
+  };
+
+  const inputStyle = (focused) => ({
+    width: '100%', height: 50,
+    border: `1.5px solid ${focused ? 'var(--black)' : 'var(--gray-200)'}`,
+    borderRadius: 'var(--radius)',
+    padding: '0 14px',
+    fontFamily: 'var(--font)', fontSize: 15,
+    color: 'var(--black)',
+    outline: 'none',
+    background: 'var(--white)',
+    boxSizing: 'border-box',
+  });
+
+  return (
+    <div className="pda-screen" style={{background: 'var(--white)'}}>
+      <TopBar title="Iniciar sesión" onBack={() => nav.pop()}/>
+      <div style={{flex: 1, overflow: 'auto', padding: '28px 24px 24px',
+        display: 'flex', flexDirection: 'column', gap: 20}}>
+
+        <div style={{textAlign: 'center', marginBottom: 4}}>
+          <div style={{
+            width: 52, height: 52, borderRadius: 14,
+            background: 'var(--black)', margin: '0 auto 14px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon name="mail" size={22} color="white"/>
+          </div>
+          <div style={{fontSize: 20, fontWeight: 700, color: 'var(--black)', letterSpacing: '-.4px'}}>
+            Bienvenido
+          </div>
+          <div style={{fontSize: 13, color: 'var(--gray-500)', marginTop: 5}}>
+            Accede con tu cuenta Yurest
+          </div>
+        </div>
+
+        <div style={{display: 'flex', flexDirection: 'column', gap: 14}}>
+          <div>
+            <label style={{fontSize: 12, fontWeight: 600, color: 'var(--gray-700)',
+              display: 'block', marginBottom: 7}}>
+              Correo electrónico
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="tu@restaurante.es"
+              style={inputStyle(false)}
+            />
+          </div>
+          <div>
+            <label style={{fontSize: 12, fontWeight: 600, color: 'var(--gray-700)',
+              display: 'block', marginBottom: 7}}>
+              Contraseña
+            </label>
+            <div style={{position: 'relative'}}>
+              <input
+                type={showPw ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••"
+                style={{...inputStyle(false), paddingRight: 46}}
+              />
+              <button onClick={() => setShowPw(s => !s)} style={{
+                position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--gray-400)', padding: 4,
+              }}>
+                <Icon name="eye" size={17}/>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={handleLogin}
+          style={{
+            width: '100%', height: 52,
+            background: loading ? 'var(--gray-300)' : 'var(--accent)',
+            color: 'white', border: 'none',
+            borderRadius: 'var(--radius)',
+            fontSize: 16, fontWeight: 700,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            transition: 'background .2s',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}>
+          {loading
+            ? <><div style={{width:18,height:18,border:'2px solid rgba(255,255,255,.4)',
+                borderTop:'2px solid white',borderRadius:'50%',
+                animation:'spin 1s linear infinite'}}/> Entrando…</>
+            : 'Iniciar sesión'
+          }
+        </button>
+
+        <div style={{textAlign: 'center'}}>
+          <button
+            style={{background: 'none', border: 'none', color: 'var(--blue)',
+              fontSize: 13, fontWeight: 500, cursor: 'pointer'}}
+            onClick={() => toast('Recuperación no disponible en modo demo')}>
+            ¿Olvidaste tu contraseña?
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════
+// LOGIN — pin numérico para el operador seleccionado
+// ════════════════════════════════════════════════════════
+function ScreenLogin({ nav, user: selectedUser }) {
   const { CURRENT_USER, RESTAURANTE } = window.YDATA;
+  const user = selectedUser || CURRENT_USER;
   const [pin, setPin] = useStateM('');
   const [err, setErr] = useStateM(false);
   const onKey = (k) => {
@@ -1647,47 +1922,56 @@ function ScreenLogin({ nav }) {
   ));
   return (
     <div className="pda-screen" style={{background:'var(--white)'}}>
-      {/* Brand header */}
+      {/* Brand header with back button */}
       <div style={{
-        padding: '36px 24px 26px', textAlign: 'center',
+        padding: '28px 24px 22px', textAlign: 'center',
         background: 'var(--black)', color: 'var(--white)', flexShrink: 0,
+        position: 'relative',
       }}>
+        {selectedUser && (
+          <button onClick={() => nav.pop()} style={{
+            position: 'absolute', left: 14, top: 28,
+            background: 'rgba(255,255,255,.1)', border: 'none',
+            width: 36, height: 36, borderRadius: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', color: 'white',
+          }}>
+            <Icon name="back" size={18} color="white"/>
+          </button>
+        )}
         <div style={{
-          width: 50, height: 50, borderRadius: 14,
+          width: 46, height: 46, borderRadius: 13,
           background: 'var(--accent)',
-          margin: '0 auto 14px',
+          margin: '0 auto 12px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 8px 24px rgba(255,77,77,.4)',
         }}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round">
+          <svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.4" strokeLinecap="round">
             <path d="M3 11l8-7 8 7v9a2 2 0 01-2 2h-4v-7H9v7H5a2 2 0 01-2-2v-9z"/>
           </svg>
         </div>
-        <div style={{fontSize: 10.5, fontWeight: 600, letterSpacing: 3,
-          textTransform: 'uppercase', color: 'var(--accent-light)', marginBottom: 8}}>
+        <div style={{fontSize: 10, fontWeight: 600, letterSpacing: 3,
+          textTransform: 'uppercase', color: 'var(--accent-light)', marginBottom: 6}}>
           YUREST · PDA
         </div>
-        <div style={{fontSize: 20, fontWeight: 300, letterSpacing: '-.4px', lineHeight: 1.2}}>
+        <div style={{fontSize: 18, fontWeight: 300, letterSpacing: '-.4px', lineHeight: 1.2}}>
           {RESTAURANTE.name.split(' ')[0]}{' '}
           <strong style={{fontWeight: 600}}>{RESTAURANTE.name.split(' ').slice(1).join(' ')}</strong>
-        </div>
-        <div style={{fontSize: 11, color: 'rgba(255,255,255,.5)', marginTop: 4}}>
-          {window.YDATA.DEVICE.name} · Turno cena
         </div>
       </div>
 
       <div style={{
         flex: 1, display: 'flex', flexDirection: 'column',
         alignItems: 'center', justifyContent: 'center',
-        padding: '24px 24px 12px',
+        padding: '20px 24px 12px',
       }}>
-        <UserAvatar name={CURRENT_USER.name} initials={CURRENT_USER.initials} size={56}/>
+        <UserAvatar name={user.name} initials={user.initials} size={54}/>
         <div style={{fontSize: 15, fontWeight: 600, color: 'var(--black)', marginTop: 10}}>
-          {CURRENT_USER.name}
+          {user.name}
         </div>
         <div style={{fontSize: 11, color: 'var(--gray-500)', marginBottom: 20}}>
-          {CURRENT_USER.role === 'admin' ? 'Administrador' :
-           CURRENT_USER.role === 'supervisor' ? 'Supervisor/a' : 'Operador/a'}
+          {user.role === 'admin' ? 'Administrador' :
+           user.role === 'supervisor' ? 'Supervisor/a' : 'Operador/a'}
           {' · Sala'}
         </div>
 
@@ -1695,10 +1979,10 @@ function ScreenLogin({ nav }) {
           animation: err ? 'shake .35s' : 'none'}}>{dots}</div>
         <div style={{fontSize: 11, color: err ? 'var(--accent)' : 'var(--gray-500)',
           minHeight: 14, marginBottom: 14}}>
-          {err ? 'PIN incorrecto' : `Introduce tu PIN (${CURRENT_USER.pin})`}
+          {err ? 'PIN incorrecto' : 'Introduce tu PIN'}
         </div>
 
-        <div style={{width: 232}}>
+        <div style={{width: 228}}>
           <div style={{display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap: 8}}>
             {['1','2','3','4','5','6','7','8','9','C','0','back'].map(k => (
               <button key={k} onClick={() => onKey(k)} style={{
@@ -1717,16 +2001,18 @@ function ScreenLogin({ nav }) {
           </div>
         </div>
 
-        <button style={{
-          marginTop: 14,
-          display: 'inline-flex', alignItems: 'center', gap: 6,
-          background: 'transparent', border: 'none',
-          color: 'var(--gray-500)', fontSize: 12, fontWeight: 500,
-          cursor: 'pointer',
-        }} onClick={() => nav.push({ name: 'developer-login' })}>
-          <Icon name="settings" size={14}/>
-          Modo developer
-        </button>
+        {!selectedUser && (
+          <button style={{
+            marginTop: 14,
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: 'transparent', border: 'none',
+            color: 'var(--gray-500)', fontSize: 12, fontWeight: 500,
+            cursor: 'pointer',
+          }} onClick={() => nav.push({ name: 'email-login' })}>
+            <Icon name="mail" size={13}/>
+            Entrar con correo
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1736,7 +2022,7 @@ function ScreenLogin({ nav }) {
 // MESAS — listado por zona + side-sheet con detalle
 // ════════════════════════════════════════════════════════
 function ScreenMesas({ nav, toast }) {
-  const { ZONES, TABLES, OrderStatus, RESTAURANTE } = window.YDATA;
+  const { ZONES, TABLES, OrderStatus, RESTAURANTE, AVISOS_COCINA } = window.YDATA;
   const [zone, setZone] = useStateM('z-terraza');
   const [selectedId, setSelectedId] = useStateM(null);
   const [mergeMode, setMergeMode] = useStateM(false);
@@ -1747,6 +2033,82 @@ function ScreenMesas({ nav, toast }) {
   const [editDinersModal, setEditDinersModal] = useStateM(null);
   const [transferModal, setTransferModal] = useStateM(null);
   const [pinModal, setPinModal] = useStateM(null); // { action, payload }
+  const [bellOpen, setBellOpen] = useStateM(false);
+  const [bellFilter, setBellFilter] = useStateM('todos');
+  // avisosStatus: { [id]: 'pending' | 'collecting' | 'done' }
+  const [avisosStatus, setAvisosStatus] = useStateM({});
+  // lineStatuses: { [lineId]: 'servido' } — shared state between bell and comanda view
+  const [lineStatuses, setLineStatuses] = useStateM({});
+  // Live timer tick (increments every 30s to refresh displayed times)
+  const [tick, setTick] = useStateM(0);
+  const [startTs] = useStateM(() => Date.now());
+
+  useEffectM(() => {
+    const id = setInterval(() => setTick(t => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  const parseBaseMinutes = (hora) => {
+    const m = hora.match(/(\d+)\s*min/);
+    if (m) return parseInt(m[1]);
+    return 0; // "hace 30s" → 0
+  };
+
+  const getElapsedMin = (hora) => {
+    const base = parseBaseMinutes(hora);
+    const extra = Math.floor((Date.now() - startTs) / 60000);
+    return base + extra;
+  };
+
+  const active = AVISOS_COCINA.filter(a => (avisosStatus[a.id] || 'pending') !== 'done');
+  const avisosCount = active.length;
+
+  const filterActive = active.filter(a =>
+    bellFilter === 'todos' || a.tipo === bellFilter);
+
+  // Group by mesa, urgent first
+  const mesaGroups = useMemoM(() => {
+    const map = {};
+    filterActive.forEach(a => {
+      if (!map[a.mesa]) map[a.mesa] = [];
+      map[a.mesa].push(a);
+    });
+    return Object.entries(map)
+      .map(([mesa, items]) => ({ mesa, items }))
+      .sort((a, b) => {
+        const au = a.items.some(x => x.urgente) ? 1 : 0;
+        const bu = b.items.some(x => x.urgente) ? 1 : 0;
+        return bu - au;
+      });
+  }, [filterActive, tick]);
+
+  const setAvStatus = (id, status) => {
+    setAvisosStatus(prev => ({ ...prev, [id]: status }));
+    if (status === 'done') {
+      const aviso = AVISOS_COCINA.find(a => a.id === id);
+      if (aviso?.line_ids?.length) {
+        setLineStatuses(prev => {
+          const next = { ...prev };
+          aviso.line_ids.forEach(lid => { next[lid] = 'servido'; });
+          return next;
+        });
+      }
+    }
+  };
+
+  // Map: tableName → highest-priority aviso type (rotura > demora > listo)
+  const avisosMap = useMemoM(() => {
+    const priority = { rotura: 3, demora: 2, listo: 1 };
+    const map = {};
+    active.forEach(a => {
+      const st = avisosStatus[a.id] || 'pending';
+      const existing = map[a.mesa];
+      if (!existing || priority[a.tipo] > priority[existing.tipo]) {
+        map[a.mesa] = { tipo: a.tipo, status: st, urgente: a.urgente };
+      }
+    });
+    return map;
+  }, [active, avisosStatus]);
 
   const filtered = TABLES.filter(t => t.zone_id === zone);
   // Group merged tables
@@ -1814,6 +2176,20 @@ function ScreenMesas({ nav, toast }) {
           onClick={() => { setMergeMode(m => !m); setMergeSelected([]); }}
           title="Juntar mesas">
           <Icon name="merge" size={16}/>
+        </button>
+        <button className="tb-action" style={{position:'relative'}}
+          onClick={() => setBellOpen(true)} title="Avisos de cocina">
+          <Icon name="bell" size={18}/>
+          {avisosCount > 0 && (
+            <span style={{
+              position:'absolute', top: -2, right: -2,
+              minWidth: 16, height: 16, borderRadius: 8,
+              background:'var(--accent)', color:'white',
+              fontSize: 9, fontWeight: 800, fontFamily:'var(--mono)',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              padding:'0 4px', border:'2px solid var(--white)',
+            }}>{avisosCount}</span>
+          )}
         </button>
       </div>
 
@@ -1885,6 +2261,7 @@ function ScreenMesas({ nav, toast }) {
                 selected={selectedId === t.id}
                 mergeMode={mergeMode}
                 mergeSelected={mergeSelected.includes(t.id)}
+                avisoInfo={avisosMap[t.name] || null}
                 onClick={() => {
                   if (mergeMode) toggleMergeSelection(t.id);
                   else setSelectedId(t.id);
@@ -1905,6 +2282,7 @@ function ScreenMesas({ nav, toast }) {
             : selectedTable.reserva ? `Reservada · ${selectedTable.reserva}` : `Capacidad ${selectedTable.capacidad}`}
         >
           <MesaDetail mesa={selectedTable}
+            lineStatuses={lineStatuses}
             onNuevaComanda={() => { setSelectedId(null); nav.push({ name: 'comanda', mesa: selectedTable }); }}
             onAbrirMesa={() => requirePin('open-mesa', selectedTable)}
             onCerrarCuenta={() => requirePin('close-account', selectedTable)}
@@ -1975,6 +2353,215 @@ function ScreenMesas({ nav, toast }) {
           }}
         />}
       </Sheet>
+
+      {/* Avisos de cocina / KDS — full panel */}
+      <Sheet open={bellOpen} onClose={() => setBellOpen(false)}
+        title="Cocina · KDS"
+        subtitle={avisosCount > 0 ? `${avisosCount} aviso${avisosCount > 1 ? 's' : ''} pendiente${avisosCount > 1 ? 's' : ''}` : 'Sin avisos'}
+        full>
+
+        {/* Filter chips */}
+        <div style={{display:'flex', gap: 6, marginBottom: 14, overflowX:'auto', flexShrink:0}}>
+          {[
+            { id:'todos', label:'Todos', count: active.length },
+            { id:'listo', label:'Listos', count: active.filter(a=>a.tipo==='listo').length },
+            { id:'demora', label:'Demoras', count: active.filter(a=>a.tipo==='demora').length },
+            { id:'rotura', label:'Roturas', count: active.filter(a=>a.tipo==='rotura').length },
+          ].map(f => (
+            <button key={f.id}
+              className={`chip ${bellFilter === f.id ? 'active' : ''}`}
+              onClick={() => setBellFilter(f.id)}
+              style={{flexShrink:0, display:'flex', alignItems:'center', gap:5}}>
+              {f.label}
+              {f.count > 0 && (
+                <span style={{
+                  background: bellFilter === f.id ? 'rgba(255,255,255,.3)' : 'var(--gray-200)',
+                  fontSize:9.5, fontWeight:700, fontFamily:'var(--mono)',
+                  padding:'1px 5px', borderRadius:8,
+                }}>{f.count}</span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Empty state */}
+        {mesaGroups.length === 0 && (
+          <div style={{textAlign:'center', padding:'36px 0', color:'var(--gray-400)'}}>
+            <div style={{fontSize:36, marginBottom:10}}>✨</div>
+            <div style={{fontSize:14, fontWeight:600, color:'var(--gray-600)'}}>
+              {bellFilter === 'todos' ? 'Todo bajo control' : `Sin avisos de tipo "${bellFilter}"`}
+            </div>
+            <div style={{fontSize:12, marginTop:4}}>El KDS no tiene pendientes</div>
+          </div>
+        )}
+
+        {/* Groups by mesa */}
+        <div style={{display:'flex', flexDirection:'column', gap:16}}>
+          {mesaGroups.map(({ mesa, items }) => {
+            const hasUrgent = items.some(a => a.urgente);
+            return (
+              <div key={mesa}>
+                {/* Mesa header */}
+                <div className="row" style={{gap:8, marginBottom:8}}>
+                  <div style={{
+                    height:24, minWidth:42, borderRadius:7,
+                    background: hasUrgent ? 'var(--accent)' : 'var(--black)',
+                    color:'white', display:'flex', alignItems:'center', justifyContent:'center',
+                    fontFamily:'var(--mono)', fontSize:12, fontWeight:700, padding:'0 8px',
+                  }}>Mesa {mesa}</div>
+                  <div style={{fontSize:11, color:'var(--gray-500)', fontWeight:500}}>
+                    {items.length} {items.length > 1 ? 'avisos' : 'aviso'}
+                    {hasUrgent && <span style={{color:'var(--accent)', fontWeight:700, marginLeft:6}}>· URGENTE</span>}
+                  </div>
+                </div>
+
+                {/* Aviso cards in this group */}
+                <div style={{display:'flex', flexDirection:'column', gap:8}}>
+                  {items.map(a => {
+                    const status = avisosStatus[a.id] || 'pending';
+                    const elMin = getElapsedMin(a.hora);
+                    const isLate = elMin >= 5;
+                    const timerColor = isLate ? 'var(--accent)' : 'var(--gray-500)';
+                    const timerText = elMin < 1 ? '<1 min' : `${elMin} min`;
+
+                    const cfgMap = {
+                      listo:  { bg:'var(--green-soft)', color:'var(--green)', icon:'check', label:'PLATO LISTO' },
+                      demora: { bg:'var(--amber-soft)', color:'var(--amber)', icon:'clock', label:'DEMORA' },
+                      rotura: { bg:'var(--accent-soft)', color:'var(--accent)', icon:'warning', label:'ROTURA STOCK' },
+                    };
+                    const collecting = { bg:'rgba(26,110,232,.08)', color:'var(--blue)', icon:'send', label:'RECOGIENDO…' };
+                    const cfg = status === 'collecting' ? collecting : cfgMap[a.tipo];
+
+                    // Demora: extract estimated time from plato text
+                    const delayMatch = a.plato.match(/(\d+)\s*min/);
+                    const delayMin = delayMatch ? delayMatch[1] : '?';
+                    const platoPrincipal = a.plato.split(' · ')[0];
+
+                    return (
+                      <div key={a.id} className="card" style={{
+                        padding:0, overflow:'hidden',
+                        borderColor: status === 'collecting' ? 'var(--blue)' : a.urgente ? cfg.color : 'var(--gray-200)',
+                        borderWidth: (status === 'collecting' || a.urgente) ? '2px' : '1.5px',
+                      }}>
+                        {/* Type badge row */}
+                        <div style={{
+                          background: cfg.bg, color: cfg.color,
+                          padding:'7px 12px', display:'flex', alignItems:'center', gap:8,
+                          fontSize:10.5, fontWeight:700, letterSpacing:'.5px',
+                        }}>
+                          <Icon name={cfg.icon} size={13} strokeWidth={2.5}/>
+                          {cfg.label}
+                          {/* Live timer */}
+                          <span style={{
+                            marginLeft:'auto', fontSize:10, fontWeight:600,
+                            fontFamily:'var(--mono)', color: timerColor,
+                            display:'flex', alignItems:'center', gap:4,
+                          }}>
+                            {isLate && <span style={{
+                              width:6, height:6, borderRadius:3, background:'var(--accent)',
+                              display:'inline-block', animation:'pulse-dot 1.2s infinite',
+                            }}/>}
+                            {timerText}
+                          </span>
+                        </div>
+
+                        <div style={{padding:'10px 14px'}}>
+                          {/* Plato info */}
+                          <div style={{fontSize:13.5, fontWeight:600, color:'var(--black)', lineHeight:1.3, marginBottom:4}}>
+                            {platoPrincipal}
+                          </div>
+
+                          {/* Demora: mensaje para el cliente */}
+                          {a.tipo === 'demora' && status === 'pending' && (
+                            <div style={{
+                              margin:'8px 0', padding:'8px 10px',
+                              background:'var(--amber-soft)', borderRadius:'var(--radius-sm)',
+                              fontSize:11.5, color:'var(--amber)', lineHeight:1.5,
+                              fontStyle:'italic',
+                            }}>
+                              "Su {platoPrincipal.toLowerCase()} estará listo en aprox. {delayMin} min. Disculpe las molestias."
+                            </div>
+                          )}
+
+                          {/* Rotura: mensaje */}
+                          {a.tipo === 'rotura' && status === 'pending' && (
+                            <div style={{
+                              margin:'8px 0', padding:'8px 10px',
+                              background:'var(--accent-soft)', borderRadius:'var(--radius-sm)',
+                              fontSize:11.5, color:'var(--accent)', lineHeight:1.5,
+                              fontStyle:'italic',
+                            }}>
+                              "Lo sentimos, {platoPrincipal.toLowerCase()} no está disponible hoy. ¿Puedo ofrecerle una alternativa?"
+                            </div>
+                          )}
+
+                          {/* Actions */}
+                          <div className="row" style={{gap:8, marginTop: a.tipo !== 'listo' && status === 'pending' ? 8 : 10}}>
+                            <button className="btn btn-ghost btn-sm" style={{flex:1}}
+                              onClick={() => {
+                                const t = TABLES.find(t => t.name === a.mesa);
+                                setBellOpen(false);
+                                if (t) setSelectedId(t.id);
+                              }}>
+                              Ver mesa
+                            </button>
+
+                            {a.tipo === 'listo' && status === 'pending' && (
+                              <button className="btn btn-sm" style={{
+                                flex:1.3, background:'var(--black)', color:'white', border:'none',
+                                display:'flex', alignItems:'center', justifyContent:'center', gap:5,
+                              }}
+                                onClick={() => setAvStatus(a.id, 'collecting')}>
+                                En camino
+                              </button>
+                            )}
+
+                            {a.tipo === 'listo' && status === 'collecting' && (
+                              <button className="btn btn-sm" style={{
+                                flex:1.3, background:'var(--green)', color:'white', border:'none',
+                                display:'flex', alignItems:'center', justifyContent:'center', gap:5,
+                              }}
+                                onClick={() => { setAvStatus(a.id, 'done'); toast(`${platoPrincipal} servido ✓`); }}>
+                                <Icon name="check" size={13}/> Servido
+                              </button>
+                            )}
+
+                            {a.tipo === 'demora' && status === 'pending' && (
+                              <button className="btn btn-sm" style={{
+                                flex:1.4, background:'var(--amber)', color:'white', border:'none',
+                                display:'flex', alignItems:'center', justifyContent:'center', gap:5,
+                              }}
+                                onClick={() => { setAvStatus(a.id, 'done'); toast('Cliente informado'); }}>
+                                <Icon name="check" size={13}/> Cliente informado
+                              </button>
+                            )}
+
+                            {a.tipo === 'rotura' && status === 'pending' && (
+                              <button className="btn btn-sm" style={{
+                                flex:1.3, background:'var(--accent)', color:'white', border:'none',
+                                display:'flex', alignItems:'center', justifyContent:'center', gap:5,
+                              }}
+                                onClick={() => { setAvStatus(a.id, 'done'); toast('Anotado · ofrece alternativa'); }}>
+                                <Icon name="check" size={13}/> Informado
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <style>{`
+          @keyframes pulse-dot {
+            0%,100% { opacity:1; transform:scale(1); }
+            50% { opacity:.3; transform:scale(1.8); }
+          }
+        `}</style>
+      </Sheet>
     </>
   );
 }
@@ -1991,7 +2578,7 @@ function StatPill({ label, value, dotClass }) {
   );
 }
 
-function MesaCard({ t, groupTables, selected, mergeMode, mergeSelected, onClick }) {
+function MesaCard({ t, groupTables, selected, mergeMode, mergeSelected, avisoInfo, onClick }) {
   const { OrderStatus } = window.YDATA;
   const isOccupied = t.occupied && t.status === OrderStatus.OPEN;
   const isCobrar = t.status === OrderStatus.TO_CHARGE;
@@ -2010,8 +2597,27 @@ function MesaCard({ t, groupTables, selected, mergeMode, mergeSelected, onClick 
   const totalCents = isMerged ? groupTables.reduce((s, x) => s + (x.remaining_total || 0), 0) : t.remaining_total;
   const totalDiners = isMerged ? groupTables.reduce((s, x) => s + (x.diners || 0), 0) : t.diners;
   const name = isMerged ? groupTables.map(x => x.name).join('+') : t.name;
+
+  const avisoBorderStyle = (() => {
+    if (!avisoInfo || mergeMode) return {};
+    const key = avisoInfo.status === 'collecting' ? 'collecting' : avisoInfo.tipo;
+    const borderColor = {
+      listo:      '#1A9E5A',
+      demora:     '#E89E1A',
+      rotura:     '#FF4D4D',
+      collecting: '#1A6FE8',
+    }[key];
+    // urgent = faster ping (1.4s), normal = slower (2.2s), collecting = slowest (3s calm)
+    const duration = avisoInfo.urgente ? '1.4s' : key === 'collecting' ? '3s' : '2.2s';
+    return {
+      borderColor,
+      borderWidth: '2px',
+      animation: `sonar-${key} ${duration} ease-out infinite`,
+    };
+  })();
+
   return (
-    <button onClick={onClick} className={classes}>
+    <button onClick={onClick} className={classes} style={avisoBorderStyle}>
       <div style={{
         fontFamily: 'var(--mono)', fontSize: name.length > 4 ? 14 : 20,
         fontWeight: 600, lineHeight: 1,
@@ -2086,7 +2692,7 @@ function MesaCard({ t, groupTables, selected, mergeMode, mergeSelected, onClick 
 // ════════════════════════════════════════════════════════
 // Detail sheet inner — pedido + acciones
 // ════════════════════════════════════════════════════════
-function MesaDetail({ mesa, onNuevaComanda, onAbrirMesa, onCerrarCuenta, onCobrar, onMenuAction, toast }) {
+function MesaDetail({ mesa, lineStatuses, onNuevaComanda, onAbrirMesa, onCerrarCuenta, onCobrar, onMenuAction, toast }) {
   const { OrderStatus, PEDIDO_T3_LINES, ZONES } = window.YDATA;
   const lines = mesa.occupied ? PEDIDO_T3_LINES : [];
   const subtotal = lines.reduce((s, l) => s + (l.price + (l.modifiers||[]).reduce((a,m)=>a+m.price,0)) * l.quantity, 0);
@@ -2200,6 +2806,7 @@ function MesaDetail({ mesa, onNuevaComanda, onAbrirMesa, onCerrarCuenta, onCobra
         {lines.map((l, i) => (
           <LineRow key={l.id} l={l}
             last={i === lines.length - 1}
+            kdsStatus={lineStatuses?.[l.id]}
             onClick={() => setLineDetail(l)}
           />
         ))}
@@ -2251,20 +2858,24 @@ function MesaDetail({ mesa, onNuevaComanda, onAbrirMesa, onCerrarCuenta, onCobra
   );
 }
 
-function LineRow({ l, last, onClick }) {
+function LineRow({ l, last, kdsStatus, onClick }) {
   const hasModifiers = (l.modifiers || []).length > 0;
-  const statusTag = l.status === 'servido' ? {tone:'green', t:'Servido'}
-                  : l.status === 'enviado' ? {tone:'blue', t:'En cocina'}
+  const effectiveStatus = kdsStatus || l.status;
+  const statusTag = effectiveStatus === 'servido' ? {tone:'green', t:'Servido'}
+                  : effectiveStatus === 'enviado' ? {tone:'blue', t:'En cocina'}
                   : {tone:'amber', t:'Pendiente'};
+  const kdsUpdated = kdsStatus === 'servido' && l.status !== 'servido';
   return (
     <button onClick={onClick} style={{
       width: '100%',
       display: 'grid', gridTemplateColumns: '22px 1fr auto',
       gap: 10, padding: '11px 14px',
       borderBottom: last ? 'none' : '1px solid var(--gray-100)',
-      background: 'var(--white)', border: 0,
+      background: kdsUpdated ? 'rgba(26,158,90,0.04)' : 'var(--white)',
+      border: 0,
       cursor: 'pointer', textAlign: 'left',
       fontFamily: 'var(--font)',
+      transition: 'background 0.3s',
     }}>
       <div className="mono" style={{
         fontSize: 13, fontWeight: 600, color: 'var(--black)',
@@ -2276,6 +2887,16 @@ function LineRow({ l, last, onClick }) {
         </div>
         <div className="row" style={{gap: 5, marginTop: 3, flexWrap:'wrap'}}>
           <Tag tone={statusTag.tone}>{statusTag.t}</Tag>
+          {kdsUpdated && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 3,
+              fontSize: 9.5, fontWeight: 700, color: '#1A9E5A',
+              background: 'rgba(26,158,90,0.1)', borderRadius: 4,
+              padding: '1px 5px', letterSpacing: '0.03em',
+            }}>
+              ● KDS
+            </span>
+          )}
           {l.variant_name && <Tag tone="gray">{l.variant_name}</Tag>}
           {l.punto && <Tag tone="red">{l.punto}</Tag>}
           {hasModifiers && (
@@ -2526,7 +3147,8 @@ function TransferForm({ fromMesa, onConfirm }) {
 }
 
 Object.assign(window, {
-  ScreenLogin, ScreenMesas, MesaCard, MesaDetail, LineRow, LineDetailContent, ModRow,
+  ScreenOperador, ScreenEmailLogin, ScreenLogin,
+  ScreenMesas, MesaCard, MesaDetail, LineRow, LineDetailContent, ModRow,
   AbrirMesaForm, CerrarCuentaForm, EditDinersForm, TransferForm, StatPill,
 });
   </script>
@@ -3923,83 +4545,457 @@ Object.assign(window, {
 // screens-tabs.jsx — Pedidos histórico, Cocina (avisos), Perfil
 
 const { useState: useStateD, useMemo: useMemoD, useEffect: useEffectD } = React;
+const fmt = window.formatCentsEur;
 
 // ════════════════════════════════════════════════════════
-// PEDIDOS — histórico de comandas enviadas en la sesión
+// PEDIDOS — vista agrupada por acción
 // ════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+// CAJA — sesión de caja, movimientos e histórico
+// ════════════════════════════════════════════════════════
+function ScreenCaja({ nav, toast }) {
+  const { CASH_SESSION: s, CASH_MOVEMENTS: movements, CLOSED_SESSIONS } = window.YDATA;
+  const [showMov, setShowMov] = useStateD(false);
+  const [showCierre, setShowCierre] = useStateD(false);
+  const [showHistorico, setShowHistorico] = useStateD(false);
+  const [movType, setMovType] = useStateD('in');
+  const [movAmount, setMovAmount] = useStateD(0);
+  const [movDesc, setMovDesc] = useStateD('');
+
+  const openedHour = (() => {
+    try { return new Date(s.opened_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }); }
+    catch { return '18:00'; }
+  })();
+
+  const totalPayments = s.total_cash_payments + s.total_card_payments + s.total_bizum_payments;
+  const cashPct   = totalPayments ? Math.round(s.total_cash_payments / totalPayments * 100) : 0;
+  const cardPct   = totalPayments ? Math.round(s.total_card_payments / totalPayments * 100) : 0;
+  const bizumPct  = 100 - cashPct - cardPct;
+
+  return (
+    <>
+      {/* Topbar */}
+      <div className="tb">
+        <div className="tb-title">
+          <span className="tb-title-main">Caja</span>
+          <span className="tb-title-sub">Sesión activa · {s.device_id}</span>
+        </div>
+        <button className="tb-action" onClick={() => toast('Imprimiendo arqueo parcial…')}>
+          <Icon name="print" size={18}/>
+        </button>
+      </div>
+
+      <div className="content" style={{padding: '10px 12px 24px', display:'flex', flexDirection:'column', gap: 10}}>
+
+        {/* Hero balance card */}
+        <div style={{
+          borderRadius: 'var(--radius-lg)',
+          background: 'var(--black)', color: 'var(--white)',
+          padding: '20px 18px 18px',
+        }}>
+          <div style={{fontSize: 10, opacity:.4, fontWeight:700, letterSpacing:'1.8px',
+            textTransform:'uppercase', marginBottom: 10}}>
+            Saldo esperado
+          </div>
+          <div style={{fontSize: 38, fontWeight: 200, fontFamily:'var(--mono)', letterSpacing:'-1.5px', lineHeight:1}}>
+            {fmt(s.expected_amount)}
+          </div>
+          <div style={{fontSize: 11, opacity:.35, marginTop: 7}}>
+            Abierta a las {openedHour} · {s.operator_name}
+          </div>
+
+          {/* Payment breakdown bars */}
+          <div style={{marginTop: 16}}>
+            <div style={{display:'flex', height: 4, borderRadius: 99, overflow:'hidden', gap: 2}}>
+              <div style={{flex: cashPct,  background: '#1A9E5A'}}/>
+              <div style={{flex: cardPct,  background: '#1A6FE8'}}/>
+              <div style={{flex: bizumPct, background: '#A855F7'}}/>
+            </div>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap: 2, marginTop: 10}}>
+              {[
+                { label:'Efectivo', value: fmt(s.total_cash_payments),  pct: cashPct,  color:'#1A9E5A' },
+                { label:'Tarjeta',  value: fmt(s.total_card_payments),  pct: cardPct,  color:'#1A6FE8' },
+                { label:'Bizum',    value: fmt(s.total_bizum_payments), pct: bizumPct, color:'#A855F7' },
+              ].map(p => (
+                <div key={p.label}>
+                  <div style={{fontSize: 13, fontWeight:600, fontFamily:'var(--mono)',
+                    color: p.color}}>{p.value}</div>
+                  <div style={{fontSize: 10, opacity:.4, marginTop: 2, color:'white'}}>{p.label} · {p.pct}%</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats row */}
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap: 8}}>
+          {[
+            { l:'Tickets', v: String(s.payments_count), mono: true },
+            { l:'Ventas brutas', v: fmt(s.total_sales), mono: true },
+          ].map(x => (
+            <div key={x.l} className="card" style={{padding:'14px 16px'}}>
+              <div style={{fontSize: 20, fontWeight: 400, fontFamily:'var(--mono)',
+                color:'var(--black)', letterSpacing:'-.5px'}}>{x.v}</div>
+              <div style={{fontSize: 11, color:'var(--gray-400)', marginTop: 5}}>{x.l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Fondo + Movimientos */}
+        <div className="card" style={{padding: 0, overflow:'hidden'}}>
+          {/* Fondo row */}
+          <div style={{
+            display:'flex', alignItems:'center', justifyContent:'space-between',
+            padding:'12px 14px',
+            borderBottom: movements.length > 0 ? '1px solid var(--gray-100)' : 'none',
+          }}>
+            <div>
+              <div style={{fontSize:12, color:'var(--gray-400)', marginBottom:2}}>Fondo inicial</div>
+              <div style={{fontSize:15, fontWeight:600, fontFamily:'var(--mono)', color:'var(--black)'}}>
+                {fmt(s.initial_amount_cents)}
+              </div>
+            </div>
+            <div style={{textAlign:'right'}}>
+              <div style={{fontSize:12, color:'var(--gray-400)', marginBottom:2}}>Mov. manuales</div>
+              <div style={{fontSize:13, fontWeight:600, fontFamily:'var(--mono)'}}>
+                <span style={{color:'var(--green)'}}>+{fmt(s.total_in_movements)}</span>
+                <span style={{color:'var(--gray-300)', margin:'0 4px'}}>/</span>
+                <span style={{color:'var(--accent)'}}>−{fmt(s.total_out_movements)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Movements list */}
+          {movements.map((mv, i) => (
+            <div key={mv.id} style={{
+              display:'flex', alignItems:'center', gap: 12,
+              padding:'11px 14px',
+              borderBottom: i < movements.length - 1 ? '1px solid var(--gray-100)' : 'none',
+            }}>
+              <div style={{
+                width:32, height:32, borderRadius:9, flexShrink:0,
+                background: mv.type === 'in' ? 'var(--green-soft)' : 'var(--accent-soft)',
+                display:'flex', alignItems:'center', justifyContent:'center',
+              }}>
+                <Icon name={mv.type === 'in' ? 'arrowUp' : 'arrowDown'} size={14}
+                  color={mv.type === 'in' ? 'var(--green)' : 'var(--accent)'}/>
+              </div>
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{fontSize:13, fontWeight:500, color:'var(--black)',
+                  overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                  {mv.description}
+                </div>
+                <div style={{fontSize:11, color:'var(--gray-400)', marginTop:1}}>
+                  {mv.operator} · {mv.time}
+                </div>
+              </div>
+              <div style={{
+                fontSize:14, fontWeight:700, fontFamily:'var(--mono)', flexShrink:0,
+                color: mv.type === 'in' ? 'var(--green)' : 'var(--accent)',
+              }}>
+                {mv.type === 'in' ? '+' : '−'}{fmt(mv.amount_cents)}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Add movement */}
+        <button className="btn btn-ghost" style={{width:'100%'}}
+          onClick={() => setShowMov(true)}>
+          <Icon name="plus" size={14}/> Nuevo movimiento
+        </button>
+
+        {/* Histórico row */}
+        <button onClick={() => setShowHistorico(true)} style={{
+          display:'flex', alignItems:'center', justifyContent:'space-between',
+          background:'var(--white)', border:'1.5px solid var(--gray-150)',
+          borderRadius:'var(--radius)', padding:'13px 14px',
+          cursor:'pointer', fontFamily:'var(--font)',
+        }}>
+          <div style={{display:'flex', alignItems:'center', gap:10}}>
+            <Icon name="clock" size={16} color="var(--gray-400)"/>
+            <div style={{textAlign:'left'}}>
+              <div style={{fontSize:13, fontWeight:600, color:'var(--black)'}}>Histórico de cierres</div>
+              <div style={{fontSize:11, color:'var(--gray-400)', marginTop:1}}>
+                {CLOSED_SESSIONS.length} sesiones anteriores
+              </div>
+            </div>
+          </div>
+          <Icon name="chevronRight" size={16} color="var(--gray-300)"/>
+        </button>
+
+        {/* Cerrar caja */}
+        <button className="btn" style={{
+          width:'100%', marginTop:4,
+          background:'transparent', border:'1.5px solid var(--gray-200)',
+          color:'var(--gray-500)', fontWeight:600,
+        }} onClick={() => setShowCierre(true)}>
+          <Icon name="lock" size={14}/> Cerrar caja
+        </button>
+
+      </div>
+
+      {/* Nuevo movimiento sheet */}
+      <Sheet open={showMov} onClose={() => { setShowMov(false); setMovAmount(0); setMovDesc(''); }}
+        title="Nuevo movimiento" subtitle="Entrada o salida manual de efectivo">
+        <div style={{display:'flex', gap: 8, marginBottom: 14}}>
+          {[{id:'in',label:'Entrada +'},{id:'out',label:'Salida −'}].map(t => (
+            <button key={t.id} className={`chip ${movType === t.id ? 'active' : ''}`}
+              style={{flex:1, justifyContent:'center'}} onClick={() => setMovType(t.id)}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <AmountDisplay cents={movAmount}
+          label={movType === 'in' ? 'Importe de entrada' : 'Importe de salida'} size="lg"/>
+        <NumpadCents value={movAmount} onChange={setMovAmount}/>
+        <input
+          type="text" placeholder="Descripción (opcional)"
+          value={movDesc} onChange={e => setMovDesc(e.target.value)}
+          style={{
+            width:'100%', height:44, border:'1.5px solid var(--gray-200)',
+            borderRadius:'var(--radius)', padding:'0 12px',
+            fontFamily:'var(--font)', fontSize:14, color:'var(--black)',
+            outline:'none', marginBottom:14, boxSizing:'border-box',
+          }}
+        />
+        <button className="btn btn-dark btn-block" onClick={() => {
+          if (!movAmount) { toast('Introduce un importe'); return; }
+          toast(`${movType === 'in' ? 'Entrada' : 'Salida'} registrada: ${fmt(movAmount)}`);
+          setShowMov(false); setMovAmount(0); setMovDesc('');
+        }}>
+          <Icon name="check" size={14}/> Registrar movimiento
+        </button>
+      </Sheet>
+
+      {/* Cerrar caja sheet */}
+      <Sheet open={showCierre} onClose={() => setShowCierre(false)}
+        title="Cerrar caja" subtitle="Resumen de la sesión actual">
+        <div style={{
+          background:'var(--gray-50)', borderRadius:'var(--radius)', padding:'14px',
+          display:'flex', flexDirection:'column', gap:10, marginBottom:16,
+        }}>
+          {[
+            { l:'Saldo esperado', v: fmt(s.expected_amount), bold:true },
+            { l:'Ventas brutas',  v: fmt(s.total_sales) },
+            { l:'Tickets emitidos', v: String(s.payments_count) },
+            { l:'Efectivo cobrado', v: fmt(s.total_cash_payments) },
+          ].map(x => (
+            <div key={x.l} style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+              <span style={{fontSize:13, color:'var(--gray-500)'}}>{x.l}</span>
+              <span style={{
+                fontSize: x.bold ? 16 : 13, fontWeight: x.bold ? 700 : 500,
+                fontFamily:'var(--mono)', color:'var(--black)',
+              }}>{x.v}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{
+          background:'var(--amber-soft)', borderRadius:'var(--radius-sm)',
+          padding:'10px 12px', marginBottom:16,
+          fontSize:12, color:'var(--amber)', fontWeight:500, lineHeight:1.5,
+        }}>
+          El cierre requiere autorización del administrador y genera el informe Z.
+        </div>
+        <button className="btn btn-dark btn-block" onClick={() => {
+          toast('Solicitud de cierre enviada al administrador');
+          setShowCierre(false);
+        }}>
+          <Icon name="lock" size={14}/> Solicitar cierre de caja
+        </button>
+      </Sheet>
+
+      {/* Histórico sheet */}
+      <Sheet open={showHistorico} onClose={() => setShowHistorico(false)}
+        title="Histórico de cierres" subtitle={`Últimas ${CLOSED_SESSIONS.length} sesiones`}>
+        <div style={{display:'flex', flexDirection:'column', gap: 10}}>
+          {CLOSED_SESSIONS.map(cs => {
+            const hasDiff = cs.discrepancy_cents !== 0;
+            return (
+              <div key={cs.z_report_number} style={{
+                border:'1.5px solid var(--gray-150)', borderRadius:'var(--radius)',
+                overflow:'hidden',
+              }}>
+                {/* Header */}
+                <div style={{
+                  display:'flex', alignItems:'center', justifyContent:'space-between',
+                  padding:'12px 14px',
+                  borderBottom:'1px solid var(--gray-100)',
+                }}>
+                  <div>
+                    <div style={{fontSize:13, fontWeight:700, color:'var(--black)'}}>
+                      Cierre Z-{cs.z_report_number}
+                    </div>
+                    <div style={{fontSize:11, color:'var(--gray-400)', marginTop:2}}>
+                      {cs.operator_name} · {cs.tickets} tickets
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize:10, fontWeight:700, letterSpacing:'.5px',
+                    color: hasDiff ? 'var(--amber)' : 'var(--green)',
+                    background: hasDiff ? 'var(--amber-soft)' : 'var(--green-soft)',
+                    padding:'3px 8px', borderRadius:100,
+                  }}>
+                    {hasDiff ? 'DESCUADRE' : 'CUADRADO'}
+                  </span>
+                </div>
+                {/* Stats */}
+                <div style={{
+                  display:'grid', gridTemplateColumns:'1fr 1fr', gap:0,
+                  padding:'10px 14px 12px',
+                }}>
+                  {[
+                    { l:'Ventas', v: fmt(cs.total_sales) },
+                    { l:'Saldo final', v: fmt(cs.final_amount_cents) },
+                    { l:'Efectivo', v: fmt(cs.total_cash) },
+                    { l:'Tarjeta+Bizum', v: fmt(cs.total_card + cs.total_bizum) },
+                  ].map(x => (
+                    <div key={x.l} style={{paddingBottom:6}}>
+                      <div style={{fontSize:10.5, color:'var(--gray-400)'}}>{x.l}</div>
+                      <div style={{fontSize:13, fontWeight:600, fontFamily:'var(--mono)',
+                        color:'var(--black)', marginTop:2}}>{x.v}</div>
+                    </div>
+                  ))}
+                </div>
+                {hasDiff && (
+                  <div style={{
+                    margin:'0 14px 12px', padding:'7px 10px', borderRadius:8,
+                    background:'var(--amber-soft)', fontSize:11, color:'var(--amber)', fontWeight:500,
+                  }}>
+                    {cs.discrepancy_cents > 0 ? '+' : ''}{fmt(Math.abs(cs.discrepancy_cents))}
+                    {cs.diffReason ? ` · ${cs.diffReason}` : ''}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </Sheet>
+    </>
+  );
+}
+
+
 function ScreenPedidos({ nav, toast }) {
-  const { PEDIDOS_INICIAL } = window.YDATA;
+  const { ACTIVE_ORDERS, AVISOS_COCINA, OrderStatus } = window.YDATA;
   const [filter, setFilter] = useStateD('todos');
-  const [search, setSearch] = useStateD('');
 
-  const filtros = [
-    { id: 'todos', label: 'Todos' },
-    { id: 'cocina', label: 'En cocina' },
-    { id: 'parcial', label: 'Parciales' },
-    { id: 'servido', label: 'Servidos' },
-    { id: 'pagado', label: 'Pagados' },
+  const avisosMap = useMemoD(() => {
+    const map = {};
+    AVISOS_COCINA.forEach(a => { (map[a.mesa] = map[a.mesa] || []).push(a); });
+    return map;
+  }, []);
+
+  const getAvisos = (name) => {
+    const direct = avisosMap[name];
+    if (direct) return direct;
+    return name.split('+').flatMap(p => avisosMap[p] || []);
+  };
+
+  const isAtencion = (o) =>
+    o.status === OrderStatus.TO_CHARGE || getAvisos(o.table_name).length > 0;
+
+  const priority = (o) => {
+    const av = getAvisos(o.table_name);
+    if (o.status === OrderStatus.TO_CHARGE && av.some(a => a.tipo === 'listo')) return 0;
+    if (o.status === OrderStatus.TO_CHARGE) return 1;
+    if (av.some(a => a.tipo === 'listo'))   return 2;
+    if (av.some(a => a.tipo === 'rotura'))  return 3;
+    if (av.some(a => a.tipo === 'demora'))  return 4;
+    return 99;
+  };
+
+  const FILTERS = [
+    { id: 'todos',   label: 'Todos',   count: ACTIVE_ORDERS.length },
+    { id: 'cobrar',  label: 'Cobrar',  count: ACTIVE_ORDERS.filter(o => o.status === OrderStatus.TO_CHARGE).length },
+    { id: 'cocina',  label: 'Cocina',  count: ACTIVE_ORDERS.filter(o => getAvisos(o.table_name).length > 0).length },
+    { id: 'activos', label: 'Activos', count: ACTIVE_ORDERS.filter(o => !isAtencion(o)).length },
   ];
 
-  const filtered = PEDIDOS_INICIAL.filter(p => {
-    if (filter === 'pagado' && !p.pagado) return false;
-    if (filter === 'cocina' && p.estado !== 'cocina') return false;
-    if (filter === 'parcial' && p.estado !== 'parcial') return false;
-    if (filter === 'servido' && p.estado !== 'servido') return false;
-    if (search && !p.id.includes(search) && !p.mesa.includes(search.toUpperCase())) return false;
-    return true;
-  });
+  const sorted = useMemoD(() => [...ACTIVE_ORDERS].sort((a, b) => priority(a) - priority(b)), []);
 
-  const stats = {
-    total: PEDIDOS_INICIAL.length,
-    pagados: PEDIDOS_INICIAL.filter(p => p.pagado).length,
-    importe: PEDIDOS_INICIAL.reduce((s,p) => s + p.total, 0),
-  };
+  const filtered = useMemoD(() => {
+    if (filter === 'cobrar')  return sorted.filter(o => o.status === OrderStatus.TO_CHARGE);
+    if (filter === 'cocina')  return sorted.filter(o => getAvisos(o.table_name).length > 0);
+    if (filter === 'activos') return sorted.filter(o => !isAtencion(o));
+    return sorted;
+  }, [filter]);
+
+  const showSections = filter === 'todos';
+  const atencionList = showSections ? filtered.filter(isAtencion)          : [];
+  const servicioList = showSections ? filtered.filter(o => !isAtencion(o)) : [];
+  const flatList     = showSections ? [] : filtered;
+  const totalImporte = ACTIVE_ORDERS.reduce((s, o) => s + o.total, 0);
 
   return (
     <>
       <div className="tb">
         <div className="tb-title">
-          <span className="tb-title-main">Mis pedidos</span>
-          <span className="tb-title-sub">Turno cena · {stats.total} comandas · {fmt(stats.importe)}</span>
-        </div>
-        <button className="tb-action"><Icon name="filter" size={18}/></button>
-      </div>
-
-      {/* Search */}
-      <div style={{padding:'10px 12px', background:'var(--white)',
-        borderBottom:'1px solid var(--gray-200)', flexShrink: 0}}>
-        <div style={{display:'flex', alignItems:'center', gap: 8,
-          background:'var(--gray-100)', borderRadius: 10, padding:'8px 12px'}}>
-          <Icon name="search" size={14} color="var(--gray-400)"/>
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Buscar nº ticket o mesa…"
-            style={{flex:1, border:'none', background:'transparent',
-              outline:'none', fontFamily:'var(--font)', fontSize: 13, color:'var(--black)'}}/>
+          <span className="tb-title-main">Pedidos</span>
+          <span className="tb-title-sub">{ACTIVE_ORDERS.length} mesas activas · {fmt(totalImporte)}</span>
         </div>
       </div>
 
-      {/* Filter chips */}
-      <div style={{display:'flex', gap: 6, padding:'10px 12px',
+      {/* Filtros */}
+      <div style={{
+        display:'flex', gap:6, padding:'9px 12px',
         background:'var(--white)', borderBottom:'1px solid var(--gray-200)',
-        overflowX:'auto', flexShrink: 0}}>
-        {filtros.map(f => (
+        overflowX:'auto', flexShrink:0,
+      }}>
+        {FILTERS.map(f => (
           <button key={f.id} className={`chip ${filter === f.id ? 'active' : ''}`}
-            onClick={() => setFilter(f.id)}>{f.label}</button>
+            style={{flexShrink:0}}
+            onClick={() => setFilter(f.id)}>
+            {f.label}
+            <span className="mono" style={{fontSize:10, opacity: filter === f.id ? .65 : .45}}>
+              {f.count}
+            </span>
+          </button>
         ))}
       </div>
 
-      <div className="content" style={{padding: '12px'}}>
-        {filtered.length === 0 ? (
-          <div style={{textAlign:'center', padding:'40px 20px', color:'var(--gray-400)'}}>
-            <div style={{fontSize: 32, marginBottom: 8}}>📋</div>
-            <div style={{fontSize:13}}>Sin pedidos que mostrar</div>
+      <div className="content" style={{padding:'14px 12px', display:'flex', flexDirection:'column', gap:14}}>
+
+        {/* Atención section */}
+        {showSections && atencionList.length > 0 && (
+          <div>
+            <div className="section-title">Requieren atención</div>
+            <div style={{display:'flex', flexDirection:'column', gap:8}}>
+              {atencionList.map(o => (
+                <PedidoCardFull key={o.order_id} o={o} avisos={getAvisos(o.table_name)}
+                  onClick={() => nav.push({ name: 'pedido-detail', order: o })}/>
+              ))}
+            </div>
           </div>
-        ) : (
-          <div style={{display:'flex', flexDirection:'column', gap: 8}}>
-            {filtered.map(p => (
-              <PedidoCard key={p.id} p={p}
-                onClick={() => toast(`Pedido ${p.id} · ${p.mesa}`)}/>
+        )}
+
+        {/* En servicio section */}
+        {servicioList.length > 0 && (
+          <div>
+            {showSections && <div className="section-title">En servicio</div>}
+            <div className="card" style={{padding:0, overflow:'hidden'}}>
+              {servicioList.map((o, i) => (
+                <PedidoRow key={o.order_id} o={o}
+                  last={i === servicioList.length - 1}
+                  onClick={() => nav.push({ name: 'pedido-detail', order: o })}/>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Lista plana para filtros distintos de todos */}
+        {flatList.length > 0 && (
+          <div style={{display:'flex', flexDirection:'column', gap:8}}>
+            {flatList.map(o => (
+              <PedidoCardFull key={o.order_id} o={o} avisos={getAvisos(o.table_name)}
+                onClick={() => nav.push({ name: 'pedido-detail', order: o })}/>
             ))}
+          </div>
+        )}
+
+        {filtered.length === 0 && (
+          <div style={{textAlign:'center', padding:'48px 0', color:'var(--gray-300)'}}>
+            <div style={{fontSize:13, fontWeight:500}}>Sin pedidos para este filtro</div>
           </div>
         )}
       </div>
@@ -4007,44 +5003,285 @@ function ScreenPedidos({ nav, toast }) {
   );
 }
 
-function PedidoCard({ p, onClick }) {
-  const estados = {
-    cocina:  { c: 'tag-amber', t: 'En cocina', icon: 'flame' },
-    parcial: { c: 'tag-blue',  t: 'Parcial', icon: 'clock' },
-    servido: { c: 'tag-green', t: 'Servido', icon: 'check' },
-  };
-  const e = estados[p.estado];
+/* Card completa — pedidos con alertas o vistas filtradas */
+function PedidoCardFull({ o, avisos, onClick }) {
+  const { OrderStatus } = window.YDATA;
+  const cobrar  = o.status === OrderStatus.TO_CHARGE;
+  const listos  = avisos.filter(a => a.tipo === 'listo');
+  const roturas = avisos.filter(a => a.tipo === 'rotura');
+  const demoras = avisos.filter(a => a.tipo === 'demora');
+  const hasAlerts = cobrar || avisos.length > 0;
+
   return (
-    <button onClick={onClick} className="card tap" style={{
-      padding: '12px 14px',
-      display: 'flex', alignItems: 'center', gap: 12,
-      textAlign: 'left',
+    <button onClick={onClick} className="card tap"
+      style={{padding:0, overflow:'hidden', width:'100%', textAlign:'left', display:'block'}}>
+
+      {/* Main row */}
+      <div style={{display:'flex', alignItems:'center', gap:12, padding:'13px 14px'}}>
+        {/* Mesa badge */}
+        <div style={{
+          width:44, height:44, borderRadius:10, flexShrink:0,
+          background:'var(--gray-100)',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          fontFamily:'var(--mono)', fontWeight:700, color:'var(--black)',
+          fontSize: o.table_name.length > 3 ? 10 : 14, lineHeight:1.1, textAlign:'center',
+        }}>{o.table_name}</div>
+
+        {/* Info */}
+        <div style={{flex:1, minWidth:0}}>
+          <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:8}}>
+            <div style={{minWidth:0}}>
+              <div style={{display:'flex', alignItems:'center', gap:6, flexWrap:'wrap'}}>
+                <span style={{fontSize:14, fontWeight:600, color:'var(--black)'}}>{o.zone}</span>
+                {o.merged && <span className="tag tag-blue" style={{padding:'1px 6px', fontSize:9}}>UNIDA</span>}
+              </div>
+              <div style={{fontSize:11.5, color:'var(--gray-500)', marginTop:3}}>
+                <span className="mono" style={{fontWeight:600, color:'var(--gray-600)'}}>{o.camarero}</span>
+                {' · '}{o.diners} pax · {o.lineas} líneas · {o.opened_at}
+              </div>
+            </div>
+            <div style={{textAlign:'right', flexShrink:0}}>
+              <div className="mono" style={{fontSize:15, fontWeight:700, color:'var(--black)'}}>{fmt(o.total)}</div>
+              <Icon name="chevronRight" size={13} color="var(--gray-300)"/>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Alerts */}
+      {hasAlerts && (
+        <div style={{
+          display:'flex', flexWrap:'wrap', gap:5,
+          padding:'9px 14px 12px',
+          borderTop:'1px solid var(--gray-100)',
+        }}>
+          {cobrar && (
+            <span className="tag tag-red"><Icon name="cash" size={10}/> Cobrar cuenta</span>
+          )}
+          {listos.length > 0 && (
+            <span className="tag tag-green">
+              <Icon name="check" size={10}/>
+              {listos.length === 1 ? 'Plato listo' : `${listos.length} platos listos`}
+            </span>
+          )}
+          {roturas.length > 0 && (
+            <span className="tag tag-red"><Icon name="alert" size={10}/> Rotura de stock</span>
+          )}
+          {demoras.length > 0 && (
+            <span className="tag tag-amber"><Icon name="clock" size={10}/> Demora en cocina</span>
+          )}
+        </div>
+      )}
+    </button>
+  );
+}
+
+/* Fila compacta — "En servicio" dentro de card agrupada */
+function PedidoRow({ o, last, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      display:'flex', alignItems:'center', gap:12, padding:'12px 14px',
+      borderBottom: last ? 'none' : '1px solid var(--gray-100)',
+      background:'var(--white)', border:0, cursor:'pointer',
+      textAlign:'left', fontFamily:'var(--font)', width:'100%',
     }}>
       <div style={{
-        width: 40, height: 40, borderRadius: 10,
-        background: 'var(--gray-100)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 600,
-        color: 'var(--black)',
-        flexShrink: 0,
-      }}>{p.mesa}</div>
-      <div style={{flex: 1, minWidth: 0}}>
-        <div className="row" style={{gap: 6}}>
-          <span className="mono" style={{fontSize: 12, fontWeight: 600, color:'var(--black)'}}>{p.id}</span>
-          <span className={`tag ${e.c}`}>
-            <Icon name={e.icon} size={9}/> {e.t}
-          </span>
-          {p.pagado && <span className="tag tag-dark">Pagado · {p.metodo}</span>}
+        width:38, height:38, borderRadius:9, flexShrink:0,
+        background:'var(--gray-100)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        fontFamily:'var(--mono)', fontWeight:700, color:'var(--black)',
+        fontSize: o.table_name.length > 3 ? 9 : 12, lineHeight:1.1, textAlign:'center',
+      }}>{o.table_name}</div>
+      <div style={{flex:1, minWidth:0}}>
+        <div style={{fontSize:13, fontWeight:600, color:'var(--black)', display:'flex', alignItems:'center', gap:6}}>
+          {o.zone}
+          {o.merged && <span className="tag tag-blue" style={{padding:'1px 5px', fontSize:9}}>UNIDA</span>}
         </div>
-        <div style={{fontSize: 11, color: 'var(--gray-500)', marginTop: 3}}>
-          {p.zona} · {p.hora} · {p.lineas} líneas
+        <div style={{fontSize:11.5, color:'var(--gray-500)', marginTop:2}}>
+          <span className="mono" style={{fontWeight:600, color:'var(--gray-600)'}}>{o.camarero}</span>
+          {' · '}{o.diners} pax · {o.lineas} líneas · {o.opened_at}
         </div>
       </div>
-      <div style={{textAlign: 'right'}}>
-        <div className="mono" style={{fontSize: 14, fontWeight: 600, color: 'var(--black)'}}>{fmt(p.total)}</div>
-        <Icon name="chevronRight" size={14} color="var(--gray-300)"/>
+      <div style={{textAlign:'right', flexShrink:0}}>
+        <div className="mono" style={{fontSize:14, fontWeight:600, color:'var(--black)'}}>{fmt(o.total)}</div>
+        <Icon name="chevronRight" size={13} color="var(--gray-300)"/>
       </div>
     </button>
+  );
+}
+
+
+// ════════════════════════════════════════════════════════
+// PEDIDO DETAIL — vista específica de un pedido
+// ════════════════════════════════════════════════════════
+function ScreenPedidoDetail({ order: o, nav, toast }) {
+  const { PEDIDO_T3_LINES, AVISOS_COCINA, OrderStatus } = window.YDATA;
+  const cobrar = o.status === OrderStatus.TO_CHARGE;
+
+  // Only T3 has real line data for the demo
+  const lines = o.table_name === 'T3' ? PEDIDO_T3_LINES : null;
+
+  // Active avisos for this order
+  const avisos = AVISOS_COCINA.filter(a => {
+    if (a.mesa === o.table_name) return true;
+    const parts = o.table_name.split('+');
+    return parts.includes(a.mesa);
+  });
+
+  const tipoConfig = {
+    listo:  { color:'var(--green)',  bg:'var(--green-soft)',  icon:'check',  label:'Listo en cocina' },
+    demora: { color:'var(--amber)',  bg:'var(--amber-soft)',  icon:'clock',  label:'Demora en cocina' },
+    rotura: { color:'var(--accent)', bg:'var(--accent-soft)', icon:'alert',  label:'Rotura de stock' },
+  };
+
+  return (
+    <div className="pda-screen">
+      {/* Topbar */}
+      <div className="tb">
+        <button className="tb-back" onClick={() => nav.pop()}>
+          <Icon name="chevronLeft" size={20}/>
+        </button>
+        <div className="tb-title">
+          <span className="tb-title-main">{o.table_name}</span>
+          <span className="tb-title-sub">{o.zone} · abierta {o.opened_at} · {o.diners} comensales</span>
+        </div>
+        {cobrar && (
+          <button className="tb-action" onClick={() => nav.push({ name: 'cobro', mesa: { name: o.table_name, total: o.total } })}>
+            <Icon name="cash" size={18}/>
+          </button>
+        )}
+      </div>
+
+      <div className="content" style={{padding:'12px', display:'flex', flexDirection:'column', gap:10}}>
+
+        {/* Status hero */}
+        <div style={{
+          borderRadius:'var(--radius)',
+          background: cobrar ? 'var(--black)' : 'var(--gray-50)',
+          border: cobrar ? 'none' : '1.5px solid var(--gray-150)',
+          padding:'14px 16px',
+          display:'flex', alignItems:'center', justifyContent:'space-between',
+        }}>
+          <div>
+            <div style={{
+              fontSize:11, fontWeight:600, letterSpacing:'1px', textTransform:'uppercase',
+              color: cobrar ? 'rgba(255,255,255,.4)' : 'var(--gray-400)', marginBottom:4,
+            }}>
+              {cobrar ? 'Pendiente de cobro' : 'En servicio'}
+            </div>
+            <div style={{
+              fontSize:28, fontWeight:300, fontFamily:'var(--mono)', letterSpacing:'-1px',
+              color: cobrar ? 'var(--white)' : 'var(--black)',
+            }}>
+              {fmt(o.total)}
+            </div>
+            <div style={{fontSize:11, marginTop:4,
+              color: cobrar ? 'rgba(255,255,255,.35)' : 'var(--gray-400)'}}>
+              {o.lineas} líneas · {o.camarero}
+            </div>
+          </div>
+          {cobrar && (
+            <button className="btn" style={{
+              background:'var(--white)', color:'var(--black)',
+              border:'none', fontWeight:700, fontSize:13,
+              padding:'10px 16px', flexShrink:0,
+            }} onClick={() => nav.push({ name: 'cobro', mesa: { name: o.table_name, total: o.total } })}>
+              Cobrar
+            </button>
+          )}
+        </div>
+
+        {/* KDS alerts */}
+        {avisos.length > 0 && (
+          <div style={{display:'flex', flexDirection:'column', gap:6}}>
+            {avisos.map(a => {
+              const cfg = tipoConfig[a.tipo];
+              return (
+                <div key={a.id} style={{
+                  display:'flex', alignItems:'center', gap:10,
+                  background: cfg.bg, borderRadius:'var(--radius-sm)', padding:'10px 12px',
+                }}>
+                  <Icon name={cfg.icon} size={14} color={cfg.color}/>
+                  <div style={{flex:1, minWidth:0}}>
+                    <div style={{fontSize:12, fontWeight:600, color:cfg.color}}>{cfg.label}</div>
+                    <div style={{fontSize:11, color:cfg.color, opacity:.8, marginTop:1}}>
+                      {a.plato} · {a.hora}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Lines */}
+        {lines ? (
+          <>
+            <div style={{fontSize:11, fontWeight:700, letterSpacing:'1px',
+              textTransform:'uppercase', color:'var(--gray-400)'}}>
+              Líneas del pedido
+            </div>
+            <div className="card" style={{padding:0, overflow:'hidden'}}>
+              {lines.map((l, i) => (
+                <div key={l.id} style={{
+                  display:'grid', gridTemplateColumns:'22px 1fr auto',
+                  gap:10, padding:'10px 14px',
+                  borderBottom: i < lines.length - 1 ? '1px solid var(--gray-100)' : 'none',
+                  background:'var(--white)',
+                }}>
+                  <div style={{fontSize:13, fontWeight:600, fontFamily:'var(--mono)',
+                    color:'var(--gray-500)', textAlign:'right', paddingTop:1}}>{l.quantity}</div>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontSize:13, fontWeight:500, color:'var(--black)', lineHeight:1.25}}>
+                      {l.product_name}
+                    </div>
+                    <div style={{marginTop:3}}>
+                      {l.status === 'servido'
+                        ? <span style={{fontSize:10, fontWeight:700, color:'var(--green)',
+                            background:'var(--green-soft)', borderRadius:4, padding:'1px 6px'}}>Servido</span>
+                        : l.status === 'enviado'
+                        ? <span style={{fontSize:10, fontWeight:700, color:'var(--blue)',
+                            background:'var(--blue-soft)', borderRadius:4, padding:'1px 6px'}}>En cocina</span>
+                        : <span style={{fontSize:10, fontWeight:700, color:'var(--amber)',
+                            background:'var(--amber-soft)', borderRadius:4, padding:'1px 6px'}}>Pendiente</span>
+                      }
+                    </div>
+                    {l.nota && (
+                      <div style={{fontSize:10.5, color:'var(--gray-400)', marginTop:2, fontStyle:'italic'}}>
+                        "{l.nota}"
+                      </div>
+                    )}
+                  </div>
+                  <div style={{fontSize:13, fontWeight:500, fontFamily:'var(--mono)',
+                    color:'var(--black)', textAlign:'right', whiteSpace:'nowrap'}}>
+                    {fmt(l.price * l.quantity)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="card" style={{padding:'20px 14px', textAlign:'center'}}>
+            <div style={{fontSize:13, color:'var(--gray-400)'}}>
+              {o.lineas} líneas · detalle en terminal de caja
+            </div>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:4}}>
+          <button className="btn btn-ghost" onClick={() => {
+            nav.push({ name: 'comanda', mesa: { name: o.table_name, zone_id: 'z-terraza' } });
+          }}>
+            <Icon name="plus" size={13}/> Nueva comanda
+          </button>
+          <button className="btn btn-ghost" onClick={() => toast('Ticket impreso')}>
+            <Icon name="print" size={13}/> Imprimir
+          </button>
+        </div>
+
+      </div>
+    </div>
   );
 }
 
@@ -4204,7 +5441,9 @@ function AvisoCard({ a, onAck, onGoMesa }) {
 // PERFIL — usuario, turno, caja, ajustes
 // ════════════════════════════════════════════════════════
 function ScreenPerfil({ nav, toast, onLogout }) {
-  const { CAMARERO } = window.YDATA;
+  const { CURRENT_USER } = window.YDATA;
+  const u = CURRENT_USER;
+  const roleLabel = u.role === 'admin' ? 'Administrador' : u.role === 'supervisor' ? 'Supervisor/a' : 'Operador/a';
   const stats = [
     { label: 'Comandas', value: '24', sub: 'Esta sesión' },
     { label: 'Facturado', value: '634€', sub: 'Bruto turno' },
@@ -4216,8 +5455,8 @@ function ScreenPerfil({ nav, toast, onLogout }) {
     <>
       <div className="tb">
         <div className="tb-title">
-          <span className="tb-title-main">Mi perfil</span>
-          <span className="tb-title-sub">Sesión y configuración</span>
+          <span className="tb-title-main">Más</span>
+          <span className="tb-title-sub">Perfil y configuración</span>
         </div>
       </div>
 
@@ -4236,17 +5475,17 @@ function ScreenPerfil({ nav, toast, onLogout }) {
               fontFamily:'var(--mono)', fontSize: 19, fontWeight: 600,
               flexShrink: 0,
               boxShadow: '0 6px 18px rgba(255,77,77,.35)',
-            }}>{CAMARERO.id}</div>
+            }}>{u.initials}</div>
             <div style={{flex: 1, minWidth: 0}}>
-              <div style={{fontSize: 16, fontWeight: 600}}>{CAMARERO.nombre}</div>
-              <div style={{fontSize: 11.5, opacity: .65, marginTop: 2}}>{CAMARERO.rol}</div>
+              <div style={{fontSize: 16, fontWeight: 600}}>{u.name}</div>
+              <div style={{fontSize: 11.5, opacity: .65, marginTop: 2}}>{roleLabel}</div>
               <div style={{fontSize: 11, opacity: .55, marginTop: 4,
                 display:'inline-flex', alignItems:'center', gap: 5,
                 background:'rgba(255,255,255,.08)',
                 padding:'3px 8px', borderRadius: 100,
               }}>
                 <span style={{width:6, height:6, borderRadius:3, background:'var(--green)'}}/>
-                {CAMARERO.turno}
+                {u.shift || 'Turno activo'}
               </div>
             </div>
           </div>
@@ -4310,7 +5549,8 @@ function ScreenPerfil({ nav, toast, onLogout }) {
 }
 
 Object.assign(window, {
-  ScreenPedidos, ScreenCocina, ScreenPerfil, PedidoCard, AvisoCard,
+  ScreenCaja, ScreenPedidos, ScreenCocina, ScreenPerfil,
+  ScreenPedidoDetail, PedidoCardFull, PedidoRow, AvisoCard,
 });
   </script>
   <script type="text/babel">
@@ -4322,7 +5562,7 @@ const { useState: useStateA, useEffect: useEffectA, useRef: useRefA, useMemo: us
 function App() {
   // stack: array de { name, ...props }
   // tabRoots: el "tab" actual cuya raíz se muestra cuando stack queda en root
-  const [stack, setStack] = useStateA([{ name: 'login' }]);
+  const [stack, setStack] = useStateA([{ name: 'operador' }]);
   const [direction, setDirection] = useStateA('push'); // push | pop | fade
   const [animating, setAnimating] = useStateA(false);
   const [outgoing, setOutgoing] = useStateA(null); // screen instance leaving
@@ -4363,8 +5603,12 @@ function App() {
   const renderScreen = (s, props = {}) => {
     const common = { nav, toast, ...props };
     switch (s.name) {
+      case 'operador':
+        return <ScreenOperador {...common}/>;
       case 'login':
-        return <ScreenLogin {...common}/>;
+        return <ScreenLogin user={s.user} {...common}/>;
+      case 'email-login':
+        return <ScreenEmailLogin {...common}/>;
       case 'tabs':
         return <TabsRoot tab={s.tab || 'mesas'} nav={nav} toast={toast}/>;
       case 'mesa':
@@ -4377,6 +5621,8 @@ function App() {
         return <ScreenConfirmacion mesa={s.mesa} items={s.items} total={s.total} {...common}/>;
       case 'cobro':
         return <ScreenCobro mesa={s.mesa} total={s.total} {...common}/>;
+      case 'pedido-detail':
+        return <ScreenPedidoDetail order={s.order} {...common}/>;
       case 'cambiar-mesa':
         return <ScreenCambiarMesa mesa={s.mesa} mode="cambiar" {...common}/>;
       case 'juntar-mesa':
@@ -4425,8 +5671,8 @@ function TabsRoot({ tab: initialTab, nav, toast }) {
     switch (t) {
       case 'mesas':   return <ScreenMesas nav={nav} toast={toast}/>;
       case 'pedidos': return <ScreenPedidos nav={nav} toast={toast}/>;
-      case 'cocina':  return <ScreenCocina nav={nav} toast={toast} onClearAviso={() => setAvisos(a => Math.max(0, a-1))}/>;
-      case 'perfil':  return <ScreenPerfil nav={nav} toast={toast} onLogout={() => nav.replace({ name: 'login' })}/>;
+      case 'caja':    return <ScreenCaja nav={nav} toast={toast}/>;
+      case 'mas':     return <ScreenPerfil nav={nav} toast={toast} onLogout={() => nav.replace({ name: 'operador' })}/>;
       default: return null;
     }
   };
@@ -4458,8 +5704,7 @@ function TabsRoot({ tab: initialTab, nav, toast }) {
           {renderTab(tab)}
         </div>
       </div>
-      <BottomNav current={tab} onSelect={handleTabChange}
-        avisos={avisos} pedidos={0}/>
+      <BottomNav current={tab} onSelect={handleTabChange} badges={{}}/>
     </div>
   );
 }
