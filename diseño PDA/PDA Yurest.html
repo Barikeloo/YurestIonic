@@ -586,6 +586,7 @@ html, body {
 </head>
 <body>
   <div id="app-root"></div>
+
   <script type="text/babel">
 // data.jsx — Modelo real basado en YurestIonic
 // • Precios en CÉNTIMOS (formatCents para mostrar)
@@ -946,6 +947,8 @@ window.YDATA = {
   CASH_SESSION, CLOSED_SESSIONS, ORPHAN_SESSION, CASH_MOVEMENTS,
   SAMPLE_CHARGE_SESSION,
 };
+  </script>
+  <script type="text/babel">
 
 // Android.jsx — Simplified Android (Material 3) device frame
 // Status bar + top app bar + content + gesture nav + keyboard.
@@ -1160,6 +1163,8 @@ function AndroidKeyboard() {
 Object.assign(window, {
   AndroidDevice, AndroidStatusBar, AndroidAppBar, AndroidListItem, AndroidNavBar, AndroidKeyboard,
 });
+  </script>
+  <script type="text/babel">
 // components.jsx — Shared UI for PDA Yurest
 // • Iconos SVG, TopBar, BottomNav, Sheet, AmountDisplay, NumpadCents,
 //   PinAuthModal, Stepper, Toast, helpers (formatCents, fmt, fmtTime)
@@ -1604,6 +1609,8 @@ Object.assign(window, {
   UserAvatar,
   formatCents, formatCentsEur, fmt, fmtTime, timeFromString,
 });
+  </script>
+  <script type="text/babel">
 // screens-mesas.jsx — Login + Mesas + Detalle mesa + merge mode + transferir cuenta
 // Adapted from YurestIonic real frontend
 
@@ -2522,6 +2529,8 @@ Object.assign(window, {
   ScreenLogin, ScreenMesas, MesaCard, MesaDetail, LineRow, LineDetailContent, ModRow,
   AbrirMesaForm, CerrarCuentaForm, EditDinersForm, TransferForm, StatPill,
 });
+  </script>
+  <script type="text/babel">
 // screens-comanda.jsx — Nueva comanda, Modificadores, Resumen, Confirmación, Cambio/Juntar mesas
 
 const { useState: useStateC, useMemo: useMemoC, useEffect: useEffectC } = React;
@@ -3305,6 +3314,8 @@ Object.assign(window, {
   ScreenComanda, ScreenResumenComanda, ScreenConfirmacion, ScreenCambiarMesa,
   ProductCard, ModificadoresPanel, NumpadCodigo,
 });
+  </script>
+  <script type="text/babel">
 // screens-cobro.jsx — Cobro: efectivo, tarjeta, dividir cuenta
 
 const { useState: useStateB, useMemo: useMemoB } = React;
@@ -3907,6 +3918,8 @@ function CobroDone({ mesa, total, metodo, cambio, onClose }) {
 Object.assign(window, {
   ScreenCobro, CobroEfectivo, CobroTarjeta, CobroDividir, CobroDone, MetodoBtn,
 });
+  </script>
+  <script type="text/babel">
 // screens-tabs.jsx — Pedidos histórico, Cocina (avisos), Perfil
 
 const { useState: useStateD, useMemo: useMemoD, useEffect: useEffectD } = React;
@@ -4299,6 +4312,8 @@ function ScreenPerfil({ nav, toast, onLogout }) {
 Object.assign(window, {
   ScreenPedidos, ScreenCocina, ScreenPerfil, PedidoCard, AvisoCard,
 });
+  </script>
+  <script type="text/babel">
 // app.jsx — App principal con navigation stack + tabs + animaciones
 
 const { useState: useStateA, useEffect: useEffectA, useRef: useRefA, useMemo: useMemoA } = React;
