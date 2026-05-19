@@ -45,7 +45,9 @@
       "Bash(php -l app/Sale/Application/RefundChargeSessionLine/RefundChargeSessionLine.php app/Sale/Application/RefundChargeSessionLine/RefundChargeSessionLineCommand.php app/Sale/Infrastructure/Entrypoint/Http/RefundChargeSessionLineController.php app/Sale/Infrastructure/Entrypoint/Http/Requests/RefundChargeSessionLineRequest.php app/Sale/Domain/Exception/RefundablePaidLineNotFoundException.php app/Sale/Domain/Entity/ChargeSession.php app/Sale/Application/CreateChargeSession/ChargeSessionResponseBuilder.php)",
       "Bash(./vendor/bin/sail php *)",
       "Bash(./vendor/bin/php-parse --version)",
-      "Bash(npx --offline tsc --noEmit -p tsconfig.app.json)"
+      "Bash(npx --offline tsc --noEmit -p tsconfig.app.json)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(./node_modules/.bin/tsc --noEmit -p tsconfig.json)"
     ]
   }
 }

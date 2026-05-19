@@ -49,16 +49,11 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
   public parts = 2;
   public assignedLines: BillLine[] = [];
   public selectedLineId: string | null = null;
-  /**
-   * Comensales ya pagados que el cajero ha "reabierto" en esta sesión del modal
-   * para poder asignarles nuevas líneas (p. ej. cuando piden algo después del
-   * primer cobro). Es estado puramente local: se descarta al cerrar el modal y
-   * vuelve a partir de la BD al reabrir.
-   */
-  public reopenedDiners = new Set<number>();
   private chargeSessionLoaded = false;
   public isLoading = false;
   public error: string | null = null;
+  /** Cuando es true, el reparto equitativo divide entre TODOS los comensales (incluidos los ya pagados). */
+  public includePaidInEqualSplit = false;
 
   /** Debounce de sincronización de asignaciones con el backend. */
   private readonly assignSync$ = new Subject<void>();
@@ -100,6 +95,11 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
 
     if (changes['chargeSession'] && this.chargeSession) {
       this.chargeSessionLoaded = true;
+      // Si ya hay pagos y el método fue partes iguales, forzamos el modo equal
+      // para evitar que el cajero intente cambiar a líneas/comensal.
+      if (this.isEqualOnlyMode && this.mode !== 'equal') {
+        this.mode = 'equal';
+      }
     }
 
     if (changes['orderId'] && !changes['orderId'].firstChange) {
@@ -187,6 +187,36 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
       });
   }
 
+  /**
+   * Verdadero si la sesión ya tiene pagos registrados.
+   */
+  public get hasRecordedPayments(): boolean {
+    if (!this.chargeSession) return false;
+    return this.chargeSession.paid_cents > 0 || this.chargeSession.paid_diner_numbers.length > 0;
+  }
+
+  /**
+   * Verdadero si el método inicial fue "partes iguales" (no hay líneas pagadas).
+   */
+  public get isEqualOnlyMode(): boolean {
+    if (!this.hasRecordedPayments) return false;
+    return (this.chargeSession?.paid_order_line_ids ?? []).length === 0;
+  }
+
+  /**
+   * Cambia de modo validando que no se salte de método una vez iniciados los pagos.
+   */
+  public onChangeMode(newMode: 'equal' | 'lines' | 'diner'): void {
+    if (newMode === this.mode) return;
+
+    if (this.isEqualOnlyMode) {
+      // Si se empezó con partes iguales, no se permite cambiar a líneas/comensal.
+      return;
+    }
+
+    this.mode = newMode;
+  }
+
   public get remainingDiners(): number {
     if (this.chargeSession) {
       return this.chargeSession.diners_count - this.chargeSession.paid_diner_numbers.length;
@@ -204,24 +234,31 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
     return allDiners.filter((d) => !this.paidDiners.includes(d));
   }
 
+  public get activeDinersForEqualSplit(): number[] {
+    if (this.includePaidInEqualSplit) {
+      return this.allDinerNumbers;
+    }
+    return this.unpaidDinerNumbers;
+  }
+
   public get equalPart(): number {
+    const activeDiners = this.activeDinersForEqualSplit;
     if (this.chargeSession) {
-      const unpaidCount = this.remainingDiners;
-      if (unpaidCount > 0) {
-        const recalculated = Math.floor(this.chargeSession.remaining_cents / unpaidCount);
-        return recalculated;
+      if (activeDiners.length > 0) {
+        return Math.floor(this.chargeSession.remaining_cents / activeDiners.length);
       }
       return this.chargeSession.suggested_per_diner_cents;
     }
-    if (this.remainingDiners <= 0) return 0;
-    return Math.floor(this.total / this.remainingDiners);
+    if (activeDiners.length <= 0) return 0;
+    return Math.floor(this.total / activeDiners.length);
   }
 
   public get remainder(): number {
+    const activeDiners = this.activeDinersForEqualSplit;
     if (this.chargeSession) {
-      return this.chargeSession.remaining_cents - (this.equalPart * this.remainingDiners);
+      return this.chargeSession.remaining_cents - (this.equalPart * activeDiners.length);
     }
-    return this.total - this.equalPart * this.remainingDiners;
+    return this.total - this.equalPart * activeDiners.length;
   }
 
   public get remainingTotal(): number {
@@ -331,7 +368,6 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
    */
   public placeOnDiner(n: number): void {
     if (this.selectedLineId == null) return;
-    if (this.isDinerLocked(n)) return;
     const id = this.selectedLineId;
     const line = this.assignedLines.find((l) => l.id === id);
     if (line?.isPaidLine) return;
@@ -340,24 +376,6 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
     );
     this.selectedLineId = null;
     this.assignSync$.next();
-  }
-
-  /**
-   * Un comensal está bloqueado para nuevas asignaciones cuando ya pagó y el
-   * cajero NO lo ha reabierto explícitamente en esta sesión del modal.
-   */
-  public isDinerLocked(n: number): boolean {
-    return this.isDinerPaid(n) && !this.reopenedDiners.has(n);
-  }
-
-  /**
-   * Reabre un comensal ya pagado para permitirle asignar líneas nuevas
-   * (p. ej. pidió algo después del primer cobro). Sólo afecta a UI: al cobrar
-   * de nuevo se generará una venta adicional para el mismo diner_number.
-   */
-  public reopenDiner(n: number, event?: Event): void {
-    event?.stopPropagation();
-    this.reopenedDiners.add(n);
   }
 
   /** Devuelve una línea al pool (quita asignación). */
@@ -589,20 +607,23 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
   }
 
   public getDinerAmount(dinerNum: number): number {
-    if (!this.chargeSession) {
-      const unpaidNumbers = this.unpaidDinerNumbers;
-      const index = unpaidNumbers.indexOf(dinerNum);
+    const activeDiners = this.activeDinersForEqualSplit;
+    const index = activeDiners.indexOf(dinerNum);
 
-      return this.equalPart + (index === unpaidNumbers.length - 1 ? this.remainder : 0);
+    // Si el comensal no está en el grupo activo de reparto, le corresponde 0.
+    if (index === -1) {
+      return 0;
     }
 
-    const unpaidNumbers = this.unpaidDinerNumbers;
-    const isLastUnpaid = unpaidNumbers.length > 0 && unpaidNumbers[unpaidNumbers.length - 1] === dinerNum;
+    if (!this.chargeSession) {
+      return this.equalPart + (index === activeDiners.length - 1 ? this.remainder : 0);
+    }
 
-    if (isLastUnpaid) {
-      const othersAmount = this.equalPart * (unpaidNumbers.length - 1);
+    const isLast = activeDiners.length > 0 && activeDiners[activeDiners.length - 1] === dinerNum;
+
+    if (isLast) {
+      const othersAmount = this.equalPart * (activeDiners.length - 1);
       const lastAmount = this.chargeSession.remaining_cents - othersAmount;
-
       return lastAmount;
     }
 
@@ -611,6 +632,10 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
 
   public get isSessionCompleted(): boolean {
     if (!this.chargeSession) return false;
-    return this.chargeSession.paid_diner_numbers.length >= this.chargeSession.diners_count;
+    // La sesión está completa SOLO cuando no queda nada por pagar.
+    // `paid_diner_numbers.length === diners_count` no basta: puede haber
+    // líneas sin asignar pendientes, o un comensal "pagado" cuya línea
+    // se ha reembolsado dejando importe restante.
+    return this.chargeSession.remaining_cents <= 0;
   }
 }

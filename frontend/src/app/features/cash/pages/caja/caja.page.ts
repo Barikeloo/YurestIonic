@@ -130,13 +130,9 @@ export class CajaPage implements OnInit, OnDestroy {
   public readonly dinerAmountsByLines = computed<Record<number, number> | null>(() => {
     const session = this.loadedChargeSession();
     if (!session || !session.line_assignments?.length) return null;
-    const priceByLineId = new Map<string, number>();
-    for (const line of this.selectedTableLines) {
-      if (line.id) priceByLineId.set(line.id, line.price);
-    }
     const amounts: Record<number, number> = {};
     for (const a of session.line_assignments) {
-      const price = priceByLineId.get(a.order_line_id);
+      const price = this.linePrices.get(a.order_line_id);
       if (price == null) continue;
       amounts[a.diner_number] = (amounts[a.diner_number] ?? 0) + price;
     }
@@ -157,6 +153,11 @@ export class CajaPage implements OnInit, OnDestroy {
   public showPaymentSuccess = false;
   public selectedTable: PendingTable | null = null;
   public selectedTableLines: OrderLine[] = [];
+  // Mapa estable de precios (céntimos) por order_line_id, capturado al cargar
+  // las líneas del pedido. Se mantiene íntegro aunque `selectedTableLines` se
+  // reduzca tras un cobro parcial — así `dinerAmountsByLines` puede calcular
+  // el importe real por comensal aunque el array de líneas ya no esté completo.
+  private linePrices = new Map<string, number>();
   public currentUser: { id: string } | null = null;
   public fromMesas = false;
   public isPartialPayment = false;
@@ -771,6 +772,7 @@ export class CajaPage implements OnInit, OnDestroy {
     ).subscribe({
       next: ({ lines, remainingTotal }) => {
         this.selectedTableLines = lines;
+        this.captureLinePrices(lines);
         this.currentPaymentAmount = remainingTotal;
         this.showCobrarModal = true;
         this.pendingTableToCharge = null;
@@ -862,6 +864,7 @@ export class CajaPage implements OnInit, OnDestroy {
     ).subscribe({
       next: ({ lines }) => {
         this.selectedTableLines = lines;
+        this.captureLinePrices(lines);
         this.showSplitModal = true;
       },
       error: () => {
@@ -927,6 +930,7 @@ export class CajaPage implements OnInit, OnDestroy {
           variantName: l.variant_name ?? null,
           modifiers: l.modifiers?.map((m) => ({ name: m.name })) ?? null,
         }));
+        this.captureLinePrices(this.selectedTableLines);
 
         this.originalOrderTotal = originalTotal;
 
@@ -1062,10 +1066,6 @@ export class CajaPage implements OnInit, OnDestroy {
     const mappedMethod: PaymentMethod = directMethods.includes(paymentMethod as PaymentMethod)
       ? (paymentMethod as PaymentMethod)
       : PaymentMethod.OTHER;
-
-    if (orderLineIds && orderLineIds.length > 0) {
-      this.paymentFacade.addPaidOrderLineIds(orderLineIds);
-    }
 
     const sale$: Observable<RecordPaymentResponse | TpvSale> = activeSessionId
       ? this.paymentFacade.recordPayment(activeSessionId, {
@@ -1322,12 +1322,6 @@ export class CajaPage implements OnInit, OnDestroy {
         // Es un cobro parcial siempre que haya una charge session activa
         // o haya más de un comensal en la mesa.
         this.isPartialPayment = !!data.chargeSessionId || (this.selectedTable?.diners ?? 1) > 1;
-        // Trackeamos las líneas pagadas para que el split-bill-modal las marque
-        // como bloqueadas cuando reabra el comensal.
-        const paidIds = selectedLines.map((l) => l.id).filter((id): id is string => !!id);
-        if (paidIds.length > 0) {
-          this.paymentFacade.addPaidOrderLineIds(paidIds);
-        }
       }
       this.showSplitModal = false;
       this.showCobrarModal = true;
@@ -1382,6 +1376,7 @@ export class CajaPage implements OnInit, OnDestroy {
     this.showPaymentSuccess = false;
     this.selectedTable = null;
     this.selectedTableLines = [];
+    this.linePrices.clear();
     this.paidDiners = [];
     this.originalOrderTotal = 0;
     this.currentPaymentAmount = 0;
@@ -1401,6 +1396,13 @@ export class CajaPage implements OnInit, OnDestroy {
   public getPerDinerAmount(total: number, diners: number): number {
     if (diners <= 0) return 0;
     return Math.floor(total / diners);
+  }
+
+  private captureLinePrices(lines: ReadonlyArray<{ id?: string; price: number }>): void {
+    this.linePrices.clear();
+    for (const l of lines) {
+      if (l.id) this.linePrices.set(l.id, l.price);
+    }
   }
 
   /**

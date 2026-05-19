@@ -15,6 +15,7 @@ use App\Sale\Application\CreateChargeSession\CreateChargeSessionResponse;
 use App\Sale\Domain\Entity\Sale;
 use App\Sale\Domain\Exception\ChargeSessionNotFoundException;
 use App\Sale\Domain\Exception\RefundablePaidLineNotFoundException;
+use App\Sale\Domain\Interfaces\ChargeSessionLineAssignmentRepositoryInterface;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
@@ -30,6 +31,7 @@ final class RefundChargeSessionLine
         private readonly SalePaymentRepositoryInterface $salePaymentRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly CashMovementRepositoryInterface $cashMovementRepository,
+        private readonly ChargeSessionLineAssignmentRepositoryInterface $assignmentRepository,
         private readonly ChargeSessionResponseBuilder $responseBuilder,
     ) {}
 
@@ -50,6 +52,13 @@ final class RefundChargeSessionLine
 
         $sale->cancel($refundedByUuid, $reason);
         $this->saleRepository->save($sale);
+
+        // Al reembolsar, la línea vuelve al pool de pendientes: quitamos su
+        // asignación al comensal para que pueda reasignarse libremente.
+        $this->assignmentRepository->deleteByOrderLineIds(
+            $sessionUuid,
+            [Uuid::create($command->orderLineId)],
+        );
 
         $payments = $this->salePaymentRepository->findBySaleId($sale->id());
         $cashTotal = 0;

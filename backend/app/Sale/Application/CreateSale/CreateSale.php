@@ -13,7 +13,6 @@ use App\Sale\Application\CreateOrderFinalTicket\CreateOrderFinalTicket;
 use App\Sale\Domain\Entity\Sale;
 use App\Sale\Domain\Entity\SaleLine;
 use App\Sale\Domain\Entity\SalePayment;
-use App\Sale\Domain\Interfaces\ChargeSessionLineAssignmentRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Sale\Domain\ValueObject\PaymentMethod;
@@ -38,7 +37,6 @@ final class CreateSale
         private readonly TipRepositoryInterface $tipRepository,
         private readonly TransactionManagerInterface $transactionManager,
         private readonly CreateOrderFinalTicket $createOrderFinalTicket,
-        private readonly ChargeSessionLineAssignmentRepositoryInterface $assignmentRepository,
     ) {}
 
     public function __invoke(
@@ -97,8 +95,14 @@ final class CreateSale
                 if (count($orderLineIds) === 0) {
                     $orderLines = [];
                 } else {
-                    $lineIdSet = array_map(fn ($id) => Uuid::create($id), $orderLineIds);
-                    $orderLines = array_filter($orderLines, fn ($line) => in_array($line->uuid(), $lineIdSet, true));
+                    // Comparamos por valor string del UUID. `in_array(..., true)`
+                    // sobre objetos Uuid usaría identidad de instancia y siempre
+                    // devolvería false, dejando $orderLines vacío y sin SaleLines.
+                    $lineIdLookup = array_flip($orderLineIds);
+                    $orderLines = array_filter(
+                        $orderLines,
+                        fn ($line) => isset($lineIdLookup[$line->uuid()->value()]),
+                    );
                 }
             }
 
@@ -130,7 +134,6 @@ final class CreateSale
 
             $this->saleRepository->save($sale);
 
-            $cobradoLineIds = [];
             foreach ($orderLines as $line) {
                 $saleLine = SaleLine::dddCreate(
                     id: Uuid::generate(),
@@ -144,18 +147,14 @@ final class CreateSale
                     taxPercentage: SaleLineTaxPercentage::create($line->taxPercentage()->value()),
                 );
                 $this->saleLineRepository->save($saleLine);
-                $cobradoLineIds[] = $line->uuid();
             }
 
-            // Si la venta se asienta sobre una charge session activa, las líneas
-            // facturadas ya no tienen sentido como asignaciones pendientes: el
-            // front las verá filtradas como `paid_order_line_ids` la próxima vez.
-            if ($chargeSessionId !== null && count($cobradoLineIds) > 0) {
-                $this->assignmentRepository->deleteByOrderLineIds(
-                    Uuid::create($chargeSessionId),
-                    $cobradoLineIds,
-                );
-            }
+            // Las `line_assignments` de las líneas cobradas se conservan: el front
+            // las necesita para agrupar las líneas pagadas bajo su comensal y
+            // ofrecer el botón de reembolso. `paid_order_line_ids` (derivado de
+            // SaleLines activas) sigue siendo la fuente de verdad de "qué está
+            // pagado"; las assignments quedan como "quién pagó qué".
+            
 
             $orderJustClosed = false;
             $order = $this->orderRepository->findByUuid($orderUuid);

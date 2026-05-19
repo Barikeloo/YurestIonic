@@ -29,13 +29,10 @@ export class DinersStatusComponent {
   @Input() dinerAmounts: Record<number, number> | null = null;
 
   get paidTotal(): number {
-    if (this.dinerAmounts) {
-      return this.paidDiners.reduce((sum, n) => sum + (this.dinerAmounts?.[n] ?? 0), 0);
-    }
-    if (this.amountPerDiner !== null) {
-      return this.paidDiners.length * this.amountPerDiner;
-    }
-    return this.total - this.remainingTotal;
+    // Fuente de verdad única: lo que el BE reporta como pagado en la sesión.
+    // No sumamos `dinerAmounts` ni `amountPerDiner` porque divergen cuando se
+    // mezclan modos de cobro (líneas + equal split + manual).
+    return Math.max(0, this.total - this.remainingTotal);
   }
 
   get perDinerAmount(): number {
