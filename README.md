@@ -120,13 +120,13 @@ docker compose run --rm api php artisan key:generate
 
 ### 2.6 Cargar datos de demostración
 
-Ejecuta únicamente el seeder de demo para tener un restaurante funcional con usuarios, productos, zonas y mesas listos para probar:
+Ejecuta todos los seeders para tener múltiples restaurantes de prueba con usuarios, productos, zonas, mesas y datos operativos listos para probar:
 
 ```bash
-docker compose exec api php artisan db:seed --class=SaonaDemoSeeder
+docker compose exec api php artisan db:seed
 ```
 
-> Este paso es **obligatorio** para la primera puesta en marcha. Crea el restaurante *Bar Manolo* y los usuarios de prueba documentados en la sección 3.
+> Este paso es **obligatorio** para la primera puesta en marcha. Crea varios restaurantes de demo (incluido *Bar Manolo*) y los usuarios de prueba documentados en la sección 3.
 
 ### 2.7 Verificar que todo funciona
 
@@ -162,14 +162,14 @@ make stop
 docker compose down -v   # elimina volúmenes (base de datos)
 make start
 make install
-docker compose exec api php artisan db:seed --class=SaonaDemoSeeder
+docker compose exec api php artisan db:seed
 ```
 
 ---
 
-## 3. Datos de demostración — SaonaDemoSeeder
+## 3. Datos de demostración
 
-Tras ejecutar `SaonaDemoSeeder`, el sistema contiene el restaurante **Bar Manolo** con catálogo, zonas, mesas y usuarios operativos. A continuación las credenciales para acceder:
+Tras ejecutar `php artisan db:seed`, el sistema crea varios restaurantes de demostración con catálogos, zonas, mesas y usuarios operativos. El restaurante principal es **Bar Manolo**. A continuación las credenciales para acceder:
 
 ### Usuarios de prueba
 
@@ -197,14 +197,29 @@ Tras ejecutar `SaonaDemoSeeder`, el sistema contiene el restaurante **Bar Manolo
 
 ## 4. Guía de uso de la aplicación
 
-### 4.1 Login y selección de rol
+### 4.1 Vinculación de dispositivo
+
+La primera vez que accedes a la aplicación desde un dispositivo nuevo, debes **vincularlo** a un restaurante antes de poder operar. Este paso es obligatorio y se realiza una sola vez por dispositivo.
+
+#### Flujo de vinculación
+
+1. **Pantalla de bienvenida** — Al abrir http://localhost:4200 por primera vez en el dispositivo, verás la pantalla de inicio con dos opciones: **"Vincular dispositivo"** y **"Acceder como desarrollador"**.
+2. **Autenticación del administrador** — Toca **"Vincular dispositivo"** e introduce el **email y contraseña** del usuario con rol `admin` del restaurante que quieres vincular.
+   > Solo los usuarios con rol `admin` pueden vincular dispositivos. Si introduces credenciales de otro rol, el sistema mostrará un error.
+3. **Selección del restaurante** — Tras validar las credenciales, el sistema muestra la lista de restaurantes asociados a ese administrador. Selecciona el restaurante que quieres vincular al dispositivo.
+4. **Confirmación** — El restaurante seleccionado se guarda de forma persistente en el almacenamiento local del dispositivo (`localStorage`). A partir de este momento, todas las operaciones del TPV estarán asociadas a ese restaurante.
+5. **Acceso al login** — Una vez vinculado, el dispositivo redirige automáticamente a la pantalla de login para que los operadores puedan iniciar sesión con email/contraseña o PIN.
+
+> Si el dispositivo ya está vinculado, la pantalla de bienvenida redirige automáticamente al login sin mostrar el selector.
+
+### 4.2 Login y selección de rol
 
 Al entrar en http://localhost:4200 verás la pantalla de login. Puedes autenticarte de dos formas:
 
 1. **Email + Contraseña** — Para administradores y supervisores que gestionan el backoffice.
 2. **Acceso rápido (PIN)** — Para camareros que operan el TPV. Más rápido en el día a día con tabletas compartidas.
 
-### 4.2 Backoffice — Gestión del negocio
+### 4.3 Backoffice — Gestión del negocio
 
 Desde el menú lateral, accede a **"Gestión"**. Esta sección está restringida a roles `admin` y `supervisor`.
 
@@ -215,7 +230,18 @@ Desde el menú lateral, accede a **"Gestión"**. Esta sección está restringida
 - **Mesas** — Mesas físicas asignadas a una zona. Soportan agrupación (unión de mesas para grupos grandes).
 - **Usuarios** — Alta de empleados con rol (`admin`, `supervisor`, `operator`), email, contraseña y PIN numérico.
 
-### 4.3 TPV — Flujo de venta paso a paso
+#### Cambio de restaurante (Tenant Context)
+
+Los usuarios con rol `admin` pueden operar y visualizar varios restaurantes desde un mismo inicio de sesión. En el panel de **Gestión**, la barra lateral izquierda muestra la lista de restaurantes disponibles. Con un solo click sobre cualquier restaurante:
+
+- El sistema cambia el **contexto activo** (`restaurant_id`) para todas las operaciones subsiguientes.
+- La **topbar** actualiza automáticamente el nombre del restaurante seleccionado.
+- Se cargan en tiempo real los usuarios, productos, familias, zonas, impuestos y Z-Reports correspondientes a ese tenant.
+- El contexto se **persiste** en `localStorage`, por lo que al recargar la página o volver a "Gestión" se mantiene el último restaurante seleccionado.
+
+> Esta funcionalidad permite a un administrador gestionar varios locales (multi-tenant) sin cerrar sesión, alternando entre ellos de forma instantánea.
+
+### 4.4 TPV — Flujo de venta paso a paso
 
 | Paso | Acción | Resultado esperado |
 |---|---|---|
@@ -228,7 +254,7 @@ Desde el menú lateral, accede a **"Gestión"**. Esta sección está restringida
 | **7. Cobrar** | Toca **"Cobrar"**. Aparece el teclado numérico con el **total exacto** pendiente. Si modificas el importe a una cantidad menor, el sistema detecta automáticamente que es un **pago parcial** y cambia el botón a "Cobrar parcial". | Se genera una `Sale` vinculada a la `Order`. Si es pago total, la orden se cierra. |
 | **8. Cerrar** | Tras cobrar, la mesa vuelve a estado **libre** (verde). El ticket queda registrado con número de serie. | Se muestra la confirmación con el número de ticket. |
 
-### 4.4 Cobro dividido — Casuística avanzada
+### 4.5 Cobro dividido — Casuística avanzada
 
 El sistema soporta combinaciones de métodos dentro de una misma sesión de cobro (`ChargeSession`), con las siguientes reglas de negocio:
 
@@ -237,7 +263,7 @@ El sistema soporta combinaciones de métodos dentro de una misma sesión de cobr
 - **Toggle "Incluir comensales ya pagados"** — En el modo "Partes iguales", determina si la deuda restante se divide entre **todos** los comensales (incluso los que ya pagaron sus líneas) o solo entre los **pendientes**.
 - **Pagos mixtos** — Un mismo comensal puede pagar parte en efectivo y parte con tarjeta. El sistema valida que la suma de pagos coincida con el total.
 
-### 4.5 Caja — Sesiones de turno y Z-Report
+### 4.6 Caja — Sesiones de turno y Z-Report
 
 - **Apertura de caja** — Al inicio del turno, el operador (o admin) abre una sesión de caja introduciendo el **fondo inicial** en efectivo.
 - **Durante el turno** — Todos los cobros (`Sale`) y movimientos de caja (`CashMovement`: entradas de cambio, pagos a proveedores, sangrías, propinas) quedan vinculados a la sesión activa del dispositivo.
@@ -249,7 +275,7 @@ El sistema soporta combinaciones de métodos dentro de una misma sesión de cobr
   - Discrepancia detectada y justificación.
   - **Hash SHA-256** encadenado con el Z anterior para garantizar la integridad fiscal de la secuencia.
 
-### 4.6 Dashboard de finanzas (prototipo)
+### 4.7 Dashboard de finanzas (prototipo)
 
 Accesible desde el menú lateral para roles `admin` y `supervisor`. Muestra:
 
@@ -261,7 +287,7 @@ Accesible desde el menú lateral para roles `admin` y `supervisor`. Muestra:
 
 > Estado actual: **Prototipo funcional**. Los datos son reales de la base de datos, pero la interfaz está en fase de pulido visual.
 
-### 4.7 Panel de Desarrollador (SuperAdmin) — Gestión de la plataforma
+### 4.8 Panel de Desarrollador (SuperAdmin) — Gestión de la plataforma
 
 El **Panel de Desarrollador** es una interfaz independiente destinada a los administradores de la plataforma, no al personal del restaurante. Permite gestionar el ecosistema multi-tenant desde un único punto de control.
 
