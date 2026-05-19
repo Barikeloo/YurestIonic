@@ -86,6 +86,7 @@
         [lines]="selectedTableLines"
         [diners]="selectedTable?.diners || 2"
         [paidDiners]="paidDiners"
+        [equalPaidDiners]="equalPaidDinerNumbers"
         [paidOrderLineIds]="paymentFacade.paidLineIds()"
         [orderId]="selectedTable?.order_id || null"
         [userId]="currentUser?.id || null"

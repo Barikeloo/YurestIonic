@@ -162,6 +162,15 @@ export class CajaPage implements OnInit, OnDestroy {
   public fromMesas = false;
   public isPartialPayment = false;
   public paidDiners: number[] = [];
+  /**
+   * Comensales que ya pagaron su parte en modo EQUAL.
+   * Se usan para distinguirlos de los que pagaron por LINEAS:
+   * los equal-paid se ocultan siempre; los line-paid se muestran
+   * cuando el toggle "Incluir comensales ya pagados" está ON.
+   */
+  public equalPaidDinerNumbers: number[] = [];
+  private lastSplitOrderId: string | null = null;
+  private lastPaymentWasEqualPart = false;
   public originalOrderTotal = 0;
   public currentPaymentAmount = 0;
   public lastPaymentTicketText: string | null = null;
@@ -875,6 +884,13 @@ export class CajaPage implements OnInit, OnDestroy {
   public onSplitBill(): void {
     this.showCobrarModal = false;
 
+    // Si cambia la orden, resetear el trackeo de equal-paid diners
+    const currentOrderId = this.selectedTable?.order_id ?? null;
+    if (currentOrderId !== this.lastSplitOrderId) {
+      this.equalPaidDinerNumbers = [];
+      this.lastSplitOrderId = currentOrderId;
+    }
+
     if (!this.selectedTable) {
       this.showSplitModal = true;
       return;
@@ -945,6 +961,8 @@ export class CajaPage implements OnInit, OnDestroy {
 
         this.paymentFacade.setLoadedChargeSession(useSession);
         console.log('onSplitBill - chargeSession loaded:', useSession);
+        console.log('[CajaPage] onSplitBill - paid_diner_numbers:', useSession?.paid_diner_numbers);
+        console.log('[CajaPage] onSplitBill - remaining_cents:', useSession?.remaining_cents);
 
         if (useSession) {
           this.paidDiners = useSession.paid_diner_numbers;
@@ -1107,6 +1125,20 @@ export class CajaPage implements OnInit, OnDestroy {
               console.log('Charge session reloaded after payment:', freshSession);
               this.paymentFacade.setLoadedChargeSession(freshSession);
               this.paidDiners = freshSession.paid_diner_numbers;
+              console.log('[CajaPage] Payment done - freshSession.paid_diner_numbers:', freshSession.paid_diner_numbers);
+              console.log('[CajaPage] Payment done - freshSession.remaining_cents:', freshSession.remaining_cents);
+
+              // Si el pago fue en modo equal, registrar al comensal como equal-paid
+              // para que no vuelva a aparecer en el modal de reparto.
+              const dinerNum = this.currentDinerNumber();
+              if (this.lastPaymentWasEqualPart && dinerNum !== null) {
+                if (!this.equalPaidDinerNumbers.includes(dinerNum)) {
+                  this.equalPaidDinerNumbers.push(dinerNum);
+                  console.log('[CajaPage] Tracked equal-paid diner:', dinerNum);
+                }
+              }
+              this.lastPaymentWasEqualPart = false;
+
               if (this.selectedTable) {
                 this.selectedTable.total = freshSession.remaining_cents;
                 this.updatePendingTableTotal(this.selectedTable.order_id, freshSession.remaining_cents);
@@ -1292,6 +1324,9 @@ export class CajaPage implements OnInit, OnDestroy {
     console.log('Split confirmed:', data);
     console.log('Before - paidDiners:', this.paidDiners);
 
+    // Recordar si este pago va a ser en modo equal para trackearlo después
+    this.lastPaymentWasEqualPart = !!data.isEqualPart;
+
     if (data.chargeSessionId) {
       this.paymentFacade.setCurrentChargeSession({
         id: data.chargeSessionId,
@@ -1378,6 +1413,8 @@ export class CajaPage implements OnInit, OnDestroy {
     this.selectedTableLines = [];
     this.linePrices.clear();
     this.paidDiners = [];
+    this.equalPaidDinerNumbers = [];
+    this.lastSplitOrderId = null;
     this.originalOrderTotal = 0;
     this.currentPaymentAmount = 0;
     this.fromMesas = false;

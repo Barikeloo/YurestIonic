@@ -100,7 +100,7 @@
                 }
               </div>
               <div class="parts-grid">
-                @for (dinerNum of allDinerNumbers; track dinerNum; let i = $index) {
+                @for (dinerNum of activeDinersForEqualSplit; track dinerNum; let i = $index) {
                   <div class="part-card" [class.paid]="getDinerAmount(dinerNum) <= 0">
                     <div class="part-label">Comensal {{ dinerNum }}</div>
                     <div class="part-amount">

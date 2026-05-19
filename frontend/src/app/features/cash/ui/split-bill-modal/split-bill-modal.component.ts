@@ -39,6 +39,12 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
   @Input() chargeSession: ChargeSession | null = null;
   @Input() remainingCents = 0;
   @Input() paidOrderLineIds: string[] = [];
+  /**
+   * Comensales que ya pagaron en modo EQUAL (no por lineas).
+   * Se ocultan siempre del reparto, incluso cuando el toggle
+   * "Incluir comensales ya pagados" está ON.
+   */
+  @Input() equalPaidDiners: number[] = [];
   @Output() closeModal = new EventEmitter<void>();
   @Output() confirmSplit = new EventEmitter<{ selectedLines: BillLine[]; diner?: number; amount?: number; isEqualPart?: boolean; chargeSessionId?: string }>();
   @Output() sessionUpdated = new EventEmitter<any>();
@@ -54,6 +60,12 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
   public error: string | null = null;
   /** Cuando es true, el reparto equitativo divide entre TODOS los comensales (incluidos los ya pagados). */
   public includePaidInEqualSplit = false;
+  /**
+   * Cuota fija del reparto equal, calculada UNA VEZ cuando se inicia el modo.
+   * Nunca se recalcula: si son 4 y cada uno debe 19,14, cada uno siempre paga 19,14.
+   * El último se hace cargo del resto por redondeo.
+   */
+  private fixedEqualPartCents: number | null = null;
 
   /** Debounce de sincronización de asignaciones con el backend. */
   private readonly assignSync$ = new Subject<void>();
@@ -80,7 +92,17 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
       this.loadChargeSession();
     } else {
       this.chargeSessionLoaded = true;
+      this.ensureFixedEqualPart();
     }
+
+    // Diagnóstico: loguear estado de la sesión al abrir el modal
+    console.log('[SplitBillModal] ngOnInit - chargeSession:', this.chargeSession);
+    console.log('[SplitBillModal] ngOnInit - paidDiners Input:', this.paidDiners);
+    console.log('[SplitBillModal] ngOnInit - paid_diner_numbers:', this.chargeSession?.paid_diner_numbers);
+    console.log('[SplitBillModal] ngOnInit - unpaidDinerNumbers:', this.unpaidDinerNumbers);
+    console.log('[SplitBillModal] ngOnInit - activeDinersForEqualSplit:', this.activeDinersForEqualSplit);
+    console.log('[SplitBillModal] ngOnInit - equalPart:', this.equalPart);
+    console.log('[SplitBillModal] ngOnInit - includePaidInEqualSplit:', this.includePaidInEqualSplit);
 
     this.assignSync$
       .pipe(debounceTime(350), takeUntil(this.destroy$))
@@ -103,8 +125,13 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     if (changes['orderId'] && !changes['orderId'].firstChange) {
+      this.resetFixedEqualPart();
       this.chargeSession = null;
       this.loadChargeSession();
+    }
+
+    if (changes['chargeSession'] && this.chargeSession && this.mode === 'equal') {
+      this.ensureFixedEqualPart();
     }
   }
 
@@ -214,6 +241,9 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
       return;
     }
 
+    if (newMode === 'equal') {
+      this.ensureFixedEqualPart();
+    }
     this.mode = newMode;
   }
 
@@ -236,12 +266,20 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
 
   public get activeDinersForEqualSplit(): number[] {
     if (this.includePaidInEqualSplit) {
-      return this.allDinerNumbers;
+      // Toggle ON: mostrar TODOS los comensales EXCEPTO los que pagaron
+      // en modo equal (ya terminaron). Los que pagaron por LINEAS sí se
+      // muestran para que participen en el reparto del restante.
+      return this.allDinerNumbers.filter((d) => !this.equalPaidDiners.includes(d));
     }
+    // Toggle OFF: solo mostrar comensales que no han pagado nada
     return this.unpaidDinerNumbers;
   }
 
   public get equalPart(): number {
+    // Si existe cuota fija (calculada al iniciar el reparto equal), usarla siempre.
+    if (this.fixedEqualPartCents !== null) {
+      return this.fixedEqualPartCents;
+    }
     const activeDiners = this.activeDinersForEqualSplit;
     if (this.chargeSession) {
       if (activeDiners.length > 0) {
@@ -628,6 +666,27 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     return this.equalPart;
+  }
+
+  /**
+   * Calcula la cuota fija del reparto equal UNA VEZ.
+   * Se basa en remaining_cents / diners_count en el momento de iniciar el modo.
+   * Nunca se recalcula: cada comensal siempre paga esta cuota (el último
+   * se hace cargo del resto por redondeo).
+   */
+  private ensureFixedEqualPart(): void {
+    if (this.fixedEqualPartCents !== null || !this.chargeSession || this.mode !== 'equal') {
+      return;
+    }
+    const activeDiners = this.activeDinersForEqualSplit;
+    if (activeDiners.length <= 0) return;
+    this.fixedEqualPartCents = Math.floor(this.chargeSession.remaining_cents / activeDiners.length);
+    console.log('[SplitBillModal] Fixed equal part set:', this.fixedEqualPartCents, 'for', activeDiners.length, 'diners, remaining:', this.chargeSession.remaining_cents);
+  }
+
+  private resetFixedEqualPart(): void {
+    this.fixedEqualPartCents = null;
+    console.log('[SplitBillModal] Fixed equal part reset');
   }
 
   public get isSessionCompleted(): boolean {
