@@ -87,12 +87,13 @@
                 @if (chargeSession) {
                   <span class="session-info">
                     Cuota: {{ formatCents(equalPart) }} €
-                    ({{ activeDinersForEqualSplit.length }} de {{ chargeSession.diners_count }} comensales)
+                    ({{ splittingDiners.length }} de {{ chargeSession.diners_count }} comensales)
                   </span>
                   <label class="equal-toggle" style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #666; margin-top: 4px; cursor: pointer;">
                     <input
                       type="checkbox"
                       [(ngModel)]="includePaidInEqualSplit"
+                      (ngModelChange)="onToggleIncludePaid()"
                       style="width: 16px; height: 16px; cursor: pointer;"
                     />
                     Incluir comensales ya pagados
@@ -100,30 +101,42 @@
                 }
               </div>
               <div class="parts-grid">
-                @for (dinerNum of activeDinersForEqualSplit; track dinerNum; let i = $index) {
-                  <div class="part-card" [class.paid]="getDinerAmount(dinerNum) <= 0">
-                    <div class="part-label">Comensal {{ dinerNum }}</div>
-                    <div class="part-amount">
-                      @if (getDinerAmount(dinerNum) > 0) {
-                        <span>
-                          {{ formatCents(getDinerAmount(dinerNum)) }} €
-                        </span>
+                @for (dinerNum of displayedEqualDiners; track dinerNum) {
+                  @if (isInEqualSplit(dinerNum)) {
+                    <div class="part-card">
+                      <div class="part-label">Comensal {{ dinerNum }}</div>
+                      @if (getPaidSubtotal(dinerNum) > 0) {
+                        <div class="part-paid-hint" style="font-size: 11px; color: #888;">Ya pagó {{ formatCents(getPaidSubtotal(dinerNum)) }} € por líneas</div>
                       }
-                      @if (getDinerAmount(dinerNum) <= 0) {
-                        <span class="paid-badge">✓ Pagado</span>
-                      }
+                      <div class="part-amount">
+                        <span>{{ formatCents(getDinerAmount(dinerNum)) }} €</span>
+                      </div>
+                      <div class="part-actions" style="display: flex; margin-top: auto;">
+                        <button
+                          class="btn-charge"
+                          (click)="chargeEqualPart(dinerNum)"
+                          [disabled]="getDinerAmount(dinerNum) <= 0"
+                          style="flex: 1;"
+                          >
+                          Cobrar
+                        </button>
+                      </div>
                     </div>
-                    <div class="part-actions" style="display: flex; margin-top: auto;">
-                      <button
-                        class="btn-charge"
-                        (click)="chargeEqualPart(dinerNum)"
-                        [disabled]="getDinerAmount(dinerNum) <= 0"
-                        style="flex: 1;"
-                        >
-                        {{ getDinerAmount(dinerNum) <= 0 ? 'Pagado' : 'Cobrar' }}
-                      </button>
+                  } @else {
+                    <div class="part-card paid">
+                      <div class="part-label">Comensal {{ dinerNum }}</div>
+                      <div class="part-amount">
+                        @if (getPaidSubtotal(dinerNum) > 0) {
+                          <span class="paid-badge">✓ Pagó {{ formatCents(getPaidSubtotal(dinerNum)) }} €</span>
+                        } @else {
+                          <span class="paid-badge">✓ Pagado</span>
+                        }
+                      </div>
+                      <div class="part-actions" style="display: flex; margin-top: auto;">
+                        <button class="btn-charge" disabled style="flex: 1;">Pagado</button>
+                      </div>
                     </div>
-                  </div>
+                  }
                 }
               </div>
             </div>

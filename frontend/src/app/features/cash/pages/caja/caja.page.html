@@ -86,7 +86,8 @@
         [lines]="selectedTableLines"
         [diners]="selectedTable?.diners || 2"
         [paidDiners]="paidDiners"
-        [equalPaidDiners]="equalPaidDinerNumbers"
+        [equalRoundPaidDiners]="equalRoundPaidDinerNumbers"
+        [equalRoundFixedPartCents]="equalRoundFixedPartCents"
         [paidOrderLineIds]="paymentFacade.paidLineIds()"
         [orderId]="selectedTable?.order_id || null"
         [userId]="currentUser?.id || null"
@@ -94,6 +95,7 @@
         (confirmSplit)="onConfirmSplit($event)"
         (sessionUpdated)="onChargeSessionUpdated($event)"
         (refundLine)="onRefundLine($event)"
+        (equalRoundFixedPartChanged)="onEqualRoundFixedPartChanged($event)"
       ></app-split-bill-modal>
       <app-diners-status
         class="split-modal-sidebar"

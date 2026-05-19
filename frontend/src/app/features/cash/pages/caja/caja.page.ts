@@ -163,14 +163,23 @@ export class CajaPage implements OnInit, OnDestroy {
   public isPartialPayment = false;
   public paidDiners: number[] = [];
   /**
-   * Comensales que ya pagaron su parte en modo EQUAL.
-   * Se usan para distinguirlos de los que pagaron por LINEAS:
-   * los equal-paid se ocultan siempre; los line-paid se muestran
-   * cuando el toggle "Incluir comensales ya pagados" está ON.
+   * Comensales que ya pagaron su parte en la "ronda equal" actual de esta orden.
+   * Se usa cuando el toggle "Incluir comensales ya pagados" reparte el remanente
+   * entre TODOS los comensales: a medida que cada uno paga, sale de la ronda.
+   * Solo se vacía al cambiar de orden.
    */
-  public equalPaidDinerNumbers: number[] = [];
-  private lastSplitOrderId: string | null = null;
+  public equalRoundPaidDinerNumbers: number[] = [];
+  /**
+   * Cuota fija de la ronda equal en curso. Se persiste aquí (no en el modal)
+   * porque el modal se destruye en cada cobro y la cuota debe sobrevivir a
+   * todos los cobros equal para que el reparto sea estable
+   * (8,80 / 8,80 / 8,80 / 8,80, con el último absorbiendo el resto por
+   * redondeo). Se invalida en cambio de orden, refund de línea, cambio de
+   * `diners_count` o cambio del toggle.
+   */
+  public equalRoundFixedPartCents: number | null = null;
   private lastPaymentWasEqualPart = false;
+  private lastSplitOrderId: string | null = null;
   public originalOrderTotal = 0;
   public currentPaymentAmount = 0;
   public lastPaymentTicketText: string | null = null;
@@ -884,10 +893,10 @@ export class CajaPage implements OnInit, OnDestroy {
   public onSplitBill(): void {
     this.showCobrarModal = false;
 
-    // Si cambia la orden, resetear el trackeo de equal-paid diners
     const currentOrderId = this.selectedTable?.order_id ?? null;
     if (currentOrderId !== this.lastSplitOrderId) {
-      this.equalPaidDinerNumbers = [];
+      this.equalRoundPaidDinerNumbers = [];
+      this.equalRoundFixedPartCents = null;
       this.lastSplitOrderId = currentOrderId;
     }
 
@@ -1128,14 +1137,23 @@ export class CajaPage implements OnInit, OnDestroy {
               console.log('[CajaPage] Payment done - freshSession.paid_diner_numbers:', freshSession.paid_diner_numbers);
               console.log('[CajaPage] Payment done - freshSession.remaining_cents:', freshSession.remaining_cents);
 
-              // Si el pago fue en modo equal, registrar al comensal como equal-paid
-              // para que no vuelva a aparecer en el modal de reparto.
+              // Si el pago fue en modo equal, lo añadimos a la ronda equal:
+              // así, cuando el toggle "Incluir ya pagados" está ON, el comensal
+              // queda fuera del próximo grid (ya pagó su cuota equal).
               const dinerNum = this.currentDinerNumber();
               if (this.lastPaymentWasEqualPart && dinerNum !== null) {
-                if (!this.equalPaidDinerNumbers.includes(dinerNum)) {
-                  this.equalPaidDinerNumbers.push(dinerNum);
-                  console.log('[CajaPage] Tracked equal-paid diner:', dinerNum);
+                if (!this.equalRoundPaidDinerNumbers.includes(dinerNum)) {
+                  this.equalRoundPaidDinerNumbers = [...this.equalRoundPaidDinerNumbers, dinerNum];
+                  console.log('[CajaPage] Tracked equal-round paid diner:', dinerNum);
                 }
+              } else if (this.equalRoundFixedPartCents !== null) {
+                // Pago por líneas (o cualquier cobro no-equal): el divisor de la
+                // ronda equal cambia porque entra un nuevo comensal al grupo de
+                // pagados. La cuota fija de la ronda anterior queda obsoleta:
+                // la invalidamos para que la siguiente apertura del modal
+                // recalcule sobre el nuevo `remaining` y el nuevo `splitting`.
+                this.equalRoundFixedPartCents = null;
+                console.log('[CajaPage] Equal round quota invalidated by non-equal payment');
               }
               this.lastPaymentWasEqualPart = false;
 
@@ -1320,11 +1338,14 @@ export class CajaPage implements OnInit, OnDestroy {
     win.print();
   }
 
+  public onEqualRoundFixedPartChanged(value: number | null): void {
+    this.equalRoundFixedPartCents = value;
+  }
+
   public onConfirmSplit(data: { selectedLines: BillLine[]; diner?: number; amount?: number; isEqualPart?: boolean; chargeSessionId?: string }): void {
     console.log('Split confirmed:', data);
     console.log('Before - paidDiners:', this.paidDiners);
 
-    // Recordar si este pago va a ser en modo equal para trackearlo después
     this.lastPaymentWasEqualPart = !!data.isEqualPart;
 
     if (data.chargeSessionId) {
@@ -1390,6 +1411,9 @@ export class CajaPage implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (updated) => {
+          // Un refund sube `remaining_cents` y vuelve a meter al comensal en
+          // el reparto: la cuota fija anterior ya no representa el reparto.
+          this.equalRoundFixedPartCents = null;
           this.onChargeSessionUpdated(updated);
         },
         error: (err) => {
@@ -1413,7 +1437,8 @@ export class CajaPage implements OnInit, OnDestroy {
     this.selectedTableLines = [];
     this.linePrices.clear();
     this.paidDiners = [];
-    this.equalPaidDinerNumbers = [];
+    this.equalRoundPaidDinerNumbers = [];
+    this.equalRoundFixedPartCents = null;
     this.lastSplitOrderId = null;
     this.originalOrderTotal = 0;
     this.currentPaymentAmount = 0;
