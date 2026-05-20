@@ -1,9 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionUsersFacade, UserRow, UserFormData } from '../../../pages/core/gestion/facades/gestion-users.facade';
 import { ToastService } from '../../../core/services/toast.service';
 import { UserRole } from '../../../core/enums/user-role.enum';
+import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 
 export interface RoleOption {
   value: UserRole;
@@ -13,7 +14,7 @@ export interface RoleOption {
 @Component({
   selector: 'app-users-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SearchBarComponent],
   templateUrl: './users-management.component.html',
   styleUrls: ['./users-management.component.scss'],
 })
@@ -28,12 +29,47 @@ export class UsersManagementComponent {
   public readonly selectedIndex = computed(() => this.facade().selectedIndex());
   public readonly isSaving = computed(() => this.facade().isSaving());
 
+  public readonly searchTerm = signal('');
+
+  // Búsqueda por nombre, email o etiqueta del rol (Operario / Supervisor / Admin).
+  public readonly filteredUsers = computed<UserRow[]>(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    if (!term) return this.users();
+
+    return this.users().filter((u) => {
+      const nameMatch = u.name.toLowerCase().includes(term);
+      const emailMatch = u.email.toLowerCase().includes(term);
+      const roleMatch = this.getRoleLabel(u.role).toLowerCase().includes(term);
+
+      return nameMatch || emailMatch || roleMatch;
+    });
+  });
+
   isSelected(index: number): boolean {
     return this.selectedIndex() === index;
   }
 
   onSelect(index: number): void {
     this.facade().select(index);
+  }
+
+  isSelectedFiltered(filteredIndex: number): boolean {
+    const target = this.filteredUsers()[filteredIndex];
+    if (!target) return false;
+    const realIndex = this.users().indexOf(target);
+
+    return realIndex >= 0 && realIndex === this.selectedIndex();
+  }
+
+  onSelectFiltered(filteredIndex: number): void {
+    const target = this.filteredUsers()[filteredIndex];
+    if (!target) return;
+    const realIndex = this.users().indexOf(target);
+    if (realIndex >= 0) this.facade().select(realIndex);
+  }
+
+  onSearchChange(value: string): void {
+    this.searchTerm.set(value);
   }
 
   onCreate(): void {

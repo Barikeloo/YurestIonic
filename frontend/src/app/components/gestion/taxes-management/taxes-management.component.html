@@ -1,14 +1,27 @@
 <div class="gestion-section-grid">
   <div class="gestion-card">
     <div class="gestion-card-title">Impuestos configurados</div>
+    <app-search-bar
+      [value]="searchTerm()"
+      [resultsCount]="filteredTaxes().length"
+      [totalCount]="taxes().length"
+      placeholder="Buscar por nombre o %..."
+      ariaLabel="Buscar impuesto"
+      (valueChange)="onSearchChange($event)"
+    ></app-search-bar>
     <div class="gestion-row-list">
-      @for (tax of taxes(); track tax; let i = $index) {
+      @for (tax of filteredTaxes(); track tax; let i = $index) {
         <div
           class="gestion-row-item"
-          [class.active]="isSelected(i)"
-          (click)="onSelect(i)"
+          [class.active]="isSelectedFiltered(i)"
+          (click)="onSelectFiltered(i)"
           >
           <strong>{{ tax.name }}</strong><br />{{ tax.percentage }}%
+        </div>
+      }
+      @if (filteredTaxes().length === 0 && searchTerm().trim() !== '') {
+        <div class="gestion-empty" style="padding: 20px; text-align: center; color: var(--gray-500);">
+          Sin resultados para «{{ searchTerm() }}».
         </div>
       }
     </div>

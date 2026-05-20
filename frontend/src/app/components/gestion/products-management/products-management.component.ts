@@ -5,6 +5,7 @@ import { GestionProductsFacade, ProductRow, ProductFormData } from '../../../pag
 import { ProductItem } from '../../../services/product.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { ToggleComponent } from '../../../shared/components/toggle/toggle.component';
+import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 import { ProductModifiersModalComponent } from '../product-modifiers-modal/product-modifiers-modal.component';
 
 export interface TaxOption {
@@ -21,7 +22,7 @@ export interface FamilyOption {
 @Component({
   selector: 'app-products-management',
   standalone: true,
-  imports: [FormsModule, ToggleComponent, ProductModifiersModalComponent],
+  imports: [FormsModule, ToggleComponent, SearchBarComponent, ProductModifiersModalComponent],
   templateUrl: './products-management.component.html',
   styleUrls: ['./products-management.component.scss'],
 })
@@ -37,6 +38,7 @@ export class ProductsManagementComponent {
   public readonly isSaving = computed(() => this.facade().isSaving());
 
   public readonly modifiersModalOpen = signal(false);
+  public readonly searchTerm = signal('');
 
   public readonly selectedProduct = computed<ProductRow | null>(() => {
     const index = this.selectedIndex();
@@ -44,6 +46,19 @@ export class ProductsManagementComponent {
       return null;
     }
     return this.products()[index] ?? null;
+  });
+
+  // Búsqueda por nombre del producto y por nombre de su familia, todo lowercase.
+  public readonly filteredProducts = computed<ProductRow[]>(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    if (!term) return this.products();
+
+    return this.products().filter((p) => {
+      const productMatch = p.name.toLowerCase().includes(term);
+      const familyMatch = this.getFamilyName(p.family_id).toLowerCase().includes(term);
+
+      return productMatch || familyMatch;
+    });
   });
 
   openModifiers(): void {
@@ -69,6 +84,25 @@ export class ProductsManagementComponent {
 
   onSelect(index: number): void {
     this.facade().select(index);
+  }
+
+  isSelectedFiltered(filteredIndex: number): boolean {
+    const target = this.filteredProducts()[filteredIndex];
+    if (!target) return false;
+    const realIndex = this.products().indexOf(target);
+
+    return realIndex >= 0 && realIndex === this.selectedIndex();
+  }
+
+  onSelectFiltered(filteredIndex: number): void {
+    const target = this.filteredProducts()[filteredIndex];
+    if (!target) return;
+    const realIndex = this.products().indexOf(target);
+    if (realIndex >= 0) this.facade().select(realIndex);
+  }
+
+  onSearchChange(value: string): void {
+    this.searchTerm.set(value);
   }
 
   onCreate(): void {

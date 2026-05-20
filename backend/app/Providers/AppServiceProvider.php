@@ -16,8 +16,10 @@ use App\Family\Domain\Interfaces\FamilyRepositoryInterface;
 use App\Family\Infrastructure\Persistence\Repositories\EloquentFamilyRepository;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Order\Domain\Interfaces\OrderTransferRepositoryInterface;
 use App\Order\Infrastructure\Persistence\Repositories\EloquentOrderLineRepository;
 use App\Order\Infrastructure\Persistence\Repositories\EloquentOrderRepository;
+use App\Order\Infrastructure\Persistence\Repositories\EloquentOrderTransferRepository;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Product\Infrastructure\Persistence\Repositories\EloquentProductRepository;
 use App\ProductModifier\Domain\Interfaces\ProductModifierRepositoryInterface;
@@ -75,6 +77,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(SuperAdminRepositoryInterface::class, EloquentSuperAdminRepository::class);
         $this->app->bind(OrderRepositoryInterface::class, EloquentOrderRepository::class);
         $this->app->bind(OrderLineRepositoryInterface::class, EloquentOrderLineRepository::class);
+        $this->app->bind(OrderTransferRepositoryInterface::class, EloquentOrderTransferRepository::class);
         $this->app->bind(SaleRepositoryInterface::class, EloquentSaleRepository::class);
         $this->app->bind(SaleLineRepositoryInterface::class, EloquentSaleLineRepository::class);
         $this->app->bind(ChargeSessionRepositoryInterface::class, EloquentChargeSessionRepository::class);

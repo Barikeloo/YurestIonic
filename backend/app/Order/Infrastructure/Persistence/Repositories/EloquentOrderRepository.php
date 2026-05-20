@@ -78,6 +78,23 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         return $model ? $this->toDomain($model) : null;
     }
 
+    public function findActiveByTableId(Uuid $tableId): ?Order
+    {
+        $tableInternalId = EloquentTable::query()->where('uuid', $tableId->value())->value('id');
+
+        if ($tableInternalId === null) {
+            return null;
+        }
+
+        $model = $this->model->newQuery()
+            ->with(['restaurant', 'table', 'openedByUser', 'closedByUser'])
+            ->where('table_id', $tableInternalId)
+            ->whereIn('status', ['open', 'to-charge'])
+            ->first();
+
+        return $model ? $this->toDomain($model) : null;
+    }
+
     public function countActiveByRestaurantId(Uuid $restaurantId): int
     {
         $restaurantIdInt = EloquentRestaurant::query()->where('uuid', $restaurantId->value())->value('id');

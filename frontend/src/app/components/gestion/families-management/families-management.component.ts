@@ -1,14 +1,15 @@
 
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionFamiliesFacade, FamilyRow, FamilyFormData } from '../../../pages/core/gestion/facades/gestion-families.facade';
 import { ToastService } from '../../../core/services/toast.service';
 import { ToggleComponent } from '../../../shared/components/toggle/toggle.component';
+import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 
 @Component({
   selector: 'app-families-management',
   standalone: true,
-  imports: [FormsModule, ToggleComponent],
+  imports: [FormsModule, ToggleComponent, SearchBarComponent],
   templateUrl: './families-management.component.html',
   styleUrls: ['./families-management.component.scss'],
 })
@@ -21,12 +22,32 @@ export class FamiliesManagementComponent {
   public readonly selectedIndex = computed(() => this.facade().selectedIndex());
   public readonly isSaving = computed(() => this.facade().isSaving());
 
-  isSelected(index: number): boolean {
-    return this.selectedIndex() === index;
+  public readonly searchTerm = signal('');
+
+  public readonly filteredFamilies = computed<FamilyRow[]>(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    if (!term) return this.families();
+
+    return this.families().filter((f) => f.name.toLowerCase().includes(term));
+  });
+
+  isSelectedFiltered(filteredIndex: number): boolean {
+    const target = this.filteredFamilies()[filteredIndex];
+    if (!target) return false;
+    const realIndex = this.families().indexOf(target);
+
+    return realIndex >= 0 && realIndex === this.selectedIndex();
   }
 
-  onSelect(index: number): void {
-    this.facade().select(index);
+  onSelectFiltered(filteredIndex: number): void {
+    const target = this.filteredFamilies()[filteredIndex];
+    if (!target) return;
+    const realIndex = this.families().indexOf(target);
+    if (realIndex >= 0) this.facade().select(realIndex);
+  }
+
+  onSearchChange(value: string): void {
+    this.searchTerm.set(value);
   }
 
   onCreate(): void {

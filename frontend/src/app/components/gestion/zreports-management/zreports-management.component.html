@@ -11,6 +11,19 @@
     </app-btn>
   </div>
 
+  @if (!loading && reports.length > 0) {
+    <div class="zreports-search">
+      <app-search-bar
+        [value]="searchTerm()"
+        [resultsCount]="filteredReports.length"
+        [totalCount]="reports.length"
+        placeholder="Buscar por número Z o fecha..."
+        ariaLabel="Buscar Z Report"
+        (valueChange)="onSearchChange($event)"
+      ></app-search-bar>
+    </div>
+  }
+
   <div class="zreports-content">
     @if (loading) {
       <div class="zreports-loading">
@@ -25,31 +38,37 @@
     }
 
     @if (!loading && reports.length > 0) {
-      <div class="zreports-list">
-        @for (report of reports; track report) {
-          <div class="zreport-card" (click)="onViewReport(report)">
-            <div class="zreport-header">
-              <div class="zreport-number">Z #{{ report.zNum }}</div>
-              <app-badge [text]="getDiffText(report.diff)" [color]="getDiffColor(report.diff)"></app-badge>
+      @if (filteredReports.length === 0) {
+        <div class="zreports-empty">
+          Sin resultados para «{{ searchTerm() }}».
+        </div>
+      } @else {
+        <div class="zreports-list">
+          @for (report of filteredReports; track report) {
+            <div class="zreport-card" (click)="onViewReport(report)">
+              <div class="zreport-header">
+                <div class="zreport-number">Z #{{ report.zNum }}</div>
+                <app-badge [text]="getDiffText(report.diff)" [color]="getDiffColor(report.diff)"></app-badge>
+              </div>
+              <div class="zreport-date">{{ formatDate(report.date) }}</div>
+              <div class="zreport-details">
+                <div class="zreport-detail">
+                  <span class="detail-label">Tickets:</span>
+                  <span class="detail-value">{{ report.tickets }}</span>
+                </div>
+                <div class="zreport-detail">
+                  <span class="detail-label">Neto:</span>
+                  <span class="detail-value">{{ formatCents(report.net) }}€</span>
+                </div>
+                <div class="zreport-detail">
+                  <span class="detail-label">Efectivo:</span>
+                  <span class="detail-value">{{ formatCents(report.initial + report.movIn - report.movOut) }}€</span>
+                </div>
+              </div>
             </div>
-            <div class="zreport-date">{{ formatDate(report.date) }}</div>
-            <div class="zreport-details">
-              <div class="zreport-detail">
-                <span class="detail-label">Tickets:</span>
-                <span class="detail-value">{{ report.tickets }}</span>
-              </div>
-              <div class="zreport-detail">
-                <span class="detail-label">Neto:</span>
-                <span class="detail-value">{{ formatCents(report.net) }}€</span>
-              </div>
-              <div class="zreport-detail">
-                <span class="detail-label">Efectivo:</span>
-                <span class="detail-value">{{ formatCents(report.initial + report.movIn - report.movOut) }}€</span>
-              </div>
-            </div>
-          </div>
-        }
-      </div>
+          }
+        </div>
+      }
     }
   </div>
 

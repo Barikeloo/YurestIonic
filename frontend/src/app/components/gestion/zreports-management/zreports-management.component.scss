@@ -30,6 +30,18 @@
   margin-right: 8px;
 }
 
+.zreports-search {
+  padding: 14px 16px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  margin-top: 4px;
+}
+
+.zreports-search app-search-bar {
+  display: block;
+}
+
 .zreports-content {
   flex: 1;
   overflow-y: auto;

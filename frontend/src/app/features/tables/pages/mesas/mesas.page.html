@@ -150,6 +150,11 @@
                 Mesa libre
               }
             </div>
+            @if (lastTransfer && lastTransferFromTableName) {
+              <div class="order-table-transfer-chip" title="Traspasada de {{ lastTransferFromTableName }} a las {{ lastTransferTimeFormatted }}">
+                ↪ Traspasada desde {{ lastTransferFromTableName }} · {{ lastTransferTimeFormatted }}
+              </div>
+            }
           </div>
           <div class="order-total-big">
             {{ selectedTable.occupied && (selectedTable.remaining_total ?? 0) > 0 ? formatCents(selectedTable.remaining_total ?? 0) : '0,00€' }}
@@ -568,3 +573,18 @@
 
   </div>
 </div>
+
+<!-- Transfer account modal -->
+<app-transfer-table-modal
+  [isOpen]="transferModalOpen"
+  [sourceTableId]="transferSourceTable?.id ?? null"
+  [sourceTableName]="transferSourceTable?.name ?? ''"
+  [hasPartialPayments]="transferHasPartialPayments"
+  [zones]="facade.zones()"
+  [tables]="facade.tables()"
+  [occupiedTableIds]="occupiedTableIds"
+  [isLoading]="transferLoading"
+  [errorMessage]="transferError"
+  (closeModal)="closeTransferModal()"
+  (confirmTransfer)="onConfirmTransfer($event)"
+></app-transfer-table-modal>

@@ -19,6 +19,9 @@ final class GetOrderPaidTotal
 
         $total = 0;
         foreach ($sales as $sale) {
+            if ($sale->isCancelled()) {
+                continue;
+            }
             $total += $sale->total()->value();
         }
 

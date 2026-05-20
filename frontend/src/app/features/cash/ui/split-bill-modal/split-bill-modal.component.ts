@@ -64,6 +64,8 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
   public parts = 2;
   public assignedLines: BillLine[] = [];
   public selectedLineId: string | null = null;
+  /** Comensal seleccionado como destino de las próximas asignaciones en modo `diner`. */
+  public activeDinerNumber: number | null = null;
   private chargeSessionLoaded = false;
   public isLoading = false;
   public error: string | null = null;
@@ -114,16 +116,6 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
       this.ensureFixedEqualPart();
     }
 
-    // Diagnóstico: loguear estado de la sesión al abrir el modal
-    console.log('[SplitBillModal] ngOnInit - chargeSession:', this.chargeSession);
-    console.log('[SplitBillModal] ngOnInit - paidDiners Input:', this.paidDiners);
-    console.log('[SplitBillModal] ngOnInit - paid_diner_numbers:', this.chargeSession?.paid_diner_numbers);
-    console.log('[SplitBillModal] ngOnInit - unpaidDinerNumbers:', this.unpaidDinerNumbers);
-    console.log('[SplitBillModal] ngOnInit - splittingDiners:', this.splittingDiners);
-    console.log('[SplitBillModal] ngOnInit - displayedEqualDiners:', this.displayedEqualDiners);
-    console.log('[SplitBillModal] ngOnInit - equalPart:', this.equalPart);
-    console.log('[SplitBillModal] ngOnInit - includePaidInEqualSplit:', this.includePaidInEqualSplit);
-
     this.assignSync$
       .pipe(debounceTime(350), takeUntil(this.destroy$))
       .subscribe(() => this.flushAssignments());
@@ -145,6 +137,13 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
         const dinersCountChanged = curr.diners_count !== prev.diners_count;
         if (remainingIncreased || dinersCountChanged) {
           this.resetFixedEqualPart();
+        }
+      }
+      if (curr && this.activeDinerNumber !== null) {
+        const outOfRange = this.activeDinerNumber > curr.diners_count;
+        const justPaid = curr.paid_diner_numbers.includes(this.activeDinerNumber);
+        if (outOfRange || justPaid) {
+          this.activeDinerNumber = null;
         }
       }
     }
@@ -191,9 +190,6 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
       assignmentByLine.set(a.order_line_id, a.diner_number);
     }
 
-    console.log('rebuildAssignedLines - chargeSession:', this.chargeSession);
-    console.log('rebuildAssignedLines - paidIds size:', paidIds.size, 'line count:', this.lines?.length);
-
     this.assignedLines = (this.lines ?? []).map((l) => ({
       ...l,
       diner: l.id && assignmentByLine.has(l.id)
@@ -201,8 +197,6 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
         : (l.diner ?? null),
       isPaidLine: l.id ? paidIds.has(l.id) : false,
     }));
-
-    console.log('rebuildAssignedLines - assignedLines sample:', this.assignedLines.slice(0, 2));
 
     // Si la línea seleccionada ya no existe (porque se ha pagado o cambió input),
     // limpiamos la selección para no quedar en un estado fantasma.
@@ -278,7 +272,37 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
     if (newMode === 'equal') {
       this.ensureFixedEqualPart();
     }
+    if (newMode !== 'diner') {
+      this.activeDinerNumber = null;
+    }
     this.mode = newMode;
+  }
+
+  /**
+   * Activa un comensal como destino de las próximas asignaciones en modo `diner`.
+   * Tocar el ya activo lo desactiva. Comensales con su cobro cerrado se ignoran.
+   */
+  public selectActiveDiner(n: number): void {
+    if (this.isDinerPaid(n) && this.getSubtotal(n) === 0) return;
+    this.activeDinerNumber = this.activeDinerNumber === n ? null : n;
+  }
+
+  /**
+   * Toggle de asignación de una línea contra el comensal activo:
+   *  - si la línea ya pertenecía al activo, vuelve al pool;
+   *  - si pertenecía a otro o estaba libre, se reasigna al activo.
+   * Sin comensal activo no hace nada; líneas ya pagadas tampoco se tocan.
+   */
+  public toggleLineForActiveDiner(line: BillLine): void {
+    if (this.activeDinerNumber === null) return;
+    if (line.isPaidLine || !line.id) return;
+
+    const id = line.id;
+    const active = this.activeDinerNumber;
+    this.assignedLines = this.assignedLines.map((l) =>
+      l.id === id ? { ...l, diner: l.diner === active ? null : active } : l,
+    );
+    this.assignSync$.next();
   }
 
   public get remainingDiners(): number {
@@ -638,7 +662,6 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
    */
   public loadChargeSession(): void {
     if (!this.orderId || !this.userId) {
-      console.log('No orderId or userId, skipping charge session load');
       return;
     }
 
@@ -647,11 +670,9 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
 
     this.chargeSessionService.getCurrentChargeSession(this.orderId).subscribe({
       next: (session) => {
-        console.log('Charge session loaded:', session);
         this.chargeSession = session;
         this.rebuildAssignedLines();
         this.sessionUpdated.emit(session);
-        this.syncPaidDinersFromSession();
         this.isLoading = false;
         // Sin ngOnChanges en esta vía: fijamos la cuota explícitamente.
         this.ensureFixedEqualPart();
@@ -684,7 +705,6 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
       remaining_cents: this.remainingCents > 0 ? this.remainingCents : undefined,
     }).subscribe({
       next: (session) => {
-        console.log('Charge session created:', session);
         this.chargeSession = session;
         this.rebuildAssignedLines();
         this.sessionUpdated.emit(session);
@@ -693,18 +713,10 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error creating charge session:', error);
-
         this.error = 'Error al crear la sesión de cobro';
         this.isLoading = false;
       },
     });
-  }
-
-  private syncPaidDinersFromSession(): void {
-    if (!this.chargeSession) return;
-
-    const paidDinerNumbers = this.chargeSession.paid_diner_numbers;
-    console.log('Syncing paid diners from session:', paidDinerNumbers);
   }
 
   public isDinerPaid(dinerNum: number): boolean {
@@ -751,14 +763,12 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
     const splitting = this.splittingDiners;
     if (splitting.length <= 0) return;
     this.fixedEqualPartCents = Math.floor(this.chargeSession.remaining_cents / splitting.length);
-    console.log('[SplitBillModal] Fixed equal part set:', this.fixedEqualPartCents, 'for', splitting.length, 'splitting diners, remaining:', this.chargeSession.remaining_cents);
     this.equalRoundFixedPartChanged.emit(this.fixedEqualPartCents);
   }
 
   private resetFixedEqualPart(): void {
     const wasSet = this.fixedEqualPartCents !== null;
     this.fixedEqualPartCents = null;
-    console.log('[SplitBillModal] Fixed equal part reset');
     if (wasSet) {
       this.equalRoundFixedPartChanged.emit(null);
     }

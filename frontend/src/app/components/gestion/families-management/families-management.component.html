@@ -1,14 +1,27 @@
 <div class="gestion-section-grid">
   <div class="gestion-card">
     <div class="gestion-card-title">Familias disponibles</div>
+    <app-search-bar
+      [value]="searchTerm()"
+      [resultsCount]="filteredFamilies().length"
+      [totalCount]="families().length"
+      placeholder="Buscar familia por nombre..."
+      ariaLabel="Buscar familia"
+      (valueChange)="onSearchChange($event)"
+    ></app-search-bar>
     <div class="gestion-row-list">
-      @for (family of families(); track family; let i = $index) {
+      @for (family of filteredFamilies(); track family; let i = $index) {
         <div
           class="gestion-row-item"
-          [class.active]="isSelected(i)"
-          (click)="onSelect(i)"
+          [class.active]="isSelectedFiltered(i)"
+          (click)="onSelectFiltered(i)"
           >
           <strong>{{ family.name }}</strong><br />Estado: {{ family.active ? 'Activa' : 'Inactiva' }}
+        </div>
+      }
+      @if (filteredFamilies().length === 0 && searchTerm().trim() !== '') {
+        <div class="gestion-empty" style="padding: 20px; text-align: center; color: var(--gray-500);">
+          Sin resultados para «{{ searchTerm() }}».
         </div>
       }
     </div>

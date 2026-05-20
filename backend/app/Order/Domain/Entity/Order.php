@@ -2,6 +2,7 @@
 
 namespace App\Order\Domain\Entity;
 
+use App\Order\Domain\Exception\OrderNotTransferableException;
 use App\Order\Domain\ValueObject\OrderDiners;
 use App\Order\Domain\ValueObject\OrderStatus;
 use App\Shared\Domain\ValueObject\DomainDateTime;
@@ -14,7 +15,7 @@ final class Order
         private readonly Uuid $restaurantId,
         private readonly Uuid $uuid,
         private OrderStatus $status,
-        private readonly Uuid $tableId,
+        private Uuid $tableId,
         private readonly Uuid $openedByUserId,
         private ?Uuid $closedByUserId,
         private OrderDiners $diners,
@@ -130,6 +131,22 @@ final class Order
     public function updateDiners(OrderDiners $diners): void
     {
         $this->diners = $diners;
+        $this->updatedAt = DomainDateTime::now();
+    }
+
+    /**
+     * Traspasa la comanda a otra mesa. Solo permitido si la comanda está
+     * abierta o por cobrar; cerradas o canceladas se rechazan. La validación
+     * de que la mesa destino esté libre es responsabilidad del caso de uso,
+     * no del agregado.
+     */
+    public function transferTo(Uuid $newTableId): void
+    {
+        if (! $this->status->isOpen() && ! $this->status->isToCharge()) {
+            throw OrderNotTransferableException::create();
+        }
+
+        $this->tableId = $newTableId;
         $this->updatedAt = DomainDateTime::now();
     }
 

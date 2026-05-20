@@ -397,15 +397,30 @@ export class CajaPage implements OnInit, OnDestroy {
       tables: this.tpvService.listTables().pipe(catchError(() => of([] as TpvTableItem[]))),
     }).pipe(takeUntil(this.destroy$)).subscribe(({ orders, tables }) => {
       const tableNameById = new Map(tables.map((t) => [t.id, t.name] as const));
-      this.setPendingTables(orders
-        .filter((o) => o.status === OrderStatus.OPEN || o.status === OrderStatus.TO_CHARGE)
-        .map((o) => ({
+      const activeOrders = orders.filter((o) => o.status === OrderStatus.OPEN || o.status === OrderStatus.TO_CHARGE);
+
+      if (activeOrders.length === 0) {
+        this.setPendingTables([]);
+        return;
+      }
+
+      const paidTotals$ = activeOrders.map((o) =>
+        this.tpvService.getOrderPaidTotal(o.id).pipe(
+          map((r) => ({ orderId: o.id, paid: r.total_cents })),
+          catchError(() => of({ orderId: o.id, paid: 0 })),
+        ),
+      );
+
+      forkJoin(paidTotals$).pipe(takeUntil(this.destroy$)).subscribe((paidEntries) => {
+        const paidByOrder = new Map(paidEntries.map((e) => [e.orderId, e.paid] as const));
+        this.setPendingTables(activeOrders.map((o) => ({
           order_id: o.id,
           table_name: tableNameById.get(o.table_id) ?? 'Mesa',
           diners: o.diners,
           opened_at: o.opened_at,
-          total: o.total,
+          total: Math.max(0, o.total - (paidByOrder.get(o.id) ?? 0)),
         })));
+      });
     });
   }
 

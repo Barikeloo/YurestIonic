@@ -1,9 +1,10 @@
 
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CardComponent } from '../../../shared/components/card/card.component';
 import { BadgeComponent } from '../../../shared/components/badge/badge.component';
 import { BtnComponent } from '../../../shared/components/btn/btn.component';
 import { ZReportModalComponent, ZReportSession } from '../../../features/cash/ui/z-report-modal/z-report-modal.component';
+import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 
 export interface ZReportRow {
   id: string;
@@ -32,7 +33,7 @@ export interface ZReportRow {
   selector: 'app-zreports-management',
   templateUrl: './zreports-management.component.html',
   styleUrls: ['./zreports-management.component.scss'],
-  imports: [CardComponent, BadgeComponent, BtnComponent, ZReportModalComponent],
+  imports: [CardComponent, BadgeComponent, BtnComponent, ZReportModalComponent, SearchBarComponent],
   standalone: true,
 })
 export class ZReportsManagementComponent {
@@ -44,6 +45,26 @@ export class ZReportsManagementComponent {
 
   public selectedReport: ZReportSession | null = null;
   public showReportModal = false;
+  public readonly searchTerm = signal('');
+
+  // Búsqueda por número Z ("12", "Z12", "Z #12") o por fecha legible.
+  // Getter (no computed) porque `reports` es un @Input() clásico, no signal,
+  // y queremos que cambios en el input desde el padre se reflejen siempre.
+  public get filteredReports(): ZReportRow[] {
+    const term = this.searchTerm().trim().toLowerCase();
+    if (!term) return this.reports;
+
+    return this.reports.filter((r) => {
+      const numMatch = String(r.zNum).includes(term) || `z #${r.zNum}`.includes(term) || `z${r.zNum}`.includes(term);
+      const dateMatch = this.formatDate(r.date).toLowerCase().includes(term);
+
+      return numMatch || dateMatch;
+    });
+  }
+
+  public onSearchChange(value: string): void {
+    this.searchTerm.set(value);
+  }
 
   public onViewReport(report: ZReportRow): void {
     this.selectedReport = {

@@ -303,6 +303,31 @@ export class MesasFacade {
     }
   }
 
+  public async transferOrderToTable(orderId: string, toTableId: string): Promise<void> {
+    const currentUser = await firstValueFrom(this.authService.currentUser$);
+
+    if (!currentUser) {
+      throw new Error('No hay sesión activa');
+    }
+
+    await firstValueFrom(this.tpvService.transferOrder(orderId, {
+      to_table_id: toTableId,
+      transferred_by_user_id: currentUser.id,
+    }));
+
+    await this.loadData();
+
+    const destinationSelected = this._tables().find((candidate) => candidate.id === toTableId) ?? null;
+    this._selectedTable.set(destinationSelected);
+
+    if (destinationSelected?.order_id) {
+      const lines = await firstValueFrom(this.tpvService.getOrderLines(destinationSelected.order_id));
+      this._orderLines.set(lines);
+    } else {
+      this._orderLines.set([]);
+    }
+  }
+
   public async mergeTables(tableIds: string[]): Promise<void> {
     await firstValueFrom(this.tableService.mergeTables(tableIds));
   }

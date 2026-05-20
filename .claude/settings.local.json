@@ -47,7 +47,14 @@
       "Bash(./vendor/bin/php-parse --version)",
       "Bash(npx --offline tsc --noEmit -p tsconfig.app.json)",
       "Bash(echo \"exit=$?\")",
-      "Bash(./node_modules/.bin/tsc --noEmit -p tsconfig.json)"
+      "Bash(./node_modules/.bin/tsc --noEmit -p tsconfig.json)",
+      "Bash(php -l app/Order/Domain/Entity/Order.php)",
+      "Bash(php -l app/Order/Domain/Entity/OrderTransfer.php)",
+      "Bash(php -l app/Order/Domain/Exception/OrderNotTransferableException.php)",
+      "Bash(php -l app/Order/Domain/Exception/DestinationTableOccupiedException.php)",
+      "Bash(php -l app/Order/Domain/Exception/SameTableTransferException.php)",
+      "Bash(find /Users/yurest/Desktop/Worksito/yurestionic/bruno* -name \"*.bru\" -path \"*order*\")",
+      "Bash(npx --no-install tsc --noEmit -p tsconfig.json)"
     ]
   }
 }

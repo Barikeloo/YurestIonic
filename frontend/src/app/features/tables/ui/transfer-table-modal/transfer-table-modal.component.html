@@ -1,0 +1,85 @@
+@if (isOpen) {
+  <div class="transfer-modal-overlay" (click)="onClose()">
+    <div class="transfer-modal-box" (click)="$event.stopPropagation()">
+      <!-- Header -->
+      <div class="transfer-modal-header">
+        <div class="transfer-modal-title">Traspasar cuenta — {{ sourceTableName }}</div>
+        <button type="button" class="transfer-modal-close" [disabled]="isLoading" (click)="onClose()">✕</button>
+      </div>
+
+      <!-- Avisos -->
+      <div class="transfer-modal-notices">
+        @if (hasPartialPayments) {
+          <div class="transfer-notice warning">
+            <span class="transfer-notice-icon">⚠</span>
+            <span>Esta mesa tiene comensales ya cobrados. El traspaso conserva los pagos.</span>
+          </div>
+        }
+        <div class="transfer-notice info">
+          <span class="transfer-notice-icon">ℹ</span>
+          <span>Recuerda avisar a cocina del cambio de mesa.</span>
+        </div>
+        @if (errorMessage) {
+          <div class="transfer-notice error">
+            <span class="transfer-notice-icon">✕</span>
+            <span>{{ errorMessage }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Lista por zona -->
+      <div class="transfer-modal-body">
+        @if (getZonesWithTables().length === 0) {
+          <div class="transfer-empty">No hay otras mesas disponibles.</div>
+        }
+        @for (zone of getZonesWithTables(); track zone.id) {
+          <div class="transfer-zone">
+            <div class="transfer-zone-title">{{ zone.name }}</div>
+            <div class="transfer-zone-grid">
+              @for (table of getTablesForZone(zone.id); track table.id) {
+                <button
+                  type="button"
+                  class="transfer-table-tile"
+                  [class.selected]="selectedTableId === table.id"
+                  [class.disabled]="!isSelectable(table)"
+                  [disabled]="!isSelectable(table) || isLoading"
+                  (click)="selectTable(table)"
+                  >
+                  <div class="transfer-table-name">{{ table.name }}</div>
+                  @if (isOrigin(table)) {
+                    <div class="transfer-table-state origin">Origen</div>
+                  } @else if (isOccupied(table)) {
+                    <div class="transfer-table-state occupied">Ocupada</div>
+                  } @else {
+                    <div class="transfer-table-state free">Libre</div>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="transfer-modal-footer">
+        <button type="button" class="transfer-btn-secondary" [disabled]="isLoading" (click)="onClose()">
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="transfer-btn-primary"
+          [disabled]="selectedTableId === null || isLoading"
+          (click)="onConfirm()"
+          >
+          @if (isLoading) {
+            Traspasando...
+          } @else if (selectedTableId !== null) {
+            Traspasar a {{ selectedTableName() }}
+          } @else {
+            Selecciona una mesa
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

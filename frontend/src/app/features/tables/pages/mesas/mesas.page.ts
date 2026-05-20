@@ -10,7 +10,9 @@ import { MesasFacade, TableWithStatus } from '../../facades/mesas.facade';
 import { OrderStatus } from '../../../../core/enums/order-status.enum';
 import { AuthActionType } from '../../../../core/enums/auth-action-type.enum';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { TpvOrderLine } from '../../../cash/services/tpv.service';
+import { OrderTransferItem, TpvOrderLine, TpvService } from '../../../cash/services/tpv.service';
+import { firstValueFrom } from 'rxjs';
+import { TransferTableModalComponent } from '../../ui/transfer-table-modal/transfer-table-modal.component';
 
 const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#E74C3C'];
 
@@ -18,7 +20,7 @@ const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#
   selector: 'app-mesas',
   templateUrl: './mesas.page.html',
   styleUrls: ['./mesas.page.scss'],
-  imports: [PinAuthModalComponent, DinersStatusComponent, FilterByPipe, DragDropModule],
+  imports: [PinAuthModalComponent, DinersStatusComponent, FilterByPipe, DragDropModule, TransferTableModalComponent],
   providers: [MesasFacade],
 })
 export class MesasPage implements OnInit {
@@ -27,6 +29,7 @@ export class MesasPage implements OnInit {
   private readonly pinAuthService = inject(PinAuthService);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
+  private readonly tpvService = inject(TpvService);
 
   // ----- UI state: open-table modal -----
   public modalOpen = false;
@@ -60,6 +63,16 @@ export class MesasPage implements OnInit {
   public detailModalOpen = false;
   public selectedLine: TpvOrderLine | null = null;
 
+  // ----- UI state: transfer-account modal -----
+  public transferModalOpen = false;
+  public transferLoading = false;
+  public transferError: string | null = null;
+  public transferSourceTable: TableWithStatus | null = null;
+  public transferHasPartialPayments = false;
+
+  // Último traspaso de la mesa actualmente seleccionada (chip informativo en el panel).
+  public lastTransfer: OrderTransferItem | null = null;
+
   // ----- UI state: merge tables mode -----
   public isMergeMode = false;
   public selectedTablesForMerge: string[] = [];
@@ -84,6 +97,35 @@ export class MesasPage implements OnInit {
 
   public async selectTable(table: TableWithStatus): Promise<void> {
     await this.facade.selectTable(table);
+    await this.loadLastTransferForOrder(table.order_id ?? null);
+  }
+
+  private async loadLastTransferForOrder(orderId: string | null): Promise<void> {
+    if (!orderId) {
+      this.lastTransfer = null;
+
+      return;
+    }
+
+    try {
+      const response = await firstValueFrom(this.tpvService.getOrderTransfers(orderId));
+      this.lastTransfer = response.transfers[0] ?? null;
+    } catch {
+      this.lastTransfer = null;
+    }
+  }
+
+  public get lastTransferFromTableName(): string | null {
+    if (!this.lastTransfer) return null;
+
+    return this.facade.tables().find((t) => t.id === this.lastTransfer!.from_table_id)?.name ?? null;
+  }
+
+  public get lastTransferTimeFormatted(): string {
+    if (!this.lastTransfer) return '';
+    const date = new Date(this.lastTransfer.transferred_at);
+
+    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   }
 
   // ----- Open table flow -----
@@ -395,8 +437,65 @@ export class MesasPage implements OnInit {
     }
   }
 
-  public onTransferAccount(): void {
+  public async onTransferAccount(): Promise<void> {
+    const menuTable = this.tableMenuTable;
     this.closeTableMenu();
+
+    if (!menuTable?.order_id) {
+      return;
+    }
+
+    this.transferSourceTable = menuTable;
+    this.transferError = null;
+
+    try {
+      const paidCount = await this.facade.getPaidDinersCountFromChargeSession(menuTable.order_id);
+      this.transferHasPartialPayments = paidCount > 0;
+    } catch {
+      this.transferHasPartialPayments = false;
+    }
+
+    this.transferModalOpen = true;
+  }
+
+  public closeTransferModal(): void {
+    if (this.transferLoading) {
+      return;
+    }
+    this.transferModalOpen = false;
+    this.transferSourceTable = null;
+    this.transferHasPartialPayments = false;
+    this.transferError = null;
+  }
+
+  public async onConfirmTransfer(toTableId: string): Promise<void> {
+    if (!this.transferSourceTable?.order_id || this.transferLoading) {
+      return;
+    }
+
+    this.transferLoading = true;
+    this.transferError = null;
+
+    const sourceName = this.transferSourceTable.name;
+    const destinationName = this.facade.tables().find((t) => t.id === toTableId)?.name ?? 'la nueva mesa';
+
+    try {
+      const sourceOrderId = this.transferSourceTable.order_id;
+      await this.facade.transferOrderToTable(sourceOrderId, toTableId);
+      this.transferModalOpen = false;
+      this.transferSourceTable = null;
+      this.transferHasPartialPayments = false;
+      await this.loadLastTransferForOrder(sourceOrderId);
+      this.toastService.presentSuccess(`Cuenta traspasada de ${sourceName} a ${destinationName}.`);
+    } catch (err) {
+      this.transferError = err instanceof Error ? err.message : 'No se pudo traspasar la cuenta.';
+    } finally {
+      this.transferLoading = false;
+    }
+  }
+
+  public get occupiedTableIds(): string[] {
+    return this.facade.tables().filter((t) => t.occupied).map((t) => t.id);
   }
 
   // ----- Merge tables mode -----

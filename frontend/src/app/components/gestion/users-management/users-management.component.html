@@ -1,16 +1,29 @@
 <div class="gestion-section-grid">
   <div class="gestion-card">
     <div class="gestion-card-title">Usuarios del restaurante</div>
+    <app-search-bar
+      [value]="searchTerm()"
+      [resultsCount]="filteredUsers().length"
+      [totalCount]="users().length"
+      placeholder="Buscar por nombre, email o rol..."
+      ariaLabel="Buscar usuario"
+      (valueChange)="onSearchChange($event)"
+    ></app-search-bar>
     <div class="gestion-row-list">
-      @for (user of users(); track user; let i = $index) {
+      @for (user of filteredUsers(); track user; let i = $index) {
         <div
           class="gestion-row-item"
-          [class.active]="isSelected(i)"
-          (click)="onSelect(i)"
+          [class.active]="isSelectedFiltered(i)"
+          (click)="onSelectFiltered(i)"
           >
           <strong>{{ user.name }}</strong><br />
           <span class="user-meta-email">{{ user.email }}</span>
           <span class="user-role-badge" [ngClass]="getRoleBadgeClass(user.role)">{{ getRoleLabel(user.role) }}</span>
+        </div>
+      }
+      @if (filteredUsers().length === 0 && searchTerm().trim() !== '') {
+        <div class="gestion-empty" style="padding: 20px; text-align: center; color: var(--gray-500);">
+          Sin resultados para «{{ searchTerm() }}».
         </div>
       }
     </div>

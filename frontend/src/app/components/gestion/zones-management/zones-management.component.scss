@@ -35,7 +35,7 @@
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-sm);
   background: var(--white);
-  padding: 12px;
+  padding: 16px;
   min-width: 0;
 }
 
@@ -46,6 +46,11 @@
   margin-bottom: 10px;
 }
 
+.gestion-card app-search-bar {
+  display: block;
+  margin-bottom: 14px;
+}
+
 .gestion-row-list {
   display: flex;
   flex-direction: column;
@@ -53,6 +58,8 @@
   max-height: 300px;
   overflow-y: auto;
   padding-right: 2px;
+  border-top: 1px solid var(--gray-200);
+  padding-top: 12px;
 }
 
 .gestion-row-item {

@@ -1,12 +1,20 @@
 <div class="gestion-section-grid">
   <div class="gestion-card">
     <div class="gestion-card-title">Catalogo actual</div>
+    <app-search-bar
+      [value]="searchTerm()"
+      [resultsCount]="filteredProducts().length"
+      [totalCount]="products().length"
+      placeholder="Buscar producto o familia..."
+      ariaLabel="Buscar producto"
+      (valueChange)="onSearchChange($event)"
+    ></app-search-bar>
     <div class="gestion-row-list">
-      @for (product of products(); track product; let i = $index) {
+      @for (product of filteredProducts(); track product; let i = $index) {
         <div
           class="gestion-row-item"
-          [class.active]="isSelected(i)"
-          (click)="onSelect(i)"
+          [class.active]="isSelectedFiltered(i)"
+          (click)="onSelectFiltered(i)"
           >
           <strong>{{ product.name }}</strong><br />
           {{ getFamilyName(product.family_id) }} · {{ toEuroFromCents(product.price) }} · IVA {{ getTaxPercentage(product.tax_id) }}% · Stock {{ product.stock }} · {{ product.active ? 'Activo' : 'Inactivo' }}
@@ -15,6 +23,10 @@
       @if (products().length === 0) {
         <div class="gestion-empty" style="padding: 20px; text-align: center; color: var(--gray-500);">
           No hay productos. Crea uno nuevo para comenzar.
+        </div>
+      } @else if (filteredProducts().length === 0 && searchTerm().trim() !== '') {
+        <div class="gestion-empty" style="padding: 20px; text-align: center; color: var(--gray-500);">
+          Sin resultados para «{{ searchTerm() }}».
         </div>
       }
     </div>

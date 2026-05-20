@@ -280,45 +280,111 @@
               </div>
             </div>
           }
-          <!-- Por comensal -->
+          <!-- Por comensal (card-first) -->
           @if (mode === 'diner') {
-            <div class="diner-mode">
-              <div class="diner-cards">
-                @for (d of unpaidDinerNumbers; track d) {
-                  <div class="diner-card">
-                    <div class="diner-name">Comensal {{ d }}</div>
-                    @for (line of getDinerLines(d); track line) {
-                      <div class="diner-line" [class.paid-line]="line.isPaidLine">
-                        <span>
-                          {{ line.name }}@if (line.variantName) { <span class="line-variant">({{ line.variantName }})</span> }
-                          @if ((line.modifiers ?? []).length > 0) {
-                            <span class="line-modifiers-mini">{{ formatLineModifiers(line) }}</span>
-                          }
-                          @if (line.isPaidLine) {
-                            <span class="paid-badge-mini" title="Línea ya cobrada">🔒</span>
-                          }
-                        </span>
-                        <span>{{ formatCents(line.price) }} €</span>
-                      </div>
-                    }
-                    <div class="diner-subtotal">
-                      <span>Subtotal</span>
-                      <span>{{ formatCents(getSubtotal(d)) }} €</span>
+            <div class="diner-mode-v2">
+              <!-- Cabecera con instrucción y total pendiente -->
+              <div class="diner-v2-header">
+                <div class="diner-v2-hint">
+                  @if (activeDinerNumber === null) {
+                    Selecciona un comensal y marca lo que se lleva.
+                  } @else {
+                    Comensal {{ activeDinerNumber }} activo — toca sus líneas.
+                  }
+                </div>
+                <div class="diner-v2-remaining">
+                  Pendiente <strong>{{ formatCents(remainingTotal) }} €</strong>
+                </div>
+              </div>
+
+              <!-- Grid de comensales -->
+              <div class="section-label">Comensales</div>
+              <div class="diner-v2-grid">
+                @for (n of allDinerNumbers; track n) {
+                  <div
+                    class="diner-v2-tile"
+                    [class.paid]="isDinerPaid(n) && getSubtotal(n) === 0"
+                    [class.active]="activeDinerNumber === n"
+                    [style.--diner-color]="dinerColor(n)"
+                    (click)="selectActiveDiner(n)"
+                    >
+                    <div class="diner-v2-tile-avatar">{{ n }}</div>
+                    <div class="diner-v2-tile-body">
+                      <div class="diner-v2-tile-title">Comensal {{ n }}</div>
+                      @if (isDinerPaid(n) && getSubtotal(n) === 0) {
+                        <div class="diner-v2-tile-state paid">✓ Pagado</div>
+                      } @else if (getDinerLineCount(n) === 0) {
+                        <div class="diner-v2-tile-state">Sin líneas</div>
+                      } @else {
+                        <div class="diner-v2-tile-state">
+                          {{ getDinerLineCount(n) }} {{ getDinerLineCount(n) === 1 ? 'línea' : 'líneas' }}
+                        </div>
+                      }
                     </div>
-                    <button class="btn-charge" (click)="chargeDiner(d)">Cobrar comensal {{ d }}</button>
+                    <div class="diner-v2-tile-amount">{{ formatCents(getSubtotal(n)) }} €</div>
                   </div>
                 }
               </div>
-              <div class="common-expenses">
-                <div class="section-label">Gastos comunes — pendiente asignar</div>
-                <div class="common-badges">
-                  @for (line of getCommonLines(); track line) {
-                    <span class="common-badge">
-                      {{ line.name }}@if (line.variantName) { ({{ line.variantName }}) } · {{ formatCents(line.price) }} €
-                    </span>
-                  }
-                </div>
+
+              <!-- Lista de líneas de la mesa -->
+              <div class="section-label">Líneas de la mesa</div>
+              <div class="diner-v2-lines" [class.no-active]="activeDinerNumber === null">
+                @for (line of assignedLines; track line.id) {
+                  <div
+                    class="diner-v2-line"
+                    [class.paid-line]="line.isPaidLine"
+                    [class.assigned]="line.diner != null"
+                    [class.on-active]="line.diner != null && line.diner === activeDinerNumber"
+                    [style.--line-owner-color]="line.diner != null ? dinerColor(line.diner) : 'transparent'"
+                    (click)="toggleLineForActiveDiner(line)"
+                    >
+                    <div class="diner-v2-line-info">
+                      <div class="diner-v2-line-name">
+                        {{ line.name }}@if (line.variantName) { <span class="line-variant">({{ line.variantName }})</span> }
+                        @if (line.isPaidLine) {
+                          <span class="paid-badge-mini" title="Línea ya cobrada">🔒</span>
+                        }
+                      </div>
+                      @if ((line.modifiers ?? []).length > 0) {
+                        <div class="line-modifiers-mini">{{ formatLineModifiers(line) }}</div>
+                      }
+                      @if (line.diner != null) {
+                        <div class="diner-v2-line-owner">Asignada a Comensal {{ line.diner }}</div>
+                      }
+                    </div>
+                    <div class="diner-v2-line-price">{{ formatCents(line.price) }} €</div>
+                  </div>
+                }
               </div>
+
+              <!-- CTA — Cobrar al comensal activo -->
+              @if (activeDinerNumber !== null) {
+                <div class="diner-v2-footer" [style.--diner-color]="dinerColor(activeDinerNumber)">
+                  <div class="diner-v2-footer-info">
+                    <div class="diner-v2-footer-avatar">{{ activeDinerNumber }}</div>
+                    <div class="diner-v2-footer-text">
+                      <div class="diner-v2-footer-title">Comensal {{ activeDinerNumber }}</div>
+                      @if (getSubtotal(activeDinerNumber) > 0) {
+                        <div class="diner-v2-footer-sub">{{ getDinerLineCount(activeDinerNumber) }} {{ getDinerLineCount(activeDinerNumber) === 1 ? 'línea asignada' : 'líneas asignadas' }}</div>
+                      } @else {
+                        <div class="diner-v2-footer-sub">Toca las líneas que se lleva</div>
+                      }
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="diner-v2-charge-btn"
+                    [disabled]="getSubtotal(activeDinerNumber) <= 0 || isLoading"
+                    (click)="chargeDiner(activeDinerNumber)"
+                    >
+                    @if (getSubtotal(activeDinerNumber) > 0) {
+                      Cobrar — {{ formatCents(getSubtotal(activeDinerNumber)) }} €
+                    } @else {
+                      Sin líneas
+                    }
+                  </button>
+                </div>
+              }
             </div>
           }
         </div>

@@ -30,6 +30,8 @@ use App\Order\Infrastructure\Entrypoint\Http\GetLinesController as OrderGetLines
 use App\Order\Infrastructure\Entrypoint\Http\GetOrderTotalController;
 use App\Order\Infrastructure\Entrypoint\Http\PostController as OrderPostController;
 use App\Order\Infrastructure\Entrypoint\Http\PutController as OrderPutController;
+use App\Order\Infrastructure\Entrypoint\Http\GetOrderTransfersController;
+use App\Order\Infrastructure\Entrypoint\Http\TransferOrderController;
 use App\Product\Infrastructure\Entrypoint\Http\ActivateController as ProductActivateController;
 use App\Product\Infrastructure\Entrypoint\Http\DeactivateController as ProductDeactivateController;
 use App\Product\Infrastructure\Entrypoint\Http\DeleteController as ProductDeleteController;
@@ -155,6 +157,8 @@ Route::middleware([
     Route::get('/tpv/orders/{id}/final-ticket/print', GetFinalTicketPrintController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/lines', OrderGetLinesController::class)->whereUuid('id');
     Route::put('/tpv/orders/{id}', OrderPutController::class)->whereUuid('id');
+    Route::post('/tpv/orders/{id}/transfer', TransferOrderController::class)->whereUuid('id');
+    Route::get('/tpv/orders/{id}/transfers', GetOrderTransfersController::class)->whereUuid('id');
     Route::delete('/tpv/orders/{id}', OrderDeleteController::class)->whereUuid('id');
 
     Route::post('/tpv/sales', SalePostController::class);

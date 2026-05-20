@@ -1,14 +1,27 @@
 <div class="gestion-section-grid">
   <div class="gestion-card">
     <div class="gestion-card-title">Zonas y capacidad</div>
+    <app-search-bar
+      [value]="searchTerm()"
+      [resultsCount]="filteredZones().length"
+      [totalCount]="zones().length"
+      placeholder="Buscar zona..."
+      ariaLabel="Buscar zona"
+      (valueChange)="onSearchChange($event)"
+    ></app-search-bar>
     <div class="gestion-row-list">
-      @for (zone of zones(); track zone; let i = $index) {
+      @for (zone of filteredZones(); track zone; let i = $index) {
         <div
           class="gestion-row-item"
-          [class.active]="isZoneSelected(i)"
-          (click)="onSelectZone(i)"
+          [class.active]="isSelectedFiltered(i)"
+          (click)="onSelectFiltered(i)"
           >
           <strong>{{ zone.name }}</strong><br />Mesas registradas: {{ zone.tables.length }}
+        </div>
+      }
+      @if (filteredZones().length === 0 && searchTerm().trim() !== '') {
+        <div class="gestion-empty" style="padding: 20px; text-align: center; color: var(--gray-500);">
+          Sin resultados para «{{ searchTerm() }}».
         </div>
       }
     </div>

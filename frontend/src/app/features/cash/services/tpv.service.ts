@@ -182,6 +182,28 @@ interface UpdateOrderPayload {
   closed_by_user_id?: string;
 }
 
+export interface TransferOrderPayload {
+  to_table_id: string;
+  transferred_by_user_id: string;
+}
+
+export interface TransferOrderResponse {
+  transfer_id: string;
+  order_id: string;
+  from_table_id: string;
+  to_table_id: string;
+  transferred_at: string;
+}
+
+export interface OrderTransferItem {
+  id: string;
+  order_id: string;
+  from_table_id: string;
+  to_table_id: string;
+  transferred_by_user_id: string;
+  transferred_at: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -255,6 +277,18 @@ export class TpvService {
   public deleteOrder(id: string): Observable<unknown> {
     return this.http
       .delete(`${this.baseUrl}/tpv/orders/${id}`, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public transferOrder(orderId: string, payload: TransferOrderPayload): Observable<TransferOrderResponse> {
+    return this.http
+      .post<TransferOrderResponse>(`${this.baseUrl}/tpv/orders/${orderId}/transfer`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public getOrderTransfers(orderId: string): Observable<{ transfers: OrderTransferItem[] }> {
+    return this.http
+      .get<{ transfers: OrderTransferItem[] }>(`${this.baseUrl}/tpv/orders/${orderId}/transfers`, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 

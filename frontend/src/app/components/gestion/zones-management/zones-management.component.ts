@@ -1,13 +1,14 @@
 
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionZonesFacade, TableRow, ZoneRow, ZoneFormData, TableFormData } from '../../../pages/core/gestion/facades/gestion-zones.facade';
 import { ToastService } from '../../../core/services/toast.service';
+import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 
 @Component({
   selector: 'app-zones-management',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, SearchBarComponent],
   templateUrl: './zones-management.component.html',
   styleUrls: ['./zones-management.component.scss'],
 })
@@ -24,16 +25,38 @@ export class ZonesManagementComponent {
   public readonly isSavingZone = computed(() => this.facade().isSavingZone());
   public readonly isSavingTable = computed(() => this.facade().isSavingTable());
 
+  public readonly searchTerm = signal('');
+
+  public readonly filteredZones = computed<ZoneRow[]>(() => {
+    const term = this.searchTerm().trim().toLowerCase();
+    if (!term) return this.zones();
+    return this.zones().filter((z) => z.name.toLowerCase().includes(term));
+  });
+
   isZoneSelected(index: number): boolean {
     return this.selectedZoneIndex() === index;
   }
 
-  isTableSelected(index: number): boolean {
-    return this.selectedTableIndex() === index;
+  isSelectedFiltered(filteredIndex: number): boolean {
+    const target = this.filteredZones()[filteredIndex];
+    if (!target) return false;
+    const realIndex = this.zones().indexOf(target);
+    return realIndex >= 0 && realIndex === this.selectedZoneIndex();
   }
 
-  onSelectZone(index: number): void {
-    this.facade().selectZone(index);
+  onSelectFiltered(filteredIndex: number): void {
+    const target = this.filteredZones()[filteredIndex];
+    if (!target) return;
+    const realIndex = this.zones().indexOf(target);
+    if (realIndex >= 0) this.facade().selectZone(realIndex);
+  }
+
+  onSearchChange(value: string): void {
+    this.searchTerm.set(value);
+  }
+
+  isTableSelected(index: number): boolean {
+    return this.selectedTableIndex() === index;
   }
 
   onCreateZone(): void {
