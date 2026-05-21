@@ -4,8 +4,8 @@ namespace App\Tables\Infrastructure\Entrypoint\Http;
 
 use App\Tables\Application\MergeTables\MergeTables;
 use App\Tables\Domain\Exception\MinimumTwoTablesRequiredException;
-use App\Tables\Domain\Exception\TablesNotInSameZoneException;
 use App\Tables\Domain\Exception\TablesNotFoundException;
+use App\Tables\Domain\Exception\TablesNotInSameZoneException;
 use App\Tables\Domain\Exception\TablesWithOpenOrdersException;
 use App\Tables\Infrastructure\Entrypoint\Http\Requests\MergeTablesRequest;
 use Illuminate\Http\JsonResponse;

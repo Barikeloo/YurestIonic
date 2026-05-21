@@ -2,6 +2,7 @@
 
 namespace App\ProductVariant\Domain\Entity;
 
+use App\Product\Domain\Exception\InsufficientStockException;
 use App\ProductVariant\Domain\ValueObject\VariantName;
 use App\ProductVariant\Domain\ValueObject\VariantPrice;
 use App\ProductVariant\Domain\ValueObject\VariantStock;
@@ -103,7 +104,7 @@ class ProductVariant
     public function decreaseStock(int $amount): void
     {
         if (! $this->stock->isSufficientFor($amount)) {
-            throw \App\Product\Domain\Exception\InsufficientStockException::forProduct(
+            throw InsufficientStockException::forProduct(
                 $this->id->value(),
                 $this->stock->value(),
                 $amount,

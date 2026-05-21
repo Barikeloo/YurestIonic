@@ -1,364 +1,905 @@
-@import 'variables.scss';
+// =============================================================
+// COBRAR MODAL — Minimalist redesign for hospitality POS
+// Single-column, hero amount, segmented methods, sticky footer
+// =============================================================
 
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.42);
+  inset: 0;
+  background: rgba(15, 15, 15, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 300;
-  backdrop-filter: blur(3px);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.18s ease-out;
 }
 
 .modal-content {
+  interpolate-size: allow-keywords;
+
   background: var(--white);
   border-radius: var(--radius-2xl);
-  width: 90%;
-  max-width: 900px;
-  max-height: 92vh;
-  overflow: hidden;
+  width: 92%;
+  max-width: 560px;
+  max-height: 94vh;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: slideUp 0.22s ease-out;
+  transition: max-width 0.4s cubic-bezier(0.32, 0.72, 0, 1),
+              height 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+
+  &.wide {
+    max-width: 940px;
+  }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// -------------------------------------------------------------
+// HEADER
+// -------------------------------------------------------------
 .modal-header {
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--gray-200);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--gray-100);
   flex-shrink: 0;
 }
 
-.modal-title {
-  font-size: 17px;
-  font-weight: 700;
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font);
+  font-size: 14px;
+  color: var(--gray-700);
+}
+
+.header-table {
+  font-weight: 600;
   color: var(--black);
 }
 
+.header-sep {
+  color: var(--gray-300);
+}
+
+.header-diners {
+  color: var(--gray-500);
+}
+
 .close-btn {
+  width: 44px;
+  height: 44px;
   border: none;
-  background: none;
-  font-size: 24px;
-  color: var(--gray-400);
+  background: transparent;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-500);
   cursor: pointer;
-  line-height: 1;
-  padding: 0 2px;
+  transition: background 0.15s, color 0.15s;
+
+  &:hover,
+  &:active {
+    background: var(--gray-100);
+    color: var(--gray-800);
+  }
 }
 
-.modal-body {
-  overflow-y: auto;
+// -------------------------------------------------------------
+// BODY (scrollable)
+// -------------------------------------------------------------
+// -------------------------------------------------------------
+// LAYOUT — grid 1col → 2cols cuando hay panel lateral abierto
+// -------------------------------------------------------------
+.modal-layout {
   flex: 1;
-  padding: 24px;
-}
-
-.payment-grid {
+  min-height: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 28px;
+  grid-template-columns: 1fr 0fr;
+  transition: grid-template-columns 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+
+  &.split {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
 }
 
-.left-column,
-.right-column {
+.main-pane,
+.side-pane {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
 }
 
-.right-column app-diners-status {
-  margin-bottom: 8px;
+.main-pane {
+  padding: 8px 20px 16px;
+  gap: 18px;
+  display: flex;
+  flex-direction: column;
 }
 
-.section-label {
-  font-size: 11px;
-  color: var(--gray-400);
+// -------------------------------------------------------------
+// SIDE PANE — colapsado por defecto, expande al activar opción
+// -------------------------------------------------------------
+.side-pane {
+  border-left: 1px solid var(--gray-100);
+  background: var(--gray-50);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.32s ease 0.04s;
+
+  &.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.side-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.side-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--gray-200);
+  flex-shrink: 0;
+  background: var(--white);
+}
+
+.side-title {
   font-family: var(--font);
-  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--black);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.summary-card {
-  background: var(--gray-50);
+.close-btn.small {
+  width: 36px;
+  height: 36px;
 }
 
-.summary-row {
+.side-body {
+  flex: 1;
+  position: relative;
+  padding: 16px 20px;
+}
+
+// Cada side-slot ocupa el mismo espacio; cross-fade entre ellos
+.side-slot {
+  position: absolute;
+  inset: 16px 20px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.26s ease;
+
+  &.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.side-slot-inner {
   display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--gray-100);
-}
-
-.summary-name {
-  font-family: var(--font);
-  font-size: 13px;
-  color: var(--gray-700);
-}
-
-.summary-price {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: var(--gray-700);
-}
-
-.summary-total {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 8px;
-  font-weight: 700;
-  font-family: var(--font);
-  font-size: 15px;
-  color: var(--black);
-}
-
-.total-amount {
-  font-family: var(--mono);
-  color: var(--black);
-}
-
-.methods-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  flex-direction: column;
   gap: 12px;
+  height: 100%;
+  overflow-y: auto;
+
+  &::-webkit-scrollbar { width: 6px; }
+  &::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
 }
 
-.method-btn {
-  padding: 16px 8px;
-  border-radius: 12px;
-  border: 2px solid var(--gray-200);
-  background: var(--white);
-  cursor: pointer;
+// Detalle total dentro del side
+.detail-total {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--gray-200);
+  font-weight: 700;
+  color: var(--black) !important;
+}
+
+.partial-remaining {
+  margin-top: 6px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--gray-600);
   text-align: center;
-  transition: all 0.12s;
+
+  strong {
+    font-family: var(--mono);
+    color: var(--accent);
+  }
+}
+
+// -------------------------------------------------------------
+// HERO — total a cobrar
+// -------------------------------------------------------------
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 0 8px;
+}
+
+.hero-amount {
+  font-family: var(--mono);
+  font-weight: 600;
+  letter-spacing: -1.5px;
+  color: var(--black);
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  line-height: 1;
+}
+
+.hero-int {
+  font-size: 64px;
+}
+
+.hero-sep {
+  font-size: 64px;
+  color: var(--gray-300);
+  margin: 0 -2px;
+}
+
+.hero-dec {
+  font-size: 40px;
+  color: var(--gray-600);
+}
+
+.hero-currency {
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--gray-500);
+  margin-left: 6px;
+}
+
+.hero-label {
+  margin-top: 6px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  font-weight: 500;
+}
+
+// Acceso al detalle de líneas — chevron sutil debajo del hero
+.detail-link {
+  margin-top: 14px;
+  min-height: 40px;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+
+  .detail-link-text {
+    transition: color 0.18s ease;
+  }
+
+  .detail-link-chevron {
+    color: var(--gray-400);
+    transition: transform 0.32s cubic-bezier(0.32, 0.72, 0, 1), color 0.18s ease;
+  }
+
+  &:hover {
+    background: var(--gray-100);
+    color: var(--gray-800);
+
+    .detail-link-chevron {
+      color: var(--gray-700);
+    }
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &.active {
+    background: var(--gray-900);
+    color: var(--white);
+
+    .detail-link-chevron {
+      color: var(--white);
+      transform: rotate(90deg);
+    }
+  }
+}
+
+// =============================================================
+// PANEL DETALLE — vista densa tipo ticket
+// Una fila por producto, sin cards. Separadores sutiles.
+// =============================================================
+.detail-list {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font);
+}
+
+.detail-item {
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-bottom: 1px solid var(--gray-200);
+
+  &:first-child { padding-top: 4px; }
+  &:last-child { border-bottom: none; }
+}
+
+.detail-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.detail-item-name {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.detail-qty {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent);
+  margin-right: 4px;
+  flex-shrink: 0;
+}
+
+.detail-product {
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.detail-variant {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--gray-500);
+  font-weight: 400;
+}
+
+.detail-tax {
+  margin-left: 4px;
+  padding: 1px 5px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+
+.detail-price {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--black);
+  flex-shrink: 0;
+}
+
+.detail-modifiers {
+  list-style: none;
+  padding: 2px 0 0 18px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--gray-500);
+    line-height: 1.4;
+  }
+}
+
+.detail-mod-name {
+  color: var(--gray-500);
+}
+
+.detail-mod-price {
+  font-family: var(--mono);
+  color: var(--gray-600);
+}
+
+// Desglose IVA (compacto)
+.detail-tax-summary {
+  margin-top: 14px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--gray-300);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 2px;
+  column-gap: 16px;
+  font-family: var(--font);
+  font-size: 12px;
+}
+
+.detail-tax-label {
+  color: var(--gray-500);
+}
+
+.detail-tax-value {
+  font-family: var(--mono);
+  color: var(--gray-700);
+  text-align: right;
+}
+
+// Total final destacado
+.detail-total-row {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: var(--black);
+  color: var(--white);
+  border-radius: var(--radius-md);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font);
+}
+
+.detail-total-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--gray-300);
+}
+
+.detail-total-value {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+// -------------------------------------------------------------
+// MÉTODOS DE PAGO
+// -------------------------------------------------------------
+.methods {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+}
+
+.methods-segment {
+  --segment-gap: 6px;
+  --segment-padding: 6px;
+  --segment-cols: 4;
+  --active-index: 0;
+
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--segment-cols), 1fr);
+  gap: var(--segment-gap);
+  background: var(--gray-50);
+  padding: var(--segment-padding);
+  border-radius: var(--radius-xl);
+  isolation: isolate;
+}
+
+// Indicador deslizante que sigue al método activo
+.segment-indicator {
+  position: absolute;
+  top: var(--segment-padding);
+  bottom: var(--segment-padding);
+  left: var(--segment-padding);
+  width: calc(
+    (100% - 2 * var(--segment-padding) - (var(--segment-cols) - 1) * var(--segment-gap))
+    / var(--segment-cols)
+  );
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transform: translateX(
+    calc(var(--active-index) * (100% + var(--segment-gap)))
+  );
+  transition: transform 0.34s cubic-bezier(0.32, 0.72, 0, 1);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.method-pill {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 80px;
+  min-height: 84px;
+  padding: 14px 8px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: color 0.28s ease, transform 0.08s;
+  color: var(--gray-500);
+
+  .method-icon {
+    width: 26px;
+    height: 26px;
+    transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .method-label {
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    transition: font-weight 0.28s ease;
+  }
+
+  &:hover:not(.active) {
+    color: var(--gray-800);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
 
   &.active {
-    border-color: var(--accent);
-    background: var(--accent-soft);
+    color: var(--black);
+
+    .method-icon {
+      transform: scale(1.08);
+    }
+
+    .method-label {
+      font-weight: 600;
+    }
   }
 
-  &:hover {
-    border-color: var(--gray-300);
-  }
-}
-
-.method-icon {
-  font-size: 32px;
-  line-height: 1;
-  color: var(--gray-600);
-  transition: transform 0.12s;
-
-  .active & {
-    transform: scale(1.1);
+  &.more.active {
     color: var(--accent);
   }
 }
 
-.method-icon-text {
-  font-size: 14px;
-  font-weight: 700;
-  color: #000 !important;
-  letter-spacing: 0.5px;
-  background: #fff;
-  padding: 4px 8px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-
-  .active & {
-    color: var(--accent) !important;
-    border-color: var(--accent);
-  }
+.secondary-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  z-index: 5;
+  min-width: 180px;
+  overflow: hidden;
+  animation: fadeIn 0.12s ease-out;
 }
 
-.method-icon-emoji {
-  font-size: 32px;
-  line-height: 1;
-  transition: transform 0.12s;
-
-  .active & {
-    transform: scale(1.1);
-  }
-}
-
-.method-label {
-  font-size: 13px;
-  font-family: var(--font);
-  color: var(--gray-500);
-  font-weight: 500;
-
-  .active & {
-    color: var(--accent);
-    font-weight: 700;
-  }
-}
-
-.fiscal-toggle {
+.secondary-item {
+  width: 100%;
+  min-height: 52px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-}
-
-.fiscal-label {
-  font-size: 13px;
+  gap: 12px;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
   font-family: var(--font);
+  font-size: 15px;
+  font-weight: 500;
   color: var(--gray-700);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
+
+  svg {
+    color: var(--gray-500);
+    flex-shrink: 0;
+  }
+
+  &:hover,
+  &:active {
+    background: var(--gray-50);
+    color: var(--black);
+  }
+
+  &.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+
+    svg { color: var(--accent); }
+  }
 }
 
-.fiscal-fields {
+// -------------------------------------------------------------
+// ÁREA CONTEXTUAL
+// -------------------------------------------------------------
+// =============================================================
+// CONTEXTO POR MÉTODO
+// Cada método tiene su propio slot. Animamos grid-template-rows:
+// 0fr ↔ 1fr (sí es transitionable, a diferencia de height: auto).
+// Cuando cambias de tarjeta a bizum: la tarjeta colapsa y bizum
+// expande en paralelo → la altura total se desliza suavemente.
+// =============================================================
+.context {
   display: flex;
   flex-direction: column;
+}
+
+.ctx-slot {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+  transition: grid-template-rows 0.36s cubic-bezier(0.32, 0.72, 0, 1),
+              opacity 0.24s ease;
+
+  &.active {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.ctx-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.ctx-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@keyframes contextFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.info-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px 16px;
+  background: var(--gray-50);
+  border-radius: var(--radius-xl);
+  gap: 6px;
+
+  &.warning {
+    background: var(--accent-soft);
+
+    .info-icon { color: var(--accent); }
+    .info-title { color: var(--accent); }
+  }
+}
+
+.info-icon {
+  color: var(--gray-500);
+  margin-bottom: 4px;
+}
+
+.info-title {
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.info-text {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--gray-600);
+  line-height: 1.4;
+}
+
+.info-highlight {
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--black);
+  letter-spacing: 0.5px;
+}
+
+// Cash input row (label + amount) usado en side-pane "Parcial"
+.cash-input-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 14px;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
+}
+
+.cash-input-label {
+  font-family: var(--font);
+  font-size: 12px;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cash-input-value {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+// Quick amounts
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   gap: 6px;
 }
 
-.fiscal-input {
-  border-radius: 10px;
+.quick-chip {
+  min-height: 56px;
+  padding: 14px 6px;
+  border-radius: var(--radius-md);
   border: 1.5px solid var(--gray-200);
-  padding: 10px 12px;
-  font-family: var(--font);
-  font-size: 13px;
-  outline: none;
-  box-sizing: border-box;
-  width: 100%;
   background: var(--white);
-  color: var(--gray-900);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: var(--mono);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: border-color 0.14s, background 0.14s, color 0.14s, transform 0.08s;
 
-  &::placeholder {
-    color: var(--gray-400);
+  &:hover {
+    border-color: var(--gray-300);
+    background: var(--gray-50);
   }
 
-  &:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
+  &:active {
+    transform: scale(0.97);
   }
+
+  &.active {
+    border-color: var(--black);
+    background: var(--black);
+    color: var(--white);
+  }
+
+  &.exact {
+    font-family: var(--font);
+    font-weight: 600;
+    color: var(--gray-800);
+    border-style: dashed;
+
+    &.active {
+      border-style: solid;
+      color: var(--white);
+    }
+  }
+}
+
+// Change (cash) — wrapper colapsable
+.change-row-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition: grid-template-rows 0.32s cubic-bezier(0.32, 0.72, 0, 1),
+              opacity 0.22s ease;
+
+  &.visible {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+.change-row-inner {
+  overflow: hidden;
+  min-height: 0;
 }
 
 .change-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-}
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-radius: var(--radius-xl);
+  font-family: var(--font);
+  transition: background 0.24s ease, color 0.24s ease;
 
-.change-amount {
-  font-family: var(--mono);
-  font-size: 26px;
-  font-weight: 700;
-}
-
-.success-text {
-  color: var(--green);
-}
-
-.error-text {
-  color: var(--accent);
-}
-
-.quick-amounts {
-  .quick-buttons {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
+  &.success {
+    background: var(--green-soft);
+    color: var(--green);
   }
-}
 
-.quick-btn {
-  padding: 5px 10px;
-  border-radius: 8px;
-  border: 1.5px solid var(--gray-200);
-  background: var(--white);
-  font-family: var(--mono);
-  font-size: 12px;
-  cursor: pointer;
-  color: var(--gray-700);
-
-  &.active {
-    border-color: var(--accent);
+  &.error {
     background: var(--accent-soft);
     color: var(--accent);
   }
 }
 
-// Card payment
-.card-payment {
-  text-align: center;
-  padding-top: 12px;
-}
-
-.card-icon {
-  font-size: 60px;
-  margin-bottom: 10px;
-}
-
-.card-text {
-  font-size: 14px;
-  font-family: var(--font);
-  color: var(--gray-600);
-  margin-bottom: 20px;
-}
-
-.card-amount-card {
-  background: var(--gray-50);
-}
-
-.card-amount-row {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font);
+.change-label {
   font-size: 13px;
-  margin-bottom: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.card-amount-label {
-  color: var(--gray-500);
-}
-
-.card-amount-value {
+.change-value {
   font-family: var(--mono);
+  font-size: 24px;
   font-weight: 700;
-  font-size: 20px;
 }
 
-.tip-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 8px;
-  border-top: 1px solid var(--gray-200);
+// -------------------------------------------------------------
+// TIP (en side-pane)
+// -------------------------------------------------------------
+.tip-presets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
 }
 
-.tip-label {
-  font-family: var(--font);
-  font-size: 13px;
-  color: var(--gray-700);
-}
-
-.tip-buttons {
-  margin-top: 10px;
-  display: flex;
-  gap: 6px;
-}
-
-.tip-btn {
-  flex: 1;
-  padding: 6px 0;
-  border-radius: 8px;
+.tip-chip {
+  min-height: 52px;
+  padding: 12px 6px;
+  border-radius: var(--radius-md);
   border: 1.5px solid var(--gray-200);
   background: var(--white);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--gray-700);
   cursor: pointer;
-  color: var(--gray-600);
+  transition: border-color 0.14s, background 0.14s, color 0.14s, transform 0.08s;
+
+  &:hover { border-color: var(--gray-300); }
+
+  &:active { transform: scale(0.97); }
 
   &.active {
     border-color: var(--green);
@@ -368,213 +909,184 @@
   }
 }
 
-.card-total-row {
+.tip-total {
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid var(--gray-200);
+  align-items: baseline;
+  padding: 12px 14px;
+  margin-top: 6px;
+  background: var(--white);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--gray-200);
   font-family: var(--font);
-  font-weight: 700;
-  font-size: 15px;
-}
-
-.card-total-value {
-  font-family: var(--mono);
-}
-
-// Bizum payment
-.bizum-payment {
-  text-align: center;
-  padding-top: 12px;
-}
-
-.bizum-icon {
-  font-size: 60px;
-  margin-bottom: 10px;
-}
-
-.bizum-text {
   font-size: 14px;
-  font-family: var(--font);
-  color: var(--gray-600);
-  margin-bottom: 6px;
-}
+  color: var(--gray-700);
 
-.bizum-number {
-  font-family: var(--mono);
-  font-size: 28px;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: var(--black);
-}
-
-.bizum-amount-card {
-  background: var(--gray-50);
-}
-
-.bizum-amount-row {
-  display: flex;
-  justify-content: space-between;
-  font-family: var(--font);
-  font-size: 13px;
-}
-
-.bizum-amount-label {
-  color: var(--gray-500);
-}
-
-.bizum-amount-value {
-  font-family: var(--mono);
-  font-weight: 700;
-  font-size: 22px;
-}
-
-// Mixed payment
-.mixed-payment {
-  .mixed-placeholder {
-    color: var(--gray-500);
-    font-family: var(--font);
-    font-size: 13px;
+  strong {
+    font-family: var(--mono);
+    font-size: 18px;
+    color: var(--black);
   }
 }
 
-// Invitation payment
-.invitation-payment {
-  text-align: center;
-  padding-top: 16px;
-}
-
-.invitation-icon {
-  font-size: 56px;
-  margin-bottom: 8px;
-}
-
-.invitation-title {
+// -------------------------------------------------------------
+// FISCAL
+// -------------------------------------------------------------
+.fiscal-input {
+  min-height: 48px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--gray-200);
+  padding: 12px 14px;
+  font-family: var(--font);
   font-size: 15px;
-  font-family: var(--font);
-  font-weight: 600;
-  color: var(--black);
-  margin-bottom: 4px;
+  outline: none;
+  background: var(--white);
+  color: var(--gray-900);
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &::placeholder { color: var(--gray-400); }
+
+  &:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
 }
 
-.invitation-text {
-  font-size: 13px;
-  font-family: var(--font);
-  color: var(--gray-400);
-  margin-bottom: 20px;
+// -------------------------------------------------------------
+// CHIPS DE ACCIONES SECUNDARIAS
+// -------------------------------------------------------------
+.action-chips {
+  // Grid de columnas iguales que NO hace wrap; cada chip ocupa 1fr.
+  // Funciona con 1, 2, 3 o 4 chips visibles sin saltos de línea.
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 6px;
 }
 
-.invitation-value-card {
-  background: var(--accent-soft);
-  border: none;
-}
-
-.invitation-label {
-  font-family: var(--font);
-  font-size: 13px;
-  color: var(--accent);
-}
-
-.invitation-value {
-  font-family: var(--mono);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--accent);
-}
-
-.payment-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-// Partial payment
-.modal-header-right {
-  display: flex;
+.action-chip {
+  min-height: 48px;
+  min-width: 0;
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-}
-
-.partial-badge {
-  display: inline-block;
-  padding: 3px 10px;
-  border-radius: 6px;
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 700;
-  font-family: var(--font);
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-}
-
-.partial-toggle-btn {
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: 10px;
-  border: 1.5px dashed var(--gray-300);
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 10px;
+  border-radius: 999px;
+  border: 1.5px solid var(--gray-200);
   background: var(--white);
   font-family: var(--font);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--gray-600);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-700);
   cursor: pointer;
-  transition: all 0.15s;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: border-color 0.14s, background 0.14s, color 0.14s, transform 0.08s;
 
-  &:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: var(--accent-soft);
+  svg {
+    flex-shrink: 0;
+    color: var(--gray-500);
+    transition: color 0.14s;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--gray-300);
+    color: var(--gray-900);
+
+    svg { color: var(--gray-700); }
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.97);
   }
 
   &.active {
-    border-color: var(--accent);
-    border-style: solid;
-    background: var(--accent-soft);
-    color: var(--accent);
+    border-color: var(--black);
+    background: var(--black);
+    color: var(--white);
+
+    svg { color: var(--white); }
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 }
 
-.summary-partial {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1.5px dashed var(--accent);
-  font-family: var(--font);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--accent);
+// -------------------------------------------------------------
+// FOOTER (sticky)
+// -------------------------------------------------------------
+.modal-footer {
+  padding: 16px 20px 20px;
+  border-top: 1px solid var(--gray-100);
+  background: var(--white);
+  flex-shrink: 0;
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.04);
+
+  // Tablet-optimised primary CTA — larger than the default lg size
+  ::ng-deep .btn.lg {
+    height: 72px;
+    min-height: 72px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    border-radius: 16px;
+  }
 }
 
-.partial-amount {
-  font-family: var(--mono);
-  color: var(--accent);
+// -------------------------------------------------------------
+// RESPONSIVE
+// -------------------------------------------------------------
+
+// Tablet/móvil estrecho: el side-pane ocupa todo (no cabe en 2 col)
+@media (max-width: 760px) {
+  .modal-content.wide {
+    max-width: 92%;
+  }
+
+  .modal-layout.split {
+    grid-template-columns: 0fr 1fr;
+  }
+
+  .modal-layout.split .main-pane {
+    overflow: hidden;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .side-pane {
+    border-left: none;
+  }
 }
 
-.summary-remaining {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 4px;
-  font-family: var(--font);
-  font-size: 12px;
-  color: var(--gray-500);
-}
+@media (max-width: 540px) {
+  .modal-content {
+    width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
 
-.remaining-amount {
-  font-family: var(--mono);
-  color: var(--gray-500);
-}
+  .hero-int { font-size: 52px; }
+  .hero-sep { font-size: 52px; }
+  .hero-dec { font-size: 32px; }
+  .hero-currency { font-size: 22px; }
 
-.partial-quick-amounts {
-  display: flex;
-  gap: 6px;
-  margin-top: 6px;
-}
+  .methods-segment {
+    --segment-cols: 2;
+    grid-template-columns: repeat(2, 1fr);
+  }
 
-.partial-cash-label {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px solid var(--gray-200);
+  // En 2 columnas el indicador se mueve por filas (--col, --row vienen del TS)
+  .segment-indicator {
+    transform: translate(
+      calc(var(--active-col, 0) * (100% + var(--segment-gap))),
+      calc(var(--active-row, 0) * (100% + var(--segment-gap)))
+    );
+  }
+
+  .quick-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }

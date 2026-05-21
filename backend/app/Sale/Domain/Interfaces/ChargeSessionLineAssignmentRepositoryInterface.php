@@ -17,7 +17,7 @@ interface ChargeSessionLineAssignmentRepositoryInterface
     /**
      * Reemplaza atómicamente el conjunto de asignaciones de la sesión.
      *
-     * @param array<int, ChargeSessionLineAssignment> $assignments
+     * @param  array<int, ChargeSessionLineAssignment>  $assignments
      */
     public function replaceForSession(Uuid $chargeSessionId, array $assignments): void;
 
@@ -25,7 +25,7 @@ interface ChargeSessionLineAssignmentRepositoryInterface
      * Borra las asignaciones de un subconjunto de order_lines dentro de la sesión.
      * Se usa al cobrar para liberar las líneas ya facturadas.
      *
-     * @param array<int, Uuid> $orderLineIds
+     * @param  array<int, Uuid>  $orderLineIds
      */
     public function deleteByOrderLineIds(Uuid $chargeSessionId, array $orderLineIds): void;
 }

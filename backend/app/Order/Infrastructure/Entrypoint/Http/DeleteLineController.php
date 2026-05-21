@@ -19,7 +19,7 @@ final class DeleteLineController
     {
         try {
             ($this->deleteOrderLine)($request->toCommand());
-        } catch (OrderLineNotFoundException | OrderNotFoundException $e) {
+        } catch (OrderLineNotFoundException|OrderNotFoundException $e) {
             return new JsonResponse(['message' => $e->getMessage()], 404);
         } catch (OrderIsNotOpenException $e) {
             return new JsonResponse(['message' => $e->getMessage()], 422);

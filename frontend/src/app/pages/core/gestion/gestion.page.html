@@ -65,6 +65,14 @@
                       [taxes]="selectedData.taxes"
                       />
                   }
+                  @case ('menus') {
+                    <app-menus-management
+                      [facade]="menusFacade"
+                      [products]="menuProductOptions"
+                      [families]="selectedData.families"
+                      [taxes]="selectedData.taxes"
+                      />
+                  }
                   @case ('zones') {
                     <app-zones-management [facade]="zonesFacade" />
                   }

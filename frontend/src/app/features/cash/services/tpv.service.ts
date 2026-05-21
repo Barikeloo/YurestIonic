@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
-import { catchError, shareReplay } from 'rxjs/operators';
+import { catchError, map, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../../environments/environment';
 import { OrderStatus } from '../../../core/enums/order-status.enum';
 
@@ -72,9 +72,19 @@ export interface TpvOrder {
   remaining_total?: number;
 }
 
+export interface TpvOrderLineMenuSelection {
+  section_name: string;
+  product_id: string;
+  product_name: string;
+  variant_id: string | null;
+  variant_name: string | null;
+  modifiers: Array<{ id: string; name: string; price: number; type?: 'extra' | 'accompaniment' }>;
+  extra_price: number;
+}
+
 export interface TpvOrderLine {
   id: string;
-  product_id: string;
+  product_id: string | null;
   product_name: string | null;
   quantity: number;
   price: number;
@@ -83,6 +93,9 @@ export interface TpvOrderLine {
   variant_id?: string | null;
   variant_name?: string | null;
   modifiers?: Array<{ id: string; name: string; price: number; type?: 'extra' | 'accompaniment' }> | null;
+  menu_id?: string | null;
+  menu_name?: string | null;
+  menu_selections?: TpvOrderLineMenuSelection[] | null;
 }
 
 export interface TpvSale {
@@ -165,6 +178,52 @@ export interface TpvCashSessionListItem {
   net: number;
   mov_in: number;
   mov_out: number;
+}
+
+export interface TpvMenuItem {
+  id: string;
+  product_id: string;
+  variant_id: string | null;
+  extra_price: number;
+  position: number;
+}
+
+export interface TpvMenuSection {
+  id: string;
+  name: string;
+  position: number;
+  min_choices: number;
+  max_choices: number;
+  items: TpvMenuItem[];
+}
+
+export interface TpvMenu {
+  id: string;
+  tax_id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  active: boolean;
+  archived: boolean;
+  validity_from: string | null;
+  validity_to: string | null;
+  available_days: number;
+  available_from_time: string | null;
+  available_to_time: string | null;
+  sections: TpvMenuSection[];
+}
+
+interface AddMenuLinePayload {
+  order_id: string;
+  menu_id: string;
+  diner_number?: number | null;
+  notes?: string | null;
+  selections: Array<{
+    section_id: string;
+    product_id: string;
+    variant_id?: string | null;
+    modifiers?: Array<{ id: string; name: string; price: number; type: 'extra' | 'accompaniment' }>;
+  }>;
 }
 
 interface AddLinePayload {
@@ -289,6 +348,21 @@ export class TpvService {
   public getOrderTransfers(orderId: string): Observable<{ transfers: OrderTransferItem[] }> {
     return this.http
       .get<{ transfers: OrderTransferItem[] }>(`${this.baseUrl}/tpv/orders/${orderId}/transfers`, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public listMenus(): Observable<TpvMenu[]> {
+    return this.http
+      .get<{ data: TpvMenu[] }>(`${this.baseUrl}/tpv/menus?active=true&archived=false`, { withCredentials: true })
+      .pipe(
+        map((response) => response.data ?? []),
+        catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))),
+      );
+  }
+
+  public addMenuLineToOrder(payload: AddMenuLinePayload): Observable<unknown> {
+    return this.http
+      .post(`${this.baseUrl}/tpv/orders/menu-lines`, payload, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 

@@ -7,7 +7,7 @@ namespace App\Sale\Application\AssignChargeSessionLines;
 final readonly class AssignChargeSessionLinesCommand
 {
     /**
-     * @param array<int, array{order_line_id: string, diner_number: int}> $assignments
+     * @param  array<int, array{order_line_id: string, diner_number: int}>  $assignments
      */
     public function __construct(
         public string $chargeSessionId,

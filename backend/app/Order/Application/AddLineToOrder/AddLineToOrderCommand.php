@@ -5,7 +5,7 @@ namespace App\Order\Application\AddLineToOrder;
 final readonly class AddLineToOrderCommand
 {
     /**
-     * @param array<int, array{id: string, name: string, price: int, type: string}>|null $modifiers
+     * @param  array<int, array{id: string, name: string, price: int, type: string}>|null  $modifiers
      */
     public function __construct(
         public string $restaurantId,

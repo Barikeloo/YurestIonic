@@ -285,7 +285,7 @@ Accesible desde el menú lateral para roles `admin` y `supervisor`. Muestra:
 - **Métodos de pago** — Distribución porcentual (pie chart) de efectivo vs tarjeta vs otros.
 - **Top camareros** — Ranking de operadores por volumen de ventas.
 
-> Estado actual: **Prototipo funcional**. Los datos son reales de la base de datos, pero la interfaz está en fase de pulido visual.
+> Estado actual: **Prototipo funcional**. Los datos no son reales, pero la interfaz está lista para integrar datos reales en el futuro.
 
 ### 4.8 Panel de Desarrollador (SuperAdmin) — Gestión de la plataforma
 

@@ -28,6 +28,10 @@ final class AddLineToSale
         $orderLine = $this->orderLineRepository->findByUuid(Uuid::create($command->orderLineId))
             ?? throw OrderLineNotFoundException::withId($command->orderLineId);
 
+        if ($orderLine->isMenuLine() || $orderLine->productId() === null) {
+            throw new \DomainException('Las líneas de menú aún no pueden cobrarse. Próximamente disponible.');
+        }
+
         $productId = $orderLine->productId()->value();
         $product = $this->productRepository->findById($productId);
 

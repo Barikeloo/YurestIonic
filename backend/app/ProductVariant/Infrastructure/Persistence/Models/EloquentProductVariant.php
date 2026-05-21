@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class EloquentProductVariant extends Model
 {
     use SoftDeletes;
+
     protected $table = 'product_variants';
 
     protected $fillable = [

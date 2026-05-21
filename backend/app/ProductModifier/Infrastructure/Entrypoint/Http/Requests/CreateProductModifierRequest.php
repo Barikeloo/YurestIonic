@@ -3,8 +3,8 @@
 namespace App\ProductModifier\Infrastructure\Entrypoint\Http\Requests;
 
 use App\ProductModifier\Application\CreateProductModifier\CreateProductModifierCommand;
-use App\ProductModifier\Domain\ValueObject\ModifierType;
 use App\ProductModifier\Domain\ValueObject\ModifierSelectionType;
+use App\ProductModifier\Domain\ValueObject\ModifierType;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;

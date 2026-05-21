@@ -14,6 +14,8 @@ use App\Cash\Infrastructure\Persistence\Repositories\EloquentTipRepository;
 use App\Cash\Infrastructure\Persistence\Repositories\EloquentZReportRepository;
 use App\Family\Domain\Interfaces\FamilyRepositoryInterface;
 use App\Family\Infrastructure\Persistence\Repositories\EloquentFamilyRepository;
+use App\Menu\Domain\Interfaces\MenuRepositoryInterface;
+use App\Menu\Infrastructure\Persistence\Repositories\EloquentMenuRepository;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderTransferRepositoryInterface;
@@ -64,6 +66,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(FamilyRepositoryInterface::class, EloquentFamilyRepository::class);
+        $this->app->bind(MenuRepositoryInterface::class, EloquentMenuRepository::class);
         $this->app->bind(ProductRepositoryInterface::class, EloquentProductRepository::class);
         $this->app->bind(ProductVariantRepositoryInterface::class, EloquentProductVariantRepository::class);
         $this->app->bind(ProductModifierRepositoryInterface::class, EloquentProductModifierRepository::class);

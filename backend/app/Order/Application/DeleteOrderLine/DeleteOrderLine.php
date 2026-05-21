@@ -37,11 +37,22 @@ final class DeleteOrderLine
             throw OrderIsNotOpenException::create();
         }
 
-        $product = $this->productRepository->findById($line->productId()->value());
-
-        if ($product !== null) {
-            $product->increaseStock($line->quantity()->value());
-            $this->productRepository->save($product);
+        // En líneas de menú, devolvemos stock a cada producto elegido (vienen en menu_selections);
+        // en líneas de producto, solo a su productId.
+        if ($line->isMenuLine()) {
+            foreach ($line->menuSelections() ?? [] as $selection) {
+                $product = $this->productRepository->findById($selection['product_id']);
+                if ($product !== null) {
+                    $product->increaseStock($line->quantity()->value());
+                    $this->productRepository->save($product);
+                }
+            }
+        } elseif ($line->productId() !== null) {
+            $product = $this->productRepository->findById($line->productId()->value());
+            if ($product !== null) {
+                $product->increaseStock($line->quantity()->value());
+                $this->productRepository->save($product);
+            }
         }
 
         $this->orderLineRepository->delete($line->id());

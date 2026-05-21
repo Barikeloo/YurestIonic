@@ -1,0 +1,485 @@
+<div class="editor-page">
+  <!-- Top bar sticky con back + acciones -->
+  <header class="editor-page__topbar">
+    <div class="editor-page__back">
+      <button type="button" class="btn-back" (click)="onCancel()" aria-label="Volver">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Volver
+      </button>
+      <div class="editor-page__breadcrumb">
+        <span class="breadcrumb-link" (click)="onCancel()">Gestión</span>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-link" (click)="onCancel()">Menús</span>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">{{ mode() === 'create' ? 'Nuevo' : (header().name || 'Editar') }}</span>
+      </div>
+    </div>
+
+    <div class="editor-page__actions">
+      <button type="button" class="btn-secondary" (click)="onCancel()">Cancelar</button>
+      <button type="button" class="btn-primary" (click)="onSave()" [disabled]="isSaving() || isLoading()">
+        {{ isSaving() ? 'Guardando…' : (mode() === 'create' ? 'Crear menú' : 'Guardar cambios') }}
+      </button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="editor-page__loading">Cargando editor…</div>
+  } @else {
+    <div class="editor-page__split">
+      <!-- ═══ SIDEBAR CATÁLOGO ═══════════════════════════════════════ -->
+      <aside class="catalog-sidebar" aria-label="Catálogo de productos">
+        <div class="catalog-sidebar__header">
+          <h2 class="catalog-sidebar__title">Catálogo</h2>
+          <span class="catalog-sidebar__count">{{ filteredCatalog().length }}</span>
+        </div>
+
+        <div class="catalog-sidebar__search">
+          <input
+            type="text"
+            class="form-input"
+            placeholder="Buscar producto…"
+            [ngModel]="catalogSearch()"
+            (ngModelChange)="onCatalogSearchChange($event)"
+          />
+        </div>
+
+        <div class="catalog-sidebar__families">
+          <button
+            type="button"
+            class="family-chip"
+            [class.active]="catalogFamilyFilter() === null"
+            (click)="setCatalogFamilyFilter(null)"
+          >
+            Todas
+          </button>
+          @for (family of families(); track family.id) {
+            <button
+              type="button"
+              class="family-chip"
+              [class.active]="catalogFamilyFilter() === family.id"
+              (click)="setCatalogFamilyFilter(family.id)"
+            >
+              {{ family.name }}
+            </button>
+          }
+        </div>
+
+        <div class="catalog-sidebar__hint">
+          <span class="hint-icon" aria-hidden="true">↔</span>
+          <span>Arrastra productos a las secciones del menú</span>
+        </div>
+
+        <ul
+          class="catalog-list"
+          cdkDropList
+          id="catalog-sidebar"
+          [cdkDropListData]="filteredCatalog()"
+          [cdkDropListConnectedTo]="itemsDropIds()"
+          [cdkDropListSortingDisabled]="true"
+        >
+          @for (product of filteredCatalog(); track product.id) {
+            <li class="catalog-item" cdkDrag [cdkDragData]="product" [attr.data-family]="product.familyId">
+              <div class="catalog-item__handle" aria-hidden="true">
+                <span class="dots">⋮⋮</span>
+              </div>
+              <div class="catalog-item__main">
+                <span class="catalog-item__name">{{ product.name }}</span>
+                <span class="catalog-item__family">{{ familyName(product.familyId) }}</span>
+              </div>
+              <span class="catalog-item__price">{{ formatPriceEuros(product.price) }}</span>
+            </li>
+          }
+
+          @if (filteredCatalog().length === 0) {
+            <li class="catalog-list__empty">
+              @if (catalogSearch().trim() || catalogFamilyFilter() !== null) {
+                Sin resultados con los filtros aplicados.
+              } @else {
+                No hay productos activos en el catálogo.
+              }
+            </li>
+          }
+        </ul>
+      </aside>
+
+      <!-- ═══ COLUMNA CONFIGURACIÓN ════════════════════════════════ -->
+      <aside class="config-column" aria-label="Configuración del menú">
+        <div class="config-column__inner">
+          <div class="config-column__heading-row">
+            <h2 class="config-column__heading">Configuración</h2>
+            <span class="config-column__heading-hint">Datos generales y disponibilidad</span>
+          </div>
+
+      <!-- ── HEADER ────────────────────────────────────────────────── -->
+      <section class="editor-section">
+        <h2 class="editor-section__title">Datos generales</h2>
+
+        <div class="form-grid">
+          <div class="field field--span-2">
+            <label class="field__label" for="me-name">Nombre del menú</label>
+            <input
+              id="me-name"
+              type="text"
+              class="form-input"
+              [ngModel]="header().name"
+              (ngModelChange)="updateHeader('name', $event)"
+              placeholder="Ej. Menú del día"
+              required
+            />
+          </div>
+
+          <div class="field field--span-2">
+            <label class="field__label" for="me-desc">Descripción <span class="field__hint">(opcional)</span></label>
+            <textarea
+              id="me-desc"
+              class="form-input"
+              rows="2"
+              [ngModel]="header().description"
+              (ngModelChange)="updateHeader('description', $event)"
+              placeholder="Ej. Incluye primer plato, segundo plato, postre y bebida"
+            ></textarea>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="me-price">Precio (€)</label>
+            <input
+              id="me-price"
+              type="number"
+              step="0.01"
+              min="0"
+              class="form-input"
+              [ngModel]="priceEuros()"
+              (ngModelChange)="onPriceChange($event)"
+              placeholder="0,00"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="me-tax">IVA</label>
+            <select
+              id="me-tax"
+              class="form-input"
+              [ngModel]="header().taxId"
+              (ngModelChange)="updateHeader('taxId', $event)"
+              required
+            >
+              <option value="">Selecciona…</option>
+              @for (tax of taxes(); track tax.id) {
+                <option [value]="tax.id">{{ tax.name }} ({{ tax.percentage }}%)</option>
+              }
+            </select>
+          </div>
+
+          <div class="field field--span-2 field--toggle">
+            <label class="field__label">Estado del menú</label>
+            <div class="toggle-row">
+              <app-toggle [value]="header().active" (valueChange)="updateHeader('active', $event)" />
+              <span class="toggle-row__label" [class.active]="header().active">
+                {{ header().active ? 'Activo (visible en TPV)' : 'Inactivo (oculto)' }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── DISPONIBILIDAD ───────────────────────────────────────── -->
+      <section class="editor-section">
+        <h2 class="editor-section__title">Disponibilidad</h2>
+
+        <div class="form-grid">
+          <div class="field field--span-2">
+            <label class="field__label">Días disponibles</label>
+            <div class="days-grid">
+              @for (day of weekdays; track day.bit) {
+                <button
+                  type="button"
+                  class="day-chip"
+                  [class.active]="isDayActive(day.bit)"
+                  (click)="toggleDay(day.bit)"
+                  [attr.aria-pressed]="isDayActive(day.bit)"
+                >
+                  <span class="day-chip__short">{{ day.short }}</span>
+                  <span class="day-chip__label">{{ day.label }}</span>
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="me-time-from">Hora inicio <span class="field__hint">(opcional)</span></label>
+            <input
+              id="me-time-from"
+              type="time"
+              class="form-input"
+              [ngModel]="header().availableFromTime"
+              (ngModelChange)="updateHeader('availableFromTime', $event)"
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="me-time-to">Hora fin <span class="field__hint">(opcional)</span></label>
+            <input
+              id="me-time-to"
+              type="time"
+              class="form-input"
+              [ngModel]="header().availableToTime"
+              (ngModelChange)="updateHeader('availableToTime', $event)"
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="me-from">Vigente desde <span class="field__hint">(opcional)</span></label>
+            <input
+              id="me-from"
+              type="date"
+              class="form-input"
+              [ngModel]="header().validityFrom"
+              (ngModelChange)="updateHeader('validityFrom', $event)"
+            />
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="me-to">Vigente hasta <span class="field__hint">(opcional)</span></label>
+            <input
+              id="me-to"
+              type="date"
+              class="form-input"
+              [ngModel]="header().validityTo"
+              (ngModelChange)="updateHeader('validityTo', $event)"
+            />
+          </div>
+        </div>
+      </section>
+        </div>
+      </aside>
+
+      <!-- ═══ COLUMNA SECCIONES ════════════════════════════════════ -->
+      <main class="sections-column" aria-label="Secciones del menú">
+        <div class="sections-column__inner">
+          <div class="editor-page__title-row">
+            <h1 class="editor-page__title">
+              {{ mode() === 'create' ? 'Nuevo menú' : 'Editar menú' }}
+            </h1>
+            <p class="editor-page__subtitle">
+              Arrastra productos del catálogo a cada sección para construir el menú.
+            </p>
+          </div>
+
+          @if (errorMessages().length > 0) {
+            <div class="errors-banner" role="alert">
+              <strong>Revisa estos campos:</strong>
+              <ul>
+                @for (err of errorMessages(); track err) {
+                  <li>{{ err }}</li>
+                }
+              </ul>
+            </div>
+          }
+
+      <section class="editor-section">
+        <div class="editor-section__header-row">
+          <h2 class="editor-section__title">Secciones</h2>
+          <button type="button" class="btn-small" (click)="addSection()">+ Añadir sección</button>
+        </div>
+
+        @if (sections().length === 0) {
+          <div class="empty-state">
+            Aún no hay secciones. Cada sección representa una elección del comensal (ej. "Primer plato").
+          </div>
+        }
+
+        <div
+          cdkDropList
+          id="sections-list"
+          [cdkDropListData]="sections()"
+          (cdkDropListDropped)="dropSection($event)"
+          class="sections-list"
+        >
+          @for (section of sections(); track $index; let sIdx = $index) {
+            <article class="section-card" cdkDrag [cdkDragLockAxis]="'y'">
+              <div class="section-card__handle" cdkDragHandle aria-label="Reordenar sección" title="Arrastrar para reordenar">
+                <span class="dots" aria-hidden="true">⋮⋮</span>
+              </div>
+
+              <div class="section-card__body">
+                <div class="section-card__top">
+                  <input
+                    type="text"
+                    class="form-input section-card__name"
+                    [ngModel]="section.name"
+                    (ngModelChange)="updateSection(sIdx, 'name', $event)"
+                    placeholder="Nombre de la sección (ej. Primer plato)"
+                  />
+                  <button type="button" class="btn-icon btn-icon--danger" (click)="removeSection(sIdx)" title="Eliminar sección" aria-label="Eliminar sección">
+                    ✕
+                  </button>
+                </div>
+
+                <div class="choice-modes" role="radiogroup" aria-label="¿Cuántos productos puede elegir el comensal?">
+                  <span class="choice-modes__label">El comensal elige:</span>
+                  <button
+                    type="button"
+                    class="choice-chip"
+                    role="radio"
+                    [class.active]="sectionChoiceMode(section) === 'single-required'"
+                    [attr.aria-checked]="sectionChoiceMode(section) === 'single-required'"
+                    (click)="setSectionChoiceMode(sIdx, 'single-required')"
+                  >
+                    <span class="choice-chip__title">Obligatorio</span>
+                    <span class="choice-chip__hint">elige 1 producto</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="choice-chip"
+                    role="radio"
+                    [class.active]="sectionChoiceMode(section) === 'single-optional'"
+                    [attr.aria-checked]="sectionChoiceMode(section) === 'single-optional'"
+                    (click)="setSectionChoiceMode(sIdx, 'single-optional')"
+                  >
+                    <span class="choice-chip__title">Opcional</span>
+                    <span class="choice-chip__hint">elige 1 o ninguno</span>
+                  </button>
+                  <button
+                    type="button"
+                    class="choice-chip"
+                    role="radio"
+                    [class.active]="sectionChoiceMode(section) === 'multi'"
+                    [attr.aria-checked]="sectionChoiceMode(section) === 'multi'"
+                    (click)="setSectionChoiceMode(sIdx, 'multi')"
+                  >
+                    <span class="choice-chip__title">Varios</span>
+                    <span class="choice-chip__hint">rango personalizado</span>
+                  </button>
+
+                  @if (sectionChoiceMode(section) === 'multi') {
+                    <div class="choice-multi">
+                      <label class="choice-multi__field">
+                        Mínimo
+                        <input
+                          type="number"
+                          min="0"
+                          class="form-input form-input--small"
+                          [ngModel]="section.minChoices"
+                          (ngModelChange)="updateSection(sIdx, 'minChoices', +$event)"
+                        />
+                      </label>
+                      <label class="choice-multi__field">
+                        Máximo
+                        <input
+                          type="number"
+                          min="1"
+                          class="form-input form-input--small"
+                          [ngModel]="section.maxChoices"
+                          (ngModelChange)="updateSection(sIdx, 'maxChoices', +$event)"
+                        />
+                      </label>
+                    </div>
+                  }
+                </div>
+
+                <div
+                  cdkDropList
+                  [cdkDropListData]="section.items"
+                  [id]="'section-' + sIdx"
+                  [cdkDropListConnectedTo]="itemsDropIds()"
+                  (cdkDropListDropped)="dropItem($event, sIdx)"
+                  class="items-list"
+                >
+                  @if (section.items.length === 0) {
+                    <div class="items-list__empty">
+                      <span class="items-list__empty-icon" aria-hidden="true">+</span>
+                      <span>Suelta productos aquí o búscalos abajo.</span>
+                    </div>
+                  }
+                  @for (item of section.items; track $index; let iIdx = $index) {
+                    <div class="item-row" cdkDrag [cdkDragData]="item">
+                      <div class="item-row__handle" cdkDragHandle aria-label="Mover item" title="Arrastrar para reordenar o mover de sección">
+                        <span class="dots" aria-hidden="true">⋮⋮</span>
+                      </div>
+                      <div class="item-row__main">
+                        <div class="item-row__product">
+                          {{ productName(item.productId) }}
+                          <span class="item-row__product-price">{{ itemReferencePriceEuros(item) }}</span>
+                        </div>
+                        @if (productVariants(item.productId).length > 0) {
+                          <div class="item-row__variant">
+                            <label class="item-row__variant-label" [attr.for]="'item-variant-' + sIdx + '-' + iIdx">Variante:</label>
+                            <select
+                              [id]="'item-variant-' + sIdx + '-' + iIdx"
+                              class="form-input form-input--xs item-row__variant-select"
+                              [ngModel]="item.variantId"
+                              (ngModelChange)="updateItem(sIdx, iIdx, 'variantId', $event || null)"
+                            >
+                              <option [ngValue]="null">Producto base</option>
+                              @for (v of productVariants(item.productId); track v.id) {
+                                <option [ngValue]="v.id">{{ v.name }} · {{ formatPriceEuros(v.price) }}</option>
+                              }
+                            </select>
+                          </div>
+                        }
+                      </div>
+                      <div class="item-row__extra">
+                        <label class="item-row__extra-label" [attr.for]="'item-extra-' + sIdx + '-' + iIdx">Supl.</label>
+                        <input
+                          [id]="'item-extra-' + sIdx + '-' + iIdx"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="form-input form-input--xs"
+                          [ngModel]="itemExtraPriceEuros(item)"
+                          (ngModelChange)="onItemExtraPriceChange(sIdx, iIdx, $event)"
+                          placeholder="0,00"
+                        />
+                        <span class="item-row__extra-suffix">€</span>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn-icon btn-icon--danger"
+                        (click)="removeItem(sIdx, iIdx)"
+                        title="Quitar de la sección"
+                        aria-label="Quitar item"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  }
+                </div>
+
+                <div class="item-picker">
+                  <input
+                    type="text"
+                    class="form-input"
+                    placeholder="Buscar producto a añadir…"
+                    [ngModel]="productSearchValue(sIdx)"
+                    (ngModelChange)="onProductSearch(sIdx, $event)"
+                  />
+                  @if (productSearchResults(sIdx).length > 0) {
+                    <ul class="item-picker__results">
+                      @for (p of productSearchResults(sIdx); track p.id) {
+                        <li class="item-picker__result" (click)="addItem(sIdx, p.id)">
+                          <span class="item-picker__name">{{ p.name }}</span>
+                          <span class="item-picker__price">{{ formatPriceEuros(p.price) }}</span>
+                        </li>
+                      }
+                    </ul>
+                  }
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+
+        @if (sections().length > 0) {
+          <button type="button" class="btn-small btn-small--block" (click)="addSection()">+ Añadir otra sección</button>
+        }
+      </section>
+        </div>
+      </main>
+    </div>
+  }
+</div>

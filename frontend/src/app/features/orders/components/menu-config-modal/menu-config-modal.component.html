@@ -1,0 +1,137 @@
+@if (isOpen && menu) {
+  <div class="menu-modal-overlay" (click)="onClose()">
+    <div class="menu-modal" (click)="$event.stopPropagation()">
+      <header class="menu-modal__header">
+        <div class="menu-modal__title">
+          <h2>{{ menu.name }}</h2>
+          @if (menu.description) {
+            <p class="menu-modal__desc">{{ menu.description }}</p>
+          }
+        </div>
+        <div class="menu-modal__price">{{ (menu.price / 100).toFixed(2).replace('.', ',') }} €</div>
+        <button type="button" class="menu-modal__close" (click)="onClose()" aria-label="Cerrar">×</button>
+      </header>
+
+      <div class="menu-modal__body">
+        @for (section of menu.sections; track section.id) {
+          <section class="menu-section">
+            <div class="menu-section__header">
+              <h3 class="menu-section__name">{{ section.name }}</h3>
+              <span class="menu-section__rule">{{ sectionRuleLabel(section) }}</span>
+              <span class="menu-section__count">
+                {{ sectionSelections(section.id).length }}/{{ section.max_choices }}
+              </span>
+            </div>
+
+            <div class="menu-section__items">
+              @for (product of sectionItems(section); track product.id) {
+                @let selected = isProductSelected(section.id, product.id);
+                @let extra = sectionExtraPriceForProduct(section, product.id);
+                <button
+                  type="button"
+                  class="menu-item-card"
+                  [class.selected]="selected"
+                  (click)="toggleProduct(section, product)"
+                >
+                  <div class="menu-item-card__name">{{ product.name }}</div>
+                  @if (extra > 0) {
+                    <div class="menu-item-card__suppl">+{{ (extra / 100).toFixed(2).replace('.', ',') }} €</div>
+                  }
+                  @if (selected) {
+                    <div class="menu-item-card__check">✓</div>
+                  }
+                </button>
+
+                @if (selected) {
+                  @let sel = selectionFor(section.id, product.id);
+                  @if (sel && (product.variants?.length ?? 0) > 0) {
+                    <div class="menu-item-sub">
+                      <span class="menu-item-sub__label">Variante:</span>
+                      <div class="menu-item-sub__options">
+                        <button
+                          type="button"
+                          class="sub-chip"
+                          [class.active]="sel.variantId === null"
+                          (click)="selectVariant(section.id, product.id, null)"
+                        >
+                          Base · {{ (product.price / 100).toFixed(2).replace('.', ',') }} €
+                        </button>
+                        @for (v of product.variants ?? []; track v.id) {
+                          @if (v.active) {
+                            <button
+                              type="button"
+                              class="sub-chip"
+                              [class.active]="sel.variantId === v.id"
+                              (click)="selectVariant(section.id, product.id, v.id)"
+                            >
+                              {{ v.name }} · {{ (v.price / 100).toFixed(2).replace('.', ',') }} €
+                            </button>
+                          }
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @if (sel && (product.modifiers?.length ?? 0) > 0) {
+                    <div class="menu-item-sub">
+                      <span class="menu-item-sub__label">Extras:</span>
+                      <div class="menu-item-sub__options">
+                        @for (m of product.modifiers ?? []; track m.id) {
+                          @if (m.active) {
+                            <button
+                              type="button"
+                              class="sub-chip"
+                              [class.active]="isModifierSelected(section.id, product.id, m.id)"
+                              (click)="toggleModifier(section.id, product.id, m.id)"
+                            >
+                              {{ m.name }}
+                              @if (m.price > 0) {
+                                · +{{ (m.price / 100).toFixed(2).replace('.', ',') }} €
+                              }
+                            </button>
+                          }
+                        }
+                      </div>
+                    </div>
+                  }
+                }
+              }
+
+              @if (sectionItems(section).length === 0) {
+                <div class="menu-section__empty">
+                  Esta sección no tiene productos activos disponibles.
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        <div class="menu-notes">
+          <label for="menu-notes-input">Notas para cocina (opcional)</label>
+          <textarea
+            id="menu-notes-input"
+            rows="2"
+            [(ngModel)]="notes"
+            placeholder="Ej. sin gluten, alergias, punto de cocción…"
+          ></textarea>
+        </div>
+      </div>
+
+      <footer class="menu-modal__footer">
+        <div class="menu-modal__total">
+          <span class="menu-modal__total-label">Total</span>
+          <span class="menu-modal__total-value">{{ (totalPrice() / 100).toFixed(2).replace('.', ',') }} €</span>
+        </div>
+        @if (blockReason(); as reason) {
+          <span class="menu-modal__block">{{ reason }}</span>
+        }
+        <div class="menu-modal__actions">
+          <button type="button" class="btn-cancel" (click)="onClose()">Cancelar</button>
+          <button type="button" class="btn-confirm" [disabled]="!canConfirm()" (click)="onConfirm()">
+            Añadir al pedido
+          </button>
+        </div>
+      </footer>
+    </div>
+  </div>
+}

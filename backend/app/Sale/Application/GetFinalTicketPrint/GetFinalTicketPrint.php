@@ -50,7 +50,25 @@ final class GetFinalTicketPrint
         $orderLinesPayload = [];
         $productNameCache = [];
         foreach ($orderLines as $line) {
-            $productId = $line->productId()->value();
+            if ($line->isMenuLine()) {
+                // Líneas de menú: usamos su nombre denormalizado y exponemos
+                // las selecciones del comensal para que el ticket las pueda renderizar.
+                $orderLinesPayload[] = [
+                    'name' => $line->menuName() ?? 'Menú',
+                    'quantity' => $line->quantity()->value(),
+                    'price_cents' => $line->price()->value(),
+                    'total_cents' => $line->price()->value() * $line->quantity()->value(),
+                    'variant_name' => null,
+                    'modifiers' => null,
+                    'menu_selections' => $line->menuSelections(),
+                ];
+                continue;
+            }
+
+            $productId = $line->productId()?->value();
+            if ($productId === null) {
+                continue;
+            }
             if (! isset($productNameCache[$productId])) {
                 $product = $this->productRepository->findById($productId);
                 $productNameCache[$productId] = $product !== null ? $product->name()->value() : 'Producto';

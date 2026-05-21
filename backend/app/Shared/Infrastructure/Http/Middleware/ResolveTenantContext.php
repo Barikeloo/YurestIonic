@@ -3,7 +3,6 @@
 namespace App\Shared\Infrastructure\Http\Middleware;
 
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
-use App\Restaurant\Infrastructure\Persistence\DTO\RestaurantWithInternalId;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 use App\SuperAdmin\Domain\Interfaces\SuperAdminRepositoryInterface;

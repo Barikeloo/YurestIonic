@@ -19,7 +19,11 @@ final class ListOrderLines
 
         return array_map(
             function ($orderLine): ListOrderLinesResponse {
-                $product = $this->productRepository->findById($orderLine->productId()->value());
+                // Las líneas de menú no tienen producto asociado: su display se compone con
+                // menuName y menuSelections, no con el nombre del producto.
+                $product = $orderLine->productId() !== null
+                    ? $this->productRepository->findById($orderLine->productId()->value())
+                    : null;
 
                 return ListOrderLinesResponse::create(
                     orderLine: $orderLine,

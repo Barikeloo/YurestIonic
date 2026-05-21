@@ -283,7 +283,7 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Almejas a la marinera',       'price' => 1490, 'stock' => 30],
             ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Tartar de atún',              'price' => 1690, 'stock' => 25],
             ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Carpaccio de ternera',        'price' => 1390, 'stock' => 25],
-            ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Tomate, mozzarella y albahaca','price' => 1090,'stock' => 40],
+            ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Tomate, mozzarella y albahaca', 'price' => 1090, 'stock' => 40],
             ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Hummus con pita',             'price' => 790,  'stock' => 50],
             ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Guacamole con nachos',        'price' => 890,  'stock' => 50],
             ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Nachos con queso',            'price' => 990,  'stock' => 50],
@@ -301,8 +301,8 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada niçoise',         'price' => 1290, 'stock' => 35],
             ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada Waldorf',         'price' => 1190, 'stock' => 30],
             ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada de pollo crispy', 'price' => 1290, 'stock' => 40],
-            ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada templada de pulpo','price' => 1490,'stock' => 25],
-            ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada de queso de cabra y nueces', 'price' => 1290,'stock' => 35],
+            ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada templada de pulpo', 'price' => 1490, 'stock' => 25],
+            ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada de queso de cabra y nueces', 'price' => 1290, 'stock' => 35],
 
             // ── Arroces y Pastas ──
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Paella mixta',           'price' => 1450, 'stock' => 30],
@@ -316,11 +316,11 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Risotto de gambas',      'price' => 1590, 'stock' => 25],
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Carbonara',              'price' => 1250, 'stock' => 40],
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Tallarines al pesto',    'price' => 1190, 'stock' => 40],
-            ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Espaguetis a la boloñesa','price' => 1190,'stock' => 40],
-            ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Espaguetis aglio e olio','price' => 1090, 'stock' => 40],
+            ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Espaguetis a la boloñesa', 'price' => 1190, 'stock' => 40],
+            ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Espaguetis aglio e olio', 'price' => 1090, 'stock' => 40],
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Penne arrabbiata',       'price' => 1090, 'stock' => 40],
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Ravioli de ricotta y espinacas', 'price' => 1290, 'stock' => 30],
-            ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Gnocchi a los cuatro quesos','price' => 1290,'stock' => 30],
+            ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Gnocchi a los cuatro quesos', 'price' => 1290, 'stock' => 30],
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Lasaña de carne',        'price' => 1290, 'stock' => 30],
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Mac & cheese',           'price' => 1190, 'stock' => 30],
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Canelones de la abuela', 'price' => 1290, 'stock' => 30],
@@ -399,7 +399,7 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'Guinness 50cl',                  'price' => 480,  'stock' => 80],
             ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'Paulaner Weissbier 50cl',        'price' => 490,  'stock' => 80],
             ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'Erdinger Weissbier 50cl',        'price' => 490,  'stock' => 80],
-            ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'Franziskaner Hefe-Weissbier 50cl','price' => 490, 'stock' => 60],
+            ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'Franziskaner Hefe-Weissbier 50cl', 'price' => 490, 'stock' => 60],
             ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'IPA artesana La Pirata',         'price' => 480,  'stock' => 60],
             ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'IPA artesana Garage Soup',       'price' => 480,  'stock' => 60],
             ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'Pale Ale artesana',              'price' => 460,  'stock' => 60],
@@ -475,7 +475,7 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Aperol Spritz',           'price' => 850,  'stock' => 150],
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Bloody Mary',             'price' => 890,  'stock' => 80],
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Long Island Iced Tea',    'price' => 990,  'stock' => 60],
-            ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Cóctel sin alcohol de la casa', 'price' => 650,'stock' => 100],
+            ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Cóctel sin alcohol de la casa', 'price' => 650, 'stock' => 100],
             // Destilados
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Gin tonic',               'price' => 850,  'stock' => 999],
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Gin tonic premium',       'price' => 1090, 'stock' => 200],
@@ -1337,12 +1337,12 @@ class SaonaDemoSeeder extends Seeder
             ],
 
             // ─────────────── Vinos de la casa ───────────────
-            'Tinto de la casa'  => $copaBotella(350, 1490, 999, 50),
+            'Tinto de la casa' => $copaBotella(350, 1490, 999, 50),
             'Blanco de la casa' => $copaBotella(350, 1490, 999, 50),
             'Rosado de la casa' => $copaBotella(350, 1490, 999, 50),
 
             // ─────────────── Vermut (copa + botellín) ───────────────
-            'Vermut rojo'   => [
+            'Vermut rojo' => [
                 ['name' => 'Copa',     'price' => 350,  'stock' => 200],
                 ['name' => 'Botellín', 'price' => 1090, 'stock' => 30],
             ],
@@ -1353,45 +1353,45 @@ class SaonaDemoSeeder extends Seeder
 
             // ─────────────── Tintos ───────────────
             'Rioja Crianza (D.O.Ca. Rioja)' => $copaBotella(420, 1890, 100, 60),
-            'Rioja Reserva (D.O.Ca. Rioja)' => $copaBotella(590, 2690, 80,  40),
-            'Ribera del Duero Roble'        => $copaBotella(440, 1990, 80,  40),
-            'Ribera del Duero Crianza'      => $copaBotella(540, 2490, 80,  35),
-            'Ribera del Duero Reserva'      => $copaBotella(750, 3490, 60,  25),
-            'Priorat (D.O.Q. Priorat)'      => $copaBotella(720, 3290, 60,  25),
-            'Toro Tempranillo'              => $copaBotella(480, 2190, 80,  30),
-            'Mencía Bierzo'                 => $copaBotella(460, 2090, 80,  25),
-            'Garnacha Calatayud'            => $copaBotella(390, 1790, 80,  30),
-            'Somontano Tinto'               => $copaBotella(420, 1890, 80,  25),
-            'Malbec (Argentina)'            => $copaBotella(540, 2490, 60,  25),
-            'Cabernet Sauvignon (Chile)'    => $copaBotella(500, 2290, 60,  25),
+            'Rioja Reserva (D.O.Ca. Rioja)' => $copaBotella(590, 2690, 80, 40),
+            'Ribera del Duero Roble' => $copaBotella(440, 1990, 80, 40),
+            'Ribera del Duero Crianza' => $copaBotella(540, 2490, 80, 35),
+            'Ribera del Duero Reserva' => $copaBotella(750, 3490, 60, 25),
+            'Priorat (D.O.Q. Priorat)' => $copaBotella(720, 3290, 60, 25),
+            'Toro Tempranillo' => $copaBotella(480, 2190, 80, 30),
+            'Mencía Bierzo' => $copaBotella(460, 2090, 80, 25),
+            'Garnacha Calatayud' => $copaBotella(390, 1790, 80, 30),
+            'Somontano Tinto' => $copaBotella(420, 1890, 80, 25),
+            'Malbec (Argentina)' => $copaBotella(540, 2490, 60, 25),
+            'Cabernet Sauvignon (Chile)' => $copaBotella(500, 2290, 60, 25),
 
             // ─────────────── Blancos ───────────────
-            'Albariño (D.O. Rías Baixas)'        => $copaBotella(480, 2190, 100, 50),
-            'Verdejo (D.O. Rueda)'               => $copaBotella(370, 1690, 120, 60),
-            'Godello (D.O. Valdeorras)'          => $copaBotella(440, 1990, 80,  30),
-            'Sauvignon Blanc (Rueda)'            => $copaBotella(420, 1890, 80,  30),
-            'Chardonnay (Somontano)'             => $copaBotella(460, 2090, 80,  30),
-            'Riesling (Alemania)'                => $copaBotella(520, 2390, 60,  25),
-            'Txakoli (D.O. Getariako Txakolina)' => $copaBotella(460, 2090, 60,  25),
-            'Pazo de Señorans'                   => $copaBotella(630, 2890, 40,  20),
+            'Albariño (D.O. Rías Baixas)' => $copaBotella(480, 2190, 100, 50),
+            'Verdejo (D.O. Rueda)' => $copaBotella(370, 1690, 120, 60),
+            'Godello (D.O. Valdeorras)' => $copaBotella(440, 1990, 80, 30),
+            'Sauvignon Blanc (Rueda)' => $copaBotella(420, 1890, 80, 30),
+            'Chardonnay (Somontano)' => $copaBotella(460, 2090, 80, 30),
+            'Riesling (Alemania)' => $copaBotella(520, 2390, 60, 25),
+            'Txakoli (D.O. Getariako Txakolina)' => $copaBotella(460, 2090, 60, 25),
+            'Pazo de Señorans' => $copaBotella(630, 2890, 40, 20),
 
             // ─────────────── Rosados ───────────────
-            'Rosado Navarra'  => $copaBotella(370, 1690, 80, 30),
+            'Rosado Navarra' => $copaBotella(370, 1690, 80, 30),
             'Rosado Provence' => $copaBotella(540, 2490, 50, 25),
 
             // ─────────────── Espumosos ───────────────
-            'Cava Brut Nature'  => $copaBotella(420, 1890, 80, 40),
-            'Cava Reserva'      => $copaBotella(520, 2390, 60, 30),
+            'Cava Brut Nature' => $copaBotella(420, 1890, 80, 40),
+            'Cava Reserva' => $copaBotella(520, 2390, 60, 30),
             'Prosecco (Italia)' => $copaBotella(480, 2190, 60, 30),
 
             // ─────────────── Arroces (Individual / Para 2 / Para 4) ───────────────
-            'Paella mixta'       => $paellaRaciones(1450, 30),
+            'Paella mixta' => $paellaRaciones(1450, 30),
             'Paella de verduras' => $paellaRaciones(1350, 30),
-            'Paella de marisco'  => $paellaRaciones(1690, 25),
-            'Arroz negro'        => $paellaRaciones(1590, 25),
-            'Arroz a banda'      => $paellaRaciones(1490, 25),
+            'Paella de marisco' => $paellaRaciones(1690, 25),
+            'Arroz negro' => $paellaRaciones(1590, 25),
+            'Arroz a banda' => $paellaRaciones(1490, 25),
             'Arroz del senyoret' => $paellaRaciones(1550, 25),
-            'Fideuá de marisco'  => $paellaRaciones(1590, 25),
+            'Fideuá de marisco' => $paellaRaciones(1590, 25),
 
             // ─────────────── Helado (bolas) ───────────────
             'Helado' => [

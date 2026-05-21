@@ -2,9 +2,9 @@
 
 namespace App\Restaurant\Infrastructure\Persistence\Repositories;
 
-use App\Restaurant\Infrastructure\Persistence\DTO\RestaurantWithInternalId;
 use App\Restaurant\Domain\Entity\Restaurant;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
+use App\Restaurant\Infrastructure\Persistence\DTO\RestaurantWithInternalId;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;

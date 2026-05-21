@@ -5,7 +5,7 @@ namespace App\Product\Application\GetProduct;
 final readonly class GetProductResponse
 {
     /**
-     * @param string[] $allergens
+     * @param  string[]  $allergens
      */
     private function __construct(
         public string $id,
@@ -22,7 +22,7 @@ final readonly class GetProductResponse
     ) {}
 
     /**
-     * @param string[] $allergens
+     * @param  string[]  $allergens
      */
     public static function create(
         string $id,

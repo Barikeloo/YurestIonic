@@ -311,8 +311,11 @@ export class CajaPage implements OnInit, OnDestroy {
           id: l.id,
           name: l.product_name || 'Producto',
           price: l.price * l.quantity,
+          unitPrice: l.price,
+          quantity: l.quantity,
+          taxPercentage: l.tax_percentage,
           variantName: l.variant_name ?? null,
-          modifiers: l.modifiers?.map((m) => ({ name: m.name })) ?? null,
+          modifiers: l.modifiers?.map((m) => ({ name: m.name, price: m.price })) ?? null,
         }));
         this.currentPaymentAmount = remainingTotal;
         this.showCobrarModal = true;
@@ -785,8 +788,11 @@ export class CajaPage implements OnInit, OnDestroy {
               id: l.id,
               name: l.product_name || 'Producto',
               price: l.price * l.quantity,
+              unitPrice: l.price,
+              quantity: l.quantity,
+              taxPercentage: l.tax_percentage,
               variantName: l.variant_name ?? null,
-              modifiers: l.modifiers?.map((m) => ({ name: m.name })) ?? null,
+              modifiers: l.modifiers?.map((m) => ({ name: m.name, price: m.price })) ?? null,
             })),
             remainingTotal,
           })),
@@ -966,9 +972,12 @@ export class CajaPage implements OnInit, OnDestroy {
           id: l.id,
           name: l.product_name || 'Producto',
           price: l.price * l.quantity,
+          unitPrice: l.price,
+          quantity: l.quantity,
+          taxPercentage: l.tax_percentage,
           diner: l.diner_number,
           variantName: l.variant_name ?? null,
-          modifiers: l.modifiers?.map((m) => ({ name: m.name })) ?? null,
+          modifiers: l.modifiers?.map((m) => ({ name: m.name, price: m.price })) ?? null,
         }));
         this.captureLinePrices(this.selectedTableLines);
 

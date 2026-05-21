@@ -106,6 +106,17 @@ final class CreateSale
                 }
             }
 
+            // Guardia temporal: las líneas de menú aún no tienen mapeo a SaleLine
+            // (productId es null en menus). Bloqueamos el cobro con un mensaje claro
+            // hasta que esté implementada la integración en cobros.
+            foreach ($orderLines as $line) {
+                if ($line->isMenuLine()) {
+                    throw new \DomainException(
+                        'Las líneas de menú aún no pueden cobrarse. Próximamente disponible.'
+                    );
+                }
+            }
+
             $total = 0;
             foreach ($orderLines as $line) {
                 $total += $line->price()->value() * $line->quantity()->value();
@@ -154,7 +165,6 @@ final class CreateSale
             // ofrecer el botón de reembolso. `paid_order_line_ids` (derivado de
             // SaleLines activas) sigue siendo la fuente de verdad de "qué está
             // pagado"; las assignments quedan como "quién pagó qué".
-            
 
             $orderJustClosed = false;
             $order = $this->orderRepository->findByUuid($orderUuid);

@@ -2,8 +2,8 @@
 
 namespace App\ProductVariant\Infrastructure\Entrypoint\Http;
 
-use App\ProductVariant\Domain\Exception\ProductVariantNotFoundException;
 use App\ProductVariant\Application\DeleteProductVariant\DeleteProductVariant;
+use App\ProductVariant\Domain\Exception\ProductVariantNotFoundException;
 use App\ProductVariant\Infrastructure\Entrypoint\Http\Requests\DeleteProductVariantRequest;
 use Illuminate\Http\JsonResponse;
 

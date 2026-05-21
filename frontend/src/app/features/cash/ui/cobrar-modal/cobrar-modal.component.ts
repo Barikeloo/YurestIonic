@@ -1,27 +1,48 @@
-import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnChanges, SimpleChanges, inject, HostListener } from '@angular/core';
 
 import { FormsModule } from '@angular/forms';
-import { CardComponent } from '../../../../shared/components/card/card.component';
 import { BtnComponent } from '../../../../shared/components/btn/btn.component';
-import { ToggleComponent } from '../../../../shared/components/toggle/toggle.component';
 import { NumpadComponent } from '../../../../shared/components/numpad/numpad.component';
-import { AmountDisplayComponent } from '../../../../shared/components/amount-display/amount-display.component';
-import { DinersStatusComponent } from '../../../../shared/components/diners-status/diners-status.component';
 import { PaymentMethod } from '../../../../core/enums/payment-method.enum';
 import { ToastService } from '../../../../core/services/toast.service';
+
+export interface OrderLineModifier {
+  name: string;
+  price?: number;
+}
 
 export interface OrderLine {
   id?: string;
   name: string;
+  /** Importe total de la línea (cantidad × precio unitario, sin contar modificadores). */
   price: number;
   diner?: number | null;
+  quantity?: number;
+  unitPrice?: number;
+  variantName?: string | null;
+  /** Porcentaje de IVA (ej. 10, 21). El precio se asume con IVA incluido (PVP). */
+  taxPercentage?: number;
+  modifiers?: OrderLineModifier[] | null;
 }
+
+interface TaxLine {
+  rate: number;
+  base: number;
+  tax: number;
+}
+
+interface MethodOption {
+  value: PaymentMethod;
+  label: string;
+}
+
+type SideOption = 'detail' | 'partial' | 'tip' | 'fiscal' | null;
 
 @Component({
   selector: 'app-cobrar-modal',
   templateUrl: './cobrar-modal.component.html',
   styleUrls: ['./cobrar-modal.component.scss'],
-  imports: [FormsModule, CardComponent, BtnComponent, ToggleComponent, NumpadComponent, AmountDisplayComponent, DinersStatusComponent],
+  imports: [FormsModule, BtnComponent, NumpadComponent],
   standalone: true,
 })
 export class CobrarModalComponent implements OnChanges {
@@ -39,65 +60,219 @@ export class CobrarModalComponent implements OnChanges {
 
   private readonly toastService = inject(ToastService);
 
-  public Math = Math;
+  public readonly PaymentMethod = PaymentMethod;
+  public readonly Math = Math;
+
   public method: PaymentMethod = PaymentMethod.CASH;
   public inputAmount = 0;
   public tip = 0;
-  public showTip = false;
-  public showFiscal = false;
+
+  // Una sola opción lateral activa a la vez (mutex)
+  public sideOption: SideOption = null;
+
+  public showSecondaryMethods = false;
+
+  // Fiscal data
+  public fiscalNif = '';
+  public fiscalName = '';
+  public fiscalAddress = '';
+
+  public readonly primaryMethods: MethodOption[] = [
+    { value: PaymentMethod.CASH, label: 'Efectivo' },
+    { value: PaymentMethod.CARD, label: 'Tarjeta' },
+    { value: PaymentMethod.BIZUM, label: 'Bizum' },
+  ];
+
+  public readonly secondaryMethods: MethodOption[] = [
+    { value: PaymentMethod.MIXED, label: 'Mixto' },
+    { value: PaymentMethod.INVITATION, label: 'Invitación' },
+  ];
+
+  public readonly cashQuickAmounts = [4000, 5000, 6000, 10000, 20000, 50000];
+  public readonly tipPresets = [100, 200, 500, 1000];
+
+  // ---- Derivados desde sideOption ----
+  public get partialMode(): boolean { return this.sideOption === 'partial'; }
+  public get tipMode(): boolean { return this.sideOption === 'tip'; }
+  public get fiscalMode(): boolean { return this.sideOption === 'fiscal'; }
+  public get showDetail(): boolean { return this.sideOption === 'detail'; }
+  public get isWide(): boolean { return this.sideOption !== null; }
 
   public get effectiveAmount(): number {
-    return Math.min(this.inputAmount, this.total);
+    if (this.partialMode) return Math.min(this.inputAmount, this.total);
+    return this.total;
   }
 
   public get change(): number {
     if (this.method !== PaymentMethod.CASH) return 0;
-    return this.inputAmount - this.effectiveAmount;
+    const cashIn = this.partialMode ? this.inputAmount : (this.inputAmount || this.total);
+    return cashIn - this.effectiveAmount;
   }
 
-  public get remainingTotal(): number {
-    if (this.diners <= 0) return this.total;
-    const perDiner = Math.floor(this.total / this.diners);
-    return this.total - (this.paidDiners.length * perDiner);
+  public get remainingAfter(): number {
+    return Math.max(0, this.total - this.effectiveAmount);
+  }
+
+  public get methodLabel(): string {
+    return [...this.primaryMethods, ...this.secondaryMethods].find(m => m.value === this.method)?.label ?? '';
+  }
+
+  public get isSecondaryActive(): boolean {
+    return this.secondaryMethods.some(m => m.value === this.method);
+  }
+
+  public get activeMethodIndex(): number {
+    if (this.isSecondaryActive) return this.primaryMethods.length;
+    const idx = this.primaryMethods.findIndex(m => m.value === this.method);
+    return idx >= 0 ? idx : 0;
+  }
+
+  /**
+   * Importe total de modificadores de una línea (suma de precios de extras
+   * cuando estén informados). Devuelve 0 si la línea no tiene modificadores
+   * o si los precios no vienen poblados.
+   */
+  public modifiersTotal(line: OrderLine): number {
+    if (!line.modifiers) return 0;
+    return line.modifiers.reduce((acc, m) => acc + (m.price ?? 0), 0);
+  }
+
+  /**
+   * Total real de la línea: precio base + suma de modificadores con coste.
+   */
+  public lineTotal(line: OrderLine): number {
+    return line.price + this.modifiersTotal(line);
+  }
+
+  /**
+   * Desglose de IVA por tipo. Asume que los precios incluyen IVA (PVP), que
+   * es lo habitual en hostelería ES. Devuelve [] si ninguna línea tiene
+   * `taxPercentage` informado.
+   */
+  public get taxBreakdown(): TaxLine[] {
+    const grouped = new Map<number, number>();
+    let hasAnyTax = false;
+    for (const line of this.lines) {
+      if (line.taxPercentage === undefined || line.taxPercentage === null) continue;
+      hasAnyTax = true;
+      const rate = line.taxPercentage;
+      const grossLine = this.lineTotal(line);
+      grouped.set(rate, (grouped.get(rate) ?? 0) + grossLine);
+    }
+    if (!hasAnyTax) return [];
+
+    return Array.from(grouped.entries())
+      .sort((a, b) => a[0] - b[0])
+      .map(([rate, gross]) => {
+        const base = Math.round(gross / (1 + rate / 100));
+        const tax = gross - base;
+        return { rate, base, tax };
+      });
+  }
+
+  public get sidePanelTitle(): string {
+    switch (this.sideOption) {
+      case 'detail': return `Detalle (${this.lines.length} ${this.lines.length === 1 ? 'línea' : 'líneas'})`;
+      case 'partial': return 'Cobro parcial';
+      case 'tip': return 'Propina';
+      case 'fiscal': return 'Factura completa';
+      default: return '';
+    }
+  }
+
+  public get confirmLabel(): string {
+    if (this.isProcessing) return 'Procesando…';
+    const total = this.effectiveAmount + (this.tipMode ? this.tip : 0);
+    const verb = this.method === PaymentMethod.INVITATION ? 'Invitar' : 'Cobrar';
+    return `${verb} ${this.formatCents(total)} €`;
+  }
+
+  public get canConfirm(): boolean {
+    if (this.isProcessing) return false;
+    if (this.effectiveAmount <= 0) return false;
+    if (this.method === PaymentMethod.CASH && this.partialMode && this.inputAmount < this.effectiveAmount) return false;
+    return true;
   }
 
   public ngOnChanges(changes: SimpleChanges): void {
     const justOpened = changes['isOpen'] && this.isOpen && !changes['isOpen'].previousValue;
-    const totalChangedWhileOpen = changes['total'] && this.isOpen;
-    if (justOpened || totalChangedWhileOpen) {
+    if (justOpened) {
+      this.resetForm();
+      this.inputAmount = this.total;
+    }
+    const totalChangedWhileOpen = changes['total'] && this.isOpen && !justOpened;
+    if (totalChangedWhileOpen && !this.partialMode) {
       this.inputAmount = this.total;
     }
   }
 
-  private methodLabels: { [key: string]: string } = {
-    [PaymentMethod.CASH]: 'Efectivo',
-    [PaymentMethod.CARD]: 'Tarjeta',
-    [PaymentMethod.BIZUM]: 'Bizum',
-    [PaymentMethod.MIXED]: 'Mixto',
-    [PaymentMethod.INVITATION]: 'Invitación',
-  };
-
-  public static readonly METHODS: Array<{ value: PaymentMethod; label: string; icon: string }> = [
-    { value: PaymentMethod.CASH, label: 'Efectivo', icon: 'cash' },
-    { value: PaymentMethod.CARD, label: 'Tarjeta', icon: 'card' },
-    { value: PaymentMethod.BIZUM, label: 'Bizum', icon: 'phone' },
-    { value: PaymentMethod.MIXED, label: 'Mixto', icon: 'mixed' },
-    { value: PaymentMethod.INVITATION, label: 'Invitación', icon: 'gift' },
-  ];
-
-  public get methods(): Array<{ value: PaymentMethod; label: string; icon: string }> {
-    return CobrarModalComponent.METHODS;
+  @HostListener('document:keydown.escape')
+  public onEscape(): void {
+    if (this.isOpen) {
+      if (this.sideOption !== null) {
+        this.sideOption = null;
+      } else {
+        this.onClose();
+      }
+    }
   }
-
-
 
   public onClose(): void {
     this.closeModal.emit();
-    this.resetForm();
+  }
+
+  public selectMethod(method: PaymentMethod): void {
+    this.method = method;
+    this.showSecondaryMethods = false;
+    // Si entras a Invitación con propina activa, cierra propina
+    if (method === PaymentMethod.INVITATION && this.tipMode) {
+      this.sideOption = null;
+    }
+    if (!this.partialMode) {
+      this.inputAmount = this.total;
+    }
+  }
+
+  public toggleSecondaryMethods(): void {
+    this.showSecondaryMethods = !this.showSecondaryMethods;
+  }
+
+  // Mutex: toggla la opción lateral. Si haces clic en la activa, se cierra.
+  public toggleSide(opt: Exclude<SideOption, null>): void {
+    if (this.sideOption === opt) {
+      this.sideOption = null;
+      if (opt === 'partial') this.inputAmount = this.total;
+      return;
+    }
+    // Cambiando de panel → resetear estado relacionado
+    if (this.sideOption === 'partial' && opt !== 'partial') {
+      this.inputAmount = this.total;
+    }
+    this.sideOption = opt;
+    if (opt === 'partial') {
+      this.inputAmount = 0;
+    }
+  }
+
+  public closeSide(): void {
+    if (this.partialMode) this.inputAmount = this.total;
+    this.sideOption = null;
+  }
+
+  public onAmountChange(value: number): void {
+    this.inputAmount = value;
+  }
+
+  public setQuickAmount(amount: number): void {
+    this.inputAmount = amount;
+  }
+
+  public setTip(amount: number): void {
+    this.tip = this.tip === amount ? 0 : amount;
   }
 
   public onConfirm(): void {
-    const tip = this.showTip ? this.tip : 0;
+    const tip = this.tipMode ? this.tip : 0;
     const amountToPay = this.effectiveAmount;
 
     if (amountToPay <= 0) {
@@ -105,9 +280,13 @@ export class CobrarModalComponent implements OnChanges {
       return;
     }
 
-    if (this.method === PaymentMethod.CASH) {
+    if (this.method === PaymentMethod.CASH && this.partialMode) {
       if (this.inputAmount > this.total * 2 && this.total > 0) {
-        this.toastService.presentWarning('El importe introducido parece demasiado alto. Por favor, verifíquelo.');
+        this.toastService.presentWarning('El importe entregado parece demasiado alto. Por favor, verifíquelo.');
+        return;
+      }
+      if (this.inputAmount < amountToPay) {
+        this.toastService.presentWarning('El importe entregado es inferior al importe a cobrar.');
         return;
       }
     }
@@ -123,25 +302,16 @@ export class CobrarModalComponent implements OnChanges {
       method: this.method,
       amount: amountToPay + tip,
       tip: tip > 0 ? tip : undefined,
-      isManualPartial: isManualPartial,
+      isManualPartial,
     });
-    this.resetForm();
   }
 
   public onSplitBill(): void {
     this.splitBill.emit();
   }
 
-  public onCashGivenChange(value: number): void {
-    this.inputAmount = value;
-  }
-
-  public setQuickAmount(amount: number): void {
-    this.inputAmount = amount;
-  }
-
   public formatCents(cents: number): string {
-    return (cents / 100).toFixed(2);
+    return (cents / 100).toFixed(2).replace('.', ',');
   }
 
   public abs(value: number): number {
@@ -152,7 +322,10 @@ export class CobrarModalComponent implements OnChanges {
     this.method = PaymentMethod.CASH;
     this.inputAmount = 0;
     this.tip = 0;
-    this.showTip = false;
-    this.showFiscal = false;
+    this.sideOption = null;
+    this.showSecondaryMethods = false;
+    this.fiscalNif = '';
+    this.fiscalName = '';
+    this.fiscalAddress = '';
   }
 }

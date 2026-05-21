@@ -1,0 +1,108 @@
+<div class="menus-mgmt">
+  <header class="menus-mgmt__header">
+    <div>
+      <div class="menus-mgmt__title">Menús del restaurante</div>
+      <div class="menus-mgmt__subtitle">
+        Combos y menús del día. Comparten productos con la Carta y tienen reglas propias de horarios y precio.
+      </div>
+    </div>
+    <button type="button" class="btn-primary" (click)="onCreate()">
+      <span aria-hidden="true">+</span> Nuevo menú
+    </button>
+  </header>
+
+  <div class="menus-mgmt__toolbar">
+    <div class="menus-mgmt__filters">
+      @for (f of filters; track f.value) {
+        <button
+          type="button"
+          class="filter-chip"
+          [class.active]="facade().filter() === f.value"
+          (click)="onFilterChange(f.value)"
+        >
+          {{ f.label }}
+        </button>
+      }
+    </div>
+    <app-search-bar
+      [value]="facade().search()"
+      [resultsCount]="menus().length"
+      [totalCount]="totalCount()"
+      placeholder="Buscar menú por nombre..."
+      ariaLabel="Buscar menú"
+      (valueChange)="onSearchChange($event)"
+    />
+  </div>
+
+  @if (facade().isLoading()) {
+    <div class="menus-mgmt__empty">Cargando menús…</div>
+  } @else if (totalCount() === 0) {
+    <div class="menus-mgmt__empty">
+      Aún no hay menús. Crea el primero para empezar a ofrecer combos al comensal.
+    </div>
+  } @else if (menus().length === 0) {
+    <div class="menus-mgmt__empty">No hay menús que coincidan con los filtros aplicados.</div>
+  } @else {
+    <ul class="menus-mgmt__list">
+      @for (menu of menus(); track menu.id) {
+        <li class="menu-card" [class.archived]="menu.archived" (click)="onEdit(menu)">
+          <div class="menu-card__main">
+            <div class="menu-card__heading">
+              <h3 class="menu-card__name">{{ menu.name }}</h3>
+              <div class="menu-card__badges">
+                @if (isAvailableNow().get(menu.id)) {
+                  <span class="badge badge--live">Disponible ahora</span>
+                }
+                @if (menu.archived) {
+                  <span class="badge badge--archived">Archivado</span>
+                } @else if (!menu.active) {
+                  <span class="badge badge--inactive">Inactivo</span>
+                } @else {
+                  <span class="badge badge--active">Activo</span>
+                }
+              </div>
+            </div>
+
+            @if (menu.description) {
+              <p class="menu-card__desc">{{ menu.description }}</p>
+            }
+
+            <div class="menu-card__meta">
+              <span class="meta-item">{{ toEuro(menu.price) }}</span>
+              <span class="meta-sep">·</span>
+              <span class="meta-item">{{ daysShort(menu.availableDays) }}</span>
+              <span class="meta-sep">·</span>
+              <span class="meta-item">{{ formatTimeRange(menu.availableFromTime, menu.availableToTime) }}</span>
+              <span class="meta-sep">·</span>
+              <span class="meta-item">{{ formatValidity(menu) }}</span>
+              <span class="meta-sep">·</span>
+              <span class="meta-item">{{ sectionsSummary(menu) }}</span>
+            </div>
+          </div>
+
+          <div class="menu-card__actions">
+            @if (!menu.archived) {
+              <button
+                type="button"
+                class="btn-action"
+                [title]="menu.active ? 'Desactivar' : 'Activar'"
+                (click)="onToggleActive(menu, $event)"
+              >
+                {{ menu.active ? 'Desactivar' : 'Activar' }}
+              </button>
+              <button
+                type="button"
+                class="btn-action btn-action--danger"
+                title="Archivar"
+                (click)="onArchive(menu, $event)"
+              >
+                Archivar
+              </button>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</div>
+

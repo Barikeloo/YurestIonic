@@ -2,6 +2,9 @@
 
 namespace App\Order\Application\AddLineToOrder;
 
+use App\Family\Domain\Exception\FamilyNotActiveException;
+use App\Family\Domain\Exception\FamilyNotFoundException;
+use App\Family\Domain\Interfaces\FamilyRepositoryInterface;
 use App\Order\Domain\Entity\OrderLine;
 use App\Order\Domain\Exception\OrderIsNotOpenException;
 use App\Order\Domain\Exception\OrderNotFoundException;
@@ -11,11 +14,10 @@ use App\Order\Domain\ValueObject\OrderLineDinerNumber;
 use App\Order\Domain\ValueObject\OrderLinePrice;
 use App\Order\Domain\ValueObject\OrderLineQuantity;
 use App\Order\Domain\ValueObject\OrderLineTaxPercentage;
-use App\Family\Domain\Exception\FamilyNotActiveException;
-use App\Family\Domain\Interfaces\FamilyRepositoryInterface;
-use App\Product\Domain\Exception\InsufficientStockException;
 use App\Product\Domain\Exception\ProductNotActiveException;
+use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
+use App\ProductVariant\Infrastructure\Persistence\Models\EloquentProductVariant;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tax\Domain\Exception\TaxNotFoundException;
 use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
@@ -45,7 +47,7 @@ final class AddLineToOrder
         $product = $this->productRepository->findById($command->productId);
 
         if ($product === null) {
-            throw \App\Product\Domain\Exception\ProductNotFoundException::withId($command->productId);
+            throw ProductNotFoundException::withId($command->productId);
         }
 
         if (! $product->isActive()) {
@@ -55,7 +57,7 @@ final class AddLineToOrder
         $family = $this->familyRepository->findById($product->familyId()->value());
 
         if ($family === null) {
-            throw \App\Family\Domain\Exception\FamilyNotFoundException::withId($product->familyId()->value());
+            throw FamilyNotFoundException::withId($product->familyId()->value());
         }
 
         if (! $family->isActive()) {
@@ -72,7 +74,7 @@ final class AddLineToOrder
         $variantName = null;
 
         if ($command->variantId !== null) {
-            $variant = \App\ProductVariant\Infrastructure\Persistence\Models\EloquentProductVariant::query()
+            $variant = EloquentProductVariant::query()
                 ->where('uuid', $command->variantId)
                 ->whereHas('product', function ($q) use ($product): void {
                     $q->where('uuid', $product->id()->value());

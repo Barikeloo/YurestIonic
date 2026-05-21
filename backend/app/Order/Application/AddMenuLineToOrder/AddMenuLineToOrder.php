@@ -1,0 +1,217 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Order\Application\AddMenuLineToOrder;
+
+use App\Menu\Domain\Entity\Menu;
+use App\Menu\Domain\Entity\MenuSection;
+use App\Menu\Domain\Exception\MenuNotFoundException;
+use App\Menu\Domain\Interfaces\MenuRepositoryInterface;
+use App\Order\Domain\Entity\OrderLine;
+use App\Order\Domain\Exception\OrderIsNotOpenException;
+use App\Order\Domain\Exception\OrderNotFoundException;
+use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
+use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Order\Domain\ValueObject\OrderLineDinerNumber;
+use App\Order\Domain\ValueObject\OrderLinePrice;
+use App\Order\Domain\ValueObject\OrderLineQuantity;
+use App\Order\Domain\ValueObject\OrderLineTaxPercentage;
+use App\Product\Domain\Exception\ProductNotActiveException;
+use App\Product\Domain\Exception\ProductNotFoundException;
+use App\Product\Domain\Interfaces\ProductRepositoryInterface;
+use App\ProductVariant\Infrastructure\Persistence\Models\EloquentProductVariant;
+use App\Shared\Domain\ValueObject\Uuid;
+use App\Tax\Domain\Exception\TaxNotFoundException;
+use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
+use DomainException;
+
+/**
+ * Añade una línea de tipo "menú" a una orden abierta. A diferencia de
+ * AddLineToOrder (un producto), esta línea representa el menú completo y guarda
+ * en `menu_selections` las elecciones del comensal por sección, con variantes
+ * y modificadores ya resueltos para que el ticket / cocina puedan renderizarse
+ * sin tener que volver a leer el menú.
+ */
+final class AddMenuLineToOrder
+{
+    public function __construct(
+        private readonly OrderLineRepositoryInterface $orderLineRepository,
+        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly MenuRepositoryInterface $menuRepository,
+        private readonly ProductRepositoryInterface $productRepository,
+        private readonly TaxRepositoryInterface $taxRepository,
+    ) {}
+
+    public function __invoke(AddMenuLineToOrderCommand $command): AddMenuLineToOrderResponse
+    {
+        $order = $this->orderRepository->findByUuid(Uuid::create($command->orderId));
+        if ($order === null) {
+            throw OrderNotFoundException::withId($command->orderId);
+        }
+        if (! $order->status()->isOpen()) {
+            throw OrderIsNotOpenException::create();
+        }
+
+        $menu = $this->menuRepository->findById($command->menuId, includeArchived: false);
+        if ($menu === null || $menu->isArchived() || ! $menu->isActive()) {
+            throw MenuNotFoundException::withId($command->menuId);
+        }
+
+        $tax = $this->taxRepository->findById($menu->taxId()->value());
+        if ($tax === null) {
+            throw TaxNotFoundException::withId($menu->taxId()->value());
+        }
+
+        // Indexa secciones del menú por id para validación rápida.
+        $sectionsById = [];
+        foreach ($menu->sections() as $section) {
+            $sectionsById[$section->id()->value()] = $section;
+        }
+
+        $this->validateChoiceRules($menu, $command->selections, $sectionsById);
+
+        // Construye el JSON denormalizado y calcula extras.
+        [$menuSelectionsJson, $extrasTotal] = $this->buildSelectionsJson($command->selections, $sectionsById);
+
+        // Stock: una unidad de cada producto elegido por unidad de menú añadida.
+        foreach ($menuSelectionsJson as $selection) {
+            $product = $this->productRepository->findById($selection['product_id']);
+            if ($product === null) {
+                continue; // ya validado arriba; defensivo
+            }
+            $product->decreaseStock(1);
+            $this->productRepository->save($product);
+        }
+
+        $totalPrice = $menu->price()->value() + $extrasTotal;
+
+        $orderLine = OrderLine::dddCreateMenuLine(
+            id: Uuid::generate(),
+            restaurantId: Uuid::create($command->restaurantId),
+            orderId: Uuid::create($command->orderId),
+            menuId: Uuid::create($command->menuId),
+            menuName: $menu->name()->value(),
+            menuSelections: $menuSelectionsJson,
+            userId: Uuid::create($command->userId),
+            quantity: OrderLineQuantity::create(1),
+            price: OrderLinePrice::create($totalPrice),
+            taxPercentage: OrderLineTaxPercentage::create($tax->percentage()->value()),
+            dinerNumber: $command->dinerNumber !== null
+                ? OrderLineDinerNumber::create($command->dinerNumber)
+                : null,
+            notes: $command->notes,
+        );
+
+        $this->orderLineRepository->save($orderLine);
+
+        return AddMenuLineToOrderResponse::create($orderLine);
+    }
+
+    /**
+     * Verifica que cada sección reciba un número de selecciones dentro de su rango
+     * min/max y que cada producto elegido pertenezca a esa sección.
+     *
+     * @param  array<int, array{section_id: string, product_id: string, variant_id: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>}>  $selections
+     * @param  array<string, MenuSection>  $sectionsById
+     */
+    private function validateChoiceRules(Menu $menu, array $selections, array $sectionsById): void
+    {
+        $countBySection = [];
+        foreach ($selections as $sel) {
+            $sectionId = $sel['section_id'];
+            if (! isset($sectionsById[$sectionId])) {
+                throw new DomainException("La sección {$sectionId} no pertenece al menú {$menu->id()->value()}.");
+            }
+            $section = $sectionsById[$sectionId];
+
+            $allowedProductIds = array_map(fn ($it) => $it->productId()->value(), $section->items());
+            if (! in_array($sel['product_id'], $allowedProductIds, true)) {
+                throw new DomainException(
+                    "El producto {$sel['product_id']} no está disponible en la sección \"{$section->name()->value()}\"."
+                );
+            }
+
+            $countBySection[$sectionId] = ($countBySection[$sectionId] ?? 0) + 1;
+        }
+
+        foreach ($menu->sections() as $section) {
+            $count = $countBySection[$section->id()->value()] ?? 0;
+            $rule = $section->choiceRule();
+            if ($count < $rule->min() || $count > $rule->max()) {
+                throw new DomainException(sprintf(
+                    'La sección "%s" requiere entre %d y %d elecciones (recibidas: %d).',
+                    $section->name()->value(),
+                    $rule->min(),
+                    $rule->max(),
+                    $count,
+                ));
+            }
+        }
+    }
+
+    /**
+     * Para cada selección resuelve nombres (producto, variante) y precios, validando
+     * que el producto exista y esté activo. Devuelve [selecciones_json, total_extras].
+     *
+     * @param  array<int, array{section_id: string, product_id: string, variant_id: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>}>  $selections
+     * @param  array<string, MenuSection>  $sectionsById
+     * @return array{0: array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>, 1: int}
+     */
+    private function buildSelectionsJson(array $selections, array $sectionsById): array
+    {
+        $extrasTotal = 0;
+        $rows = [];
+
+        foreach ($selections as $sel) {
+            $section = $sectionsById[$sel['section_id']];
+
+            $product = $this->productRepository->findById($sel['product_id']);
+            if ($product === null) {
+                throw ProductNotFoundException::withId($sel['product_id']);
+            }
+            if (! $product->isActive()) {
+                throw ProductNotActiveException::withId($sel['product_id']);
+            }
+
+            // Localiza el item del menú correspondiente (para obtener su extraPrice).
+            $menuItemExtraPrice = 0;
+            foreach ($section->items() as $item) {
+                if ($item->productId()->value() === $sel['product_id']) {
+                    $menuItemExtraPrice = $item->extraPrice()->value();
+                    break;
+                }
+            }
+            $extrasTotal += $menuItemExtraPrice;
+
+            $variantName = null;
+            if ($sel['variant_id'] !== null) {
+                $variant = EloquentProductVariant::query()
+                    ->where('uuid', $sel['variant_id'])
+                    ->whereHas('product', function ($q) use ($product): void {
+                        $q->where('uuid', $product->id()->value());
+                    })
+                    ->first();
+                if ($variant !== null) {
+                    $variantName = (string) $variant->name;
+                }
+            }
+
+            foreach ($sel['modifiers'] ?? [] as $mod) {
+                $extrasTotal += (int) ($mod['price'] ?? 0);
+            }
+
+            $rows[] = [
+                'section_name' => $section->name()->value(),
+                'product_id' => $sel['product_id'],
+                'product_name' => $product->name()->value(),
+                'variant_id' => $sel['variant_id'],
+                'variant_name' => $variantName,
+                'modifiers' => $sel['modifiers'] ?? [],
+                'extra_price' => $menuItemExtraPrice,
+            ];
+        }
+
+        return [$rows, $extrasTotal];
+    }
+}

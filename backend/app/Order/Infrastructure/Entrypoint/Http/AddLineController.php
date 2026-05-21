@@ -2,9 +2,9 @@
 
 namespace App\Order\Infrastructure\Entrypoint\Http;
 
-use App\Order\Application\AddLineToOrder\AddLineToOrder;
 use App\Family\Domain\Exception\FamilyNotActiveException;
 use App\Family\Domain\Exception\FamilyNotFoundException;
+use App\Order\Application\AddLineToOrder\AddLineToOrder;
 use App\Order\Domain\Exception\OrderIsNotOpenException;
 use App\Order\Domain\Exception\OrderNotFoundException;
 use App\Order\Infrastructure\Entrypoint\Http\Requests\AddLineToOrderRequest;
@@ -24,13 +24,13 @@ final class AddLineController
     {
         try {
             $response = ($this->addLineToOrder)($request->toCommand());
-        } catch (OrderNotFoundException | ProductNotFoundException $e) {
+        } catch (OrderNotFoundException|ProductNotFoundException $e) {
             return new JsonResponse(['message' => $e->getMessage()], 404);
         } catch (
-            OrderIsNotOpenException |
-            ProductNotActiveException |
-            FamilyNotActiveException |
-            InsufficientStockException |
+            OrderIsNotOpenException|
+            ProductNotActiveException|
+            FamilyNotActiveException|
+            InsufficientStockException|
             TaxNotFoundException $e
         ) {
             return new JsonResponse(['message' => $e->getMessage()], 422);

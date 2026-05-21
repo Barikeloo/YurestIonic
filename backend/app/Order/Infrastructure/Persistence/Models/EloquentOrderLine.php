@@ -3,6 +3,7 @@
 namespace App\Order\Infrastructure\Persistence\Models;
 
 use App\Product\Infrastructure\Persistence\Models\EloquentProduct;
+use App\ProductVariant\Infrastructure\Persistence\Models\EloquentProductVariant;
 use App\Sale\Infrastructure\Persistence\Models\EloquentSaleLine;
 use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
@@ -26,6 +27,9 @@ final class EloquentOrderLine extends Model
         'variant_id',
         'variant_name',
         'modifiers',
+        'menu_id',
+        'menu_name',
+        'menu_selections',
         'user_id',
         'quantity',
         'price',
@@ -43,6 +47,7 @@ final class EloquentOrderLine extends Model
     {
         return [
             'modifiers' => 'array',
+            'menu_selections' => 'array',
             'quantity' => 'integer',
             'price' => 'integer',
             'tax_percentage' => 'integer',
@@ -62,7 +67,7 @@ final class EloquentOrderLine extends Model
 
     public function variant(): BelongsTo
     {
-        return $this->belongsTo(\App\ProductVariant\Infrastructure\Persistence\Models\EloquentProductVariant::class, 'variant_id', 'uuid');
+        return $this->belongsTo(EloquentProductVariant::class, 'variant_id', 'uuid');
     }
 
     public function user(): BelongsTo

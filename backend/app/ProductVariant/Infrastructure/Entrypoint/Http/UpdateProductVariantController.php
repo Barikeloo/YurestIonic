@@ -2,8 +2,8 @@
 
 namespace App\ProductVariant\Infrastructure\Entrypoint\Http;
 
-use App\ProductVariant\Domain\Exception\ProductVariantNotFoundException;
 use App\ProductVariant\Application\UpdateProductVariant\UpdateProductVariant;
+use App\ProductVariant\Domain\Exception\ProductVariantNotFoundException;
 use App\ProductVariant\Infrastructure\Entrypoint\Http\Requests\UpdateProductVariantRequest;
 use Illuminate\Http\JsonResponse;
 

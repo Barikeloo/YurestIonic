@@ -54,7 +54,11 @@
       "Bash(php -l app/Order/Domain/Exception/DestinationTableOccupiedException.php)",
       "Bash(php -l app/Order/Domain/Exception/SameTableTransferException.php)",
       "Bash(find /Users/yurest/Desktop/Worksito/yurestionic/bruno* -name \"*.bru\" -path \"*order*\")",
-      "Bash(npx --no-install tsc --noEmit -p tsconfig.json)"
+      "Bash(npx --no-install tsc --noEmit -p tsconfig.json)",
+      "Bash(php -l app/Menu/Domain/Entity/Menu.php app/Menu/Domain/Entity/MenuSection.php app/Menu/Domain/Entity/MenuItem.php app/Menu/Domain/ValueObject/MenuName.php app/Menu/Domain/ValueObject/MenuDescription.php app/Menu/Domain/ValueObject/MenuPrice.php app/Menu/Domain/ValueObject/MenuValidity.php app/Menu/Domain/ValueObject/MenuAvailability.php app/Menu/Domain/ValueObject/MenuSectionName.php app/Menu/Domain/ValueObject/MenuSectionChoiceRule.php app/Menu/Domain/ValueObject/MenuItemExtraPrice.php app/Menu/Domain/Exception/MenuNotFoundException.php app/Menu/Domain/Exception/MenuInvalidConfigurationException.php app/Menu/Domain/Exception/MenuArchivedException.php)",
+      "Bash(npm start *)",
+      "Bash(tee /tmp/ng-serve.log)",
+      "Read(//private/tmp/**)"
     ]
   }
 }

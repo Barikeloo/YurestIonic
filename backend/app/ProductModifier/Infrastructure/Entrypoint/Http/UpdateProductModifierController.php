@@ -2,8 +2,8 @@
 
 namespace App\ProductModifier\Infrastructure\Entrypoint\Http;
 
-use App\ProductModifier\Domain\Exception\ProductModifierNotFoundException;
 use App\ProductModifier\Application\UpdateProductModifier\UpdateProductModifier;
+use App\ProductModifier\Domain\Exception\ProductModifierNotFoundException;
 use App\ProductModifier\Infrastructure\Entrypoint\Http\Requests\UpdateProductModifierRequest;
 use Illuminate\Http\JsonResponse;
 

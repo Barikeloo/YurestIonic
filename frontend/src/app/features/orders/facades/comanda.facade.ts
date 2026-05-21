@@ -3,6 +3,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService, AuthUser, QuickAccessUserResponse } from '../../../core/services/auth.service';
 import {
   TpvFamilyItem,
+  TpvMenu,
   TpvOrder,
   TpvOrderLine,
   TpvProductItem,
@@ -48,6 +49,10 @@ export class ComandaFacade {
   private readonly _selectedCloser = signal<QuickAccessUserResponse | null>(null);
   private readonly _closing = signal<boolean>(false);
   private readonly _closeError = signal<string | null>(null);
+  private readonly _menus = signal<TpvMenu[]>([]);
+  /** 'products' (catálogo clásico) o 'menus' (cards de menu para añadir como línea menu). */
+  private readonly _activeCatalog = signal<'products' | 'menus'>('products');
+  private readonly _addingMenuLine = signal<boolean>(false);
 
   private orderId: string | null = null;
 
@@ -66,6 +71,9 @@ export class ComandaFacade {
   public readonly selectedCloser: Signal<QuickAccessUserResponse | null> = this._selectedCloser.asReadonly();
   public readonly closing: Signal<boolean> = this._closing.asReadonly();
   public readonly closeError: Signal<string | null> = this._closeError.asReadonly();
+  public readonly menus: Signal<TpvMenu[]> = this._menus.asReadonly();
+  public readonly activeCatalog: Signal<'products' | 'menus'> = this._activeCatalog.asReadonly();
+  public readonly addingMenuLine: Signal<boolean> = this._addingMenuLine.asReadonly();
 
   public readonly cartTotal: Signal<number> = computed(() =>
     this._cartLines().reduce((acc, line) => {
@@ -110,10 +118,11 @@ export class ComandaFacade {
     this._loading.set(true);
 
     try {
-      const [families, productsResponse, taxes] = await Promise.all([
+      const [families, productsResponse, taxes, menus] = await Promise.all([
         firstValueFrom(this.tpvService.listFamilies()),
         firstValueFrom(this.tpvService.listProducts()),
         firstValueFrom(this.tpvService.listTaxes()),
+        firstValueFrom(this.tpvService.listMenus()).catch(() => [] as TpvMenu[]),
       ]);
 
       const products = Array.isArray(productsResponse) ? productsResponse : (productsResponse as any).items || [];
@@ -125,6 +134,7 @@ export class ComandaFacade {
       this._families.set(activeFamilies);
       this._products.set(products.filter((product: TpvProductItem) => product.active && activeFamilyIds.has(product.family_id)));
       this._taxes.set(taxes);
+      this._menus.set(menus);
 
       if (orderId) {
         const [order, lines] = await Promise.all([
@@ -145,6 +155,55 @@ export class ComandaFacade {
 
   public setSearchQuery(query: string): void {
     this._searchQuery.set(query);
+  }
+
+  public setActiveCatalog(catalog: 'products' | 'menus'): void {
+    this._activeCatalog.set(catalog);
+  }
+
+  /**
+   * Añade un menú personalizado como línea a la orden. A diferencia de los
+   * productos, los menús no pasan por el cart local: se envían directamente y
+   * refrescamos `existingLines` para verlos en el panel.
+   */
+  public async addMenuLine(
+    menuId: string,
+    selections: Array<{
+      section_id: string;
+      product_id: string;
+      variant_id?: string | null;
+      modifiers?: Array<{ id: string; name: string; price: number; type: 'extra' | 'accompaniment' }>;
+    }>,
+    notes?: string | null,
+  ): Promise<boolean> {
+    if (!this.orderId || this._addingMenuLine()) {
+      return false;
+    }
+
+    this._addingMenuLine.set(true);
+    this._sendError.set(null);
+
+    try {
+      await firstValueFrom(
+        this.tpvService.addMenuLineToOrder({
+          order_id: this.orderId,
+          menu_id: menuId,
+          selections,
+          notes: notes ?? null,
+        }),
+      );
+
+      // Refrescamos las líneas confirmadas para ver el menú como tarjeta.
+      const lines = await firstValueFrom(this.tpvService.getOrderLines(this.orderId));
+      this._existingLines.set(lines);
+
+      return true;
+    } catch (err) {
+      this._sendError.set(err instanceof Error ? err.message : 'No se pudo añadir el menú.');
+      return false;
+    } finally {
+      this._addingMenuLine.set(false);
+    }
   }
 
   private getCartQuantity(productId: string): number {

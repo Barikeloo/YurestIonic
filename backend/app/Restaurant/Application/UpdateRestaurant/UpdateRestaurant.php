@@ -2,12 +2,12 @@
 
 namespace App\Restaurant\Application\UpdateRestaurant;
 
-use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Restaurant\Domain\Exception\CannotUpdateLegalDataException;
 use App\Restaurant\Domain\Exception\ForbiddenException;
 use App\Restaurant\Domain\Exception\LinkedRestaurantNotFoundException;
 use App\Restaurant\Domain\Exception\NotAuthenticatedException;
 use App\Restaurant\Domain\Exception\RestaurantNotFoundException;
+use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Restaurant\Domain\ValueObject\RestaurantLegalName;
 use App\Restaurant\Domain\ValueObject\RestaurantName;
 use App\Restaurant\Domain\ValueObject\RestaurantPasswordHash;

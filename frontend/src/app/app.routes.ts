@@ -14,6 +14,18 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/core/gestion/gestion.page').then((m) => m.GestionPage),
       },
       {
+        path: 'gestion/menus/nuevo',
+        canActivate: [AuthGuard, RoleGuard],
+        data: { role: 'admin' },
+        loadComponent: () => import('./pages/core/gestion-menus-editor/gestion-menus-editor.page').then((m) => m.GestionMenusEditorPage),
+      },
+      {
+        path: 'gestion/menus/:id/editar',
+        canActivate: [AuthGuard, RoleGuard],
+        data: { role: 'admin' },
+        loadComponent: () => import('./pages/core/gestion-menus-editor/gestion-menus-editor.page').then((m) => m.GestionMenusEditorPage),
+      },
+      {
         path: 'mesas',
         canActivate: [AuthGuard],
         loadComponent: () => import('./features/tables/pages/mesas/mesas.page').then((m) => m.MesasPage),

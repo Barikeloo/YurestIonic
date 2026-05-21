@@ -21,7 +21,9 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
     {
         $restaurantId = EloquentRestaurant::query()->where('uuid', $orderLine->restaurantId()->value())->value('id');
         $orderId = EloquentOrder::query()->where('uuid', $orderLine->orderId()->value())->value('id');
-        $productId = EloquentProduct::query()->where('uuid', $orderLine->productId()->value())->value('id');
+        $productId = $orderLine->productId() !== null
+            ? EloquentProduct::query()->where('uuid', $orderLine->productId()->value())->value('id')
+            : null;
         $userId = EloquentUser::query()->where('uuid', $orderLine->userId()->value())->value('id');
 
         $this->model->newQuery()->updateOrCreate(
@@ -33,6 +35,9 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
                 'variant_id' => $orderLine->variantId()?->value(),
                 'variant_name' => $orderLine->variantName(),
                 'modifiers' => $orderLine->modifiers(),
+                'menu_id' => $orderLine->menuId()?->value(),
+                'menu_name' => $orderLine->menuName(),
+                'menu_selections' => $orderLine->menuSelections(),
                 'user_id' => $userId,
                 'quantity' => $orderLine->quantity()->value(),
                 'price' => $orderLine->price()->value(),
@@ -105,7 +110,9 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
     {
         $restaurantUuid = EloquentRestaurant::query()->where('id', $model->restaurant_id)->value('uuid');
         $orderUuid = EloquentOrder::query()->where('id', $model->order_id)->value('uuid');
-        $productUuid = EloquentProduct::query()->where('id', $model->product_id)->value('uuid');
+        $productUuid = $model->product_id !== null
+            ? EloquentProduct::query()->where('id', $model->product_id)->value('uuid')
+            : null;
         $userUuid = EloquentUser::query()->where('id', $model->user_id)->value('uuid');
 
         return OrderLine::fromPersistence(
@@ -117,6 +124,9 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
             $model->variant_id,
             $model->variant_name,
             $model->modifiers,
+            $model->menu_id,
+            $model->menu_name,
+            $model->menu_selections,
             $userUuid,
             (int) $model->quantity,
             (int) $model->price,

@@ -2,6 +2,7 @@
 
 namespace App\Product\Domain\Entity;
 
+use App\Product\Domain\Exception\InsufficientStockException;
 use App\Product\Domain\ValueObject\ProductAllergens;
 use App\Product\Domain\ValueObject\ProductImageSrc;
 use App\Product\Domain\ValueObject\ProductName;
@@ -170,7 +171,7 @@ class Product
     public function decreaseStock(int $amount): void
     {
         if (! $this->stock->isSufficientFor($amount)) {
-            throw \App\Product\Domain\Exception\InsufficientStockException::forProduct(
+            throw InsufficientStockException::forProduct(
                 $this->id->value(),
                 $this->stock->value(),
                 $amount,

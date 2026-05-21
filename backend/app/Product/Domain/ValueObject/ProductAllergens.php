@@ -48,7 +48,7 @@ final class ProductAllergens
     }
 
     /**
-     * @param string[] $codes
+     * @param  string[]  $codes
      */
     public static function create(array $codes): self
     {

@@ -15,6 +15,7 @@ import { GestionFamiliesFacade } from './facades/gestion-families.facade';
 import { GestionTaxesFacade } from './facades/gestion-taxes.facade';
 import { GestionZonesFacade } from './facades/gestion-zones.facade';
 import { GestionProductsFacade } from './facades/gestion-products.facade';
+import { GestionMenusFacade } from './facades/gestion-menus.facade';
 import { GestionUsersFacade } from './facades/gestion-users.facade';
 import { GestionZReportsFacade } from './facades/gestion-zreports.facade';
 import { ProductItem, ProductService } from '../../../services/product.service';
@@ -28,6 +29,7 @@ import { RestaurantDetailComponent } from '../../../components/gestion/restauran
 import { UsersManagementComponent } from '../../../components/gestion/users-management/users-management.component';
 import { FamiliesManagementComponent } from '../../../components/gestion/families-management/families-management.component';
 import { ProductsManagementComponent } from '../../../components/gestion/products-management/products-management.component';
+import { MenusManagementComponent } from '../../../components/gestion/menus-management/menus-management.component';
 import { ZonesManagementComponent } from '../../../components/gestion/zones-management/zones-management.component';
 import { TaxesManagementComponent } from '../../../components/gestion/taxes-management/taxes-management.component';
 import { ZReportsManagementComponent, ZReportRow } from '../../../components/gestion/zreports-management/zreports-management.component';
@@ -112,17 +114,19 @@ interface ManagementDataRow {
     UsersManagementComponent,
     FamiliesManagementComponent,
     ProductsManagementComponent,
+    MenusManagementComponent,
     ZonesManagementComponent,
     TaxesManagementComponent,
     ZReportsManagementComponent
 ],
-  providers: [GestionFamiliesFacade, GestionTaxesFacade, GestionZonesFacade, GestionProductsFacade, GestionUsersFacade, GestionZReportsFacade],
+  providers: [GestionFamiliesFacade, GestionTaxesFacade, GestionZonesFacade, GestionProductsFacade, GestionMenusFacade, GestionUsersFacade, GestionZReportsFacade],
 })
 export class GestionPage {
   protected readonly familiesFacade = inject(GestionFamiliesFacade);
   protected readonly taxesFacade = inject(GestionTaxesFacade);
   protected readonly zonesFacade = inject(GestionZonesFacade);
   protected readonly productsFacade = inject(GestionProductsFacade);
+  protected readonly menusFacade = inject(GestionMenusFacade);
   protected readonly usersFacade = inject(GestionUsersFacade);
   protected readonly zreportsFacade = inject(GestionZReportsFacade);
   protected readonly toastService = inject(ToastService);
@@ -149,6 +153,7 @@ export class GestionPage {
     { key: ManagementEntityKey.USERS, label: 'Usuarios' },
     { key: ManagementEntityKey.FAMILIES, label: 'Familias' },
     { key: ManagementEntityKey.PRODUCTS, label: 'Productos' },
+    { key: ManagementEntityKey.MENUS, label: 'Menús' },
     { key: ManagementEntityKey.ZONES, label: 'Zonas y Mesas' },
     { key: ManagementEntityKey.TAXES, label: 'Impuestos' },
     { key: ManagementEntityKey.ZREPORTS, label: 'Z Reports' },
@@ -330,6 +335,17 @@ export class GestionPage {
     }
   }
 
+  private async loadMenus(silent: boolean = false): Promise<void> {
+    try {
+      await this.menusFacade.load();
+    } catch (error: unknown) {
+      if (!silent) {
+        const message = error instanceof Error ? error.message : 'No se pudieron cargar los menús.';
+        this.toastService.presentError(message);
+      }
+    }
+  }
+
   private syncProductsMirror(): void {
     const restaurant = this.selectedRestaurant;
     if (!restaurant) {
@@ -381,6 +397,16 @@ export class GestionPage {
 
   public get selectedRestaurant(): ManagementRestaurant | null {
     return this.managementRestaurants().find((restaurant) => restaurant.id === this.managementState.restaurantId) ?? null;
+  }
+
+  /**
+   * Productos del restaurante actual mapeados al shape mínimo (`MenuProductOption`)
+   * que consume el editor de menús. Evita acoplar el módulo de menús al DTO completo.
+   */
+  public get menuProductOptions(): Array<{ id: string; name: string; price: number; active: boolean }> {
+    return this.selectedData.products
+      .filter((p) => !!p.uuid)
+      .map((p) => ({ id: p.uuid as string, name: p.name, price: p.price, active: p.active }));
   }
 
   public get selectedData(): ManagementDataRow {
@@ -468,6 +494,7 @@ export class GestionPage {
               this.loadFamilies();
               this.loadTaxes();
               this.loadProducts();
+              this.loadMenus();
               this.loadZonesAndTables();
               this.startBackgroundPreload();
             },
@@ -1267,6 +1294,7 @@ export class GestionPage {
                   this.loadFamilies(true);
                   this.loadTaxes();
                   this.loadProducts();
+                  this.loadMenus(true);
                   this.loadZonesAndTables();
                   this.startBackgroundPreload();
                 },
@@ -1282,6 +1310,7 @@ export class GestionPage {
               this.loadFamilies(true);
               this.loadTaxes();
               this.loadProducts();
+              this.loadMenus(true);
               this.loadZonesAndTables();
               this.startBackgroundPreload();
             }

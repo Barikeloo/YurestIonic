@@ -21,16 +21,24 @@ use App\Family\Infrastructure\Entrypoint\Http\GetController as FamilyGetControll
 use App\Family\Infrastructure\Entrypoint\Http\PostController as FamilyPostController;
 use App\Family\Infrastructure\Entrypoint\Http\PutController as FamilyPutController;
 use App\Family\Infrastructure\Entrypoint\Http\TpvGetCollectionController as FamilyTpvGetCollectionController;
+use App\Menu\Infrastructure\Entrypoint\Http\ActivateController as MenuActivateController;
+use App\Menu\Infrastructure\Entrypoint\Http\DeactivateController as MenuDeactivateController;
+use App\Menu\Infrastructure\Entrypoint\Http\DeleteController as MenuDeleteController;
+use App\Menu\Infrastructure\Entrypoint\Http\GetCollectionController as MenuGetCollectionController;
+use App\Menu\Infrastructure\Entrypoint\Http\GetController as MenuGetController;
+use App\Menu\Infrastructure\Entrypoint\Http\PostController as MenuPostController;
+use App\Menu\Infrastructure\Entrypoint\Http\PutController as MenuPutController;
 use App\Order\Infrastructure\Entrypoint\Http\AddLineController as OrderAddLineController;
+use App\Order\Infrastructure\Entrypoint\Http\AddMenuLineController as OrderAddMenuLineController;
 use App\Order\Infrastructure\Entrypoint\Http\DeleteController as OrderDeleteController;
 use App\Order\Infrastructure\Entrypoint\Http\DeleteLineController as OrderDeleteLineController;
 use App\Order\Infrastructure\Entrypoint\Http\GetCollectionController as OrderGetCollectionController;
 use App\Order\Infrastructure\Entrypoint\Http\GetController as OrderGetController;
 use App\Order\Infrastructure\Entrypoint\Http\GetLinesController as OrderGetLinesController;
 use App\Order\Infrastructure\Entrypoint\Http\GetOrderTotalController;
+use App\Order\Infrastructure\Entrypoint\Http\GetOrderTransfersController;
 use App\Order\Infrastructure\Entrypoint\Http\PostController as OrderPostController;
 use App\Order\Infrastructure\Entrypoint\Http\PutController as OrderPutController;
-use App\Order\Infrastructure\Entrypoint\Http\GetOrderTransfersController;
 use App\Order\Infrastructure\Entrypoint\Http\TransferOrderController;
 use App\Product\Infrastructure\Entrypoint\Http\ActivateController as ProductActivateController;
 use App\Product\Infrastructure\Entrypoint\Http\DeactivateController as ProductDeactivateController;
@@ -56,6 +64,7 @@ use App\Restaurant\Infrastructure\Entrypoint\Http\GetController as RestaurantGet
 use App\Restaurant\Infrastructure\Entrypoint\Http\PostController as RestaurantPostController;
 use App\Restaurant\Infrastructure\Entrypoint\Http\PutController as RestaurantPutController;
 use App\Sale\Infrastructure\Entrypoint\Http\AddLineController as SaleAddLineController;
+use App\Sale\Infrastructure\Entrypoint\Http\AssignChargeSessionLinesController;
 use App\Sale\Infrastructure\Entrypoint\Http\CancelChargeSessionController;
 use App\Sale\Infrastructure\Entrypoint\Http\CancelSaleController;
 use App\Sale\Infrastructure\Entrypoint\Http\CreateChargeSessionController;
@@ -72,7 +81,6 @@ use App\Sale\Infrastructure\Entrypoint\Http\PostController as SalePostController
 use App\Sale\Infrastructure\Entrypoint\Http\PutController as SalePutController;
 use App\Sale\Infrastructure\Entrypoint\Http\RecordChargeSessionPaymentController;
 use App\Sale\Infrastructure\Entrypoint\Http\RefundChargeSessionLineController;
-use App\Sale\Infrastructure\Entrypoint\Http\AssignChargeSessionLinesController;
 use App\Sale\Infrastructure\Entrypoint\Http\UpdateChargeSessionDinersController;
 use App\Shared\Infrastructure\Http\Middleware\RequireAdminSession;
 use App\Shared\Infrastructure\Http\Middleware\RequireManagementSession;
@@ -150,6 +158,10 @@ Route::middleware([
 
     Route::post('/tpv/orders', OrderPostController::class);
     Route::post('/tpv/orders/lines', OrderAddLineController::class);
+    Route::post('/tpv/orders/menu-lines', OrderAddMenuLineController::class);
+
+    // Listado de menús activos para añadir a la comanda (reutiliza el controller admin).
+    Route::get('/tpv/menus', MenuGetCollectionController::class);
     Route::get('/tpv/orders', OrderGetCollectionController::class);
     Route::get('/tpv/orders/{id}', OrderGetController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/total', GetOrderTotalController::class)->whereUuid('id');
@@ -257,6 +269,15 @@ Route::middleware([
     Route::put('/admin/products/{productId}/modifiers/reorder', ReorderProductModifiersController::class)->whereUuid('productId');
     Route::put('/admin/products/{productId}/modifiers/{modifierId}', UpdateProductModifierController::class)->whereUuid('productId')->whereUuid('modifierId');
     Route::delete('/admin/products/{productId}/modifiers/{modifierId}', DeleteProductModifierController::class)->whereUuid('productId')->whereUuid('modifierId');
+
+    Route::get('/admin/menus', MenuGetCollectionController::class);
+    Route::get('/admin/menus/{id}', MenuGetController::class)->whereUuid('id');
+    Route::post('/admin/menus', MenuPostController::class);
+    Route::put('/admin/menus/{id}', MenuPutController::class)->whereUuid('id');
+    Route::delete('/admin/menus/{id}', MenuDeleteController::class)->whereUuid('id');
+    Route::patch('/admin/menus/{id}/activate', MenuActivateController::class)->whereUuid('id');
+    Route::patch('/admin/menus/{id}/deactivate', MenuDeactivateController::class)->whereUuid('id');
+
     Route::post('/tpv/cash-sessions/force-close', ForceCloseCashSessionController::class);
     Route::post('/tpv/z-reports/generate', GenerateZReportController::class);
 });

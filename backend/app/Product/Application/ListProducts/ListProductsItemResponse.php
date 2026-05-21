@@ -5,9 +5,9 @@ namespace App\Product\Application\ListProducts;
 final readonly class ListProductsItemResponse
 {
     /**
-     * @param string[] $allergens
-     * @param array<int, array<string, mixed>> $variants
-     * @param array<int, array<string, mixed>> $modifiers
+     * @param  string[]  $allergens
+     * @param  array<int, array<string, mixed>>  $variants
+     * @param  array<int, array<string, mixed>>  $modifiers
      */
     private function __construct(
         public string $id,
@@ -26,9 +26,9 @@ final readonly class ListProductsItemResponse
     ) {}
 
     /**
-     * @param string[] $allergens
-     * @param array<int, array<string, mixed>> $variants
-     * @param array<int, array<string, mixed>> $modifiers
+     * @param  string[]  $allergens
+     * @param  array<int, array<string, mixed>>  $variants
+     * @param  array<int, array<string, mixed>>  $modifiers
      */
     public static function create(
         string $id,

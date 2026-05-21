@@ -7,8 +7,8 @@ use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Exception\MinimumTwoTablesRequiredException;
-use App\Tables\Domain\Exception\TablesNotInSameZoneException;
 use App\Tables\Domain\Exception\TablesNotFoundException;
+use App\Tables\Domain\Exception\TablesNotInSameZoneException;
 use App\Tables\Domain\Exception\TablesWithOpenOrdersException;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
 
@@ -54,6 +54,7 @@ final class MergeTables
         ));
         if (count($groupIds) === 1 && $groupIds[0] !== null) {
             $existingGroupId = Uuid::create($groupIds[0]);
+
             return MergeTablesResponse::create(
                 groupId: $existingGroupId->value(),
                 mergedTableIds: array_keys($allTables),
@@ -92,24 +93,11 @@ final class MergeTables
                 $secondaryOrder = $openOrders[$i];
                 $lines = $this->orderLineRepository->findByOrderId($secondaryOrder->id());
                 foreach ($lines as $line) {
-                    $newLine = OrderLine::dddCreate(
-                        id: Uuid::generate(),
-                        restaurantId: $primaryOrder->restaurantId(),
-                        orderId: $primaryOrder->id(),
-                        productId: $line->productId(),
-                        variantId: $line->variantId(),
-                        modifiers: $line->modifiers(),
-                        userId: $line->userId(),
-                        quantity: $line->quantity(),
-                        price: $line->price(),
-                        taxPercentage: $line->taxPercentage(),
-                        dinerNumber: $line->dinerNumber(),
-                        discountPercent: $line->discountPercent(),
-                        discountAmount: $line->discountAmount(),
-                        discountReason: $line->discountReason(),
-                        isInvitation: $line->isInvitation(),
-                        priceOverride: $line->priceOverride(),
-                        notes: $line->notes(),
+                    // clonedForOrder preserva el tipo de línea (producto o menú) y
+                    // copia todos los campos relevantes, evitando el branching aquí.
+                    $newLine = $line->clonedForOrder(
+                        newId: Uuid::generate(),
+                        newOrderId: $primaryOrder->id(),
                     );
                     $this->orderLineRepository->save($newLine);
                     $this->orderLineRepository->delete($line->id());

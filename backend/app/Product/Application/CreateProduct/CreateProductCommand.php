@@ -5,7 +5,7 @@ namespace App\Product\Application\CreateProduct;
 final readonly class CreateProductCommand
 {
     /**
-     * @param string[] $allergens
+     * @param  string[]  $allergens
      */
     public function __construct(
         public string $familyId,

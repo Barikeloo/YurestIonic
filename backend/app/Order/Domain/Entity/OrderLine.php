@@ -14,17 +14,21 @@ use App\Shared\Domain\ValueObject\Uuid;
 final class OrderLine
 {
     /**
-     * @param array<int, array{id: string, name: string, price: int, type: string}>|null $modifiers
+     * @param  array<int, array{id: string, name: string, price: int, type: string}>|null  $modifiers
+     * @param  array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>|null  $menuSelections
      */
     private function __construct(
         private readonly Uuid $id,
         private readonly Uuid $restaurantId,
         private readonly Uuid $uuid,
         private readonly Uuid $orderId,
-        private readonly Uuid $productId,
+        private readonly ?Uuid $productId,
         private readonly ?Uuid $variantId,
         private readonly ?string $variantName,
         private readonly ?array $modifiers,
+        private readonly ?Uuid $menuId,
+        private readonly ?string $menuName,
+        private readonly ?array $menuSelections,
         private readonly Uuid $userId,
         private readonly OrderLineQuantity $quantity,
         private readonly OrderLinePrice $price,
@@ -42,7 +46,7 @@ final class OrderLine
     ) {}
 
     /**
-     * @param array<int, array{id: string, name: string, price: int, type: string}>|null $modifiers
+     * @param  array<int, array{id: string, name: string, price: int, type: string}>|null  $modifiers
      */
     public static function dddCreate(
         Uuid $id,
@@ -73,6 +77,9 @@ final class OrderLine
             variantId: $variantId,
             variantName: $variantName,
             modifiers: $modifiers,
+            menuId: null,
+            menuName: null,
+            menuSelections: null,
             userId: $userId,
             quantity: $quantity,
             price: $price,
@@ -90,17 +97,70 @@ final class OrderLine
     }
 
     /**
-     * @param array<int, array{id: string, name: string, price: int, type: string}>|null $modifiers
+     * Crea una línea que representa la elección de un menú completo. No tiene
+     * `productId`; el precio es el del menú y las elecciones del comensal viven
+     * en `menuSelections` (cada item: sección + producto + variante? + extras + suplemento).
+     *
+     * @param  array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>  $menuSelections
+     */
+    public static function dddCreateMenuLine(
+        Uuid $id,
+        Uuid $restaurantId,
+        Uuid $orderId,
+        Uuid $menuId,
+        string $menuName,
+        array $menuSelections,
+        Uuid $userId,
+        OrderLineQuantity $quantity,
+        OrderLinePrice $price,
+        OrderLineTaxPercentage $taxPercentage,
+        ?OrderLineDinerNumber $dinerNumber = null,
+        ?string $notes = null,
+    ): self {
+        return new self(
+            id: $id,
+            restaurantId: $restaurantId,
+            uuid: $id,
+            orderId: $orderId,
+            productId: null,
+            variantId: null,
+            variantName: null,
+            modifiers: null,
+            menuId: $menuId,
+            menuName: $menuName,
+            menuSelections: $menuSelections,
+            userId: $userId,
+            quantity: $quantity,
+            price: $price,
+            taxPercentage: $taxPercentage,
+            dinerNumber: $dinerNumber,
+            discountPercent: null,
+            discountAmount: null,
+            discountReason: null,
+            isInvitation: false,
+            priceOverride: null,
+            notes: $notes,
+            createdAt: DomainDateTime::now(),
+            updatedAt: DomainDateTime::now(),
+        );
+    }
+
+    /**
+     * @param  array<int, array{id: string, name: string, price: int, type: string}>|null  $modifiers
+     * @param  array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>|null  $menuSelections
      */
     public static function fromPersistence(
         string $id,
         string $restaurantId,
         string $uuid,
         string $orderId,
-        string $productId,
+        ?string $productId,
         ?string $variantId,
         ?string $variantName,
         ?array $modifiers,
+        ?string $menuId,
+        ?string $menuName,
+        ?array $menuSelections,
         string $userId,
         int $quantity,
         int $price,
@@ -121,10 +181,13 @@ final class OrderLine
             restaurantId: Uuid::create($restaurantId),
             uuid: Uuid::create($uuid),
             orderId: Uuid::create($orderId),
-            productId: Uuid::create($productId),
+            productId: $productId !== null ? Uuid::create($productId) : null,
             variantId: $variantId !== null ? Uuid::create($variantId) : null,
             variantName: $variantName,
             modifiers: $modifiers,
+            menuId: $menuId !== null ? Uuid::create($menuId) : null,
+            menuName: $menuName,
+            menuSelections: $menuSelections,
             userId: Uuid::create($userId),
             quantity: OrderLineQuantity::create($quantity),
             price: OrderLinePrice::create($price),
@@ -162,9 +225,32 @@ final class OrderLine
         return $this->orderId;
     }
 
-    public function productId(): Uuid
+    public function productId(): ?Uuid
     {
         return $this->productId;
+    }
+
+    public function menuId(): ?Uuid
+    {
+        return $this->menuId;
+    }
+
+    public function menuName(): ?string
+    {
+        return $this->menuName;
+    }
+
+    /**
+     * @return array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>|null
+     */
+    public function menuSelections(): ?array
+    {
+        return $this->menuSelections;
+    }
+
+    public function isMenuLine(): bool
+    {
+        return $this->menuId !== null;
     }
 
     public function variantId(): ?Uuid
@@ -255,6 +341,41 @@ final class OrderLine
         return $this->notes;
     }
 
+    /**
+     * Clona la línea apuntando a otra orden (caso de uso: merge de mesas).
+     * Preserva si es línea de producto o de menú.
+     */
+    public function clonedForOrder(Uuid $newId, Uuid $newOrderId): self
+    {
+        return new self(
+            id: $newId,
+            restaurantId: $this->restaurantId,
+            uuid: $newId,
+            orderId: $newOrderId,
+            productId: $this->productId,
+            variantId: $this->variantId,
+            variantName: $this->variantName,
+            modifiers: $this->modifiers,
+            menuId: $this->menuId,
+            menuName: $this->menuName,
+            menuSelections: $this->menuSelections,
+            userId: $this->userId,
+            quantity: $this->quantity,
+            price: $this->price,
+            taxPercentage: $this->taxPercentage,
+            dinerNumber: $this->dinerNumber,
+            discountPercent: $this->discountPercent,
+            discountAmount: $this->discountAmount,
+            discountReason: $this->discountReason,
+            isInvitation: $this->isInvitation,
+            priceOverride: $this->priceOverride,
+            notes: $this->notes,
+            createdAt: DomainDateTime::now(),
+            updatedAt: DomainDateTime::now(),
+            deletedAt: null,
+        );
+    }
+
     public function withAddedQuantity(int $delta): self
     {
         return new self(
@@ -266,6 +387,9 @@ final class OrderLine
             variantId: $this->variantId,
             variantName: $this->variantName,
             modifiers: $this->modifiers,
+            menuId: $this->menuId,
+            menuName: $this->menuName,
+            menuSelections: $this->menuSelections,
             userId: $this->userId,
             quantity: OrderLineQuantity::create($this->quantity->value() + $delta),
             price: $this->price,

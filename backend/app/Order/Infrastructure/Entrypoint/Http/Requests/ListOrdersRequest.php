@@ -19,6 +19,6 @@ final class ListOrdersRequest extends FormRequest
 
     public function toCommand(): ListOrdersCommand
     {
-        return new ListOrdersCommand();
+        return new ListOrdersCommand;
     }
 }
