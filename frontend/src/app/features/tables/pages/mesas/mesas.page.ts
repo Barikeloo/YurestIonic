@@ -768,6 +768,22 @@ export class MesasPage implements OnInit {
     return (line.modifiers ?? []).filter((m) => m.type !== 'extra' && m.type !== 'accompaniment');
   }
 
+  public isMenuLine(line: TpvOrderLine): boolean {
+    return !!line.menu_id;
+  }
+
+  public lineDisplayName(line: TpvOrderLine): string {
+    if (this.isMenuLine(line)) {
+      return line.menu_name ?? 'Menú';
+    }
+    return line.product_name ?? 'Producto';
+  }
+
+  public menuLineSelectionsLabel(line: TpvOrderLine): string {
+    if (!line.menu_selections || line.menu_selections.length === 0) return '';
+    return line.menu_selections.map((s) => s.product_name).join(', ');
+  }
+
   // ----- Pure UI helpers -----
   public formatCents(cents: number): string {
     return (cents / 100).toFixed(2).replace('.', ',') + '€';

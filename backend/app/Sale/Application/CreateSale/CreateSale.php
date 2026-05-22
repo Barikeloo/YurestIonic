@@ -106,17 +106,6 @@ final class CreateSale
                 }
             }
 
-            // Guardia temporal: las líneas de menú aún no tienen mapeo a SaleLine
-            // (productId es null en menus). Bloqueamos el cobro con un mensaje claro
-            // hasta que esté implementada la integración en cobros.
-            foreach ($orderLines as $line) {
-                if ($line->isMenuLine()) {
-                    throw new \DomainException(
-                        'Las líneas de menú aún no pueden cobrarse. Próximamente disponible.'
-                    );
-                }
-            }
-
             $total = 0;
             foreach ($orderLines as $line) {
                 $total += $line->price()->value() * $line->quantity()->value();

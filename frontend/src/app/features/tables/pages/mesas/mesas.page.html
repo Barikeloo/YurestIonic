@@ -176,21 +176,29 @@
             <div class="order-line order-line-clickable" (click)="openLineDetail(line)">
               <div class="order-line-qty">{{ line.quantity }}</div>
               <div class="order-line-info">
-                <div class="order-line-name">{{ line.product_name ?? 'Producto' }}</div>
-                @if (line.variant_name || (line.modifiers ?? []).length > 0) {
-                  <div class="order-line-tags-row">
-                    @if (line.variant_name) {
-                      <span class="line-variant">{{ line.variant_name }}</span>
-                    }
-                    @if ((line.modifiers ?? []).length > 0) {
-                      <span class="line-modifiers-count">+{{ line.modifiers!.length }} {{ line.modifiers!.length === 1 ? 'extra' : 'extras' }}</span>
-                    }
-                  </div>
-                }
-                @if ((line.modifiers ?? []).length > 0) {
-                  <div class="order-line-meta">
-                    <span class="line-modifiers-mini">{{ formatModifiers(line.modifiers ?? []) }}</span>
-                  </div>
+                <div class="order-line-name">{{ lineDisplayName(line) }}</div>
+                @if (isMenuLine(line)) {
+                  @if (menuLineSelectionsLabel(line); as selectionsText) {
+                    <div class="order-line-meta">
+                      <span class="line-modifiers-mini">{{ selectionsText }}</span>
+                    </div>
+                  }
+                } @else {
+                  @if (line.variant_name || (line.modifiers ?? []).length > 0) {
+                    <div class="order-line-tags-row">
+                      @if (line.variant_name) {
+                        <span class="line-variant">{{ line.variant_name }}</span>
+                      }
+                      @if ((line.modifiers ?? []).length > 0) {
+                        <span class="line-modifiers-count">+{{ line.modifiers!.length }} {{ line.modifiers!.length === 1 ? 'extra' : 'extras' }}</span>
+                      }
+                    </div>
+                  }
+                  @if ((line.modifiers ?? []).length > 0) {
+                    <div class="order-line-meta">
+                      <span class="line-modifiers-mini">{{ formatModifiers(line.modifiers ?? []) }}</span>
+                    </div>
+                  }
                 }
               </div>
               <div class="order-line-price">{{ formatCents(getLineTotal(line)) }}</div>
@@ -345,14 +353,41 @@
       <div class="line-detail-header">
         <div class="line-detail-qty">{{ line.quantity }}×</div>
         <div class="line-detail-title-wrap">
-          <div class="line-detail-title">{{ line.product_name ?? 'Producto' }}</div>
-          @if (line.variant_name) {
+          <div class="line-detail-title">{{ lineDisplayName(line) }}</div>
+          @if (!isMenuLine(line) && line.variant_name) {
             <span class="line-detail-variant">{{ line.variant_name }}</span>
           }
         </div>
       </div>
 
-      @if (lineAccompaniments(line).length > 0) {
+      @if (isMenuLine(line) && line.menu_selections && line.menu_selections.length > 0) {
+        <div class="line-detail-section">
+          <div class="section-title">Elecciones del menú</div>
+          @for (sel of line.menu_selections; track sel.product_id) {
+            <div class="line-modifier-item">
+              <span class="modifier-name">
+                <strong>{{ sel.section_name }}:</strong> {{ sel.product_name }}
+                @if (sel.variant_name) {
+                  <span class="line-detail-variant">{{ sel.variant_name }}</span>
+                }
+              </span>
+              <span class="modifier-price" [class.free]="sel.extra_price === 0">
+                {{ sel.extra_price === 0 ? '' : '+' + formatCents(sel.extra_price) }}
+              </span>
+            </div>
+            @for (mod of sel.modifiers; track mod.id) {
+              <div class="line-modifier-item" style="padding-left: 16px">
+                <span class="modifier-name">+ {{ mod.name }}</span>
+                <span class="modifier-price" [class.free]="mod.price === 0">
+                  {{ mod.price === 0 ? 'Gratis' : '+' + formatCents(mod.price) }}
+                </span>
+              </div>
+            }
+          }
+        </div>
+      }
+
+      @if (!isMenuLine(line) && lineAccompaniments(line).length > 0) {
         <div class="line-detail-section">
           <div class="section-title">Acompañamientos</div>
           @for (mod of lineAccompaniments(line); track mod.id) {
@@ -366,7 +401,7 @@
         </div>
       }
 
-      @if (lineExtras(line).length > 0) {
+      @if (!isMenuLine(line) && lineExtras(line).length > 0) {
         <div class="line-detail-section">
           <div class="section-title">Extras</div>
           @for (mod of lineExtras(line); track mod.id) {
@@ -380,7 +415,7 @@
         </div>
       }
 
-      @if (lineLegacyModifiers(line).length > 0) {
+      @if (!isMenuLine(line) && lineLegacyModifiers(line).length > 0) {
         <div class="line-detail-section">
           <div class="section-title">Modificadores</div>
           @for (mod of lineLegacyModifiers(line); track mod.id) {

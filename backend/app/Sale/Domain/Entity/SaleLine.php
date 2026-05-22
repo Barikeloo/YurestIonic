@@ -16,7 +16,7 @@ final class SaleLine
         private readonly Uuid $uuid,
         private readonly Uuid $saleId,
         private readonly Uuid $orderLineId,
-        private readonly Uuid $productId,
+        private readonly ?Uuid $productId,
         private readonly Uuid $userId,
         private readonly SaleLineQuantity $quantity,
         private readonly SaleLinePrice $price,
@@ -31,7 +31,7 @@ final class SaleLine
         Uuid $restaurantId,
         Uuid $saleId,
         Uuid $orderLineId,
-        Uuid $productId,
+        ?Uuid $productId,
         Uuid $userId,
         SaleLineQuantity $quantity,
         SaleLinePrice $price,
@@ -59,7 +59,7 @@ final class SaleLine
         string $uuid,
         string $saleId,
         string $orderLineId,
-        string $productId,
+        ?string $productId,
         string $userId,
         int $quantity,
         int $price,
@@ -74,7 +74,7 @@ final class SaleLine
             uuid: Uuid::create($uuid),
             saleId: Uuid::create($saleId),
             orderLineId: Uuid::create($orderLineId),
-            productId: Uuid::create($productId),
+            productId: $productId !== null ? Uuid::create($productId) : null,
             userId: Uuid::create($userId),
             quantity: SaleLineQuantity::create($quantity),
             price: SaleLinePrice::create($price),
@@ -110,7 +110,7 @@ final class SaleLine
         return $this->orderLineId;
     }
 
-    public function productId(): Uuid
+    public function productId(): ?Uuid
     {
         return $this->productId;
     }

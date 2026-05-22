@@ -5,7 +5,7 @@ import { catchError, finalize, switchMap, take, takeUntil, map, tap } from 'rxjs
 import { AuthService } from '../../../../core/services/auth.service';
 import { PinAuthService, AuthContext, AuthActionType } from '../../../../core/services/pin-auth.service';
 import { PinAuthResult } from '../../../../components/pin-auth-modal/pin-auth-modal.component';
-import { TpvService, TpvCashSession, TpvCashSessionListItem, TpvOrder, TpvSale, TpvTableItem } from '../../services/tpv.service';
+import { TpvService, TpvCashSession, TpvCashSessionListItem, TpvOrder, TpvOrderLine, TpvSale, TpvTableItem } from '../../services/tpv.service';
 import { ChargeSessionService, ChargeSession, RecordPaymentResponse } from '../../services/charge-session.service';
 import { CajaSessionFacade } from '../../facades/caja-session.facade';
 import { CajaPaymentFacade } from '../../facades/caja-payment.facade';
@@ -208,6 +208,40 @@ export class CajaPage implements OnInit, OnDestroy {
     this.deviceId = this.authService.getDeviceId();
   }
 
+  /**
+   * Construye el nombre y los modificadores a mostrar para una línea de orden.
+   * Los menús se renderizan con `menu_name` como nombre y las selecciones del
+   * menú se proyectan como modificadores (`Sección: Producto`, sub-extras), de
+   * forma que los modales de cobro las muestren sin más lógica.
+   */
+  private buildPaymentLineLabel(l: TpvOrderLine): {
+    name: string;
+    variantName: string | null;
+    modifiers: { name: string; price: number }[] | null;
+  } {
+    if (l.menu_id) {
+      const menuMods: { name: string; price: number }[] = [];
+      for (const sel of l.menu_selections ?? []) {
+        const baseLabel = sel.section_name ? `${sel.section_name}: ${sel.product_name}` : sel.product_name;
+        const variantSuffix = sel.variant_name ? ` (${sel.variant_name})` : '';
+        menuMods.push({ name: baseLabel + variantSuffix, price: sel.extra_price ?? 0 });
+        for (const mod of sel.modifiers ?? []) {
+          menuMods.push({ name: `   · ${mod.name}`, price: mod.price ?? 0 });
+        }
+      }
+      return {
+        name: l.menu_name ?? 'Menú',
+        variantName: null,
+        modifiers: menuMods.length > 0 ? menuMods : null,
+      };
+    }
+    return {
+      name: l.product_name ?? 'Producto',
+      variantName: l.variant_name ?? null,
+      modifiers: l.modifiers?.map((m) => ({ name: m.name, price: m.price })) ?? null,
+    };
+  }
+
   public ngOnInit(): void {
     this.updateClock();
     this.clockInterval = setInterval(() => this.updateClock(), 1000);
@@ -307,16 +341,19 @@ export class CajaPage implements OnInit, OnDestroy {
           diners: diners,
           opened_at: order.opened_at || new Date().toISOString(),
         } as PendingTable;
-        this.selectedTableLines = lines.map((l) => ({
-          id: l.id,
-          name: l.product_name || 'Producto',
-          price: l.price * l.quantity,
-          unitPrice: l.price,
-          quantity: l.quantity,
-          taxPercentage: l.tax_percentage,
-          variantName: l.variant_name ?? null,
-          modifiers: l.modifiers?.map((m) => ({ name: m.name, price: m.price })) ?? null,
-        }));
+        this.selectedTableLines = lines.map((l) => {
+          const label = this.buildPaymentLineLabel(l);
+          return {
+            id: l.id,
+            name: label.name,
+            price: l.price * l.quantity,
+            unitPrice: l.price,
+            quantity: l.quantity,
+            taxPercentage: l.tax_percentage,
+            variantName: label.variantName,
+            modifiers: label.modifiers,
+          };
+        });
         this.currentPaymentAmount = remainingTotal;
         this.showCobrarModal = true;
       },
@@ -784,16 +821,19 @@ export class CajaPage implements OnInit, OnDestroy {
         return this.tpvService.getOrderLines(mesa.order_id).pipe(
           takeUntil(this.paymentFlowDestroy$),
           map((lines) => ({
-            lines: lines.map((l) => ({
-              id: l.id,
-              name: l.product_name || 'Producto',
-              price: l.price * l.quantity,
-              unitPrice: l.price,
-              quantity: l.quantity,
-              taxPercentage: l.tax_percentage,
-              variantName: l.variant_name ?? null,
-              modifiers: l.modifiers?.map((m) => ({ name: m.name, price: m.price })) ?? null,
-            })),
+            lines: lines.map((l) => {
+              const label = this.buildPaymentLineLabel(l);
+              return {
+                id: l.id,
+                name: label.name,
+                price: l.price * l.quantity,
+                unitPrice: l.price,
+                quantity: l.quantity,
+                taxPercentage: l.tax_percentage,
+                variantName: label.variantName,
+                modifiers: label.modifiers,
+              };
+            }),
             remainingTotal,
           })),
           catchError((error) => {
@@ -878,14 +918,17 @@ export class CajaPage implements OnInit, OnDestroy {
         return this.tpvService.getOrderLines(mesa.order_id).pipe(
           takeUntil(this.paymentFlowDestroy$),
           map((lines) => ({
-            lines: lines.map((l) => ({
-              id: l.id,
-              name: l.product_name || 'Producto',
-              price: l.price * l.quantity,
-              diner: l.diner_number,
-              variantName: l.variant_name ?? null,
-              modifiers: l.modifiers?.map((m) => ({ name: m.name })) ?? null,
-            })),
+            lines: lines.map((l) => {
+              const label = this.buildPaymentLineLabel(l);
+              return {
+                id: l.id,
+                name: label.name,
+                price: l.price * l.quantity,
+                diner: l.diner_number,
+                variantName: label.variantName,
+                modifiers: label.modifiers?.map((m) => ({ name: m.name })) ?? null,
+              };
+            }),
             remainingTotal,
           })),
           catchError((error) => {
@@ -968,17 +1011,20 @@ export class CajaPage implements OnInit, OnDestroy {
         const paidTotalCents = paidTotal.total_cents;
         const originalTotal = orderTotal.total_cents;
 
-        this.selectedTableLines = (orderLines ?? []).map((l) => ({
-          id: l.id,
-          name: l.product_name || 'Producto',
-          price: l.price * l.quantity,
-          unitPrice: l.price,
-          quantity: l.quantity,
-          taxPercentage: l.tax_percentage,
-          diner: l.diner_number,
-          variantName: l.variant_name ?? null,
-          modifiers: l.modifiers?.map((m) => ({ name: m.name, price: m.price })) ?? null,
-        }));
+        this.selectedTableLines = (orderLines ?? []).map((l) => {
+          const label = this.buildPaymentLineLabel(l);
+          return {
+            id: l.id,
+            name: label.name,
+            price: l.price * l.quantity,
+            unitPrice: l.price,
+            quantity: l.quantity,
+            taxPercentage: l.tax_percentage,
+            diner: l.diner_number,
+            variantName: label.variantName,
+            modifiers: label.modifiers,
+          };
+        });
         this.captureLinePrices(this.selectedTableLines);
 
         this.originalOrderTotal = originalTotal;

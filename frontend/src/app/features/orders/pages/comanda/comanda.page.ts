@@ -6,12 +6,16 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { AuthService, AuthUser, QuickAccessUserResponse } from '../../../../core/services/auth.service';
 import { FilterByPipe, SearchPipe } from '../../../../pipes';
-import { TpvOrderLine, TpvProductItem } from '../../../cash/services/tpv.service';
-import { CartLine, ComandaFacade } from '../../facades/comanda.facade';
+import { TpvMenu, TpvOrderLine, TpvProductItem } from '../../../cash/services/tpv.service';
+import { CartLine, CartMenuLine, ComandaFacade } from '../../facades/comanda.facade';
 import {
   ProductConfigModalComponent,
   ProductConfigResult,
 } from '../../components/product-config-modal/product-config-modal.component';
+import {
+  MenuConfigModalComponent,
+  MenuConfigResult,
+} from '../../components/menu-config-modal/menu-config-modal.component';
 
 const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#E74C3C'];
 
@@ -19,7 +23,7 @@ const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#
   selector: 'app-comanda',
   templateUrl: './comanda.page.html',
   styleUrls: ['./comanda.page.scss'],
-  imports: [FormsModule, FilterByPipe, SearchPipe, ProductConfigModalComponent],
+  imports: [FormsModule, FilterByPipe, SearchPipe, ProductConfigModalComponent, MenuConfigModalComponent],
   providers: [ComandaFacade],
 })
 export class ComandaPage implements OnInit, OnDestroy {
@@ -34,6 +38,8 @@ export class ComandaPage implements OnInit, OnDestroy {
   public closeModalOpen = false;
   public configModalOpen = false;
   public selectedProduct: TpvProductItem | null = null;
+  public menuConfigModalOpen = false;
+  public selectedMenu: TpvMenu | null = null;
   public detailModalOpen = false;
   public selectedLine: CartLine | TpvOrderLine | null = null;
 
@@ -91,6 +97,37 @@ export class ComandaPage implements OnInit, OnDestroy {
   public onConfigClose(): void {
     this.selectedProduct = null;
     this.configModalOpen = false;
+  }
+
+  public setActiveCatalog(catalog: 'products' | 'menus'): void {
+    this.facade.setActiveCatalog(catalog);
+  }
+
+  public addMenu(menu: TpvMenu): void {
+    this.selectedMenu = menu;
+    this.menuConfigModalOpen = true;
+  }
+
+  public onMenuConfigConfirm(result: MenuConfigResult): void {
+    if (!this.selectedMenu) return;
+
+    this.facade.addMenuLine(this.selectedMenu, result.selections, result.notes);
+
+    this.selectedMenu = null;
+    this.menuConfigModalOpen = false;
+  }
+
+  public removeMenuFromCart(line: CartMenuLine): void {
+    this.facade.removeMenuFromCart(line);
+  }
+
+  public menuCartLineSelectionsLabel(line: CartMenuLine): string {
+    return line.selections.map((s) => s.productName).join(', ');
+  }
+
+  public onMenuConfigClose(): void {
+    this.selectedMenu = null;
+    this.menuConfigModalOpen = false;
   }
 
   public isOutOfStock(product: TpvProductItem): boolean {
@@ -214,6 +251,20 @@ export class ComandaPage implements OnInit, OnDestroy {
 
   public lineDetailTotal(line: CartLine | TpvOrderLine): number {
     return this.isCartLine(line) ? this.getLineTotal(line) : this.getExistingLineTotal(line);
+  }
+
+  public isMenuLine(line: CartLine | TpvOrderLine): boolean {
+    if (this.isCartLine(line)) return false;
+    return !!line.menu_id;
+  }
+
+  public menuLineName(line: TpvOrderLine): string {
+    return line.menu_name ?? 'Menú';
+  }
+
+  public menuLineSelections(line: TpvOrderLine): string {
+    if (!line.menu_selections || line.menu_selections.length === 0) return '';
+    return line.menu_selections.map((s) => s.product_name).join(', ');
   }
 
   private isCartLine(line: CartLine | TpvOrderLine): line is CartLine {

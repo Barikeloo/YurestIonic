@@ -7,6 +7,48 @@
 
 ---
 
+## Índice
+
+1. [Resumen Ejecutivo](#1-resumen-ejecutivo)
+2. [Guía de Despliegue](#2-guía-de-despliegue)
+   - [2.1 Prerrequisitos del sistema](#21-prerrequisitos-del-sistema)
+   - [2.2 Clonar el repositorio](#22-clonar-el-repositorio)
+   - [2.3 Configurar variables de entorno](#23-configurar-variables-de-entorno)
+   - [2.4 Levantar la infraestructura](#24-levantar-la-infraestructura)
+   - [2.5 Instalar dependencias y preparar la base de datos](#25-instalar-dependencias-y-preparar-la-base-de-datos)
+   - [2.6 Cargar datos de demostración](#26-cargar-datos-de-demostración)
+   - [2.7 Verificar que todo funciona](#27-verificar-que-todo-funciona)
+   - [2.8 Comandos de operación diaria](#28-comandos-de-operación-diaria)
+   - [2.9 Reinicio desde cero](#29-reinicio-desde-cero-reset-completo)
+3. [Datos de demostración](#3-datos-de-demostración)
+4. [Guía de uso de la aplicación](#4-guía-de-uso-de-la-aplicación)
+   - [4.1 Vinculación de dispositivo](#41-vinculación-de-dispositivo)
+   - [4.2 Login y selección de rol](#42-login-y-selección-de-rol)
+   - [4.3 Backoffice — Gestión del negocio](#43-backoffice--gestión-del-negocio)
+   - [4.4 TPV — Flujo de venta paso a paso](#44-tpv--flujo-de-venta-paso-a-paso)
+   - [4.5 Cobro dividido — Casuística avanzada](#45-cobro-dividido--casuística-avanzada)
+   - [4.6 Caja — Sesiones de turno y Z-Report](#46-caja--sesiones-de-turno-y-z-report)
+   - [4.7 Dashboard de finanzas (prototipo)](#47-dashboard-de-finanzas-prototipo)
+   - [4.8 Panel de Desarrollador (SuperAdmin)](#48-panel-de-desarrollador-superadmin--gestión-de-la-plataforma)
+   - [4.9 Editor de Menús — Combos y menú del día](#49-editor-de-menús--combos-y-menú-del-día)
+5. [Características implementadas](#5-características-implementadas)
+6. [Arquitectura](#6-arquitectura)
+   - [6.1 Stack tecnológico](#61-stack-tecnológico)
+   - [6.2 Patrón arquitectónico — DDD + Hexagonal](#62-patrón-arquitectónico--ddd--hexagonal)
+   - [6.3 Dominios implementados](#63-dominios-implementados)
+   - [6.4 Flujo de una petición](#64-flujo-de-una-petición-arquitectura-en-acción)
+   - [6.5 Decisiones técnicas clave](#65-decisiones-técnicas-clave)
+   - [6.6 Seguridad](#66-seguridad)
+7. [Estructura del repositorio](#7-estructura-del-repositorio)
+8. [API REST — Endpoints principales](#8-api-rest--endpoints-principales)
+9. [Testing](#9-testing)
+10. [Flujo de desarrollo recomendado](#10-flujo-de-desarrollo-recomendado)
+11. [Documentación adicional](#11-documentación-adicional)
+12. [Próximos pasos y roadmap técnico](#12-próximos-pasos-y-roadmap-técnico)
+13. [Notas para el despliegue en producción](#13-notas-para-el-despliegue-en-producción)
+
+---
+
 ## 1. Resumen Ejecutivo
 
 **YurestIonic** es un sistema TPV (Terminal Punto de Venta) completo diseñado para el sector hostelero. Gestiona la operativa diaria de un restaurante desde la configuración del negocio hasta el cierre fiscal del turno, pasando por la toma de pedidos en salón, la división de cuenta por comensales y el cobro con múltiples métodos de pago.
@@ -16,6 +58,7 @@ El producto está pensado para desplegarse en tabletas táctiles como dispositiv
 ### Alcance actual
 
 - **Backoffice completo** — Gestión de familias, productos, impuestos, zonas, mesas, usuarios y roles.
+- **Menús (combos / menú del día)** — Editor para definir productos compuestos por secciones con reglas `min/max` de elecciones, suplementos opcionales por item, vigencia por fechas, días de la semana y franja horaria.
 - **Front de venta (TPV)** — Flujo real de mesa → pedido → cobro → cierre, optimizado para táctil.
 - **División de cuenta** — 3 estrategias: partes iguales, asignación por líneas, por comensal.
 - **Cierre de caja** — Sesiones de turno, movimientos de caja, arqueo y generación de Z-Report con hash de integridad.
@@ -225,6 +268,7 @@ Desde el menú lateral, accede a **"Gestión"**. Esta sección está restringida
 
 - **Familias** — Categorías del catálogo. Ej: Bebidas, Entrantes, Carnes. Se pueden activar/desactivar sin borrarlas.
 - **Productos** — Alta de artículos con nombre, precio, impuesto, familia, imagen y stock. Cada producto puede tener **modificadores** (ej: "sin cebolla", "doble queso", "extra de salsa") que se registran como notas en la línea de pedido.
+- **Menús** — Productos compuestos por secciones que el comensal personaliza al pedir (combos, menú del día). Ver detalle en [4.9 Editor de Menús](#49-editor-de-menús--combos-y-menú-del-día).
 - **Impuestos** — Configuración de tipos de IVA aplicables.
 - **Zonas** — Salones o ambientes del local (Terraza, Salón, Barra).
 - **Mesas** — Mesas físicas asignadas a una zona. Soportan agrupación (unión de mesas para grupos grandes).
@@ -321,6 +365,91 @@ En la pantalla de login, despliega el selector de modo de acceso y elige **"Supe
 
 > **Importante:** El SuperAdmin no opera dentro de un restaurante concreto. No ve mesas, ni toma pedidos, ni cierra cajas. Su rol es exclusivamente la administración de la plataforma y sus tenants.
 
+### 4.9 Editor de Menús — Combos y menú del día
+
+Un **menú** es un producto compuesto: un nombre comercial (p. ej. *Menú del día*) con un precio base que el comensal personaliza al pedir eligiendo un producto por cada **sección** definida por el restaurador. El sistema lo modela como un dominio propio (`Menu` → `MenuSection` → `MenuItem`) y, al añadirlo a una comanda, se persiste como una sola línea de orden con las elecciones denormalizadas en JSON, lo que permite reconstruir lo que pidió cada comensal incluso si los productos del catálogo cambian después.
+
+#### Modelo conceptual
+
+```
+Menu (cabecera)
+└── MenuSection × N        (ej: "Primer plato", "Segundo plato", "Postre")
+    ├── min_choices / max_choices  (reglas de elección por sección)
+    └── MenuItem × N        (ej: "Sopa", "Ensalada", "Lomo")
+        ├── product_id        (referencia al catálogo)
+        ├── variant_id?       (opcional: forzar una variante concreta)
+        └── extra_price       (suplemento sobre el precio base del menú)
+```
+
+#### Propiedades de la cabecera del menú
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `name` | texto | Nombre comercial mostrado en TPV y en el ticket. |
+| `description` | texto | Descripción libre opcional (uso interno y marketing). |
+| `price` | céntimos | Precio base del menú (PVP con IVA incluido). Los `extra_price` de los items se suman al cobrar. |
+| `tax_id` | UUID | Tipo de IVA aplicado al menú completo. |
+| `validity_from` / `validity_to` | fecha (opcional) | Rango de vigencia. Fuera de él, el menú no se ofrece. |
+| `available_days` | bitmask (7 bits) | Días de la semana en los que se ofrece (`L M X J V S D`). |
+| `available_from_time` / `available_to_time` | hora `HH:mm` (opcional) | Franja horaria dentro del día (por ejemplo, sólo en comidas). |
+| `active` | booleano | Permite ocultarlo del TPV temporalmente sin perder la configuración. |
+| `archived` | booleano | Eliminación lógica. Los menús archivados no se editan ni se sirven. |
+
+#### Propiedades de cada sección
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `name` | texto | Título visible en el modal del TPV (p. ej. "Primer plato"). |
+| `min_choices` | entero ≥ 0 | Mínimo de productos que el comensal debe elegir para confirmar. |
+| `max_choices` | entero ≥ 1 | Máximo permitido (1 → comportamiento radio, >1 → selección múltiple). |
+| `position` | entero | Orden en que se muestra la sección dentro del menú. |
+| `items[]` | lista | Productos elegibles para esa sección (ver tabla siguiente). |
+
+> Casos típicos: `min=1, max=1` ("Elige 1, obligatorio"), `min=0, max=1` ("Opcional"), `min=1, max=2` ("Elige 1 o 2").
+
+#### Propiedades de cada item de sección
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `product_id` | UUID | Producto del catálogo ofrecido en esta sección. |
+| `variant_id` | UUID nullable | Si se fija, el comensal recibe esa variante; si es null, podrá elegir entre las variantes activas del producto. |
+| `extra_price` | céntimos (≥ 0) | Suplemento sumado al precio del menú si el comensal elige este item (p. ej. `+2,00€` por solomillo). |
+| `position` | entero | Orden de aparición dentro de la sección. |
+
+#### Flujo del restaurador — Crear / editar un menú
+
+1. **Gestión → Menús** muestra la lista de menús del restaurante con su estado (Activo / Inactivo / Archivado), días, franja y un resumen "*N secciones · M items*".
+2. **"Nuevo menú"** abre el editor de pantalla completa con tres bloques:
+   - **Cabecera**: nombre, descripción, precio, IVA, vigencia, días y franja horaria.
+   - **Secciones**: tarjetas reordenables (drag & drop) con su nombre y reglas `min/max`.
+   - **Catálogo lateral**: lista de productos activos filtrable por familia y búsqueda. Cada producto se arrastra a la sección destino para añadirlo como `MenuItem`.
+3. Dentro de cada item se puede fijar **variante** y **suplemento** (`extra_price`). El editor valida en tiempo real que cada sección tenga al menos un item y que `min_choices ≤ max_choices ≤ nº items`.
+4. **Guardar** persiste el menú completo en una transacción (cabecera + secciones + items). El estado por defecto es **activo**.
+5. Desde el listado se puede **activar/desactivar** con un toggle (sin borrar nada) o **archivar** definitivamente (las órdenes pasadas mantienen su referencia al `menu_id`).
+
+#### Flujo del camarero — Añadir un menú a una comanda
+
+1. En la página de **Comanda**, junto a la pestaña *Productos* aparece la pestaña **Menús**.
+2. El grid muestra cards de los menús **activos y disponibles ahora** (validez, día, franja).
+3. Al tocar un menú se abre el **modal de configuración** con todas las secciones y sus items.
+4. Por cada sección, el camarero selecciona el/los productos pedidos por el comensal (la UI fuerza el cumplimiento de `min_choices`/`max_choices`). Para cada elección, si el producto tiene variantes o modificadores, se ofrecen como chips dentro del mismo modal.
+5. Opcionalmente se añade una **nota** libre (alergias, "sin guarnición", etc.).
+6. **El precio total** del menú se calcula en tiempo real: `precio base + Σ extra_price + Σ modificadores`.
+7. Al confirmar, la línea **entra al cart local** (sección *Sin enviar*) junto a los productos sueltos. La comanda se manda al backend al pulsar **Enviar comanda**, no antes.
+
+#### Persistencia en la orden y en la venta
+
+- En `order_lines`, las líneas de menú no tienen `product_id` (`NULL`). En su lugar guardan `menu_id`, `menu_name` (snapshot del nombre) y `menu_selections` (JSON con `section_name`, `product_id`, `product_name`, `variant_id`, `variant_name`, `modifiers[]` y `extra_price` por cada elección del comensal).
+- Al cobrar, se genera una `SaleLine` por línea de menú con `product_id = NULL`. Para la trazabilidad fiscal, la `OrderLine` original (que sí incluye las elecciones denormalizadas) queda vinculada vía `order_line_id`. El ticket final reconstruye el desglose del menú a partir de `menu_selections`.
+- Toda esta denormalización es deliberada: si mañana se renombra un producto del catálogo, los tickets antiguos siguen mostrando el nombre con el que el comensal lo pidió.
+
+#### Reglas y límites actuales
+
+- Un menú debe tener **al menos una sección** y cada sección **al menos un item** para guardarse.
+- Los menús archivados no se editan ni se ofrecen en el TPV, pero conservan integridad para órdenes históricas.
+- El TPV no filtra todavía por `available_days` ni franja horaria en cliente (todos los menús activos se listan); el filtrado horario está disponible en el modelo y se aplicará en una iteración próxima.
+- Las líneas de menú no se pueden fraccionar entre comensales por línea desde el split por líneas; sí participan del split por partes iguales.
+
 ---
 
 ## 5. Características implementadas
@@ -345,6 +474,10 @@ En la pantalla de login, despliega el selector de modo de acceso y elige **"Supe
 | **Auth** | Roles y permisos | 3 roles (`admin`, `supervisor`, `operator`) con guardas de navegación (`CanActivate`) en el frontend y middlewares de autorización en el backend. |
 | **Producto** | Modificadores | Cada producto puede tener opciones de personalización que se almacenan en `order_lines.notes` (ej: "sin cebolla", "extra queso"). |
 | **Producto** | Stock | Control de inventario básico con decremento automático al cerrar venta. |
+| **Menú** | Editor visual | Editor drag & drop de menús con secciones reordenables, catálogo lateral filtrable y validación en tiempo real de reglas `min/max`. |
+| **Menú** | Vigencia y disponibilidad | Cabecera con `validity_from/to`, bitmask de `available_days` y franja `available_from_time/available_to_time` para activar el menú sólo en su ventana real. |
+| **Menú** | Suplementos por item | Cada `MenuItem` puede llevar un `extra_price` que se suma al precio base del menú si el comensal lo elige. |
+| **Menú** | Snapshot de elecciones | La línea de orden de un menú guarda en JSON el `menu_name`, los `menu_selections` y sus variantes/modificadores, garantizando que los tickets antiguos no se "rompan" al renombrar productos del catálogo. |
 | **Mesa** | Estados visuales | Mesas con 2 estados (libre/ocupada) representados con semáforo de colores en el grid. |
 | **Mesa** | Agrupación | Soporte para unir mesas físicas (campo `merged_table_group_id`) y gestionarlas como una sola unidad de cobro. |
 | **Pedido** | Líneas mutables | Incremento, decremento y eliminación de líneas en tiempo real antes del cierre. |
@@ -430,6 +563,7 @@ App/<Dominio>/
 | `Restaurant` | `Restaurant`, `RestaurantName` | Datos fiscales y de contacto del negocio |
 | `Family` | `Family`, `FamilyName` | Categorías del catálogo |
 | `Product` | `Product`, `Price`, `Stock` | Artículos del menú con precio, impuesto, imagen y modificadores |
+| `Menu` | `Menu`, `MenuSection`, `MenuItem`, `MenuValidity`, `MenuAvailability` | Productos compuestos con secciones, reglas de elección y ventana de disponibilidad |
 | `Tax` | `Tax`, `TaxPercentage` | Tipos de IVA aplicables |
 | `Zone` | `Zone`, `ZoneName` | Salones del local |
 | `Table` | `Table`, `TableName` | Mesas físicas con soporte de agrupación |
@@ -622,6 +756,9 @@ GET|POST       /api/management/tables
 GET|PUT|DELETE /api/management/tables/{uuid}
 GET|POST       /api/management/users
 GET|PUT|DELETE /api/management/users/{uuid}
+GET|POST       /api/management/menus           # Listar / crear menús del restaurante
+GET|PUT        /api/management/menus/{uuid}    # Editar cabecera, secciones e items
+POST           /api/management/menus/{uuid}/archive # Archivado lógico (no editable)
 ```
 
 ### TPV (requiere sesión autenticada)
@@ -631,10 +768,12 @@ GET    /api/tpv/zones                # Zonas del restaurante
 GET    /api/tpv/tables               # Mesas del restaurante
 GET    /api/tpv/families            # Familias activas
 GET    /api/tpv/products            # Productos activos
+GET    /api/tpv/menus               # Menús activos disponibles para la comanda
 POST   /api/tpv/orders              # Crear orden (abrir mesa)
 GET    /api/tpv/orders              # Listar órdenes abiertas
 GET    /api/tpv/orders/{id}         # Detalle de orden
-POST   /api/tpv/orders/lines        # Añadir línea a orden
+POST   /api/tpv/orders/lines        # Añadir línea de producto a orden
+POST   /api/tpv/orders/menu-lines   # Añadir línea de menú a orden (con sus selecciones)
 PUT    /api/tpv/orders/{id}         # Actualizar orden (comensales, etc.)
 DELETE /api/tpv/orders/{id}         # Cancelar orden
 POST   /api/tpv/sales               # Crear venta (cerrar ticket)
@@ -728,6 +867,7 @@ make test-frontend
 | [`AGENTS.md`](./AGENTS.md) | IAs / Nuevos devs | Convenciones de código: DDD, VOs con constructor privado, nomenclatura, estilo PSR-12 |
 | [`docs/DOMINIO_TPV.md`](./docs/DOMINIO_TPV.md) | Integradores / Partners | Reglas de diseño de APIs TPV: timestamps por línea, jerarquía de productos, fracciones, series de facturación |
 | [`PLAN_SEMANA_CTO.md`](./PLAN_SEMANA_CTO.md) | CTO / Dirección | Plan de presentación: guion de demo, decisiones técnicas a justificar, estructura de la presentación |
+| [`MENU_FEATURE_README.md`](./MENU_FEATURE_README.md) | Equipo de desarrollo | Detalle técnico del módulo Menús: estructura del dominio, migraciones, casos de uso, integración con OrderLine/SaleLine y áreas de mejora pendientes |
 
 ---
 
@@ -741,7 +881,7 @@ make test-frontend
 
 ### Medio plazo (3–6 meses)
 
-4. **Descuentos y promociones** — Descuento por línea (% o importe fijo), descuento global en ticket, menús del día con precio cerrado.
+4. **Descuentos y promociones** — Descuento por línea (% o importe fijo), descuento global en ticket, cupones y promociones temporales (los menús del día con precio cerrado ya están operativos, ver [4.9](#49-editor-de-menús--combos-y-menú-del-día)).
 5. **Traslado de mesa** — Mover un pedido abierto de una mesa a otra sin perder líneas ni asignaciones.
 6. **Reservas** — Calendario de reservas con nombre, teléfono, número de comensales y asignación automática a mesa.
 7. **Auditoría inmutable** — Tabla `AuditLog` con trazabilidad completa: quién, qué, cuándo, IP, device. Cumplimiento RGPD y fiscal.

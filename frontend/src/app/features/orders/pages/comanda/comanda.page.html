@@ -29,49 +29,88 @@
   @if (!facade.loading()) {
     <div class="comanda-layout">
       <div class="products-area">
-        <div class="family-tabs">
-          <button class="family-tab" [class.active]="facade.activeFamilyId() === null" (click)="setFamily(null)">Todo</button>
-          @for (family of facade.families(); track family) {
-            <button
-              class="family-tab"
-              [class.active]="facade.activeFamilyId() === family.id"
-              (click)="setFamily(family.id)"
-            >{{ family.name }}</button>
-          }
+        <div class="catalog-tabs">
+          <button
+            class="catalog-tab"
+            [class.active]="facade.activeCatalog() === 'products'"
+            (click)="setActiveCatalog('products')"
+          >
+            Productos
+          </button>
+          <button
+            class="catalog-tab"
+            [class.active]="facade.activeCatalog() === 'menus'"
+            (click)="setActiveCatalog('menus')"
+          >
+            Menús
+          </button>
         </div>
-        <div class="products-search">
-          <input
-            type="text"
-            class="search-input"
-            placeholder="Buscar producto..."
-            [ngModel]="facade.searchQuery()"
-            (ngModelChange)="setSearch($event)"
-            />
-        </div>
-        <div class="products-grid-wrap">
-          <div class="products-grid">
-            @for (product of facade.products() | filterBy:'family_id':facade.activeFamilyId() | search:facade.searchQuery():['name']; track product) {
+
+        @if (facade.activeCatalog() === 'products') {
+          <div class="family-tabs">
+            <button class="family-tab" [class.active]="facade.activeFamilyId() === null" (click)="setFamily(null)">Todo</button>
+            @for (family of facade.families(); track family) {
               <button
-                class="product-card"
-                [class.out-of-stock]="isOutOfStock(product)"
-                [disabled]="isOutOfStock(product)"
-                (click)="addToCart(product)"
-                >
-                @if (isOutOfStock(product) || getAvailableStock(product) <= 15) {
-                  <div class="stock-badge" [class.stock-low]="getAvailableStock(product) <= 15 && getAvailableStock(product) > 0" [class.stock-zero]="isOutOfStock(product)">
-                    {{ isOutOfStock(product) ? '0' : getAvailableStock(product) }}
-                  </div>
-                }
-                <div class="product-initial">{{ product.name[0] }}</div>
-                <div class="product-name">{{ product.name }}</div>
-                <div class="product-price">{{ formatCents(product.price) }}</div>
-              </button>
-            }
-            @if ((facade.products() | filterBy:'family_id':facade.activeFamilyId() | search:facade.searchQuery():['name']).length === 0) {
-              <div class="products-empty">Sin resultados</div>
+                class="family-tab"
+                [class.active]="facade.activeFamilyId() === family.id"
+                (click)="setFamily(family.id)"
+              >{{ family.name }}</button>
             }
           </div>
-        </div>
+          <div class="products-search">
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Buscar producto..."
+              [ngModel]="facade.searchQuery()"
+              (ngModelChange)="setSearch($event)"
+              />
+          </div>
+          <div class="products-grid-wrap">
+            <div class="products-grid">
+              @for (product of facade.products() | filterBy:'family_id':facade.activeFamilyId() | search:facade.searchQuery():['name']; track product) {
+                <button
+                  class="product-card"
+                  [class.out-of-stock]="isOutOfStock(product)"
+                  [disabled]="isOutOfStock(product)"
+                  (click)="addToCart(product)"
+                  >
+                  @if (isOutOfStock(product) || getAvailableStock(product) <= 15) {
+                    <div class="stock-badge" [class.stock-low]="getAvailableStock(product) <= 15 && getAvailableStock(product) > 0" [class.stock-zero]="isOutOfStock(product)">
+                      {{ isOutOfStock(product) ? '0' : getAvailableStock(product) }}
+                    </div>
+                  }
+                  <div class="product-initial">{{ product.name[0] }}</div>
+                  <div class="product-name">{{ product.name }}</div>
+                  <div class="product-price">{{ formatCents(product.price) }}</div>
+                </button>
+              }
+              @if ((facade.products() | filterBy:'family_id':facade.activeFamilyId() | search:facade.searchQuery():['name']).length === 0) {
+                <div class="products-empty">Sin resultados</div>
+              }
+            </div>
+          </div>
+        }
+
+        @if (facade.activeCatalog() === 'menus') {
+          <div class="products-grid-wrap">
+            <div class="products-grid">
+              @for (menu of facade.menus(); track menu) {
+                <button
+                  class="product-card menu-card"
+                  (click)="addMenu(menu)"
+                  >
+                  <div class="product-initial">{{ menu.name[0] }}</div>
+                  <div class="product-name">{{ menu.name }}</div>
+                  <div class="product-price">{{ formatCents(menu.price) }}</div>
+                </button>
+              }
+              @if (facade.menus().length === 0) {
+                <div class="products-empty">No hay menús activos</div>
+              }
+            </div>
+          </div>
+        }
       </div>
       <div class="comanda-sidebar">
         <div class="order-panel-header">
@@ -86,7 +125,7 @@
           </div>
         </div>
         <div class="order-lines">
-          @if (facade.existingLines().length === 0 && facade.cartLines().length === 0) {
+          @if (facade.existingLines().length === 0 && facade.cartLines().length === 0 && facade.cartMenuLines().length === 0) {
             <div class="order-empty-msg">
               Toca un producto para añadirlo
             </div>
@@ -98,21 +137,30 @@
             <div class="order-line order-line-confirmed" (click)="openLineDetail(line)">
               <div class="order-line-qty">{{ line.quantity }}</div>
               <div class="order-line-info">
-                <div class="order-line-name">{{ line.product_name ?? 'Producto' }}</div>
-                @if (line.variant_name || (line.modifiers ?? []).length > 0) {
-                  <div class="order-line-tags-row">
-                    @if (line.variant_name) {
-                      <span class="line-variant">{{ line.variant_name }}</span>
-                    }
-                    @if ((line.modifiers ?? []).length > 0) {
-                      <span class="line-modifiers-count">+{{ line.modifiers!.length }} {{ line.modifiers!.length === 1 ? 'extra' : 'extras' }}</span>
-                    }
-                  </div>
-                }
-                @if ((line.modifiers ?? []).length > 0) {
-                  <div class="order-line-meta">
-                    <span class="line-modifiers-mini">{{ formatModifiers(line.modifiers ?? []) }}</span>
-                  </div>
+                @if (isMenuLine(line)) {
+                  <div class="order-line-name">{{ menuLineName(line) }}</div>
+                  @if (menuLineSelections(line); as selectionsText) {
+                    <div class="order-line-meta">
+                      <span class="line-modifiers-mini">{{ selectionsText }}</span>
+                    </div>
+                  }
+                } @else {
+                  <div class="order-line-name">{{ line.product_name ?? 'Producto' }}</div>
+                  @if (line.variant_name || (line.modifiers ?? []).length > 0) {
+                    <div class="order-line-tags-row">
+                      @if (line.variant_name) {
+                        <span class="line-variant">{{ line.variant_name }}</span>
+                      }
+                      @if ((line.modifiers ?? []).length > 0) {
+                        <span class="line-modifiers-count">+{{ line.modifiers!.length }} {{ line.modifiers!.length === 1 ? 'extra' : 'extras' }}</span>
+                      }
+                    </div>
+                  }
+                  @if ((line.modifiers ?? []).length > 0) {
+                    <div class="order-line-meta">
+                      <span class="line-modifiers-mini">{{ formatModifiers(line.modifiers ?? []) }}</span>
+                    </div>
+                  }
                 }
               </div>
               <div class="cart-line-right" (click)="$event.stopPropagation()">
@@ -121,8 +169,29 @@
               </div>
             </div>
           }
-          @if (facade.cartLines().length > 0) {
+          @if (facade.cartLines().length > 0 || facade.cartMenuLines().length > 0) {
             <div class="order-section-label">Sin enviar</div>
+          }
+          @for (menuLine of facade.cartMenuLines(); track menuLine) {
+            <div class="order-line order-line-cart menu-cart-line">
+              <div class="order-line-info">
+                <div class="order-line-name">{{ menuLine.menuName }}</div>
+                @if (menuCartLineSelectionsLabel(menuLine); as selectionsText) {
+                  <div class="order-line-meta">
+                    <span class="line-modifiers-mini">{{ selectionsText }}</span>
+                  </div>
+                }
+                @if (menuLine.notes) {
+                  <div class="order-line-meta">
+                    <span class="line-modifiers-mini">Nota: {{ menuLine.notes }}</span>
+                  </div>
+                }
+              </div>
+              <div class="cart-line-right" (click)="$event.stopPropagation()">
+                <div class="order-line-price">{{ formatCents(menuLine.unitPrice) }}</div>
+                <button class="btn-remove-cart" (click)="removeMenuFromCart(menuLine)" title="Eliminar">×</button>
+              </div>
+            </div>
           }
           @for (line of facade.cartLines(); track line) {
             <div class="order-line order-line-cart" (click)="openLineDetail(line)">
@@ -157,7 +226,7 @@
         <div class="order-actions">
           <button
             class="btn-comanda"
-            [disabled]="facade.cartLines().length === 0 || facade.sendingOrder()"
+            [disabled]="!facade.hasPendingCart() || facade.sendingOrder()"
             (click)="sendComanda()"
             >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
@@ -166,7 +235,7 @@
             </svg>
             {{ facade.sendingOrder() ? 'Enviando...' : 'Enviar comanda' }}
           </button>
-          <button class="btn-outline" style="width:100%" (click)="clearCart()" [disabled]="facade.cartLines().length === 0">
+          <button class="btn-outline" style="width:100%" (click)="clearCart()" [disabled]="!facade.hasPendingCart()">
             Limpiar
           </button>
           @if (facade.sendError(); as error) {
@@ -184,6 +253,14 @@
   (confirm)="onConfigConfirm($event)"
   (closeModal)="onConfigClose()"
 ></app-product-config-modal>
+
+<app-menu-config-modal
+  [isOpen]="menuConfigModalOpen"
+  [menu]="selectedMenu"
+  [products]="facade.products()"
+  (confirm)="onMenuConfigConfirm($event)"
+  (closeModal)="onMenuConfigClose()"
+></app-menu-config-modal>
 
 <!-- Modal detalle de línea -->
 <div class="modal-overlay" [class.open]="detailModalOpen" (click)="closeLineDetail()">

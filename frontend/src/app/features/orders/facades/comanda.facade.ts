@@ -29,6 +29,34 @@ export interface CartLine {
   modifiers: SelectedModifier[];
 }
 
+export interface MenuSelectionPayload {
+  section_id: string;
+  product_id: string;
+  variant_id: string | null;
+  modifiers: SelectedModifier[];
+}
+
+export interface CartMenuLineSelection {
+  sectionId: string;
+  sectionName: string;
+  productId: string;
+  productName: string;
+  variantId: string | null;
+  variantName: string | null;
+  modifiers: SelectedModifier[];
+  extraPrice: number;
+}
+
+export interface CartMenuLine {
+  menuId: string;
+  menuName: string;
+  taxId: string;
+  /** Precio total de la unidad del menú (base + suplementos + modificadores). */
+  unitPrice: number;
+  selections: CartMenuLineSelection[];
+  notes: string | null;
+}
+
 @Injectable()
 export class ComandaFacade {
   private readonly tpvService = inject(TpvService);
@@ -52,7 +80,7 @@ export class ComandaFacade {
   private readonly _menus = signal<TpvMenu[]>([]);
   /** 'products' (catálogo clásico) o 'menus' (cards de menu para añadir como línea menu). */
   private readonly _activeCatalog = signal<'products' | 'menus'>('products');
-  private readonly _addingMenuLine = signal<boolean>(false);
+  private readonly _cartMenuLines = signal<CartMenuLine[]>([]);
 
   private orderId: string | null = null;
 
@@ -73,17 +101,26 @@ export class ComandaFacade {
   public readonly closeError: Signal<string | null> = this._closeError.asReadonly();
   public readonly menus: Signal<TpvMenu[]> = this._menus.asReadonly();
   public readonly activeCatalog: Signal<'products' | 'menus'> = this._activeCatalog.asReadonly();
-  public readonly addingMenuLine: Signal<boolean> = this._addingMenuLine.asReadonly();
+  public readonly cartMenuLines: Signal<CartMenuLine[]> = this._cartMenuLines.asReadonly();
 
-  public readonly cartTotal: Signal<number> = computed(() =>
-    this._cartLines().reduce((acc, line) => {
-      const modifierTotal = line.modifiers.reduce((mAcc, m) => mAcc + m.price, 0);
-      return acc + (line.price + modifierTotal) * line.quantity;
-    }, 0),
+  public readonly cartMenusTotal: Signal<number> = computed(() =>
+    this._cartMenuLines().reduce((acc, line) => acc + line.unitPrice, 0),
   );
 
+  public readonly cartTotal: Signal<number> = computed(() => {
+    const productsTotal = this._cartLines().reduce((acc, line) => {
+      const modifierTotal = line.modifiers.reduce((mAcc, m) => mAcc + m.price, 0);
+      return acc + (line.price + modifierTotal) * line.quantity;
+    }, 0);
+    return productsTotal + this.cartMenusTotal();
+  });
+
   public readonly cartCount: Signal<number> = computed(() =>
-    this._cartLines().reduce((acc, line) => acc + line.quantity, 0),
+    this._cartLines().reduce((acc, line) => acc + line.quantity, 0) + this._cartMenuLines().length,
+  );
+
+  public readonly hasPendingCart: Signal<boolean> = computed(
+    () => this._cartLines().length > 0 || this._cartMenuLines().length > 0,
   );
 
   public readonly existingSubtotal: Signal<number> = computed(() =>
@@ -162,48 +199,61 @@ export class ComandaFacade {
   }
 
   /**
-   * Añade un menú personalizado como línea a la orden. A diferencia de los
-   * productos, los menús no pasan por el cart local: se envían directamente y
-   * refrescamos `existingLines` para verlos en el panel.
+   * Añade un menú al cart local (no toca backend). Se enviará junto al resto
+   * de líneas cuando el camarero pulse "Enviar comanda".
    */
-  public async addMenuLine(
-    menuId: string,
-    selections: Array<{
-      section_id: string;
-      product_id: string;
-      variant_id?: string | null;
-      modifiers?: Array<{ id: string; name: string; price: number; type: 'extra' | 'accompaniment' }>;
-    }>,
-    notes?: string | null,
-  ): Promise<boolean> {
-    if (!this.orderId || this._addingMenuLine()) {
-      return false;
+  public addMenuLine(
+    menu: TpvMenu,
+    selections: MenuSelectionPayload[],
+    notes: string | null,
+  ): void {
+    if (!this.orderId) {
+      return;
     }
 
-    this._addingMenuLine.set(true);
-    this._sendError.set(null);
+    const enriched: CartMenuLineSelection[] = [];
+    let unitPrice = menu.price;
 
-    try {
-      await firstValueFrom(
-        this.tpvService.addMenuLineToOrder({
-          order_id: this.orderId,
-          menu_id: menuId,
-          selections,
-          notes: notes ?? null,
-        }),
-      );
+    for (const sel of selections) {
+      const section = menu.sections.find((s) => s.id === sel.section_id);
+      const product = this._products().find((p) => p.id === sel.product_id);
+      const item = section?.items.find((it) => it.product_id === sel.product_id);
+      const extraPrice = item?.extra_price ?? 0;
 
-      // Refrescamos las líneas confirmadas para ver el menú como tarjeta.
-      const lines = await firstValueFrom(this.tpvService.getOrderLines(this.orderId));
-      this._existingLines.set(lines);
+      const variant = sel.variant_id
+        ? product?.variants?.find((v) => v.id === sel.variant_id) ?? null
+        : null;
 
-      return true;
-    } catch (err) {
-      this._sendError.set(err instanceof Error ? err.message : 'No se pudo añadir el menú.');
-      return false;
-    } finally {
-      this._addingMenuLine.set(false);
+      const modifiersTotal = sel.modifiers.reduce((acc, m) => acc + m.price, 0);
+      unitPrice += extraPrice + modifiersTotal;
+
+      enriched.push({
+        sectionId: sel.section_id,
+        sectionName: section?.name ?? '',
+        productId: sel.product_id,
+        productName: product?.name ?? 'Producto',
+        variantId: sel.variant_id,
+        variantName: variant?.name ?? null,
+        modifiers: sel.modifiers,
+        extraPrice,
+      });
     }
+
+    this._cartMenuLines.update((current) => [
+      ...current,
+      {
+        menuId: menu.id,
+        menuName: menu.name,
+        taxId: menu.tax_id,
+        unitPrice,
+        selections: enriched,
+        notes,
+      },
+    ]);
+  }
+
+  public removeMenuFromCart(target: CartMenuLine): void {
+    this._cartMenuLines.update((lines) => lines.filter((line) => line !== target));
   }
 
   private getCartQuantity(productId: string): number {
@@ -283,12 +333,14 @@ export class ComandaFacade {
 
   public clearCart(): void {
     this._cartLines.set([]);
+    this._cartMenuLines.set([]);
   }
 
   public async sendComanda(currentUser: AuthUser | null): Promise<boolean> {
-    const lines = this._cartLines();
+    const productLines = this._cartLines();
+    const menuLines = this._cartMenuLines();
 
-    if (!this.orderId || lines.length === 0 || this._sendingOrder()) {
+    if (!this.orderId || (productLines.length === 0 && menuLines.length === 0) || this._sendingOrder()) {
       return false;
     }
 
@@ -302,7 +354,7 @@ export class ComandaFacade {
     this._sendError.set(null);
 
     try {
-      for (const line of lines) {
+      for (const line of productLines) {
         await firstValueFrom(
           this.tpvService.addOrderLine({
             order_id: this.orderId,
@@ -314,7 +366,24 @@ export class ComandaFacade {
         );
       }
 
+      for (const menuLine of menuLines) {
+        await firstValueFrom(
+          this.tpvService.addMenuLineToOrder({
+            order_id: this.orderId,
+            menu_id: menuLine.menuId,
+            notes: menuLine.notes,
+            selections: menuLine.selections.map((s) => ({
+              section_id: s.sectionId,
+              product_id: s.productId,
+              variant_id: s.variantId,
+              modifiers: s.modifiers,
+            })),
+          }),
+        );
+      }
+
       this._cartLines.set([]);
+      this._cartMenuLines.set([]);
 
       return true;
     } catch (err) {

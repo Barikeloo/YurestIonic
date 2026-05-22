@@ -23,7 +23,10 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
         $restaurantId = EloquentRestaurant::query()->where('uuid', $saleLine->restaurantId()->value())->value('id');
         $saleId = EloquentSale::query()->where('uuid', $saleLine->saleId()->value())->value('id');
         $orderLineId = EloquentOrderLine::query()->where('uuid', $saleLine->orderLineId()->value())->value('id');
-        $productId = EloquentProduct::query()->where('uuid', $saleLine->productId()->value())->value('id');
+        $productUuid = $saleLine->productId()?->value();
+        $productId = $productUuid !== null
+            ? EloquentProduct::query()->where('uuid', $productUuid)->value('id')
+            : null;
         $userId = EloquentUser::query()->where('uuid', $saleLine->userId()->value())->value('id');
 
         $this->model->newQuery()->updateOrCreate(
@@ -71,7 +74,9 @@ final class EloquentSaleLineRepository implements SaleLineRepositoryInterface
         $restaurantUuid = EloquentRestaurant::query()->where('id', $model->restaurant_id)->value('uuid');
         $saleUuid = EloquentSale::query()->where('id', $model->sale_id)->value('uuid');
         $orderLineUuid = EloquentOrderLine::query()->where('id', $model->order_line_id)->value('uuid');
-        $productUuid = EloquentProduct::query()->where('id', $model->product_id)->value('uuid');
+        $productUuid = $model->product_id !== null
+            ? EloquentProduct::query()->where('id', $model->product_id)->value('uuid')
+            : null;
         $userUuid = EloquentUser::query()->where('id', $model->user_id)->value('uuid');
 
         return SaleLine::fromPersistence(
