@@ -186,11 +186,16 @@
                     <span class="line-modifiers-mini">Nota: {{ menuLine.notes }}</span>
                   </div>
                 }
+                <div class="order-line-meta">
+                  <span class="order-line-unit">{{ formatCents(menuLine.unitPrice) }} / ud.</span>
+                </div>
               </div>
-              <div class="cart-line-right" (click)="$event.stopPropagation()">
-                <div class="order-line-price">{{ formatCents(menuLine.unitPrice) }}</div>
-                <button class="btn-remove-cart" (click)="removeMenuFromCart(menuLine)" title="Eliminar">×</button>
+              <div class="cart-qty-controls" (click)="$event.stopPropagation()">
+                <button class="qty-btn" (click)="changeMenuQty(menuLine, -1)" aria-label="Quitar una unidad">−</button>
+                <div class="qty-value">{{ menuLine.quantity }}</div>
+                <button class="qty-btn" (click)="changeMenuQty(menuLine, 1)" aria-label="Añadir una unidad">+</button>
               </div>
+              <div class="order-line-price">{{ formatCents(menuLine.unitPrice * menuLine.quantity) }}</div>
             </div>
           }
           @for (line of facade.cartLines(); track line) {

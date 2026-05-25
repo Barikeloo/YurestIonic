@@ -1,0 +1,79 @@
+<div class="modal-overlay" [class.open]="isOpen" (click)="onOverlayClick()">
+  <div class="modal-box transfers-box" (click)="onBoxClick($event)">
+    <button class="modal-close-btn" (click)="close.emit()" aria-label="Cerrar">✕</button>
+
+    <div class="transfers-header">
+      <div class="transfers-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 1l4 4-4 4"></path>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+          <path d="M7 23l-4-4 4-4"></path>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+        </svg>
+      </div>
+      <div class="transfers-title-wrap">
+        <div class="transfers-title">{{ title }}</div>
+        @if (subtitle) {
+          <div class="transfers-subtitle">{{ subtitle }}</div>
+        }
+      </div>
+      @if (!loading) {
+        <div class="transfers-count">{{ transfers.length }}</div>
+      }
+    </div>
+
+    <div class="transfers-body">
+      @if (loading) {
+        <div class="transfers-empty">Cargando transferencias...</div>
+      }
+      @if (!loading && transfers.length === 0) {
+        <div class="transfers-empty">
+          <div class="transfers-empty-icon">↔</div>
+          <div>Sin transferencias registradas para este pedido.</div>
+        </div>
+      }
+      @if (!loading && transfers.length > 0) {
+        <ol class="transfers-timeline">
+          @for (transfer of transfers; track transfer.id; let i = $index) {
+            <li class="transfer-item">
+              <div class="transfer-step">
+                <div class="transfer-step-num">{{ i + 1 }}</div>
+                @if (i < transfers.length - 1) {
+                  <div class="transfer-step-line"></div>
+                }
+              </div>
+              <div class="transfer-card">
+                <div class="transfer-route">
+                  <div class="transfer-table from">
+                    <span class="transfer-label">Desde</span>
+                    <span class="transfer-value">{{ transfer.fromTable }}</span>
+                  </div>
+                  <div class="transfer-arrow" aria-hidden="true">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </div>
+                  <div class="transfer-table to">
+                    <span class="transfer-label">Hacia</span>
+                    <span class="transfer-value">{{ transfer.toTable }}</span>
+                  </div>
+                </div>
+                <div class="transfer-footer">
+                  <span class="transfer-user">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    {{ transfer.user }}
+                  </span>
+                  <span class="transfer-date">{{ transfer.date }}</span>
+                </div>
+              </div>
+            </li>
+          }
+        </ol>
+      }
+    </div>
+  </div>
+</div>

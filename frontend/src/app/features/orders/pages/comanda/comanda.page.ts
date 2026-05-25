@@ -90,13 +90,19 @@ export class ComandaPage implements OnInit, OnDestroy {
       modifiers: result.modifiers,
     });
 
-    this.selectedProduct = null;
-    this.configModalOpen = false;
+    // Diferimos el cierre para que el click sintético de pantalla táctil
+    // no aterrice en el botón que queda debajo del modal una vez cerrado.
+    setTimeout(() => {
+      this.selectedProduct = null;
+      this.configModalOpen = false;
+    });
   }
 
   public onConfigClose(): void {
-    this.selectedProduct = null;
-    this.configModalOpen = false;
+    setTimeout(() => {
+      this.selectedProduct = null;
+      this.configModalOpen = false;
+    });
   }
 
   public setActiveCatalog(catalog: 'products' | 'menus'): void {
@@ -113,12 +119,21 @@ export class ComandaPage implements OnInit, OnDestroy {
 
     this.facade.addMenuLine(this.selectedMenu, result.selections, result.notes);
 
-    this.selectedMenu = null;
-    this.menuConfigModalOpen = false;
+    // Diferimos el cierre del modal a la siguiente macro-task para evitar
+    // que el click sintético se filtre al botón "Enviar comanda" que queda
+    // detrás del modal una vez se desmonta del DOM.
+    setTimeout(() => {
+      this.selectedMenu = null;
+      this.menuConfigModalOpen = false;
+    });
   }
 
   public removeMenuFromCart(line: CartMenuLine): void {
     this.facade.removeMenuFromCart(line);
+  }
+
+  public changeMenuQty(line: CartMenuLine, delta: number): void {
+    this.facade.changeMenuQty(line, delta);
   }
 
   public menuCartLineSelectionsLabel(line: CartMenuLine): string {
@@ -126,8 +141,10 @@ export class ComandaPage implements OnInit, OnDestroy {
   }
 
   public onMenuConfigClose(): void {
-    this.selectedMenu = null;
-    this.menuConfigModalOpen = false;
+    setTimeout(() => {
+      this.selectedMenu = null;
+      this.menuConfigModalOpen = false;
+    });
   }
 
   public isOutOfStock(product: TpvProductItem): boolean {

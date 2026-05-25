@@ -247,12 +247,7 @@ export class MesasFacade {
       throw new Error('No hay sesión activa');
     }
 
-    await firstValueFrom(
-      this.tpvService.updateOrder(table.order_id, {
-        action: 'mark-to-charge',
-        closed_by_user_id: currentUser.id,
-      }),
-    );
+    await firstValueFrom(this.tpvService.markOrderToCharge(table.order_id, currentUser.id));
 
     const previouslySelectedId = table.id;
     await this.loadData();

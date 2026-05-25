@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Order\Infrastructure\Entrypoint\Http\Requests;
 
-use App\Order\Application\UpdateOrder\UpdateOrderCommand;
+use App\Order\Application\ReopenOrder\ReopenOrderCommand;
 use Illuminate\Foundation\Http\FormRequest;
 
-final class UpdateOrderRequest extends FormRequest
+final class ReopenOrderRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -18,7 +18,7 @@ final class UpdateOrderRequest extends FormRequest
     {
         return [
             'id' => ['required', 'string', 'uuid'],
-            'diners' => ['sometimes', 'integer', 'min:1'],
+            'reopened_by_user_id' => ['required', 'string', 'uuid'],
         ];
     }
 
@@ -29,11 +29,11 @@ final class UpdateOrderRequest extends FormRequest
         ]);
     }
 
-    public function toCommand(): UpdateOrderCommand
+    public function toCommand(): ReopenOrderCommand
     {
-        return new UpdateOrderCommand(
+        return new ReopenOrderCommand(
             id: (string) $this->input('id'),
-            diners: $this->input('diners') !== null ? (int) $this->input('diners') : null,
+            reopenedByUserId: (string) $this->input('reopened_by_user_id'),
         );
     }
 }

@@ -237,8 +237,6 @@ interface AddLinePayload {
 
 interface UpdateOrderPayload {
   diners?: number;
-  action?: 'mark-to-charge' | 'close' | 'cancel';
-  closed_by_user_id?: string;
 }
 
 export interface TransferOrderPayload {
@@ -260,6 +258,7 @@ export interface OrderTransferItem {
   from_table_id: string;
   to_table_id: string;
   transferred_by_user_id: string;
+  transferred_by_user_name?: string;
   transferred_at: string;
 }
 
@@ -333,6 +332,36 @@ export class TpvService {
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
+  public markOrderToCharge(id: string, closedByUserId: string): Observable<TpvOrder> {
+    return this.http
+      .post<TpvOrder>(
+        `${this.baseUrl}/tpv/orders/${id}/mark-to-charge`,
+        { closed_by_user_id: closedByUserId },
+        { withCredentials: true },
+      )
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public cancelOrder(id: string, cancelledByUserId: string): Observable<TpvOrder> {
+    return this.http
+      .post<TpvOrder>(
+        `${this.baseUrl}/tpv/orders/${id}/cancel`,
+        { cancelled_by_user_id: cancelledByUserId },
+        { withCredentials: true },
+      )
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public reopenOrder(id: string, reopenedByUserId: string): Observable<TpvOrder> {
+    return this.http
+      .post<TpvOrder>(
+        `${this.baseUrl}/tpv/orders/${id}/reopen`,
+        { reopened_by_user_id: reopenedByUserId },
+        { withCredentials: true },
+      )
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
   public deleteOrder(id: string): Observable<unknown> {
     return this.http
       .delete(`${this.baseUrl}/tpv/orders/${id}`, { withCredentials: true })
@@ -400,6 +429,17 @@ export class TpvService {
 
   public getFinalTicketText(orderId: string, width: '58' | '80' = '58'): Observable<string> {
     return this.http.get(`${this.baseUrl}/tpv/orders/${orderId}/final-ticket/print`, {
+      withCredentials: true,
+      responseType: 'text',
+      params: {
+        format: 'text',
+        width,
+      },
+    });
+  }
+
+  public getOrderPreTicketText(orderId: string, width: '58' | '80' = '80'): Observable<string> {
+    return this.http.get(`${this.baseUrl}/tpv/orders/${orderId}/pre-ticket`, {
       withCredentials: true,
       responseType: 'text',
       params: {

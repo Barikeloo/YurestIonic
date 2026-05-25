@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Order\Infrastructure\Entrypoint\Http\Requests;
 
-use App\Order\Application\UpdateOrder\UpdateOrderCommand;
+use App\Order\Application\CancelOrder\CancelOrderCommand;
 use Illuminate\Foundation\Http\FormRequest;
 
-final class UpdateOrderRequest extends FormRequest
+final class CancelOrderRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -18,7 +18,7 @@ final class UpdateOrderRequest extends FormRequest
     {
         return [
             'id' => ['required', 'string', 'uuid'],
-            'diners' => ['sometimes', 'integer', 'min:1'],
+            'cancelled_by_user_id' => ['required', 'string', 'uuid'],
         ];
     }
 
@@ -29,11 +29,11 @@ final class UpdateOrderRequest extends FormRequest
         ]);
     }
 
-    public function toCommand(): UpdateOrderCommand
+    public function toCommand(): CancelOrderCommand
     {
-        return new UpdateOrderCommand(
+        return new CancelOrderCommand(
             id: (string) $this->input('id'),
-            diners: $this->input('diners') !== null ? (int) $this->input('diners') : null,
+            cancelledByUserId: (string) $this->input('cancelled_by_user_id'),
         );
     }
 }

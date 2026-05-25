@@ -35,23 +35,89 @@
             <div class="kpi-value">{{ formatCents(facade.kpiTicketMedium()) }}</div>
           </div>
         </div>
+        <!-- Refresh indicator -->
+        @if (facade.refreshLabel()) {
+          <div class="refresh-indicator">
+            <span class="refresh-dot"></span>
+            Actualizado {{ facade.refreshLabel() }}
+          </div>
+        }
+        <!-- Smart filter chips -->
+        <div class="pedidos-chips">
+          @for (chip of chips; track chip.id) {
+            @let count = facade.chipCounts()[chip.id];
+            <button
+              class="chip"
+              [class.active]="facade.activeChip() === chip.id"
+              (click)="toggleChip(chip.id)"
+              [attr.aria-pressed]="facade.activeChip() === chip.id"
+            >
+              <span class="chip-icon" [attr.data-icon]="chip.icon" aria-hidden="true">
+                @if (chip.icon === 'user') {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                  </svg>
+                }
+                @if (chip.icon === 'clock') {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                }
+                @if (chip.icon === 'euro') {
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 5a8 8 0 1 0 0 14"></path>
+                    <line x1="3" y1="10" x2="14" y2="10"></line>
+                    <line x1="3" y1="14" x2="13" y2="14"></line>
+                  </svg>
+                }
+              </span>
+              <span class="chip-label">{{ chip.label }}</span>
+              @if (count > 0) {
+                <span class="chip-count">{{ count }}</span>
+              }
+              @if (facade.activeChip() === chip.id) {
+                <span class="chip-close" aria-hidden="true">✕</span>
+              }
+            </button>
+          }
+        </div>
         <!-- Toolbar -->
         <div class="pedidos-toolbar">
-          <select class="pedidos-input" [ngModel]="facade.filters().status" (ngModelChange)="updateFilter('status', $event)">
+          <select
+            class="pedidos-input"
+            [ngModel]="facade.filters().status"
+            (ngModelChange)="updateFilter('status', $event)"
+            [disabled]="isChipOverridingStatus()"
+            [title]="isChipOverridingStatus() ? 'Filtro forzado por el chip activo' : ''"
+          >
             <option value="all">Todos los estados</option>
             <option value="open">Abiertos</option>
             <option value="to-charge">Para cobrar</option>
             <option value="invoiced">Cerrados</option>
             <option value="cancelled">Cancelados</option>
           </select>
-          <select class="pedidos-input" [ngModel]="facade.filters().user" (ngModelChange)="updateFilter('user', $event)">
+          <select
+            class="pedidos-input"
+            [ngModel]="facade.filters().user"
+            (ngModelChange)="updateFilter('user', $event)"
+            [disabled]="isChipOverridingUser()"
+            [title]="isChipOverridingUser() ? 'Filtro forzado por el chip activo' : ''"
+          >
             <option value="all">Todos los camareros</option>
             @for (user of $any(facade.users()); track user) {
               <option [value]="user.user_uuid">{{ user.name }}</option>
             }
           </select>
           <input class="pedidos-input" type="date" [ngModel]="facade.filters().date" (ngModelChange)="updateFilter('date', $event)" />
-          <input class="pedidos-input" type="text" placeholder="Buscar por ID..." [ngModel]="facade.filters().search" (ngModelChange)="updateFilter('search', $event)" />
+          <input
+            class="pedidos-input"
+            type="text"
+            placeholder="Buscar mesa, camarero, ID, importe..."
+            [ngModel]="searchDisplay()"
+            (ngModelChange)="onSearchInput($event)"
+          />
           <button class="btn-reset" (click)="resetFilters()" title="Limpiar filtros">↺</button>
         </div>
         <!-- List -->
@@ -71,10 +137,19 @@
                 >
                 <div class="pedido-main">
                   <div class="pedido-main-title">{{ getTableName(order.table_id) }}</div>
-                  <div class="pedido-main-sub">{{ order.diners }} comensal{{ order.diners !== 1 ? 'es' : '' }}</div>
+                  <div class="pedido-main-sub">
+                    {{ order.diners }} comensal{{ order.diners !== 1 ? 'es' : '' }} · {{ getUserName(order.opened_by_user_id) }}
+                  </div>
                 </div>
-                <div class="pedido-meta">{{ formatTime(order.opened_at) }}</div>
-                <div class="pedido-meta">{{ formatCents(order.total) }}</div>
+                <div class="pedido-meta" [class]="timeColor(order.opened_at)">
+                  {{ formatTime(order.opened_at) }}
+                </div>
+                <div class="pedido-meta">
+                  <span class="pedido-total">{{ formatCents(order.total) }}</span>
+                  @if (hasUnpaid(order)) {
+                    <span class="pedido-remaining">({{ formatCents(order.remaining_total!) }} pend.)</span>
+                  }
+                </div>
                 <div>
                   <span class="status-pill" [class]="'status-' + order.status">
                     {{ statusLabel(order.status) }}
@@ -117,11 +192,14 @@
               </div>
             }
             @for (line of facade.selectedLines(); track line) {
-              <div class="pedido-detail-line">
+              <div class="pedido-detail-line" (click)="openLineDetail(line)">
                 <div class="pedido-line-qty">{{ line.quantity }}</div>
-                <div>
-                  <div class="pedido-line-name">{{ line.product_name ?? 'Producto' }}</div>
+                <div class="pedido-line-body">
+                  <div class="pedido-line-name">{{ lineTitle(line) }}</div>
                   <div class="pedido-line-meta">{{ formatCents(line.price) }} / ud.</div>
+                </div>
+                <div class="pedido-line-chevron">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
                 </div>
                 <div class="pedido-line-price">{{ formatCents(line.price * line.quantity) }}</div>
               </div>
@@ -132,18 +210,155 @@
             <div class="pedido-summary-row"><span>Impuestos</span><span>{{ formatCents(facade.detailTax()) }}</span></div>
             <div class="pedido-summary-row total"><span>Total</span><span>{{ formatCents(facade.detailTotal()) }}</span></div>
           </div>
+          @let busy = facade.actionInProgress();
           <div class="pedido-detail-actions">
-            <button class="btn-small" (click)="goToMesa()">Abrir en mesa</button>
-            <button class="btn-small">Imprimir ticket</button>
-            <button class="btn-small primary" (click)="markAsCharged()" [disabled]="selectedOrder.status !== OrderStatus.OPEN">
-              Marcar cobrado
-            </button>
-            <button class="btn-small" (click)="cancelOrder()" [disabled]="selectedOrder.status === OrderStatus.INVOICED || selectedOrder.status === OrderStatus.CANCELLED">
-              Cancelar pedido
-            </button>
+            <!-- ── Primary CTA ─────────────────────────── -->
+            @if (selectedOrder.status === OrderStatus.OPEN) {
+              <button
+                class="action-primary"
+                (click)="markAsCharged()"
+                [disabled]="busy !== null"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                {{ busy === 'mark-to-charge' ? 'Marcando...' : 'Marcar para cobrar' }}
+              </button>
+            }
+            @if (selectedOrder.status === OrderStatus.TO_CHARGE) {
+              <button
+                class="action-primary"
+                (click)="goToCaja()"
+                [disabled]="busy !== null"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="6" width="20" height="12" rx="2"></rect>
+                  <circle cx="12" cy="12" r="2"></circle>
+                  <path d="M6 12h.01M18 12h.01"></path>
+                </svg>
+                Ir a caja
+              </button>
+            }
+
+            <!-- ── Secondary actions ───────────────────── -->
+            <div class="action-grid">
+              @if (selectedOrder.status !== OrderStatus.CANCELLED) {
+                <button
+                  class="action-secondary"
+                  (click)="goToMesa()"
+                  [disabled]="busy !== null"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                  Abrir en mesa
+                </button>
+              }
+              @if (selectedOrder.status === OrderStatus.OPEN || selectedOrder.status === OrderStatus.TO_CHARGE) {
+                <button
+                  class="action-secondary"
+                  (click)="printPreTicket()"
+                  [disabled]="busy !== null"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                  </svg>
+                  {{ busy === 'print' ? 'Imprimiendo...' : 'Imprimir pre-cuenta' }}
+                </button>
+              }
+              @if (selectedOrder.status === OrderStatus.INVOICED) {
+                <button
+                  class="action-secondary"
+                  (click)="printTicket()"
+                  [disabled]="busy !== null"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                  </svg>
+                  {{ busy === 'print' ? 'Imprimiendo...' : 'Imprimir ticket' }}
+                </button>
+              }
+              @if (selectedOrder.status === OrderStatus.TO_CHARGE && permissions.canReopenOrders()) {
+                <button
+                  class="action-secondary"
+                  (click)="reopenOrder()"
+                  [disabled]="busy !== null"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="1 4 1 10 7 10"></polyline>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                  </svg>
+                  {{ busy === 'reopen' ? 'Reabriendo...' : 'Reabrir mesa' }}
+                </button>
+              }
+              <button
+                class="action-secondary"
+                (click)="openTransfers()"
+                [disabled]="busy !== null"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 1l4 4-4 4"></path>
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                  <path d="M7 23l-4-4 4-4"></path>
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                </svg>
+                Transferencias
+                @let count = facade.transferCounts()[selectedOrder.id];
+                @if (count !== undefined && count > 0) {
+                  <span class="action-badge">{{ count }}</span>
+                }
+              </button>
+            </div>
+
+            <!-- ── Danger zone ─────────────────────────── -->
+            @if (selectedOrder.status === OrderStatus.OPEN && permissions.canCancelOrders()) {
+              <button
+                class="action-danger"
+                (click)="cancelOrder()"
+                [disabled]="busy !== null"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"></path>
+                  <path d="M10 11v6M14 11v6"></path>
+                </svg>
+                {{ busy === 'cancel' ? 'Cancelando...' : 'Cancelar pedido' }}
+              </button>
+            }
           </div>
         }
       </aside>
     </div>
   }
 </div>
+
+@let confirmConfig = pendingConfirm();
+<app-confirm-modal
+  [isOpen]="confirmConfig !== null"
+  [title]="confirmConfig?.title ?? ''"
+  [message]="confirmConfig?.message ?? ''"
+  [confirmLabel]="confirmConfig?.confirmLabel ?? 'Confirmar'"
+  [variant]="confirmConfig?.variant ?? 'default'"
+  [loading]="facade.actionInProgress() !== null"
+  (confirm)="onConfirmModalAccept()"
+  (cancel)="onConfirmModalCancel()"
+/>
+
+<app-line-detail-modal
+  [line]="selectedLine()"
+  (close)="closeLineDetail()"
+/>
+
+<app-transfers-modal
+  [isOpen]="transfersModalOpen()"
+  [loading]="facade.loadingTransfers()"
+  [transfers]="transfersDisplay()"
+  [title]="transfersModalTitle()"
+  [subtitle]="transfersModalSubtitle()"
+  (close)="closeTransfers()"
+/>

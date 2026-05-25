@@ -448,16 +448,7 @@
   white-space: nowrap;
 }
 
-.order-total-big {
-  font-size: 28px;
-  font-weight: 600;
-  color: #0D0D0D;
-  font-family: 'DM Mono', monospace;
-  letter-spacing: -0.5px;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-}
+// (Header sin importes — solo identidad de mesa)
 
 // ── Order lines ────────────────────────────────
 .order-lines {
@@ -537,133 +528,6 @@
   max-width: 200px;
 }
 
-.line-detail-box {
-  max-width: 420px;
-  width: 92%;
-  padding: 28px 28px 22px;
-}
-
-.line-detail-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 22px;
-  padding-right: 40px;
-}
-
-.line-detail-qty {
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
-  background: #FFECEC;
-  color: #FF4D4D;
-  font-size: 22px;
-  font-weight: 700;
-  font-family: 'DM Mono', monospace;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.line-detail-title-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  min-width: 0;
-  flex: 1;
-  padding-top: 4px;
-}
-
-.line-detail-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: #0D0D0D;
-  line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.line-detail-variant {
-  font-size: 12px;
-  font-weight: 600;
-  color: #3D3D3D;
-  background: #F4F4F4;
-  padding: 3px 10px;
-  border-radius: 12px;
-}
-
-.line-detail-section {
-  margin-bottom: 18px;
-
-  .section-title {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: #A0A0A0;
-    margin-bottom: 10px;
-  }
-}
-
-.line-modifier-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 14px;
-  background: #FAFAFA;
-  border-radius: 10px;
-  margin-bottom: 6px;
-  font-size: 14px;
-
-  .modifier-name {
-    color: #0D0D0D;
-    font-weight: 500;
-  }
-
-  .modifier-price {
-    font-family: 'DM Mono', monospace;
-    font-weight: 600;
-    color: #FF4D4D;
-    white-space: nowrap;
-
-    &.free { color: #1A9E5A; }
-  }
-}
-
-.line-detail-summary {
-  margin-top: 8px;
-  padding: 14px 16px;
-  background: #FAFAFA;
-  border-radius: 14px;
-}
-
-.summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
-  padding: 4px 0;
-
-  .summary-label { color: #7A7A7A; }
-  .summary-value {
-    font-family: 'DM Mono', monospace;
-    font-weight: 600;
-    color: #3D3D3D;
-  }
-
-  &.total {
-    border-top: 1px solid #E8E8E8;
-    margin-top: 6px;
-    padding-top: 10px;
-
-    .summary-label { font-size: 15px; font-weight: 700; color: #0D0D0D; }
-    .summary-value { font-size: 20px; font-weight: 700; color: #0D0D0D; }
-  }
-}
 
 .order-line-qty {
   font-size: 15px;
@@ -706,28 +570,163 @@
 }
 
 // ── Summary ────────────────────────────────────
-.order-summary {
-  padding: 16px 24px;
-  border-top: 1px solid #F0F0F0;
+// ── Payment card (consolida toda la info financiera) ──
+.payment-card {
+  margin: 0 20px 12px;
+  padding: 16px 18px 14px;
+  background: #fff;
+  border: 1px solid #E8E8E8;
+  border-radius: 14px;
   flex-shrink: 0;
-  background: #FAFAFA;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.2s, background 0.2s;
+
+  &.fully-paid {
+    border-color: #B8E0C8;
+    background: #F4FBF7;
+  }
 }
 
-.summary-row {
+.payment-card-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #E8E8E8;
+}
+
+.breakdown-row {
   display: flex;
   justify-content: space-between;
-  font-size: 14px;
+  font-size: 12px;
   color: #7A7A7A;
-  margin-bottom: 6px;
+  font-family: 'DM Mono', monospace;
+  letter-spacing: -0.1px;
 
-  &.total {
-    font-size: 18px;
+  span:first-child {
+    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
     font-weight: 600;
-    color: #0D0D0D;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px solid #E8E8E8;
-    margin-bottom: 0;
+    font-size: 11px;
+    color: #A0A0A0;
+  }
+}
+
+.payment-card-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.payment-card-total-label {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #3D3D3D;
+}
+
+.payment-card-total-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #0D0D0D;
+}
+
+// Barra de progreso de pago
+.payment-card-progress {
+  position: relative;
+  height: 6px;
+  background: #F0F0F0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.payment-card-progress-bar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, #1A9E5A 0%, #2BB870 100%);
+  border-radius: 999px;
+  transition: width 0.4s ease-out;
+  min-width: 0;
+}
+
+.payment-card.fully-paid .payment-card-progress {
+  background: #D6EFE0;
+}
+
+// Chips de estado al pie
+.payment-card-status {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.payment-status-chip {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 0;
+  white-space: nowrap;
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .status-label {
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .status-value {
+    margin-left: auto;
+    font-family: 'DM Mono', monospace;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+    font-size: 13px;
+  }
+
+  &.paid {
+    background: #E6F5ED;
+    color: #1A9E5A;
+
+    .status-dot { background: #1A9E5A; }
+
+    &.zero {
+      background: #F4F4F4;
+      color: #A0A0A0;
+      .status-dot { background: #C8C8C8; }
+    }
+  }
+
+  &.pending {
+    background: #FDF0E8;
+    color: #C25A1D;
+
+    .status-dot { background: #E07A2D; }
+  }
+
+  &.done {
+    flex: 0 1 auto;
+    background: #E6F5ED;
+    color: #1A9E5A;
+    padding: 8px 14px;
   }
 }
 

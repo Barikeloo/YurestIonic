@@ -156,9 +156,6 @@
               </div>
             }
           </div>
-          <div class="order-total-big">
-            {{ selectedTable.occupied && (selectedTable.remaining_total ?? 0) > 0 ? formatCents(selectedTable.remaining_total ?? 0) : '0,00€' }}
-          </div>
         </div>
       </div>
       <div class="order-lines">
@@ -207,11 +204,48 @@
           }
         }
       </div>
-      <div class="order-summary">
-        <div class="summary-row"><span>Subtotal</span><span>{{ formatCents(facade.linesSubtotal()) }}</span></div>
-        <div class="summary-row"><span>Impuestos</span><span>{{ formatCents(facade.linesTax()) }}</span></div>
-        <div class="summary-row total"><span>Total</span><span>{{ formatCents(facade.linesTotal()) }}</span></div>
-      </div>
+      @if (selectedTable.occupied && facade.orderLines().length > 0) {
+        @let total = selectedTable.total ?? facade.linesTotal();
+        @let remaining = selectedTable.remaining_total ?? 0;
+        @let paid = total - remaining > 0 ? total - remaining : 0;
+        @let paidPct = total > 0 ? (paid / total) * 100 : 0;
+        <div class="payment-card" [class.fully-paid]="remaining <= 0 && paid > 0">
+          <div class="payment-card-breakdown">
+            <div class="breakdown-row"><span>Subtotal</span><span>{{ formatCents(facade.linesSubtotal()) }}</span></div>
+            <div class="breakdown-row"><span>Impuestos</span><span>{{ formatCents(facade.linesTax()) }}</span></div>
+          </div>
+          <div class="payment-card-total">
+            <span class="payment-card-total-label">Total</span>
+            <span class="payment-card-total-value">{{ formatCents(total) }}</span>
+          </div>
+          @if (paid > 0 || remaining > 0) {
+            <div class="payment-card-progress" [attr.aria-label]="'Pagado ' + paidPct + ' por ciento'">
+              <div class="payment-card-progress-bar" [style.width.%]="paidPct"></div>
+            </div>
+            <div class="payment-card-status">
+              <div class="payment-status-chip paid" [class.zero]="paid <= 0">
+                <span class="status-dot"></span>
+                <span class="status-label">Pagado</span>
+                <span class="status-value">{{ formatCents(paid) }}</span>
+              </div>
+              @if (remaining > 0) {
+                <div class="payment-status-chip pending">
+                  <span class="status-dot"></span>
+                  <span class="status-label">Pendiente</span>
+                  <span class="status-value">{{ formatCents(remaining) }}</span>
+                </div>
+              } @else {
+                <div class="payment-status-chip done">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span class="status-label">Cobrado</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
       <div class="order-actions">
         @if (selectedTable.status === OrderStatus.TO_CHARGE) {
           <button
@@ -344,104 +378,10 @@
   </div>
 </div>
 
-<!-- ── Modal detalle de línea ─────────────────── -->
-<div class="modal-overlay" [class.open]="detailModalOpen" (click)="closeLineDetail()">
-  @if (selectedLine; as line) {
-    <div class="modal-box line-detail-box" (click)="$event.stopPropagation()">
-      <button class="modal-close-btn" (click)="closeLineDetail()">✕</button>
-
-      <div class="line-detail-header">
-        <div class="line-detail-qty">{{ line.quantity }}×</div>
-        <div class="line-detail-title-wrap">
-          <div class="line-detail-title">{{ lineDisplayName(line) }}</div>
-          @if (!isMenuLine(line) && line.variant_name) {
-            <span class="line-detail-variant">{{ line.variant_name }}</span>
-          }
-        </div>
-      </div>
-
-      @if (isMenuLine(line) && line.menu_selections && line.menu_selections.length > 0) {
-        <div class="line-detail-section">
-          <div class="section-title">Elecciones del menú</div>
-          @for (sel of line.menu_selections; track sel.product_id) {
-            <div class="line-modifier-item">
-              <span class="modifier-name">
-                <strong>{{ sel.section_name }}:</strong> {{ sel.product_name }}
-                @if (sel.variant_name) {
-                  <span class="line-detail-variant">{{ sel.variant_name }}</span>
-                }
-              </span>
-              <span class="modifier-price" [class.free]="sel.extra_price === 0">
-                {{ sel.extra_price === 0 ? '' : '+' + formatCents(sel.extra_price) }}
-              </span>
-            </div>
-            @for (mod of sel.modifiers; track mod.id) {
-              <div class="line-modifier-item" style="padding-left: 16px">
-                <span class="modifier-name">+ {{ mod.name }}</span>
-                <span class="modifier-price" [class.free]="mod.price === 0">
-                  {{ mod.price === 0 ? 'Gratis' : '+' + formatCents(mod.price) }}
-                </span>
-              </div>
-            }
-          }
-        </div>
-      }
-
-      @if (!isMenuLine(line) && lineAccompaniments(line).length > 0) {
-        <div class="line-detail-section">
-          <div class="section-title">Acompañamientos</div>
-          @for (mod of lineAccompaniments(line); track mod.id) {
-            <div class="line-modifier-item">
-              <span class="modifier-name">{{ mod.name }}</span>
-              <span class="modifier-price" [class.free]="mod.price === 0">
-                {{ mod.price === 0 ? 'Gratis' : '+' + formatCents(mod.price) }}
-              </span>
-            </div>
-          }
-        </div>
-      }
-
-      @if (!isMenuLine(line) && lineExtras(line).length > 0) {
-        <div class="line-detail-section">
-          <div class="section-title">Extras</div>
-          @for (mod of lineExtras(line); track mod.id) {
-            <div class="line-modifier-item">
-              <span class="modifier-name">{{ mod.name }}</span>
-              <span class="modifier-price" [class.free]="mod.price === 0">
-                {{ mod.price === 0 ? 'Gratis' : '+' + formatCents(mod.price) }}
-              </span>
-            </div>
-          }
-        </div>
-      }
-
-      @if (!isMenuLine(line) && lineLegacyModifiers(line).length > 0) {
-        <div class="line-detail-section">
-          <div class="section-title">Modificadores</div>
-          @for (mod of lineLegacyModifiers(line); track mod.id) {
-            <div class="line-modifier-item">
-              <span class="modifier-name">{{ mod.name }}</span>
-              <span class="modifier-price" [class.free]="mod.price === 0">
-                {{ mod.price === 0 ? 'Gratis' : '+' + formatCents(mod.price) }}
-              </span>
-            </div>
-          }
-        </div>
-      }
-
-      <div class="line-detail-summary">
-        <div class="summary-row">
-          <span class="summary-label">Precio unitario</span>
-          <span class="summary-value">{{ formatCents(line.price) }}</span>
-        </div>
-        <div class="summary-row total">
-          <span class="summary-label">Total</span>
-          <span class="summary-value">{{ formatCents(getLineTotal(line)) }}</span>
-        </div>
-      </div>
-    </div>
-  }
-</div>
+<app-line-detail-modal
+  [line]="selectedLine"
+  (close)="closeLineDetail()"
+/>
 
 <!-- Modal de autenticación PIN - Abrir mesa -->
 <app-pin-auth-modal

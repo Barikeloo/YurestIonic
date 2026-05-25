@@ -1,6 +1,6 @@
 
 import { Component, inject, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PinAuthModalComponent, PinAuthResult } from '../../../../components/pin-auth-modal/pin-auth-modal.component';
 import { PinAuthService } from '../../../../core/services/pin-auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
@@ -13,6 +13,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { OrderTransferItem, TpvOrderLine, TpvService } from '../../../cash/services/tpv.service';
 import { firstValueFrom } from 'rxjs';
 import { TransferTableModalComponent } from '../../ui/transfer-table-modal/transfer-table-modal.component';
+import { LineDetailModalComponent } from '../../../../shared/components/line-detail-modal/line-detail-modal.component';
 
 const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#E74C3C'];
 
@@ -20,7 +21,7 @@ const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#
   selector: 'app-mesas',
   templateUrl: './mesas.page.html',
   styleUrls: ['./mesas.page.scss'],
-  imports: [PinAuthModalComponent, DinersStatusComponent, FilterByPipe, DragDropModule, TransferTableModalComponent],
+  imports: [PinAuthModalComponent, DinersStatusComponent, FilterByPipe, DragDropModule, TransferTableModalComponent, LineDetailModalComponent],
   providers: [MesasFacade],
 })
 export class MesasPage implements OnInit {
@@ -28,6 +29,7 @@ export class MesasPage implements OnInit {
   protected readonly OrderStatus = OrderStatus;
   private readonly pinAuthService = inject(PinAuthService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly toastService = inject(ToastService);
   private readonly tpvService = inject(TpvService);
 
@@ -89,6 +91,16 @@ export class MesasPage implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await this.facade.loadData();
+
+    const preselectId = this.route.snapshot.queryParams['selectedTableId'] ?? null;
+
+    if (preselectId) {
+      const table = this.facade.tables().find((candidate) => candidate.id === preselectId);
+
+      if (table) {
+        await this.selectTable(table);
+      }
+    }
   }
 
   public setZone(zoneId: string): void {
@@ -754,18 +766,6 @@ export class MesasPage implements OnInit {
   public getLineTotal(line: TpvOrderLine): number {
     const modTotal = (line.modifiers ?? []).reduce((acc, m) => acc + m.price, 0);
     return (line.price + modTotal) * line.quantity;
-  }
-
-  public lineAccompaniments(line: TpvOrderLine): { id: string; name: string; price: number }[] {
-    return (line.modifiers ?? []).filter((m) => m.type === 'accompaniment');
-  }
-
-  public lineExtras(line: TpvOrderLine): { id: string; name: string; price: number }[] {
-    return (line.modifiers ?? []).filter((m) => m.type === 'extra');
-  }
-
-  public lineLegacyModifiers(line: TpvOrderLine): { id: string; name: string; price: number }[] {
-    return (line.modifiers ?? []).filter((m) => m.type !== 'extra' && m.type !== 'accompaniment');
   }
 
   public isMenuLine(line: TpvOrderLine): boolean {

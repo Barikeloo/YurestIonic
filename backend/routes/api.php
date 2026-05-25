@@ -30,15 +30,19 @@ use App\Menu\Infrastructure\Entrypoint\Http\PostController as MenuPostController
 use App\Menu\Infrastructure\Entrypoint\Http\PutController as MenuPutController;
 use App\Order\Infrastructure\Entrypoint\Http\AddLineController as OrderAddLineController;
 use App\Order\Infrastructure\Entrypoint\Http\AddMenuLineController as OrderAddMenuLineController;
+use App\Order\Infrastructure\Entrypoint\Http\CancelOrderController;
 use App\Order\Infrastructure\Entrypoint\Http\DeleteController as OrderDeleteController;
 use App\Order\Infrastructure\Entrypoint\Http\DeleteLineController as OrderDeleteLineController;
 use App\Order\Infrastructure\Entrypoint\Http\GetCollectionController as OrderGetCollectionController;
 use App\Order\Infrastructure\Entrypoint\Http\GetController as OrderGetController;
 use App\Order\Infrastructure\Entrypoint\Http\GetLinesController as OrderGetLinesController;
+use App\Order\Infrastructure\Entrypoint\Http\GetOrderPreTicketController;
 use App\Order\Infrastructure\Entrypoint\Http\GetOrderTotalController;
 use App\Order\Infrastructure\Entrypoint\Http\GetOrderTransfersController;
+use App\Order\Infrastructure\Entrypoint\Http\MarkOrderToChargeController;
 use App\Order\Infrastructure\Entrypoint\Http\PostController as OrderPostController;
 use App\Order\Infrastructure\Entrypoint\Http\PutController as OrderPutController;
+use App\Order\Infrastructure\Entrypoint\Http\ReopenOrderController;
 use App\Order\Infrastructure\Entrypoint\Http\TransferOrderController;
 use App\Product\Infrastructure\Entrypoint\Http\ActivateController as ProductActivateController;
 use App\Product\Infrastructure\Entrypoint\Http\DeactivateController as ProductDeactivateController;
@@ -165,13 +169,14 @@ Route::middleware([
     Route::get('/tpv/orders', OrderGetCollectionController::class);
     Route::get('/tpv/orders/{id}', OrderGetController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/total', GetOrderTotalController::class)->whereUuid('id');
+    Route::get('/tpv/orders/{id}/pre-ticket', GetOrderPreTicketController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/final-ticket', GetOrderFinalTicketController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/final-ticket/print', GetFinalTicketPrintController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/lines', OrderGetLinesController::class)->whereUuid('id');
     Route::put('/tpv/orders/{id}', OrderPutController::class)->whereUuid('id');
+    Route::post('/tpv/orders/{id}/mark-to-charge', MarkOrderToChargeController::class)->whereUuid('id');
     Route::post('/tpv/orders/{id}/transfer', TransferOrderController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/transfers', GetOrderTransfersController::class)->whereUuid('id');
-    Route::delete('/tpv/orders/{id}', OrderDeleteController::class)->whereUuid('id');
 
     Route::post('/tpv/sales', SalePostController::class);
     Route::post('/tpv/sales/lines', SaleAddLineController::class);
@@ -206,7 +211,7 @@ Route::middleware([
     Route::post('/tpv/charge-sessions/{id}/cancel', CancelChargeSessionController::class)->whereUuid('id');
 });
 
-// S3: Rutas de eliminación requieren supervisor o admin
+// S3: Acciones contables sensibles requieren supervisor o admin
 Route::middleware([
     EncryptCookies::class,
     AddQueuedCookiesToResponse::class,
@@ -214,6 +219,8 @@ Route::middleware([
     ResolveTenantContext::class,
     RequireSupervisorSession::class,
 ])->group(function (): void {
+    Route::post('/tpv/orders/{id}/cancel', CancelOrderController::class)->whereUuid('id');
+    Route::post('/tpv/orders/{id}/reopen', ReopenOrderController::class)->whereUuid('id');
     Route::delete('/tpv/orders/{id}', OrderDeleteController::class)->whereUuid('id');
     Route::delete('/tpv/orders/lines/{lineId}', OrderDeleteLineController::class)->whereUuid('lineId');
 });

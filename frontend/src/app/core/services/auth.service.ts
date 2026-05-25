@@ -4,6 +4,8 @@ import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
+export type UserRole = 'admin' | 'supervisor' | 'operator';
+
 export interface AuthUser {
   id: string;
   name: string;

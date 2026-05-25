@@ -62,7 +62,12 @@
       "Bash(node_modules/.bin/ng build *)",
       "Bash(php -l backend/app/Sale/Domain/Entity/SaleLine.php)",
       "Bash(php -l backend/app/Sale/Application/CreateSale/CreateSale.php)",
-      "Bash(php -l backend/app/Sale/Infrastructure/Persistence/Repositories/EloquentSaleLineRepository.php)"
+      "Bash(php -l backend/app/Sale/Infrastructure/Persistence/Repositories/EloquentSaleLineRepository.php)",
+      "Bash(php -l app/Order/Application/CancelOrder/CancelOrder.php)",
+      "Bash(php -l app/Order/Application/ReopenOrder/ReopenOrder.php)",
+      "Bash(php -l app/Order/Application/MarkOrderToCharge/MarkOrderToCharge.php)",
+      "Bash(php -l app/Order/Application/UpdateOrder/UpdateOrder.php)",
+      "Bash(php -l routes/api.php)"
     ]
   }
 }

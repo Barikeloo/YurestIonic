@@ -53,6 +53,7 @@ export interface CartMenuLine {
   taxId: string;
   /** Precio total de la unidad del menú (base + suplementos + modificadores). */
   unitPrice: number;
+  quantity: number;
   selections: CartMenuLineSelection[];
   notes: string | null;
 }
@@ -61,6 +62,13 @@ export interface CartMenuLine {
 export class ComandaFacade {
   private readonly tpvService = inject(TpvService);
   private readonly authService = inject(AuthService);
+
+  public readonly instanceId = Math.random().toString(36).slice(2, 8);
+
+  constructor() {
+    // eslint-disable-next-line no-console
+    console.log('[ComandaFacade] CONSTRUCTOR instance', this.instanceId);
+  }
 
   private readonly _loading = signal<boolean>(true);
   private readonly _order = signal<TpvOrder | null>(null);
@@ -104,7 +112,7 @@ export class ComandaFacade {
   public readonly cartMenuLines: Signal<CartMenuLine[]> = this._cartMenuLines.asReadonly();
 
   public readonly cartMenusTotal: Signal<number> = computed(() =>
-    this._cartMenuLines().reduce((acc, line) => acc + line.unitPrice, 0),
+    this._cartMenuLines().reduce((acc, line) => acc + line.unitPrice * line.quantity, 0),
   );
 
   public readonly cartTotal: Signal<number> = computed(() => {
@@ -116,7 +124,8 @@ export class ComandaFacade {
   });
 
   public readonly cartCount: Signal<number> = computed(() =>
-    this._cartLines().reduce((acc, line) => acc + line.quantity, 0) + this._cartMenuLines().length,
+    this._cartLines().reduce((acc, line) => acc + line.quantity, 0) +
+      this._cartMenuLines().reduce((acc, line) => acc + line.quantity, 0),
   );
 
   public readonly hasPendingCart: Signal<boolean> = computed(
@@ -246,6 +255,7 @@ export class ComandaFacade {
         menuName: menu.name,
         taxId: menu.tax_id,
         unitPrice,
+        quantity: 1,
         selections: enriched,
         notes,
       },
@@ -254,6 +264,14 @@ export class ComandaFacade {
 
   public removeMenuFromCart(target: CartMenuLine): void {
     this._cartMenuLines.update((lines) => lines.filter((line) => line !== target));
+  }
+
+  public changeMenuQty(target: CartMenuLine, delta: number): void {
+    this._cartMenuLines.update((lines) =>
+      lines
+        .map((line) => (line === target ? { ...line, quantity: line.quantity + delta } : line))
+        .filter((line) => line.quantity > 0),
+    );
   }
 
   private getCartQuantity(productId: string): number {
@@ -367,19 +385,23 @@ export class ComandaFacade {
       }
 
       for (const menuLine of menuLines) {
-        await firstValueFrom(
-          this.tpvService.addMenuLineToOrder({
-            order_id: this.orderId,
-            menu_id: menuLine.menuId,
-            notes: menuLine.notes,
-            selections: menuLine.selections.map((s) => ({
-              section_id: s.sectionId,
-              product_id: s.productId,
-              variant_id: s.variantId,
-              modifiers: s.modifiers,
-            })),
-          }),
-        );
+        // Cada `quantity` se dispara como una llamada independiente porque el
+        // endpoint de menús crea una OrderLine por petición (no soporta qty).
+        for (let i = 0; i < menuLine.quantity; i++) {
+          await firstValueFrom(
+            this.tpvService.addMenuLineToOrder({
+              order_id: this.orderId,
+              menu_id: menuLine.menuId,
+              notes: menuLine.notes,
+              selections: menuLine.selections.map((s) => ({
+                section_id: s.sectionId,
+                product_id: s.productId,
+                variant_id: s.variantId,
+                modifiers: s.modifiers,
+              })),
+            }),
+          );
+        }
       }
 
       this._cartLines.set([]);
@@ -466,12 +488,7 @@ export class ComandaFacade {
     this._closeError.set(null);
 
     try {
-      await firstValueFrom(
-        this.tpvService.updateOrder(this.orderId, {
-          action: 'mark-to-charge',
-          closed_by_user_id: closer.user_uuid,
-        }),
-      );
+      await firstValueFrom(this.tpvService.markOrderToCharge(this.orderId, closer.user_uuid));
 
       return true;
     } catch (err) {

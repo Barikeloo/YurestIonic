@@ -1,67 +1,165 @@
 @if (isOpen && menu) {
-  <div class="menu-modal-overlay" (click)="onClose()">
-    <div class="menu-modal" (click)="$event.stopPropagation()">
-      <header class="menu-modal__header">
-        <div class="menu-modal__title">
-          <h2>{{ menu.name }}</h2>
+  <div class="mcm-overlay" (click)="onClose()">
+    <div class="mcm-shell" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+
+      <!-- Cabecera -->
+      <header class="mcm-head">
+        <div class="mcm-head__main">
+          <div class="mcm-head__badge">Menú</div>
+          <div>
+            <h2 class="mcm-head__title">{{ menu.name }}</h2>
+            @if (menu.description) {
+              <p class="mcm-head__desc">{{ menu.description }}</p>
+            }
+          </div>
         </div>
-        <div class="menu-modal__price">{{ (menu.price / 100).toFixed(2).replace('.', ',') }} €</div>
-        <button type="button" class="menu-modal__close" (click)="onClose()" aria-label="Cerrar">×</button>
+        <div class="mcm-head__price">
+          <span class="mcm-head__price-label">Precio base</span>
+          <span class="mcm-head__price-value">{{ priceLabel(menu.price) }} €</span>
+        </div>
+        <button type="button" class="mcm-head__close" (click)="onClose()" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </header>
 
-      <div class="menu-modal__body">
-        @for (section of menu.sections; track section.id) {
-          <section class="menu-section">
-            <div class="menu-section__header">
-              <h3 class="menu-section__name">{{ section.name }}</h3>
-              <span class="menu-section__rule">{{ sectionRuleLabel(section) }}</span>
-              <span class="menu-section__count">
-                {{ sectionSelections(section.id).length }}/{{ section.max_choices }}
-              </span>
+      <!-- Contenido (rail + canvas) -->
+      <div class="mcm-content">
+
+        <!-- Rail lateral de pasos -->
+        <aside class="mcm-rail" aria-label="Secciones del menú">
+          @for (section of menu.sections; track section.id; let i = $index) {
+            @let count = sectionSelections(section.id).length;
+            @let isCurrent = currentStepIndex() === i;
+            @let isDone = isStepComplete(i) && !isCurrent;
+            <button
+              type="button"
+              class="mcm-step"
+              [class.is-current]="isCurrent"
+              [class.is-done]="isDone"
+              (click)="goToStep(i)"
+            >
+              <div class="mcm-step__indicator">
+                @if (isDone) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                } @else {
+                  <span>{{ i + 1 }}</span>
+                }
+              </div>
+              <div class="mcm-step__info">
+                <div class="mcm-step__name">{{ section.name }}</div>
+                <div class="mcm-step__rule">{{ sectionRuleLabel(section) }}</div>
+              </div>
+              @if (count > 0) {
+                <div class="mcm-step__count">{{ count }}/{{ section.max_choices }}</div>
+              }
+            </button>
+          }
+        </aside>
+
+        <!-- Canvas (sección activa) -->
+        <main class="mcm-canvas">
+          @if (currentSection(); as section) {
+            <div class="mcm-canvas__heading">
+              <div>
+                <h3 class="mcm-canvas__title">{{ section.name }}</h3>
+                <div class="mcm-canvas__rule">{{ sectionRuleLabel(section) }}</div>
+              </div>
+              <div class="mcm-canvas__count">
+                <span class="mcm-canvas__count-num">{{ sectionSelections(section.id).length }}</span>
+                <span class="mcm-canvas__count-sep">/</span>
+                <span class="mcm-canvas__count-max">{{ section.max_choices }}</span>
+              </div>
             </div>
 
-            <div class="menu-section__items">
-              @for (product of sectionItems(section); track product.id) {
-                @let selected = isProductSelected(section.id, product.id);
-                @let extra = sectionExtraPriceForProduct(section, product.id);
-                <button
-                  type="button"
-                  class="menu-item-card"
-                  [class.selected]="selected"
-                  (click)="toggleProduct(section, product)"
-                >
-                  <div class="menu-item-card__name">{{ product.name }}</div>
-                  @if (extra > 0) {
-                    <div class="menu-item-card__suppl">+{{ (extra / 100).toFixed(2).replace('.', ',') }} €</div>
-                  }
-                  @if (selected) {
-                    <div class="menu-item-card__check">✓</div>
-                  }
-                </button>
+            @if (sectionItems(section).length === 0) {
+              <div class="mcm-empty">Esta sección no tiene productos disponibles.</div>
+            } @else {
+              <div class="mcm-grid">
+                @for (product of sectionItems(section); track product.id) {
+                  @let selected = isProductSelected(section.id, product.id);
+                  @let extra = sectionExtraPriceForProduct(section, product.id);
+                  @let customizable = (product.variants?.length ?? 0) > 0 || (product.modifiers?.length ?? 0) > 0;
+                  <button
+                    type="button"
+                    class="mcm-card"
+                    [class.is-selected]="selected"
+                    [class.has-supplement]="extra > 0"
+                    (click)="toggleProduct(section, product)"
+                  >
+                    @if (extra > 0) {
+                      <div class="mcm-card__ribbon">+{{ priceLabel(extra) }} €</div>
+                    }
 
-                @if (selected) {
-                  @let sel = selectionFor(section.id, product.id);
-                  @if (sel && (product.variants?.length ?? 0) > 0) {
-                    <div class="menu-item-sub">
-                      <span class="menu-item-sub__label">Variante:</span>
-                      <div class="menu-item-sub__options">
+                    <div class="mcm-card__check" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                    </div>
+
+                    <div class="mcm-card__body">
+                      <div class="mcm-card__name">{{ product.name }}</div>
+                    </div>
+
+                    <div class="mcm-card__foot">
+                      @if (extra === 0) {
+                        <span class="mcm-card__tag mcm-card__tag--included">Incluido</span>
+                      } @else {
+                        <span class="mcm-card__tag mcm-card__tag--supplement">Suplemento</span>
+                      }
+                      @if (customizable) {
+                        <span class="mcm-card__tag mcm-card__tag--customizable" aria-label="Personalizable">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                          </svg>
+                        </span>
+                      }
+                    </div>
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- Personalización de los productos elegidos en esta sección -->
+            @for (sel of sectionSelections(section.id); track sel.productId) {
+              @let product = productById(sel.productId);
+              @if (product && (((product.variants?.length ?? 0) > 0) || ((product.modifiers?.length ?? 0) > 0))) {
+                <div class="mcm-customize">
+                  <div class="mcm-customize__head">
+                    <span class="mcm-customize__icon">⚙</span>
+                    <div>
+                      <div class="mcm-customize__title">Personaliza</div>
+                      <div class="mcm-customize__product">{{ product.name }}</div>
+                    </div>
+                  </div>
+
+                  @if ((product.variants?.length ?? 0) > 0) {
+                    <div class="mcm-customize__group">
+                      <span class="mcm-customize__label">Variante</span>
+                      <div class="mcm-chips">
                         <button
                           type="button"
-                          class="sub-chip"
-                          [class.active]="sel.variantId === null"
+                          class="mcm-chip"
+                          [class.is-active]="sel.variantId === null"
                           (click)="selectVariant(section.id, product.id, null)"
                         >
-                          Base · {{ (product.price / 100).toFixed(2).replace('.', ',') }} €
+                          <span class="mcm-chip__name">Base</span>
+                          <span class="mcm-chip__price">{{ priceLabel(product.price) }} €</span>
                         </button>
                         @for (v of product.variants ?? []; track v.id) {
                           @if (v.active) {
                             <button
                               type="button"
-                              class="sub-chip"
-                              [class.active]="sel.variantId === v.id"
+                              class="mcm-chip"
+                              [class.is-active]="sel.variantId === v.id"
                               (click)="selectVariant(section.id, product.id, v.id)"
                             >
-                              {{ v.name }} · {{ (v.price / 100).toFixed(2).replace('.', ',') }} €
+                              <span class="mcm-chip__name">{{ v.name }}</span>
+                              <span class="mcm-chip__price">{{ priceLabel(v.price) }} €</span>
                             </button>
                           }
                         }
@@ -69,21 +167,23 @@
                     </div>
                   }
 
-                  @if (sel && (product.modifiers?.length ?? 0) > 0) {
-                    <div class="menu-item-sub">
-                      <span class="menu-item-sub__label">Extras:</span>
-                      <div class="menu-item-sub__options">
+                  @if ((product.modifiers?.length ?? 0) > 0) {
+                    <div class="mcm-customize__group">
+                      <span class="mcm-customize__label">Extras</span>
+                      <div class="mcm-chips">
                         @for (m of product.modifiers ?? []; track m.id) {
                           @if (m.active) {
                             <button
                               type="button"
-                              class="sub-chip"
-                              [class.active]="isModifierSelected(section.id, product.id, m.id)"
+                              class="mcm-chip mcm-chip--toggle"
+                              [class.is-active]="isModifierSelected(section.id, product.id, m.id)"
                               (click)="toggleModifier(section.id, product.id, m.id)"
                             >
-                              {{ m.name }}
+                              <span class="mcm-chip__name">{{ m.name }}</span>
                               @if (m.price > 0) {
-                                · +{{ (m.price / 100).toFixed(2).replace('.', ',') }} €
+                                <span class="mcm-chip__price">+{{ priceLabel(m.price) }} €</span>
+                              } @else {
+                                <span class="mcm-chip__price mcm-chip__price--free">Gratis</span>
                               }
                             </button>
                           }
@@ -91,42 +191,75 @@
                       </div>
                     </div>
                   }
-                }
-              }
-
-              @if (sectionItems(section).length === 0) {
-                <div class="menu-section__empty">
-                  Esta sección no tiene productos activos disponibles.
                 </div>
               }
-            </div>
-          </section>
-        }
+            }
 
-        <div class="menu-notes">
-          <label for="menu-notes-input">Notas para cocina (opcional)</label>
-          <textarea
-            id="menu-notes-input"
-            rows="2"
-            [(ngModel)]="notes"
-            placeholder="Ej. sin gluten, alergias, punto de cocción…"
-          ></textarea>
-        </div>
+            @if (isLastStep()) {
+              <div class="mcm-notes">
+                <label for="mcm-notes-input" class="mcm-notes__label">Notas para cocina (opcional)</label>
+                <textarea
+                  id="mcm-notes-input"
+                  class="mcm-notes__input"
+                  rows="2"
+                  [(ngModel)]="notes"
+                  placeholder="Alergias, punto de cocción, sin gluten…"
+                ></textarea>
+              </div>
+            }
+          }
+        </main>
       </div>
 
-      <footer class="menu-modal__footer">
-        <div class="menu-modal__total">
-          <span class="menu-modal__total-label">Total</span>
-          <span class="menu-modal__total-value">{{ (totalPrice() / 100).toFixed(2).replace('.', ',') }} €</span>
-        </div>
+      <!-- Pie de página: total + navegación -->
+      <footer class="mcm-foot">
         @if (blockReason(); as reason) {
-          <span class="menu-modal__block">{{ reason }}</span>
+          <div class="mcm-foot__hint">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <span>{{ reason }}</span>
+          </div>
         }
-        <div class="menu-modal__actions">
-          <button type="button" class="btn-cancel" (click)="onClose()">Cancelar</button>
-          <button type="button" class="btn-confirm" [disabled]="!canConfirm()" (click)="onConfirm()">
-            Añadir al pedido
-          </button>
+
+        <div class="mcm-foot__row">
+          <div class="mcm-foot__total">
+            <span class="mcm-foot__total-label">Total</span>
+            <span class="mcm-foot__total-value">{{ priceLabel(totalPrice()) }} €</span>
+          </div>
+
+          <div class="mcm-foot__actions">
+            @if (!isFirstStep()) {
+              <button type="button" class="mcm-btn mcm-btn--ghost" (click)="goPrev()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"/>
+                </svg>
+                <span>Anterior</span>
+              </button>
+            }
+            @if (!isLastStep()) {
+              <button type="button" class="mcm-btn mcm-btn--primary" (click)="goNext()">
+                <span>Siguiente</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="mcm-btn mcm-btn--primary mcm-btn--confirm"
+                [disabled]="!canConfirm()"
+                (click)="onConfirm()"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>Añadir al pedido</span>
+              </button>
+            }
+          </div>
         </div>
       </footer>
     </div>

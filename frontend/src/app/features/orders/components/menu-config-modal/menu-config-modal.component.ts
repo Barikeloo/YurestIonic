@@ -14,11 +14,6 @@ export interface MenuConfigResult {
   notes: string | null;
 }
 
-/**
- * Estado interno por item seleccionado dentro de una sección del menú.
- * Permite seleccionar variante (si el producto tiene) y extras/acompañamientos
- * de forma análoga al product-config-modal, pero anidado por sección.
- */
 interface SelectionState {
   productId: string;
   variantId: string | null;
@@ -39,9 +34,9 @@ export class MenuConfigModalComponent {
 
   private readonly _menu = signal<TpvMenu | null>(null);
   private readonly _products = signal<TpvProductItem[]>([]);
-  /** sectionId → lista de selecciones (su orden importa para min/max). */
   private readonly _selectionsBySection = signal<Map<string, SelectionState[]>>(new Map());
   private readonly _notes = signal<string>('');
+  private readonly _currentStepIndex = signal<number>(0);
 
   @Input() set menu(value: TpvMenu | null) {
     this._menu.set(value);
@@ -57,22 +52,60 @@ export class MenuConfigModalComponent {
     return this._products();
   }
 
-  /** Reset al abrir, para no arrastrar selecciones de la apertura anterior. */
   public ngOnChanges(): void {
     if (!this.isOpen) {
       this._selectionsBySection.set(new Map());
       this._notes.set('');
+      this._currentStepIndex.set(0);
     }
   }
 
-  // ─── Helpers de datos ──────────────────────────────────────────────────
+  public readonly currentStepIndex = this._currentStepIndex.asReadonly();
+
+  public readonly currentSection = computed<TpvMenuSection | null>(() => {
+    const menu = this._menu();
+    if (!menu) return null;
+    const idx = this._currentStepIndex();
+    return menu.sections[idx] ?? null;
+  });
+
+  public readonly isLastStep = computed(() => {
+    const menu = this._menu();
+    if (!menu) return true;
+    return this._currentStepIndex() >= menu.sections.length - 1;
+  });
+
+  public readonly isFirstStep = computed(() => this._currentStepIndex() === 0);
+
+  public goToStep(index: number): void {
+    const menu = this._menu();
+    if (!menu) return;
+    const clamped = Math.max(0, Math.min(index, menu.sections.length - 1));
+    this._currentStepIndex.set(clamped);
+  }
+
+  public goNext(): void {
+    this.goToStep(this._currentStepIndex() + 1);
+  }
+
+  public goPrev(): void {
+    this.goToStep(this._currentStepIndex() - 1);
+  }
+
+  public isStepComplete(sectionIndex: number): boolean {
+    const menu = this._menu();
+    if (!menu) return false;
+    const section = menu.sections[sectionIndex];
+    if (!section) return false;
+    const count = this.sectionSelections(section.id).length;
+    return count >= section.min_choices && count <= section.max_choices;
+  }
 
   public productById(productId: string): TpvProductItem | null {
     return this._products().find((p) => p.id === productId) ?? null;
   }
 
   public sectionItems(section: TpvMenuSection): TpvProductItem[] {
-    // Mantiene el orden de menu items (definidos por el restaurador en el editor).
     return section.items
       .map((it) => this.productById(it.product_id))
       .filter((p): p is TpvProductItem => p !== null && p.active);
@@ -81,7 +114,8 @@ export class MenuConfigModalComponent {
   public sectionRuleLabel(section: TpvMenuSection): string {
     const { min_choices: min, max_choices: max } = section;
     if (min === 1 && max === 1) return 'Obligatorio · Elige 1';
-    if (min === 0 && max === 1) return 'Opcional · Elige 1 o ninguno';
+    if (min === 0 && max === 1) return 'Opcional · Elige 1';
+    if (min === max) return `Elige ${min}`;
     return `Elige entre ${min} y ${max}`;
   }
 
@@ -89,8 +123,6 @@ export class MenuConfigModalComponent {
     const item = section.items.find((it) => it.product_id === productId);
     return item?.extra_price ?? 0;
   }
-
-  // ─── Selection state ───────────────────────────────────────────────────
 
   public sectionSelections(sectionId: string): SelectionState[] {
     return this._selectionsBySection().get(sectionId) ?? [];
@@ -108,7 +140,6 @@ export class MenuConfigModalComponent {
       const alreadySelected = current.find((s) => s.productId === product.id);
 
       if (alreadySelected) {
-        // Deseleccionar
         next.set(section.id, current.filter((s) => s.productId !== product.id));
         return next;
       }
@@ -120,12 +151,10 @@ export class MenuConfigModalComponent {
       };
 
       if (!isMulti) {
-        // Reemplaza (radio behavior)
         next.set(section.id, [newSelection]);
       } else if (current.length < section.max_choices) {
         next.set(section.id, [...current, newSelection]);
       }
-      // si está al límite, no hacemos nada (UI debe deshabilitar)
       return next;
     });
   }
@@ -169,8 +198,6 @@ export class MenuConfigModalComponent {
     return this.sectionSelections(sectionId).find((s) => s.productId === productId) ?? null;
   }
 
-  // ─── Cómputos para el footer ───────────────────────────────────────────
-
   public readonly totalPrice = computed(() => {
     const menu = this._menu();
     if (!menu) return 0;
@@ -195,7 +222,7 @@ export class MenuConfigModalComponent {
     for (const section of menu.sections) {
       const count = this.sectionSelections(section.id).length;
       if (count < section.min_choices) {
-        return `Falta elegir en "${section.name}" (${count}/${section.min_choices})`;
+        return `Falta elegir en "${section.name}"`;
       }
       if (count > section.max_choices) {
         return `Demasiadas elecciones en "${section.name}"`;
@@ -206,7 +233,9 @@ export class MenuConfigModalComponent {
 
   public readonly canConfirm = computed(() => this.blockReason() === '');
 
-  // ─── Notes & actions ───────────────────────────────────────────────────
+  public priceLabel(cents: number): string {
+    return (cents / 100).toFixed(2).replace('.', ',');
+  }
 
   public get notes(): string {
     return this._notes();
