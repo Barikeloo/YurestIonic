@@ -66,6 +66,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/core/finanzas/finanzas.page').then((m) => m.FinanzasPage),
   },
   {
+    path: 'registro-auditoria',
+    loadComponent: () => import('./pages/core/registro-auditoria/registro-auditoria.page').then((m) => m.RegistroAuditoriaPage),
+  },
+  {
     path: 'login',
     loadComponent: () => import('./pages/core/login/login.page').then((m) => m.LoginPage),
   },

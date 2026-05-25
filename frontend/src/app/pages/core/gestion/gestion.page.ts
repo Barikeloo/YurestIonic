@@ -259,6 +259,10 @@ export class GestionPage {
     this.router.navigateByUrl('/finanzas');
   }
 
+  public goToRegistroAuditoria(): void {
+    this.router.navigateByUrl('/registro-auditoria');
+  }
+
   public unlinkDevice(): void {
     if (confirm('¿Estás seguro de que deseas desvincular este dispositivo?')) {
       console.log('Before clear - isDeviceLinked:', this.deviceStorageService.isDeviceLinked());

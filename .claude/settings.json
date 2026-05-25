@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/barik/.claude/projects/c--Users-barik-Desktop-YurestTPV/**)",
+      "PowerShell(\\(Get-Content \"C:\\\\Users\\\\barik\\\\Desktop\\\\YurestTPV\\\\frontend\\\\src\\\\app\\\\pages\\\\core\\\\registro-auditoria\\\\registro-auditoria.page.ts\" | Measure-Object -Line\\).Lines; \\(Get-Content \"C:\\\\Users\\\\barik\\\\Desktop\\\\YurestTPV\\\\frontend\\\\src\\\\app\\\\pages\\\\core\\\\registro-auditoria\\\\registro-auditoria.page.html\" | Measure-Object -Line\\).Lines)"
+    ]
+  }
+}
