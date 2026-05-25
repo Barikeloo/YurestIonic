@@ -1,0 +1,758 @@
+<div class="audit-page" (click)="closeDropdowns()">
+
+  <!-- ── Page head ─────────────────────────────────────────────── -->
+  <div class="page-head">
+    <div class="page-title-row">
+      <h1 class="page-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        Registro de Auditoría
+      </h1>
+      <div class="page-subtitle">Histórico de eventos del sistema · solo lectura</div>
+    </div>
+    <div class="page-head-actions">
+      <!-- Saved views -->
+      <div class="saved-views" (click)="$event.stopPropagation()">
+        <button class="saved-views-trigger" (click)="savedViewsOpen.update(v => !v)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>
+          </svg>
+          <span class="view-name">{{ activeViewMeta?.name ?? 'Vista' }}</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" class="view-chev">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        @if (savedViewsOpen()) {
+          <div class="saved-views-menu">
+            @for (v of SAVED_VIEWS; track v.id) {
+              <button class="saved-views-item" [class.active]="activeView() === v.id" (click)="applyView(v.id)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+                  <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+                </svg>
+                <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ v.name }}</span>
+                @if (activeView() === v.id) {
+                  <span class="check">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  </span>
+                }
+              </button>
+            }
+            <div class="saved-views-divider"></div>
+            <button class="save-current" (click)="showToast('Vista guardada'); savedViewsOpen.set(false)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              Guardar vista actual…
+            </button>
+          </div>
+        }
+      </div>
+      <!-- Live tail toggle -->
+      <button class="btn-ghost live" [class.on]="liveTail()" (click)="toggleLiveTail()" title="Live tail">
+        <span class="live-dot"></span>
+        Live tail
+      </button>
+      <!-- Export -->
+      <button class="btn-ghost" (click)="exportData()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Exportar
+      </button>
+      <!-- Back -->
+      <button class="btn-ghost" (click)="goBack()">
+        ← Gestión
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Category Tabs ──────────────────────────────────────────── -->
+  <div class="audit-tabs">
+    @for (tab of TABS; track tab.id) {
+      <button class="audit-tab" [class.active]="activeTab() === tab.id" (click)="selectTab(tab.id)">
+        {{ tab.label }}
+        <span class="tab-count">{{ tabCounts[tab.id] ?? 0 }}</span>
+      </button>
+    }
+  </div>
+
+  <!-- ── Main Layout ────────────────────────────────────────────── -->
+  <div class="audit-layout">
+
+    <!-- Left column -->
+    <section class="audit-left">
+
+      <!-- KPI strip -->
+      <div class="summary-strip">
+        <!-- Eventos hoy -->
+        <div class="kpi-card">
+          <div class="kpi-label">Eventos hoy</div>
+          <div class="kpi-value">{{ kpiTotal.toLocaleString('es-ES') }}</div>
+          <svg class="kpi-spark-full" viewBox="0 0 100 28" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="sparkgrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#1A6FE8" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#1A6FE8" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path [attr.d]="buildSparklinePath().area" fill="url(#sparkgrad)"/>
+            <path [attr.d]="buildSparklinePath().line" fill="none" stroke="#1A6FE8" stroke-width="1.5"/>
+          </svg>
+        </div>
+        <!-- Críticos -->
+        <div class="kpi-card">
+          <div class="kpi-label">Críticos</div>
+          <div class="kpi-value" [class.danger]="kpiCritical > 0">
+            {{ kpiCritical }}
+            @if (kpiCritical > 0) {
+              <span class="kpi-value-sub">requieren revisión</span>
+            }
+          </div>
+        </div>
+        <!-- Usuarios activos -->
+        <div class="kpi-card">
+          <div class="kpi-label">Usuarios activos</div>
+          <div class="kpi-value">{{ kpiUsers }}</div>
+        </div>
+        <!-- Última actividad -->
+        <div class="kpi-card">
+          <div class="kpi-label">Última actividad</div>
+          <div class="kpi-value" style="font-size:22px">
+            {{ kpiLast }}
+            <span class="kpi-value-sub">· TPV-02</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Refresh row -->
+      <div class="refresh-row">
+        @if (liveTail()) {
+          <span class="refresh-indicator">
+            <span class="refresh-dot"></span>
+            Actualizado hace {{ refreshCount() }}s · próximo refresh en {{ 30 - refreshCount() }}s
+          </span>
+        }
+        <span style="color:#C8C8C8">·</span>
+        <span style="color:#7A7A7A">{{ filtered.length }} de {{ TABS[0] ? 15 : 0 }} eventos</span>
+        <span class="kbd-hint">
+          <span class="kbd">/</span> buscar
+          <span style="margin:0 6px;color:#E0E0E0">|</span>
+          <span class="kbd">Esc</span> cerrar
+        </span>
+      </div>
+
+      <!-- Waterfall -->
+      @if (buildWaterfallData().length > 0) {
+        <div class="waterfall">
+          <div class="waterfall-head">
+            <span class="waterfall-title">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+              </svg>
+              Distribución temporal · 10:00 – 16:00
+            </span>
+            <div class="waterfall-legend">
+              <span class="lg"><span class="lg-dot" style="background:#1A6FE8"></span>Info</span>
+              <span class="lg"><span class="lg-dot" style="background:#D97706"></span>Warning</span>
+              <span class="lg"><span class="lg-dot" style="background:#B64040"></span>Danger</span>
+              <span class="lg"><span class="lg-dot" style="background:#2C0F0F"></span>Critical</span>
+            </div>
+          </div>
+          <div class="waterfall-track">
+            @for (d of buildWaterfallData(); track d.id) {
+              <div
+                class="waterfall-dot"
+                [class]="'waterfall-dot sev-' + d.sev + (d.id === selectedId() ? ' is-active' : '')"
+                [style.left]="(d.x * 100) + '%'"
+                [title]="formatTimeHM(d.ts) + ' · ' + d.action"
+                (click)="selectEvent(d.id)"
+              ></div>
+            }
+          </div>
+          <div class="waterfall-bottom">
+            @for (tick of ['10:00','11:00','12:00','13:00','14:00','15:00','16:00']; track tick; let i = $index) {
+              <span class="waterfall-tick" [style.left]="(i / 6 * 100) + '%'">{{ tick }}</span>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Smart filter chips -->
+      <div class="audit-chips">
+        @for (chip of CHIPS; track chip.id) {
+          <button
+            class="chip"
+            [class.active]="activeChip() === chip.id"
+            (click)="toggleChip(chip.id)"
+          >
+            <span class="chip-icon">
+              <ng-container [ngSwitch]="chip.icon">
+                <ng-container *ngSwitchCase="'alert'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                </ng-container>
+                <ng-container *ngSwitchCase="'user'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </ng-container>
+                <ng-container *ngSwitchCase="'clock'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                </ng-container>
+                <ng-container *ngSwitchCase="'wallet'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/>
+                    <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/>
+                    <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4z"/>
+                  </svg>
+                </ng-container>
+                <ng-container *ngSwitchCase="'ban'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                  </svg>
+                </ng-container>
+                <ng-container *ngSwitchCase="'lock-open'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1"/>
+                  </svg>
+                </ng-container>
+                <ng-container *ngSwitchCase="'shield-off'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19.69 14a6.9 6.9 0 0 0 .31-2V5l-8-3-3.16 1.18"/>
+                    <path d="M4.73 4.73 4 5v7c0 6 8 10 8 10a20.29 20.29 0 0 0 5.62-4.38"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                </ng-container>
+                <ng-container *ngSwitchCase="'swap'">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                    <path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                  </svg>
+                </ng-container>
+                <ng-container *ngSwitchDefault>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                  </svg>
+                </ng-container>
+              </ng-container>
+            </span>
+            <span>{{ chip.label }}</span>
+            @if (chipCounts[chip.id] > 0) {
+              <span class="chip-count">{{ chipCounts[chip.id] }}</span>
+            }
+            @if (activeChip() === chip.id) {
+              <span class="chip-close">✕</span>
+            }
+          </button>
+        }
+      </div>
+
+      <!-- Toolbar -->
+      <div class="audit-toolbar">
+        <!-- Category -->
+        <select class="audit-input" [value]="filterCategory()" (change)="filterCategory.set($any($event.target).value)">
+          <option value="all">Todas las categorías</option>
+          <option value="order">Pedidos</option>
+          <option value="caja">Caja</option>
+          <option value="sale">Ventas</option>
+          <option value="table">Mesas</option>
+          <option value="catalog">Catálogo</option>
+          <option value="auth">Acceso</option>
+          <option value="config">Config.</option>
+          <option value="system">Sistema</option>
+        </select>
+        <!-- Severity -->
+        <select class="audit-input" [value]="filterSeverity()" (change)="filterSeverity.set($any($event.target).value)">
+          <option value="all">Toda severidad</option>
+          <option value="info">Info</option>
+          <option value="warning">Warning</option>
+          <option value="danger">Danger</option>
+          <option value="critical">Critical</option>
+          <option value="success">Success</option>
+        </select>
+        <!-- User -->
+        <select class="audit-input" [value]="filterUser()" (change)="filterUser.set($any($event.target).value)">
+          <option value="all">Todos los usuarios</option>
+          <option value="Ana Martínez">Ana Martínez</option>
+          <option value="Juan García">Juan García</option>
+          <option value="Laura Fernández">Laura Fernández</option>
+          <option value="Marco Ruiz">Marco Ruiz</option>
+          <option value="Carlos Admin">Carlos Admin</option>
+          <option value="Sara Vidal">Sara Vidal</option>
+        </select>
+        <!-- Device -->
+        <select class="audit-input" [value]="filterDevice()" (change)="filterDevice.set($any($event.target).value)">
+          <option value="all">Dispositivo</option>
+          <option value="TPV-01">TPV-01</option>
+          <option value="TPV-02">TPV-02</option>
+          <option value="TPV-03">TPV-03</option>
+          <option value="TPV-Admin">TPV-Admin</option>
+        </select>
+        <!-- Date range -->
+        <div class="input-date-range">
+          <input class="audit-input" type="text" value="25/05/2026" />
+          <span class="dash">→</span>
+          <input class="audit-input" type="text" value="25/05/2026" />
+        </div>
+        <!-- Search -->
+        <div class="input-search">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+          </svg>
+          <input
+            class="audit-input audit-search-input"
+            type="text"
+            [value]="searchRaw()"
+            (input)="onSearch($any($event.target).value)"
+            placeholder="Buscar eventos..."
+          />
+        </div>
+        <!-- Reset -->
+        <button class="btn-reset" (click)="resetFilters()" title="Limpiar filtros">↺</button>
+      </div>
+
+      <!-- Event list -->
+      <div class="audit-list-wrap">
+        <div class="audit-list-head">
+          <div>Hora</div>
+          <div>Categoría</div>
+          <div>Acción</div>
+          <div>Usuario</div>
+          <div class="col-loaded">{{ filtered.length }} · cargados {{ filtered.length }}</div>
+        </div>
+
+        @if (filtered.length === 0) {
+          <div class="empty-state">
+            <div class="empty-illustration">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 12h-6l-2 3h-4l-2-3H2"/>
+                <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>
+              </svg>
+            </div>
+            <h3 class="empty-title">No hay eventos con los filtros actuales</h3>
+            <div class="empty-sub">No se han registrado movimientos que coincidan con los filtros aplicados.</div>
+            <button class="btn-ghost" (click)="resetFilters()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/>
+                <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/>
+              </svg>
+              Limpiar filtros
+            </button>
+          </div>
+        } @else {
+          <div class="audit-list">
+            @for (group of grouped; track group.key) {
+              <!-- Day header -->
+              <div class="day-header">
+                {{ group.label }}
+                <span class="day-count">{{ group.events.length }} eventos</span>
+              </div>
+              <!-- Event rows -->
+              @for (evt of group.events; track evt.id) {
+                <div
+                  class="event-row"
+                  [class.active]="selectedId() === evt.id"
+                  (click)="selectEvent(evt.id)"
+                >
+                  <!-- Time -->
+                  <div class="event-time">{{ formatTimeHM(evt.ts) }}</div>
+                  <!-- Category pill -->
+                  <div class="event-cat">
+                    <span class="cat-pill" [style.background]="CATEGORIES[evt.cat].bg" [style.color]="CATEGORIES[evt.cat].color">
+                      <!-- Cat icon -->
+                      <ng-container [ngSwitch]="evt.cat">
+                        <svg *ngSwitchCase="'order'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                        </svg>
+                        <svg *ngSwitchCase="'caja'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/>
+                          <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/>
+                          <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4z"/>
+                        </svg>
+                        <svg *ngSwitchCase="'sale'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M19 5a8 8 0 1 0 0 14"/><line x1="3" y1="10" x2="14" y2="10"/><line x1="3" y1="14" x2="13" y2="14"/>
+                        </svg>
+                        <svg *ngSwitchCase="'table'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                          <line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/>
+                          <line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/>
+                        </svg>
+                        <svg *ngSwitchCase="'catalog'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M16.5 9.4 7.55 4.24"/>
+                          <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                          <polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>
+                        </svg>
+                        <svg *ngSwitchCase="'auth'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                        </svg>
+                        <svg *ngSwitchCase="'config'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="3"/>
+                          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                        <svg *ngSwitchCase="'system'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                          <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                          <line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+                        </svg>
+                        <svg *ngSwitchDefault width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                          <circle cx="12" cy="12" r="10"/>
+                        </svg>
+                      </ng-container>
+                      {{ CATEGORIES[evt.cat].label }}
+                    </span>
+                  </div>
+                  <!-- Action + entity -->
+                  <div class="event-body">
+                    <div class="event-action">
+                      {{ evt.action }}
+                      @if (evt.entityLabel) {
+                        <span class="mono">{{ evt.entityLabel }}</span>
+                      }
+                      @if (evt.amount) {
+                        <span class="mono" [style.color]="getAmountColor(evt.amount)">{{ evt.amount }}</span>
+                      }
+                      @if (ANOMALIES[evt.id]) {
+                        <span class="anomaly-badge" [class]="'anomaly-badge sev-' + ANOMALIES[evt.id].severity">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+                          </svg>
+                          {{ ANOMALIES[evt.id].label }}
+                        </span>
+                      }
+                    </div>
+                    <div class="event-sub">
+                      <span class="sub-user">{{ evt.user.name }}</span>
+                      <span class="sub-sep">·</span>
+                      <span>{{ evt.user.role }}</span>
+                      <span class="sub-sep">·</span>
+                      <span style="font-family:'DM Mono',monospace">{{ evt.device }}</span>
+                      @if (evt.reason) {
+                        <span class="sub-sep">·</span>
+                        <span>{{ evt.reason }}</span>
+                      }
+                    </div>
+                  </div>
+                  <!-- User + severity -->
+                  <div class="event-user">
+                    <span class="sev-dot" [class]="getSevClass(evt.sev)"></span>
+                    <div class="avatar" [style.background]="evt.user.color">{{ evt.user.initials }}</div>
+                    <div class="event-user-meta">
+                      <div class="event-user-name">{{ evt.user.name.split(' ')[0] }} {{ evt.user.name.split(' ')[1]?.[0] }}.</div>
+                      <div class="event-user-device">{{ evt.device }}</div>
+                    </div>
+                  </div>
+                  <!-- Chevron -->
+                  <div class="event-chevron">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Audit-of-audit footer -->
+      <div class="audit-of-audit">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/>
+          <path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/>
+          <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/>
+          <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
+          <path d="M8.65 22c.21-.66.45-1.32.57-2"/>
+          <path d="M14 13.12c0 2.38 0 6.38-1 8.88"/>
+          <path d="M2 16h.01"/>
+          <path d="M21.8 16c.2-2 .131-5.354 0-6"/>
+          <path d="M9 6.8a6 6 0 0 1 9 5.2c0 .47 0 1.44-.05 2"/>
+        </svg>
+        <div class="aoa-text">
+          <strong>Esta consulta queda registrada:</strong>
+          Carlos Admin (administrador) consultó {{ filtered.length }} eventos con la vista "{{ activeViewMeta?.name ?? 'personalizada' }}" el 25 may 2026 a las 14:35 desde TPV-Admin
+        </div>
+        <span class="aoa-ref">aoa-ref-2026-1142</span>
+      </div>
+    </section>
+
+    <!-- ── Detail panel ────────────────────────────────────────── -->
+    <div class="audit-detail">
+      @if (!selected) {
+        <div class="detail-empty">Selecciona un evento para ver su detalle completo.</div>
+      } @else {
+        <!-- Header -->
+        <div class="detail-head">
+          <div class="detail-cat-icon" [style.background]="CATEGORIES[selected.cat].bg" [style.color]="CATEGORIES[selected.cat].color">
+            <ng-container [ngSwitch]="selected.cat">
+              <svg *ngSwitchCase="'order'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+              </svg>
+              <svg *ngSwitchCase="'caja'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 12V8H6a2 2 0 0 1-2-2c0-1.1.9-2 2-2h12v4"/>
+                <path d="M4 6v12c0 1.1.9 2 2 2h14v-4"/>
+                <path d="M18 12a2 2 0 0 0-2 2c0 1.1.9 2 2 2h4v-4z"/>
+              </svg>
+              <svg *ngSwitchCase="'sale'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 5a8 8 0 1 0 0 14"/><line x1="3" y1="10" x2="14" y2="10"/><line x1="3" y1="14" x2="13" y2="14"/>
+              </svg>
+              <svg *ngSwitchCase="'auth'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+              </svg>
+              <svg *ngSwitchCase="'system'" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"/>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"/>
+                <line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/>
+              </svg>
+              <svg *ngSwitchDefault width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+              </svg>
+            </ng-container>
+          </div>
+          <div class="detail-head-meta">
+            <h2 class="detail-title">{{ selected.action }}</h2>
+            <div class="detail-timestamp">
+              <span>{{ formatTimestampAbsolute(selected.ts) }}</span>
+              <span class="relative">· {{ formatRelative(selected.ts) }}</span>
+            </div>
+            <div class="detail-head-pills">
+              <span class="status-pill" [style.background]="CATEGORIES[selected.cat].bg" [style.color]="CATEGORIES[selected.cat].color">
+                {{ CATEGORIES[selected.cat].label }}
+              </span>
+              <span class="status-pill" [class]="getSevClass(selected.sev)">
+                {{ SEV_LABEL[selected.sev] }}
+              </span>
+              @if (selected.entityLabel) {
+                <span class="status-pill" style="background:#F4F4F4;color:#3D3D3D">
+                  <span style="font-family:'DM Mono',monospace;font-size:11px">{{ selected.entityLabel }}</span>
+                </span>
+              }
+              @if (ANOMALIES[selected.id]) {
+                <span class="anomaly-badge" [class]="'anomaly-badge sev-' + ANOMALIES[selected.id].severity">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+                  </svg>
+                  {{ ANOMALIES[selected.id].label }}
+                </span>
+              }
+            </div>
+          </div>
+          <!-- Permalink + copy -->
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+            <button class="icon-btn" title="Copiar enlace al evento" (click)="copyToClipboard('https://tpv.yurest.app/audit/' + selected.id)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+              </svg>
+            </button>
+            <button class="icon-btn" title="Exportar evento" (click)="showToast('Exportando evento...')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="detail-body">
+
+          <!-- Quién -->
+          <div class="detail-section">
+            <div class="detail-section-label">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+              </svg>
+              Quién
+            </div>
+            <div class="who-row">
+              <div class="who-avatar" [style.background]="selected.user.color">{{ selected.user.initials }}</div>
+              <div>
+                <div class="who-name">{{ selected.user.name }}</div>
+                <div class="who-role">{{ selected.user.role }}</div>
+              </div>
+            </div>
+            <div class="who-grid">
+              <div>
+                <div class="who-field-label">Dispositivo</div>
+                <div class="who-field-value">{{ selected.device }}</div>
+              </div>
+              <div>
+                <div class="who-field-label">IP</div>
+                <div class="who-field-value">
+                  {{ selected.ip }}
+                  <button class="copy-btn" (click)="copyToClipboard(selected.ip)" title="Copiar IP">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              @if (selected.session) {
+                <div style="grid-column: 1 / -1">
+                  <div class="who-field-label">Sesión de caja</div>
+                  <div class="who-field-value link">{{ selected.session }}</div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Qué cambió (diff) -->
+          @if (selected.diff && selected.diff.length > 0) {
+            <div class="detail-section">
+              <div class="detail-section-label">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 3v18"/><path d="M21 3v18"/><path d="M3 12h18"/>
+                </svg>
+                Qué cambió
+              </div>
+              <div class="diff-table">
+                @for (row of selected.diff; track row.field) {
+                  <div class="diff-row">
+                    <div class="field">{{ row.field }}</div>
+                    <div class="changes">
+                      @if (row.before !== row.after) {
+                        <div class="diff-line before"><span class="marker"></span>{{ row.before }}</div>
+                        <div class="diff-line after"><span class="marker"></span>{{ row.after }}</div>
+                      } @else {
+                        <div class="diff-line" style="padding:8px 10px;color:#7A7A7A">{{ row.before }}</div>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Inline diff -->
+          @if (selected.inline) {
+            <div class="detail-section">
+              <div class="detail-section-label">Qué cambió</div>
+              <div class="diff-inline">
+                <span class="key">{{ selected.inline.campo }}:</span>
+                <span class="from">{{ selected.inline.from }}</span>
+                <span class="arrow">→</span>
+                <span class="to">{{ selected.inline.to }}</span>
+              </div>
+            </div>
+          }
+
+          <!-- Contexto -->
+          <div class="detail-section">
+            <div class="detail-section-label">Contexto</div>
+            <div class="context-prose">{{ selected.summary }}</div>
+            @if (selected.reason) {
+              <div class="context-reason" [class.danger]="selected.sev === 'critical' || selected.sev === 'danger'">
+                Motivo: {{ selected.reason }}
+              </div>
+            }
+            <!-- JSON payload colapsable -->
+            <div class="json-block">
+              <div class="json-head" [class.open]="jsonOpen()" (click)="jsonOpen.update(v => !v)">
+                PAYLOAD JSON
+                <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
+              @if (jsonOpen()) {
+                <div class="json-body">{{ selected.payload | json }}</div>
+              }
+            </div>
+          </div>
+
+          <!-- Integridad hash -->
+          <div class="detail-section">
+            <div class="detail-section-label">Integridad</div>
+            <div class="hash-row">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
+                <span class="hash-label">SHA-256</span>
+                <span class="hash-value">{{ makeHash(selected.id) }}</span>
+              </div>
+              <span class="verified-badge">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                Verificado
+              </span>
+            </div>
+          </div>
+
+          <!-- Eventos relacionados -->
+          @if (relatedTimeline.length > 1) {
+            <div class="detail-section">
+              <div class="detail-section-label">Eventos relacionados</div>
+              <div class="related-list">
+                @for (rel of relatedTimeline; track rel.id) {
+                  <div
+                    class="related-row"
+                    [class.is-current]="rel.id === selected.id"
+                    (click)="selectEvent(rel.id)"
+                  >
+                    <div class="related-time">{{ formatTimeHM(rel.ts) }}</div>
+                    <div class="related-action">
+                      {{ rel.action }}
+                      <span class="related-sub">{{ rel.user.name }} · {{ rel.device }}</span>
+                    </div>
+                    <svg class="chev-sm" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Footer -->
+        <div class="detail-footer">
+          <div class="detail-footer-row">
+            <button class="action-secondary" (click)="showToast('Abriendo entidad relacionada...')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              Ver entidad relacionada
+            </button>
+            <button class="action-secondary" (click)="showToast('Exportando evento a CSV...')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Exportar a CSV
+            </button>
+          </div>
+          @if (selected.sev === 'critical' || selected.sev === 'danger') {
+            <button class="action-critical" (click)="showToast('Evento marcado como revisado')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+              </svg>
+              Marcar como revisado
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Toast ─────────────────────────────────────────────────── -->
+  @if (toastMsg()) {
+    <div class="toast">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="20 6 9 17 4 12"/>
+      </svg>
+      {{ toastMsg() }}
+    </div>
+  }
+
+</div>
