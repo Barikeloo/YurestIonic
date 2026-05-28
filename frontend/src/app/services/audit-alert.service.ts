@@ -4,6 +4,7 @@ import { BaseApiService } from '../core/services/api/base-api.service';
 
 export interface AuditAlertApi {
   uuid: string;
+  audit_log_uuid: string | null;
   action: string;
   anomaly_kind: string;
   entity_type: string;

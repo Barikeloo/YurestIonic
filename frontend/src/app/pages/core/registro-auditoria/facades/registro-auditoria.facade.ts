@@ -374,6 +374,16 @@ export class RegistroAuditoriaFacade {
     });
   }
 
+  public selectAlert(alert: AuditAlertApi): void {
+    this._alertsOpen.set(false);
+    if (alert.audit_log_uuid) {
+      this._selectedId.set(alert.audit_log_uuid);
+    }
+    if (!alert.read_at) {
+      this.markAlertRead(alert.uuid);
+    }
+  }
+
   public startAlertPolling(): void {
     this.loadAlerts();
     this.alertTimer = setInterval(() => this.loadAlerts(), 30000);

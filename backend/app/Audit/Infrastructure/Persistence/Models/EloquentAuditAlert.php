@@ -23,6 +23,7 @@ final class EloquentAuditAlert extends Model
 
     protected $fillable = [
         'uuid',
+        'audit_log_uuid',
         'restaurant_id',
         'action',
         'anomaly_kind',

@@ -30,16 +30,17 @@ final class EloquentAuditRecorder implements AuditRecorderInterface
         try {
             DB::transaction(function () use ($draft): void {
                 $resolved = AuditEventCatalog::resolve($draft->slug, $draft->toCatalogContext());
-                $anomalyKind = $this->detector->detect($draft);
-
-                if ($anomalyKind !== null) {
-                    $this->alertNotifier->notifyCriticalAnomaly($draft, $anomalyKind);
-                }
 
                 $prevHash = $this->repository->lockAndGetLastHashForRestaurant($draft->restaurantId);
 
                 $uuid = Uuid::generate();
                 $createdAt = DomainDateTime::now();
+
+                $anomalyKind = $this->detector->detect($draft);
+
+                if ($anomalyKind !== null) {
+                    $this->alertNotifier->notifyCriticalAnomaly($draft, $anomalyKind, $uuid->value());
+                }
 
                 $integrityHash = $this->hasher->compute(
                     prevHash: $prevHash,

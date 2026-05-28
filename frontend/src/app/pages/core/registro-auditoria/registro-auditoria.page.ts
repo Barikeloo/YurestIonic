@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { AuditAlertApi } from '../../../services/audit-alert.service';
 import { AuditCategoryApi, AuditLogService, AuditSeverityApi, ListAuditEventsFilters } from '../../../services/audit-log.service';
 import { RestaurantService, AdminRestaurantUser } from '../../../services/restaurant.service';
 import { RestaurantContextFacade } from '../../../core/facades/restaurant-context.facade';
@@ -386,6 +387,8 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   toggleAlerts(): void { this.facade.toggleAlerts(); }
 
   markAlertRead(uuid: string): void { this.facade.markAlertRead(uuid); }
+
+  selectAlert(alert: AuditAlertApi): void { this.facade.selectAlert(alert); }
 
   exportData(): void { this.facade.showToast('Exportando CSV...'); }
 

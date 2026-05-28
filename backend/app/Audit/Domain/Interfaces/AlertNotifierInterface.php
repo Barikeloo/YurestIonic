@@ -8,5 +8,5 @@ use App\Audit\Domain\AuditEventDraft;
 
 interface AlertNotifierInterface
 {
-    public function notifyCriticalAnomaly(AuditEventDraft $draft, string $anomalyKind): void;
+    public function notifyCriticalAnomaly(AuditEventDraft $draft, string $anomalyKind, ?string $auditLogUuid = null): void;
 }

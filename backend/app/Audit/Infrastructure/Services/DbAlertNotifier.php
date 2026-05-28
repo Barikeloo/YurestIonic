@@ -12,7 +12,7 @@ use App\User\Infrastructure\Persistence\Models\EloquentUser;
 
 final class DbAlertNotifier implements AlertNotifierInterface
 {
-    public function notifyCriticalAnomaly(AuditEventDraft $draft, string $anomalyKind): void
+    public function notifyCriticalAnomaly(AuditEventDraft $draft, string $anomalyKind, ?string $auditLogUuid = null): void
     {
         $restaurantId = EloquentRestaurant::query()
             ->where('uuid', $draft->restaurantId->value())
@@ -31,6 +31,7 @@ final class DbAlertNotifier implements AlertNotifierInterface
 
         EloquentAuditAlert::query()->withoutGlobalScopes()->create([
             'uuid' => \Ramsey\Uuid\Uuid::uuid4()->toString(),
+            'audit_log_uuid' => $auditLogUuid,
             'restaurant_id' => $restaurantId,
             'action' => $draft->slug->value(),
             'anomaly_kind' => $anomalyKind,

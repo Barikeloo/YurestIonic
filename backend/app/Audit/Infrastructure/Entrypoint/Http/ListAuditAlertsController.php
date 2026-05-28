@@ -45,6 +45,7 @@ final class ListAuditAlertsController
         return new JsonResponse([
             'data' => $alerts->map(static fn ($alert): array => [
                 'uuid' => $alert->uuid,
+                'audit_log_uuid' => $alert->audit_log_uuid,
                 'action' => $alert->action,
                 'anomaly_kind' => $alert->anomaly_kind,
                 'entity_type' => $alert->entity_type,
