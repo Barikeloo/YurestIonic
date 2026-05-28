@@ -22,13 +22,11 @@ export interface AuditAlertsResponse {
 
 @Injectable({ providedIn: 'root' })
 export class AuditAlertService extends BaseApiService {
-  private readonly baseUrl = `${this.apiUrl}/admin/audit-alerts`;
-
   public listAlerts(): Observable<AuditAlertsResponse> {
-    return this.http.get<AuditAlertsResponse>(this.baseUrl, { withCredentials: true });
+    return this.get<AuditAlertsResponse>('/admin/audit-alerts');
   }
 
   public markAsRead(uuid: string): Observable<{ ok: boolean }> {
-    return this.http.post<{ ok: boolean }>(`${this.baseUrl}/${uuid}/read`, {}, { withCredentials: true });
+    return this.post<{ ok: boolean }>(`/admin/audit-alerts/${uuid}/read`);
   }
 }
