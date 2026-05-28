@@ -4,6 +4,7 @@ use App\Audit\Infrastructure\Entrypoint\Http\GetAuditEventController;
 use App\Audit\Infrastructure\Entrypoint\Http\ListAuditAlertsController;
 use App\Audit\Infrastructure\Entrypoint\Http\ListAuditEventsController;
 use App\Audit\Infrastructure\Entrypoint\Http\MarkAlertReadController;
+use App\Audit\Infrastructure\Entrypoint\Http\MarkAllAlertsReadController;
 use App\Audit\Infrastructure\Entrypoint\Http\VerifyAuditChainController;
 use App\AuditSavedView\Infrastructure\Entrypoint\Http\CreateAuditSavedViewController;
 use App\AuditSavedView\Infrastructure\Entrypoint\Http\DeleteAuditSavedViewController;
@@ -309,6 +310,7 @@ Route::middleware([
     Route::delete('/admin/audit-saved-views/{uuid}', DeleteAuditSavedViewController::class)->whereUuid('uuid');
 
     Route::get('/admin/audit-alerts', ListAuditAlertsController::class);
+    Route::post('/admin/audit-alerts/read-all', MarkAllAlertsReadController::class);
     Route::post('/admin/audit-alerts/{uuid}/read', MarkAlertReadController::class)->whereUuid('uuid');
 });
 

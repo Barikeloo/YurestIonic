@@ -70,58 +70,95 @@
           <div class="alerts-dropdown">
             <div class="alerts-header">
               <div class="alerts-title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>
-                <strong>Alertas críticas</strong>
+                <strong>Alertas de anomalías</strong>
+                @if (unreadAlertCount() > 0) {
+                  <span class="alerts-badge">{{ unreadAlertCount() }}</span>
+                }
               </div>
               @if (unreadAlertCount() > 0) {
-                <span class="alerts-badge">{{ unreadAlertCount() }} sin leer</span>
+                <button class="alerts-mark-all" (click)="markAllAlertsRead()" title="Marcar todas como leídas">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/><polyline points="14 13 9 8 4 13"/>
+                  </svg>
+                  Marcar todas
+                </button>
               }
             </div>
+
             @if (alerts().length === 0) {
               <div class="alerts-empty">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:#C8C8C8;margin-bottom:8px">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                </svg>
-                <div>Sin alertas activas</div>
-                <div style="font-size:11px;color:#aaa;margin-top:2px">Las anomalías aparecerán aquí</div>
+                <div class="alerts-empty-icon">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <div class="alerts-empty-title">Todo en orden</div>
+                <div class="alerts-empty-sub">Sin anomalías detectadas. Las alertas aparecerán aquí cuando se detecte algo inusual.</div>
               </div>
+            } @else {
+              @if (unreadAlerts().length > 0) {
+                <div class="alerts-section-label">Sin leer</div>
+                @for (alert of unreadAlerts(); track alert.uuid) {
+                  <ng-container *ngTemplateOutlet="alertRow; context: { $implicit: alert }"></ng-container>
+                }
+              }
+              @if (readAlerts().length > 0) {
+                <div class="alerts-section-label">Anteriores</div>
+                @for (alert of readAlerts(); track alert.uuid) {
+                  <ng-container *ngTemplateOutlet="alertRow; context: { $implicit: alert }"></ng-container>
+                }
+              }
             }
-            @for (alert of alerts(); track alert.uuid) {
+
+            <ng-template #alertRow let-alert>
               <div
                 class="alert-item"
                 [class.unread]="!alert.read_at"
                 [class.has-log]="alert.audit_log_uuid"
+                [class]="'alert-item sev-' + anomalyMeta(alert.anomaly_kind).severity + (!alert.read_at ? ' unread' : '') + (alert.audit_log_uuid ? ' has-log' : '')"
                 (click)="selectAlert(alert)"
-                title="{{ alert.audit_log_uuid ? 'Ver evento en el registro' : 'Sin evento vinculado' }}"
+                [title]="alert.audit_log_uuid ? 'Click para abrir el evento en el registro' : 'Sin evento vinculado'"
               >
+                <div class="alert-stripe"></div>
+                <div class="alert-icon">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                </div>
                 <div class="alert-item-body">
-                  <div class="alert-meta">
-                    <span class="alert-kind">{{ alert.anomaly_kind }}</span>
+                  <div class="alert-meta-row">
+                    <span class="alert-kind-label">{{ anomalyMeta(alert.anomaly_kind).label }}</span>
                     <span class="alert-time">{{ formatRelative(alert.created_at) }}</span>
                   </div>
                   <div class="alert-summary">{{ alert.summary ?? alert.action }}</div>
-                  <div class="alert-hint">
+                  <div class="alert-description">{{ anomalyMeta(alert.anomaly_kind).description }}</div>
+                  <div class="alert-footer-row">
                     @if (alert.audit_log_uuid) {
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="9 18 15 12 9 6"/>
-                      </svg>
-                      Ver en el registro
+                      <span class="alert-cta">
+                        Ver en el registro
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="9 18 15 12 9 6"/>
+                        </svg>
+                      </span>
                     } @else {
-                      <span class="alert-hint-muted">Sin evento vinculado</span>
+                      <span class="alert-cta-muted">Sin evento vinculado</span>
+                    }
+                    @if (!alert.read_at) {
+                      <button
+                        class="alert-mark-btn"
+                        (click)="markAlertRead(alert.uuid); $event.stopPropagation()"
+                        title="Marcar como leída sin abrir"
+                      >
+                        Marcar leída
+                      </button>
                     }
                   </div>
                 </div>
-                @if (!alert.read_at) {
-                  <button class="alert-mark" (click)="markAlertRead(alert.uuid); $event.stopPropagation()" title="Marcar como leída">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </button>
-                }
               </div>
-            }
+            </ng-template>
           </div>
         }
       </div>
@@ -431,6 +468,7 @@
               @for (evt of group.events; track evt.id) {
                 <div
                   class="event-row"
+                  [attr.data-event-id]="evt.id"
                   [class.active]="selectedId() === evt.id"
                   (click)="selectEvent(evt.id)"
                 >

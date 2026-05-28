@@ -350,6 +350,8 @@ export class RegistroAuditoriaFacade {
 
   public setSavedViewsOpen(value: boolean): void { this._savedViewsOpen.set(value); }
 
+  public setAlertsOpen(value: boolean): void { this._alertsOpen.set(value); }
+
   // ── Lifecycle ────────────────────────────────────────────────
   // ── Alert methods ──────────────────────────────────────────
   public loadAlerts(): void {
@@ -369,6 +371,17 @@ export class RegistroAuditoriaFacade {
           prev.map(a => a.uuid === uuid ? { ...a, read_at: new Date().toISOString() } : a),
         );
         this._unreadAlertCount.update(c => Math.max(0, c - 1));
+      },
+      error: () => {},
+    });
+  }
+
+  public markAllAlertsRead(): void {
+    this.auditAlertService.markAllAsRead().subscribe({
+      next: () => {
+        const now = new Date().toISOString();
+        this._alerts.update(prev => prev.map(a => a.read_at ? a : { ...a, read_at: now }));
+        this._unreadAlertCount.set(0);
       },
       error: () => {},
     });

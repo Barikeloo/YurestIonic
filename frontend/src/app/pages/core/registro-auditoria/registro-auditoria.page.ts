@@ -72,6 +72,40 @@ const ANOMALIES: Record<string, { label: string; severity: string }> = {
   'evt-011': { label: 'Abono > 20 €',           severity: 'warning'  },
 };
 
+interface AnomalyKindMeta {
+  label: string;
+  description: string;
+  severity: SeverityKey;
+  category: CategoryKey;
+}
+
+const ANOMALY_KIND_META: Record<string, AnomalyKindMeta> = {
+  auth_failed_burst: {
+    label: 'Ráfaga de PIN fallidos',
+    description: '3+ intentos de acceso fallidos en menos de 5 minutos',
+    severity: 'critical',
+    category: 'auth',
+  },
+  caja_mismatch: {
+    label: 'Descuadre de caja',
+    description: 'El cierre no cuadra con el efectivo contado',
+    severity: 'danger',
+    category: 'caja',
+  },
+};
+
+const UNKNOWN_ANOMALY: AnomalyKindMeta = {
+  label: 'Anomalía detectada',
+  description: 'Evento marcado como anómalo por el sistema',
+  severity: 'warning',
+  category: 'system',
+};
+
+function anomalyMeta(kind: string | null | undefined): AnomalyKindMeta {
+  if (!kind) return UNKNOWN_ANOMALY;
+  return ANOMALY_KIND_META[kind] ?? { ...UNKNOWN_ANOMALY, label: kind };
+}
+
 function formatTimeHM(iso: string): string {
   const d = new Date(iso);
   return d.toTimeString().slice(0, 5);
@@ -134,6 +168,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   readonly SEV_LABEL = SEV_LABEL;
   readonly SPARK_HOURLY = SPARK_HOURLY;
   readonly ANOMALIES = ANOMALIES;
+  readonly anomalyMeta = anomalyMeta;
 
   // ── Facade proxy: data signals ─────────────────────────────
   get events() { return this.facade.events; }
@@ -146,12 +181,16 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   get alerts() { return this.facade.alerts; }
   get unreadAlertCount() { return this.facade.unreadAlertCount; }
   get alertsOpen() { return this.facade.alertsOpen; }
+  get selectedId() { return this.facade.selectedId; }
 
   readonly eventIndex = computed<Record<string, AuditEvent>>(() => {
     const idx: Record<string, AuditEvent> = {};
     for (const e of this.events()) idx[e.id] = e;
     return idx;
   });
+
+  readonly unreadAlerts = computed<AuditAlertApi[]>(() => this.alerts().filter(a => !a.read_at));
+  readonly readAlerts = computed<AuditAlertApi[]>(() => this.alerts().filter(a => !!a.read_at));
 
   // ── Local UI / filter signals ────────────────────────────────
   readonly activeTab = signal('all');
@@ -164,7 +203,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   readonly dateTo = signal<string>(isoToday());
   readonly searchRaw = signal('');
   readonly searchDebounced = signal('');
-  readonly selectedId = signal('');
   readonly toastMsg = signal<string | null>(null);
   readonly refreshCount = signal(0);
   readonly liveTail = signal(true);
@@ -294,6 +332,14 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
       const filters = this.serverFilters();
       this.facade.loadInitial(filters);
     });
+
+    effect(() => {
+      const target = this.pendingAlertNav();
+      if (!target) return;
+      if (!this.eventIndex()[target]) return;
+      this.pendingAlertNav.set(null);
+      this.scrollAndPulse(target);
+    });
   }
 
   ngOnInit(): void {
@@ -318,7 +364,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     this.activeChip.update(c => c === id ? null : id);
   }
 
-  selectEvent(id: string): void { this.selectedId.set(id); }
+  selectEvent(id: string): void { this.facade.setSelectedId(id); }
 
   resetFilters(): void {
     this.filterCategory.set('all');
@@ -388,7 +434,54 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
 
   markAlertRead(uuid: string): void { this.facade.markAlertRead(uuid); }
 
-  selectAlert(alert: AuditAlertApi): void { this.facade.selectAlert(alert); }
+  markAllAlertsRead(): void { this.facade.markAllAlertsRead(); }
+
+  private readonly pendingAlertNav = signal<string | null>(null);
+
+  selectAlert(alert: AuditAlertApi): void {
+    this.facade.setAlertsOpen(false);
+    if (!alert.read_at) this.facade.markAlertRead(alert.uuid);
+
+    const targetId = alert.audit_log_uuid;
+    if (!targetId) {
+      this.facade.showToast('Esta alerta no tiene un evento vinculado');
+      return;
+    }
+
+    const inCurrentList = !!this.eventIndex()[targetId];
+    if (inCurrentList) {
+      this.facade.setSelectedId(targetId);
+      this.scrollAndPulse(targetId);
+      return;
+    }
+
+    const alertDay = dayKey(alert.created_at);
+    this.activeTab.set('all');
+    this.activeChip.set(null);
+    this.filterCategory.set('all');
+    this.filterSeverity.set('all');
+    this.filterUser.set('all');
+    this.filterDevice.set('all');
+    this.searchRaw.set('');
+    this.searchDebounced.set('');
+    this.dateFrom.set(alertDay);
+    this.dateTo.set(alertDay);
+    this.facade.setSelectedId(targetId);
+    this.pendingAlertNav.set(targetId);
+    this.facade.showToast('Filtros ajustados para mostrar el evento de la alerta');
+  }
+
+  private scrollAndPulse(eventId: string): void {
+    setTimeout(() => {
+      const target = document.querySelector<HTMLElement>(`[data-event-id="${eventId}"]`);
+      if (!target) return;
+      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      target.classList.remove('pulse-highlight');
+      void target.offsetWidth;
+      target.classList.add('pulse-highlight');
+      setTimeout(() => target.classList.remove('pulse-highlight'), 1800);
+    }, 60);
+  }
 
   exportData(): void { this.facade.showToast('Exportando CSV...'); }
 
@@ -447,11 +540,11 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
       });
   }
 
-  closeDropdowns(): void { this.savedViewsOpen.set(false); }
+  closeDropdowns(): void { this.savedViewsOpen.set(false); this.facade.setAlertsOpen(false); }
 
   @HostListener('document:keydown', ['$event'])
   onKeyDown(e: KeyboardEvent): void {
-    if (e.key === 'Escape') this.savedViewsOpen.set(false);
+    if (e.key === 'Escape') { this.savedViewsOpen.set(false); this.facade.setAlertsOpen(false); }
     if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
       e.preventDefault();
       (document.querySelector('.audit-search-input') as HTMLInputElement | null)?.focus();

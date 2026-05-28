@@ -30,4 +30,8 @@ export class AuditAlertService extends BaseApiService {
   public markAsRead(uuid: string): Observable<{ ok: boolean }> {
     return this.post<{ ok: boolean }>(`/admin/audit-alerts/${uuid}/read`);
   }
+
+  public markAllAsRead(): Observable<{ ok: boolean; marked: number }> {
+    return this.post<{ ok: boolean; marked: number }>(`/admin/audit-alerts/read-all`);
+  }
 }
