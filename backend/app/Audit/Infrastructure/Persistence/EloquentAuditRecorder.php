@@ -9,6 +9,7 @@ use App\Audit\Domain\AuditChainHasher;
 use App\Audit\Domain\AuditEventCatalog;
 use App\Audit\Domain\AuditEventDraft;
 use App\Audit\Domain\Entity\AuditLog;
+use App\Audit\Domain\Interfaces\AlertNotifierInterface;
 use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
 use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Shared\Domain\ValueObject\DomainDateTime;
@@ -21,6 +22,7 @@ final class EloquentAuditRecorder implements AuditRecorderInterface
         private readonly AuditLogRepositoryInterface $repository,
         private readonly AnomalyDetector $detector,
         private readonly AuditChainHasher $hasher,
+        private readonly AlertNotifierInterface $alertNotifier,
     ) {}
 
     public function record(AuditEventDraft $draft): void
@@ -29,6 +31,10 @@ final class EloquentAuditRecorder implements AuditRecorderInterface
             DB::transaction(function () use ($draft): void {
                 $resolved = AuditEventCatalog::resolve($draft->slug, $draft->toCatalogContext());
                 $anomalyKind = $this->detector->detect($draft);
+
+                if ($anomalyKind !== null) {
+                    $this->alertNotifier->notifyCriticalAnomaly($draft, $anomalyKind);
+                }
 
                 $prevHash = $this->repository->lockAndGetLastHashForRestaurant($draft->restaurantId);
 
