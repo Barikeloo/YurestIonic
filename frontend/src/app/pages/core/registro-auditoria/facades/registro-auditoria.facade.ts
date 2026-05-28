@@ -6,6 +6,7 @@ import {
   CreateAuditSavedViewPayload,
   ListAuditEventsFilters,
 } from '../../../../services/audit-log.service';
+import { AuditAlertApi, AuditAlertService } from '../../../../services/audit-alert.service';
 import { RestaurantService, AdminRestaurantUser } from '../../../../services/restaurant.service';
 import { RestaurantContextFacade } from '../../../../core/facades/restaurant-context.facade';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -84,6 +85,7 @@ export interface AuditSavedViewMergedItem {
 @Injectable()
 export class RegistroAuditoriaFacade {
   private readonly auditLogService = inject(AuditLogService);
+  private readonly auditAlertService = inject(AuditAlertService);
   private readonly restaurantService = inject(RestaurantService);
   private readonly restaurantContextFacade = inject(RestaurantContextFacade);
   private readonly authService = inject(AuthService);
@@ -115,10 +117,15 @@ export class RegistroAuditoriaFacade {
   private readonly _savedViews = signal<AuditSavedViewApi[]>([]);
   private readonly _isLoadingViews = signal(false);
 
+  private readonly _alerts = signal<AuditAlertApi[]>([]);
+  private readonly _unreadAlertCount = signal(0);
+  private readonly _alertsOpen = signal(false);
+
   // ── Timers ───────────────────────────────────────────────────
   private refreshTimer?: ReturnType<typeof setInterval>;
   private liveTailTimer?: ReturnType<typeof setInterval>;
   private toastTimer?: ReturnType<typeof setTimeout>;
+  private alertTimer?: ReturnType<typeof setInterval>;
 
   // ── Race guard ───────────────────────────────────────────────
   private loadVersion = 0;
@@ -142,6 +149,10 @@ export class RegistroAuditoriaFacade {
 
   public readonly savedViews: Signal<AuditSavedViewApi[]> = this._savedViews.asReadonly();
   public readonly isLoadingViews: Signal<boolean> = this._isLoadingViews.asReadonly();
+
+  public readonly alerts: Signal<AuditAlertApi[]> = this._alerts.asReadonly();
+  public readonly unreadAlertCount: Signal<number> = this._unreadAlertCount.asReadonly();
+  public readonly alertsOpen: Signal<boolean> = this._alertsOpen.asReadonly();
 
   // ── Computed: merged saved views (defaults + backend) ──────
   public readonly mergedSavedViews = computed<AuditSavedViewMergedItem[]>(() => {
@@ -325,7 +336,9 @@ export class RegistroAuditoriaFacade {
 
   public toggleLiveTail(): void { this._liveTail.update(v => !v); }
 
-  public closeDropdowns(): void { this._savedViewsOpen.set(false); }
+  public toggleAlerts(): void { this._alertsOpen.update(v => !v); }
+
+  public closeDropdowns(): void { this._savedViewsOpen.set(false); this._alertsOpen.set(false); }
 
   public toggleSavedViewsOpen(): void { this._savedViewsOpen.update(v => !v); }
 
@@ -338,9 +351,42 @@ export class RegistroAuditoriaFacade {
   public setSavedViewsOpen(value: boolean): void { this._savedViewsOpen.set(value); }
 
   // ── Lifecycle ────────────────────────────────────────────────
+  // ── Alert methods ──────────────────────────────────────────
+  public loadAlerts(): void {
+    this.auditAlertService.listAlerts().subscribe({
+      next: (res) => {
+        this._alerts.set(res.data);
+        this._unreadAlertCount.set(res.unread_count);
+      },
+      error: () => {},
+    });
+  }
+
+  public markAlertRead(uuid: string): void {
+    this.auditAlertService.markAsRead(uuid).subscribe({
+      next: () => {
+        this._alerts.update(prev =>
+          prev.map(a => a.uuid === uuid ? { ...a, read_at: new Date().toISOString() } : a),
+        );
+        this._unreadAlertCount.update(c => Math.max(0, c - 1));
+      },
+      error: () => {},
+    });
+  }
+
+  public startAlertPolling(): void {
+    this.loadAlerts();
+    this.alertTimer = setInterval(() => this.loadAlerts(), 30000);
+  }
+
+  public stopAlertPolling(): void {
+    if (this.alertTimer) clearInterval(this.alertTimer);
+  }
+
   public destroy(): void {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
     if (this.liveTailTimer) clearInterval(this.liveTailTimer);
     if (this.toastTimer) clearTimeout(this.toastTimer);
+    if (this.alertTimer) clearInterval(this.alertTimer);
   }
 }

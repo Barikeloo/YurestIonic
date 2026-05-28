@@ -1590,3 +1590,138 @@ button { font-family: inherit; }
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+
+/* ── Alert bell & dropdown ─────────────────────────────────── */
+.alert-bell-wrap {
+  position: relative;
+}
+
+.btn-ghost.bell {
+  position: relative;
+  color: #3D3D3D;
+}
+
+.btn-ghost.bell.has-alerts {
+  color: #B64040;
+}
+
+.bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #B64040;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.alerts-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 340px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+  z-index: 100;
+  padding: 12px 0;
+}
+
+.alerts-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 10px;
+  border-bottom: 1px solid #F0F0F0;
+  font-size: 14px;
+  color: #0D0D0D;
+}
+
+.alerts-badge {
+  background: #FBECEC;
+  color: #B64040;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.alerts-empty {
+  padding: 24px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+}
+
+.alert-item {
+  padding: 10px 16px;
+  border-bottom: 1px solid #F5F5F5;
+  cursor: default;
+}
+
+.alert-item:last-child {
+  border-bottom: none;
+}
+
+.alert-item.unread {
+  background: #FDF8F0;
+}
+
+.alert-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.alert-kind {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #B64040;
+  background: #FBECEC;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.alert-time {
+  font-size: 11px;
+  color: #888;
+}
+
+.alert-summary {
+  font-size: 13px;
+  color: #3D3D3D;
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+
+.alert-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.alert-mark {
+  background: none;
+  border: none;
+  color: #1A6FE8;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.alert-mark:hover {
+  text-decoration: underline;
+}

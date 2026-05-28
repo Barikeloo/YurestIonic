@@ -142,6 +142,9 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   get nextCursor() { return this.facade.nextCursor; }
   get hasMore() { return this.facade.hasMore; }
   get usersDirectory() { return this.facade.usersDirectory; }
+  get alerts() { return this.facade.alerts; }
+  get unreadAlertCount() { return this.facade.unreadAlertCount; }
+  get alertsOpen() { return this.facade.alertsOpen; }
 
   readonly eventIndex = computed<Record<string, AuditEvent>>(() => {
     const idx: Record<string, AuditEvent> = {};
@@ -295,6 +298,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.facade.startRefreshTimer();
     this.facade.startLiveTailTimer();
+    this.facade.startAlertPolling();
     this.facade.loadUsersDirectory();
     this.facade.loadSavedViews();
   }
@@ -378,6 +382,10 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   }
 
   toggleLiveTail(): void { this.facade.toggleLiveTail(); }
+
+  toggleAlerts(): void { this.facade.toggleAlerts(); }
+
+  markAlertRead(uuid: string): void { this.facade.markAlertRead(uuid); }
 
   exportData(): void { this.facade.showToast('Exportando CSV...'); }
 
