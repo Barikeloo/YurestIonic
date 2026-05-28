@@ -7,7 +7,7 @@ use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
 use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Audit\Infrastructure\Persistence\EloquentAuditRecorder;
 use App\Audit\Infrastructure\Persistence\Repositories\EloquentAuditLogRepository;
-use App\Audit\Infrastructure\Services\SlackAlertNotifier;
+use App\Audit\Infrastructure\Services\DbAlertNotifier;
 use App\AuditSavedView\Domain\Interfaces\AuditSavedViewRepositoryInterface;
 use App\AuditSavedView\Infrastructure\Persistence\Repositories\EloquentAuditSavedViewRepository;
 use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
@@ -104,9 +104,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AuditLogRepositoryInterface::class, EloquentAuditLogRepository::class);
         $this->app->bind(AuditRecorderInterface::class, EloquentAuditRecorder::class);
         $this->app->bind(AuditSavedViewRepositoryInterface::class, EloquentAuditSavedViewRepository::class);
-        $this->app->bind(AlertNotifierInterface::class, static fn ($app): SlackAlertNotifier => new SlackAlertNotifier(
-            webhookUrl: (string) $app->make('config')->get('services.slack.webhook_url', ''),
-        ));
+        $this->app->bind(AlertNotifierInterface::class, DbAlertNotifier::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
     }
 
