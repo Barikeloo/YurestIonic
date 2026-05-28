@@ -26,7 +26,16 @@ class UpdateProduct
         $product = $this->productRepository->findById($command->id)
             ?? throw ProductNotFoundException::withId($command->id);
 
-        $priceBefore = $product->price()->value();
+        $before = [
+            'family_id' => $product->familyId()->value(),
+            'tax_id' => $product->taxId()->value(),
+            'image_src' => $product->imageSrc()->value(),
+            'name' => $product->name()->value(),
+            'price' => $product->price()->value(),
+            'stock' => $product->stock()->value(),
+            'active' => $product->isActive(),
+            'allergens' => $product->allergens()->values(),
+        ];
 
         $product->update(
             familyId: Uuid::create($command->familyId),
@@ -41,18 +50,47 @@ class UpdateProduct
 
         $this->productRepository->save($product);
 
-        if ($priceBefore !== $command->price) {
+        $after = [
+            'family_id' => $product->familyId()->value(),
+            'tax_id' => $product->taxId()->value(),
+            'image_src' => $product->imageSrc()->value(),
+            'name' => $product->name()->value(),
+            'price' => $product->price()->value(),
+            'stock' => $product->stock()->value(),
+            'active' => $product->isActive(),
+            'allergens' => $product->allergens()->values(),
+        ];
+
+        $userId = $command->userId !== null ? Uuid::create($command->userId) : null;
+        $restaurantId = Uuid::create($command->restaurantId);
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: $restaurantId,
+            slug: ActionSlug::create('product.updated'),
+            entityType: 'product',
+            entityId: $command->id,
+            userId: $userId,
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            before: $before,
+            after: $after,
+            metadata: [
+                'product_name' => $product->name()->value(),
+            ],
+        ));
+
+        if ($before['price'] !== $command->price) {
             $this->auditRecorder->record(new AuditEventDraft(
-                restaurantId: Uuid::create($command->restaurantId),
+                restaurantId: $restaurantId,
                 slug: ActionSlug::create('product.price_changed'),
                 entityType: 'product',
                 entityId: $command->id,
-                userId: null,
+                userId: $userId,
                 deviceId: $command->deviceId,
                 ipAddress: $command->ipAddress,
                 metadata: [
                     'product_name' => $product->name()->value(),
-                    'price_before_formatted' => number_format($priceBefore / 100, 2).' €',
+                    'price_before_formatted' => number_format($before['price'] / 100, 2).' €',
                     'price_after_formatted' => number_format($command->price / 100, 2).' €',
                 ],
             ));

@@ -22,8 +22,10 @@ final class AdminDeleteController
     public function __invoke(DeleteRestaurantUserRequest $request, string $uuid, string $userUuid): JsonResponse
     {
         $superAdminUuid = $request->session()->get('super_admin_id');
+        $authUserUuid = null;
 
         if (! is_string($superAdminUuid) || $superAdminUuid === '') {
+            $superAdminUuid = null;
             $authUserUuid = $request->session()->get('auth_user_id');
 
             if (! is_string($authUserUuid) || $authUserUuid === '') {
@@ -51,7 +53,7 @@ final class AdminDeleteController
         }
 
         try {
-            $response = ($this->deleteRestaurantUser)($request->toCommand($uuid, $userUuid));
+            $response = ($this->deleteRestaurantUser)($request->toCommand($uuid, $userUuid, $authUserUuid, $superAdminUuid));
         } catch (UserNotFoundException $e) {
             return new JsonResponse(['message' => 'User not found.'], 404);
         } catch (\Throwable $e) {

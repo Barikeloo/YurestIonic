@@ -23,5 +23,9 @@ final readonly class CreateMenuCommand
         public ?string $availableToTime,
         public bool $active,
         public array $sections,
+        public string $restaurantId,
+        public ?string $userId = null,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

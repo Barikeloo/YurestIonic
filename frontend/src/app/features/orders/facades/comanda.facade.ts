@@ -372,37 +372,38 @@ export class ComandaFacade {
     this._sendError.set(null);
 
     try {
-      for (const line of productLines) {
-        await firstValueFrom(
-          this.tpvService.addOrderLine({
-            order_id: this.orderId,
-            product_id: line.productId,
-            quantity: line.quantity,
-            variant_id: line.variantId ?? null,
-            modifiers: line.modifiers.length > 0 ? line.modifiers : null,
-          }),
-        );
-      }
+      const payloadProductLines = productLines.map((line) => ({
+        product_id: line.productId,
+        quantity: line.quantity,
+        variant_id: line.variantId ?? null,
+        modifiers: line.modifiers.length > 0 ? line.modifiers : null,
+        diner_number: null as number | null,
+      }));
 
+      const payloadMenuLines: Array<{ menu_id: string; notes: string | null; selections: Array<{ section_id: string; product_id: string; variant_id: string | null; modifiers: SelectedModifier[] }> }> = [];
       for (const menuLine of menuLines) {
-        // Cada `quantity` se dispara como una llamada independiente porque el
-        // endpoint de menús crea una OrderLine por petición (no soporta qty).
+        const mappedSelections = menuLine.selections.map((s) => ({
+          section_id: s.sectionId,
+          product_id: s.productId,
+          variant_id: s.variantId,
+          modifiers: s.modifiers,
+        }));
         for (let i = 0; i < menuLine.quantity; i++) {
-          await firstValueFrom(
-            this.tpvService.addMenuLineToOrder({
-              order_id: this.orderId,
-              menu_id: menuLine.menuId,
-              notes: menuLine.notes,
-              selections: menuLine.selections.map((s) => ({
-                section_id: s.sectionId,
-                product_id: s.productId,
-                variant_id: s.variantId,
-                modifiers: s.modifiers,
-              })),
-            }),
-          );
+          payloadMenuLines.push({
+            menu_id: menuLine.menuId,
+            notes: menuLine.notes,
+            selections: mappedSelections,
+          });
         }
       }
+
+      await firstValueFrom(
+        this.tpvService.batchAddLines({
+          order_id: this.orderId,
+          product_lines: payloadProductLines,
+          menu_lines: payloadMenuLines,
+        }),
+      );
 
       this._cartLines.set([]);
       this._cartMenuLines.set([]);

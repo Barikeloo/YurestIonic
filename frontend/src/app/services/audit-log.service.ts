@@ -56,6 +56,31 @@ export interface ListAuditEventsFilters {
   since?: string;
 }
 
+export interface AuditSavedViewApi {
+  uuid: string;
+  name: string;
+  icon: string | null;
+  filters: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ListAuditSavedViewsResponse {
+  data: AuditSavedViewApi[];
+}
+
+export interface CreateAuditSavedViewPayload {
+  name: string;
+  icon: string | null;
+  filters: Record<string, unknown>;
+}
+
+export interface UpdateAuditSavedViewPayload {
+  name?: string;
+  icon?: string | null;
+  filters?: Record<string, unknown>;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -80,5 +105,21 @@ export class AuditLogService extends BaseApiService {
 
   public getEvent(uuid: string): Observable<AuditEventApi> {
     return this.get<AuditEventApi>(`/admin/audit-log/${uuid}`);
+  }
+
+  public listSavedViews(): Observable<ListAuditSavedViewsResponse> {
+    return this.get<ListAuditSavedViewsResponse>('/admin/audit-saved-views');
+  }
+
+  public createSavedView(payload: CreateAuditSavedViewPayload): Observable<AuditSavedViewApi> {
+    return this.post<AuditSavedViewApi>('/admin/audit-saved-views', payload);
+  }
+
+  public updateSavedView(uuid: string, payload: UpdateAuditSavedViewPayload): Observable<AuditSavedViewApi> {
+    return this.patch<AuditSavedViewApi>(`/admin/audit-saved-views/${uuid}`, payload);
+  }
+
+  public deleteSavedView(uuid: string): Observable<void> {
+    return this.delete<void>(`/admin/audit-saved-views/${uuid}`);
   }
 }

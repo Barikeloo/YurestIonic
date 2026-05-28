@@ -22,8 +22,10 @@ final class AdminPostController
     public function __invoke(CreateRestaurantUserRequest $request, string $uuid): JsonResponse
     {
         $superAdminUuid = $request->session()->get('super_admin_id');
+        $authUserUuid = null;
 
         if (! is_string($superAdminUuid) || $superAdminUuid === '') {
+            $superAdminUuid = null;
             $authUserUuid = $request->session()->get('auth_user_id');
 
             if (! is_string($authUserUuid) || $authUserUuid === '') {
@@ -51,7 +53,7 @@ final class AdminPostController
         }
 
         try {
-            $response = ($this->createRestaurantUser)($request->toCommand($uuid));
+            $response = ($this->createRestaurantUser)($request->toCommand($uuid, $authUserUuid, $superAdminUuid));
         } catch (PinAlreadyInUseException $e) {
             return new JsonResponse(['message' => $e->getMessage()], 409);
         } catch (\Throwable $e) {

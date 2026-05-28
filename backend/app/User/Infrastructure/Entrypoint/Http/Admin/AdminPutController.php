@@ -27,6 +27,7 @@ final class AdminPutController
         $authUserUuid = null;
 
         if (! is_string($superAdminUuid) || $superAdminUuid === '') {
+            $superAdminUuid = null;
             $authUserUuid = $request->session()->get('auth_user_id');
 
             if (! is_string($authUserUuid) || $authUserUuid === '') {
@@ -54,7 +55,7 @@ final class AdminPutController
         }
 
         try {
-            $response = ($this->updateRestaurantUser)($request->toCommand($uuid, $userUuid, $authUserUuid));
+            $response = ($this->updateRestaurantUser)($request->toCommand($uuid, $userUuid, $authUserUuid, $superAdminUuid));
         } catch (CannotDemoteSelfAdminException $e) {
             return new JsonResponse(['message' => $e->getMessage()], 422);
         } catch (PinAlreadyInUseException $e) {

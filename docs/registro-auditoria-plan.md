@@ -2,7 +2,7 @@
 
 > Documento de seguimiento. Recoge el estado actual, las decisiones de diseño pendientes y el plan por hitos para llevar la página `Registro de Auditoría` (ya maquetada en el front con datos mock) a un módulo real conectado con el backend y el TPV.
 
-Última actualización: 2026-05-26
+Última actualización: 2026-05-28
 
 ---
 
@@ -27,7 +27,7 @@ El front pinta 10–12 conceptos que la tabla actual **no almacena**: `category`
 
 ### Cobertura de auditoría — instrumentados vs. pendientes
 
-#### ✅ Instrumentados (18 slugs)
+#### ✅ Instrumentados (45 slugs — cobertura completa)
 
 | Slug | Use case | Categoría | Severidad |
 |---|---|---|---|
@@ -35,6 +35,8 @@ El front pinta 10–12 conceptos que la tabla actual **no almacena**: `category`
 | `auth.login_pin_failed` | `User/AuthenticateUserByPin` (rama de fallo) | auth | critical |
 | `auth.device_link` | `User/AuthenticateForDeviceLink` | auth | info |
 | `order.created` | `Order/CreateOrder` | order | info |
+| `order.line_added` | `Order/AddLineToOrder` (rama nueva y rama merge) | order | info |
+| `order.line_removed` | `Order/DeleteOrderLine` | order | warning |
 | `order.marked_to_charge` | `Order/MarkOrderToCharge` | order | warning |
 | `order.reopened` | `Order/ReopenOrder` | order | danger |
 | `order.transferred` | `Order/TransferOrder` | order | info |
@@ -44,43 +46,40 @@ El front pinta 10–12 conceptos que la tabla actual **no almacena**: `category`
 | `caja.force_closed` | `Cash/ForceCloseCashSession` | caja | critical |
 | `caja.cash_movement` | `Cash/RegisterCashMovement` | caja | warning |
 | `sale.created` | `Sale/CreateSale` | sale | success |
+| `sale.cancelled` | `Sale/CancelSale` | sale | danger |
 | `sale.credit_note_issued` | `Sale/CreateCreditNote` | sale | danger |
+| `product.created` | `Product/CreateProduct` | catalog | info |
+| `product.updated` | `Product/UpdateProduct` (siempre, con `before/after`) | catalog | info |
+| `product.deleted` | `Product/DeleteProduct` | catalog | warning |
 | `product.activated` | `Product/SetProductActive` (rama activar) | catalog | info |
 | `product.deactivated` | `Product/SetProductActive` (rama desactivar) | catalog | info |
 | `product.price_changed` | `Product/UpdateProduct` (condicional si cambia precio) | catalog | warning |
+| `family.created` | `Family/CreateFamily` | catalog | info |
+| `family.updated` | `Family/UpdateFamily` (con `before/after`) | catalog | info |
+| `family.deleted` | `Family/DeleteFamily` | catalog | warning |
+| `menu.created` | `Menu/CreateMenu` | catalog | info |
+| `menu.updated` | `Menu/UpdateMenu` (con `before/after` del header) | catalog | info |
+| `menu.activated` | `Menu/SetMenuActive` (rama activar) | catalog | info |
+| `menu.deactivated` | `Menu/SetMenuActive` (rama desactivar) | catalog | info |
+| `menu.archived` | `Menu/ArchiveMenu` | catalog | warning |
+| `table.created` | `Tables/CreateTable` | table | info |
+| `table.updated` | `Tables/UpdateTable` (con `before/after`) | table | info |
+| `table.deleted` | `Tables/DeleteTable` | table | warning |
 | `table.merged` | `Tables/MergeTables` | table | info |
+| `table.unmerged` | `Tables/UnmergeTables` | table | info |
+| `zone.created` | `Zone/CreateZone` | table | info |
+| `zone.updated` | `Zone/UpdateZone` (con `before/after`) | table | info |
+| `zone.deleted` | `Zone/DeleteZone` | table | warning |
+| `user.created` | `User/CreateRestaurantUser` | config | warning |
+| `user.updated` | `User/UpdateRestaurantUser` (con diff de campos) | config | warning |
+| `user.deleted` | `User/DeleteRestaurantUser` | config | critical |
+| `tax.created` | `Tax/CreateTax` | config | warning |
+| `tax.updated` | `Tax/UpdateTax` (con `before/after` y `changed_fields`) | config | warning |
+| `tax.deleted` | `Tax/DeleteTax` | config | critical |
 
 #### 🚧 Pendientes (por instrumentar)
 
-| Módulo | Slug propuesto | Use case | Prioridad |
-|---|---|---|---|
-| **Order** | `order.line_added` | `Order/AddOrderLine` | Alta |
-| **Order** | `order.line_removed` | `Order/DeleteOrderLine` | Alta |
-| **Product** | `product.created` | `Product/CreateProduct` | Media |
-| **Product** | `product.updated` | `Product/UpdateProduct` (siempre) | Media |
-| **Product** | `product.deleted` | `Product/DeleteProduct` | Media |
-| **Sale** | `sale.cancelled` | `Sale/CancelSale` | Alta |
-| **Tables** | `table.created` | `Tables/CreateTable` | Media |
-| **Tables** | `table.updated` | `Tables/UpdateTable` | Media |
-| **Tables** | `table.deleted` | `Tables/DeleteTable` | Media |
-| **Tables** | `table.unmerged` | `Tables/UnmergeTables` | Media |
-| **Family** | `family.created` | `Family/CreateFamily` | Baja |
-| **Family** | `family.updated` | `Family/UpdateFamily` | Baja |
-| **Family** | `family.deleted` | `Family/DeleteFamily` | Baja |
-| **Zone** | `zone.created` | `Zone/CreateZone` | Baja |
-| **Zone** | `zone.updated` | `Zone/UpdateZone` | Baja |
-| **Zone** | `zone.deleted` | `Zone/DeleteZone` | Baja |
-| **Tax** | `tax.created` | `Tax/CreateTax` | Baja |
-| **Tax** | `tax.updated` | `Tax/UpdateTax` | Baja |
-| **Tax** | `tax.deleted` | `Tax/DeleteTax` | Baja |
-| **User** | `user.created` | `User/CreateUser` | Media |
-| **User** | `user.updated` | `User/UpdateRestaurantUser` | Media |
-| **User** | `user.deleted` | `User/DeleteRestaurantUser` | Media |
-| **Menu** | `menu.created` | `Menu/CreateMenu` | Baja |
-| **Menu** | `menu.updated` | `Menu/UpdateMenu` | Baja |
-| **Menu** | `menu.activated` | `Menu/SetMenuActive` (rama activar) | Baja |
-| **Menu** | `menu.deactivated` | `Menu/SetMenuActive` (rama desactivar) | Baja |
-| **Menu** | `menu.archived` | `Menu/ArchiveMenu` | Baja |
+_Ninguno._ Cobertura completa del prototipo alcanzada el 2026-05-28.
 
 ---
 
@@ -289,7 +288,7 @@ Para cada use case de Decisión D, inyectar `AuditRecorderInterface` en el const
 > Nota: cadena de hash, ambos detectores de anomalía y permiso `role = admin` ya se entregaron como parte del Hito 1.
 - [x] Endpoint admin `GET /api/admin/audit-log/verify` que recalcula la cadena y reporta filas rotas
 - [ ] Alerting cuando aparece una anomalía crítica (Slack/email)
-- [ ] Vistas guardadas persistidas por usuario (tabla `audit_saved_views`) — opcional
+- [x] Vistas guardadas persistidas por usuario (tabla `audit_saved_views`) — opcional
 
 ### Hito 4b — Fix de cobertura `device_id` + `ip_address` ✅ Completado (2026-05-26)
 Fix aplicado: todos los use cases instrumentados en Hito 3 ahora pasan `deviceId` e `ipAddress` al `AuditEventDraft`. El interceptor del front ya envía `X-Device-Id`; el backend lo extrae del header o del body y la IP se captura con `$request->ip()`.
@@ -314,5 +313,15 @@ Fix aplicado: todos los use cases instrumentados en Hito 3 ahora pasan `deviceId
 - ✅ **Hito 3 — Instrumentación completa** completado (2026-05-26). Los 18 slugs instrumentados en sus use cases: Auth, Order, Caja, Sale, Catalog, Tables.
 - ✅ **Hito 4b — Fix `device_id` / `ip_address`** completado (2026-05-26). Todos los use cases de Hito 3 ahora capturan y persisten dispositivo e IP.
 - ✅ **Endpoint verify** implementado (2026-05-26). `GET /api/admin/audit-log/verify` recalcula la cadena de hash por restaurante.
-- 🚧 **Hito 4 — Hardening** pendiente: alerting, vistas guardadas persistidas.
-- 🚧 **27 slugs pendientes** por instrumentar (tabla completa en sección "Cobertura de auditoría — instrumentados vs. pendientes"). Prioridades: Alta (`order.line_added`, `order.line_removed`, `sale.cancelled`), Media (resto de catalog, tables, user), Baja (family, zone, tax, menu).
+- ✅ **Bloque 1 — Alta prioridad** completado (2026-05-28). 3 slugs instrumentados: `order.line_added` (`AddLineToOrder`, ambas ramas — nueva y merge), `order.line_removed` (`DeleteOrderLine`), `sale.cancelled` (`CancelSale`). `device_id` e `ip_address` capturados desde Request.
+- ✅ **Bloque 2 — Product** completado (2026-05-28). 3 slugs instrumentados: `product.created` (`CreateProduct`), `product.updated` (`UpdateProduct`, siempre, con `before/after` snapshot) y `product.deleted` (`DeleteProduct`, carga producto antes de borrar para summary). El evento existente `product.price_changed` sigue disparándose adicionalmente cuando el precio cambia.
+- ✅ **Bloque 3 — Tables** completado (2026-05-28). 4 slugs instrumentados: `table.created` (`CreateTable`), `table.updated` (`UpdateTable`, con `before/after`), `table.deleted` (`DeleteTable`, carga tabla antes de borrar para summary) y `table.unmerged` (`UnmergeTables`).
+- ✅ **Bloque 4 — User** completado (2026-05-28). 3 slugs instrumentados en categoría `config`: `user.created` (`CreateRestaurantUser`), `user.updated` (`UpdateRestaurantUser`, con diff de campos y flags `password_changed`/`pin_changed` sin exponer secretos) y `user.deleted` (`DeleteRestaurantUser`, captura nombre/rol antes de borrar). Distingue actor `super_admin` vs `restaurant_admin` en metadata.
+- ✅ **Bloque 5a — Family** completado (2026-05-28). 3 slugs instrumentados: `family.created` (`CreateFamily`), `family.updated` (`UpdateFamily`, con `before/after`) y `family.deleted` (`DeleteFamily`, carga familia antes de borrar para summary).
+- ✅ **Bloque 5b — Zone** completado (2026-05-28). 3 slugs en categoría `table` (espacios físicos del restaurante): `zone.created` (`CreateZone`), `zone.updated` (`UpdateZone`, con `before/after`) y `zone.deleted` (`DeleteZone`, carga zona antes de borrar para summary).
+- ✅ **Bloque 5c — Tax** completado (2026-05-28). 3 slugs en categoría `config` (configuración fiscal): `tax.created` (warning), `tax.updated` (warning, con `before/after` y `changed_fields`) y `tax.deleted` (**critical** por implicaciones fiscales). Severidades elevadas respecto a Family/Zone porque cambios en impuestos impactan facturación.
+- ✅ **Bloque 5d — Menu** completado (2026-05-28). 5 slugs en categoría `catalog`: `menu.created`, `menu.updated` (con `before/after` del header — name/price/active/tax_id, sin diff de sections para no inflar el log), `menu.activated`/`menu.deactivated` (rama doble en `SetMenuActive`) y `menu.archived` (warning, soft-delete del catálogo).
+- ✅ **Cobertura completa del prototipo alcanzada (45 slugs)**. Todos los use cases del backlog del plan están instrumentados.
+- ✅ **Backend Vistas Guardadas** completado (2026-05-28). Módulo `app/AuditSavedView/` con DDD completo: entity `AuditSavedView`, 4 use cases (`List`, `Create`, `Update`, `Delete`), `EloquentAuditSavedViewRepository`, 4 controllers + FormRequests. Rutas: `GET/POST/PATCH/DELETE /api/admin/audit-saved-views`. Migración ejecutada en DB.
+- ✅ **Frontend Vistas Guardadas** completado (2026-05-28). `AuditLogService` extendido con CRUD de saved views. `RegistroAuditoriaFacade` creado siguiendo el patrón Facade con Angular Signals. Componente refactorizado como thin wrapper del facade. Template actualizado: carga vistas del backend (`mergedSavedViews`), botón "Guardar vista actual" persiste via API, icono de eliminar para vistas custom. Compilación limpia (`npx tsc --noEmit`).
+- 🚧 **Hito 4 — Hardening** pendiente: alerting cuando aparece anomalía crítica.

@@ -62,6 +62,21 @@ final class AuditEventCatalog
             'severity' => 'danger',
             'summary' => 'Pedido {entity_id} cancelado.',
         ],
+        'order.line_added' => [
+            'category' => 'order',
+            'severity' => 'info',
+            'summary' => 'Añadida {metadata.quantity}× {metadata.product_name} al pedido {metadata.order_id}.',
+        ],
+        'order.line_removed' => [
+            'category' => 'order',
+            'severity' => 'warning',
+            'summary' => 'Eliminada línea {metadata.quantity}× {metadata.product_name} del pedido {metadata.order_id}.',
+        ],
+        'order.comanda_sent' => [
+            'category' => 'order',
+            'severity' => 'info',
+            'summary' => 'Comanda enviada: {metadata.total_lines} artículos ({metadata.items_summary}) al pedido {metadata.order_id}.',
+        ],
 
         // Caja
         'caja.opened' => [
@@ -96,8 +111,60 @@ final class AuditEventCatalog
             'severity' => 'danger',
             'summary' => 'Abono emitido sobre venta {entity_id} por {metadata.amount_formatted}.',
         ],
+        'sale.cancelled' => [
+            'category' => 'sale',
+            'severity' => 'danger',
+            'summary' => 'Venta {entity_id} cancelada. Motivo: {reason}.',
+        ],
+
+        // Config (gestión de usuarios y ajustes del restaurante)
+        'user.created' => [
+            'category' => 'config',
+            'severity' => 'warning',
+            'summary' => 'Usuario {metadata.user_name} ({metadata.role}) creado.',
+        ],
+        'user.updated' => [
+            'category' => 'config',
+            'severity' => 'warning',
+            'summary' => 'Usuario {metadata.user_name} actualizado: {metadata.changed_fields}.',
+        ],
+        'user.deleted' => [
+            'category' => 'config',
+            'severity' => 'critical',
+            'summary' => 'Usuario {metadata.user_name} ({metadata.role}) eliminado.',
+        ],
+        'tax.created' => [
+            'category' => 'config',
+            'severity' => 'warning',
+            'summary' => 'Impuesto {metadata.tax_name} creado al {metadata.percentage}%.',
+        ],
+        'tax.updated' => [
+            'category' => 'config',
+            'severity' => 'warning',
+            'summary' => 'Impuesto {metadata.tax_name} actualizado: {metadata.changed_fields}.',
+        ],
+        'tax.deleted' => [
+            'category' => 'config',
+            'severity' => 'critical',
+            'summary' => 'Impuesto {metadata.tax_name} ({metadata.percentage}%) eliminado.',
+        ],
 
         // Catalog
+        'product.created' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Producto {metadata.product_name} creado con precio {metadata.price_formatted}.',
+        ],
+        'product.updated' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Producto {metadata.product_name} actualizado.',
+        ],
+        'product.deleted' => [
+            'category' => 'catalog',
+            'severity' => 'warning',
+            'summary' => 'Producto {metadata.product_name} eliminado del catálogo.',
+        ],
         'product.activated' => [
             'category' => 'catalog',
             'severity' => 'info',
@@ -113,12 +180,87 @@ final class AuditEventCatalog
             'severity' => 'warning',
             'summary' => 'Precio del producto {metadata.product_name} actualizado de {metadata.price_before_formatted} a {metadata.price_after_formatted}.',
         ],
+        'family.created' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Familia {metadata.family_name} creada.',
+        ],
+        'family.updated' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Familia {metadata.family_name} actualizada.',
+        ],
+        'family.deleted' => [
+            'category' => 'catalog',
+            'severity' => 'warning',
+            'summary' => 'Familia {metadata.family_name} eliminada del catálogo.',
+        ],
+        'menu.created' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Menú {metadata.menu_name} creado con precio {metadata.price_formatted}.',
+        ],
+        'menu.updated' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Menú {metadata.menu_name} actualizado.',
+        ],
+        'menu.activated' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Menú {metadata.menu_name} activado.',
+        ],
+        'menu.deactivated' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Menú {metadata.menu_name} desactivado.',
+        ],
+        'menu.archived' => [
+            'category' => 'catalog',
+            'severity' => 'warning',
+            'summary' => 'Menú {metadata.menu_name} archivado.',
+        ],
 
         // Tables
+        'table.created' => [
+            'category' => 'table',
+            'severity' => 'info',
+            'summary' => 'Mesa {metadata.table_name} creada.',
+        ],
+        'table.updated' => [
+            'category' => 'table',
+            'severity' => 'info',
+            'summary' => 'Mesa {metadata.table_name} actualizada.',
+        ],
+        'table.deleted' => [
+            'category' => 'table',
+            'severity' => 'warning',
+            'summary' => 'Mesa {metadata.table_name} eliminada.',
+        ],
         'table.merged' => [
             'category' => 'table',
             'severity' => 'info',
             'summary' => 'Fusión de mesas {metadata.tables_label}.',
+        ],
+        'table.unmerged' => [
+            'category' => 'table',
+            'severity' => 'info',
+            'summary' => 'Mesas {metadata.tables_label} separadas tras fusión.',
+        ],
+        'zone.created' => [
+            'category' => 'table',
+            'severity' => 'info',
+            'summary' => 'Zona {metadata.zone_name} creada.',
+        ],
+        'zone.updated' => [
+            'category' => 'table',
+            'severity' => 'info',
+            'summary' => 'Zona {metadata.zone_name} actualizada.',
+        ],
+        'zone.deleted' => [
+            'category' => 'table',
+            'severity' => 'warning',
+            'summary' => 'Zona {metadata.zone_name} eliminada.',
         ],
     ];
 

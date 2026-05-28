@@ -23,8 +23,16 @@ final class CreateRestaurantUserRequest extends FormRequest
         ];
     }
 
-    public function toCommand(string $restaurantUuid): CreateRestaurantUserCommand
-    {
+    public function toCommand(
+        string $restaurantUuid,
+        ?string $actorUserUuid,
+        ?string $actorSuperAdminUuid,
+    ): CreateRestaurantUserCommand {
+        $deviceId = $this->input('device_id');
+        if (! is_string($deviceId) || $deviceId === '') {
+            $deviceId = $this->header('X-Device-Id');
+        }
+
         return new CreateRestaurantUserCommand(
             name: (string) $this->input('name'),
             email: (string) $this->input('email'),
@@ -32,6 +40,10 @@ final class CreateRestaurantUserRequest extends FormRequest
             restaurantUuid: $restaurantUuid,
             role: (string) ($this->input('role') ?? 'operator'),
             plainPin: $this->input('pin'),
+            actorUserUuid: $actorUserUuid,
+            actorSuperAdminUuid: $actorSuperAdminUuid,
+            deviceId: is_string($deviceId) ? $deviceId : null,
+            ipAddress: $this->ip(),
         );
     }
 }

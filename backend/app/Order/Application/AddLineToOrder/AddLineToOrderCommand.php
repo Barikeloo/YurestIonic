@@ -16,5 +16,7 @@ final readonly class AddLineToOrderCommand
         public ?int $dinerNumber,
         public ?string $variantId = null,
         public ?array $modifiers = null,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

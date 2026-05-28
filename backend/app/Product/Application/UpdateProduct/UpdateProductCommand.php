@@ -20,5 +20,6 @@ final readonly class UpdateProductCommand
         public string $restaurantId,
         public ?string $deviceId = null,
         public ?string $ipAddress = null,
+        public ?string $userId = null,
     ) {}
 }

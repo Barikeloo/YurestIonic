@@ -401,6 +401,12 @@ export class TpvService {
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
+  public batchAddLines(payload: { order_id: string; product_lines: Array<{ product_id: string; quantity: number; variant_id?: string | null; modifiers?: Array<{ id: string; name: string; price: number; type?: 'extra' | 'accompaniment' }> | null; diner_number?: number | null }>; menu_lines: Array<{ menu_id: string; notes: string | null; selections: Array<{ section_id: string; product_id: string; variant_id: string | null; modifiers: Array<{ id: string; name: string; price: number; type?: 'extra' | 'accompaniment' }> }> }> }): Observable<unknown> {
+    return this.http
+      .post(`${this.baseUrl}/tpv/orders/batch-lines`, payload, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
   public deleteOrderLine(lineId: string): Observable<void> {
     return this.http
       .delete<void>(`${this.baseUrl}/tpv/orders/lines/${lineId}`, { withCredentials: true })

@@ -6,6 +6,8 @@ use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
 use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Audit\Infrastructure\Persistence\EloquentAuditRecorder;
 use App\Audit\Infrastructure\Persistence\Repositories\EloquentAuditLogRepository;
+use App\AuditSavedView\Domain\Interfaces\AuditSavedViewRepositoryInterface;
+use App\AuditSavedView\Infrastructure\Persistence\Repositories\EloquentAuditSavedViewRepository;
 use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
@@ -99,6 +101,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TransactionManagerInterface::class, LaravelTransactionManager::class);
         $this->app->bind(AuditLogRepositoryInterface::class, EloquentAuditLogRepository::class);
         $this->app->bind(AuditRecorderInterface::class, EloquentAuditRecorder::class);
+        $this->app->bind(AuditSavedViewRepositoryInterface::class, EloquentAuditSavedViewRepository::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
     }
 

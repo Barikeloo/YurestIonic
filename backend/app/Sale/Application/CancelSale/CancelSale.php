@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\CancelSale;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Domain\Entity\CashMovement;
 use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
@@ -23,6 +26,7 @@ final class CancelSale
         private readonly SalePaymentRepositoryInterface $salePaymentRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly CashMovementRepositoryInterface $cashMovementRepository,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(CancelSaleCommand $command): CancelSaleResponse
@@ -58,29 +62,47 @@ final class CancelSale
         }
 
         // 4. Registrar movimiento de caja compensatorio (cash out)
+        $cashRefundedCents = 0;
         $cashSessionId = $sale->cashSessionId();
         if ($cashSessionId !== null) {
-            $totalCash = 0;
             foreach ($payments as $payment) {
                 if ($payment->method()->isCash()) {
-                    $totalCash += $payment->amount()->toCents();
+                    $cashRefundedCents += $payment->amount()->toCents();
                 }
             }
 
-            if ($totalCash > 0) {
+            if ($cashRefundedCents > 0) {
                 $cashMovement = CashMovement::dddCreate(
                     id: Uuid::generate(),
                     restaurantId: $sale->restaurantId(),
                     cashSessionId: $cashSessionId,
                     type: MovementType::out(),
                     reasonCode: MovementReasonCode::cancellation(),
-                    amount: Money::create($totalCash),
+                    amount: Money::create($cashRefundedCents),
                     userId: $cancelledByUuid,
                     description: 'Devolución por cancelación de venta: '.$command->reason,
                 );
                 $this->cashMovementRepository->save($cashMovement);
             }
         }
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: $sale->restaurantId(),
+            slug: ActionSlug::create('sale.cancelled'),
+            entityType: 'sale',
+            entityId: $sale->id()->value(),
+            userId: $cancelledByUuid,
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            sessionId: $cashSessionId,
+            reason: $command->reason,
+            metadata: [
+                'order_id' => $sale->orderId()->value(),
+                'total_cents' => $sale->total()->value(),
+                'cash_refunded_cents' => $cashRefundedCents,
+                'payments_removed' => count($payments),
+            ],
+        ));
 
         return CancelSaleResponse::create($sale);
     }

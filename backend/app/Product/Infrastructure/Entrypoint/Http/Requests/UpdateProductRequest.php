@@ -55,6 +55,8 @@ final class UpdateProductRequest extends FormRequest
             $deviceId = $this->header('X-Device-Id');
         }
 
+        $userId = $this->session()->get('auth_user_id');
+
         return new UpdateProductCommand(
             id: $id,
             familyId: (string) $this->input('family_id'),
@@ -68,6 +70,7 @@ final class UpdateProductRequest extends FormRequest
             restaurantId: (string) $tenantContext->restaurantUuid(),
             deviceId: is_string($deviceId) ? $deviceId : null,
             ipAddress: $this->ip(),
+            userId: is_string($userId) && $userId !== '' ? $userId : null,
         );
     }
 }

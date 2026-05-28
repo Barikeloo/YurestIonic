@@ -10,5 +10,7 @@ final readonly class CancelSaleCommand
         public string $saleId,
         public string $cancelledByUserId,
         public string $reason,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

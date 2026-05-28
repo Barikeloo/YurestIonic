@@ -2,6 +2,9 @@
 
 namespace App\Order\Application\DeleteOrderLine;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Order\Domain\Exception\OrderIsNotOpenException;
 use App\Order\Domain\Exception\OrderLineNotFoundException;
 use App\Order\Domain\Exception\OrderNotFoundException;
@@ -16,6 +19,7 @@ final class DeleteOrderLine
         private readonly OrderLineRepositoryInterface $orderLineRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly ProductRepositoryInterface $productRepository,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(DeleteOrderLineCommand $command): void
@@ -39,7 +43,9 @@ final class DeleteOrderLine
 
         // En líneas de menú, devolvemos stock a cada producto elegido (vienen en menu_selections);
         // en líneas de producto, solo a su productId.
+        $productName = null;
         if ($line->isMenuLine()) {
+            $productName = $line->menuName();
             foreach ($line->menuSelections() ?? [] as $selection) {
                 $product = $this->productRepository->findById($selection['product_id']);
                 if ($product !== null) {
@@ -50,11 +56,31 @@ final class DeleteOrderLine
         } elseif ($line->productId() !== null) {
             $product = $this->productRepository->findById($line->productId()->value());
             if ($product !== null) {
+                $productName = $product->name()->value();
                 $product->increaseStock($line->quantity()->value());
                 $this->productRepository->save($product);
             }
         }
 
         $this->orderLineRepository->delete($line->id());
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: $line->restaurantId(),
+            slug: ActionSlug::create('order.line_removed'),
+            entityType: 'order_line',
+            entityId: $line->id()->value(),
+            userId: Uuid::create($command->userId),
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            metadata: [
+                'order_id' => $line->orderId()->value(),
+                'product_id' => $line->productId()?->value(),
+                'product_name' => $productName ?? '—',
+                'variant_name' => $line->variantName(),
+                'quantity' => $line->quantity()->value(),
+                'unit_price_cents' => $line->price()->value(),
+                'is_menu_line' => $line->isMenuLine(),
+            ],
+        ));
     }
 }

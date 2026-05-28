@@ -8,6 +8,8 @@ import { RestaurantService, AdminRestaurantUser } from '../../../services/restau
 import { RestaurantContextFacade } from '../../../core/facades/restaurant-context.facade';
 import { AuthService } from '../../../core/services/auth.service';
 import { adaptApiEvent, AuditEvent, UserDirectoryEntry } from './audit-event.adapter';
+import { RegistroAuditoriaFacade } from './facades/registro-auditoria.facade';
+import { SaveViewModalComponent } from '../../../components/modals/save-view-modal/save-view-modal.component';
 
 const SEARCH_DEBOUNCE_MS = 350;
 const MIN_SEARCH_CHARS = 2;
@@ -21,7 +23,6 @@ type SeverityKey = 'info' | 'warning' | 'danger' | 'critical' | 'success';
 interface Category { label: string; color: string; bg: string; }
 interface Chip { id: string; label: string; icon: string; }
 interface Tab { id: string; label: string; cat: CategoryKey | null; }
-interface SavedView { id: string; name: string; icon: string; filters: Record<string, string | null>; }
 
 const CATEGORIES: Record<CategoryKey, Category> = {
   order:   { label: 'Pedidos',   color: '#1A6FE8', bg: '#EAF1FD' },
@@ -37,7 +38,6 @@ const CATEGORIES: Record<CategoryKey, Category> = {
 const SEV_LABEL: Record<SeverityKey, string> = {
   info: 'Info', warning: 'Warning', danger: 'Danger', critical: 'Critical', success: 'Success',
 };
-
 
 const TABS: Tab[] = [
   { id: 'all',     label: 'Todo',      cat: null       },
@@ -60,14 +60,6 @@ const CHIPS: Chip[] = [
   { id: 'reopen',    label: 'Reaperturas',          icon: 'lock-open' },
   { id: 'auth-fail', label: 'Fallos de acceso',     icon: 'shield-off'},
   { id: 'transfer',  label: 'Transferencias',       icon: 'swap'      },
-];
-
-const SAVED_VIEWS: SavedView[] = [
-  { id: 'sv-default',      name: 'Vista por defecto',                icon: 'list',      filters: { tab: 'all',   chip: null,       sev: 'all', user: 'all' } },
-  { id: 'sv-criticos',     name: 'Críticos del turno',               icon: 'alert',     filters: { tab: 'all',   chip: 'critical', sev: 'all', user: 'all' } },
-  { id: 'sv-reaperturas',  name: 'Mis reaperturas (Ana)',             icon: 'lock-open', filters: { tab: 'order', chip: 'reopen',   sev: 'all', user: 'Ana Martínez' } },
-  { id: 'sv-cuadres',      name: 'Cuadres con discrepancia',         icon: 'wallet',    filters: { tab: 'caja',  chip: null,       sev: 'warning', user: 'all' } },
-  { id: 'sv-fallos',       name: 'Fallos de acceso (24h)',           icon: 'shield-off',filters: { tab: 'auth',  chip: 'auth-fail',sev: 'all', user: 'all' } },
 ];
 
 const SPARK_HOURLY = [0,0,0,0,0,0,1,2,4,8,15,12,9,14,22,18,11,7,5,3,2,1,0,0];
@@ -128,51 +120,36 @@ function chipMatches(chipId: string, evt: AuditEvent): boolean {
 @Component({
   selector: 'app-registro-auditoria',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SaveViewModalComponent],
   templateUrl: './registro-auditoria.page.html',
   styleUrls: ['./registro-auditoria.page.scss'],
+  providers: [RegistroAuditoriaFacade],
 })
 export class RegistroAuditoriaPage implements OnInit, OnDestroy {
-  // ── Constants exposed to template ────────────────────────────
+  // ── Constants ──────────────────────────────────────────────
   readonly TABS = TABS;
   readonly CHIPS = CHIPS;
   readonly CATEGORIES = CATEGORIES;
-  readonly SAVED_VIEWS = SAVED_VIEWS;
   readonly SEV_LABEL = SEV_LABEL;
-  readonly ANOMALIES = ANOMALIES;
   readonly SPARK_HOURLY = SPARK_HOURLY;
+  readonly ANOMALIES = ANOMALIES;
 
-  // ── State ────────────────────────────────────────────────────
-  readonly events = signal<AuditEvent[]>([]);
+  // ── Facade proxy: data signals ─────────────────────────────
+  get events() { return this.facade.events; }
+  get isLoading() { return this.facade.isLoading; }
+  get isLoadingMore() { return this.facade.isLoadingMore; }
+  get loadError() { return this.facade.loadError; }
+  get nextCursor() { return this.facade.nextCursor; }
+  get hasMore() { return this.facade.hasMore; }
+  get usersDirectory() { return this.facade.usersDirectory; }
+
   readonly eventIndex = computed<Record<string, AuditEvent>>(() => {
     const idx: Record<string, AuditEvent> = {};
     for (const e of this.events()) idx[e.id] = e;
     return idx;
   });
-  readonly isLoading = signal(false);
-  readonly isLoadingMore = signal(false);
-  readonly loadError = signal<string | null>(null);
-  readonly nextCursor = signal<string | null>(null);
-  readonly hasMore = signal(false);
 
-  // Directorio de usuarios del restaurante actual (uuid -> {name, role}) cargado una vez al iniciar.
-  readonly usersDirectory = signal<Record<string, UserDirectoryEntry>>({});
-  // Lista para el dropdown de usuarios: ordenada por nombre.
-  readonly usersDropdownOptions = computed<Array<{ uuid: string; name: string }>>(() => {
-    const dir = this.usersDirectory();
-    return Object.entries(dir)
-      .map(([uuid, entry]) => ({ uuid, name: entry.name }))
-      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
-  });
-  // Lista de dispositivos derivada de los eventos cargados (únicos, ordenados).
-  readonly devicesDropdownOptions = computed<string[]>(() => {
-    const set = new Set<string>();
-    for (const e of this.events()) {
-      if (e.device && e.device !== '—') set.add(e.device);
-    }
-    return Array.from(set).sort();
-  });
-
+  // ── Local UI / filter signals ────────────────────────────────
   readonly activeTab = signal('all');
   readonly activeChip = signal<string | null>(null);
   readonly filterCategory = signal('all');
@@ -182,31 +159,35 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   readonly dateFrom = signal<string>(isoToday());
   readonly dateTo = signal<string>(isoToday());
   readonly searchRaw = signal('');
-  /** Versión debounceada de searchRaw que dispara refetch al backend. */
   readonly searchDebounced = signal('');
-  readonly selectedId = signal<string>('');
+  readonly selectedId = signal('');
   readonly toastMsg = signal<string | null>(null);
   readonly refreshCount = signal(0);
   readonly liveTail = signal(true);
   readonly savedViewsOpen = signal(false);
   readonly activeView = signal('sv-default');
   readonly jsonOpen = signal(false);
+  readonly saveViewModalOpen = signal(false);
 
-  // ── Timers ───────────────────────────────────────────────────
-  private refreshTimer?: ReturnType<typeof setInterval>;
-  private liveTailTimer?: ReturnType<typeof setInterval>;
-  private toastTimer?: ReturnType<typeof setTimeout>;
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
 
-  // ── Race-condition guard for in-flight requests ──────────────
-  private loadVersion = 0;
+  // ── Computed: users & devices dropdowns ───────────────────────
+  readonly usersDropdownOptions = computed<Array<{ uuid: string; name: string }>>(() => {
+    const dir = this.usersDirectory();
+    return Object.entries(dir)
+      .map(([uuid, entry]) => ({ uuid, name: entry.name }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  });
 
-  // ── Cache de respuesta cruda del backend para poder re-adaptar cuando llega el directorio ──
-  private rawApiEvents: import('../../../services/audit-log.service').AuditEventApi[] = [];
+  readonly devicesDropdownOptions = computed<string[]>(() => {
+    const set = new Set<string>();
+    for (const e of this.events()) {
+      if (e.device && e.device !== '—') set.add(e.device);
+    }
+    return Array.from(set).sort();
+  });
 
-  // ── Computed: filtros traducidos a parámetros server-side ────
-  // Tab > dropdown: si la pestaña fija una categoría, prevalece sobre el dropdown.
-  // Chip se mantiene en cliente porque combina criterios o usa data no expuesta.
+  // ── Computed: server filters ───────────────────────────────
   readonly serverFilters = computed<ListAuditEventsFilters>(() => {
     const tab = TABS.find(t => t.id === this.activeTab());
     const tabCategory = tab?.cat ?? null;
@@ -232,17 +213,13 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     return filters;
   });
 
-  // ── Computed: filtered events ─────────────────────────────────
-  // Los filtros principales (categoría, severidad, usuario, dispositivo, búsqueda) ya los aplica
-  // el backend. Aquí sólo se aplica el chip, que combina criterios o usa lógica que aún no está
-  // expuesta por la API.
+  // ── Presentation getters ───────────────────────────────────
   get filtered(): AuditEvent[] {
     const chip = this.activeChip();
     if (!chip) return this.events();
     return this.events().filter((e: AuditEvent) => chipMatches(chip, e));
   }
 
-  // ── Computed: grouped events ─────────────────────────────────
   get grouped(): Array<{ key: string; label: string; events: AuditEvent[] }> {
     const groups: Record<string, { label: string; events: AuditEvent[] }> = {};
     const order: string[] = [];
@@ -256,7 +233,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     return order.map(k => ({ key: k, label: groups[k].label, events: groups[k].events }));
   }
 
-  // ── Computed: tab counts ──────────────────────────────────────
   get tabCounts(): Record<string, number> {
     const all = this.events();
     const counts: Record<string, number> = { all: all.length };
@@ -267,7 +243,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     return counts;
   }
 
-  // ── Computed: chip counts ─────────────────────────────────────
   get chipCounts(): Record<string, number> {
     const all = this.events();
     const counts: Record<string, number> = {};
@@ -275,7 +250,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     return counts;
   }
 
-  // ── Computed: KPIs (sobre los eventos cargados) ────────────────
   private todayKey(): string { return new Date().toISOString().slice(0, 10); }
   get kpiTotal(): number {
     const today = this.todayKey();
@@ -294,10 +268,8 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     return first ? formatRelative(first.ts) : '—';
   }
 
-  // ── Computed: selected event ──────────────────────────────────
   get selected(): AuditEvent | null { return this.eventIndex()[this.selectedId()] ?? null; }
 
-  // ── Computed: related events for detail panel ─────────────────
   get relatedTimeline(): AuditEvent[] {
     const sel = this.selected;
     if (!sel) return [];
@@ -306,157 +278,30 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     return [...related, sel].sort((a, b) => a.ts.localeCompare(b.ts));
   }
 
-  get activeViewMeta(): SavedView | undefined {
-    return SAVED_VIEWS.find(v => v.id === this.activeView());
+  get activeViewMeta() {
+    return this.facade.mergedSavedViews().find(v => v.id === this.activeView());
   }
 
-  private readonly restaurantService = inject(RestaurantService);
-  private readonly restaurantContextFacade = inject(RestaurantContextFacade);
-  private readonly authService = inject(AuthService);
+  protected readonly facade = inject(RegistroAuditoriaFacade);
+  private readonly router = inject(Router);
 
-  constructor(
-    private readonly router: Router,
-    private readonly auditLogService: AuditLogService,
-  ) {
-    // Refetch automático al cambiar cualquier filtro server-side. Se dispara en cuanto el componente
-    // monta (con filtros vacíos = última página global) y en cada cambio posterior.
+  constructor() {
     effect(() => {
       const filters = this.serverFilters();
-      this.loadInitial(filters);
+      this.facade.loadInitial(filters);
     });
   }
 
   ngOnInit(): void {
-    this.startRefreshTimer();
-    this.startLiveTailTimer();
-    this.loadUsersDirectory();
-  }
-
-  private loadUsersDirectory(): void {
-    let restaurantUuid = this.restaurantContextFacade.selectedRestaurantUuid;
-    if (!restaurantUuid) {
-      restaurantUuid = localStorage.getItem('gestion_selected_restaurant_uuid');
-    }
-    if (!restaurantUuid) {
-      restaurantUuid = this.authService.currentUserSnapshot?.restaurantId ?? null;
-    }
-    if (!restaurantUuid) return;
-    this.restaurantService.getRestaurantUsers(restaurantUuid).subscribe({
-      next: (resp) => {
-        const dir: Record<string, UserDirectoryEntry> = {};
-        for (const u of resp.users as AdminRestaurantUser[]) {
-          dir[u.uuid] = { name: u.name, role: u.role };
-        }
-        this.usersDirectory.set(dir);
-        // Re-adaptamos los eventos ya cargados para que muestren el nombre real del usuario.
-        this.reAdaptEventsWithDirectory();
-      },
-      error: () => {
-        // Silenciamos: si falla, los eventos siguen mostrando 'Usuario desconocido'.
-      },
-    });
-  }
-
-  /** Reaplica el adapter sobre los eventos crudos del backend, ahora con directorio de usuarios. */
-  private reAdaptEventsWithDirectory(): void {
-    if (this.rawApiEvents.length === 0) return;
-    const dir = this.usersDirectory();
-    this.events.set(this.rawApiEvents.map(api => adaptApiEvent(api, dir)));
+    this.facade.startRefreshTimer();
+    this.facade.startLiveTailTimer();
+    this.facade.loadUsersDirectory();
+    this.facade.loadSavedViews();
   }
 
   ngOnDestroy(): void {
-    if (this.refreshTimer) clearInterval(this.refreshTimer);
-    if (this.liveTailTimer) clearInterval(this.liveTailTimer);
-    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.facade.destroy();
     if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
-  }
-
-  private loadInitial(filters: ListAuditEventsFilters): void {
-    const version = ++this.loadVersion;
-    this.isLoading.set(true);
-    this.isLoadingMore.set(false);
-    this.loadError.set(null);
-    this.nextCursor.set(null);
-    this.hasMore.set(false);
-
-    this.auditLogService.list(filters).subscribe({
-      next: (resp) => {
-        if (version !== this.loadVersion) return;
-        this.rawApiEvents = resp.data;
-        const dir = this.usersDirectory();
-        const adapted = resp.data.map(api => adaptApiEvent(api, dir));
-        this.events.set(adapted);
-        this.nextCursor.set(resp.next_cursor);
-        this.hasMore.set(resp.has_more);
-        const currentSelected = this.selectedId();
-        const stillVisible = currentSelected && adapted.some(e => e.id === currentSelected);
-        if (!stillVisible) {
-          this.selectedId.set(adapted[0]?.id ?? '');
-        }
-        this.isLoading.set(false);
-      },
-      error: (err: Error) => {
-        if (version !== this.loadVersion) return;
-        this.loadError.set(err.message);
-        this.isLoading.set(false);
-      },
-    });
-  }
-
-  loadMore(): void {
-    const cursor = this.nextCursor();
-    if (!cursor || this.isLoadingMore()) return;
-
-    const version = ++this.loadVersion;
-    this.isLoadingMore.set(true);
-    this.loadError.set(null);
-
-    const filters: ListAuditEventsFilters = { ...this.serverFilters(), cursor };
-    this.auditLogService.list(filters).subscribe({
-      next: (resp) => {
-        if (version !== this.loadVersion) return;
-        this.rawApiEvents = [...this.rawApiEvents, ...resp.data];
-        const dir = this.usersDirectory();
-        const adapted = resp.data.map(api => adaptApiEvent(api, dir));
-        this.events.update(prev => [...prev, ...adapted]);
-        this.nextCursor.set(resp.next_cursor);
-        this.hasMore.set(resp.has_more);
-        this.isLoadingMore.set(false);
-      },
-      error: (err: Error) => {
-        if (version !== this.loadVersion) return;
-        this.loadError.set(err.message);
-        this.isLoadingMore.set(false);
-      },
-    });
-  }
-
-  private startRefreshTimer(): void {
-    this.refreshTimer = setInterval(() => {
-      if (this.liveTail()) this.refreshCount.update(c => (c + 1) % 30);
-    }, 1000);
-  }
-
-  private startLiveTailTimer(): void {
-    this.liveTailTimer = setInterval(() => this.pollLiveTail(), 5000);
-  }
-
-  /** Pide eventos más recientes que el último cargado y los prepende a la lista. */
-  private pollLiveTail(): void {
-    if (!this.liveTail() || this.events().length === 0) return;
-    const since = this.events()[0].id;
-    const version = ++this.loadVersion;
-    this.auditLogService.list({ since }).subscribe({
-      next: (resp) => {
-        if (version !== this.loadVersion) return;
-        if (resp.data.length === 0) return;
-        const dir = this.usersDirectory();
-        const adapted = resp.data.map(api => adaptApiEvent(api, dir));
-        this.rawApiEvents = [...resp.data, ...this.rawApiEvents];
-        this.events.update(prev => [...adapted, ...prev]);
-      },
-      error: () => { /* silencioso: no interrumpimos la UI por errores de polling */ },
-    });
   }
 
   // ── Actions ───────────────────────────────────────────────────
@@ -482,12 +327,10 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
     this.activeChip.set(null);
     this.activeView.set('sv-default');
-    this.nextCursor.set(null);
-    this.hasMore.set(false);
   }
 
   applyView(viewId: string): void {
-    const v = SAVED_VIEWS.find(s => s.id === viewId);
+    const v = this.facade.mergedSavedViews().find(s => s.id === viewId);
     if (!v) return;
     this.activeView.set(viewId);
     this.activeTab.set((v.filters['tab'] as string) || 'all');
@@ -495,24 +338,48 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     this.filterSeverity.set((v.filters['sev'] as string) || 'all');
     this.filterUser.set((v.filters['user'] as string) || 'all');
     this.savedViewsOpen.set(false);
-    this.showToast(`Vista aplicada: ${v.name}`);
+    this.facade.showToast(`Vista aplicada: ${v.name}`);
+  }
+
+  openSaveViewModal(): void {
+    this.saveViewModalOpen.set(true);
+    this.savedViewsOpen.set(false);
+  }
+
+  onSaveViewConfirm(name: string): void {
+    this.saveViewModalOpen.set(false);
+    const filters: Record<string, unknown> = {
+      tab: this.activeTab(),
+      chip: this.activeChip(),
+      sev: this.filterSeverity(),
+      user: this.filterUser(),
+      device: this.filterDevice(),
+      category: this.filterCategory(),
+      dateFrom: this.dateFrom(),
+      dateTo: this.dateTo(),
+      search: this.searchDebounced(),
+    };
+    this.facade.saveCurrentView(name.trim(), filters);
+  }
+
+  deleteView(uuid: string, event: Event): void {
+    event.stopPropagation();
+    this.facade.deleteView(uuid);
   }
 
   showToast(msg: string): void {
-    this.toastMsg.set(msg);
-    if (this.toastTimer) clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => this.toastMsg.set(null), 1800);
+    this.facade.showToast(msg);
   }
 
   copyToClipboard(txt: string): void {
     try { navigator.clipboard?.writeText(txt); } catch (_) {}
     const label = txt.length > 40 ? txt.slice(0, 40) + '…' : txt;
-    this.showToast(`Copiado: ${label}`);
+    this.facade.showToast(`Copiado: ${label}`);
   }
 
-  toggleLiveTail(): void { this.liveTail.update(v => !v); }
+  toggleLiveTail(): void { this.facade.toggleLiveTail(); }
 
-  exportData(): void { this.showToast('Exportando CSV...'); }
+  exportData(): void { this.facade.showToast('Exportando CSV...'); }
 
   onSearch(value: string): void {
     this.searchRaw.set(value);
@@ -520,6 +387,10 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     this.searchDebounceTimer = setTimeout(() => {
       this.searchDebounced.set(value);
     }, SEARCH_DEBOUNCE_MS);
+  }
+
+  loadMore(): void {
+    this.facade.loadMore(this.serverFilters());
   }
 
   // ── Helpers for template ──────────────────────────────────────

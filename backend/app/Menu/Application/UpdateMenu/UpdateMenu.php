@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Menu\Application\UpdateMenu;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Menu\Application\Shared\MenuSectionsBuilder;
 use App\Menu\Domain\Exception\MenuNotFoundException;
 use App\Menu\Domain\Interfaces\MenuRepositoryInterface;
@@ -18,12 +21,20 @@ class UpdateMenu
 {
     public function __construct(
         private MenuRepositoryInterface $menuRepository,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(UpdateMenuCommand $command): UpdateMenuResponse
     {
         $menu = $this->menuRepository->findById($command->id, includeArchived: false)
             ?? throw MenuNotFoundException::withId($command->id);
+
+        $before = [
+            'name' => $menu->name()->value(),
+            'price' => $menu->price()->value(),
+            'active' => $menu->isActive(),
+            'tax_id' => $menu->taxId()->value(),
+        ];
 
         $validity = MenuValidity::create(
             $command->validityFrom !== null ? new \DateTimeImmutable($command->validityFrom) : null,
@@ -50,6 +61,27 @@ class UpdateMenu
         $menu->replaceSections($sections);
 
         $this->menuRepository->save($menu);
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: Uuid::create($command->restaurantId),
+            slug: ActionSlug::create('menu.updated'),
+            entityType: 'menu',
+            entityId: $command->id,
+            userId: $command->userId !== null ? Uuid::create($command->userId) : null,
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            before: $before,
+            after: [
+                'name' => $menu->name()->value(),
+                'price' => $menu->price()->value(),
+                'active' => $menu->isActive(),
+                'tax_id' => $menu->taxId()->value(),
+            ],
+            metadata: [
+                'menu_name' => $menu->name()->value(),
+                'sections_count' => count($sections),
+            ],
+        ));
 
         return UpdateMenuResponse::fromEntity($menu);
     }

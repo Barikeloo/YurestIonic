@@ -3,6 +3,10 @@
 use App\Audit\Infrastructure\Entrypoint\Http\GetAuditEventController;
 use App\Audit\Infrastructure\Entrypoint\Http\ListAuditEventsController;
 use App\Audit\Infrastructure\Entrypoint\Http\VerifyAuditChainController;
+use App\AuditSavedView\Infrastructure\Entrypoint\Http\CreateAuditSavedViewController;
+use App\AuditSavedView\Infrastructure\Entrypoint\Http\DeleteAuditSavedViewController;
+use App\AuditSavedView\Infrastructure\Entrypoint\Http\ListAuditSavedViewsController;
+use App\AuditSavedView\Infrastructure\Entrypoint\Http\UpdateAuditSavedViewController;
 use App\Cash\Infrastructure\Entrypoint\Http\CancelClosingCashSessionController;
 use App\Cash\Infrastructure\Entrypoint\Http\CloseCashSessionController;
 use App\Cash\Infrastructure\Entrypoint\Http\ForceCloseCashSessionController;
@@ -33,6 +37,7 @@ use App\Menu\Infrastructure\Entrypoint\Http\PostController as MenuPostController
 use App\Menu\Infrastructure\Entrypoint\Http\PutController as MenuPutController;
 use App\Order\Infrastructure\Entrypoint\Http\AddLineController as OrderAddLineController;
 use App\Order\Infrastructure\Entrypoint\Http\AddMenuLineController as OrderAddMenuLineController;
+use App\Order\Infrastructure\Entrypoint\Http\BatchAddLinesController;
 use App\Order\Infrastructure\Entrypoint\Http\CancelOrderController;
 use App\Order\Infrastructure\Entrypoint\Http\DeleteController as OrderDeleteController;
 use App\Order\Infrastructure\Entrypoint\Http\DeleteLineController as OrderDeleteLineController;
@@ -165,6 +170,7 @@ Route::middleware([
 
     Route::post('/tpv/orders', OrderPostController::class);
     Route::post('/tpv/orders/lines', OrderAddLineController::class);
+    Route::post('/tpv/orders/batch-lines', BatchAddLinesController::class);
     Route::post('/tpv/orders/menu-lines', OrderAddMenuLineController::class);
 
     // Listado de menús activos para añadir a la comanda (reutiliza el controller admin).
@@ -294,6 +300,11 @@ Route::middleware([
     Route::get('/admin/audit-log', ListAuditEventsController::class);
     Route::get('/admin/audit-log/{uuid}', GetAuditEventController::class)->whereUuid('uuid');
     Route::get('/admin/audit-log/verify', VerifyAuditChainController::class);
+
+    Route::get('/admin/audit-saved-views', ListAuditSavedViewsController::class);
+    Route::post('/admin/audit-saved-views', CreateAuditSavedViewController::class);
+    Route::patch('/admin/audit-saved-views/{uuid}', UpdateAuditSavedViewController::class)->whereUuid('uuid');
+    Route::delete('/admin/audit-saved-views/{uuid}', DeleteAuditSavedViewController::class)->whereUuid('uuid');
 });
 
 Route::middleware([

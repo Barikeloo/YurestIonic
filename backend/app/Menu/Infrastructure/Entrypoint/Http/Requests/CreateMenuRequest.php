@@ -66,6 +66,15 @@ final class CreateMenuRequest extends FormRequest
 
     public function toCommand(): CreateMenuCommand
     {
+        $tenantContext = app(TenantContext::class);
+
+        $deviceId = $this->input('device_id');
+        if (! is_string($deviceId) || $deviceId === '') {
+            $deviceId = $this->header('X-Device-Id');
+        }
+
+        $userId = $this->session()->get('auth_user_id');
+
         return new CreateMenuCommand(
             taxId: (string) $this->input('tax_id'),
             name: (string) $this->input('name'),
@@ -88,6 +97,10 @@ final class CreateMenuRequest extends FormRequest
                 : null,
             active: (bool) ($this->input('active') ?? true),
             sections: MenuRequestHelpers::buildSections((array) $this->input('sections', [])),
+            restaurantId: (string) $tenantContext->restaurantUuid(),
+            userId: is_string($userId) && $userId !== '' ? $userId : null,
+            deviceId: is_string($deviceId) ? $deviceId : null,
+            ipAddress: $this->ip(),
         );
     }
 }

@@ -2,6 +2,9 @@
 
 namespace App\Order\Application\AddLineToOrder;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Family\Domain\Exception\FamilyNotActiveException;
 use App\Family\Domain\Exception\FamilyNotFoundException;
 use App\Family\Domain\Interfaces\FamilyRepositoryInterface;
@@ -30,6 +33,7 @@ final class AddLineToOrder
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly TaxRepositoryInterface $taxRepository,
         private readonly FamilyRepositoryInterface $familyRepository,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(AddLineToOrderCommand $command): AddLineToOrderResponse
@@ -113,6 +117,16 @@ final class AddLineToOrder
             $merged = $existing->withAddedQuantity($quantity->value());
             $this->orderLineRepository->save($merged);
 
+            $this->recordLineAdded(
+                command: $command,
+                lineId: $merged->id()->value(),
+                productName: $product->name()->value(),
+                variantName: $variantName,
+                quantity: $quantity->value(),
+                unitPrice: $price,
+                merged: true,
+            );
+
             return AddLineToOrderResponse::create($merged);
         }
 
@@ -133,6 +147,45 @@ final class AddLineToOrder
 
         $this->orderLineRepository->save($orderLine);
 
+        $this->recordLineAdded(
+            command: $command,
+            lineId: $orderLine->id()->value(),
+            productName: $product->name()->value(),
+            variantName: $variantName,
+            quantity: $quantity->value(),
+            unitPrice: $price,
+            merged: false,
+        );
+
         return AddLineToOrderResponse::create($orderLine);
+    }
+
+    private function recordLineAdded(
+        AddLineToOrderCommand $command,
+        string $lineId,
+        string $productName,
+        ?string $variantName,
+        int $quantity,
+        int $unitPrice,
+        bool $merged,
+    ): void {
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: Uuid::create($command->restaurantId),
+            slug: ActionSlug::create('order.line_added'),
+            entityType: 'order_line',
+            entityId: $lineId,
+            userId: Uuid::create($command->userId),
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            metadata: [
+                'order_id' => $command->orderId,
+                'product_id' => $command->productId,
+                'product_name' => $productName,
+                'variant_name' => $variantName,
+                'quantity' => $quantity,
+                'unit_price_cents' => $unitPrice,
+                'merged' => $merged,
+            ],
+        ));
     }
 }
