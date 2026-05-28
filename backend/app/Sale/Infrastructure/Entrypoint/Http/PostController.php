@@ -46,6 +46,7 @@ final class PostController
             orderLineIds: $validated['order_line_ids'] ?? null,
             isPartialPayment: $validated['is_partial_payment'] ?? false,
             chargeSessionId: $validated['charge_session_id'] ?? null,
+            ipAddress: $request->ip(),
         );
 
         return new JsonResponse($response->toArray(), 201);

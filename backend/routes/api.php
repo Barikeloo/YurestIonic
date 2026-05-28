@@ -1,5 +1,8 @@
 <?php
 
+use App\Audit\Infrastructure\Entrypoint\Http\GetAuditEventController;
+use App\Audit\Infrastructure\Entrypoint\Http\ListAuditEventsController;
+use App\Audit\Infrastructure\Entrypoint\Http\VerifyAuditChainController;
 use App\Cash\Infrastructure\Entrypoint\Http\CancelClosingCashSessionController;
 use App\Cash\Infrastructure\Entrypoint\Http\CloseCashSessionController;
 use App\Cash\Infrastructure\Entrypoint\Http\ForceCloseCashSessionController;
@@ -287,6 +290,10 @@ Route::middleware([
 
     Route::post('/tpv/cash-sessions/force-close', ForceCloseCashSessionController::class);
     Route::post('/tpv/z-reports/generate', GenerateZReportController::class);
+
+    Route::get('/admin/audit-log', ListAuditEventsController::class);
+    Route::get('/admin/audit-log/{uuid}', GetAuditEventController::class)->whereUuid('uuid');
+    Route::get('/admin/audit-log/verify', VerifyAuditChainController::class);
 });
 
 Route::middleware([

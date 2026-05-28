@@ -2,7 +2,9 @@
 
 namespace App\Tables\Application\MergeTables;
 
-use App\Order\Domain\Entity\OrderLine;
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -18,6 +20,7 @@ final class MergeTables
         private readonly TableRepositoryInterface $tableRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly OrderLineRepositoryInterface $orderLineRepository,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(MergeTablesCommand $command): MergeTablesResponse
@@ -112,6 +115,24 @@ final class MergeTables
             $table->mergeWith($groupId);
             $this->tableRepository->save($table);
         }
+
+        $tableNames = array_map(
+            static fn ($table) => $table->name()->value(),
+            $allTables
+        );
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: Uuid::create($command->restaurantId),
+            slug: ActionSlug::create('table.merged'),
+            entityType: 'table_group',
+            entityId: $groupId->value(),
+            userId: null,
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            metadata: [
+                'tables_label' => implode(', ', $tableNames),
+            ],
+        ));
 
         return MergeTablesResponse::create(
             groupId: $groupId->value(),

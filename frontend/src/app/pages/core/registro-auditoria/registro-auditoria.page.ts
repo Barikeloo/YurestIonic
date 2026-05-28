@@ -1,76 +1,27 @@
-import { Component, OnInit, OnDestroy, signal, computed, HostListener } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, effect, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
+import { AuditCategoryApi, AuditLogService, AuditSeverityApi, ListAuditEventsFilters } from '../../../services/audit-log.service';
+import { RestaurantService, AdminRestaurantUser } from '../../../services/restaurant.service';
+import { RestaurantContextFacade } from '../../../core/facades/restaurant-context.facade';
+import { AuthService } from '../../../core/services/auth.service';
+import { adaptApiEvent, AuditEvent, UserDirectoryEntry } from './audit-event.adapter';
+
+const SEARCH_DEBOUNCE_MS = 350;
+const MIN_SEARCH_CHARS = 2;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isoToday(): string { return new Date().toISOString().slice(0, 10); }
+
 type CategoryKey = 'order' | 'caja' | 'sale' | 'table' | 'catalog' | 'auth' | 'config' | 'system';
 type SeverityKey = 'info' | 'warning' | 'danger' | 'critical' | 'success';
-
-interface User {
-  name: string;
-  role: string;
-  color: string;
-  initials: string;
-}
-
-interface AuditEvent {
-  id: string;
-  ts: string;
-  cat: CategoryKey;
-  sev: SeverityKey;
-  action: string;
-  entity?: { kind: string; id: string };
-  entityLabel?: string;
-  amount?: string;
-  user: User;
-  device: string;
-  ip: string;
-  session?: string | null;
-  summary: string;
-  reason?: string | null;
-  diff?: Array<{ field: string; before: string; after: string }> | null;
-  inline?: { campo: string; from: string; to: string } | null;
-  payload: Record<string, unknown>;
-  related: string[];
-  actions: string[];
-}
 
 interface Category { label: string; color: string; bg: string; }
 interface Chip { id: string; label: string; icon: string; }
 interface Tab { id: string; label: string; cat: CategoryKey | null; }
 interface SavedView { id: string; name: string; icon: string; filters: Record<string, string | null>; }
-
-const AVATAR_COLORS = ['#1A6FE8','#1A9E5A','#D97706','#B64040','#6C5CE7','#0D7E8C','#C2410C','#7C3AED'];
-
-function avatarColor(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = ((h * 31) + name.charCodeAt(i)) >>> 0;
-  return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
-function makeInitials(name: string): string {
-  return name.split(' ').slice(0, 2).map(s => s[0] || '').join('').toUpperCase();
-}
-function makeUser(name: string, role: string): User {
-  return { name, role, color: avatarColor(name), initials: makeInitials(name) };
-}
-function makeHash(id: string): string {
-  let h = 5381;
-  for (let i = 0; i < id.length; i++) h = ((h << 5) + h + id.charCodeAt(i)) >>> 0;
-  const hex = '0123456789abcdef';
-  let out = '';
-  let n = h;
-  for (let i = 0; i < 64; i++) { out += hex[(n + i * 31) % 16]; n = ((n * 1103515245) + 12345) >>> 0; }
-  return out;
-}
-
-const USERS: Record<string, User> = {
-  ana:   makeUser('Ana Martínez',    'Supervisora'),
-  juan:  makeUser('Juan García',      'Camarero'),
-  laura: makeUser('Laura Fernández',  'Camarera'),
-  marco: makeUser('Marco Ruiz',       'Cocinero'),
-  admin: makeUser('Carlos Admin',     'Administrador'),
-  sara:  makeUser('Sara Vidal',       'Camarera'),
-};
 
 const CATEGORIES: Record<CategoryKey, Category> = {
   order:   { label: 'Pedidos',   color: '#1A6FE8', bg: '#EAF1FD' },
@@ -87,220 +38,6 @@ const SEV_LABEL: Record<SeverityKey, string> = {
   info: 'Info', warning: 'Warning', danger: 'Danger', critical: 'Critical', success: 'Success',
 };
 
-const EVENTS: AuditEvent[] = [
-  {
-    id: 'evt-001', ts: '2026-05-25T14:32:15', cat: 'auth', sev: 'critical',
-    action: 'Login fallido — PIN incorrecto',
-    entity: { kind: 'auth_attempt', id: 'att-9F3A' },
-    user: USERS['juan'], device: 'TPV-02', ip: '192.168.1.45', session: null,
-    summary: 'Tercer intento consecutivo con PIN incorrecto. El usuario quedó temporalmente bloqueado durante 5 minutos.',
-    reason: '3 intentos fallidos en 90 segundos',
-    diff: null,
-    inline: { campo: 'estado_usuario', from: 'active', to: 'locked-temp' },
-    payload: { user_uuid: 'u-juan-7821', pin_attempt_count: 3, lock_duration_sec: 300 },
-    related: ['evt-010'], actions: ['mark-reviewed', 'export'],
-  },
-  {
-    id: 'evt-002', ts: '2026-05-25T14:28:02', cat: 'order', sev: 'danger',
-    action: 'Reapertura de pedido',
-    entity: { kind: 'order', id: 'a4f3d8e1' }, entityLabel: 'Pedido a4f3d8e1',
-    user: USERS['ana'], device: 'TPV-01', ip: '192.168.1.41', session: 'Sesión caja #45',
-    summary: 'Pedido cerrado y marcado para cobrar fue reabierto por la supervisora tras reclamación del cliente para añadir 2 cafés.',
-    reason: 'Reclamación del cliente — añadir 2 cafés',
-    diff: [
-      { field: 'status',      before: 'to-charge', after: 'open' },
-      { field: 'closed_at',   before: '14:24:50',  after: 'null' },
-      { field: 'total',       before: '47,80 €',   after: '47,80 €' },
-      { field: 'reopened_by', before: '—',         after: 'u-ana-1042' },
-    ],
-    inline: null,
-    payload: { order_id: 'a4f3d8e1', table_id: 'T-12', previous_status: 'to-charge', new_status: 'open' },
-    related: ['evt-006', 'evt-007', 'evt-004'], actions: ['view-order', 'export'],
-  },
-  {
-    id: 'evt-003', ts: '2026-05-25T14:25:11', cat: 'caja', sev: 'warning',
-    action: 'Movimiento de caja — Retirada',
-    entity: { kind: 'cash_movement', id: 'mov-0142' }, entityLabel: 'Movimiento #0142',
-    amount: '-50,00 €',
-    user: USERS['ana'], device: 'TPV-01', ip: '192.168.1.41', session: 'Sesión caja #45',
-    summary: 'Retirada manual de efectivo de 50,00 € registrada con motivo "pago proveedor". Arqueo posterior detectó discrepancia de 2,40 €.',
-    reason: 'Pago proveedor — discrepancia detectada: 2,40 €',
-    diff: [
-      { field: 'cash_balance', before: '847,60 €', after: '797,60 €' },
-      { field: 'expected',     before: '847,60 €', after: '800,00 €' },
-      { field: 'delta',        before: '0,00 €',   after: '−2,40 €' },
-    ],
-    inline: null,
-    payload: { movement_id: 'mov-0142', type: 'out', amount_cents: -5000, discrepancy_cents: -240 },
-    related: ['evt-005', 'evt-013'], actions: ['view-session', 'export'],
-  },
-  {
-    id: 'evt-004', ts: '2026-05-25T14:20:38', cat: 'table', sev: 'info',
-    action: 'Transferencia de mesa',
-    entity: { kind: 'transfer', id: 'trf-0099' }, entityLabel: 'Transferencia #0099',
-    user: USERS['juan'], device: 'TPV-03', ip: '192.168.1.43', session: 'Sesión caja #45',
-    summary: 'Mesa 12 transferida íntegramente a Mesa 5 (4 comensales, 47,80 € en consumo) a petición del cliente para cambio de zona.',
-    reason: 'Cambio de zona solicitado por el cliente',
-    diff: [
-      { field: 'from_table', before: 'Mesa 12', after: '—' },
-      { field: 'to_table',   before: '—',        after: 'Mesa 5' },
-      { field: 'diners',     before: '4',         after: '4' },
-      { field: 'total',      before: '47,80 €',   after: '47,80 €' },
-    ],
-    inline: null,
-    payload: { transfer_id: 'trf-0099', from_table_id: 'T-12', to_table_id: 'T-05' },
-    related: ['evt-002', 'evt-006'], actions: ['view-order', 'view-table', 'export'],
-  },
-  {
-    id: 'evt-005', ts: '2026-05-25T14:15:00', cat: 'caja', sev: 'info',
-    action: 'Apertura de sesión de caja',
-    entity: { kind: 'cash_session', id: 'cs-45' }, entityLabel: 'Sesión caja #45',
-    user: USERS['ana'], device: 'TPV-01', ip: '192.168.1.41', session: 'Sesión caja #45',
-    summary: 'Apertura de sesión de caja del turno de tarde con fondo inicial de 200,00 €.',
-    reason: 'Inicio de turno tarde',
-    diff: null,
-    inline: { campo: 'estado_sesión', from: 'closed', to: 'open' },
-    payload: { session_id: 'cash-session-45', opening_float_cents: 20000 },
-    related: ['evt-003'], actions: ['view-session', 'export'],
-  },
-  {
-    id: 'evt-006', ts: '2026-05-25T14:10:22', cat: 'order', sev: 'warning',
-    action: 'Pedido marcado para cobrar',
-    entity: { kind: 'order', id: 'a4f3d8e1' }, entityLabel: 'Pedido a4f3d8e1',
-    user: USERS['juan'], device: 'TPV-03', ip: '192.168.1.43', session: 'Sesión caja #45',
-    summary: 'El camarero marcó el pedido como listo para cobrar tras servir todas las comandas.',
-    reason: null, diff: null,
-    inline: { campo: 'status', from: 'open', to: 'to-charge' },
-    payload: { order_id: 'a4f3d8e1', total_cents: 4780 },
-    related: ['evt-002', 'evt-004'], actions: ['view-order', 'export'],
-  },
-  {
-    id: 'evt-007', ts: '2026-05-25T14:05:48', cat: 'sale', sev: 'success',
-    action: 'Venta creada',
-    entity: { kind: 'sale', id: 'V-2026-1142' }, entityLabel: 'Venta V-2026-1142',
-    amount: '47,80 €',
-    user: USERS['laura'], device: 'TPV-02', ip: '192.168.1.45', session: 'Sesión caja #45',
-    summary: 'Nueva venta registrada por 47,80 € — método de pago: tarjeta.',
-    reason: null, diff: null, inline: null,
-    payload: { sale_id: 'V-2026-1142', total_cents: 4780, payment_method: 'card' },
-    related: ['evt-002'], actions: ['view-sale', 'export'],
-  },
-  {
-    id: 'evt-008', ts: '2026-05-25T13:58:14', cat: 'catalog', sev: 'info',
-    action: 'Producto activado',
-    entity: { kind: 'product', id: 'p-7821' }, entityLabel: 'Croqueta Casera',
-    user: USERS['admin'], device: 'TPV-Admin', ip: '192.168.1.10', session: null,
-    summary: 'Producto "Croqueta Casera" reactivado tras reposición de stock.',
-    reason: 'Stock repuesto: 24 unidades',
-    diff: [
-      { field: 'active',     before: 'false', after: 'true' },
-      { field: 'stock',      before: '0',     after: '24' },
-      { field: 'updated_at', before: '—',     after: '13:58:14' },
-    ],
-    inline: null,
-    payload: { product_id: 'p-7821', name: 'Croqueta Casera', price_cents: 850 },
-    related: ['evt-011'], actions: ['view-product', 'export'],
-  },
-  {
-    id: 'evt-009', ts: '2026-05-25T13:50:02', cat: 'system', sev: 'critical',
-    action: 'Cierre forzado de caja',
-    entity: { kind: 'cash_session', id: 'cs-44' }, entityLabel: 'Sesión caja #44',
-    user: USERS['admin'], device: 'TPV-Admin', ip: '192.168.1.10', session: 'Sesión caja #44',
-    summary: 'Sesión de turno mañana cerrada de forma forzada por administrador. Discrepancia final 8,40 €.',
-    reason: 'Cierre forzado — cuadre no realizado en tiempo',
-    diff: [
-      { field: 'status',      before: 'open', after: 'force-closed' },
-      { field: 'delta_final', before: '—',    after: '−8,40 €' },
-    ],
-    inline: null,
-    payload: { session_id: 'cash-session-44', final_discrepancy_cents: -840 },
-    related: [], actions: ['view-session', 'mark-reviewed', 'export'],
-  },
-  {
-    id: 'evt-010', ts: '2026-05-25T13:45:30', cat: 'auth', sev: 'success',
-    action: 'Login PIN',
-    entity: { kind: 'user_session', id: 'ses-7811' }, entityLabel: 'Sesión usuario',
-    user: USERS['ana'], device: 'TPV-01', ip: '192.168.1.41', session: null,
-    summary: 'Inicio de sesión correcto con PIN de 4 dígitos.',
-    reason: null, diff: null, inline: null,
-    payload: { user_uuid: 'u-ana-1042', method: 'pin', duration_ms: 184 },
-    related: ['evt-005'], actions: ['export'],
-  },
-  {
-    id: 'evt-011', ts: '2026-05-25T13:32:18', cat: 'sale', sev: 'danger',
-    action: 'Abono emitido',
-    entity: { kind: 'credit_note', id: 'CN-0142' }, entityLabel: 'Abono CN-0142',
-    amount: '−23,40 €',
-    user: USERS['ana'], device: 'TPV-01', ip: '192.168.1.41', session: 'Sesión caja #45',
-    summary: 'Abono parcial emitido sobre venta V-2026-1138 por importe de 23,40 €. Motivo: producto en mal estado.',
-    reason: 'Producto en mal estado — devolución completa de plato',
-    diff: [
-      { field: 'sale_status', before: 'completed',          after: 'partially_refunded' },
-      { field: 'refunded',    before: '0,00 €',              after: '23,40 €' },
-    ],
-    inline: null,
-    payload: { credit_note_id: 'CN-0142', amount_cents: -2340 },
-    related: ['evt-008'], actions: ['view-sale', 'export'],
-  },
-  {
-    id: 'evt-012', ts: '2026-05-25T13:20:05', cat: 'table', sev: 'info',
-    action: 'Fusión de mesas',
-    entity: { kind: 'merge', id: 'mrg-0033' }, entityLabel: 'Mesa 8 + Mesa 9',
-    user: USERS['sara'], device: 'TPV-02', ip: '192.168.1.45', session: 'Sesión caja #45',
-    summary: 'Mesas 8 y 9 fusionadas en una única comanda para grupo de 8 comensales.',
-    reason: 'Grupo grande — 8 comensales',
-    diff: null,
-    inline: { campo: 'modo', from: 'individual', to: 'merged' },
-    payload: { merge_id: 'mrg-0033', tables: ['T-08', 'T-09'], diners: 8 },
-    related: [], actions: ['view-order', 'export'],
-  },
-  {
-    id: 'evt-013', ts: '2026-05-25T13:10:44', cat: 'catalog', sev: 'warning',
-    action: 'Cambio de precio',
-    entity: { kind: 'product', id: 'p-3301' }, entityLabel: 'Hamburguesa Yurest',
-    user: USERS['admin'], device: 'TPV-Admin', ip: '192.168.1.10', session: null,
-    summary: 'Precio de venta actualizado en la carta principal.',
-    reason: 'Revisión trimestral de carta',
-    diff: [
-      { field: 'price',    before: '9,50 €', after: '10,50 €' },
-      { field: 'tax_rate', before: '10 %',   after: '10 %' },
-    ],
-    inline: null,
-    payload: { product_id: 'p-3301', price_cents_before: 950, price_cents_after: 1050 },
-    related: ['evt-008'], actions: ['view-product', 'export'],
-  },
-  {
-    id: 'evt-014', ts: '2026-05-24T22:45:12', cat: 'caja', sev: 'success',
-    action: 'Cierre de sesión de caja',
-    entity: { kind: 'cash_session', id: 'cs-43' }, entityLabel: 'Sesión caja #43',
-    user: USERS['laura'], device: 'TPV-02', ip: '192.168.1.45', session: 'Sesión caja #43',
-    summary: 'Cierre correcto de sesión nocturna con informe Z generado.',
-    reason: null,
-    diff: [
-      { field: 'status',   before: 'open', after: 'closed' },
-      { field: 'z_report', before: '—',    after: 'Z-2026-0143' },
-      { field: 'delta',    before: '—',    after: '0,00 €' },
-    ],
-    inline: null,
-    payload: { session_id: 'cash-session-43', z_report_id: 'Z-2026-0143' },
-    related: [], actions: ['view-session', 'export'],
-  },
-  {
-    id: 'evt-015', ts: '2026-05-24T20:12:00', cat: 'order', sev: 'danger',
-    action: 'Pedido cancelado',
-    entity: { kind: 'order', id: 'b1d4e7c2' }, entityLabel: 'Pedido b1d4e7c2',
-    user: USERS['sara'], device: 'TPV-02', ip: '192.168.1.45', session: 'Sesión caja #43',
-    summary: 'Pedido cancelado tras ausencia del cliente — comanda no servida.',
-    reason: 'Cliente abandonó el local antes de servir',
-    diff: null,
-    inline: { campo: 'status', from: 'open', to: 'cancelled' },
-    payload: { order_id: 'b1d4e7c2', reason_code: 'ABANDONED' },
-    related: [], actions: ['view-order', 'export'],
-  },
-];
-
-const EVENT_INDEX: Record<string, AuditEvent> = {};
-EVENTS.forEach(e => EVENT_INDEX[e.id] = e);
 
 const TABS: Tab[] = [
   { id: 'all',     label: 'Todo',      cat: null       },
@@ -404,19 +141,52 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   readonly SEV_LABEL = SEV_LABEL;
   readonly ANOMALIES = ANOMALIES;
   readonly SPARK_HOURLY = SPARK_HOURLY;
-  readonly EVENT_INDEX = EVENT_INDEX;
 
   // ── State ────────────────────────────────────────────────────
+  readonly events = signal<AuditEvent[]>([]);
+  readonly eventIndex = computed<Record<string, AuditEvent>>(() => {
+    const idx: Record<string, AuditEvent> = {};
+    for (const e of this.events()) idx[e.id] = e;
+    return idx;
+  });
+  readonly isLoading = signal(false);
+  readonly isLoadingMore = signal(false);
+  readonly loadError = signal<string | null>(null);
+  readonly nextCursor = signal<string | null>(null);
+  readonly hasMore = signal(false);
+
+  // Directorio de usuarios del restaurante actual (uuid -> {name, role}) cargado una vez al iniciar.
+  readonly usersDirectory = signal<Record<string, UserDirectoryEntry>>({});
+  // Lista para el dropdown de usuarios: ordenada por nombre.
+  readonly usersDropdownOptions = computed<Array<{ uuid: string; name: string }>>(() => {
+    const dir = this.usersDirectory();
+    return Object.entries(dir)
+      .map(([uuid, entry]) => ({ uuid, name: entry.name }))
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  });
+  // Lista de dispositivos derivada de los eventos cargados (únicos, ordenados).
+  readonly devicesDropdownOptions = computed<string[]>(() => {
+    const set = new Set<string>();
+    for (const e of this.events()) {
+      if (e.device && e.device !== '—') set.add(e.device);
+    }
+    return Array.from(set).sort();
+  });
+
   readonly activeTab = signal('all');
   readonly activeChip = signal<string | null>(null);
   readonly filterCategory = signal('all');
   readonly filterSeverity = signal('all');
   readonly filterUser = signal('all');
   readonly filterDevice = signal('all');
+  readonly dateFrom = signal<string>(isoToday());
+  readonly dateTo = signal<string>(isoToday());
   readonly searchRaw = signal('');
-  readonly selectedId = signal('evt-002');
+  /** Versión debounceada de searchRaw que dispara refetch al backend. */
+  readonly searchDebounced = signal('');
+  readonly selectedId = signal<string>('');
   readonly toastMsg = signal<string | null>(null);
-  readonly refreshCount = signal(3);
+  readonly refreshCount = signal(0);
   readonly liveTail = signal(true);
   readonly savedViewsOpen = signal(false);
   readonly activeView = signal('sv-default');
@@ -424,31 +194,52 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
 
   // ── Timers ───────────────────────────────────────────────────
   private refreshTimer?: ReturnType<typeof setInterval>;
+  private liveTailTimer?: ReturnType<typeof setInterval>;
   private toastTimer?: ReturnType<typeof setTimeout>;
+  private searchDebounceTimer?: ReturnType<typeof setTimeout>;
+
+  // ── Race-condition guard for in-flight requests ──────────────
+  private loadVersion = 0;
+
+  // ── Cache de respuesta cruda del backend para poder re-adaptar cuando llega el directorio ──
+  private rawApiEvents: import('../../../services/audit-log.service').AuditEventApi[] = [];
+
+  // ── Computed: filtros traducidos a parámetros server-side ────
+  // Tab > dropdown: si la pestaña fija una categoría, prevalece sobre el dropdown.
+  // Chip se mantiene en cliente porque combina criterios o usa data no expuesta.
+  readonly serverFilters = computed<ListAuditEventsFilters>(() => {
+    const tab = TABS.find(t => t.id === this.activeTab());
+    const tabCategory = tab?.cat ?? null;
+    const dropdownCategory = this.filterCategory();
+    const category = tabCategory ?? (dropdownCategory !== 'all' ? dropdownCategory : null);
+
+    const severity = this.filterSeverity();
+    const userId = this.filterUser();
+    const deviceId = this.filterDevice();
+    const dateFrom = this.dateFrom();
+    const dateTo = this.dateTo();
+    const search = this.searchDebounced().trim();
+
+    const filters: ListAuditEventsFilters = {};
+    if (category) filters.category = category as AuditCategoryApi;
+    if (severity !== 'all') filters.severity = severity as AuditSeverityApi;
+    if (userId !== 'all' && UUID_REGEX.test(userId)) filters.userId = userId;
+    if (deviceId !== 'all') filters.deviceId = deviceId;
+    if (dateFrom) filters.dateFrom = dateFrom;
+    if (dateTo) filters.dateTo = dateTo;
+    if (search.length >= MIN_SEARCH_CHARS) filters.search = search;
+
+    return filters;
+  });
 
   // ── Computed: filtered events ─────────────────────────────────
+  // Los filtros principales (categoría, severidad, usuario, dispositivo, búsqueda) ya los aplica
+  // el backend. Aquí sólo se aplica el chip, que combina criterios o usa lógica que aún no está
+  // expuesta por la API.
   get filtered(): AuditEvent[] {
-    const tab = TABS.find(t => t.id === this.activeTab());
     const chip = this.activeChip();
-    const catF = this.filterCategory();
-    const sevF = this.filterSeverity();
-    const userF = this.filterUser();
-    const devF = this.filterDevice();
-    const q = this.searchRaw().toLowerCase().trim();
-
-    return EVENTS.filter(e => {
-      if (tab?.cat && e.cat !== tab.cat) return false;
-      if (chip && !chipMatches(chip, e)) return false;
-      if (catF !== 'all' && e.cat !== catF) return false;
-      if (sevF !== 'all' && e.sev !== sevF) return false;
-      if (userF !== 'all' && e.user.name !== userF) return false;
-      if (devF !== 'all' && e.device !== devF) return false;
-      if (q) {
-        const hay = `${e.action} ${e.entityLabel || ''} ${e.ip} ${e.reason || ''} ${e.user.name}`.toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
+    if (!chip) return this.events();
+    return this.events().filter((e: AuditEvent) => chipMatches(chip, e));
   }
 
   // ── Computed: grouped events ─────────────────────────────────
@@ -467,35 +258,51 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
 
   // ── Computed: tab counts ──────────────────────────────────────
   get tabCounts(): Record<string, number> {
-    const counts: Record<string, number> = { all: EVENTS.length };
+    const all = this.events();
+    const counts: Record<string, number> = { all: all.length };
     for (const tab of TABS) {
       if (!tab.cat) continue;
-      counts[tab.id] = EVENTS.filter(e => e.cat === tab.cat).length;
+      counts[tab.id] = all.filter((e: AuditEvent) => e.cat === tab.cat).length;
     }
     return counts;
   }
 
   // ── Computed: chip counts ─────────────────────────────────────
   get chipCounts(): Record<string, number> {
+    const all = this.events();
     const counts: Record<string, number> = {};
-    for (const c of CHIPS) counts[c.id] = EVENTS.filter(e => chipMatches(c.id, e)).length;
+    for (const c of CHIPS) counts[c.id] = all.filter((e: AuditEvent) => chipMatches(c.id, e)).length;
     return counts;
   }
 
-  // ── Computed: KPIs ────────────────────────────────────────────
-  get kpiTotal(): number { return EVENTS.filter(e => dayKey(e.ts) === '2026-05-25').length; }
-  get kpiCritical(): number { return EVENTS.filter(e => dayKey(e.ts) === '2026-05-25' && (e.sev === 'critical' || e.sev === 'danger')).length; }
-  get kpiUsers(): number { return new Set(EVENTS.filter(e => dayKey(e.ts) === '2026-05-25').map(e => e.user.name)).size; }
-  get kpiLast(): string { return formatRelative(EVENTS[0].ts); }
+  // ── Computed: KPIs (sobre los eventos cargados) ────────────────
+  private todayKey(): string { return new Date().toISOString().slice(0, 10); }
+  get kpiTotal(): number {
+    const today = this.todayKey();
+    return this.events().filter((e: AuditEvent) => dayKey(e.ts) === today).length;
+  }
+  get kpiCritical(): number {
+    const today = this.todayKey();
+    return this.events().filter((e: AuditEvent) => dayKey(e.ts) === today && (e.sev === 'critical' || e.sev === 'danger')).length;
+  }
+  get kpiUsers(): number {
+    const today = this.todayKey();
+    return new Set(this.events().filter((e: AuditEvent) => dayKey(e.ts) === today).map((e: AuditEvent) => e.user.name)).size;
+  }
+  get kpiLast(): string {
+    const first = this.events()[0];
+    return first ? formatRelative(first.ts) : '—';
+  }
 
   // ── Computed: selected event ──────────────────────────────────
-  get selected(): AuditEvent | null { return EVENT_INDEX[this.selectedId()] ?? null; }
+  get selected(): AuditEvent | null { return this.eventIndex()[this.selectedId()] ?? null; }
 
   // ── Computed: related events for detail panel ─────────────────
   get relatedTimeline(): AuditEvent[] {
     const sel = this.selected;
     if (!sel) return [];
-    const related = (sel.related || []).map(id => EVENT_INDEX[id]).filter(Boolean);
+    const idx = this.eventIndex();
+    const related = (sel.related || []).map(id => idx[id]).filter(Boolean);
     return [...related, sel].sort((a, b) => a.ts.localeCompare(b.ts));
   }
 
@@ -503,21 +310,153 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     return SAVED_VIEWS.find(v => v.id === this.activeView());
   }
 
-  constructor(private readonly router: Router) {}
+  private readonly restaurantService = inject(RestaurantService);
+  private readonly restaurantContextFacade = inject(RestaurantContextFacade);
+  private readonly authService = inject(AuthService);
+
+  constructor(
+    private readonly router: Router,
+    private readonly auditLogService: AuditLogService,
+  ) {
+    // Refetch automático al cambiar cualquier filtro server-side. Se dispara en cuanto el componente
+    // monta (con filtros vacíos = última página global) y en cada cambio posterior.
+    effect(() => {
+      const filters = this.serverFilters();
+      this.loadInitial(filters);
+    });
+  }
 
   ngOnInit(): void {
     this.startRefreshTimer();
+    this.startLiveTailTimer();
+    this.loadUsersDirectory();
+  }
+
+  private loadUsersDirectory(): void {
+    let restaurantUuid = this.restaurantContextFacade.selectedRestaurantUuid;
+    if (!restaurantUuid) {
+      restaurantUuid = localStorage.getItem('gestion_selected_restaurant_uuid');
+    }
+    if (!restaurantUuid) {
+      restaurantUuid = this.authService.currentUserSnapshot?.restaurantId ?? null;
+    }
+    if (!restaurantUuid) return;
+    this.restaurantService.getRestaurantUsers(restaurantUuid).subscribe({
+      next: (resp) => {
+        const dir: Record<string, UserDirectoryEntry> = {};
+        for (const u of resp.users as AdminRestaurantUser[]) {
+          dir[u.uuid] = { name: u.name, role: u.role };
+        }
+        this.usersDirectory.set(dir);
+        // Re-adaptamos los eventos ya cargados para que muestren el nombre real del usuario.
+        this.reAdaptEventsWithDirectory();
+      },
+      error: () => {
+        // Silenciamos: si falla, los eventos siguen mostrando 'Usuario desconocido'.
+      },
+    });
+  }
+
+  /** Reaplica el adapter sobre los eventos crudos del backend, ahora con directorio de usuarios. */
+  private reAdaptEventsWithDirectory(): void {
+    if (this.rawApiEvents.length === 0) return;
+    const dir = this.usersDirectory();
+    this.events.set(this.rawApiEvents.map(api => adaptApiEvent(api, dir)));
   }
 
   ngOnDestroy(): void {
     if (this.refreshTimer) clearInterval(this.refreshTimer);
+    if (this.liveTailTimer) clearInterval(this.liveTailTimer);
     if (this.toastTimer) clearTimeout(this.toastTimer);
+    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+  }
+
+  private loadInitial(filters: ListAuditEventsFilters): void {
+    const version = ++this.loadVersion;
+    this.isLoading.set(true);
+    this.isLoadingMore.set(false);
+    this.loadError.set(null);
+    this.nextCursor.set(null);
+    this.hasMore.set(false);
+
+    this.auditLogService.list(filters).subscribe({
+      next: (resp) => {
+        if (version !== this.loadVersion) return;
+        this.rawApiEvents = resp.data;
+        const dir = this.usersDirectory();
+        const adapted = resp.data.map(api => adaptApiEvent(api, dir));
+        this.events.set(adapted);
+        this.nextCursor.set(resp.next_cursor);
+        this.hasMore.set(resp.has_more);
+        const currentSelected = this.selectedId();
+        const stillVisible = currentSelected && adapted.some(e => e.id === currentSelected);
+        if (!stillVisible) {
+          this.selectedId.set(adapted[0]?.id ?? '');
+        }
+        this.isLoading.set(false);
+      },
+      error: (err: Error) => {
+        if (version !== this.loadVersion) return;
+        this.loadError.set(err.message);
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  loadMore(): void {
+    const cursor = this.nextCursor();
+    if (!cursor || this.isLoadingMore()) return;
+
+    const version = ++this.loadVersion;
+    this.isLoadingMore.set(true);
+    this.loadError.set(null);
+
+    const filters: ListAuditEventsFilters = { ...this.serverFilters(), cursor };
+    this.auditLogService.list(filters).subscribe({
+      next: (resp) => {
+        if (version !== this.loadVersion) return;
+        this.rawApiEvents = [...this.rawApiEvents, ...resp.data];
+        const dir = this.usersDirectory();
+        const adapted = resp.data.map(api => adaptApiEvent(api, dir));
+        this.events.update(prev => [...prev, ...adapted]);
+        this.nextCursor.set(resp.next_cursor);
+        this.hasMore.set(resp.has_more);
+        this.isLoadingMore.set(false);
+      },
+      error: (err: Error) => {
+        if (version !== this.loadVersion) return;
+        this.loadError.set(err.message);
+        this.isLoadingMore.set(false);
+      },
+    });
   }
 
   private startRefreshTimer(): void {
     this.refreshTimer = setInterval(() => {
       if (this.liveTail()) this.refreshCount.update(c => (c + 1) % 30);
     }, 1000);
+  }
+
+  private startLiveTailTimer(): void {
+    this.liveTailTimer = setInterval(() => this.pollLiveTail(), 5000);
+  }
+
+  /** Pide eventos más recientes que el último cargado y los prepende a la lista. */
+  private pollLiveTail(): void {
+    if (!this.liveTail() || this.events().length === 0) return;
+    const since = this.events()[0].id;
+    const version = ++this.loadVersion;
+    this.auditLogService.list({ since }).subscribe({
+      next: (resp) => {
+        if (version !== this.loadVersion) return;
+        if (resp.data.length === 0) return;
+        const dir = this.usersDirectory();
+        const adapted = resp.data.map(api => adaptApiEvent(api, dir));
+        this.rawApiEvents = [...resp.data, ...this.rawApiEvents];
+        this.events.update(prev => [...adapted, ...prev]);
+      },
+      error: () => { /* silencioso: no interrumpimos la UI por errores de polling */ },
+    });
   }
 
   // ── Actions ───────────────────────────────────────────────────
@@ -536,9 +475,15 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     this.filterSeverity.set('all');
     this.filterUser.set('all');
     this.filterDevice.set('all');
+    this.dateFrom.set(isoToday());
+    this.dateTo.set(isoToday());
     this.searchRaw.set('');
+    this.searchDebounced.set('');
+    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
     this.activeChip.set(null);
     this.activeView.set('sv-default');
+    this.nextCursor.set(null);
+    this.hasMore.set(false);
   }
 
   applyView(viewId: string): void {
@@ -569,13 +514,18 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
 
   exportData(): void { this.showToast('Exportando CSV...'); }
 
-  onSearch(value: string): void { this.searchRaw.set(value); }
+  onSearch(value: string): void {
+    this.searchRaw.set(value);
+    if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
+    this.searchDebounceTimer = setTimeout(() => {
+      this.searchDebounced.set(value);
+    }, SEARCH_DEBOUNCE_MS);
+  }
 
   // ── Helpers for template ──────────────────────────────────────
   formatTimeHM = formatTimeHM;
   formatTimestampAbsolute = formatTimestampAbsolute;
   formatRelative = formatRelative;
-  makeHash = makeHash;
 
   getCatStyle(cat: CategoryKey): Record<string, string> {
     const c = CATEGORIES[cat];

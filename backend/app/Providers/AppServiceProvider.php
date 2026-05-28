@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Infrastructure\Persistence\EloquentAuditRecorder;
+use App\Audit\Infrastructure\Persistence\Repositories\EloquentAuditLogRepository;
 use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
@@ -93,6 +97,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TipRepositoryInterface::class, EloquentTipRepository::class);
         $this->app->bind(ZReportRepositoryInterface::class, EloquentZReportRepository::class);
         $this->app->bind(TransactionManagerInterface::class, LaravelTransactionManager::class);
+        $this->app->bind(AuditLogRepositoryInterface::class, EloquentAuditLogRepository::class);
+        $this->app->bind(AuditRecorderInterface::class, EloquentAuditRecorder::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
     }
 

@@ -9,5 +9,6 @@ final readonly class AuthenticateUserByPinCommand
         public string $pin,
         public ?string $restaurantUuid,
         public ?string $deviceId,
+        public ?string $ipAddress,
     ) {}
 }

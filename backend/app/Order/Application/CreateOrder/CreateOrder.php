@@ -2,6 +2,9 @@
 
 namespace App\Order\Application\CreateOrder;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Order\Domain\Entity\Order;
 use App\Order\Domain\Exception\TableAlreadyHasOpenOrderException;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
@@ -12,6 +15,7 @@ final class CreateOrder
 {
     public function __construct(
         private readonly OrderRepositoryInterface $orderRepository,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(CreateOrderCommand $command): CreateOrderResponse
@@ -30,6 +34,17 @@ final class CreateOrder
         );
 
         $this->orderRepository->save($order);
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: Uuid::create($command->restaurantId),
+            slug: ActionSlug::create('order.created'),
+            entityType: 'order',
+            entityId: $order->id()->value(),
+            userId: Uuid::create($command->openedByUserId),
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            metadata: ['diners' => $command->diners],
+        ));
 
         return CreateOrderResponse::create($order);
     }

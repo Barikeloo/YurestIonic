@@ -13,5 +13,7 @@ final readonly class CreateCreditNoteCommand
         public string $openedByUserId,
         public int $totalCents,
         public ?array $customerFiscalData,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

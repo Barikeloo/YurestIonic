@@ -31,11 +31,18 @@ final class CreateOrderRequest extends FormRequest
             throw new \RuntimeException('Tenant context is required.');
         }
 
+        $deviceId = $this->input('device_id');
+        if (! is_string($deviceId) || $deviceId === '') {
+            $deviceId = $this->header('X-Device-Id');
+        }
+
         return new CreateOrderCommand(
             restaurantId: $restaurantId,
             tableId: (string) $this->input('table_id'),
             openedByUserId: (string) $this->input('opened_by_user_id'),
             diners: (int) $this->input('diners'),
+            deviceId: is_string($deviceId) ? $deviceId : null,
+            ipAddress: $this->ip(),
         );
     }
 }

@@ -62,6 +62,7 @@ final class GetFinalTicketPrint
                     'modifiers' => null,
                     'menu_selections' => $line->menuSelections(),
                 ];
+
                 continue;
             }
 

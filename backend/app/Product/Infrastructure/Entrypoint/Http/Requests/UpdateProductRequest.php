@@ -48,6 +48,12 @@ final class UpdateProductRequest extends FormRequest
     public function toCommand(string $id): UpdateProductCommand
     {
         $allergens = $this->input('allergens', []);
+        $tenantContext = app(TenantContext::class);
+
+        $deviceId = $this->input('device_id');
+        if (! is_string($deviceId) || $deviceId === '') {
+            $deviceId = $this->header('X-Device-Id');
+        }
 
         return new UpdateProductCommand(
             id: $id,
@@ -59,6 +65,9 @@ final class UpdateProductRequest extends FormRequest
             stock: (int) $this->input('stock'),
             active: (bool) $this->input('active'),
             allergens: is_array($allergens) ? array_values(array_map('strval', $allergens)) : [],
+            restaurantId: (string) $tenantContext->restaurantUuid(),
+            deviceId: is_string($deviceId) ? $deviceId : null,
+            ipAddress: $this->ip(),
         );
     }
 }

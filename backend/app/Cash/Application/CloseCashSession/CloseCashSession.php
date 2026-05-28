@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\CloseCashSession;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Application\GenerateZReport\GenerateZReport;
 use App\Cash\Application\GenerateZReport\GenerateZReportCommand;
 use App\Cash\Domain\Exception\CashSessionNotFoundException;
@@ -23,6 +26,7 @@ final class CloseCashSession
         private readonly GenerateZReport $generateZReport,
         private readonly SaleRepositoryInterface $saleRepository,
         private readonly TransactionManagerInterface $transactionManager,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(CloseCashSessionCommand $command): CloseCashSessionResponse
@@ -61,6 +65,19 @@ final class CloseCashSession
             );
 
             $this->cashSessionRepository->save($cashSession);
+
+            $this->auditRecorder->record(new AuditEventDraft(
+                restaurantId: $cashSession->restaurantId(),
+                slug: ActionSlug::create('caja.closed'),
+                entityType: 'cash_session',
+                entityId: $cashSession->id()->value(),
+                userId: Uuid::create($command->closedByUserId),
+                deviceId: $command->deviceId,
+                ipAddress: $command->ipAddress,
+                metadata: [
+                    'delta_final_formatted' => number_format($discrepancy->toCents() / 100, 2).' €',
+                ],
+            ));
 
             return CloseCashSessionResponse::create(
                 id: $cashSession->id()->value(),

@@ -2,8 +2,12 @@
 
 namespace App\User\Application\AuthenticateForDeviceLink;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Shared\Domain\ValueObject\Email;
+use App\Shared\Domain\ValueObject\Uuid;
 use App\User\Domain\Exception\InvalidCredentialsException;
 use App\User\Domain\Exception\OnlyAdminsCanLinkDeviceException;
 use App\User\Domain\Exception\UserNotFoundException;
@@ -18,6 +22,7 @@ class AuthenticateForDeviceLink
         private RestaurantRepositoryInterface $restaurantRepository,
         private PasswordHasherInterface $passwordHasher,
         private UserQuickAccessRepositoryInterface $userQuickAccessRepository,
+        private AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(AuthenticateForDeviceLinkCommand $command): AuthenticateForDeviceLinkResponse
@@ -48,6 +53,18 @@ class AuthenticateForDeviceLink
 
         if ($command->deviceId !== null && $command->deviceId !== '') {
             $this->userQuickAccessRepository->recordAccess($user->id()->value(), $command->deviceId);
+        }
+
+        if ($restaurantId !== null) {
+            $this->auditRecorder->record(new AuditEventDraft(
+                restaurantId: Uuid::create($restaurantId),
+                slug: ActionSlug::create('auth.device_link'),
+                entityType: 'user_session',
+                entityId: $user->id()->value(),
+                userId: Uuid::create($user->id()->value()),
+                ipAddress: $command->ipAddress,
+                deviceId: $command->deviceId,
+            ));
         }
 
         return AuthenticateForDeviceLinkResponse::create(

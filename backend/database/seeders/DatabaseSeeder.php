@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             SuperAdminTestSeeder::class,
             CashSessionSeeder::class,
             ZReportSeeder::class,
+            AuditLogSeeder::class,
         ]);
     }
 }

@@ -9,5 +9,7 @@ final readonly class CancelOrderCommand
     public function __construct(
         public string $id,
         public string $cancelledByUserId,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

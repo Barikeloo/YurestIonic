@@ -9,5 +9,7 @@ final readonly class CreateOrderCommand
         public string $tableId,
         public string $openedByUserId,
         public int $diners,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

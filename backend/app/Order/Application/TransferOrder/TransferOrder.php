@@ -2,6 +2,9 @@
 
 namespace App\Order\Application\TransferOrder;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Order\Domain\Entity\OrderTransfer;
 use App\Order\Domain\Exception\DestinationTableOccupiedException;
 use App\Order\Domain\Exception\OrderNotFoundException;
@@ -21,6 +24,7 @@ class TransferOrder
         private OrderTransferRepositoryInterface $orderTransferRepository,
         private TableRepositoryInterface $tableRepository,
         private TransactionManagerInterface $transactionManager,
+        private AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(TransferOrderCommand $command): TransferOrderResponse
@@ -60,6 +64,20 @@ class TransferOrder
 
             return $newTransfer;
         });
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: $order->restaurantId(),
+            slug: ActionSlug::create('order.transferred'),
+            entityType: 'order',
+            entityId: $order->id()->value(),
+            userId: Uuid::create($command->transferredByUserId),
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            metadata: [
+                'from_table_id' => $transfer->fromTableId()->value(),
+                'to_table_id' => $transfer->toTableId()->value(),
+            ],
+        ));
 
         return TransferOrderResponse::create(
             transferId: $transfer->id()->value(),

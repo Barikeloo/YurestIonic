@@ -11,5 +11,7 @@ final readonly class CloseCashSessionCommand
         public string $closedByUserId,
         public int $finalAmountCents,
         public ?string $discrepancyReason,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

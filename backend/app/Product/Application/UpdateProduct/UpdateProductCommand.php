@@ -16,6 +16,9 @@ final readonly class UpdateProductCommand
         public int $price,
         public int $stock,
         public bool $active,
-        public array $allergens = [],
+        public array $allergens,
+        public string $restaurantId,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

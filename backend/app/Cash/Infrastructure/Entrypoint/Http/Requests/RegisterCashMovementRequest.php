@@ -32,6 +32,11 @@ final class RegisterCashMovementRequest extends FormRequest
         $restaurantUuid = app(TenantContext::class)->restaurantUuid()
             ?? throw new \RuntimeException('Tenant context is required.');
 
+        $deviceId = $this->input('device_id');
+        if (! is_string($deviceId) || $deviceId === '') {
+            $deviceId = $this->header('X-Device-Id');
+        }
+
         return new RegisterCashMovementCommand(
             restaurantId: $restaurantUuid,
             cashSessionId: (string) $this->input('cash_session_id'),
@@ -40,6 +45,8 @@ final class RegisterCashMovementRequest extends FormRequest
             amountCents: (int) $this->input('amount_cents'),
             userId: (string) $this->input('user_id'),
             description: $this->input('description'),
+            deviceId: is_string($deviceId) ? $deviceId : null,
+            ipAddress: $this->ip(),
         );
     }
 }

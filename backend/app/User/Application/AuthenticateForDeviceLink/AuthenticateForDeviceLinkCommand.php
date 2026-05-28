@@ -8,5 +8,6 @@ final readonly class AuthenticateForDeviceLinkCommand
         public string $email,
         public string $password,
         public ?string $deviceId,
+        public ?string $ipAddress,
     ) {}
 }

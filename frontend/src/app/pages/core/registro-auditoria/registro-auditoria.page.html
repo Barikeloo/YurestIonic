@@ -14,7 +14,7 @@
     <div class="page-head-actions">
       <!-- Saved views -->
       <div class="saved-views" (click)="$event.stopPropagation()">
-        <button class="saved-views-trigger" (click)="savedViewsOpen.update(v => !v)">
+        <button class="saved-views-trigger" (click)="savedViewsOpen.set(!savedViewsOpen())">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2 2 7l10 5 10-5-10-5z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>
           </svg>
@@ -280,26 +280,22 @@
         <!-- User -->
         <select class="audit-input" [value]="filterUser()" (change)="filterUser.set($any($event.target).value)">
           <option value="all">Todos los usuarios</option>
-          <option value="Ana Martínez">Ana Martínez</option>
-          <option value="Juan García">Juan García</option>
-          <option value="Laura Fernández">Laura Fernández</option>
-          <option value="Marco Ruiz">Marco Ruiz</option>
-          <option value="Carlos Admin">Carlos Admin</option>
-          <option value="Sara Vidal">Sara Vidal</option>
+          @for (u of usersDropdownOptions(); track u.uuid) {
+            <option [value]="u.uuid">{{ u.name }}</option>
+          }
         </select>
         <!-- Device -->
         <select class="audit-input" [value]="filterDevice()" (change)="filterDevice.set($any($event.target).value)">
           <option value="all">Dispositivo</option>
-          <option value="TPV-01">TPV-01</option>
-          <option value="TPV-02">TPV-02</option>
-          <option value="TPV-03">TPV-03</option>
-          <option value="TPV-Admin">TPV-Admin</option>
+          @for (d of devicesDropdownOptions(); track d) {
+            <option [value]="d">{{ d }}</option>
+          }
         </select>
         <!-- Date range -->
         <div class="input-date-range">
-          <input class="audit-input" type="text" value="25/05/2026" />
+          <input class="audit-input" type="date" [value]="dateFrom()" (change)="dateFrom.set($any($event.target).value)" />
           <span class="dash">→</span>
-          <input class="audit-input" type="text" value="25/05/2026" />
+          <input class="audit-input" type="date" [value]="dateTo()" (change)="dateTo.set($any($event.target).value)" />
         </div>
         <!-- Search -->
         <div class="input-search">
@@ -482,6 +478,38 @@
         </div>
         <span class="aoa-ref">aoa-ref-2026-1142</span>
       </div>
+
+      <!-- Paginación por cursor -->
+      @if (hasMore()) {
+        <div style="display:flex;justify-content:center;padding:24px 0">
+          <button
+            class="btn-ghost"
+            style="padding:10px 20px;font-size:14px"
+            (click)="loadMore()"
+            [disabled]="isLoadingMore()"
+          >
+            @if (isLoadingMore()) {
+              <span style="display:inline-flex;gap:6px;align-items:center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite">
+                  <path d="M21 12a9 9 0 1 1-6.22-8.56"/>
+                </svg>
+                Cargando…
+              </span>
+            } @else {
+              <span style="display:inline-flex;gap:6px;align-items:center">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+                Cargar más eventos
+              </span>
+            }
+          </button>
+        </div>
+      } @else if (events().length > 0 && !isLoading()) {
+        <div style="text-align:center;padding:24px 0;color:#999;font-size:13px">
+          Fin del registro · {{ events().length }} eventos cargados
+        </div>
+      }
     </section>
 
     <!-- ── Detail panel ────────────────────────────────────────── -->
@@ -657,7 +685,7 @@
             }
             <!-- JSON payload colapsable -->
             <div class="json-block">
-              <div class="json-head" [class.open]="jsonOpen()" (click)="jsonOpen.update(v => !v)">
+              <div class="json-head" [class.open]="jsonOpen()" (click)="jsonOpen.set(!jsonOpen())">
                 PAYLOAD JSON
                 <svg class="chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="9 18 15 12 9 6"/>
@@ -678,7 +706,7 @@
               </svg>
               <div style="display:flex;flex-direction:column;gap:2px;flex:1;min-width:0">
                 <span class="hash-label">SHA-256</span>
-                <span class="hash-value">{{ makeHash(selected.id) }}</span>
+                <span class="hash-value">{{ selected.integrityHash }}</span>
               </div>
               <span class="verified-badge">
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">

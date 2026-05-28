@@ -35,6 +35,7 @@ class SaonaDemoSeeder extends Seeder
         $zoneIds = $this->seedZones($restaurantId, $now);
         $this->seedTables($restaurantId, $zoneIds, $now);
         $this->seedQuickAccess($restaurantId, $userIds, $now);
+        $this->seedAuditLogs($restaurantId);
 
         $this->command->info('Bar Manolo demo seeded correctamente.');
         $this->command->info('  Admin:      '.self::RESTAURANT_EMAIL.' / 12345678 / PIN 1234');
@@ -1505,5 +1506,27 @@ class SaonaDemoSeeder extends Seeder
             );
             $i++;
         }
+    }
+
+    /**
+     * Reusa AuditLogSeeder para generar 50 eventos de auditoría asociados a Bar Manolo
+     * (con cadena de hash íntegra, anomalías y todas las severidades).
+     */
+    private function seedAuditLogs(int $restaurantId): void
+    {
+        $restaurantUuid = (string) DB::table('restaurants')
+            ->where('id', $restaurantId)
+            ->value('uuid');
+
+        $users = DB::table('users')
+            ->where('restaurant_id', $restaurantId)
+            ->get(['id', 'uuid'])
+            ->all();
+
+        if ($users === []) {
+            return;
+        }
+
+        app(AuditLogSeeder::class)->seedForRestaurant($restaurantId, $restaurantUuid, $users);
     }
 }

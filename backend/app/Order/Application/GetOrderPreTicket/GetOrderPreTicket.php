@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Order\Application\GetOrderPreTicket;
 
+use App\Order\Domain\Entity\Order;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Restaurant\Domain\Entity\Restaurant;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\Tables\Domain\Entity\Table;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
 
 final class GetOrderPreTicket
@@ -40,15 +43,15 @@ final class GetOrderPreTicket
     }
 
     private function buildText(
-        \App\Order\Domain\Entity\Order $order,
-        ?\App\Tables\Domain\Entity\Table $table,
-        ?\App\Restaurant\Domain\Entity\Restaurant $restaurant,
+        Order $order,
+        ?Table $table,
+        ?Restaurant $restaurant,
         array $lines,
         int $width,
     ): string {
         $fill = str_repeat('=', $width);
-        $sep  = str_repeat('-', $width);
-        $out  = [];
+        $sep = str_repeat('-', $width);
+        $out = [];
 
         $out[] = $this->center('PRE-CUENTA', $width);
         $out[] = '';
@@ -62,7 +65,7 @@ final class GetOrderPreTicket
         }
 
         $out[] = $this->pair('Mesa', $table !== null ? $table->name()->value() : $order->tableId()->value(), $width);
-        $out[] = $this->pair('Fecha', (new \DateTimeImmutable())->format('d/m/Y H:i'), $width);
+        $out[] = $this->pair('Fecha', (new \DateTimeImmutable)->format('d/m/Y H:i'), $width);
         $out[] = $this->pair('Comensales', (string) $order->diners()->value(), $width);
         $out[] = $fill;
         $out[] = '';
@@ -79,15 +82,15 @@ final class GetOrderPreTicket
                 $out[] = $this->itemLine($qty, $name, $price, $lineTotal, $width);
                 $selections = $line->menuSelections() ?? [];
                 foreach ($selections as $sel) {
-                    $selName = '  ' . ($sel['product_name'] ?? 'Producto');
+                    $selName = '  '.($sel['product_name'] ?? 'Producto');
                     $selPrice = $sel['extra_price'] ?? 0;
                     if ($selPrice > 0) {
-                        $selName .= ' (+' . $this->moneyLabel($selPrice) . ')';
+                        $selName .= ' (+'.$this->moneyLabel($selPrice).')';
                     }
                     $mods = $sel['modifiers'] ?? [];
                     foreach ($mods as $mod) {
                         if ($mod['price'] > 0) {
-                            $selName .= ' + ' . $mod['name'];
+                            $selName .= ' + '.$mod['name'];
                         }
                     }
                     $out[] = $this->wrapLine($selName, $width);
@@ -100,12 +103,12 @@ final class GetOrderPreTicket
                 }
                 $out[] = $this->itemLine($qty, $name, $price, $lineTotal, $width);
                 if ($line->variantName() !== null) {
-                    $out[] = $this->wrapLine('  ' . $line->variantName(), $width);
+                    $out[] = $this->wrapLine('  '.$line->variantName(), $width);
                 }
                 $mods = $line->modifiers() ?? [];
                 foreach ($mods as $mod) {
                     if ($mod['price'] > 0) {
-                        $out[] = $this->wrapLine('  + ' . $mod['name'] . '  ' . $this->moneyLabel($mod['price']), $width);
+                        $out[] = $this->wrapLine('  + '.$mod['name'].'  '.$this->moneyLabel($mod['price']), $width);
                     }
                 }
             }
@@ -113,7 +116,7 @@ final class GetOrderPreTicket
         }
 
         $out[] = $fill;
-        $out[] = $this->pair('TOTAL', $this->moneyLabel($total) . ' EUR', $width);
+        $out[] = $this->pair('TOTAL', $this->moneyLabel($total).' EUR', $width);
         $out[] = $fill;
         $out[] = '';
         $out[] = $this->center('PENDIENTE DE COBRO', $width);
@@ -130,7 +133,8 @@ final class GetOrderPreTicket
             return $text;
         }
         $pad = (int) floor(($width - $len) / 2);
-        return str_repeat(' ', $pad) . $text;
+
+        return str_repeat(' ', $pad).$text;
     }
 
     private function pair(string $left, string $right, int $width): string
@@ -139,19 +143,21 @@ final class GetOrderPreTicket
         if ($gap <= 0) {
             return mb_substr($left, 0, $width);
         }
-        return $left . str_repeat(' ', $gap) . $right;
+
+        return $left.str_repeat(' ', $gap).$right;
     }
 
     private function itemLine(int $qty, string $name, int $price, int $total, int $width): string
     {
-        $prefix = $qty . 'x ';
-        $priceStr = $this->moneyLabel($price) . '  ' . $this->moneyLabel($total);
+        $prefix = $qty.'x ';
+        $priceStr = $this->moneyLabel($price).'  '.$this->moneyLabel($total);
         $available = $width - mb_strlen($prefix) - mb_strlen($priceStr);
         if ($available <= 0) {
-            return mb_substr($prefix . $name, 0, $width);
+            return mb_substr($prefix.$name, 0, $width);
         }
-        $namePart = mb_strlen($name) > $available ? mb_substr($name, 0, $available - 1) . '…' : $name;
-        return $prefix . $namePart . str_repeat(' ', $available - mb_strlen($namePart)) . $priceStr;
+        $namePart = mb_strlen($name) > $available ? mb_substr($name, 0, $available - 1).'…' : $name;
+
+        return $prefix.$namePart.str_repeat(' ', $available - mb_strlen($namePart)).$priceStr;
     }
 
     private function wrapLine(string $text, int $width): string
@@ -159,11 +165,12 @@ final class GetOrderPreTicket
         if (mb_strlen($text) <= $width) {
             return $text;
         }
-        return mb_substr($text, 0, $width - 1) . '…';
+
+        return mb_substr($text, 0, $width - 1).'…';
     }
 
     private function moneyLabel(int $cents): string
     {
-        return number_format($cents / 100, 2, ',', '.') . '€';
+        return number_format($cents / 100, 2, ',', '.').'€';
     }
 }
