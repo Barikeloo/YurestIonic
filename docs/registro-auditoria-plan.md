@@ -2,7 +2,7 @@
 
 > Documento de seguimiento. Recoge el estado actual, las decisiones de diseño pendientes y el plan por hitos para llevar la página `Registro de Auditoría` (ya maquetada en el front con datos mock) a un módulo real conectado con el backend y el TPV.
 
-Última actualización: 2026-05-28
+Última actualización: 2026-05-29
 
 ---
 
@@ -287,11 +287,31 @@ Para cada use case de Decisión D, inyectar `AuditRecorderInterface` en el const
 ### Hito 4 — Hardening
 > Nota: cadena de hash, ambos detectores de anomalía y permiso `role = admin` ya se entregaron como parte del Hito 1.
 - [x] Endpoint admin `GET /api/admin/audit-log/verify` que recalcula la cadena y reporta filas rotas
-- [ ] Alerting cuando aparece una anomalía crítica (Slack/email)
+- [x] Sistema de alertas de anomalías in-app (tabla `audit_alerts`) — ver Hito 4a
 - [x] Vistas guardadas persistidas por usuario (tabla `audit_saved_views`) — opcional
 
 ### Hito 4b — Fix de cobertura `device_id` + `ip_address` ✅ Completado (2026-05-26)
 Fix aplicado: todos los use cases instrumentados en Hito 3 ahora pasan `deviceId` e `ipAddress` al `AuditEventDraft`. El interceptor del front ya envía `X-Device-Id`; el backend lo extrae del header o del body y la IP se captura con `$request->ip()`.
+
+### Hito 4a — Sistema de alertas de anomalías ✅ Completado (2026-05-29)
+Cuando el `AnomalyDetector` detecta una anomalía, el `EloquentAuditRecorder` notifica vía `AlertNotifierInterface`. La implementación `DbAlertNotifier` persiste la alerta en la tabla `audit_alerts` para consumo in-app. Slack/email queda como roadmap.
+
+**Backend:**
+- [x] Migración `create_audit_alerts_table` (`uuid, restaurant_id, action, anomaly_kind, entity_type, entity_id, summary, metadata, user_id, device_id, read_at, created_at`) + índices
+- [x] Migración `add_audit_log_uuid_to_audit_alerts` para vincular alerta con evento de auditoría
+- [x] `Domain/Interfaces/AlertNotifierInterface.php` con `notifyCriticalAnomaly(AuditEventDraft, string $anomalyKind, ?string $auditLogUuid)`
+- [x] `Infrastructure/Services/DbAlertNotifier.php` — implementación que crea fila en `audit_alerts` resolviendo `restaurant_id` y `user_id` desde Eloquent
+- [x] `Infrastructure/Persistence/Models/EloquentAuditAlert.php` (timestamps=false, casts para metadata/array/read_at/created_at)
+- [x] `ListAuditAlertsController` — `GET /api/admin/audit-alerts`, devuelve últimas 50 alertas del restaurante + `unread_count`. Incluye `resolveLegacyAuditLogUuids` para emparejar alertas antiguas sin `audit_log_uuid` vía heurística `(action, entity_type, entity_id)` ±60s
+- [x] `MarkAlertReadController` — `POST /api/admin/audit-alerts/{uuid}/read`
+- [x] `MarkAllAlertsReadController` — `POST /api/admin/audit-alerts/read-all`
+- [x] Bind en `AppServiceProvider`: `AlertNotifierInterface → DbAlertNotifier`
+- [x] `EloquentAuditRecorder` inyecta `AlertNotifierInterface` y llama `notifyCriticalAnomaly` dentro de la misma transacción del `record()` cuando `anomaly_kind !== null`
+
+**Frontend:**
+- [x] `AuditAlertService` (`listAlerts`, `markAsRead`, `markAllAsRead`) apuntando a `/admin/audit-alerts`
+- [x] `RegistroAuditoriaFacade` integra alertas: signals `_alerts`, `_unreadAlertCount`, `_alertsOpen`; métodos `loadAlerts`, `markAlertRead`, `markAllAlertsRead`, `startAlertPolling` (30s), `fetchAndInjectEvent` (carga evento vinculado a una alerta si no está ya en la lista)
+- [x] `RegistroAuditoriaPage` integra dropdown de alertas con badge de no leídas, click para navegar al evento vinculado (`selectAlert` + `scrollAndPulse`), y marcar como leídas
 
 ### Hito 5 — Roadmap (no se construye, se cuenta al CTO)
 - SSE/WebSocket para live tail real
@@ -324,4 +344,5 @@ Fix aplicado: todos los use cases instrumentados en Hito 3 ahora pasan `deviceId
 - ✅ **Cobertura completa del prototipo alcanzada (45 slugs)**. Todos los use cases del backlog del plan están instrumentados.
 - ✅ **Backend Vistas Guardadas** completado (2026-05-28). Módulo `app/AuditSavedView/` con DDD completo: entity `AuditSavedView`, 4 use cases (`List`, `Create`, `Update`, `Delete`), `EloquentAuditSavedViewRepository`, 4 controllers + FormRequests. Rutas: `GET/POST/PATCH/DELETE /api/admin/audit-saved-views`. Migración ejecutada en DB.
 - ✅ **Frontend Vistas Guardadas** completado (2026-05-28). `AuditLogService` extendido con CRUD de saved views. `RegistroAuditoriaFacade` creado siguiendo el patrón Facade con Angular Signals. Componente refactorizado como thin wrapper del facade. Template actualizado: carga vistas del backend (`mergedSavedViews`), botón "Guardar vista actual" persiste via API, icono de eliminar para vistas custom. Compilación limpia (`npx tsc --noEmit`).
-- 🚧 **Hito 4 — Hardening** pendiente: alerting cuando aparece anomalía crítica.
+- ✅ **Hito 4a — Sistema de alertas de anomalías** completado (2026-05-29). Backend: `AlertNotifierInterface` + `DbAlertNotifier`, tabla `audit_alerts`, controllers `List/MarkRead/MarkAllRead`. Frontend: `AuditAlertService`, integración en facade y page con dropdown, badge de no leídas, navegación a evento vinculado y polling cada 30s. Slack/email queda como roadmap.
+- 🚧 **Hito 4 — Hardening** pendiente: alerting externo (Slack/email) cuando aparece anomalía crítica.

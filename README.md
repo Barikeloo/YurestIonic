@@ -31,6 +31,7 @@
    - [4.7 Dashboard de finanzas (prototipo)](#47-dashboard-de-finanzas-prototipo)
    - [4.8 Panel de Desarrollador (SuperAdmin)](#48-panel-de-desarrollador-superadmin--gestión-de-la-plataforma)
    - [4.9 Editor de Menús — Combos y menú del día](#49-editor-de-menús--combos-y-menú-del-día)
+   - [4.10 Registro de Auditoría](#410-registro-de-auditoría)
 5. [Características implementadas](#5-características-implementadas)
 6. [Arquitectura](#6-arquitectura)
    - [6.1 Stack tecnológico](#61-stack-tecnológico)
@@ -63,6 +64,7 @@ El producto está pensado para desplegarse en tabletas táctiles como dispositiv
 - **División de cuenta** — 3 estrategias: partes iguales, asignación por líneas, por comensal.
 - **Cierre de caja** — Sesiones de turno, movimientos de caja, arqueo y generación de Z-Report con hash de integridad.
 - **Dashboard de finanzas** — Prototipo funcional con métricas de ventas por período, producto estrella y evolución de ingresos.
+- **Registro de Auditoría** — Traza inmutable de todas las operaciones críticas del negocio: 45 eventos instrumentados (auth, pedidos, caja, ventas, catálogo, mesas, configuración). Hash SHA-256 encadenado por restaurante, detección de anomalías (ráfaga de PIN fallidos, descuadre de caja), alertas in-app, filtros server-side con paginación por cursor, live tail y vistas guardadas. Solo accesible para `admin`.
 - **Panel de desarrollador (SuperAdmin)** — Gestión de la plataforma multi-tenant: alta de restaurantes, administración de superadmins y control global del sistema.
 - **Prototipo PDA** — Diseño preliminar de la interfaz de PDA (Punto de Atención Digital) para operadores. Incompleto; se completará en una fase posterior del proyecto.
 
@@ -452,6 +454,71 @@ Menu (cabecera)
 
 ---
 
+### 4.10 Registro de Auditoría
+
+Accesible desde el menú lateral en **"Auditoría"** (solo usuarios con rol `admin`). Es la traza operativa completa e inmutable del restaurante: quién hizo qué, cuándo, desde qué dispositivo, y qué cambió.
+
+#### Qué se audita
+
+El sistema instrumenta **45 tipos de eventos** distribuidos en 8 categorías: `auth`, `order`, `caja`, `sale`, `table`, `catalog`, `config` y `system`. Ejemplos:
+
+| Categoría | Eventos representativos |
+|---|---|
+| **Auth** | Login con PIN (éxito o fallo), vinculación de dispositivo |
+| **Pedidos** | Apertura, añadir/borrar línea, transferencia, reapertura, marcado para cobro |
+| **Caja** | Apertura de turno, cierre, cierre forzado, movimiento de caja |
+| **Ventas** | Creación de ticket, cancelación completa, nota de abono |
+| **Catálogo** | Alta/baja/modificación de productos, familias y menús; cambio de precio |
+| **Mesas** | Creación, modificación, unión, desunión, eliminación |
+| **Config** | Alta/baja/modificación de usuarios, impuestos |
+
+#### Interfaz de la página
+
+- **KPIs superiores** — Total de eventos hoy, críticos, usuarios activos y tiempo desde el último evento.
+- **Tabs por categoría** — 9 pestañas (`Todo`, `Pedidos`, `Caja`, `Ventas`, `Mesas`, `Catálogo`, `Acceso`, `Config`, `Sistema`). El contador de cada tab refleja los eventos ya cargados.
+- **Chips inteligentes** — Filtros rápidos de una pulsación: "Solo críticos", "Mis acciones", "Última hora", "Movimientos de caja", "Cancelaciones", "Reaperturas", "Fallos de acceso", "Transferencias".
+- **Filtros avanzados** — Severidad (info / warning / danger / critical / success), usuario, dispositivo y rango de fechas. Todos aplican en servidor con debounce.
+- **Búsqueda** — Campo de texto libre con `LIKE` en `action`, `summary` e `entity_id` (mínimo 2 caracteres).
+- **Scroll infinito** — Paginación por cursor opaco (`next_cursor`). Cada lote carga hasta 50 eventos.
+- **Live tail** — Toggle "Live". Cada 5 segundos consulta eventos nuevos posteriores al primero visible y los inserta en la cabecera de la lista.
+- **Drawer de detalle** — Al tocar un evento se abre un panel lateral con:
+  - Metadata completa (acción, entidad, usuario, dispositivo, IP, sesión).
+  - Diferencia estructurada (`before → after`) cuando la acción modifica datos.
+  - Payload JSON completo con botón de copiar al portapapeles.
+  - **Hash de integridad SHA-256** con indicador visual "Verificado". Si el hash no coincide con la cadena recalculada, se muestra advertencia.
+
+#### Vistas guardadas
+
+En la barra de filtros hay un dropdown "Vistas" con opciones predefinidas (Críticos del turno, Mis reaperturas, Cuadres con discrepancia, Fallos de acceso 24h) y la capacidad de **guardar la configuración actual de filtros** con un nombre personalizado. Las vistas persisten en la base de datos por restaurante y se pueden eliminar desde el mismo dropdown.
+
+#### Alertas de anomalías
+
+El detector de anomalías marca automáticamente eventos sospechosos:
+
+- **`auth_failed_burst`** — 3 o más intentos de PIN fallidos del mismo usuario en 5 minutos.
+- **`caja_mismatch`** — Cierre de caja con descuadre (diferencia entre efectivo contado y teórico).
+
+Cada anomalía genera una **alerta in-app** accesible desde el icono de campana en la barra superior. Muestra un badge con el número de alertas no leídas. Al tocar una alerta, el sistema:
+1. La marca como leída.
+2. Si la alerta está vinculada a un evento de auditoría, carga ese evento en el drawer y hace scroll suave hasta él con un efecto visual de pulso.
+
+El polling de alertas es cada 30 segundos.
+
+#### Cómo acceder
+
+```
+1. Iniciar sesión con un usuario admin (ej: Manolo / PIN 1234)
+2. En el menú lateral, tocar "Auditoría"
+3. Se carga el registro con los eventos de hoy por defecto
+4. Usar tabs, chips, filtros o búsqueda para navegar
+5. Tocar cualquier evento para ver su detalle completo
+6. Guardar una combinación de filtros como "Vista" para recuperarla luego
+```
+
+> **Nota:** La auditoría no tiene interfaz de escritura. Los eventos se insertan automáticamente desde los casos de uso del backend tras cada operación exitosa (o fallo, en el caso de login PIN erróneo). El hash de integridad se calcula dentro de una transacción con `FOR UPDATE` sobre la cadena del restaurante, garantizando secuencialidad.
+
+---
+
 ## 5. Características implementadas
 
 ### Hitos del proyecto
@@ -463,7 +530,8 @@ Menu (cabecera)
 | **Hito 3 — Interfaz Backoffice** | 100% | Panel de gestión con ~1.600 líneas de componentes Angular. Formularios reactivos, validación en tiempo real, toasts de confirmación. |
 | **Hito 4 — Front de Venta (TPV)** | 100% | Flujo completo: mesas → apertura → pedido → cobro → cierre. Soporte para pagos parciales, división de cuenta (3 modos), y cierre de caja con Z-Report. |
 | **Hito 5 — Informes (Dashboard)** | 40% | Prototipo funcional con métricas clave. Pendiente: exportación a PDF/Excel, filtros avanzados, predicciones. |
-| **Hito 6 — Mejoras operativas** | 80% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores. |
+| **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 45 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor y live tail. Solo acceso `admin`. |
+| **Hito 7 — Mejoras operativas** | 80% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores. |
 
 ### Funcionalidades detalladas
 
@@ -493,6 +561,13 @@ Menu (cabecera)
 | **Caja** | Movimientos | Entradas y salidas de caja categorizadas: cambio de moneda, pago a proveedor, sangría, ajuste, propina. |
 | **Ventas** | Cancelación completa | Anulación de una venta con motivo obligatorio, generando registro de auditoría. |
 | **Ventas** | Reembolso parcial | Cancelación de líneas individuales de una venta ya cerrada mediante nota de abono (`parent_sale_id`). |
+| **Auditoría** | Traza inmutable | 45 eventos instrumentados en 8 categorías. Cada evento almacena `before/after`, metadata, IP y device. Hash SHA-256 encadenado por restaurante para garantizar integridad. |
+| **Auditoría** | Detección de anomalías | Reglas server-side: `auth_failed_burst` (≥3 fallos PIN en 5 min) y `caja_mismatch` (descuadre en cierre). Se marcan en el evento y generan alerta. |
+| **Auditoría** | Alertas in-app | Tabla `audit_alerts` con notificaciones por anomalía. Dropdown con badge de no leídas, navegación directa al evento vinculado, polling 30s. |
+| **Auditoría** | Vistas guardadas | Persistencia de combinaciones de filtros por restaurante (`audit_saved_views`). CRUD completo: crear, listar, aplicar, eliminar. |
+| **Auditoría** | Live tail | Polling cada 5s para insertar eventos nuevos en la cabecera de la lista sin perder el scroll. |
+| **Auditoría** | Paginación por cursor | Cursor opaco base64 sobre `(created_at DESC, id DESC)` para evitar desplazamiento de páginas ante inserts concurrentes. |
+| **Dispositivo** | Identificación única | El interceptor HTTP genera y envía `X-Device-Id` (UUID v4 persistente en `localStorage` o `environment.devDeviceId`). Backend captura device + IP en cada evento de auditoría. |
 | **Multi-tenant** | Shard key | `restaurant_id` en todas las tablas. Un solo backend sirve a N restaurantes con aislamiento de datos. |
 | **SuperAdmin** | Gestión de plataforma | Dominio separado para crear restaurantes y gestionar la infraestructura global. |
 | **PDA** | Prototipo de interfaz | Diseño preliminar de la PDA (Punto de Atención Digital) para operadores de sala. Incompleto; se desarrollará en fase posterior. |
@@ -570,6 +645,8 @@ App/<Dominio>/
 | `Order` | `Order`, `OrderLine`, `DinerNumber` | Pedidos abiertos (estado mutable hasta el cierre) |
 | `Sale` | `Sale`, `SaleLine`, `SalePayment` | Documentos fiscales inmutables (ticket, factura, nota de abono) |
 | `Cash` | `CashSession`, `CashMovement`, `ZReportHash` | Sesiones de caja, arqueo e informes fiscales |
+| `Audit` | `AuditLog`, `AuditEventCatalog`, `AnomalyDetector`, `AuditChainHasher` | Traza inmutable de operaciones con hash encadenado y detección de anomalías |
+| `AuditSavedView` | `AuditSavedView` | Persistencia de combinaciones de filtros del Registro de Auditoría |
 | `ChargeSession` | `ChargeSession`, `ChargeSessionPayment`, `AmountPerDiner` | División de cuenta por comensales |
 
 ### 6.4 Flujo de una petición (arquitectura en acción)
@@ -649,6 +726,8 @@ App/<Dominio>/
 ### Trazabilidad e integridad
 
 - **Z-Report con hash SHA-256** — Cada cierre de caja genera un hash encadenado con el Z anterior. Cualquier manipulación posterior rompe la cadena y es detectable.
+- **Registro de Auditoría con hash encadenado** — Cada evento de auditoría almacena `integrity_hash = SHA-256(prev_hash + uuid + restaurant_id + created_at + action + entity_type + entity_id + user_id + summary + before + after + metadata)`. La cadena es **por restaurante** y se computa dentro de una transacción con `SELECT ... FOR UPDATE`, garantizando secuencialidad. Endpoint `GET /api/admin/audit-log/verify` recalcula la cadena entera y reporta filas rotas.
+- **Identificación de dispositivo** — El interceptor HTTP del frontend genera un `X-Device-Id` UUID persistente en `localStorage` y lo envía en cada petición. El backend captura este header junto a la IP (`$request->ip()`), permitiendo saber exactamente desde qué terminal y dirección se originó cada operación auditada.
 - **Soft deletes** — Nunca se pierde información histórica. Un producto eliminado sigue referenciado en las líneas de venta antiguas.
 - **Sin datos sensibles en logs** — Contraseñas, PINs y tokens nunca se registran en los logs de Laravel.
 
@@ -697,7 +776,10 @@ yurestionic/
 │   │   │   ├── pedidos/                    # Toma de pedido: catálogo + resumen de líneas
 │   │   │   ├── caja/                       # Cobro, split bill, sesiones de caja, Z-Report
 │   │   │   ├── gestion/                    # Backoffice CRUD completo
-│   │   │   └── dashboard/                  # Prototipo de finanzas (métricas y gráficas)
+│   │   │   ├── dashboard/                  # Prototipo de finanzas (métricas y gráficas)
+│   │   │   └── registro-auditoria/         # Registro de Auditoría: filtros, live tail, drawer, alertas
+│   │   │       └── facades/
+│   │   │           └── registro-auditoria.facade.ts  # Estado reactivo con Signals
 │   │   ├── features/cash/
 │   │   │   ├── ui/
 │   │   │   │   ├── split-bill-modal/       # Modal de división de cuenta (3 modos)
@@ -708,16 +790,22 @@ yurestionic/
 │   │   │   └── facades/
 │   │   │       └── caja-payment.facade.ts  # Estado reactivo con Signals
 │   │   ├── components/                     # Componentes reutilizables (botones, cards, modals)
-│   │   ├── services/                       # Servicios globales (Auth, HTTP interceptor)
+│   │   ├── services/                       # Servicios globales (Auth, AuditLog, AuditAlert, Restaurant)
+│   │   │   ├── audit-log.service.ts        # API de auditoría: list, get, saved views CRUD
+│   │   │   └── audit-alert.service.ts      # API de alertas: list, mark read, mark all read
+│   │   ├── core/
+│   │   │   └── http/
+│   │   │       └── interceptor.ts          # Prefija API URL, JWT, X-Device-Id, X-Restaurant-Id
 │   │   ├── providers/
-│   │   │   └── interceptor.ts              # Prefija API URL, añade headers JWT
+│   │   │   └── interceptor.ts              # Legacy — migrando a core/http/interceptor.ts
 │   │   └── guards/                         # CanActivate por rol (admin, supervisor, operator)
 │   ├── src/environments/
 │   ├── angular.json
 │   └── package.json
 ├── docs/
 │   ├── CAJA_DESIGN.md                      # Especificación funcional completa del módulo Caja
-│   └── DOMINIO_TPV.md                      # Reglas de diseño de APIs TPV en hostelería
+│   ├── DOMINIO_TPV.md                      # Reglas de diseño de APIs TPV en hostelería
+│   └── registro-auditoria-plan.md          # Plan técnico de implementación del módulo Auditoría (hitos, decisiones, cobertura)
 ├── docker-compose.yml                      # 4 servicios: api, frontend, db, dbgate
 ├── Makefile                                # Comandos de desarrollo y operación
 ├── README.md                               # Este documento
@@ -795,6 +883,21 @@ PUT    /api/tpv/cash-sessions/{id}/close   # Cerrar sesión y generar Z-Report
 POST   /api/tpv/cash-sessions/{id}/movements # Registrar movimiento de caja
 ```
 
+### Auditoría (requiere rol `admin`)
+
+```
+GET    /api/admin/audit-log               # Listar eventos (cursor, filtros, since)
+GET    /api/admin/audit-log/{uuid}        # Detalle de un evento
+GET    /api/admin/audit-log/verify        # Verificar cadena de hash por restaurante
+GET    /api/admin/audit-saved-views       # Listar vistas guardadas
+POST   /api/admin/audit-saved-views        # Crear vista guardada
+PATCH  /api/admin/audit-saved-views/{uuid} # Actualizar vista
+DELETE /api/admin/audit-saved-views/{uuid} # Eliminar vista
+GET    /api/admin/audit-alerts            # Listar alertas de anomalías + unread_count
+POST   /api/admin/audit-alerts/read-all   # Marcar todas las alertas como leídas
+POST   /api/admin/audit-alerts/{uuid}/read # Marcar una alerta como leída
+```
+
 > Documentación completa de request/response en los controladores de `backend/app/<Dominio>/Infrastructure/Entrypoint/Http/`.
 
 ---
@@ -868,6 +971,7 @@ make test-frontend
 | [`docs/DOMINIO_TPV.md`](./docs/DOMINIO_TPV.md) | Integradores / Partners | Reglas de diseño de APIs TPV: timestamps por línea, jerarquía de productos, fracciones, series de facturación |
 | [`PLAN_SEMANA_CTO.md`](./PLAN_SEMANA_CTO.md) | CTO / Dirección | Plan de presentación: guion de demo, decisiones técnicas a justificar, estructura de la presentación |
 | [`MENU_FEATURE_README.md`](./MENU_FEATURE_README.md) | Equipo de desarrollo | Detalle técnico del módulo Menús: estructura del dominio, migraciones, casos de uso, integración con OrderLine/SaleLine y áreas de mejora pendientes |
+| [`docs/registro-auditoria-plan.md`](./docs/registro-auditoria-plan.md) | Tech Lead / Arquitecto | Plan técnico completo del módulo Auditoría: decisiones de diseño (A–H), hitos 1–5, cobertura de 45 slugs instrumentados, backend DDD + frontend Signals |
 
 ---
 
