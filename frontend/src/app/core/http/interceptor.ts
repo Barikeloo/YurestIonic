@@ -4,6 +4,7 @@ import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/c
 import { catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { RestaurantContextFacade } from '../facades/restaurant-context.facade';
+import { environment } from '../../../environments/environment';
 
 @Injectable()
 export class InterceptorProvider implements HttpInterceptor {
@@ -52,6 +53,11 @@ export class InterceptorProvider implements HttpInterceptor {
   }
 
   private getOrCreateDeviceId(): string {
+    const devId = environment.devDeviceId;
+    if (devId && devId.trim() !== '') {
+      return devId;
+    }
+
     const storageKey = 'tpv_device_id';
     const existing = localStorage.getItem(storageKey);
 

@@ -28,7 +28,7 @@ final class ListAuditEvents
             userId: $command->userId !== null ? Uuid::create($command->userId) : null,
             deviceId: $command->deviceId,
             dateFrom: $this->parseDate($command->dateFrom),
-            dateTo: $this->parseDate($command->dateTo),
+            dateTo: $this->parseDate($command->dateTo)?->setTime(23, 59, 59),
             search: $command->search,
             anomalyOnly: $command->anomalyOnly,
             cursorCreatedAt: $cursorCreatedAt,

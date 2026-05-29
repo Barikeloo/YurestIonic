@@ -1,4 +1,5 @@
 import { computed, inject, Injectable, Signal, signal } from '@angular/core';
+import { filter, take } from 'rxjs/operators';
 import {
   AuditEventApi,
   AuditLogService,
@@ -9,7 +10,7 @@ import {
 import { AuditAlertApi, AuditAlertService } from '../../../../services/audit-alert.service';
 import { RestaurantService, AdminRestaurantUser } from '../../../../services/restaurant.service';
 import { RestaurantContextFacade } from '../../../../core/facades/restaurant-context.facade';
-import { AuthService } from '../../../../core/services/auth.service';
+import { AuthService, AuthUser } from '../../../../core/services/auth.service';
 import { adaptApiEvent, AuditEvent, UserDirectoryEntry } from '../audit-event.adapter';
 
 function isoToday(): string { return new Date().toISOString().slice(0, 10); }
@@ -258,6 +259,24 @@ export class RegistroAuditoriaFacade {
 
   // ── Users directory ────────────────────────────────────────
   public loadUsersDirectory(): void {
+    const tryFetch = (): boolean => {
+      const restaurantUuid = this.resolveRestaurantUuid();
+      if (!restaurantUuid) return false;
+      this.fetchUsersDirectory(restaurantUuid);
+      return true;
+    };
+
+    if (tryFetch()) return;
+
+    // Page reloaded directly — currentUser is being rehydrated by getMe() asynchronously.
+    // Wait for it once and retry, otherwise the directory stays empty and audit log
+    // entries render as "Usuario desconocido".
+    this.authService.currentUser$
+      .pipe(filter((u): u is AuthUser => u !== null), take(1))
+      .subscribe(() => tryFetch());
+  }
+
+  private resolveRestaurantUuid(): string | null {
     let restaurantUuid = this.restaurantContextFacade.selectedRestaurantUuid;
     if (!restaurantUuid) {
       restaurantUuid = localStorage.getItem('gestion_selected_restaurant_uuid');
@@ -265,8 +284,10 @@ export class RegistroAuditoriaFacade {
     if (!restaurantUuid) {
       restaurantUuid = this.authService.currentUserSnapshot?.restaurantId ?? null;
     }
-    if (!restaurantUuid) return;
+    return restaurantUuid;
+  }
 
+  private fetchUsersDirectory(restaurantUuid: string): void {
     this.restaurantService.getRestaurantUsers(restaurantUuid).subscribe({
       next: (resp) => {
         const dir: Record<string, UserDirectoryEntry> = {};
@@ -387,14 +408,24 @@ export class RegistroAuditoriaFacade {
     });
   }
 
-  public selectAlert(alert: AuditAlertApi): void {
-    this._alertsOpen.set(false);
-    if (alert.audit_log_uuid) {
-      this._selectedId.set(alert.audit_log_uuid);
+  public fetchAndInjectEvent(uuid: string, onLoaded?: () => void): void {
+    if (this._events().some(e => e.id === uuid)) {
+      this._selectedId.set(uuid);
+      onLoaded?.();
+      return;
     }
-    if (!alert.read_at) {
-      this.markAlertRead(alert.uuid);
-    }
+    this._selectedId.set(uuid);
+    this.auditLogService.getEvent(uuid).subscribe({
+      next: (api) => {
+        const dir = this._usersDirectory();
+        const event = adaptApiEvent(api, dir);
+        this._events.update(prev => prev.some(e => e.id === event.id) ? prev : [event, ...prev]);
+        onLoaded?.();
+      },
+      error: () => {
+        this.showToast('No se pudo cargar el evento de la alerta');
+      },
+    });
   }
 
   public startAlertPolling(): void {

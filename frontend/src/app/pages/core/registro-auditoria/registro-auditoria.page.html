@@ -116,9 +116,15 @@
             <ng-template #alertRow let-alert>
               <div
                 class="alert-item"
-                [class.unread]="!alert.read_at"
-                [class.has-log]="alert.audit_log_uuid"
-                [class]="'alert-item sev-' + anomalyMeta(alert.anomaly_kind).severity + (!alert.read_at ? ' unread' : '') + (alert.audit_log_uuid ? ' has-log' : '')"
+                [ngClass]="{
+                  'unread': !alert.read_at,
+                  'has-log': !!alert.audit_log_uuid,
+                  'sev-critical': anomalyMeta(alert.anomaly_kind).severity === 'critical',
+                  'sev-danger':   anomalyMeta(alert.anomaly_kind).severity === 'danger',
+                  'sev-warning':  anomalyMeta(alert.anomaly_kind).severity === 'warning',
+                  'sev-info':     anomalyMeta(alert.anomaly_kind).severity === 'info',
+                  'sev-success':  anomalyMeta(alert.anomaly_kind).severity === 'success'
+                }"
                 (click)="selectAlert(alert)"
                 [title]="alert.audit_log_uuid ? 'Click para abrir el evento en el registro' : 'Sin evento vinculado'"
               >

@@ -332,14 +332,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
       const filters = this.serverFilters();
       this.facade.loadInitial(filters);
     });
-
-    effect(() => {
-      const target = this.pendingAlertNav();
-      if (!target) return;
-      if (!this.eventIndex()[target]) return;
-      this.pendingAlertNav.set(null);
-      this.scrollAndPulse(target);
-    });
   }
 
   ngOnInit(): void {
@@ -436,8 +428,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
 
   markAllAlertsRead(): void { this.facade.markAllAlertsRead(); }
 
-  private readonly pendingAlertNav = signal<string | null>(null);
-
   selectAlert(alert: AuditAlertApi): void {
     this.facade.setAlertsOpen(false);
     if (!alert.read_at) this.facade.markAlertRead(alert.uuid);
@@ -448,27 +438,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
       return;
     }
 
-    const inCurrentList = !!this.eventIndex()[targetId];
-    if (inCurrentList) {
-      this.facade.setSelectedId(targetId);
-      this.scrollAndPulse(targetId);
-      return;
-    }
-
-    const alertDay = dayKey(alert.created_at);
-    this.activeTab.set('all');
-    this.activeChip.set(null);
-    this.filterCategory.set('all');
-    this.filterSeverity.set('all');
-    this.filterUser.set('all');
-    this.filterDevice.set('all');
-    this.searchRaw.set('');
-    this.searchDebounced.set('');
-    this.dateFrom.set(alertDay);
-    this.dateTo.set(alertDay);
-    this.facade.setSelectedId(targetId);
-    this.pendingAlertNav.set(targetId);
-    this.facade.showToast('Filtros ajustados para mostrar el evento de la alerta');
+    this.facade.fetchAndInjectEvent(targetId, () => this.scrollAndPulse(targetId));
   }
 
   private scrollAndPulse(eventId: string): void {
