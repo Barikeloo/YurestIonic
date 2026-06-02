@@ -64,7 +64,7 @@ El producto está pensado para desplegarse en tabletas táctiles como dispositiv
 - **División de cuenta** — 3 estrategias: partes iguales, asignación por líneas, por comensal.
 - **Cierre de caja** — Sesiones de turno, movimientos de caja, arqueo y generación de Z-Report con hash de integridad.
 - **Dashboard de finanzas** — Prototipo funcional con métricas de ventas por período, producto estrella y evolución de ingresos.
-- **Registro de Auditoría** — Traza inmutable de todas las operaciones críticas del negocio: 45 eventos instrumentados (auth, pedidos, caja, ventas, catálogo, mesas, configuración). Hash SHA-256 encadenado por restaurante, detección de anomalías (ráfaga de PIN fallidos, descuadre de caja), alertas in-app, filtros server-side con paginación por cursor, live tail y vistas guardadas. Solo accesible para `admin`.
+- **Registro de Auditoría** — Traza inmutable de todas las operaciones críticas del negocio: 72 eventos instrumentados (auth, pedidos, caja, ventas, catálogo, mesas, configuración, restaurante). Hash SHA-256 encadenado por restaurante, detección de anomalías (ráfaga de PIN fallidos, descuadre de caja), alertas in-app, filtros server-side con paginación por cursor, live tail y vistas guardadas. Solo accesible para `admin`.
 - **Panel de desarrollador (SuperAdmin)** — Gestión de la plataforma multi-tenant: alta de restaurantes, administración de superadmins y control global del sistema.
 - **Prototipo PDA** — Diseño preliminar de la interfaz de PDA (Punto de Atención Digital) para operadores. Incompleto; se completará en una fase posterior del proyecto.
 
@@ -460,17 +460,18 @@ Accesible desde el menú lateral en **"Auditoría"** (solo usuarios con rol `adm
 
 #### Qué se audita
 
-El sistema instrumenta **45 tipos de eventos** distribuidos en 8 categorías: `auth`, `order`, `caja`, `sale`, `table`, `catalog`, `config` y `system`. Ejemplos:
+El sistema instrumenta **72 tipos de eventos** distribuidos en 9 categorías: `auth`, `order`, `caja`, `sale`, `table`, `catalog`, `config`, `restaurant` y `system`. Ejemplos:
 
 | Categoría | Eventos representativos |
 |---|---|
-| **Auth** | Login con PIN (éxito o fallo), vinculación de dispositivo |
-| **Pedidos** | Apertura, añadir/borrar línea, transferencia, reapertura, marcado para cobro |
-| **Caja** | Apertura de turno, cierre, cierre forzado, movimiento de caja |
-| **Ventas** | Creación de ticket, cancelación completa, nota de abono |
-| **Catálogo** | Alta/baja/modificación de productos, familias y menús; cambio de precio |
+| **Auth** | Login con email (éxito o fallo), login con PIN (éxito o fallo), vinculación de dispositivo, cambio de contraseña |
+| **Pedidos** | Apertura, modificación de comensales, añadir producto/menú, borrar línea, transferencia, reapertura, marcado para cobro, eliminación |
+| **Caja** | Apertura de turno, inicio de cierre, cancelación de cierre, cierre con Z-Report, movimiento de caja |
+| **Ventas** | Creación de ticket, cancelación, nota de abono, sesión de cobro, pago registrado, líneas asignadas, modificación de comensales, cierre, ticket final, añadir línea |
+| **Catálogo** | Alta/baja/modificación de productos, familias, menús, modificadores y variantes; cambio de precio |
 | **Mesas** | Creación, modificación, unión, desunión, eliminación |
 | **Config** | Alta/baja/modificación de usuarios, impuestos |
+| **Restaurant** | Creación y modificación de restaurante |
 
 #### Interfaz de la página
 
@@ -530,7 +531,7 @@ El polling de alertas es cada 30 segundos.
 | **Hito 3 — Interfaz Backoffice** | 100% | Panel de gestión con ~1.600 líneas de componentes Angular. Formularios reactivos, validación en tiempo real, toasts de confirmación. |
 | **Hito 4 — Front de Venta (TPV)** | 100% | Flujo completo: mesas → apertura → pedido → cobro → cierre. Soporte para pagos parciales, división de cuenta (3 modos), y cierre de caja con Z-Report. |
 | **Hito 5 — Informes (Dashboard)** | 40% | Prototipo funcional con métricas clave. Pendiente: exportación a PDF/Excel, filtros avanzados, predicciones. |
-| **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 45 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor y live tail. Solo acceso `admin`. |
+| **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor y live tail. Solo acceso `admin`. |
 | **Hito 7 — Mejoras operativas** | 80% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores. |
 
 ### Funcionalidades detalladas
@@ -561,7 +562,7 @@ El polling de alertas es cada 30 segundos.
 | **Caja** | Movimientos | Entradas y salidas de caja categorizadas: cambio de moneda, pago a proveedor, sangría, ajuste, propina. |
 | **Ventas** | Cancelación completa | Anulación de una venta con motivo obligatorio, generando registro de auditoría. |
 | **Ventas** | Reembolso parcial | Cancelación de líneas individuales de una venta ya cerrada mediante nota de abono (`parent_sale_id`). |
-| **Auditoría** | Traza inmutable | 45 eventos instrumentados en 8 categorías. Cada evento almacena `before/after`, metadata, IP y device. Hash SHA-256 encadenado por restaurante para garantizar integridad. |
+| **Auditoría** | Traza inmutable | 72 eventos instrumentados en 9 categorías. Cada evento almacena `before/after`, metadata, IP y device. Hash SHA-256 encadenado por restaurante para garantizar integridad. |
 | **Auditoría** | Detección de anomalías | Reglas server-side: `auth_failed_burst` (≥3 fallos PIN en 5 min) y `caja_mismatch` (descuadre en cierre). Se marcan en el evento y generan alerta. |
 | **Auditoría** | Alertas in-app | Tabla `audit_alerts` con notificaciones por anomalía. Dropdown con badge de no leídas, navegación directa al evento vinculado, polling 30s. |
 | **Auditoría** | Vistas guardadas | Persistencia de combinaciones de filtros por restaurante (`audit_saved_views`). CRUD completo: crear, listar, aplicar, eliminar. |
