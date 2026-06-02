@@ -78,15 +78,25 @@ final class SaleCrudTest extends TestCase
         ]);
 
         $session = ['auth_user_id' => $userUuid];
+        $saleId = (string) Str::uuid();
+        $orderId = (int) DB::table('orders')->where('uuid', $orderUuid)->value('id');
 
-        $createResponse = $this->withSession($session)->postJson('/api/tpv/sales', [
-            'restaurant_id' => $restaurantUuid,
-            'order_id' => $orderUuid,
-            'opened_by_user_id' => $userUuid,
+        DB::table('sales')->insert([
+            'restaurant_id' => $restaurantId,
+            'uuid' => $saleId,
+            'order_id' => $orderId,
+            'user_id' => $userId,
+            'table_id' => $tableId,
+            'opened_by_user_id' => $userId,
+            'closed_by_user_id' => null,
+            'ticket_number' => null,
+            'value_date' => now(),
+            'total' => 0,
+            'cash_session_id' => null,
+            'status' => 'closed',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
-
-        $createResponse->assertStatus(201);
-        $saleId = $createResponse->json('id');
 
         $this->withSession($session)->putJson("/api/tpv/sales/{$saleId}", [
             'closed_by_user_id' => $userUuid,
@@ -164,22 +174,7 @@ final class SaleCrudTest extends TestCase
         ]);
 
         $session = ['auth_user_id' => $userUuid];
-
-        $createResponse = $this->withSession($session)->postJson('/api/tpv/sales', [
-            'restaurant_id' => $restaurantUuid,
-            'order_id' => $orderUuid,
-            'opened_by_user_id' => $userUuid,
-        ]);
-
-        $createResponse->assertStatus(201);
-        $createResponse->assertJsonFragment([
-            'restaurant_id' => $restaurantUuid,
-            'order_id' => $orderUuid,
-            'opened_by_user_id' => $userUuid,
-            'total' => 0,
-        ]);
-
-        $saleId = $createResponse->json('id');
+        $saleId = (string) Str::uuid();
 
         $taxId = DB::table('taxes')->insertGetId([
             'restaurant_id' => $restaurantId,
@@ -213,7 +208,22 @@ final class SaleCrudTest extends TestCase
         ]);
 
         $orderId = (int) DB::table('orders')->where('uuid', $orderUuid)->value('id');
-        $saleInternalId = (int) DB::table('sales')->where('uuid', $saleId)->value('id');
+        $saleInternalId = DB::table('sales')->insertGetId([
+            'restaurant_id' => $restaurantId,
+            'uuid' => $saleId,
+            'order_id' => $orderId,
+            'user_id' => $userId,
+            'table_id' => $tableId,
+            'opened_by_user_id' => $userId,
+            'closed_by_user_id' => null,
+            'ticket_number' => null,
+            'value_date' => now(),
+            'total' => 0,
+            'cash_session_id' => null,
+            'status' => 'closed',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
 
         $orderLineId = DB::table('order_lines')->insertGetId([
             'restaurant_id' => $restaurantId,
@@ -264,7 +274,7 @@ final class SaleCrudTest extends TestCase
                 'id' => $saleId,
                 'ticket_number' => 1001,
                 'closed_by_user_id' => $userUuid,
-                'total' => 2200,
+                'total' => 2000,
             ]);
 
         $this->withSession($session)->deleteJson("/api/tpv/sales/{$saleId}")

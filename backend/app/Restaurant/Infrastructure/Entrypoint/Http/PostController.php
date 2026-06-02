@@ -39,11 +39,6 @@ final class PostController
             return new JsonResponse(['message' => 'Internal error.'], 500);
         }
 
-        $adminPin = $request->input('pin') ?? str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
-
-        return new JsonResponse([
-            ...$response->toArray(),
-            'admin_pin' => $adminPin,
-        ], 201);
+        return new JsonResponse($response->toArray(), 201);
     }
 }

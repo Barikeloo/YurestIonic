@@ -11,7 +11,7 @@ class ProductCrudTest extends TestCase
 
     public function test_product_full_crud_flow(): void
     {
-        $tenant = $this->createTenantSession();
+        $tenant = $this->createTenantSession('admin');
 
         $familyResponse = $this->withSession($tenant['session'])->postJson('/api/admin/families', [
             'name' => 'Bebidas',

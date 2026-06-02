@@ -11,7 +11,7 @@ class FamilyCrudTest extends TestCase
 
     public function test_family_full_crud_and_activation_flow(): void
     {
-        $tenant = $this->createTenantSession();
+        $tenant = $this->createTenantSession('admin');
 
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/admin/families', [
             'name' => 'Entrantes',

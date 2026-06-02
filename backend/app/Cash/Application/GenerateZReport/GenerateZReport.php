@@ -20,7 +20,7 @@ use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 
-final class GenerateZReport
+class GenerateZReport
 {
     public function __construct(
         private readonly CashSessionRepositoryInterface $cashSessionRepository,

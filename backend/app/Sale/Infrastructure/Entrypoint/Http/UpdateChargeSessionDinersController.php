@@ -24,6 +24,8 @@ final class UpdateChargeSessionDinersController
             return new JsonResponse(['message' => $e->getMessage()], 404);
         } catch (InvalidDinerCountException $e) {
             return new JsonResponse(['message' => $e->getMessage()], 422);
+        } catch (\DomainException $e) {
+            return new JsonResponse(['message' => $e->getMessage()], 422);
         } catch (\Throwable $e) {
             report($e);
 

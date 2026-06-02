@@ -127,8 +127,8 @@ class AddLineToOrderTest extends TestCase
         ]);
 
         $response->assertStatus(422);
-        $response->assertJson([
-            'message' => 'Only active products can be sold.',
+        $response->assertJsonFragment([
+            'message' => 'Product with ID ' . $productUuid . ' is not active.',
         ]);
     }
 }

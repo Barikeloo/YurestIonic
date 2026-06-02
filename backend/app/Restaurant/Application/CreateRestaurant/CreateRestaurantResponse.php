@@ -13,6 +13,7 @@ final class CreateRestaurantResponse
         public readonly ?string $legalName,
         public readonly ?string $taxId,
         public readonly string $email,
+        public readonly ?string $adminPin = null,
     ) {}
 
     public static function create(
@@ -22,6 +23,7 @@ final class CreateRestaurantResponse
         ?string $legalName,
         ?string $taxId,
         string $email,
+        ?string $adminPin = null,
     ): self {
         return new self(
             id: $id,
@@ -30,10 +32,11 @@ final class CreateRestaurantResponse
             legalName: $legalName,
             taxId: $taxId,
             email: $email,
+            adminPin: $adminPin,
         );
     }
 
-    public static function fromRestaurant(Restaurant $restaurant): self
+    public static function fromRestaurant(Restaurant $restaurant, ?string $adminPin = null): self
     {
         return new self(
             id: $restaurant->id()->value(),
@@ -42,6 +45,7 @@ final class CreateRestaurantResponse
             legalName: $restaurant->legalName()?->value(),
             taxId: $restaurant->taxId()?->value(),
             email: $restaurant->email()->value(),
+            adminPin: $adminPin,
         );
     }
 
@@ -54,6 +58,7 @@ final class CreateRestaurantResponse
             'legal_name' => $this->legalName,
             'tax_id' => $this->taxId,
             'email' => $this->email,
+            'admin_pin' => $this->adminPin,
         ];
     }
 }

@@ -32,14 +32,14 @@ class SaleLineEntityTest extends TestCase
             taxPercentage: SaleLineTaxPercentage::create(10),
         );
 
-        $this->assertSame($id->value(), $saleLine->getId()->value());
-        $this->assertSame($restaurantId->value(), $saleLine->getRestaurantId()->value());
-        $this->assertSame($saleId->value(), $saleLine->getSaleId()->value());
-        $this->assertSame($orderLineId->value(), $saleLine->getOrderLineId()->value());
-        $this->assertSame($productId->value(), $saleLine->getProductId()->value());
-        $this->assertSame($userId->value(), $saleLine->getUserId()->value());
-        $this->assertSame(2, $saleLine->getQuantity()->value());
-        $this->assertSame(1500, $saleLine->getPrice()->value());
-        $this->assertSame(10, $saleLine->getTaxPercentage()->value());
+        $this->assertSame($id->value(), $saleLine->id()->value());
+        $this->assertSame($restaurantId->value(), $saleLine->restaurantId()->value());
+        $this->assertSame($saleId->value(), $saleLine->saleId()->value());
+        $this->assertSame($orderLineId->value(), $saleLine->orderLineId()->value());
+        $this->assertSame($productId->value(), $saleLine->productId()->value());
+        $this->assertSame($userId->value(), $saleLine->userId()->value());
+        $this->assertSame(2, $saleLine->quantity()->value());
+        $this->assertSame(1500, $saleLine->price()->value());
+        $this->assertSame(10, $saleLine->taxPercentage()->value());
     }
 }

@@ -15,7 +15,7 @@ final readonly class AuditEventDraft
      * @param  array<string, mixed>  $metadata
      */
     public function __construct(
-        public Uuid $restaurantId,
+        public ?Uuid $restaurantId = null,
         public ActionSlug $slug,
         public string $entityType,
         public string $entityId,

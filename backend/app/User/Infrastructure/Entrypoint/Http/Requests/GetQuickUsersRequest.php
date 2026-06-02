@@ -5,7 +5,7 @@ namespace App\User\Infrastructure\Entrypoint\Http\Requests;
 use App\User\Application\GetQuickUsers\GetQuickUsersCommand;
 use Illuminate\Foundation\Http\FormRequest;
 
-final class GetQuickUsersRequest extends FormRequest
+class GetQuickUsersRequest extends FormRequest
 {
     public function authorize(): bool
     {

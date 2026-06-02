@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Tax;
 
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Tax\Application\CreateTax\CreateTax;
 use App\Tax\Application\CreateTax\CreateTaxCommand;
 use App\Tax\Application\CreateTax\CreateTaxResponse;
@@ -22,6 +23,8 @@ class CreateTaxTest extends TestCase
     public function test_invoke_creates_tax_and_saves_it(): void
     {
         $repository = Mockery::mock(TaxRepositoryInterface::class);
+        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+
         $repository->shouldReceive('existsByName')
             ->once()
             ->with('IVA Test')
@@ -33,8 +36,16 @@ class CreateTaxTest extends TestCase
                 return $tax->name()->value() === 'IVA Test' && $tax->percentage()->value() === 7;
             }));
 
-        $createTax = new CreateTax($repository);
-        $response = $createTax(new CreateTaxCommand('IVA Test', 7));
+        $auditRecorder->shouldReceive('record')
+            ->once();
+
+        $createTax = new CreateTax($repository, $auditRecorder);
+
+        $response = $createTax(new CreateTaxCommand(
+            name: 'IVA Test',
+            percentage: 7,
+            restaurantId: '00000000-0000-4000-8000-000000000000',
+        ));
 
         $this->assertInstanceOf(CreateTaxResponse::class, $response);
         $this->assertSame('IVA Test', $response->name);
@@ -44,16 +55,24 @@ class CreateTaxTest extends TestCase
     public function test_invoke_throws_when_tax_name_already_exists(): void
     {
         $repository = Mockery::mock(TaxRepositoryInterface::class);
+        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+
         $repository->shouldReceive('existsByName')
             ->once()
             ->with('IVA Test')
             ->andReturn(true);
         $repository->shouldNotReceive('save');
 
-        $createTax = new CreateTax($repository);
+        $auditRecorder->shouldNotReceive('record');
+
+        $createTax = new CreateTax($repository, $auditRecorder);
 
         $this->expectException(TaxNameAlreadyExistsException::class);
 
-        $createTax(new CreateTaxCommand('IVA Test', 7));
+        $createTax(new CreateTaxCommand(
+            name: 'IVA Test',
+            percentage: 7,
+            restaurantId: '00000000-0000-4000-8000-000000000000',
+        ));
     }
 }

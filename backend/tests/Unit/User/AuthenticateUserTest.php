@@ -2,11 +2,14 @@
 
 namespace Tests\Unit\User;
 
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\User\Application\AuthenticateUser\AuthenticateUser;
+use App\User\Application\AuthenticateUser\AuthenticateUserCommand;
 use App\User\Application\AuthenticateUser\AuthenticateUserResponse;
 use App\User\Domain\Entity\User;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
+use App\User\Domain\Interfaces\UserQuickAccessRepositoryInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 use Mockery;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +27,8 @@ class AuthenticateUserTest extends TestCase
         $userRepository = Mockery::mock(UserRepositoryInterface::class);
         $restaurantRepository = Mockery::mock(RestaurantRepositoryInterface::class);
         $passwordHasher = Mockery::mock(PasswordHasherInterface::class);
+        $userQuickAccessRepository = Mockery::mock(UserQuickAccessRepositoryInterface::class);
+        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
 
         $hash = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
 
@@ -40,7 +45,6 @@ class AuthenticateUserTest extends TestCase
 
         $userRepository->shouldReceive('findByEmail')
             ->once()
-            ->with('auth@example.com')
             ->andReturn($user);
 
         $passwordHasher->shouldReceive('verify')
@@ -48,11 +52,27 @@ class AuthenticateUserTest extends TestCase
             ->with('plain-password', $hash)
             ->andReturn(true);
 
-        $authenticateUser = new AuthenticateUser($userRepository, $restaurantRepository, $passwordHasher);
-        $response = $authenticateUser('auth@example.com', 'plain-password');
+        $userQuickAccessRepository->shouldReceive('recordAccess')
+            ->once();
+
+        $authenticateUser = new AuthenticateUser(
+            $userRepository,
+            $restaurantRepository,
+            $passwordHasher,
+            $userQuickAccessRepository,
+            $auditRecorder,
+        );
+
+        $command = new AuthenticateUserCommand(
+            email: 'auth@example.com',
+            plainPassword: 'plain-password',
+            deviceId: 'device-123',
+            ipAddress: '127.0.0.1',
+        );
+
+        $response = $authenticateUser($command);
 
         $this->assertInstanceOf(AuthenticateUserResponse::class, $response);
-        $this->assertTrue($response->success);
         $this->assertSame('Auth User', $response->name);
     }
 }

@@ -99,7 +99,6 @@ class CreateRestaurantTest extends TestCase
             'device_id' => 'test-device-pin-ready',
         ])->assertStatus(200)
             ->assertJson([
-                'success' => true,
                 'email' => 'pin-ready@restaurant.local',
                 'role' => 'admin',
             ]);
@@ -132,7 +131,6 @@ class CreateRestaurantTest extends TestCase
             'device_id' => 'test-device-provided-pin',
         ])->assertStatus(200)
             ->assertJson([
-                'success' => true,
                 'email' => 'provided-pin@restaurant.local',
             ]);
     }
@@ -161,7 +159,7 @@ class CreateRestaurantTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJson([
-            'message' => 'The tax_id already exists. Use the existing company action to add a branch.',
+            'message' => 'Tax ID B00110011 already exists. Use the existing company action to add a branch.',
         ]);
     }
 
@@ -180,7 +178,7 @@ class CreateRestaurantTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJson([
-            'message' => 'The tax_id does not exist yet. Use New Company to create the first restaurant.',
+            'message' => 'Tax ID B00990099 does not exist yet. Use New Company to create the first restaurant.',
         ]);
     }
 

@@ -28,18 +28,16 @@ class LoginUserTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJson([
-            'success' => true,
             'name' => 'Auth User',
             'email' => 'auth@example.com',
         ]);
         $response->assertJsonStructure([
-            'success',
             'id',
             'name',
             'email',
             'role',
-            'restaurant_id',
-            'restaurant_name',
+            'restaurantId',
+            'restaurantName',
         ]);
     }
 
@@ -52,8 +50,7 @@ class LoginUserTest extends TestCase
 
         $response->assertStatus(404);
         $response->assertJson([
-            'success' => false,
-            'message' => 'User not registered.',
+            'message' => 'User with email missing@example.com not found.',
         ]);
     }
 
@@ -73,7 +70,6 @@ class LoginUserTest extends TestCase
 
         $response->assertStatus(401);
         $response->assertJson([
-            'success' => false,
             'message' => 'Invalid credentials.',
         ]);
     }
@@ -84,7 +80,6 @@ class LoginUserTest extends TestCase
 
         $response->assertStatus(401);
         $response->assertJson([
-            'success' => false,
             'message' => 'Not authenticated.',
         ]);
     }
@@ -107,12 +102,10 @@ class LoginUserTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertJson([
-            'success' => true,
             'name' => 'Session User',
             'email' => 'session@example.com',
         ]);
         $response->assertJsonStructure([
-            'success',
             'id',
             'name',
             'email',
@@ -139,14 +132,12 @@ class LoginUserTest extends TestCase
         $this->postJson('/api/auth/logout')
             ->assertStatus(200)
             ->assertJson([
-                'success' => true,
                 'message' => 'Logged out.',
             ]);
 
         $this->getJson('/api/auth/me')
             ->assertStatus(401)
             ->assertJson([
-                'success' => false,
                 'message' => 'Not authenticated.',
             ]);
     }
@@ -184,7 +175,6 @@ class LoginUserTest extends TestCase
             'device_id' => 'device-test-1',
         ])->assertStatus(200)
             ->assertJson([
-                'success' => true,
                 'name' => 'Pin User',
                 'role' => 'operator',
                 'restaurantName' => 'Pin Restaurant',
@@ -267,14 +257,12 @@ class LoginUserTest extends TestCase
             'device_id' => 'device-regular-1',
         ])->assertStatus(200)
             ->assertJson([
-                'success' => true,
                 'name' => 'Regular Login User',
             ]);
 
         $this->postJson('/api/auth/logout')
             ->assertStatus(200)
             ->assertJson([
-                'success' => true,
                 'message' => 'Logged out.',
             ]);
 

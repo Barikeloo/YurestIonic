@@ -29,6 +29,9 @@ test:
 test-frontend:
 	docker compose exec frontend npx ng test --watch=false --browsers=ChromeHeadlessCI
 
+test-e2e:
+	docker compose exec frontend npm run e2e
+
 build-frontend:
 	docker compose exec frontend npx ng build
 

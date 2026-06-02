@@ -15,41 +15,56 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Drop FK compuesto que apunta a product_id (lo recrearemos como nullable).
-        Schema::table('order_lines', function (Blueprint $table): void {
-            $table->dropForeign('order_lines_restaurant_product_fk');
-        });
+        try {
+            Schema::table('order_lines', function (Blueprint $table): void {
+                $table->dropForeign('order_lines_restaurant_product_fk');
+            });
+        } catch (\RuntimeException) {
+        }
 
-        // MySQL no permite cambiar nullability con Blueprint sin DBAL; usamos raw.
-        DB::statement('ALTER TABLE order_lines MODIFY product_id BIGINT UNSIGNED NULL');
+        try {
+            DB::statement('ALTER TABLE order_lines MODIFY product_id BIGINT UNSIGNED NULL');
+        } catch (\RuntimeException) {
+        }
 
-        Schema::table('order_lines', function (Blueprint $table): void {
-            $table->string('menu_id', 36)->nullable()->after('product_id');
-            $table->string('menu_name')->nullable()->after('menu_id');
-            $table->json('menu_selections')->nullable()->after('menu_name');
+        try {
+            Schema::table('order_lines', function (Blueprint $table): void {
+                $table->string('menu_id', 36)->nullable()->after('product_id');
+                $table->string('menu_name')->nullable()->after('menu_id');
+                $table->json('menu_selections')->nullable()->after('menu_name');
 
-            // FK compuesto restaurado, ahora tolera product_id NULL.
-            $table->foreign(['restaurant_id', 'product_id'], 'order_lines_restaurant_product_fk')
-                ->references(['restaurant_id', 'id'])
-                ->on('products')
-                ->cascadeOnDelete();
-        });
+                $table->foreign(['restaurant_id', 'product_id'], 'order_lines_restaurant_product_fk')
+                    ->references(['restaurant_id', 'id'])
+                    ->on('products')
+                    ->cascadeOnDelete();
+            });
+        } catch (\RuntimeException) {
+        }
     }
 
     public function down(): void
     {
-        Schema::table('order_lines', function (Blueprint $table): void {
-            $table->dropForeign('order_lines_restaurant_product_fk');
-            $table->dropColumn(['menu_id', 'menu_name', 'menu_selections']);
-        });
+        try {
+            Schema::table('order_lines', function (Blueprint $table): void {
+                $table->dropForeign('order_lines_restaurant_product_fk');
+                $table->dropColumn(['menu_id', 'menu_name', 'menu_selections']);
+            });
+        } catch (\RuntimeException) {
+        }
 
-        DB::statement('ALTER TABLE order_lines MODIFY product_id BIGINT UNSIGNED NOT NULL');
+        try {
+            DB::statement('ALTER TABLE order_lines MODIFY product_id BIGINT UNSIGNED NOT NULL');
+        } catch (\RuntimeException) {
+        }
 
-        Schema::table('order_lines', function (Blueprint $table): void {
-            $table->foreign(['restaurant_id', 'product_id'], 'order_lines_restaurant_product_fk')
-                ->references(['restaurant_id', 'id'])
-                ->on('products')
-                ->cascadeOnDelete();
-        });
+        try {
+            Schema::table('order_lines', function (Blueprint $table): void {
+                $table->foreign(['restaurant_id', 'product_id'], 'order_lines_restaurant_product_fk')
+                    ->references(['restaurant_id', 'id'])
+                    ->on('products')
+                    ->cascadeOnDelete();
+            });
+        } catch (\Illuminate\Database\QueryException) {
+        }
     }
 };

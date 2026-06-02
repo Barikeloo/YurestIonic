@@ -33,7 +33,6 @@ final class DeveloperDashboardTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'success' => true,
                 'id' => $superAdminUuid,
                 'name' => 'Test Developer',
                 'email' => 'dev@tpv.local',
@@ -58,8 +57,7 @@ final class DeveloperDashboardTest extends TestCase
             'password' => 'wrong123',
         ]);
 
-        $response->assertStatus(401)
-            ->assertJson(['success' => false]);
+        $response->assertStatus(401);
     }
 
     public function test_superadmin_can_list_all_restaurants(): void
@@ -70,8 +68,8 @@ final class DeveloperDashboardTest extends TestCase
         $restaurantUuid2 = (string) Str::uuid();
 
         DB::table('restaurants')->insert([
-            ['uuid' => $restaurantUuid1, 'name' => 'Restaurant A', 'legal_name' => 'Restaurant A S.L.', 'tax_id' => 'A12345678', 'email' => 'rest-a@local', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],
-            ['uuid' => $restaurantUuid2, 'name' => 'Restaurant B', 'legal_name' => 'Restaurant B S.L.', 'tax_id' => 'B87654321', 'email' => 'rest-b@local', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],
+            ['uuid' => $restaurantUuid1, 'name' => 'Restaurant A', 'legal_name' => 'Restaurant A S.L.', 'tax_id' => 'A12345678', 'email' => 'rest-a@local.test', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],
+            ['uuid' => $restaurantUuid2, 'name' => 'Restaurant B', 'legal_name' => 'Restaurant B S.L.', 'tax_id' => 'B87654321', 'email' => 'rest-b@local.test', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $response = $this->withSession($session['session'])->getJson('/api/admin/restaurants');
@@ -88,8 +86,7 @@ final class DeveloperDashboardTest extends TestCase
 
         $response = $this->withSession($session['session'])->postJson('/api/superadmin/logout');
 
-        $response->assertStatus(200)
-            ->assertJson(['success' => true]);
+        $response->assertStatus(200);
     }
 
     public function test_superadmin_can_select_restaurant_context(): void
@@ -102,7 +99,7 @@ final class DeveloperDashboardTest extends TestCase
             'name' => 'Test Restaurant',
             'legal_name' => 'Test Restaurant S.L.',
             'tax_id' => 'T12345678',
-            'email' => 'test@local',
+            'email' => 'test@local.test',
             'password' => Hash::make('pass'),
             'created_at' => now(),
             'updated_at' => now(),
@@ -114,7 +111,6 @@ final class DeveloperDashboardTest extends TestCase
 
         $response->assertStatus(200)
             ->assertJson([
-                'success' => true,
                 'restaurant_id' => $restaurantUuid,
                 'name' => 'Test Restaurant',
             ]);
@@ -126,9 +122,9 @@ final class DeveloperDashboardTest extends TestCase
 
         // Create restaurants with same tax_id
         DB::table('restaurants')->insert([
-            ['uuid' => (string) Str::uuid(), 'name' => 'Restaurant A', 'legal_name' => 'Restaurant A S.L.', 'tax_id' => 'SHARED123', 'email' => 'rest-a@local', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],
-            ['uuid' => (string) Str::uuid(), 'name' => 'Restaurant B', 'legal_name' => 'Restaurant B S.L.', 'tax_id' => 'SHARED123', 'email' => 'rest-b@local', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],
-            ['uuid' => (string) Str::uuid(), 'name' => 'Restaurant C', 'legal_name' => 'Restaurant C S.L.', 'tax_id' => 'OTHER456', 'email' => 'rest-c@local', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],
+            ['uuid' => (string) Str::uuid(), 'name' => 'Restaurant A', 'legal_name' => 'Restaurant A S.L.', 'tax_id' => 'SHARED123', 'email' => 'rest-a@local.test', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],
+            ['uuid' => (string) Str::uuid(), 'name' => 'Restaurant B', 'legal_name' => 'Restaurant B S.L.', 'tax_id' => 'SHARED123', 'email' => 'rest-b@local.test', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],
+            ['uuid' => (string) Str::uuid(), 'name' => 'Restaurant C', 'legal_name' => 'Restaurant C S.L.', 'tax_id' => 'OTHER456', 'email' => 'rest-c@local.test', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],
         ]);
 
         $response = $this->withSession($session['session'])->getJson('/api/admin/restaurants');

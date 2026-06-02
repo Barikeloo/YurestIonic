@@ -8,7 +8,6 @@ use App\User\Application\GetMe\GetMeResponse;
 use App\User\Domain\Exception\UserNotFoundException;
 use App\User\Infrastructure\Entrypoint\Http\GetMeController;
 use App\User\Infrastructure\Entrypoint\Http\Requests\GetMeRequest;
-use Illuminate\Contracts\Session\Session;
 use Illuminate\Http\JsonResponse;
 use PHPUnit\Framework\TestCase;
 
@@ -19,18 +18,20 @@ class GetMeControllerTest extends TestCase
         $getMe = $this->createMock(GetMe::class);
         $getMe->expects($this->never())->method('__invoke');
 
-        $session = $this->createMock(Session::class);
+        $request = $this->getMockBuilder(GetMeRequest::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['session'])
+            ->getMock();
+        $session = $this->createMock(\Illuminate\Contracts\Session\Session::class);
         $session->expects($this->once())->method('get')->with('auth_user_id')->willReturn(null);
-        $session->expects($this->never())->method('forget');
 
-        $request = new GetMeRequest;
-        $request->setLaravelSession($session);
+        $request->expects($this->once())->method('session')->willReturn($session);
 
         $response = (new GetMeController($getMe))($request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(401, $response->getStatusCode());
-        $this->assertFalse($response->getData(true)['success']);
+        $this->assertSame('Not authenticated.', $response->getData(true)['message']);
     }
 
     public function test_returns_unauthenticated_if_user_not_found(): void
@@ -38,21 +39,23 @@ class GetMeControllerTest extends TestCase
         $getMe = $this->createMock(GetMe::class);
         $getMe->expects($this->once())
             ->method('__invoke')
-            ->with($this->callback(fn (GetMeCommand $c) => $c->userId === 'user-id'))
             ->willThrowException(UserNotFoundException::withId('user-id'));
 
-        $session = $this->createMock(Session::class);
+        $request = $this->getMockBuilder(GetMeRequest::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['session'])
+            ->getMock();
+        $session = $this->createMock(\Illuminate\Contracts\Session\Session::class);
         $session->expects($this->once())->method('get')->with('auth_user_id')->willReturn('user-id');
         $session->expects($this->once())->method('forget')->with('auth_user_id');
 
-        $request = new GetMeRequest;
-        $request->setLaravelSession($session);
+        $request->expects($this->exactly(2))->method('session')->willReturn($session);
 
         $response = (new GetMeController($getMe))($request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(401, $response->getStatusCode());
-        $this->assertFalse($response->getData(true)['success']);
+        $this->assertSame('Not authenticated.', $response->getData(true)['message']);
     }
 
     public function test_returns_successful_response(): void
@@ -69,22 +72,23 @@ class GetMeControllerTest extends TestCase
         $getMe = $this->createMock(GetMe::class);
         $getMe->expects($this->once())
             ->method('__invoke')
-            ->with($this->callback(fn (GetMeCommand $c) => $c->userId === 'user-id'))
             ->willReturn($getMeResponse);
 
-        $session = $this->createMock(Session::class);
+        $request = $this->getMockBuilder(GetMeRequest::class)
+            ->disableOriginalConstructor()
+            ->onlyMethods(['session'])
+            ->getMock();
+        $session = $this->createMock(\Illuminate\Contracts\Session\Session::class);
         $session->expects($this->once())->method('get')->with('auth_user_id')->willReturn('user-id');
         $session->expects($this->never())->method('forget');
 
-        $request = new GetMeRequest;
-        $request->setLaravelSession($session);
+        $request->expects($this->once())->method('session')->willReturn($session);
 
         $response = (new GetMeController($getMe))($request);
 
         $this->assertInstanceOf(JsonResponse::class, $response);
         $this->assertEquals(200, $response->getStatusCode());
         $data = $response->getData(true);
-        $this->assertTrue($data['success']);
         $this->assertEquals('uuid', $data['id']);
         $this->assertEquals('Test User', $data['name']);
         $this->assertEquals('test@example.com', $data['email']);

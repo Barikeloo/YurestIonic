@@ -25,12 +25,12 @@ class SaleEntityTest extends TestCase
         );
 
         $this->assertInstanceOf(Sale::class, $sale);
-        $this->assertSame($uuid->value(), $sale->getId()->value());
-        $this->assertSame($restaurantId->value(), $sale->getRestaurantId()->value());
-        $this->assertSame($orderId->value(), $sale->getOrderId()->value());
-        $this->assertSame($userId->value(), $sale->getOpenedByUserId()->value());
-        $this->assertNull($sale->getClosedByUserId());
-        $this->assertSame(0, $sale->getTotal()->value());
+        $this->assertSame($uuid->value(), $sale->id()->value());
+        $this->assertSame($restaurantId->value(), $sale->restaurantId()->value());
+        $this->assertSame($orderId->value(), $sale->orderId()->value());
+        $this->assertSame($userId->value(), $sale->openedByUserId()->value());
+        $this->assertNull($sale->closedByUserId());
+        $this->assertSame(0, $sale->total()->value());
     }
 
     public function test_ddd_create_generates_timestamps(): void
@@ -39,17 +39,17 @@ class SaleEntityTest extends TestCase
         $restaurantId = Uuid::generate();
         $orderId = Uuid::generate();
         $userId = Uuid::generate();
-        $beforeCreation = now();
+        $beforeCreation = new \DateTimeImmutable();
 
         $sale = Sale::dddCreate($uuid, $restaurantId, $orderId, $userId);
 
-        $afterCreation = now();
+        $afterCreation = new \DateTimeImmutable();
 
-        $this->assertTrue($sale->getCreatedAt()->value() >= $beforeCreation);
-        $this->assertTrue($sale->getCreatedAt()->value() <= $afterCreation);
+        $this->assertTrue($sale->createdAt()->value() >= $beforeCreation);
+        $this->assertTrue($sale->createdAt()->value() <= $afterCreation);
         $this->assertEquals(
-            $sale->getCreatedAt()->value()->getTimestamp(),
-            $sale->getUpdatedAt()->value()->getTimestamp()
+            $sale->createdAt()->value()->getTimestamp(),
+            $sale->updatedAt()->value()->getTimestamp()
         );
     }
 
@@ -64,8 +64,8 @@ class SaleEntityTest extends TestCase
         $sale = Sale::dddCreate($uuid, $restaurantId, $orderId, $openedBy);
         $sale->close($closedBy, SaleTicketNumber::create(1001), SaleTotal::create(5500));
 
-        $this->assertSame(1001, $sale->getTicketNumber()?->value());
-        $this->assertSame($closedBy->value(), $sale->getClosedByUserId()?->value());
-        $this->assertSame(5500, $sale->getTotal()->value());
+        $this->assertSame(1001, $sale->ticketNumber()?->value());
+        $this->assertSame($closedBy->value(), $sale->closedByUserId()?->value());
+        $this->assertSame(5500, $sale->total()->value());
     }
 }

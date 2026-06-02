@@ -50,6 +50,7 @@ frontend/yarn-error.log*
 frontend/.npm
 frontend/coverage/
 frontend/.nyc_output/
+frontend/e2e/reports/
 frontend/.env
 frontend/.env.local
 frontend/.env.*.local

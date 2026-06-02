@@ -3,8 +3,8 @@
 namespace Tests\Unit\User;
 
 use App\User\Application\CreateUser\CreateUser;
+use App\User\Application\CreateUser\CreateUserCommand;
 use App\User\Application\CreateUser\CreateUserResponse;
-use App\User\Domain\Entity\User;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 use Mockery;
@@ -31,14 +31,21 @@ class CreateUserTest extends TestCase
 
         $repository->shouldReceive('save')
             ->once()
-            ->with(Mockery::on(function (User $user) use ($hashedPassword) {
+            ->with(Mockery::on(function (\App\User\Domain\Entity\User $user) use ($hashedPassword) {
                 return $user->email()->value() === 'create@example.com'
                     && $user->name()->value() === 'Create User'
                     && $user->passwordHash()->value() === $hashedPassword;
             }));
 
         $createUser = new CreateUser($repository, $passwordHasher);
-        $response = $createUser('create@example.com', 'Create User', 'plain-password');
+
+        $command = new CreateUserCommand(
+            name: 'Create User',
+            email: 'create@example.com',
+            plainPassword: 'plain-password',
+        );
+
+        $response = $createUser($command);
 
         $this->assertInstanceOf(CreateUserResponse::class, $response);
         $this->assertSame('create@example.com', $response->email);

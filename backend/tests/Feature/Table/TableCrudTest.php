@@ -11,7 +11,7 @@ class TableCrudTest extends TestCase
 
     public function test_table_full_crud_flow(): void
     {
-        $tenant = $this->createTenantSession();
+        $tenant = $this->createTenantSession('admin');
 
         $zoneResponse = $this->withSession($tenant['session'])->postJson('/api/admin/zones', [
             'name' => 'Comedor',
@@ -78,8 +78,8 @@ class TableCrudTest extends TestCase
 
     public function test_table_name_can_repeat_in_different_restaurants(): void
     {
-        $tenantA = $this->createTenantSession();
-        $tenantB = $this->createTenantSession();
+        $tenantA = $this->createTenantSession('admin');
+        $tenantB = $this->createTenantSession('admin');
 
         $zoneA = $this->withSession($tenantA['session'])->postJson('/api/admin/zones', [
             'name' => 'Comedor',
@@ -104,8 +104,8 @@ class TableCrudTest extends TestCase
 
     public function test_table_cannot_be_created_with_zone_from_another_restaurant(): void
     {
-        $tenantA = $this->createTenantSession();
-        $tenantB = $this->createTenantSession();
+        $tenantA = $this->createTenantSession('admin');
+        $tenantB = $this->createTenantSession('admin');
 
         $zoneA = $this->withSession($tenantA['session'])->postJson('/api/admin/zones', [
             'name' => 'Comedor',

@@ -11,7 +11,7 @@ class TaxCrudTest extends TestCase
 
     public function test_tax_full_crud_flow(): void
     {
-        $tenant = $this->createTenantSession();
+        $tenant = $this->createTenantSession('admin');
 
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/admin/taxes', [
             'name' => 'IVA Intermedio',

@@ -28,11 +28,11 @@ class RestaurantEntityTest extends TestCase
         );
 
         $this->assertInstanceOf(Restaurant::class, $restaurant);
-        $this->assertSame($uuid->value(), $restaurant->getId()->value());
-        $this->assertSame('Test Restaurant', $restaurant->getName()->value());
-        $this->assertSame('Test Restaurant S.L.', $restaurant->getLegalName()?->value());
-        $this->assertSame('B12345678', $restaurant->getTaxId()?->value());
-        $this->assertSame('restaurant@example.com', $restaurant->getEmail()->value());
+        $this->assertSame($uuid->value(), $restaurant->id()->value());
+        $this->assertSame('Test Restaurant', $restaurant->name()->value());
+        $this->assertSame('Test Restaurant S.L.', $restaurant->legalName()?->value());
+        $this->assertSame('B12345678', $restaurant->taxId()?->value());
+        $this->assertSame('restaurant@example.com', $restaurant->email()->value());
     }
 
     public function test_ddd_create_with_valid_uuid(): void
@@ -49,14 +49,14 @@ class RestaurantEntityTest extends TestCase
             RestaurantPasswordHash::create('$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi')
         );
 
-        $this->assertSame($uuid->value(), $restaurant->getId()->value());
+        $this->assertSame($uuid->value(), $restaurant->id()->value());
     }
 
     public function test_ddd_create_generates_timestamps(): void
     {
         $email = Email::create('test@example.com');
         $uuid = Uuid::generate();
-        $beforeCreation = now();
+        $beforeCreation = new \DateTimeImmutable();
 
         $restaurant = Restaurant::dddCreate(
             $uuid,
@@ -67,13 +67,13 @@ class RestaurantEntityTest extends TestCase
             RestaurantPasswordHash::create('$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi')
         );
 
-        $afterCreation = now();
+        $afterCreation = new \DateTimeImmutable();
 
-        $this->assertTrue($restaurant->getCreatedAt()->value() >= $beforeCreation);
-        $this->assertTrue($restaurant->getCreatedAt()->value() <= $afterCreation);
+        $this->assertTrue($restaurant->createdAt()->value() >= $beforeCreation);
+        $this->assertTrue($restaurant->createdAt()->value() <= $afterCreation);
         $this->assertEquals(
-            $restaurant->getCreatedAt()->value()->getTimestamp(),
-            $restaurant->getUpdatedAt()->value()->getTimestamp()
+            $restaurant->createdAt()->value()->getTimestamp(),
+            $restaurant->updatedAt()->value()->getTimestamp()
         );
     }
 }

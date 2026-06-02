@@ -50,7 +50,7 @@ final class OrderCrudTest extends TestCase
         DB::table('users')->insert([
             'uuid' => $userUuid,
             'restaurant_id' => $restaurantId,
-            'role' => 'operator',
+            'role' => 'admin',
             'image_src' => null,
             'name' => 'User Test',
             'email' => 'user.order@test.dev',

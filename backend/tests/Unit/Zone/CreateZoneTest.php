@@ -2,6 +2,7 @@
 
 namespace Tests\Unit\Zone;
 
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Zone\Application\CreateZone\CreateZone;
 use App\Zone\Application\CreateZone\CreateZoneCommand;
 use App\Zone\Application\CreateZone\CreateZoneResponse;
@@ -21,15 +22,23 @@ class CreateZoneTest extends TestCase
     public function test_invoke_creates_zone_and_saves_it(): void
     {
         $repository = Mockery::mock(ZoneRepositoryInterface::class);
+        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
 
         $repository->shouldReceive('save')
             ->once()
             ->with(Mockery::on(function (Zone $zone): bool {
-                return $zone->name() === 'Salon';
+                return $zone->name()->value() === 'Salon';
             }));
 
-        $createZone = new CreateZone($repository);
-        $response = $createZone(new CreateZoneCommand('Salon'));
+        $auditRecorder->shouldReceive('record')
+            ->once();
+
+        $createZone = new CreateZone($repository, $auditRecorder);
+
+        $response = $createZone(new CreateZoneCommand(
+            name: 'Salon',
+            restaurantId: '00000000-0000-4000-8000-000000000000',
+        ));
 
         $this->assertInstanceOf(CreateZoneResponse::class, $response);
         $this->assertSame('Salon', $response->name);

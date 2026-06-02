@@ -12,10 +12,10 @@ class ZoneEntityTest extends TestCase
     {
         $zone = Zone::dddCreate(ZoneName::create('Salon'));
 
-        $this->assertSame('Salon', $zone->name());
+        $this->assertSame('Salon', $zone->name()->value());
 
         $zone->rename(ZoneName::create('Terraza'));
 
-        $this->assertSame('Terraza', $zone->name());
+        $this->assertSame('Terraza', $zone->name()->value());
     }
 }

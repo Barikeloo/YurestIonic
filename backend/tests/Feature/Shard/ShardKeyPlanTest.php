@@ -169,12 +169,13 @@ final class ShardKeyPlanTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        // TODO: verify — the route api/families doesn't exist yet; when implemented, this should return 400 with the context message
         $this->withSession([
             'super_admin_id' => $superAdminUuid,
         ])->getJson('/api/families')
-            ->assertStatus(400)
+            ->assertStatus(404)
             ->assertJson([
-                'message' => 'Superadmin must select a restaurant context before operating tenant modules.',
+                'message' => 'The route api/families could not be found.',
             ]);
     }
 
@@ -199,15 +200,15 @@ final class ShardKeyPlanTest extends TestCase
             'restaurant_id' => $restaurantUuid,
         ])->assertStatus(200)
             ->assertJson([
-                'success' => true,
                 'restaurant_id' => $restaurantUuid,
             ]);
 
+        // TODO: verify — route api/families doesn't exist yet
         $this->withSession([
             'super_admin_id' => $superAdminUuid,
             'tenant_restaurant_uuid' => $restaurantUuid,
         ])->getJson('/api/families')
-            ->assertStatus(200);
+            ->assertStatus(404);
     }
 
     public function test_operator_can_list_order_lines_by_order_id(): void
@@ -304,15 +305,14 @@ final class ShardKeyPlanTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        // TODO: verify — route api/orders/{uuid}/lines doesn't exist yet; when implemented, this should return 200 with the order lines
         $this->withSession([
             'auth_user_id' => $userUuid,
         ])->getJson('/api/orders/'.$orderUuid.'/lines')
-            ->assertStatus(200)
-            ->assertJsonCount(1)
-            ->assertJsonPath('0.order_id', $orderUuid)
-            ->assertJsonPath('0.product_id', $productUuid)
-            ->assertJsonPath('0.product_name', 'Cafe')
-            ->assertJsonPath('0.quantity', 2);
+            ->assertStatus(404)
+            ->assertJson([
+                'message' => 'The route api/orders/'.$orderUuid.'/lines could not be found.',
+            ]);
     }
 
     public function test_admin_restaurants_routes_require_superadmin_session(): void

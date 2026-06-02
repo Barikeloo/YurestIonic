@@ -15,7 +15,7 @@ class SuperAdminEntityTest extends TestCase
     {
         $id = Uuid::generate();
 
-        $superAdmin = SuperAdmin::hydrate(
+        $superAdmin = SuperAdmin::dddCreate(
             id: $id,
             name: SuperAdminName::create('Platform Superadmin'),
             email: Email::create('superadmin@example.test'),

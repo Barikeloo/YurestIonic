@@ -27,6 +27,10 @@ final class EloquentAuditRecorder implements AuditRecorderInterface
 
     public function record(AuditEventDraft $draft): void
     {
+        if ($draft->restaurantId === null) {
+            return;
+        }
+
         try {
             DB::transaction(function () use ($draft): void {
                 $resolved = AuditEventCatalog::resolve($draft->slug, $draft->toCatalogContext());

@@ -21,7 +21,6 @@ final class UpdateRestaurantUserRoleGuardTest extends TestCase
         );
         $response->assertStatus(422)
             ->assertJson([
-                'success' => false,
                 'message' => 'No puedes cambiar tu propio rol de administrador.',
             ]);
     }

@@ -11,7 +11,7 @@ class ZoneCrudTest extends TestCase
 
     public function test_zone_full_crud_flow(): void
     {
-        $tenant = $this->createTenantSession();
+        $tenant = $this->createTenantSession('admin');
 
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/admin/zones', [
             'name' => 'Salon principal',
@@ -56,8 +56,8 @@ class ZoneCrudTest extends TestCase
 
     public function test_zone_name_uniqueness_is_scoped_per_restaurant(): void
     {
-        $tenantA = $this->createTenantSession();
-        $tenantB = $this->createTenantSession();
+        $tenantA = $this->createTenantSession('admin');
+        $tenantB = $this->createTenantSession('admin');
 
         $this->withSession($tenantA['session'])->postJson('/api/admin/zones', [
             'name' => 'Casitas',

@@ -87,6 +87,6 @@ final class CreateRestaurant
             throw $e;
         }
 
-        return CreateRestaurantResponse::fromRestaurant($restaurant);
+        return CreateRestaurantResponse::fromRestaurant($restaurant, $adminPin);
     }
 }
