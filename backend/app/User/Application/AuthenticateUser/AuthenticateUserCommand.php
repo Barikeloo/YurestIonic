@@ -8,5 +8,6 @@ final readonly class AuthenticateUserCommand
         public string $email,
         public string $plainPassword,
         public ?string $deviceId,
+        public ?string $ipAddress = null,
     ) {}
 }

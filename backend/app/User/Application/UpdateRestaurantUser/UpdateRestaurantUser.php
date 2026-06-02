@@ -131,6 +131,18 @@ class UpdateRestaurantUser
             ));
         }
 
+        if ($passwordChanged) {
+            $this->auditRecorder->record(new AuditEventDraft(
+                restaurantId: Uuid::create($command->restaurantUuid),
+                slug: ActionSlug::create('auth.password_changed'),
+                entityType: 'user',
+                entityId: $command->userUuid,
+                userId: $command->actorUserUuid !== null ? Uuid::create($command->actorUserUuid) : null,
+                deviceId: $command->deviceId,
+                ipAddress: $command->ipAddress,
+            ));
+        }
+
         return UpdateRestaurantUserResponse::create($command->userUuid);
     }
 }

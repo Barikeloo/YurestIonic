@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Order\Application\AddMenuLineToOrder;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Menu\Domain\Entity\Menu;
 use App\Menu\Domain\Entity\MenuSection;
 use App\Menu\Domain\Exception\MenuNotFoundException;
@@ -41,6 +44,7 @@ final class AddMenuLineToOrder
         private readonly MenuRepositoryInterface $menuRepository,
         private readonly ProductRepositoryInterface $productRepository,
         private readonly TaxRepositoryInterface $taxRepository,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(AddMenuLineToOrderCommand $command): AddMenuLineToOrderResponse
@@ -104,6 +108,24 @@ final class AddMenuLineToOrder
         );
 
         $this->orderLineRepository->save($orderLine);
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: Uuid::create($command->restaurantId),
+            slug: ActionSlug::create('order.menu_line_added'),
+            entityType: 'order_line',
+            entityId: $orderLine->id()->value(),
+            userId: Uuid::create($command->userId),
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            metadata: [
+                'order_id' => $command->orderId,
+                'menu_id' => $command->menuId,
+                'menu_name' => $menu->name()->value(),
+                'quantity' => 1,
+                'price_cents' => $totalPrice,
+                'diner_number' => $command->dinerNumber,
+            ],
+        ));
 
         return AddMenuLineToOrderResponse::create($orderLine);
     }

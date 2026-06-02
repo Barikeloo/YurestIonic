@@ -19,6 +19,7 @@ final class UpdateSaleRequest extends FormRequest
         return [
             'closed_by_user_id' => ['required', 'string', 'uuid'],
             'ticket_number' => ['required', 'integer', 'min:1'],
+            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -28,6 +29,8 @@ final class UpdateSaleRequest extends FormRequest
             id: (string) $this->route('id'),
             closedByUserId: (string) $this->input('closed_by_user_id'),
             ticketNumber: (int) $this->input('ticket_number'),
+            deviceId: $this->input('device_id'),
+            ipAddress: $this->ip(),
         );
     }
 }

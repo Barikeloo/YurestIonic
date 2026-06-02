@@ -2,6 +2,9 @@
 
 namespace App\ProductVariant\Application\CreateProductVariant;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\ProductVariant\Domain\Entity\ProductVariant;
@@ -16,6 +19,7 @@ class CreateProductVariant
     public function __construct(
         private ProductRepositoryInterface $productRepository,
         private ProductVariantRepositoryInterface $variantRepository,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(CreateProductVariantCommand $command): CreateProductVariantResponse
@@ -33,6 +37,22 @@ class CreateProductVariant
         );
 
         $this->variantRepository->save($variant);
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: Uuid::create($command->restaurantId),
+            slug: ActionSlug::create('catalog.variant_created'),
+            entityType: 'product_variant',
+            entityId: $variant->id()->value(),
+            userId: $command->userId !== null ? Uuid::create($command->userId) : null,
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            metadata: [
+                'variant_name' => $variant->name()->value(),
+                'price_cents' => $variant->price()->value(),
+                'price_formatted' => number_format($variant->price()->value() / 100, 2).' €',
+                'product_id' => $variant->productId()->value(),
+            ],
+        ));
 
         return CreateProductVariantResponse::create(
             id: $variant->id()->value(),

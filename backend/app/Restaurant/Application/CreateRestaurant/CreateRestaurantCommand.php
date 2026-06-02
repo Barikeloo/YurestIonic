@@ -12,5 +12,7 @@ final readonly class CreateRestaurantCommand
         public string $password,
         public ?string $pin,
         public string $companyMode,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

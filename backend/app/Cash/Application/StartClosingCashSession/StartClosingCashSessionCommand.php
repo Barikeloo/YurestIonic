@@ -8,5 +8,7 @@ final readonly class StartClosingCashSessionCommand
 {
     public function __construct(
         public string $cashSessionId,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

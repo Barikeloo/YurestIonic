@@ -20,6 +20,7 @@ final class AssignChargeSessionLinesRequest extends FormRequest
             'assignments' => ['present', 'array'],
             'assignments.*.order_line_id' => ['required', 'string', 'uuid'],
             'assignments.*.diner_number' => ['required', 'integer', 'min:1'],
+            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -35,6 +36,8 @@ final class AssignChargeSessionLinesRequest extends FormRequest
         return new AssignChargeSessionLinesCommand(
             chargeSessionId: (string) $this->route('id'),
             assignments: $assignments,
+            deviceId: $this->input('device_id'),
+            ipAddress: $this->ip(),
         );
     }
 }

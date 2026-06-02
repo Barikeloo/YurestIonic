@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\RefundChargeSessionLine;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Domain\Entity\CashMovement;
 use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
@@ -33,6 +36,7 @@ final class RefundChargeSessionLine
         private readonly CashMovementRepositoryInterface $cashMovementRepository,
         private readonly ChargeSessionLineAssignmentRepositoryInterface $assignmentRepository,
         private readonly ChargeSessionResponseBuilder $responseBuilder,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(RefundChargeSessionLineCommand $command): CreateChargeSessionResponse
@@ -96,6 +100,21 @@ final class RefundChargeSessionLine
 
         $session = $this->chargeSessionRepository->findById($sessionUuid)
             ?? throw ChargeSessionNotFoundException::withId($command->chargeSessionId);
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: $session->restaurantId(),
+            slug: ActionSlug::create('sale.line_refunded'),
+            entityType: 'order_line',
+            entityId: $command->orderLineId,
+            userId: $refundedByUuid,
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            reason: $reason,
+            metadata: [
+                'charge_session_id' => $command->chargeSessionId,
+                'cash_movement_cents' => $cashTotal,
+            ],
+        ));
 
         return $this->responseBuilder->build($session);
     }

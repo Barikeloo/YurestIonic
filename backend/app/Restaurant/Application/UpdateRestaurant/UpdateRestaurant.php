@@ -2,6 +2,9 @@
 
 namespace App\Restaurant\Application\UpdateRestaurant;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Restaurant\Domain\Exception\CannotUpdateLegalDataException;
 use App\Restaurant\Domain\Exception\ForbiddenException;
 use App\Restaurant\Domain\Exception\LinkedRestaurantNotFoundException;
@@ -23,6 +26,7 @@ final class UpdateRestaurant
         private readonly RestaurantRepositoryInterface $restaurantRepository,
         private readonly PasswordHasherInterface $passwordHasher,
         private readonly UserRepositoryInterface $userRepository,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(UpdateRestaurantCommand $command): UpdateRestaurantResponse
@@ -74,6 +78,13 @@ final class UpdateRestaurant
             throw RestaurantNotFoundException::withUuid($command->id);
         }
 
+        $before = [
+            'name' => $restaurant->name()->value(),
+            'legal_name' => $restaurant->legalName()?->value(),
+            'tax_id' => $restaurant->taxId()?->value(),
+            'email' => $restaurant->email()->value(),
+        ];
+
         if ($command->name !== null) {
             $restaurant->updateName(RestaurantName::create($command->name));
         }
@@ -98,6 +109,38 @@ final class UpdateRestaurant
         }
 
         $this->restaurantRepository->save($restaurant);
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: $restaurant->id(),
+            slug: ActionSlug::create('restaurant.updated'),
+            entityType: 'restaurant',
+            entityId: $restaurant->uuid()->value(),
+            userId: $command->authUserUuid !== null ? Uuid::create($command->authUserUuid) : null,
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            before: $before,
+            after: [
+                'name' => $restaurant->name()->value(),
+                'legal_name' => $restaurant->legalName()?->value(),
+                'tax_id' => $restaurant->taxId()?->value(),
+                'email' => $restaurant->email()->value(),
+            ],
+            metadata: [
+                'restaurant_name' => $restaurant->name()->value(),
+            ],
+        ));
+
+        if ($command->plainPassword !== null) {
+            $this->auditRecorder->record(new AuditEventDraft(
+                restaurantId: $restaurant->id(),
+                slug: ActionSlug::create('auth.password_changed'),
+                entityType: 'restaurant',
+                entityId: $restaurant->uuid()->value(),
+                userId: $command->authUserUuid !== null ? Uuid::create($command->authUserUuid) : null,
+                deviceId: $command->deviceId,
+                ipAddress: $command->ipAddress,
+            ));
+        }
 
         if ($command->email !== null || $passwordHash !== null) {
             $this->userRepository->syncAdminCredentialsForRestaurant(

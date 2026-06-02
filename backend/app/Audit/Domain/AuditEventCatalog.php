@@ -77,6 +77,66 @@ final class AuditEventCatalog
             'severity' => 'info',
             'summary' => 'Comanda enviada: {metadata.total_lines} artículos ({metadata.items_summary}) al pedido {metadata.order_id}.',
         ],
+        'order.diners_updated' => [
+            'category' => 'order',
+            'severity' => 'info',
+            'summary' => 'Comensales del pedido {entity_id} actualizados: {before.diners} → {after.diners}.',
+        ],
+        'order.menu_line_added' => [
+            'category' => 'order',
+            'severity' => 'info',
+            'summary' => 'Añadido menú {metadata.menu_name} al pedido {metadata.order_id}.',
+        ],
+        'order.deleted' => [
+            'category' => 'order',
+            'severity' => 'danger',
+            'summary' => 'Pedido {entity_id} eliminado ({before.diners} comensales).',
+        ],
+        'sale.charge_session_created' => [
+            'category' => 'sale',
+            'severity' => 'info',
+            'summary' => 'Sesión de cobro {entity_id} creada para pedido {metadata.order_id} con {metadata.diners_count} comensales.',
+        ],
+        'sale.payment_recorded' => [
+            'category' => 'sale',
+            'severity' => 'success',
+            'summary' => 'Pago de {metadata.amount_formatted} registrado en sesión de cobro {entity_id} ({metadata.payment_method}).',
+        ],
+        'sale.charge_session_cancelled' => [
+            'category' => 'sale',
+            'severity' => 'danger',
+            'summary' => 'Sesión de cobro {entity_id} cancelada. Motivo: {reason}.',
+        ],
+        'sale.line_refunded' => [
+            'category' => 'sale',
+            'severity' => 'danger',
+            'summary' => 'Línea {entity_id} reembolsada en sesión de cobro {metadata.charge_session_id}. Motivo: {reason}.',
+        ],
+        'sale.lines_assigned' => [
+            'category' => 'sale',
+            'severity' => 'info',
+            'summary' => 'Líneas asignadas a comensales en sesión de cobro {entity_id}: {metadata.assignments_summary}.',
+        ],
+        'sale.diners_updated' => [
+            'category' => 'sale',
+            'severity' => 'info',
+            'summary' => 'Comensales de sesión de cobro {entity_id} actualizados: {before.diners_count} → {after.diners_count}.',
+        ],
+        'sale.closed' => [
+            'category' => 'sale',
+            'severity' => 'success',
+            'summary' => 'Venta {entity_id} cerrada por {metadata.total_formatted}.',
+        ],
+        'sale.final_ticket_created' => [
+            'category' => 'sale',
+            'severity' => 'success',
+            'summary' => 'Ticket final nº {metadata.ticket_number} generado para el pedido {metadata.order_id}.',
+        ],
+        'sale.line_added' => [
+            'category' => 'sale',
+            'severity' => 'info',
+            'summary' => 'Línea {entity_id} añadida a venta {metadata.sale_id}: {metadata.quantity}×.',
+        ],
 
         // Caja
         'caja.opened' => [
@@ -98,6 +158,21 @@ final class AuditEventCatalog
             'category' => 'caja',
             'severity' => 'warning',
             'summary' => 'Movimiento de caja ({metadata.movement_type}) por {metadata.amount_formatted}.',
+        ],
+        'caja.closing_started' => [
+            'category' => 'caja',
+            'severity' => 'warning',
+            'summary' => 'Iniciado proceso de cierre de sesión de caja {entity_id}.',
+        ],
+        'caja.closing_cancelled' => [
+            'category' => 'caja',
+            'severity' => 'warning',
+            'summary' => 'Cancelado proceso de cierre de sesión de caja {entity_id}.',
+        ],
+        'caja.z_report_generated' => [
+            'category' => 'caja',
+            'severity' => 'info',
+            'summary' => 'Generado informe Z #{metadata.report_number} con total de {metadata.total_sales_formatted}.',
         ],
 
         // Sale
@@ -219,6 +294,66 @@ final class AuditEventCatalog
             'category' => 'catalog',
             'severity' => 'warning',
             'summary' => 'Menú {metadata.menu_name} archivado.',
+        ],
+
+        'catalog.modifier_created' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Modificador {metadata.modifier_name} creado (producto {metadata.product_id}).',
+        ],
+        'catalog.modifier_updated' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Modificador {metadata.modifier_name} actualizado.',
+        ],
+        'catalog.modifier_deleted' => [
+            'category' => 'catalog',
+            'severity' => 'warning',
+            'summary' => 'Modificador {before.name} eliminado (producto {metadata.product_id}).',
+        ],
+        'catalog.variant_created' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Variante {metadata.variant_name} creada (producto {metadata.product_id}).',
+        ],
+        'catalog.variant_updated' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Variante {metadata.variant_name} actualizada.',
+        ],
+        'catalog.variant_deleted' => [
+            'category' => 'catalog',
+            'severity' => 'warning',
+            'summary' => 'Variante {before.name} eliminada (producto {metadata.product_id}).',
+        ],
+
+        // Auth
+        'auth.login_successful' => [
+            'category' => 'auth',
+            'severity' => 'info',
+            'summary' => 'Inicio de sesión correcto para usuario {entity_id}.',
+        ],
+        'auth.login_failed' => [
+            'category' => 'auth',
+            'severity' => 'warning',
+            'summary' => 'Intento de inicio de sesión fallido para {metadata.email}.',
+        ],
+        'auth.password_changed' => [
+            'category' => 'auth',
+            'severity' => 'warning',
+            'summary' => 'Contraseña cambiada para {entity_id}.',
+        ],
+
+        // Restaurant
+        'restaurant.created' => [
+            'category' => 'config',
+            'severity' => 'info',
+            'summary' => 'Restaurante {metadata.restaurant_name} creado.',
+        ],
+        'restaurant.updated' => [
+            'category' => 'config',
+            'severity' => 'info',
+            'summary' => 'Restaurante {metadata.restaurant_name} actualizado.',
         ],
 
         // Tables

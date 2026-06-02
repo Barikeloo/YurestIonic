@@ -13,5 +13,9 @@ final readonly class CreateProductModifierCommand
         public int $price,
         public bool $active,
         public int $sortOrder,
+        public string $restaurantId,
+        public ?string $userId = null,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

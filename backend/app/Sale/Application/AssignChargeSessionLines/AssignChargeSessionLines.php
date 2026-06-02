@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\AssignChargeSessionLines;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
 use App\Sale\Application\CreateChargeSession\CreateChargeSessionResponse;
@@ -22,6 +25,7 @@ final class AssignChargeSessionLines
         private readonly ChargeSessionLineAssignmentRepositoryInterface $assignmentRepository,
         private readonly OrderLineRepositoryInterface $orderLineRepository,
         private readonly ChargeSessionResponseBuilder $responseBuilder,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(AssignChargeSessionLinesCommand $command): CreateChargeSessionResponse
@@ -69,6 +73,29 @@ final class AssignChargeSessionLines
         }
 
         $this->assignmentRepository->replaceForSession($sessionUuid, $entities);
+
+        $dinerCounts = array_count_values(array_map(
+            static fn (array $a): int => $a['diner_number'],
+            $command->assignments,
+        ));
+        $summaryParts = [];
+        foreach ($dinerCounts as $diner => $count) {
+            $summaryParts[] = "{$diner}:{$count}";
+        }
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: $session->restaurantId(),
+            slug: ActionSlug::create('sale.lines_assigned'),
+            entityType: 'charge_session',
+            entityId: $session->id()->value(),
+            userId: null,
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            metadata: [
+                'assignments_summary' => implode(', ', $summaryParts),
+                'total_assigned' => count($command->assignments),
+            ],
+        ));
 
         return $this->responseBuilder->build($session);
     }

@@ -22,11 +22,17 @@ final class CreateRestaurantRequest extends FormRequest
             'email' => ['required', 'string', 'email', 'max:255', 'unique:restaurants,email'],
             'password' => ['required', 'string', 'min:8'],
             'pin' => ['sometimes', 'nullable', 'digits:4'],
+            'device_id' => ['nullable', 'string'],
         ];
     }
 
     public function toCommand(): CreateRestaurantCommand
     {
+        $deviceId = $this->input('device_id');
+        if (! is_string($deviceId) || $deviceId === '') {
+            $deviceId = $this->header('X-Device-Id');
+        }
+
         return new CreateRestaurantCommand(
             name: (string) $this->input('name'),
             legalName: $this->input('legal_name'),
@@ -35,6 +41,8 @@ final class CreateRestaurantRequest extends FormRequest
             password: (string) $this->input('password'),
             pin: $this->input('pin'),
             companyMode: $this->input('company_mode') ?? 'new',
+            deviceId: is_string($deviceId) ? $deviceId : null,
+            ipAddress: $this->ip(),
         );
     }
 }

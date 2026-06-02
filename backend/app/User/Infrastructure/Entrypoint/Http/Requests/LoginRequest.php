@@ -32,6 +32,7 @@ final class LoginRequest extends FormRequest
             email: (string) $this->input('email'),
             plainPassword: (string) $this->input('password'),
             deviceId: is_string($deviceId) ? $deviceId : null,
+            ipAddress: $this->ip(),
         );
     }
 }

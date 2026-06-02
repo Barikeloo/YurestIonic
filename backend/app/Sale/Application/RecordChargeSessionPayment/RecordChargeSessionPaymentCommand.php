@@ -14,5 +14,6 @@ final readonly class RecordChargeSessionPaymentCommand
         public string $deviceId,
         public ?int $dinerNumber,
         public ?int $amountCents,
+        public ?string $ipAddress = null,
     ) {}
 }

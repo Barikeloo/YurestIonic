@@ -232,6 +232,8 @@ final class CreateSale
                 ($this->createOrderFinalTicket)(
                     orderId: $orderUuid->value(),
                     closedByUserId: $closedByUserId,
+                    deviceId: $deviceId,
+                    ipAddress: $ipAddress,
                 );
             }
 

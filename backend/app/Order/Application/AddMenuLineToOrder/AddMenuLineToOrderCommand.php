@@ -22,5 +22,7 @@ final readonly class AddMenuLineToOrderCommand
         public ?int $dinerNumber,
         public array $selections,
         public ?string $notes = null,
+        public ?string $deviceId = null,
+        public ?string $ipAddress = null,
     ) {}
 }

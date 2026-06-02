@@ -18,6 +18,7 @@ final class StartClosingCashSessionRequest extends FormRequest
     {
         return [
             'cash_session_id' => ['required', 'string', 'uuid'],
+            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -25,6 +26,8 @@ final class StartClosingCashSessionRequest extends FormRequest
     {
         return new StartClosingCashSessionCommand(
             cashSessionId: (string) $this->input('cash_session_id'),
+            deviceId: $this->input('device_id'),
+            ipAddress: $this->ip(),
         );
     }
 }

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\CreateOrderFinalTicket;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
@@ -20,9 +23,10 @@ final class CreateOrderFinalTicket
         private readonly OrderLineRepositoryInterface $orderLineRepository,
         private readonly SaleRepositoryInterface $saleRepository,
         private readonly SalePaymentRepositoryInterface $salePaymentRepository,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
-    public function __invoke(string $orderId, string $closedByUserId): CreateOrderFinalTicketResponse
+    public function __invoke(string $orderId, string $closedByUserId, ?string $deviceId = null, ?string $ipAddress = null): CreateOrderFinalTicketResponse
     {
         $orderUuid = Uuid::create($orderId);
 
@@ -77,6 +81,21 @@ final class CreateOrderFinalTicket
         );
 
         $this->orderFinalTicketRepository->save($ticket);
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: $ticket->restaurantId(),
+            slug: ActionSlug::create('sale.final_ticket_created'),
+            entityType: 'order_final_ticket',
+            entityId: $ticket->id()->value(),
+            userId: Uuid::create($closedByUserId),
+            deviceId: $deviceId,
+            ipAddress: $ipAddress,
+            metadata: [
+                'ticket_number' => $ticket->ticketNumber(),
+                'total_formatted' => number_format($totalPaidCents / 100, 2).' €',
+                'order_id' => $orderId,
+            ],
+        ));
 
         return CreateOrderFinalTicketResponse::fromEntity($ticket);
     }

@@ -16,6 +16,7 @@ final class DeleteOrderRequest extends FormRequest
     {
         return [
             'id' => ['required', 'string', 'uuid'],
+            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -30,6 +31,8 @@ final class DeleteOrderRequest extends FormRequest
     {
         return new DeleteOrderCommand(
             id: (string) $this->input('id'),
+            deviceId: $this->input('device_id'),
+            ipAddress: $this->ip(),
         );
     }
 }

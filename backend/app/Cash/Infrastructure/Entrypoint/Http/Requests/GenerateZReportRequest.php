@@ -19,6 +19,7 @@ final class GenerateZReportRequest extends FormRequest
         return [
             'cash_session_id' => ['required', 'string', 'uuid'],
             'final_amount_cents' => ['nullable', 'integer', 'min:0'],
+            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -29,6 +30,8 @@ final class GenerateZReportRequest extends FormRequest
             finalAmountCents: $this->input('final_amount_cents') !== null
                 ? (int) $this->input('final_amount_cents')
                 : null,
+            deviceId: $this->input('device_id'),
+            ipAddress: $this->ip(),
         );
     }
 }

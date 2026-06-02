@@ -2,6 +2,9 @@
 
 namespace App\Restaurant\Application\CreateRestaurant;
 
+use App\Audit\Domain\AuditEventDraft;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Restaurant\Domain\Entity\Restaurant;
 use App\Restaurant\Domain\Exception\NotSuperAdminException;
 use App\Restaurant\Domain\Exception\TaxIdAlreadyExistsException;
@@ -22,6 +25,7 @@ final class CreateRestaurant
     public function __construct(
         private readonly RestaurantRepositoryInterface $restaurantRepository,
         private readonly CreateRestaurantUser $createRestaurantUser,
+        private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
     public function __invoke(CreateRestaurantCommand $command, ?string $superAdminUuid): CreateRestaurantResponse
@@ -53,6 +57,20 @@ final class CreateRestaurant
         );
 
         $this->restaurantRepository->save($restaurant);
+
+        $this->auditRecorder->record(new AuditEventDraft(
+            restaurantId: $restaurant->id(),
+            slug: ActionSlug::create('restaurant.created'),
+            entityType: 'restaurant',
+            entityId: $restaurant->uuid()->value(),
+            userId: null,
+            deviceId: $command->deviceId,
+            ipAddress: $command->ipAddress,
+            metadata: [
+                'restaurant_name' => $restaurant->name()->value(),
+                'restaurant_uuid' => $restaurant->uuid()->value(),
+            ],
+        ));
 
         $adminPin = $command->pin ?? str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
 
