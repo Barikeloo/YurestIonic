@@ -8,24 +8,28 @@ use App\User\Application\GetMe\GetMeResponse;
 use App\User\Domain\Exception\UserNotFoundException;
 use App\User\Infrastructure\Entrypoint\Http\GetMeController;
 use App\User\Infrastructure\Entrypoint\Http\Requests\GetMeRequest;
+use Illuminate\Contracts\Session\Session;
 use Illuminate\Http\JsonResponse;
+use Mockery;
 use PHPUnit\Framework\TestCase;
 
 class GetMeControllerTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        Mockery::close();
+    }
+
     public function test_returns_unauthenticated_if_no_user_id_in_session(): void
     {
-        $getMe = $this->createMock(GetMe::class);
-        $getMe->expects($this->never())->method('__invoke');
+        $getMe = Mockery::mock(GetMe::class);
+        $getMe->shouldNotReceive('__invoke');
 
-        $request = $this->getMockBuilder(GetMeRequest::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['session'])
-            ->getMock();
-        $session = $this->createMock(\Illuminate\Contracts\Session\Session::class);
-        $session->expects($this->once())->method('get')->with('auth_user_id')->willReturn(null);
+        $session = Mockery::mock(Session::class);
+        $session->shouldReceive('get')->once()->with('auth_user_id')->andReturn(null);
 
-        $request->expects($this->once())->method('session')->willReturn($session);
+        $request = Mockery::mock(GetMeRequest::class);
+        $request->shouldReceive('session')->once()->andReturn($session);
 
         $response = (new GetMeController($getMe))($request);
 
@@ -36,20 +40,18 @@ class GetMeControllerTest extends TestCase
 
     public function test_returns_unauthenticated_if_user_not_found(): void
     {
-        $getMe = $this->createMock(GetMe::class);
-        $getMe->expects($this->once())
-            ->method('__invoke')
-            ->willThrowException(UserNotFoundException::withId('user-id'));
+        $getMe = Mockery::mock(GetMe::class);
+        $getMe->shouldReceive('__invoke')
+            ->once()
+            ->andThrow(UserNotFoundException::withId('user-id'));
 
-        $request = $this->getMockBuilder(GetMeRequest::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['session'])
-            ->getMock();
-        $session = $this->createMock(\Illuminate\Contracts\Session\Session::class);
-        $session->expects($this->once())->method('get')->with('auth_user_id')->willReturn('user-id');
-        $session->expects($this->once())->method('forget')->with('auth_user_id');
+        $session = Mockery::mock(Session::class);
+        $session->shouldReceive('get')->once()->with('auth_user_id')->andReturn('user-id');
+        $session->shouldReceive('forget')->once()->with('auth_user_id');
 
-        $request->expects($this->exactly(2))->method('session')->willReturn($session);
+        $request = Mockery::mock(GetMeRequest::class);
+        $request->shouldReceive('session')->twice()->andReturn($session);
+        $request->shouldReceive('toCommand')->once()->with('user-id')->andReturn(new GetMeCommand(userId: 'user-id'));
 
         $response = (new GetMeController($getMe))($request);
 
@@ -69,20 +71,16 @@ class GetMeControllerTest extends TestCase
             restaurantName: 'Test Restaurant',
         );
 
-        $getMe = $this->createMock(GetMe::class);
-        $getMe->expects($this->once())
-            ->method('__invoke')
-            ->willReturn($getMeResponse);
+        $getMe = Mockery::mock(GetMe::class);
+        $getMe->shouldReceive('__invoke')->once()->andReturn($getMeResponse);
 
-        $request = $this->getMockBuilder(GetMeRequest::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['session'])
-            ->getMock();
-        $session = $this->createMock(\Illuminate\Contracts\Session\Session::class);
-        $session->expects($this->once())->method('get')->with('auth_user_id')->willReturn('user-id');
-        $session->expects($this->never())->method('forget');
+        $session = Mockery::mock(Session::class);
+        $session->shouldReceive('get')->once()->with('auth_user_id')->andReturn('user-id');
+        $session->shouldNotReceive('forget');
 
-        $request->expects($this->once())->method('session')->willReturn($session);
+        $request = Mockery::mock(GetMeRequest::class);
+        $request->shouldReceive('session')->once()->andReturn($session);
+        $request->shouldReceive('toCommand')->once()->with('user-id')->andReturn(new GetMeCommand(userId: 'user-id'));
 
         $response = (new GetMeController($getMe))($request);
 

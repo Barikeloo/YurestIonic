@@ -8,12 +8,20 @@ use App\User\Application\GetQuickUsers\GetQuickUsersResponse;
 use App\User\Infrastructure\Entrypoint\Http\GetQuickUsersController;
 use App\User\Infrastructure\Entrypoint\Http\Requests\GetQuickUsersRequest;
 use Illuminate\Http\JsonResponse;
+use Mockery;
 use PHPUnit\Framework\TestCase;
 
 class GetQuickUsersControllerTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        Mockery::close();
+    }
+
     public function test_returns_quick_users_response(): void
     {
+        $command = new GetQuickUsersCommand(deviceId: 'device-123', restaurantUuid: null);
+
         $responseData = GetQuickUsersResponse::create([
             [
                 'user_uuid' => 'uuid1',
@@ -25,20 +33,14 @@ class GetQuickUsersControllerTest extends TestCase
             ],
         ]);
 
-        $getQuickUsers = $this->createMock(GetQuickUsers::class);
-        $getQuickUsers->expects($this->once())
-            ->method('__invoke')
-            ->with($this->isInstanceOf(GetQuickUsersCommand::class))
-            ->willReturn($responseData);
+        $getQuickUsers = Mockery::mock(GetQuickUsers::class);
+        $getQuickUsers->shouldReceive('__invoke')
+            ->once()
+            ->with(Mockery::type(GetQuickUsersCommand::class))
+            ->andReturn($responseData);
 
-        $request = $this->getMockBuilder(GetQuickUsersRequest::class)
-            ->disableOriginalConstructor()
-            ->onlyMethods(['input'])
-            ->getMock();
-        $request->expects($this->exactly(2))->method('input')->willReturnMap([
-            ['device_id', null, 'device-123'],
-            ['restaurant_uuid', null, null],
-        ]);
+        $request = Mockery::mock(GetQuickUsersRequest::class);
+        $request->shouldReceive('toCommand')->once()->andReturn($command);
 
         $controller = new GetQuickUsersController($getQuickUsers);
         $response = $controller->__invoke($request);

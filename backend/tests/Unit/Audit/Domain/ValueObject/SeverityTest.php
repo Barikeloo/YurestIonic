@@ -3,11 +3,12 @@
 namespace Tests\Unit\Audit\Domain\ValueObject;
 
 use App\Audit\Domain\ValueObject\Severity;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class SeverityTest extends TestCase
 {
-    /** @dataProvider validSeverityProvider */
+    #[DataProvider('validSeverityProvider')]
     public function test_create_with_valid_severity(string $value): void
     {
         $severity = Severity::create($value);

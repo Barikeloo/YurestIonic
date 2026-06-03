@@ -3,11 +3,12 @@
 namespace Tests\Unit\Audit\Domain\ValueObject;
 
 use App\Audit\Domain\ValueObject\Category;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class CategoryTest extends TestCase
 {
-    /** @dataProvider validCategoryProvider */
+    #[DataProvider('validCategoryProvider')]
     public function test_create_with_valid_category(string $value): void
     {
         $category = Category::create($value);
