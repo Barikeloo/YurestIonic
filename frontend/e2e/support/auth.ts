@@ -33,7 +33,7 @@ export async function selectEmployeeAndEnterPin(page: Page, employee: Employee):
 }
 
 export async function pressPin(page: Page, pin: string): Promise<void> {
-  const keypad = page.locator('.pin-keypad');
+  const keypad = page.locator('.pin-keypad:visible').first();
   for (const digit of pin) {
     await keypad.getByRole('button', { name: digit, exact: true }).click();
   }

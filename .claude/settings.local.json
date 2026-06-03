@@ -78,7 +78,9 @@
       "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 npx playwright test)",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 npx playwright test e2e/specs/auth/pin-login.spec.ts)"
+      "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 npx playwright test e2e/specs/auth/pin-login.spec.ts)",
+      "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 npx playwright test e2e/specs/cash)",
+      "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 E2E_VIDEO=on E2E_TRACE=on npx playwright test e2e/specs/cash --project=chromium --grep \"opens a session\")"
     ]
   }
 }
