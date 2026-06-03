@@ -81,6 +81,12 @@ class SaonaDemoSeeder extends Seeder
         DB::table('user_quick_accesses')->where('restaurant_id', $restaurantId)->delete();
         DB::table('tables')->where('restaurant_id', $restaurantId)->delete();
         DB::table('zones')->where('restaurant_id', $restaurantId)->delete();
+
+        // Menús referencian productos sin cascade, hay que borrarlos antes que products.
+        if (DB::getSchemaBuilder()->hasTable('menus')) {
+            DB::table('menus')->where('restaurant_id', $restaurantId)->delete();
+        }
+
         DB::table('products')->where('restaurant_id', $restaurantId)->delete();
         DB::table('families')->where('restaurant_id', $restaurantId)->delete();
         DB::table('taxes')->where('restaurant_id', $restaurantId)->delete();

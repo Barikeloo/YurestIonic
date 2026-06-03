@@ -68,7 +68,16 @@
       "Bash(php -l app/Order/Application/MarkOrderToCharge/MarkOrderToCharge.php)",
       "Bash(php -l app/Order/Application/UpdateOrder/UpdateOrder.php)",
       "Bash(php -l routes/api.php)",
-      "Bash(php -l app/Order/Application/AddLineToOrder/AddLineToOrder.php app/Order/Application/AddLineToOrder/AddLineToOrderCommand.php app/Order/Application/DeleteOrderLine/DeleteOrderLine.php app/Order/Application/DeleteOrderLine/DeleteOrderLineCommand.php app/Sale/Application/CancelSale/CancelSale.php app/Sale/Application/CancelSale/CancelSaleCommand.php app/Order/Infrastructure/Entrypoint/Http/Requests/AddLineToOrderRequest.php app/Order/Infrastructure/Entrypoint/Http/Requests/DeleteOrderLineRequest.php app/Sale/Infrastructure/Entrypoint/Http/Requests/CancelSaleRequest.php app/Audit/Domain/AuditEventCatalog.php)"
+      "Bash(php -l app/Order/Application/AddLineToOrder/AddLineToOrder.php app/Order/Application/AddLineToOrder/AddLineToOrderCommand.php app/Order/Application/DeleteOrderLine/DeleteOrderLine.php app/Order/Application/DeleteOrderLine/DeleteOrderLineCommand.php app/Sale/Application/CancelSale/CancelSale.php app/Sale/Application/CancelSale/CancelSaleCommand.php app/Order/Infrastructure/Entrypoint/Http/Requests/AddLineToOrderRequest.php app/Order/Infrastructure/Entrypoint/Http/Requests/DeleteOrderLineRequest.php app/Sale/Infrastructure/Entrypoint/Http/Requests/CancelSaleRequest.php app/Audit/Domain/AuditEventCatalog.php)",
+      "Bash(open -a Docker)",
+      "Bash(docker info *)",
+      "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://127.0.0.1:4200 npx playwright test)",
+      "Bash(npx playwright *)",
+      "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://127.0.0.1:4200 npx playwright test --trace=on --video=on --screenshot=on)",
+      "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://127.0.0.1:4200 E2E_VIDEO=on E2E_TRACE=on E2E_SCREENSHOT=on npx playwright test)",
+      "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 npx playwright test)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
