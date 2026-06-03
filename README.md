@@ -20,29 +20,32 @@
    - [2.7 Verificar que todo funciona](#27-verificar-que-todo-funciona)
    - [2.8 Comandos de operación diaria](#28-comandos-de-operación-diaria)
    - [2.9 Reinicio desde cero](#29-reinicio-desde-cero-reset-completo)
-3. [Datos de demostración](#3-datos-de-demostración)
-4. [Guía de uso de la aplicación](#4-guía-de-uso-de-la-aplicación)
-   - [4.1 Vinculación de dispositivo](#41-vinculación-de-dispositivo)
-   - [4.2 Login y selección de rol](#42-login-y-selección-de-rol)
-   - [4.3 Backoffice — Gestión del negocio](#43-backoffice--gestión-del-negocio)
-   - [4.4 TPV — Flujo de venta paso a paso](#44-tpv--flujo-de-venta-paso-a-paso)
-   - [4.5 Cobro dividido — Casuística avanzada](#45-cobro-dividido--casuística-avanzada)
-   - [4.6 Caja — Sesiones de turno y Z-Report](#46-caja--sesiones-de-turno-y-z-report)
-   - [4.7 Dashboard de finanzas (prototipo)](#47-dashboard-de-finanzas-prototipo)
-   - [4.8 Panel de Desarrollador (SuperAdmin)](#48-panel-de-desarrollador-superadmin--gestión-de-la-plataforma)
-   - [4.9 Editor de Menús — Combos y menú del día](#49-editor-de-menús--combos-y-menú-del-día)
-   - [4.10 Registro de Auditoría](#410-registro-de-auditoría)
-5. [Características implementadas](#5-características-implementadas)
-6. [Arquitectura](#6-arquitectura)
-   - [6.1 Stack tecnológico](#61-stack-tecnológico)
-   - [6.2 Patrón arquitectónico — DDD + Hexagonal](#62-patrón-arquitectónico--ddd--hexagonal)
-   - [6.3 Dominios implementados](#63-dominios-implementados)
-   - [6.4 Flujo de una petición](#64-flujo-de-una-petición-arquitectura-en-acción)
-   - [6.5 Decisiones técnicas clave](#65-decisiones-técnicas-clave)
-   - [6.6 Seguridad](#66-seguridad)
-7. [Estructura del repositorio](#7-estructura-del-repositorio)
-8. [API REST — Endpoints principales](#8-api-rest--endpoints-principales)
-9. [Testing](#9-testing)
+3. [Testing](#3-testing)
+   - [3.1 Backend — PHPUnit](#31-backend--phpunit)
+   - [3.2 Frontend — unit](#32-frontend--unit)
+   - [3.3 E2E — Playwright contra stack real](#33-e2e--playwright-contra-stack-real)
+4. [Datos de demostración](#4-datos-de-demostración)
+5. [Guía de uso de la aplicación](#5-guía-de-uso-de-la-aplicación)
+   - [5.1 Vinculación de dispositivo](#51-vinculación-de-dispositivo)
+   - [5.2 Login y selección de rol](#52-login-y-selección-de-rol)
+   - [5.3 Backoffice — Gestión del negocio](#53-backoffice--gestión-del-negocio)
+   - [5.4 TPV — Flujo de venta paso a paso](#54-tpv--flujo-de-venta-paso-a-paso)
+   - [5.5 Cobro dividido — Casuística avanzada](#55-cobro-dividido--casuística-avanzada)
+   - [5.6 Caja — Sesiones de turno y Z-Report](#56-caja--sesiones-de-turno-y-z-report)
+   - [5.7 Dashboard de finanzas (prototipo)](#57-dashboard-de-finanzas-prototipo)
+   - [5.8 Panel de Desarrollador (SuperAdmin)](#58-panel-de-desarrollador-superadmin--gestión-de-la-plataforma)
+   - [5.9 Editor de Menús — Combos y menú del día](#59-editor-de-menús--combos-y-menú-del-día)
+   - [5.10 Registro de Auditoría](#510-registro-de-auditoría)
+6. [Características implementadas](#6-características-implementadas)
+7. [Arquitectura](#7-arquitectura)
+   - [7.1 Stack tecnológico](#71-stack-tecnológico)
+   - [7.2 Patrón arquitectónico — DDD + Hexagonal](#72-patrón-arquitectónico--ddd--hexagonal)
+   - [7.3 Dominios implementados](#73-dominios-implementados)
+   - [7.4 Flujo de una petición](#74-flujo-de-una-petición-arquitectura-en-acción)
+   - [7.5 Decisiones técnicas clave](#75-decisiones-técnicas-clave)
+   - [7.6 Seguridad](#76-seguridad)
+8. [Estructura del repositorio](#8-estructura-del-repositorio)
+9. [API REST — Endpoints principales](#9-api-rest--endpoints-principales)
 10. [Flujo de desarrollo recomendado](#10-flujo-de-desarrollo-recomendado)
 11. [Documentación adicional](#11-documentación-adicional)
 12. [Próximos pasos y roadmap técnico](#12-próximos-pasos-y-roadmap-técnico)
@@ -171,7 +174,7 @@ Ejecuta todos los seeders para tener múltiples restaurantes de prueba con usuar
 docker compose exec api php artisan db:seed
 ```
 
-> Este paso es **obligatorio** para la primera puesta en marcha. Crea varios restaurantes de demo (incluido *Bar Manolo*) y los usuarios de prueba documentados en la sección 3.
+> Este paso es **obligatorio** para la primera puesta en marcha. Crea varios restaurantes de demo (incluido *Bar Manolo*) y los usuarios de prueba documentados en la sección 4.
 
 ### 2.7 Verificar que todo funciona
 
@@ -212,7 +215,112 @@ docker compose exec api php artisan db:seed
 
 ---
 
-## 3. Datos de demostración
+## 3. Testing
+
+El proyecto se valida con tres suites complementarias: unitarios e integración del backend, tests de frontend, y end-to-end con Playwright contra el stack real (Docker + backend + frontend + MySQL seedeado). En conjunto suman **765 tests verdes** que cubren desde invariantes de dominio hasta el flujo completo TPV.
+
+| Suite | Tests | Cómo correr |
+|---|---|---|
+| Backend (PHPUnit) | **731** | `make test` |
+| Frontend (Karma/Jasmine) | unit | `make test-frontend` |
+| E2E (Playwright contra backend real) | **34** | `make test-e2e` |
+
+### 3.1 Backend — PHPUnit
+
+```bash
+make test                                                # toda la suite
+docker compose exec api php artisan test --filter=ChargeSessionEntityTest
+```
+
+- 731 tests en verde, 0 deprecation warnings.
+- **Unit**: entidades de dominio, Value Objects, validaciones de invariantes, cálculos (`AmountPerDiner`, hash de integridad del audit log, etc.).
+- **Feature**: endpoints HTTP con base de datos en contenedor, autenticación, permisos y casos non-happy path (404, 409, 422, 403).
+
+### 3.2 Frontend — unit
+
+```bash
+make test-frontend
+```
+
+- Karma/Jasmine sobre componentes Angular.
+- Enfoque en validación de formularios y lógica de cálculo de totales.
+
+### 3.3 E2E — Playwright contra stack real
+
+Los tests E2E ejecutan **flujos completos contra el sistema real** (Angular + Laravel + MySQL en Docker). Antes de cada suite se ejecuta `SaonaDemoSeeder` para dejar el estado conocido (Bar Manolo + 6 empleados con PIN + catálogo + 28 mesas).
+
+#### Quickstart
+
+```bash
+make start              # arranca Docker (api en :8000, frontend en :4200)
+make test-e2e           # corre la suite completa (≈2 min, 34 tests)
+make test-e2e-report    # abre el reporte HTML en http://localhost:9323
+```
+
+#### Targets disponibles
+
+| Target | Para qué |
+|---|---|
+| `make test-e2e` | Suite completa |
+| `make test-e2e-headed` | Ver el navegador mientras corre |
+| `make test-e2e-ui` | Modo interactivo de Playwright |
+| `make test-e2e-videos` | Fuerza vídeo + trace + screenshot en cada test (para demos / debug) |
+| `make test-e2e-fast` | Salta el reseed (iteración rápida en desarrollo) |
+| `make test-e2e-report` | Abre el HTML report del último run |
+
+#### Cobertura actual
+
+El plan E2E se desarrolló en 6 fases incrementales (detalle en [`PLAN_E2E.md`](PLAN_E2E.md)):
+
+| Fase | Flujo cubierto | Tests |
+|---|---|---|
+| 1 | Vinculación de dispositivo (admin login + selección restaurante + quick-users) | 6 |
+| 2 | Login PIN (operator/supervisor) + logout | 10 |
+| 3 | Caja: apertura con fondo, movimiento de entrada, cierre con Z, cancelar cierre | 2 |
+| 4 | Flujo central TPV: mesa → comanda → cerrar cuenta → cobro efectivo → mesa libre | 1 |
+| 5 | Auditoría: el admin verifica los eventos generados por el flujo | 1 |
+| 6 | Hardening: Makefile targets + README + troubleshooting | — |
+
+Para el detalle de qué hay cubierto y qué no (cobros variantes, modificadores requeridos, split bills, transferencias, etc.) ver [`PLAN_E2E.md`](PLAN_E2E.md).
+
+#### Diseño de proyectos
+
+`playwright.config.ts` define tres proyectos con dependencias para evitar conflictos sobre el estado compartido:
+
+| Project | Specs | Paralelismo |
+|---|---|---|
+| `stateful` | `cash/**`, `tpv/**` | serial (`workers: 1`, `fullyParallel: false`) |
+| `chromium` | `auth/**`, `smoke/**` | paralelo, depende de `stateful` |
+| `mobile-chrome` | `auth/**`, `smoke/**` | paralelo (Pixel 7), depende de `stateful` |
+
+Los specs mutativos corren primero en `stateful` porque `cash_sessions` es único por restaurante+device. Los read-only (`auth`, `smoke`) corren después en paralelo cross-browser.
+
+#### Ver vídeos y traces del flujo
+
+Por defecto solo se guardan vídeos cuando un test falla. Para grabarlos siempre (útil para demos y para revisar visualmente lo que hace cada test):
+
+```bash
+make test-e2e-videos
+make test-e2e-report
+```
+
+Cada test enseña **vídeo + screenshot + trace** en el HTML report. El **botón "Trace"** abre un timeline interactivo con el DOM, peticiones de red y consola en cada paso — es la herramienta más útil para debug.
+
+#### Variables de entorno principales
+
+Las más usadas (la lista completa está en [`frontend/e2e/README.md`](frontend/e2e/README.md)):
+
+| Variable | Default | Para qué |
+|---|---|---|
+| `E2E_SKIP_SEED` | `unset` | Salta el reseed (iteración rápida) |
+| `E2E_VIDEO` | `retain-on-failure` | `on` para grabar vídeo siempre |
+| `E2E_TRACE` | `on-first-retry` | `on` para trace siempre |
+| `E2E_BASE_URL` | `http://localhost:4200` | El backend solo permite CORS desde `localhost` (no `127.0.0.1`) |
+| `E2E_SKIP_WEB_SERVER` | `unset` | Salta el `ng serve` que Playwright lanzaría — actívalo si Docker ya está corriendo |
+
+---
+
+## 4. Datos de demostración
 
 Tras ejecutar `php artisan db:seed`, el sistema crea varios restaurantes de demostración con catálogos, zonas, mesas y usuarios operativos. El restaurante principal es **Bar Manolo**. A continuación las credenciales para acceder:
 
@@ -240,9 +348,9 @@ Tras ejecutar `php artisan db:seed`, el sistema crea varios restaurantes de demo
 
 ---
 
-## 4. Guía de uso de la aplicación
+## 5. Guía de uso de la aplicación
 
-### 4.1 Vinculación de dispositivo
+### 5.1 Vinculación de dispositivo
 
 La primera vez que accedes a la aplicación desde un dispositivo nuevo, debes **vincularlo** a un restaurante antes de poder operar. Este paso es obligatorio y se realiza una sola vez por dispositivo.
 
@@ -257,14 +365,14 @@ La primera vez que accedes a la aplicación desde un dispositivo nuevo, debes **
 
 > Si el dispositivo ya está vinculado, la pantalla de bienvenida redirige automáticamente al login sin mostrar el selector.
 
-### 4.2 Login y selección de rol
+### 5.2 Login y selección de rol
 
 Al entrar en http://localhost:4200 verás la pantalla de login. Puedes autenticarte de dos formas:
 
 1. **Email + Contraseña** — Para administradores y supervisores que gestionan el backoffice.
 2. **Acceso rápido (PIN)** — Para camareros que operan el TPV. Más rápido en el día a día con tabletas compartidas.
 
-### 4.3 Backoffice — Gestión del negocio
+### 5.3 Backoffice — Gestión del negocio
 
 Desde el menú lateral, accede a **"Gestión"**. Esta sección está restringida a roles `admin` y `supervisor`.
 
@@ -287,7 +395,7 @@ Los usuarios con rol `admin` pueden operar y visualizar varios restaurantes desd
 
 > Esta funcionalidad permite a un administrador gestionar varios locales (multi-tenant) sin cerrar sesión, alternando entre ellos de forma instantánea.
 
-### 4.4 TPV — Flujo de venta paso a paso
+### 5.4 TPV — Flujo de venta paso a paso
 
 | Paso | Acción | Resultado esperado |
 |---|---|---|
@@ -300,7 +408,7 @@ Los usuarios con rol `admin` pueden operar y visualizar varios restaurantes desd
 | **7. Cobrar** | Toca **"Cobrar"**. Aparece el teclado numérico con el **total exacto** pendiente. Si modificas el importe a una cantidad menor, el sistema detecta automáticamente que es un **pago parcial** y cambia el botón a "Cobrar parcial". | Se genera una `Sale` vinculada a la `Order`. Si es pago total, la orden se cierra. |
 | **8. Cerrar** | Tras cobrar, la mesa vuelve a estado **libre** (verde). El ticket queda registrado con número de serie. | Se muestra la confirmación con el número de ticket. |
 
-### 4.5 Cobro dividido — Casuística avanzada
+### 5.5 Cobro dividido — Casuística avanzada
 
 El sistema soporta combinaciones de métodos dentro de una misma sesión de cobro (`ChargeSession`), con las siguientes reglas de negocio:
 
@@ -309,7 +417,7 @@ El sistema soporta combinaciones de métodos dentro de una misma sesión de cobr
 - **Toggle "Incluir comensales ya pagados"** — En el modo "Partes iguales", determina si la deuda restante se divide entre **todos** los comensales (incluso los que ya pagaron sus líneas) o solo entre los **pendientes**.
 - **Pagos mixtos** — Un mismo comensal puede pagar parte en efectivo y parte con tarjeta. El sistema valida que la suma de pagos coincida con el total.
 
-### 4.6 Caja — Sesiones de turno y Z-Report
+### 5.6 Caja — Sesiones de turno y Z-Report
 
 - **Apertura de caja** — Al inicio del turno, el operador (o admin) abre una sesión de caja introduciendo el **fondo inicial** en efectivo.
 - **Durante el turno** — Todos los cobros (`Sale`) y movimientos de caja (`CashMovement`: entradas de cambio, pagos a proveedores, sangrías, propinas) quedan vinculados a la sesión activa del dispositivo.
@@ -321,7 +429,7 @@ El sistema soporta combinaciones de métodos dentro de una misma sesión de cobr
   - Discrepancia detectada y justificación.
   - **Hash SHA-256** encadenado con el Z anterior para garantizar la integridad fiscal de la secuencia.
 
-### 4.7 Dashboard de finanzas (prototipo)
+### 5.7 Dashboard de finanzas (prototipo)
 
 Accesible desde el menú lateral para roles `admin` y `supervisor`. Muestra:
 
@@ -333,7 +441,7 @@ Accesible desde el menú lateral para roles `admin` y `supervisor`. Muestra:
 
 > Estado actual: **Prototipo funcional**. Los datos no son reales, pero la interfaz está lista para integrar datos reales en el futuro.
 
-### 4.8 Panel de Desarrollador (SuperAdmin) — Gestión de la plataforma
+### 5.8 Panel de Desarrollador (SuperAdmin) — Gestión de la plataforma
 
 El **Panel de Desarrollador** es una interfaz independiente destinada a los administradores de la plataforma, no al personal del restaurante. Permite gestionar el ecosistema multi-tenant desde un único punto de control.
 
@@ -367,7 +475,7 @@ En la pantalla de login, despliega el selector de modo de acceso y elige **"Supe
 
 > **Importante:** El SuperAdmin no opera dentro de un restaurante concreto. No ve mesas, ni toma pedidos, ni cierra cajas. Su rol es exclusivamente la administración de la plataforma y sus tenants.
 
-### 4.9 Editor de Menús — Combos y menú del día
+### 5.9 Editor de Menús — Combos y menú del día
 
 Un **menú** es un producto compuesto: un nombre comercial (p. ej. *Menú del día*) con un precio base que el comensal personaliza al pedir eligiendo un producto por cada **sección** definida por el restaurador. El sistema lo modela como un dominio propio (`Menu` → `MenuSection` → `MenuItem`) y, al añadirlo a una comanda, se persiste como una sola línea de orden con las elecciones denormalizadas en JSON, lo que permite reconstruir lo que pidió cada comensal incluso si los productos del catálogo cambian después.
 
@@ -454,7 +562,7 @@ Menu (cabecera)
 
 ---
 
-### 4.10 Registro de Auditoría
+### 5.10 Registro de Auditoría
 
 Accesible desde el menú lateral en **"Auditoría"** (solo usuarios con rol `admin`). Es la traza operativa completa e inmutable del restaurante: quién hizo qué, cuándo, desde qué dispositivo, y qué cambió.
 
@@ -520,7 +628,7 @@ El polling de alertas es cada 30 segundos.
 
 ---
 
-## 5. Características implementadas
+## 6. Características implementadas
 
 ### Hitos del proyecto
 
@@ -575,9 +683,9 @@ El polling de alertas es cada 30 segundos.
 
 ---
 
-## 6. Arquitectura
+## 7. Arquitectura
 
-### 6.1 Stack tecnológico
+### 7.1 Stack tecnológico
 
 | Capa | Tecnología | Versión |
 |---|---|---|
@@ -597,7 +705,7 @@ El polling de alertas es cada 30 segundos.
 | **Linting PHP** | Laravel Pint | — |
 | **Cliente DB** | DbGate | (contenedor) |
 
-### 6.2 Patrón arquitectónico — DDD + Hexagonal
+### 7.2 Patrón arquitectónico — DDD + Hexagonal
 
 El backend sigue estrictamente **Domain-Driven Design** con **Arquitectura Hexagonal** (Ports & Adapters). Cada dominio es un módulo autocontenido que no conoce detalles de framework fuera de su capa `Infrastructure`.
 
@@ -629,7 +737,7 @@ App/<Dominio>/
             └── <Controller>.php  # Controladores (1 acción = 1 __invoke)
 ```
 
-### 6.3 Dominios implementados
+### 7.3 Dominios implementados
 
 | Dominio | Entidades principales | Responsabilidad |
 |---|---|---|
@@ -650,7 +758,7 @@ App/<Dominio>/
 | `AuditSavedView` | `AuditSavedView` | Persistencia de combinaciones de filtros del Registro de Auditoría |
 | `ChargeSession` | `ChargeSession`, `ChargeSessionPayment`, `AmountPerDiner` | División de cuenta por comensales |
 
-### 6.4 Flujo de una petición (arquitectura en acción)
+### 7.4 Flujo de una petición (arquitectura en acción)
 
 ```
 ┌─────────────┐     HTTP/JSON      ┌─────────────────────────────────────────────┐
@@ -694,7 +802,7 @@ App/<Dominio>/
 
 ---
 
-### 6.5 Decisiones técnicas clave
+### 7.5 Decisiones técnicas clave
 
 | Decisión | Justificación | Impacto |
 |---|---|---|
@@ -709,7 +817,7 @@ App/<Dominio>/
 
 ---
 
-## 6.6 Seguridad
+## 7.6 Seguridad
 
 ### Autenticación y autorización
 
@@ -734,7 +842,7 @@ App/<Dominio>/
 
 ---
 
-## 7. Estructura del repositorio
+## 8. Estructura del repositorio
 
 ```
 yurestionic/
@@ -820,7 +928,7 @@ yurestionic/
 
 ---
 
-## 8. API REST — Endpoints principales
+## 9. API REST — Endpoints principales
 
 ### Autenticación
 
@@ -900,33 +1008,6 @@ POST   /api/admin/audit-alerts/{uuid}/read # Marcar una alerta como leída
 ```
 
 > Documentación completa de request/response en los controladores de `backend/app/<Dominio>/Infrastructure/Entrypoint/Http/`.
-
----
-
-## 9. Testing
-
-### Backend
-
-```bash
-# Ejecutar todos los tests (unitarios + integración)
-make test
-
-# Ejecutar un test específico
-docker compose exec api php artisan test --filter=ChargeSessionEntityTest
-```
-
-- **Tests unitarios:** Cubren entidades de dominio y Value Objects (validaciones, invariantes, cálculos de `AmountPerDiner`).
-- **Tests de integración:** Validan endpoints HTTP con base de datos en memoria o contenedor de test.
-
-### Frontend
-
-```bash
-# Tests unitarios de Angular
-make test-frontend
-```
-
-- Tests de componentes con Karma/Jasmine.
-- Enfoque en validación de formularios y lógica de cálculo de totales.
 
 ---
 
