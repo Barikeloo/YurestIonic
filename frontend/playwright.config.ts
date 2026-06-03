@@ -17,7 +17,7 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: process.env.CI ? 1 : 1,
   reporter: [['list'], ['html', { outputFolder: 'e2e/reports/html', open: 'never' }]],
   outputDir: 'e2e/reports/artifacts',
   use: {
@@ -37,12 +37,22 @@ export default defineConfig({
       },
   projects: [
     {
-      name: 'chromium',
+      name: 'stateful',
+      testMatch: ['**/cash/**', '**/tpv/**'],
       use: { ...devices['Desktop Chrome'] },
+      fullyParallel: false,
+    },
+    {
+      name: 'chromium',
+      testMatch: ['**/auth/**', '**/smoke/**'],
+      use: { ...devices['Desktop Chrome'] },
+      dependencies: ['stateful'],
     },
     {
       name: 'mobile-chrome',
+      testMatch: ['**/auth/**', '**/smoke/**'],
       use: { ...devices['Pixel 7'] },
+      dependencies: ['stateful'],
     },
   ],
 });

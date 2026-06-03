@@ -10,10 +10,38 @@ export async function enterAmountWithNumpad(scope: Locator, cents: number): Prom
   }
 }
 
+async function readExpectedAmountCents(page: Page): Promise<number> {
+  const text = await page.locator('.hero-value').first().innerText();
+  const cleaned = text.replace(/[^\d,]/g, '').replace(',', '.');
+  const euros = Number.parseFloat(cleaned);
+  return Number.isNaN(euros) ? 0 : Math.round(euros * 100);
+}
+
+async function forceCloseExisting(page: Page): Promise<void> {
+  await page.getByRole('button', { name: /cerrar caja/i }).click();
+  const wizard = page.locator('.wizard-overlay');
+  await expect(wizard).toBeVisible();
+  const currentCents = await readExpectedAmountCents(page);
+  await enterAmountWithNumpad(wizard, currentCents);
+  await wizard.getByRole('button', { name: /siguiente/i }).click();
+  if (await wizard.getByText(/Descuadre detectado/i).isVisible().catch(() => false)) {
+    await wizard.locator('.reason-chip').first().click();
+    await wizard.getByRole('button', { name: /siguiente/i }).click();
+  }
+  await wizard.getByRole('button', { name: /Confirmar Z y cerrar caja/i }).click();
+  await expect(wizard).toBeHidden();
+  await expect(page.locator('.status-badge')).toContainText('CERRADA');
+}
+
 export async function openCashSession(page: Page, employee: Employee, initialAmountCents: number): Promise<void> {
   await expect(page).toHaveURL(/\/app\/caja$/);
-  await expect(page.locator('.status-badge')).toContainText('CERRADA');
 
+  const badge = page.locator('.status-badge');
+  if (await badge.textContent().then(t => t?.includes('ABIERTA')).catch(() => false)) {
+    await forceCloseExisting(page);
+  }
+
+  await expect(badge).toContainText('CERRADA');
   await page.locator('.pre-apertura').getByRole('button', { name: 'Abrir caja', exact: true }).click();
 
   const pinModal = page.locator('.pin-auth-overlay');
@@ -27,7 +55,7 @@ export async function openCashSession(page: Page, employee: Employee, initialAmo
   await openModal.getByRole('button', { name: /^Abrir caja/i }).click();
 
   await expect(openModal).toBeHidden();
-  await expect(page.locator('.status-badge')).toContainText('ABIERTA');
+  await expect(badge).toContainText('ABIERTA');
 }
 
 export async function closeCashSession(page: Page, countedAmountCents: number): Promise<void> {

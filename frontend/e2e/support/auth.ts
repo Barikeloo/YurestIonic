@@ -20,7 +20,17 @@ export async function linkDevice(page: Page): Promise<void> {
 }
 
 export async function loginByPin(page: Page, employee: Employee): Promise<void> {
-  await linkDevice(page);
+  await page.goto('/');
+  const isLinked = await page.evaluate(() =>
+    window.localStorage.getItem('tpv_linked_restaurant') !== null,
+  );
+
+  if (isLinked) {
+    await page.goto('/login');
+  } else {
+    await linkDevice(page);
+  }
+
   await selectEmployeeAndEnterPin(page, employee);
   await expect(page).toHaveURL(/\/app\//);
 }
