@@ -35,6 +35,27 @@ export async function loginByPin(page: Page, employee: Employee): Promise<void> 
   await expect(page).toHaveURL(/\/app\//);
 }
 
+export async function loginAsAdmin(page: Page): Promise<void> {
+  await page.goto('/');
+  const isLinked = await page.evaluate(() =>
+    window.localStorage.getItem('tpv_linked_restaurant') !== null,
+  );
+
+  if (isLinked) {
+    await page.goto('/login');
+    await page.getByRole('button', { name: /iniciar sesión con correo y contraseña/i }).click();
+  } else {
+    await linkDevice(page);
+    await page.getByRole('button', { name: /iniciar sesión con correo y contraseña/i }).click();
+  }
+
+  await page.getByLabel('Email').fill(adminCredentials.email);
+  await page.getByLabel('Contrasena').fill(adminCredentials.password);
+  await page.getByRole('button', { name: /^entrar$/i }).click();
+
+  await expect(page).toHaveURL(/\/app\//);
+}
+
 export async function selectEmployeeAndEnterPin(page: Page, employee: Employee): Promise<void> {
   await page.locator('.employee-card', { hasText: employee.name }).click();
   await expect(page.locator('.pin-panel')).toBeVisible();
