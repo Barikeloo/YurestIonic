@@ -397,6 +397,13 @@ final class AuditEventCatalog
             'severity' => 'warning',
             'summary' => 'Zona {metadata.zone_name} eliminada.',
         ],
+
+        // System
+        'audit.archived' => [
+            'category' => 'system',
+            'severity' => 'info',
+            'summary' => 'Archivado de auditoría: {metadata.archived_count} eventos previos a {metadata.threshold_date_formatted}.',
+        ],
     ];
 
     /**

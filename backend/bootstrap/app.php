@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,6 +15,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         __DIR__.'/../app/Audit/Infrastructure/Entrypoint/Console',
     ])
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('audit:archive-old')
+            ->weekly()
+            ->mondays()
+            ->at('02:00')
+            ->withoutOverlapping(60);
+    })
     ->withMiddleware(function (Middleware $middleware): void {
         //
     })

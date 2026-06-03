@@ -5,8 +5,10 @@ namespace Tests\Unit\Audit\Application;
 use App\Audit\Application\ArchiveAuditData\ArchiveOldAuditLogs;
 use App\Audit\Application\ArchiveAuditData\ArchiveOldAuditLogsCommand;
 use App\Audit\Domain\ArchiveStats;
+use App\Audit\Domain\AuditEventDraft;
 use App\Audit\Domain\Exception\InvalidArchiveThresholdException;
 use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
+use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use Mockery;
 use Mockery\MockInterface;
@@ -15,12 +17,14 @@ use PHPUnit\Framework\TestCase;
 class ArchiveOldAuditLogsTest extends TestCase
 {
     private AuditLogRepositoryInterface&MockInterface $repository;
+    private AuditRecorderInterface&MockInterface $auditRecorder;
     private ArchiveOldAuditLogs $useCase;
 
     protected function setUp(): void
     {
         $this->repository = Mockery::mock(AuditLogRepositoryInterface::class);
-        $this->useCase = new ArchiveOldAuditLogs($this->repository);
+        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $this->useCase = new ArchiveOldAuditLogs($this->repository, $this->auditRecorder);
     }
 
     protected function tearDown(): void
@@ -51,6 +55,16 @@ class ArchiveOldAuditLogsTest extends TestCase
             ->with(null, Mockery::type(\DateTimeImmutable::class), false)
             ->andReturn($stats);
 
+        $this->auditRecorder
+            ->shouldReceive('record')
+            ->times(2)
+            ->with(Mockery::on(static function (AuditEventDraft $draft): bool {
+                return $draft->slug->value() === 'audit.archived'
+                    && $draft->entityType === 'audit_log'
+                    && isset($draft->metadata['archived_count'])
+                    && isset($draft->metadata['threshold_date_formatted']);
+            }));
+
         $response = ($this->useCase)(new ArchiveOldAuditLogsCommand(
             olderThanDays: 90,
             restaurantUuid: null,
@@ -76,6 +90,8 @@ class ArchiveOldAuditLogsTest extends TestCase
             )
             ->andReturn([]);
 
+        $this->auditRecorder->shouldNotReceive('record');
+
         $response = ($this->useCase)(new ArchiveOldAuditLogsCommand(
             olderThanDays: 30,
             restaurantUuid: $restaurantUuid->value(),
@@ -92,6 +108,8 @@ class ArchiveOldAuditLogsTest extends TestCase
             ->once()
             ->with(null, Mockery::type(\DateTimeImmutable::class), true)
             ->andReturn([]);
+
+        $this->auditRecorder->shouldNotReceive('record');
 
         $response = ($this->useCase)(new ArchiveOldAuditLogsCommand(
             olderThanDays: 90,
@@ -120,6 +138,8 @@ class ArchiveOldAuditLogsTest extends TestCase
                 return true;
             })
             ->andReturn([]);
+
+        $this->auditRecorder->shouldNotReceive('record');
 
         ($this->useCase)(new ArchiveOldAuditLogsCommand(
             olderThanDays: 30,
@@ -157,6 +177,8 @@ class ArchiveOldAuditLogsTest extends TestCase
             ->shouldReceive('bulkArchive')
             ->once()
             ->andReturn($stats);
+
+        $this->auditRecorder->shouldNotReceive('record');
 
         $response = ($this->useCase)(new ArchiveOldAuditLogsCommand(
             olderThanDays: 30,
