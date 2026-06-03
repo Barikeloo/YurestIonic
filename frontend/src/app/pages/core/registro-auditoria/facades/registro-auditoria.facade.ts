@@ -99,6 +99,7 @@ export class RegistroAuditoriaFacade {
 
   // ── Private state ────────────────────────────────────────────
   private readonly _events = signal<AuditEvent[]>([]);
+  private readonly _includeArchived = signal<boolean>(false);
   private rawApiEvents: AuditEventApi[] = [];
   private readonly _usersDirectory = signal<Record<string, UserDirectoryEntry>>({});
   private readonly _isLoading = signal(false);
@@ -133,6 +134,7 @@ export class RegistroAuditoriaFacade {
 
   // ── Public readonly signals ────────────────────────────────
   public readonly events: Signal<AuditEvent[]> = this._events.asReadonly();
+  public readonly includeArchived: Signal<boolean> = this._includeArchived.asReadonly();
   public readonly usersDirectory: Signal<Record<string, UserDirectoryEntry>> = this._usersDirectory.asReadonly();
   public readonly isLoading: Signal<boolean> = this._isLoading.asReadonly();
   public readonly isLoadingMore: Signal<boolean> = this._isLoadingMore.asReadonly();
@@ -370,6 +372,8 @@ export class RegistroAuditoriaFacade {
   public setSelectedId(value: string): void { this._selectedId.set(value); }
 
   public setSavedViewsOpen(value: boolean): void { this._savedViewsOpen.set(value); }
+
+  public setIncludeArchived(value: boolean): void { this._includeArchived.set(value); }
 
   public setAlertsOpen(value: boolean): void { this._alertsOpen.set(value); }
 

@@ -18,5 +18,6 @@ final readonly class ListAuditEventsCommand
         public bool $anomalyOnly = false,
         public ?string $cursor = null,
         public ?string $sinceUuid = null,
+        public bool $includeArchived = false,
     ) {}
 }

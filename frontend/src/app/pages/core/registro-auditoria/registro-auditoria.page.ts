@@ -181,6 +181,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   get alerts() { return this.facade.alerts; }
   get unreadAlertCount() { return this.facade.unreadAlertCount; }
   get alertsOpen() { return this.facade.alertsOpen; }
+  get includeArchived() { return this.facade.includeArchived; }
   get selectedId() { return this.facade.selectedId; }
 
   readonly eventIndex = computed<Record<string, AuditEvent>>(() => {
@@ -251,6 +252,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     if (dateFrom) filters.dateFrom = dateFrom;
     if (dateTo) filters.dateTo = dateTo;
     if (search.length >= MIN_SEARCH_CHARS) filters.search = search;
+    if (this.includeArchived()) filters.includeArchived = true;
 
     return filters;
   });
@@ -421,6 +423,8 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   }
 
   toggleLiveTail(): void { this.facade.toggleLiveTail(); }
+
+  setIncludeArchived(value: boolean): void { this.facade.setIncludeArchived(value); }
 
   toggleAlerts(): void { this.facade.toggleAlerts(); }
 

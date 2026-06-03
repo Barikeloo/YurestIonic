@@ -31,6 +31,7 @@ final class ListAuditEvents
             dateTo: $this->parseDate($command->dateTo)?->setTime(23, 59, 59),
             search: $command->search,
             anomalyOnly: $command->anomalyOnly,
+            includeArchived: $command->includeArchived,
             cursorCreatedAt: $cursorCreatedAt,
             cursorInternalId: $cursorInternalId,
             sinceUuid: $command->sinceUuid !== null ? Uuid::create($command->sinceUuid) : null,

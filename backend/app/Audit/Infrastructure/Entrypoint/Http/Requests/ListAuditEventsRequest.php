@@ -26,6 +26,7 @@ final class ListAuditEventsRequest extends FormRequest
             'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
             'q' => ['nullable', 'string', 'min:2', 'max:200'],
             'anomaly_only' => ['nullable', 'boolean'],
+            'include_archived' => ['nullable', 'boolean'],
             'cursor' => ['nullable', 'string', 'max:500'],
             'since' => ['nullable', 'string', 'uuid'],
         ];
@@ -46,6 +47,7 @@ final class ListAuditEventsRequest extends FormRequest
             dateTo: $this->input('date_to'),
             search: $this->input('q'),
             anomalyOnly: $this->boolean('anomaly_only'),
+            includeArchived: $this->boolean('include_archived'),
             cursor: $this->input('cursor'),
             sinceUuid: $this->input('since'),
         );

@@ -51,6 +51,8 @@ export interface ListAuditEventsFilters {
   dateTo?: string;
   search?: string;
   anomalyOnly?: boolean;
+  /** Include archived events (admin only). */
+  includeArchived?: boolean;
   cursor?: string;
   /** Live tail: returns events newer than this uuid (ascending). */
   since?: string;
@@ -97,6 +99,7 @@ export class AuditLogService extends BaseApiService {
     if (filters.dateTo) params['date_to'] = filters.dateTo;
     if (filters.search) params['q'] = filters.search;
     if (filters.anomalyOnly) params['anomaly_only'] = true;
+    if (filters.includeArchived) params['include_archived'] = true;
     if (filters.cursor) params['cursor'] = filters.cursor;
     if (filters.since) params['since'] = filters.since;
 
