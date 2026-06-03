@@ -25,9 +25,7 @@
 - ✅ `EloquentAuditLogRepository` implementa `bulkArchive`.
 - ✅ Console command `audit:archive-old` funcional + schedule semanal (lunes 02:00).
 - ✅ Meta-auditoría: `AuditEventCatalog` con slug `audit.archived` y el use case emite el evento.
-- ✅ Suite backend: 742 tests verdes.
-- `ListAuditEvents` use case y `ListAuditEventsController` existen y funcionan sobre la tabla completa (sin filtro de archivado — pendiente Fase 3).
-- `VerifyAuditChain` existe y lee toda la tabla por restaurante (compatible con archivado sin cambios).
+- ✅ Suite backend: 747 tests verdes.
 
 ---
 
@@ -109,6 +107,43 @@ Objetivo: `VerifyAuditChain` sigue validando la cadena después de archivado.
 - [x] Mención al comando `audit:archive-old` en la sección de comandos operativos del README.
 
 **Commit:** `docs: document audit log retention policy and archival workflow`
+
+### Fase 6 — Panel de gestión de histórico ➕
+
+Objetivo: interfaz dedicada para que el admin explore, filtre y exporte el histórico de audit logs archivados.
+
+**Commits planeados:** 2–3 dependiendo del alcance final.
+
+#### 6.1 Backend — endpoints de histórico
+
+- [ ] Endpoint `GET /api/admin/audit-log/archived-stats` que devuelva:
+  - Total de archivados por restaurante.
+  - Rango de fechas del archive (min/max `archived_at`).
+  - Desglose por mes (`{month: "2026-01", count: 120}`).
+- [ ] Endpoint `GET /api/admin/audit-log/export` que acepte:
+  - `?include_archived=1&date_from=...&date_to=...&format=csv|json`.
+  - Sin límite de paginación (streaming response o descarga directa).
+  - Solo accesible para `admin`.
+- [ ] Refactor de `ListAuditEvents` para aceptar filtro por rango de `archived_at` (no solo booleano).
+
+#### 6.2 Frontend — página de histórico
+
+- [ ] Nueva página/pestaña `/registro-auditoria/historico` (o integrada como tab en la actual).
+- [ ] **Filtros específicos**:
+  - Rango de fechas de archivado (picker desde/hasta).
+  - Selector de período predefinido (Último mes, Último trimestre, Todo el histórico).
+- [ ] **Exportar**:
+  - Botón "Exportar CSV" / "Exportar JSON" que llama al endpoint y descarga el archivo.
+  - Indicador de progreso si el volumen es grande.
+- [ ] **Estadísticas en cabecera**:
+  - Cards con "Total archivados", "Rango de fechas", "Último archivado".
+  - Mini gráfica de archivados por mes (barras simples, opcional).
+
+#### 6.3 Consideraciones técnicas
+
+- El streaming de export grandes puede usar generadores de Laravel (`yield`) + response stream para no agotar memoria.
+- El frontend descarga el fichero vía `Blob` + `URL.createObjectURL` + `<a download>`.
+- El endpoint de stats se sirve desde caché de 5 minutos (los datos cambian semanalmente).
 
 ---
 
