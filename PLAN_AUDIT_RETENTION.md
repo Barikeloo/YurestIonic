@@ -102,11 +102,11 @@ Objetivo: `VerifyAuditChain` sigue validando la cadena después de archivado.
 
 **Commit:** `feat(audit): verify chain includes archived rows`
 
-### Fase 5 — Documentación ➕
+### Fase 5 — Documentación ✅
 
-- [ ] `README.md` (sección Características o Arquitectura): bloque "Retención de audit logs" con política (90 días → archivado, 6 años → conservación legal, **nunca borrado**).
-- [ ] Comentario en la migración explicando el racional legal.
-- [ ] Mención al comando `audit:archive-old` en la sección de comandos operativos del README.
+- [x] `README.md` (sección Características o Arquitectura): bloque "Retención de audit logs" con política (90 días → archivado, 6 años → conservación legal, **nunca borrado**).
+- [x] Comentario en la migración explicando el racional legal.
+- [x] Mención al comando `audit:archive-old` en la sección de comandos operativos del README.
 
 **Commit:** `docs: document audit log retention policy and archival workflow`
 

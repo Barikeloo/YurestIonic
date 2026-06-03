@@ -199,6 +199,8 @@ make test-frontend   # Tests unitarios del frontend (Karma/Jasmine)
 make lint            # Formatear PHP con Laravel Pint
 make build-frontend  # Build de producción Angular
 make logs-backend    # Tail de logs de Laravel en tiempo real
+docker compose exec api php artisan audit:archive-old --older-than-days=90 --dry-run  # Vista previa del archivado de audit logs >90 días
+docker compose exec api php artisan audit:archive-old --older-than-days=90            # Ejecutar archivado (mueve a archived_at, nunca borra)
 ```
 
 ### 2.9 Reinicio desde cero (reset completo)
@@ -217,11 +219,11 @@ docker compose exec api php artisan db:seed
 
 ## 3. Testing
 
-El proyecto se valida con tres suites complementarias: unitarios e integración del backend, tests de frontend, y end-to-end con Playwright contra el stack real (Docker + backend + frontend + MySQL seedeado). En conjunto suman **765 tests verdes** que cubren desde invariantes de dominio hasta el flujo completo TPV.
+El proyecto se valida con tres suites complementarias: unitarios e integración del backend, tests de frontend, y end-to-end con Playwright contra el stack real (Docker + backend + frontend + MySQL seedeado). En conjunto suman **781 tests verdes** que cubren desde invariantes de dominio hasta el flujo completo TPV.
 
 | Suite | Tests | Cómo correr |
 |---|---|---|
-| Backend (PHPUnit) | **731** | `make test` |
+| Backend (PHPUnit) | **747** | `make test` |
 | Frontend (Karma/Jasmine) | unit | `make test-frontend` |
 | E2E (Playwright contra backend real) | **34** | `make test-e2e` |
 
@@ -232,7 +234,7 @@ make test                                                # toda la suite
 docker compose exec api php artisan test --filter=ChargeSessionEntityTest
 ```
 
-- 731 tests en verde, 0 deprecation warnings.
+- 747 tests en verde, 0 deprecation warnings.
 - **Unit**: entidades de dominio, Value Objects, validaciones de invariantes, cálculos (`AmountPerDiner`, hash de integridad del audit log, etc.).
 - **Feature**: endpoints HTTP con base de datos en contenedor, autenticación, permisos y casos non-happy path (404, 409, 422, 403).
 
@@ -590,6 +592,7 @@ El sistema instrumenta **72 tipos de eventos** distribuidos en 9 categorías: `a
 - **Búsqueda** — Campo de texto libre con `LIKE` en `action`, `summary` e `entity_id` (mínimo 2 caracteres).
 - **Scroll infinito** — Paginación por cursor opaco (`next_cursor`). Cada lote carga hasta 50 eventos.
 - **Live tail** — Toggle "Live". Cada 5 segundos consulta eventos nuevos posteriores al primero visible y los inserta en la cabecera de la lista.
+- **Mostrar histórico** — Toggle que incluye eventos archivados en el listado (envía `include_archived=1`). Al activarlo, aparece un banner informativo sobre la política de retención (90 días activo → archivado → conservación legal indefinida).
 - **Drawer de detalle** — Al tocar un evento se abre un panel lateral con:
   - Metadata completa (acción, entidad, usuario, dispositivo, IP, sesión).
   - Diferencia estructurada (`before → after`) cuando la acción modifica datos.
@@ -626,6 +629,35 @@ El polling de alertas es cada 30 segundos.
 
 > **Nota:** La auditoría no tiene interfaz de escritura. Los eventos se insertan automáticamente desde los casos de uso del backend tras cada operación exitosa (o fallo, en el caso de login PIN erróneo). El hash de integridad se calcula dentro de una transacción con `FOR UPDATE` sobre la cadena del restaurante, garantizando secuencialidad.
 
+#### Retención de audit logs
+
+El sistema implementa una política de retención basada en **archivado lógico** (nunca borrado físico) alineada con la legislación española:
+
+| Período | Estado | Comportamiento en UI/API |
+|---------|--------|--------------------------|
+| Día 0 – 90 | Activo (`archived_at IS NULL`) | Visible por defecto. Aparece en el listado estándar. |
+| Día 90 – 6 años | Archivado (`archived_at` con fecha) | Solo visible para `admin` activando el toggle **"Mostrar histórico"** (envía `include_archived=1`). Incluido en la verificación de cadena de hash. |
+| +6 años | Archivado | Misma política que 90d–6a. Se conserva indefinidamente. |
+
+**Fundamento legal:**
+- **Código de Comercio (Art. 30):** obligación de conservar libros, correspondencia y justificantes durante **6 años**.
+- **LGT (Art. 66):** prescripción del derecho de la Administración para determinar la deuda tributaria — **4 años**.
+- **TicketBAI / VeriFactu:** exigen conservación íntegra de todos los registros de facturación durante el período legal aplicable.
+
+**Nunca se borran registros.** El comando `audit:archive-old` mueve eventos antiguos a estado archivado (establece `archived_at`) pero nunca ejecuta `DELETE`. Esto garantiza trazabilidad histórica completa y cumplimiento normativo sin pérdida de datos.
+
+**Comando de archivado programado:**
+
+```bash
+# Vista previa (no modifica nada)
+docker compose exec api php artisan audit:archive-old --older-than-days=90 --dry-run
+
+# Archivado real (mueve a archived_at)
+docker compose exec api php artisan audit:archive-old --older-than-days=90
+```
+
+El comando está registrado en el scheduler semanal (`bootstrap/app.php`) para ejecutarse automáticamente cada domingo a las 3:00 AM. Al archivar, emite un meta-evento `audit.archived` con el resumen de cuántos registros se archivaron por restaurante.
+
 ---
 
 ## 6. Características implementadas
@@ -639,7 +671,7 @@ El polling de alertas es cada 30 segundos.
 | **Hito 3 — Interfaz Backoffice** | 100% | Panel de gestión con ~1.600 líneas de componentes Angular. Formularios reactivos, validación en tiempo real, toasts de confirmación. |
 | **Hito 4 — Front de Venta (TPV)** | 100% | Flujo completo: mesas → apertura → pedido → cobro → cierre. Soporte para pagos parciales, división de cuenta (3 modos), y cierre de caja con Z-Report. |
 | **Hito 5 — Informes (Dashboard)** | 40% | Prototipo funcional con métricas clave. Pendiente: exportación a PDF/Excel, filtros avanzados, predicciones. |
-| **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor y live tail. Solo acceso `admin`. |
+| **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor, live tail, archivado por antigüedad (90d → `archived_at`, retención legal 6 años, nunca borrado) y toggle "Mostrar histórico" con `include_archived=1`. Solo acceso `admin`. |
 | **Hito 7 — Mejoras operativas** | 80% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores. |
 
 ### Funcionalidades detalladas
@@ -676,6 +708,9 @@ El polling de alertas es cada 30 segundos.
 | **Auditoría** | Vistas guardadas | Persistencia de combinaciones de filtros por restaurante (`audit_saved_views`). CRUD completo: crear, listar, aplicar, eliminar. |
 | **Auditoría** | Live tail | Polling cada 5s para insertar eventos nuevos en la cabecera de la lista sin perder el scroll. |
 | **Auditoría** | Paginación por cursor | Cursor opaco base64 sobre `(created_at DESC, id DESC)` para evitar desplazamiento de páginas ante inserts concurrentes. |
+| **Auditoría** | Archivado por antigüedad | Comando `audit:archive-old` mueve eventos >90 días a `archived_at`. Semanal en scheduler. Emite meta-evento `audit.archived`. Nunca borra. |
+| **Auditoría** | Toggle histórico | Flag `include_archived=1` en la UI para que el admin vea eventos archivados. Banner informativo con la política de retención. |
+| **Auditoría** | Verificación de cadena con archivados | `GET /api/admin/audit-log/verify` lee también filas archivadas. La cadena SHA-256 sigue siendo íntegra tras archivar. |
 | **Dispositivo** | Identificación única | El interceptor HTTP genera y envía `X-Device-Id` (UUID v4 persistente en `localStorage` o `environment.devDeviceId`). Backend captura device + IP en cada evento de auditoría. |
 | **Multi-tenant** | Shard key | `restaurant_id` en todas las tablas. Un solo backend sirve a N restaurantes con aislamiento de datos. |
 | **SuperAdmin** | Gestión de plataforma | Dominio separado para crear restaurantes y gestionar la infraestructura global. |
@@ -1097,4 +1132,4 @@ Esta sección es orientativa para cuando se migre de demo a producción real:
 > **Repositorio:** YurestIonic  
 > **Entorno de desarrollo:** Docker Compose con servicios separados para API, frontend, MySQL y DbGate  
 > **Demo local:** http://localhost:4200  
-> **Última actualización:** Mayo 2026
+> **Última actualización:** Junio 2026
