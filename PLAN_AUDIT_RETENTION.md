@@ -92,13 +92,13 @@ Objetivo: el admin puede ver los archivados desde `/registro-auditoria` con un t
 
 **Commit:** `feat(audit): include_archived flag end-to-end (API + facade + UI toggle)`
 
-### Fase 4 — Verificación de cadena con archivados ➕
+### Fase 4 — Verificación de cadena con archivados ✅
 
 Objetivo: `VerifyAuditChain` sigue validando la cadena después de archivado.
 
-- [ ] Confirmar / ajustar el use case `VerifyAuditChain` para que lea con `includeArchived = true`.
-- [ ] Feature test: insertar N eventos, archivar X, ejecutar verify → cadena OK.
-- [ ] Feature test negativo: corromper el `integrity_hash` de uno archivado y verificar que el endpoint reporta el fallo.
+- [x] Confirmar / ajustar el use case `VerifyAuditChain` para que lea con `includeArchived = true`.
+- [x] Feature test: insertar N eventos, archivar X, ejecutar verify → cadena OK.
+- [x] Feature test negativo: corromper el `integrity_hash` de uno archivado y verificar que el endpoint reporta el fallo.
 
 **Commit:** `feat(audit): verify chain includes archived rows`
 
