@@ -85,7 +85,10 @@
       "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 E2E_SKIP_SEED=1 E2E_VIDEO=on E2E_TRACE=on E2E_SCREENSHOT=on npx playwright test --project=stateful)",
       "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 npx playwright test e2e/specs/tpv --project=stateful)",
       "Bash(E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 E2E_SKIP_SEED=1 npx playwright test)",
-      "Bash(make test-e2e *)"
+      "Bash(make test-e2e *)",
+      "Bash(make test-e2e-videos *)",
+      "Bash(make test-e2e-report *)",
+      "Bash(git commit *)"
     ]
   }
 }
