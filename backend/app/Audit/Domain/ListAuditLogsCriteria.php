@@ -22,5 +22,6 @@ final readonly class ListAuditLogsCriteria
         public ?int $cursorInternalId = null,
         public ?Uuid $sinceUuid = null,
         public int $limit = 50,
+        public bool $includeArchived = false,
     ) {}
 }

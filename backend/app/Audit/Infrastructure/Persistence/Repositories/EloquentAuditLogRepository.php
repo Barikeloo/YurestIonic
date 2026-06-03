@@ -54,7 +54,7 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
         ]);
     }
 
-    public function findByUuid(Uuid $restaurantId, Uuid $uuid): ?AuditLog
+    public function findByUuid(Uuid $restaurantId, Uuid $uuid, bool $includeArchived = false): ?AuditLog
     {
         $restaurantIdInt = EloquentRestaurant::query()
             ->where('uuid', $restaurantId->value())
@@ -64,11 +64,16 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
             return null;
         }
 
-        $model = EloquentAuditLog::query()
+        $query = EloquentAuditLog::query()
             ->withoutGlobalScopes()
             ->where('restaurant_id', $restaurantIdInt)
-            ->where('uuid', $uuid->value())
-            ->first();
+            ->where('uuid', $uuid->value());
+
+        if (! $includeArchived) {
+            $query->whereNull('archived_at');
+        }
+
+        $model = $query->first();
 
         return $model !== null ? $this->toDomain($model) : null;
     }
@@ -179,6 +184,7 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
         ActionSlug $slug,
         Uuid $userId,
         int $withinSeconds,
+        bool $includeArchived = false,
     ): int {
         $restaurantIdInt = EloquentRestaurant::query()
             ->where('uuid', $restaurantId->value())
@@ -198,17 +204,26 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
 
         $since = (new \DateTimeImmutable)->modify("-{$withinSeconds} seconds");
 
-        return EloquentAuditLog::query()
+        $query = EloquentAuditLog::query()
             ->withoutGlobalScopes()
             ->where('restaurant_id', $restaurantIdInt)
             ->where('action', $slug->value())
             ->where('user_id', $userIdInt)
-            ->where('created_at', '>=', $since->format('Y-m-d H:i:s'))
-            ->count();
+            ->where('created_at', '>=', $since->format('Y-m-d H:i:s'));
+
+        if (! $includeArchived) {
+            $query->whereNull('archived_at');
+        }
+
+        return $query->count();
     }
 
     private function applyFilters(Builder $query, ListAuditLogsCriteria $criteria, int $restaurantIdInt): void
     {
+        if (! $criteria->includeArchived) {
+            $query->whereNull('archived_at');
+        }
+
         if ($criteria->category !== null) {
             $query->where('category', $criteria->category);
         }

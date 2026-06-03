@@ -39,6 +39,7 @@ final class EloquentAuditLog extends Model
         'ip_address',
         'device_id',
         'created_at',
+        'archived_at',
     ];
 
     protected $casts = [
@@ -46,6 +47,7 @@ final class EloquentAuditLog extends Model
         'before' => 'array',
         'after' => 'array',
         'created_at' => 'datetime',
+        'archived_at' => 'datetime',
     ];
 
     public function restaurant(): BelongsTo
