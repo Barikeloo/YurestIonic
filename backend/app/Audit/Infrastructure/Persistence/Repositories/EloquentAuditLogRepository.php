@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Audit\Infrastructure\Persistence\Repositories;
 
+use App\Audit\Domain\ArchiveStats;
 use App\Audit\Domain\AuditLogPage;
 use App\Audit\Domain\Entity\AuditLog;
 use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
@@ -14,6 +15,7 @@ use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\User\Infrastructure\Persistence\Models\EloquentUser;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
 {
@@ -256,6 +258,76 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
                     ->orWhere('entity_id', '=', $criteria->search);
             });
         }
+    }
+
+    public function bulkArchive(?Uuid $restaurantId, \DateTimeImmutable $threshold, bool $dryRun): array
+    {
+        $restaurantIdInt = null;
+        if ($restaurantId !== null) {
+            $restaurantIdInt = EloquentRestaurant::query()
+                ->where('uuid', $restaurantId->value())
+                ->value('id');
+
+            if ($restaurantIdInt === null) {
+                return [];
+            }
+        }
+
+        $thresholdFormatted = $threshold->format('Y-m-d H:i:s');
+
+        $statsQuery = EloquentAuditLog::query()
+            ->withoutGlobalScopes()
+            ->whereNull('archived_at')
+            ->where('created_at', '<', $thresholdFormatted);
+
+        if ($restaurantIdInt !== null) {
+            $statsQuery->where('restaurant_id', $restaurantIdInt);
+        }
+
+        $rows = $statsQuery
+            ->select(
+                'restaurant_id',
+                DB::raw('COUNT(*) as archived_count'),
+                DB::raw('MIN(created_at) as oldest_created_at'),
+                DB::raw('MAX(created_at) as newest_created_at'),
+            )
+            ->groupBy('restaurant_id')
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return [];
+        }
+
+        $restaurantIds = $rows->pluck('restaurant_id')->all();
+        $uuidByInternalId = EloquentRestaurant::query()
+            ->whereIn('id', $restaurantIds)
+            ->pluck('uuid', 'id');
+
+        if (! $dryRun) {
+            $updateQuery = EloquentAuditLog::query()
+                ->withoutGlobalScopes()
+                ->whereNull('archived_at')
+                ->where('created_at', '<', $thresholdFormatted);
+
+            if ($restaurantIdInt !== null) {
+                $updateQuery->where('restaurant_id', $restaurantIdInt);
+            }
+
+            $updateQuery->update([
+                'archived_at' => now()->format('Y-m-d H:i:s'),
+            ]);
+        }
+
+        return $rows->map(static function ($row) use ($uuidByInternalId): ArchiveStats {
+            $restaurantUuid = (string) $uuidByInternalId[$row->restaurant_id];
+
+            return new ArchiveStats(
+                restaurantId: Uuid::create($restaurantUuid),
+                archivedCount: (int) $row->archived_count,
+                oldestCreatedAt: $row->oldest_created_at !== null ? new \DateTimeImmutable((string) $row->oldest_created_at) : null,
+                newestCreatedAt: $row->newest_created_at !== null ? new \DateTimeImmutable((string) $row->newest_created_at) : null,
+            );
+        })->values()->all();
     }
 
     public function findAllByRestaurantOrdered(Uuid $restaurantId): array

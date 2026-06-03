@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Audit\Domain\Interfaces;
 
+use App\Audit\Domain\ArchiveStats;
 use App\Audit\Domain\AuditLogPage;
 use App\Audit\Domain\Entity\AuditLog;
 use App\Audit\Domain\ListAuditLogsCriteria;
@@ -63,4 +64,24 @@ interface AuditLogRepositoryInterface
      * @return list<AuditLog>
      */
     public function findAllByRestaurantOrdered(Uuid $restaurantId): array;
+
+    /**
+     * Marks every unarchived log older than $threshold as archived. Returns
+     * stats per restaurant for the operator.
+     *
+     *  - When $restaurantId is null, the operation runs across every
+     *    restaurant; the returned list has one entry per restaurant that
+     *    had matching rows.
+     *  - When $restaurantId is set, the list contains at most one entry
+     *    (or zero if nothing matched for that restaurant).
+     *  - When $dryRun is true the rows are NOT modified; the same stats
+     *    are computed so the operator can preview the impact.
+     *
+     * @return list<ArchiveStats>
+     */
+    public function bulkArchive(
+        ?Uuid $restaurantId,
+        \DateTimeImmutable $threshold,
+        bool $dryRun,
+    ): array;
 }
