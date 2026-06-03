@@ -29,8 +29,31 @@ test:
 test-frontend:
 	docker compose exec frontend npx ng test --watch=false --browsers=ChromeHeadlessCI
 
+# E2E tests run from the host because the global-setup needs `docker compose exec`
+# to seed the API container. Make sure `make start` is running so frontend (4200)
+# and api (8000) are up before invoking.
 test-e2e:
-	docker compose exec frontend npm run e2e
+	cd frontend && E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 npx playwright test
+
+test-e2e-headed:
+	cd frontend && E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 npx playwright test --headed
+
+test-e2e-ui:
+	cd frontend && E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 npx playwright test --ui
+
+# Force video + trace + screenshot for every test, useful for demos / debugging.
+test-e2e-videos:
+	cd frontend && E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 \
+		E2E_VIDEO=on E2E_TRACE=on E2E_SCREENSHOT=on npx playwright test
+
+# Skip the seed step (assumes DB is already in a known state).
+test-e2e-fast:
+	cd frontend && E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 \
+		E2E_SKIP_SEED=1 npx playwright test
+
+# Open the HTML report from the last run on http://localhost:9323.
+test-e2e-report:
+	cd frontend && npx playwright show-report e2e/reports/html --host 127.0.0.1 --port 9323
 
 build-frontend:
 	docker compose exec frontend npx ng build
