@@ -1,0 +1,198 @@
+<div class="historico-page">
+
+  <!-- Page head -->
+  <div class="page-head">
+    <div class="page-title-row">
+      <button class="back-btn" (click)="goBackToRegistro()" title="Volver al registro">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <div>
+        <h1 class="page-title">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><line x1="10" y1="12" x2="14" y2="12"/>
+          </svg>
+          Histórico de Auditoría
+        </h1>
+        <div class="page-subtitle">
+          Eventos archivados tras 90 días · conservados 6 años · nunca borrados
+        </div>
+      </div>
+    </div>
+    <div class="page-head-actions">
+      @if (lastUpdatedAt(); as updated) {
+        <span class="last-updated">Actualizado a las {{ formatLastUpdated(updated) }}</span>
+      }
+      <button class="btn-ghost" (click)="reload()" [disabled]="isLoading()" title="Recargar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" [class.spinning]="isLoading()">
+          <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/>
+        </svg>
+        Recargar
+      </button>
+      <button class="btn-primary" (click)="openRegistroWithHistorico()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+          <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+        </svg>
+        Abrir registro con histórico
+      </button>
+    </div>
+  </div>
+
+  <!-- Error state -->
+  @if (loadError(); as err) {
+    <div class="error-banner">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <span>{{ err }}</span>
+      <button class="btn-link" (click)="reload()">Reintentar</button>
+    </div>
+  }
+
+  <!-- Loading skeleton -->
+  @if (isLoading() && !stats()) {
+    <div class="kpi-grid">
+      @for (_ of [1,2,3,4]; track $index) {
+        <div class="kpi-card skeleton-card">
+          <div class="skel skel-label"></div>
+          <div class="skel skel-value"></div>
+          <div class="skel skel-sub"></div>
+        </div>
+      }
+    </div>
+    <div class="chart-card skeleton-chart"><div class="skel skel-chart"></div></div>
+  }
+
+  <!-- Empty state -->
+  @if (!isLoading() && !hasData() && !loadError()) {
+    <div class="empty-state">
+      <div class="empty-illustration">
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><line x1="10" y1="12" x2="14" y2="12"/>
+        </svg>
+      </div>
+      <h2 class="empty-title">Aún no hay nada en el histórico</h2>
+      <p class="empty-sub">
+        El proceso de archivado se ejecuta automáticamente cada lunes a las 02:00 y mueve aquí los eventos con más de 90 días.
+        Cuando ocurra el primer archivado verás aquí la línea temporal y los totales.
+      </p>
+      <div class="empty-meta">
+        <div class="meta-item">
+          <span class="meta-label">Política</span>
+          <span class="meta-value">90 días → archivo</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Retención</span>
+          <span class="meta-value">6 años</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Borrado</span>
+          <span class="meta-value">Nunca</span>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Stats body -->
+  @if (!isLoading() && hasData()) {
+
+    <!-- KPI cards -->
+    <div class="kpi-grid">
+
+      <div class="kpi-card kpi-primary">
+        <div class="kpi-label">Eventos archivados</div>
+        <div class="kpi-value">{{ formatNumber(total()) }}</div>
+        <div class="kpi-sub">conservados en histórico</div>
+        <svg class="kpi-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><line x1="10" y1="12" x2="14" y2="12"/>
+        </svg>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Rango temporal</div>
+        <div class="kpi-value kpi-value-sm">{{ rangeLabel() }}</div>
+        <div class="kpi-sub">
+          {{ formatDateLong(oldestDate()) }} → {{ formatDateLong(newestDate()) }}
+          · {{ spanInMonths() }} mes{{ spanInMonths() === 1 ? '' : 'es' }}
+        </div>
+        <svg class="kpi-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+        </svg>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Mes más activo</div>
+        @if (peakMonth(); as peak) {
+          <div class="kpi-value kpi-value-sm">{{ peak.label }}</div>
+          <div class="kpi-sub">{{ formatNumber(peak.count) }} eventos</div>
+        } @else {
+          <div class="kpi-value kpi-value-sm">—</div>
+        }
+        <svg class="kpi-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+        </svg>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-label">Promedio mensual</div>
+        <div class="kpi-value">{{ formatNumber(monthlyAverage()) }}</div>
+        <div class="kpi-sub">eventos/mes</div>
+        <svg class="kpi-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+      </div>
+
+    </div>
+
+    <!-- Monthly distribution chart -->
+    <div class="chart-card">
+      <div class="chart-head">
+        <div>
+          <div class="chart-title">Distribución por mes</div>
+          <div class="chart-sub">Eventos archivados agrupados por su fecha original</div>
+        </div>
+        <div class="chart-legend">
+          <span class="legend-dot"></span>
+          Eventos archivados
+        </div>
+      </div>
+
+      <div class="chart-body" [class.chart-many]="monthlyPoints().length > 12">
+        @for (point of monthlyPoints(); track point.key) {
+          <div class="bar-cell" [title]="point.label + ' · ' + formatNumber(point.count) + ' eventos'">
+            <div class="bar-track">
+              <div class="bar-fill" [style.height.%]="point.displayHeight">
+                <span class="bar-count">{{ formatNumber(point.count) }}</span>
+              </div>
+            </div>
+            <div class="bar-label">{{ point.label }}</div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Footer call-to-action -->
+    <div class="cta-card">
+      <div class="cta-text">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <div>
+          <strong>¿Quieres consultar los eventos archivados uno a uno?</strong>
+          <div class="cta-sub">Abre el registro con el toggle "Mostrar histórico" activado y podrás filtrar, buscar y ver la integridad de cada evento.</div>
+        </div>
+      </div>
+      <button class="btn-primary" (click)="openRegistroWithHistorico()">
+        Abrir registro
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </button>
+    </div>
+
+  }
+
+</div>

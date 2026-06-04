@@ -530,6 +530,29 @@ button { font-family: inherit; }
   border-radius: 8px;
 }
 
+.historico-link {
+  margin-left: auto;
+  border: 1.5px solid #E8E8E8;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3D3D3D;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .15s;
+  font-family: inherit;
+
+  svg { color: #7A7A7A; transition: color .15s; }
+
+  &:hover { border-color: #FF4D4D; color: #FF4D4D; }
+  &:hover svg { color: #FF4D4D; }
+  &:active { transform: scale(.97); }
+}
+
 .audit-input {
   border: 1.5px solid #E8E8E8;
   border-radius: 10px;

@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, signal, computed, effect, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { AuditAlertApi } from '../../../services/audit-alert.service';
 import { AuditCategoryApi, AuditLogService, AuditSeverityApi, ListAuditEventsFilters } from '../../../services/audit-log.service';
@@ -328,6 +328,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
 
   protected readonly facade = inject(RegistroAuditoriaFacade);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
   constructor() {
     effect(() => {
@@ -342,6 +343,11 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     this.facade.startAlertPolling();
     this.facade.loadUsersDirectory();
     this.facade.loadSavedViews();
+
+    // Deep-link from the histórico panel: ?historico=1 turns the toggle on.
+    if (this.route.snapshot.queryParamMap.get('historico') === '1') {
+      this.facade.setIncludeArchived(true);
+    }
   }
 
   ngOnDestroy(): void {
@@ -351,6 +357,8 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
 
   // ── Actions ───────────────────────────────────────────────────
   goBack(): void { this.router.navigateByUrl('/app/gestion'); }
+
+  goToHistorico(): void { this.router.navigateByUrl('/registro-auditoria/historico'); }
 
   selectTab(id: string): void { this.activeTab.set(id); }
 

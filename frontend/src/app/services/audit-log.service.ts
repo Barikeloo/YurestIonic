@@ -83,6 +83,18 @@ export interface UpdateAuditSavedViewPayload {
   filters?: Record<string, unknown>;
 }
 
+export interface MonthlyArchivedCountApi {
+  month: string;
+  count: number;
+}
+
+export interface ArchivedAuditStatsApi {
+  total: number;
+  oldest_created_at: string | null;
+  newest_created_at: string | null;
+  monthly_breakdown: MonthlyArchivedCountApi[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -124,5 +136,9 @@ export class AuditLogService extends BaseApiService {
 
   public deleteSavedView(uuid: string): Observable<void> {
     return this.delete<void>(`/admin/audit-saved-views/${uuid}`);
+  }
+
+  public getArchivedStats(): Observable<ArchivedAuditStatsApi> {
+    return this.get<ArchivedAuditStatsApi>('/admin/audit-log/archived-stats');
   }
 }
