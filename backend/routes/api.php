@@ -1,5 +1,6 @@
 <?php
 
+use App\Audit\Infrastructure\Entrypoint\Http\ExportAuditEventsController;
 use App\Audit\Infrastructure\Entrypoint\Http\GetArchivedAuditStatsController;
 use App\Audit\Infrastructure\Entrypoint\Http\GetAuditEventController;
 use App\Audit\Infrastructure\Entrypoint\Http\ListAuditAlertsController;
@@ -303,6 +304,7 @@ Route::middleware([
 
     Route::get('/admin/audit-log', ListAuditEventsController::class);
     Route::get('/admin/audit-log/archived-stats', GetArchivedAuditStatsController::class);
+    Route::get('/admin/audit-log/export', ExportAuditEventsController::class);
     Route::get('/admin/audit-log/verify', VerifyAuditChainController::class);
     Route::get('/admin/audit-log/{uuid}', GetAuditEventController::class)->whereUuid('uuid');
 

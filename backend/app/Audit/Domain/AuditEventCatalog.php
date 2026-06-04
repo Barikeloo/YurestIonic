@@ -404,6 +404,12 @@ final class AuditEventCatalog
             'severity' => 'info',
             'summary' => 'Archivado de auditoría: {metadata.archived_count} eventos previos a {metadata.threshold_date_formatted}.',
         ],
+
+        'audit.exported' => [
+            'category' => 'system',
+            'severity' => 'info',
+            'summary' => 'Exportación de auditoría: {metadata.row_count} filas en formato {metadata.format}.',
+        ],
     ];
 
     /**

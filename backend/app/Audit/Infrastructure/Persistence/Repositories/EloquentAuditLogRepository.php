@@ -384,6 +384,29 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
         );
     }
 
+    public function streamForExport(ListAuditLogsCriteria $criteria): iterable
+    {
+        $restaurantIdInt = EloquentRestaurant::query()
+            ->where('uuid', $criteria->restaurantId->value())
+            ->value('id');
+
+        if ($restaurantIdInt === null) {
+            return [];
+        }
+
+        $query = EloquentAuditLog::query()
+            ->withoutGlobalScopes()
+            ->with(['restaurant', 'user'])
+            ->where('restaurant_id', $restaurantIdInt);
+
+        $this->applyFilters($query, $criteria, $restaurantIdInt);
+
+        foreach ($query->orderBy('created_at', 'asc')->orderBy('id', 'asc')->lazy(1000) as $model) {
+            /** @var EloquentAuditLog $model */
+            yield $this->toDomain($model);
+        }
+    }
+
     public function findAllByRestaurantOrdered(Uuid $restaurantId): array
     {
         $restaurantIdInt = EloquentRestaurant::query()
@@ -442,6 +465,7 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
             ipAddress: $model->ip_address,
             deviceId: $model->device_id,
             createdAt: $model->created_at->toDateTimeImmutable(),
+            archivedAt: $model->archived_at?->toDateTimeImmutable(),
         );
     }
 }

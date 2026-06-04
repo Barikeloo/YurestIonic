@@ -95,4 +95,19 @@ interface AuditLogRepositoryInterface
      * restaurant has no archived rows.
      */
     public function getArchivedStats(Uuid $restaurantId): ArchivedAuditStats;
+
+    /**
+     * Streams audit logs matching the criteria in chronological order
+     * (created_at, id ASC) WITHOUT loading the whole result set into
+     * memory. The repository is expected to chunk the query (e.g.
+     * Eloquent's lazy()/cursor()) so the export endpoint can write
+     * megabytes of CSV/NDJSON without hitting the memory limit.
+     *
+     * The criteria's `cursor*`, `limit` and `sinceUuid` fields are
+     * ignored — the export covers the entire match. `includeArchived`
+     * controls whether archived rows are part of the stream.
+     *
+     * @return iterable<AuditLog>
+     */
+    public function streamForExport(ListAuditLogsCriteria $criteria): iterable;
 }

@@ -38,6 +38,7 @@ final class AuditLog
         private readonly ?string $ipAddress,
         private readonly ?string $deviceId,
         private readonly DomainDateTime $createdAt,
+        private readonly ?\DateTimeImmutable $archivedAt = null,
     ) {}
 
     /**
@@ -120,6 +121,7 @@ final class AuditLog
         ?string $ipAddress,
         ?string $deviceId,
         \DateTimeImmutable $createdAt,
+        ?\DateTimeImmutable $archivedAt = null,
     ): self {
         return new self(
             uuid: Uuid::create($uuid),
@@ -142,6 +144,7 @@ final class AuditLog
             ipAddress: $ipAddress,
             deviceId: $deviceId,
             createdAt: DomainDateTime::create($createdAt),
+            archivedAt: $archivedAt,
         );
     }
 
@@ -246,6 +249,16 @@ final class AuditLog
     public function createdAt(): DomainDateTime
     {
         return $this->createdAt;
+    }
+
+    public function archivedAt(): ?\DateTimeImmutable
+    {
+        return $this->archivedAt;
+    }
+
+    public function isArchived(): bool
+    {
+        return $this->archivedAt !== null;
     }
 
     public function hasAnomaly(): bool
