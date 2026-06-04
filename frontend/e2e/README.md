@@ -7,11 +7,13 @@ Tests E2E con Playwright, ejecutados contra el stack real (Angular + Laravel + M
 ```
 e2e/
 ├── specs/
+│   ├── audit/          ← histórico de auditoría: panel, filtros, export (mutativo)
 │   ├── auth/           ← link device, login email/PIN, logout (read-only)
 │   ├── cash/           ← apertura, movimiento, cierre de caja (mutativo)
 │   ├── smoke/          ← navegación pública (read-only)
 │   └── tpv/            ← flujo central mesa → comanda → cobro + auditoría (mutativo)
 ├── support/
+│   ├── audit.ts        ← seedAndArchiveRetentionDemo (seed backdated + archive)
 │   ├── auth.ts         ← linkDevice, loginByPin, loginAsAdmin, pressPin
 │   ├── browser-state.ts← clearDeviceLink
 │   ├── cash.ts         ← openCashSession, closeCashSession, registerCashMovement
@@ -63,7 +65,7 @@ E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 npx playwright test
 
 | Project | Specs | Paralelismo | Notas |
 |---|---|---|---|
-| `stateful` | `cash/**`, `tpv/**` | `fullyParallel: false`, workers=1 | Mutaciones serias contra una sola caja por device |
+| `stateful` | `cash/**`, `tpv/**`, `audit/**` | `fullyParallel: false`, workers=1 | Mutaciones serias contra una sola caja por device + datos de auditoría |
 | `chromium` | `auth/**`, `smoke/**` | paralelo | Read-only; depende de `stateful` |
 | `mobile-chrome` | `auth/**`, `smoke/**` | paralelo | Pixel 7; depende de `stateful` |
 
@@ -114,6 +116,33 @@ make test-e2e-videos
 - **Device pre-linkeado** `seed-device-001` con quick-access para los 5 no-admin
 
 Los UUIDs son estables entre reseeds (updateOrInsert con email como clave única).
+
+## Seeder de retención — `RetentionDemoSeeder`
+
+Las specs de `audit/` necesitan eventos con `created_at` de hace meses para que el archivo `audit:archive-old` tenga algo que mover al histórico. El seeder vive en `backend/database/seeders/RetentionDemoSeeder.php` y deja:
+
+- 40 eventos con `created_at` entre 95 y 355 días → el comando los archiva.
+- 5 eventos dentro de la última semana → quedan vivos en el registro tras el archivado.
+
+El helper `support/audit.ts::seedAndArchiveRetentionDemo()` orquesta el ciclo completo desde el spec:
+
+```ts
+test.beforeAll(() => seedAndArchiveRetentionDemo());
+```
+
+Ejecuta `db:seed --class=RetentionDemoSeeder`, después `audit:archive-old --older-than-days=90`, y termina con `cache:clear` para que la próxima llamada al endpoint `archived-stats` no devuelva una snapshot cacheada de antes del archivado.
+
+Los hashes son placeholder (sha256 de ceros) — no participan en la cadena verificable. La integridad de la cadena con archivados está cubierta por `AuditVerifyChainTest` y `AuditRetentionLifecycleTest` en backend.
+
+Lanzar sólo el subset de auditoría:
+
+```bash
+cd frontend
+E2E_SKIP_WEB_SERVER=1 E2E_BASE_URL=http://localhost:4200 E2E_SKIP_SEED=1 \
+  npx playwright test --project=stateful audit/
+```
+
+`E2E_SKIP_SEED=1` evita re-seedear Saona; el seeder de retención lo hace cada spec en su `beforeAll`.
 
 ## Troubleshooting
 
