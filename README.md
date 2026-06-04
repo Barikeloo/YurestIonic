@@ -219,24 +219,26 @@ docker compose exec api php artisan db:seed
 
 ## 3. Testing
 
-El proyecto se valida con tres suites complementarias: unitarios e integración del backend, tests de frontend, y end-to-end con Playwright contra el stack real (Docker + backend + frontend + MySQL seedeado). En conjunto suman **781 tests verdes** que cubren desde invariantes de dominio hasta el flujo completo TPV.
+El proyecto se valida con tres suites complementarias: unitarios e integración del backend, tests de frontend, y end-to-end con Playwright contra el stack real (Docker + backend + frontend + MySQL seedeado). En conjunto suman **808 tests verdes** que cubren desde invariantes de dominio hasta el flujo completo TPV y todo el ciclo de retención de auditoría.
 
 | Suite | Tests | Cómo correr |
 |---|---|---|
-| Backend (PHPUnit) | **747** | `make test` |
+| Backend (PHPUnit) | **784** (128 de auditoría) | `make test` |
 | Frontend (Karma/Jasmine) | unit | `make test-frontend` |
-| E2E (Playwright contra backend real) | **34** | `make test-e2e` |
+| E2E (Playwright contra backend real) | **24** | `make test-e2e` |
 
 ### 3.1 Backend — PHPUnit
 
 ```bash
 make test                                                # toda la suite
 docker compose exec api php artisan test --filter=ChargeSessionEntityTest
+docker compose exec api php artisan test --filter=AuditRetentionLifecycleTest
 ```
 
-- 747 tests en verde, 0 deprecation warnings.
-- **Unit**: entidades de dominio, Value Objects, validaciones de invariantes, cálculos (`AmountPerDiner`, hash de integridad del audit log, etc.).
-- **Feature**: endpoints HTTP con base de datos en contenedor, autenticación, permisos y casos non-happy path (404, 409, 422, 403).
+- 784 tests en verde, 0 deprecation warnings.
+- **Unit**: entidades de dominio, Value Objects, validaciones de invariantes, cálculos (`AmountPerDiner`, hash de integridad del audit log), use cases con mocks (`GetArchivedAuditStats`, `ExportAuditEvents`, `ListAuditEvents`, `ArchiveOldAuditLogs`, `VerifyAuditChain`, `GetAuditEvent`, + CRUD `AuditSavedView`) y formatters byte-a-byte (`CsvAuditExportFormatter`, `NdjsonAuditExportFormatter`).
+- **Feature**: endpoints HTTP con base de datos en contenedor, autenticación, permisos, casos non-happy path (404, 409, 422, 403), y el **lifecycle test de retención** (`AuditRetentionLifecycleTest`) que recorre archive → stats → export → verify chain en una sola historia para detectar regresiones en los bordes entre piezas.
+- **Auditoría**: 128 tests específicos (28 feature + 84 unit domain + 16 unit `AuditSavedView`) que cubren listado con cursor, categorías, severidad, búsqueda, exportación CSV/NDJSON, archivado masivo, estadísticas de retención, verificación de cadena SHA-256, detector de anomalías (auth burst, caja mismatch), alertas y vistas guardadas.
 
 ### 3.2 Frontend — unit
 
@@ -249,13 +251,13 @@ make test-frontend
 
 ### 3.3 E2E — Playwright contra stack real
 
-Los tests E2E ejecutan **flujos completos contra el sistema real** (Angular + Laravel + MySQL en Docker). Antes de cada suite se ejecuta `SaonaDemoSeeder` para dejar el estado conocido (Bar Manolo + 6 empleados con PIN + catálogo + 28 mesas).
+Los tests E2E ejecutan **flujos completos contra el sistema real** (Angular + Laravel + MySQL en Docker). Antes de cada suite se ejecuta `SaonaDemoSeeder` para dejar el estado conocido (Bar Manolo + 6 empleados con PIN + catálogo + 28 mesas). Para los tests de auditoría se usa además `RetentionDemoSeeder` + `audit:archive-old` para poblar el corpus archivado.
 
 #### Quickstart
 
 ```bash
 make start              # arranca Docker (api en :8000, frontend en :4200)
-make test-e2e           # corre la suite completa (≈2 min, 34 tests)
+make test-e2e           # corre la suite completa (≈3 min, 24 tests)
 make test-e2e-report    # abre el reporte HTML en http://localhost:9323
 ```
 
@@ -272,7 +274,7 @@ make test-e2e-report    # abre el reporte HTML en http://localhost:9323
 
 #### Cobertura actual
 
-El plan E2E se desarrolló en 6 fases incrementales (detalle en [`PLAN_E2E.md`](PLAN_E2E.md)):
+El plan E2E se desarrolló en 7 fases incrementales (detalle en [`PLAN_E2E.md`](PLAN_E2E.md)):
 
 | Fase | Flujo cubierto | Tests |
 |---|---|---|
@@ -282,8 +284,9 @@ El plan E2E se desarrolló en 6 fases incrementales (detalle en [`PLAN_E2E.md`](
 | 4 | Flujo central TPV: mesa → comanda → cerrar cuenta → cobro efectivo → mesa libre | 1 |
 | 5 | Auditoría: el admin verifica los eventos generados por el flujo | 1 |
 | 6 | Hardening: Makefile targets + README + troubleshooting | — |
+| 7 | Auditoría — Historico: KPIs, chart, presets, export CSV, deep-link al registro vivo | 5 |
 
-Para el detalle de qué hay cubierto y qué no (cobros variantes, modificadores requeridos, split bills, transferencias, etc.) ver [`PLAN_E2E.md`](PLAN_E2E.md).
+Para el detalle de qué hay cubierto y qué no (cobros variantes, modificadores requeridos, split bills, transferencias, etc.) ver [`PLAN_E2E.md`](PLAN_E2E.md). El fixture de auditoría usa `seedAndArchiveRetentionDemo()` definido en `frontend/e2e/support/audit.ts`, que ejecuta `RetentionDemoSeeder` + `audit:archive-old` + `cache:clear`.
 
 #### Diseño de proyectos
 
@@ -291,11 +294,11 @@ Para el detalle de qué hay cubierto y qué no (cobros variantes, modificadores 
 
 | Project | Specs | Paralelismo |
 |---|---|---|
-| `stateful` | `cash/**`, `tpv/**` | serial (`workers: 1`, `fullyParallel: false`) |
+| `stateful` | `cash/**`, `tpv/**`, `audit/**` | serial (`workers: 1`, `fullyParallel: false`) |
 | `chromium` | `auth/**`, `smoke/**` | paralelo, depende de `stateful` |
 | `mobile-chrome` | `auth/**`, `smoke/**` | paralelo (Pixel 7), depende de `stateful` |
 
-Los specs mutativos corren primero en `stateful` porque `cash_sessions` es único por restaurante+device. Los read-only (`auth`, `smoke`) corren después en paralelo cross-browser.
+Los specs mutativos corren primero en `stateful` porque `cash_sessions` es único por restaurante+device y los tests de auditoría dependen de `RetentionDemoSeeder`. Los read-only (`auth`, `smoke`) corren después en paralelo cross-browser.
 
 #### Ver vídeos y traces del flujo
 
@@ -566,7 +569,7 @@ Menu (cabecera)
 
 ### 5.10 Registro de Auditoría
 
-Accesible desde el menú lateral en **"Auditoría"** (solo usuarios con rol `admin`). Es la traza operativa completa e inmutable del restaurante: quién hizo qué, cuándo, desde qué dispositivo, y qué cambió.
+Accesible desde el menú lateral en **"Auditoría"** (solo usuarios con rol `admin`). Es la traza operativa completa e inmutable del restaurante: quién hizo qué, cuándo, desde qué dispositivo, y qué cambió. Consta de **dos vistas principales**: el **Registro vivo** (eventos del turno activos) y el **Histórico** (panel de datos archivados con métricas de retención).
 
 #### Qué se audita
 
@@ -583,7 +586,7 @@ El sistema instrumenta **72 tipos de eventos** distribuidos en 9 categorías: `a
 | **Config** | Alta/baja/modificación de usuarios, impuestos |
 | **Restaurant** | Creación y modificación de restaurante |
 
-#### Interfaz de la página
+#### Registro vivo (`/registro-auditoria`)
 
 - **KPIs superiores** — Total de eventos hoy, críticos, usuarios activos y tiempo desde el último evento.
 - **Tabs por categoría** — 9 pestañas (`Todo`, `Pedidos`, `Caja`, `Ventas`, `Mesas`, `Catálogo`, `Acceso`, `Config`, `Sistema`). El contador de cada tab refleja los eventos ya cargados.
@@ -593,15 +596,31 @@ El sistema instrumenta **72 tipos de eventos** distribuidos en 9 categorías: `a
 - **Scroll infinito** — Paginación por cursor opaco (`next_cursor`). Cada lote carga hasta 50 eventos.
 - **Live tail** — Toggle "Live". Cada 5 segundos consulta eventos nuevos posteriores al primero visible y los inserta en la cabecera de la lista.
 - **Mostrar histórico** — Toggle que incluye eventos archivados en el listado (envía `include_archived=1`). Al activarlo, aparece un banner informativo sobre la política de retención (90 días activo → archivado → conservación legal indefinida).
+- **Exportar** — Botón que descarga los eventos visibles (según filtros actuales) en formato **CSV** (RFC-4180, UTF-8 BOM, CRLF, compatible con Excel). Al exportar se registra un meta-evento `audit.exported` con el recuento y filtros usados.
 - **Drawer de detalle** — Al tocar un evento se abre un panel lateral con:
   - Metadata completa (acción, entidad, usuario, dispositivo, IP, sesión).
   - Diferencia estructurada (`before → after`) cuando la acción modifica datos.
   - Payload JSON completo con botón de copiar al portapapeles.
   - **Hash de integridad SHA-256** con indicador visual "Verificado". Si el hash no coincide con la cadena recalculada, se muestra advertencia.
 
+#### Histórico de retención (`/registro-auditoria/historico`)
+
+Panel independiente que muestra el **corpus archivado** del restaurante. Se accede como una pestaña diferenciada dentro de Auditoría:
+
+- **KPIs de retención** — 4 tarjetas: total archivado, rango temporal (primer y último evento archivado), mes pico y media mensual.
+- **Gráfico de barras mensual** — Distribución de eventos archivados mes a mes con barras verticales y etiqueta de recuento.
+- **Filtros por rango temporal** — Presets (`Todo el histórico`, `Último año`, `Último trimestre`, `Último mes`) y selector de fechas personalizado con botón "Aplicar". Los presets activos muestran un banner informativo y el botón se marca visualmente.
+- **Exportación** — Menú desplegable con dos formatos:
+  - **CSV** (RFC-4180, UTF-8 BOM, CRLF) — compatible con Excel.
+  - **NDJSON** (una línea JSON por evento) — ideal para integraciones y pipelines de datos.
+  - La exportación incluye archivados y queda registrada en la propia auditoría como meta-evento.
+- **Deep-link** — Botón "Abrir registro con histórico" que navega al registro vivo con el parámetro `?historico=1`, activando automáticamente el toggle "Mostrar histórico".
+- **Estado vacío** — Cuando el filtro no produce resultados, se muestra un mensaje con la política de retención: 90 días activo → archivado → conservación legal indefinida.
+- **Estados de carga y error** — Skeleton cards durante carga y panel de error con botón de reintentar.
+
 #### Vistas guardadas
 
-En la barra de filtros hay un dropdown "Vistas" con opciones predefinidas (Críticos del turno, Mis reaperturas, Cuadres con discrepancia, Fallos de acceso 24h) y la capacidad de **guardar la configuración actual de filtros** con un nombre personalizado. Las vistas persisten en la base de datos por restaurante y se pueden eliminar desde el mismo dropdown.
+En la barra de filtros del registro vivo hay un dropdown "Vistas" con opciones predefinidas (Críticos del turno, Mis reaperturas, Cuadres con discrepancia, Fallos de acceso 24h) y la capacidad de **guardar la configuración actual de filtros** con un nombre personalizado. Las vistas persisten en la base de datos por restaurante (tabla `audit_saved_views`) y se pueden eliminar desde el mismo dropdown. CRUD completo: crear, listar, aplicar, eliminar.
 
 #### Alertas de anomalías
 
@@ -614,7 +633,17 @@ Cada anomalía genera una **alerta in-app** accesible desde el icono de campana 
 1. La marca como leída.
 2. Si la alerta está vinculada a un evento de auditoría, carga ese evento en el drawer y hace scroll suave hasta él con un efecto visual de pulso.
 
-El polling de alertas es cada 30 segundos.
+El polling de alertas es cada 30 segundos. También disponible `POST /api/admin/audit-alerts/read-all` para marcar todas como leídas.
+
+#### Verificación de cadena de integridad
+
+`GET /api/admin/audit-log/verify` recorre **todos los eventos** del restaurante (activos y archivados) y para cada uno:
+
+1. Reconstruye el hash SHA-256 a partir de `prevHash + uuid + restaurantUuid + createdAt + actionSlug + entityType + entityId + userUuid + summary + canonicalJSON(metadata) + canonicalJSON(before) + canonicalJSON(after)`.
+2. Compara con el `integrity_hash` almacenado.
+3. Si algún eslabón no coincide, lo reporta como evento corrupto.
+
+Devuelve `is_valid`, `total_events`, `verified_count` y el listado de eventos rotos.
 
 #### Cómo acceder
 
@@ -625,6 +654,7 @@ El polling de alertas es cada 30 segundos.
 4. Usar tabs, chips, filtros o búsqueda para navegar
 5. Tocar cualquier evento para ver su detalle completo
 6. Guardar una combinación de filtros como "Vista" para recuperarla luego
+7. Explorar el Histórico para ver KPIs de retención, gráfico mensual y exportar archivados
 ```
 
 > **Nota:** La auditoría no tiene interfaz de escritura. Los eventos se insertan automáticamente desde los casos de uso del backend tras cada operación exitosa (o fallo, en el caso de login PIN erróneo). El hash de integridad se calcula dentro de una transacción con `FOR UPDATE` sobre la cadena del restaurante, garantizando secuencialidad.
@@ -636,7 +666,7 @@ El sistema implementa una política de retención basada en **archivado lógico*
 | Período | Estado | Comportamiento en UI/API |
 |---------|--------|--------------------------|
 | Día 0 – 90 | Activo (`archived_at IS NULL`) | Visible por defecto. Aparece en el listado estándar. |
-| Día 90 – 6 años | Archivado (`archived_at` con fecha) | Solo visible para `admin` activando el toggle **"Mostrar histórico"** (envía `include_archived=1`). Incluido en la verificación de cadena de hash. |
+| Día 90 – 6 años | Archivado (`archived_at` con fecha) | Solo visible para `admin` activando el toggle **"Mostrar histórico"** (envía `include_archived=1`) o desde el panel **Histórico**. Incluido en la verificación de cadena de hash. |
 | +6 años | Archivado | Misma política que 90d–6a. Se conserva indefinidamente. |
 
 **Fundamento legal:**
@@ -654,9 +684,16 @@ docker compose exec api php artisan audit:archive-old --older-than-days=90 --dry
 
 # Archivado real (mueve a archived_at)
 docker compose exec api php artisan audit:archive-old --older-than-days=90
+
+# Filtrar por restaurante específico
+docker compose exec api php artisan audit:archive-old --restaurant-uuid=<uuid>
 ```
 
-El comando está registrado en el scheduler semanal (`bootstrap/app.php`) para ejecutarse automáticamente cada domingo a las 3:00 AM. Al archivar, emite un meta-evento `audit.archived` con el resumen de cuántos registros se archivaron por restaurante.
+El comando acepta `--restaurant-uuid` para restringir el alcance y `--dry-run` para simulación. Está registrado en el scheduler semanal (`bootstrap/app.php`) para ejecutarse automáticamente cada domingo a las 3:00 AM. Al archivar, emite un meta-evento `audit.archived` con el resumen de cuántos registros se archivaron por restaurante.
+
+**Seeders de demostración:**
+- `AuditLogSeeder` — 50 eventos por restaurante con templates realistas (últimos 7 días) y cadena de hash real.
+- `RetentionDemoSeeder` — 40 eventos backdated (365–95 días) + 5 recientes para Bar Manolo, usado por los tests E2E del panel histórico. Idempotente (limpia y reinserta).
 
 ---
 
@@ -671,7 +708,7 @@ El comando está registrado en el scheduler semanal (`bootstrap/app.php`) para e
 | **Hito 3 — Interfaz Backoffice** | 100% | Panel de gestión con ~1.600 líneas de componentes Angular. Formularios reactivos, validación en tiempo real, toasts de confirmación. |
 | **Hito 4 — Front de Venta (TPV)** | 100% | Flujo completo: mesas → apertura → pedido → cobro → cierre. Soporte para pagos parciales, división de cuenta (3 modos), y cierre de caja con Z-Report. |
 | **Hito 5 — Informes (Dashboard)** | 40% | Prototipo funcional con métricas clave. Pendiente: exportación a PDF/Excel, filtros avanzados, predicciones. |
-| **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor, live tail, archivado por antigüedad (90d → `archived_at`, retención legal 6 años, nunca borrado) y toggle "Mostrar histórico" con `include_archived=1`. Solo acceso `admin`. |
+| **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor, live tail, exportación CSV/NDJSON, panel **Histórico** con KPIs de retención, gráfico mensual, presets de rango temporal y deep-link al registro vivo. Archivado por antigüedad (90d → `archived_at`, retención legal 6 años, nunca borrado) y toggle "Mostrar histórico" con `include_archived=1`. Solo acceso `admin`. Verificación de cadena con `GET /api/admin/audit-log/verify`. |
 | **Hito 7 — Mejoras operativas** | 80% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores. |
 
 ### Funcionalidades detalladas
@@ -702,6 +739,10 @@ El comando está registrado en el scheduler semanal (`bootstrap/app.php`) para e
 | **Caja** | Movimientos | Entradas y salidas de caja categorizadas: cambio de moneda, pago a proveedor, sangría, ajuste, propina. |
 | **Ventas** | Cancelación completa | Anulación de una venta con motivo obligatorio, generando registro de auditoría. |
 | **Ventas** | Reembolso parcial | Cancelación de líneas individuales de una venta ya cerrada mediante nota de abono (`parent_sale_id`). |
+| **Auditoría** | Exportación CSV/NDJSON | Stream de eventos (activos o archivados) en CSV (RFC-4180, UTF-8 BOM, CRLF) o NDJSON (una línea JSON por evento). Se registra meta-evento `audit.exported`. |
+| **Auditoría** | Panel Histórico | KPIs de retención (total archivado, rango temporal, mes pico, media mensual), gráfico de barras mensual, presets de rango temporal y selector de fechas personalizado. |
+| **Auditoría** | Deep-link histórico | Botón "Abrir registro con histórico" que navega al registro vivo con `?historico=1` activando el toggle "Mostrar histórico". |
+| **Auditoría** | Verificación de cadena | `GET /api/admin/audit-log/verify` que recorre todos los eventos (activos + archivados) y verifica la integridad SHA-256 de cada eslabón. |
 | **Auditoría** | Traza inmutable | 72 eventos instrumentados en 9 categorías. Cada evento almacena `before/after`, metadata, IP y device. Hash SHA-256 encadenado por restaurante para garantizar integridad. |
 | **Auditoría** | Detección de anomalías | Reglas server-side: `auth_failed_burst` (≥3 fallos PIN en 5 min) y `caja_mismatch` (descuadre en cierre). Se marcan en el evento y generan alerta. |
 | **Auditoría** | Alertas in-app | Tabla `audit_alerts` con notificaciones por anomalía. Dropdown con badge de no leídas, navegación directa al evento vinculado, polling 30s. |
