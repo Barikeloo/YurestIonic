@@ -94,6 +94,11 @@ test.describe.serial('TPV full flow', () => {
     await expect(list).toBeVisible();
     await expect(list.locator('.event-row').first()).toBeVisible({ timeout: 10_000 });
 
+    // Regression guard: the list area must have visible height for at least one row.
+    // Past failure: sibling items in `.audit-left` squeezed `.audit-list` to height 0.
+    const listBox = await list.boundingBox();
+    expect(listBox?.height ?? 0).toBeGreaterThan(40);
+
     // The previous test triggered caja open + close and a sale; the catalog
     // summaries for those slugs should appear in today's events.
     await expect(list).toContainText('Apertura de sesión de caja');
