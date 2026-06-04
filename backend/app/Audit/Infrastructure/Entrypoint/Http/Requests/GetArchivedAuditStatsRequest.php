@@ -17,7 +17,10 @@ final class GetArchivedAuditStatsRequest extends FormRequest
 
     public function rules(): array
     {
-        return [];
+        return [
+            'date_from' => ['nullable', 'date'],
+            'date_to' => ['nullable', 'date', 'after_or_equal:date_from'],
+        ];
     }
 
     public function toCommand(): GetArchivedAuditStatsCommand
@@ -27,6 +30,8 @@ final class GetArchivedAuditStatsRequest extends FormRequest
 
         return new GetArchivedAuditStatsCommand(
             restaurantId: (string) $tenantContext->restaurantUuid(),
+            dateFrom: $this->input('date_from'),
+            dateTo: $this->input('date_to'),
         );
     }
 }

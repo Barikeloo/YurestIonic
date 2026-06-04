@@ -138,8 +138,11 @@ export class AuditLogService extends BaseApiService {
     return this.delete<void>(`/admin/audit-saved-views/${uuid}`);
   }
 
-  public getArchivedStats(): Observable<ArchivedAuditStatsApi> {
-    return this.get<ArchivedAuditStatsApi>('/admin/audit-log/archived-stats');
+  public getArchivedStats(filters: { dateFrom?: string; dateTo?: string } = {}): Observable<ArchivedAuditStatsApi> {
+    const params: Record<string, string> = {};
+    if (filters.dateFrom) params['date_from'] = filters.dateFrom;
+    if (filters.dateTo) params['date_to'] = filters.dateTo;
+    return this.get<ArchivedAuditStatsApi>('/admin/audit-log/archived-stats', params);
   }
 
   public buildExportUrl(format: 'csv' | 'ndjson', filters: ListAuditEventsFilters = {}): string {

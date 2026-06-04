@@ -22,6 +22,21 @@ export interface PeakMonth {
   count: number;
 }
 
+export type RangePreset = 'all' | 'lastMonth' | 'lastQuarter' | 'lastYear' | 'custom';
+
+export interface RangePresetOption {
+  id: RangePreset;
+  label: string;
+  sub: string;
+}
+
+export const RANGE_PRESETS: ReadonlyArray<RangePresetOption> = [
+  { id: 'all',         label: 'Todo el histórico', sub: 'Sin filtro temporal' },
+  { id: 'lastYear',    label: 'Último año',         sub: '12 meses hacia atrás' },
+  { id: 'lastQuarter', label: 'Último trimestre',   sub: '3 meses hacia atrás' },
+  { id: 'lastMonth',   label: 'Último mes',         sub: '30 días hacia atrás' },
+];
+
 @Injectable()
 export class HistoricoFacade {
   private readonly service = inject(AuditLogService);
@@ -33,6 +48,10 @@ export class HistoricoFacade {
   private readonly _loadError = signal<string | null>(null);
   private readonly _lastUpdatedAt = signal<Date | null>(null);
   private readonly _exportMenuOpen = signal<boolean>(false);
+  private readonly _rangeMenuOpen = signal<boolean>(false);
+  private readonly _activePreset = signal<RangePreset>('all');
+  private readonly _dateFrom = signal<string | null>(null);
+  private readonly _dateTo = signal<string | null>(null);
 
   // ── Public readonly ──────────────────────────────────────────
   public readonly stats: Signal<ArchivedAuditStatsApi | null> = this._stats.asReadonly();
@@ -40,6 +59,10 @@ export class HistoricoFacade {
   public readonly loadError: Signal<string | null> = this._loadError.asReadonly();
   public readonly lastUpdatedAt: Signal<Date | null> = this._lastUpdatedAt.asReadonly();
   public readonly exportMenuOpen: Signal<boolean> = this._exportMenuOpen.asReadonly();
+  public readonly rangeMenuOpen: Signal<boolean> = this._rangeMenuOpen.asReadonly();
+  public readonly activePreset: Signal<RangePreset> = this._activePreset.asReadonly();
+  public readonly dateFrom: Signal<string | null> = this._dateFrom.asReadonly();
+  public readonly dateTo: Signal<string | null> = this._dateTo.asReadonly();
 
   // ── Derived signals ──────────────────────────────────────────
   public readonly hasData = computed(() => (this._stats()?.total ?? 0) > 0);
@@ -102,14 +125,34 @@ export class HistoricoFacade {
 
   // Export URLs always carry include_archived=1: the histórico panel
   // exists for the archived corpus, and the meta-event keeps a record
-  // of every download regardless of format.
-  public readonly csvExportUrl = computed<string>(
-    () => this.service.buildExportUrl('csv', { includeArchived: true }),
-  );
+  // of every download regardless of format. Date range is forwarded
+  // so an exported file matches what the user currently sees.
+  public readonly csvExportUrl = computed<string>(() => this.service.buildExportUrl('csv', {
+    includeArchived: true,
+    dateFrom: this._dateFrom() ?? undefined,
+    dateTo: this._dateTo() ?? undefined,
+  }));
 
-  public readonly ndjsonExportUrl = computed<string>(
-    () => this.service.buildExportUrl('ndjson', { includeArchived: true }),
-  );
+  public readonly ndjsonExportUrl = computed<string>(() => this.service.buildExportUrl('ndjson', {
+    includeArchived: true,
+    dateFrom: this._dateFrom() ?? undefined,
+    dateTo: this._dateTo() ?? undefined,
+  }));
+
+  public readonly hasActiveRange = computed<boolean>(() => this._activePreset() !== 'all');
+
+  public readonly activeRangeLabel = computed<string | null>(() => {
+    const preset = this._activePreset();
+    if (preset === 'all') return null;
+    const knownPreset = RANGE_PRESETS.find((p) => p.id === preset);
+    if (knownPreset && preset !== 'custom') return knownPreset.label;
+    const from = this._dateFrom();
+    const to = this._dateTo();
+    if (from && to) return `${from} → ${to}`;
+    if (from) return `desde ${from}`;
+    if (to) return `hasta ${to}`;
+    return 'Personalizado';
+  });
 
   // ── Setters ──────────────────────────────────────────────────
   public setStats(value: ArchivedAuditStatsApi | null): void { this._stats.set(value); }
@@ -120,12 +163,73 @@ export class HistoricoFacade {
   public toggleExportMenu(): void { this._exportMenuOpen.update((v) => !v); }
   public closeExportMenu(): void { this._exportMenuOpen.set(false); }
 
+  public toggleRangeMenu(): void { this._rangeMenuOpen.update((v) => !v); }
+  public closeRangeMenu(): void { this._rangeMenuOpen.set(false); }
+
+  /**
+   * Apply a preset range. Setting 'all' clears the filter; the others
+   * compute date_from = today - N and leave date_to open (the panel
+   * scope is always "up to today"). Triggers an immediate reload.
+   */
+  public applyPreset(preset: RangePreset): void {
+    if (preset === this._activePreset()) {
+      this.closeRangeMenu();
+      return;
+    }
+
+    if (preset === 'all') {
+      this._activePreset.set('all');
+      this._dateFrom.set(null);
+      this._dateTo.set(null);
+    } else if (preset !== 'custom') {
+      const from = this.computePresetFrom(preset);
+      this._activePreset.set(preset);
+      this._dateFrom.set(from);
+      this._dateTo.set(null);
+    }
+
+    this.closeRangeMenu();
+    this.loadStats();
+  }
+
+  /**
+   * Apply an explicit date range from the date pickers. Either bound
+   * is optional but at least one is required to qualify as 'custom'.
+   */
+  public applyCustomRange(from: string | null, to: string | null): void {
+    const cleanFrom = from && from.length > 0 ? from : null;
+    const cleanTo = to && to.length > 0 ? to : null;
+    if (cleanFrom === null && cleanTo === null) {
+      this.applyPreset('all');
+      return;
+    }
+    this._activePreset.set('custom');
+    this._dateFrom.set(cleanFrom);
+    this._dateTo.set(cleanTo);
+    this.closeRangeMenu();
+    this.loadStats();
+  }
+
+  public clearRange(): void { this.applyPreset('all'); }
+
+  private computePresetFrom(preset: Exclude<RangePreset, 'all' | 'custom'>): string {
+    const now = new Date();
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (preset === 'lastMonth') d.setDate(d.getDate() - 30);
+    else if (preset === 'lastQuarter') d.setMonth(d.getMonth() - 3);
+    else if (preset === 'lastYear') d.setFullYear(d.getFullYear() - 1);
+    return d.toISOString().slice(0, 10);
+  }
+
   // ── Business ────────────────────────────────────────────────
   public loadStats(): void {
     this.setLoading(true);
     this.setLoadError(null);
     this.service
-      .getArchivedStats()
+      .getArchivedStats({
+        dateFrom: this._dateFrom() ?? undefined,
+        dateTo: this._dateTo() ?? undefined,
+      })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {

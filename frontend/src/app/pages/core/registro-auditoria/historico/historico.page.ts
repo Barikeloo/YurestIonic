@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { HistoricoFacade } from './facades/historico.facade';
+import { HistoricoFacade, RANGE_PRESETS, RangePreset } from './facades/historico.facade';
 
 @Component({
   selector: 'app-historico',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './historico.page.html',
   styleUrls: ['./historico.page.scss'],
   providers: [HistoricoFacade],
@@ -14,6 +15,13 @@ import { HistoricoFacade } from './facades/historico.facade';
 export class HistoricoPage implements OnInit, OnDestroy {
   protected readonly facade = inject(HistoricoFacade);
   private readonly router = inject(Router);
+
+  readonly RANGE_PRESETS = RANGE_PRESETS;
+
+  // Local model bound to the custom-range date inputs. Applied on the
+  // "Aplicar" button; doesn't reload until the user confirms.
+  customFrom = '';
+  customTo = '';
 
   // Facade signal proxies
   get stats() { return this.facade.stats; }
@@ -32,13 +40,22 @@ export class HistoricoPage implements OnInit, OnDestroy {
   get exportMenuOpen() { return this.facade.exportMenuOpen; }
   get csvExportUrl() { return this.facade.csvExportUrl; }
   get ndjsonExportUrl() { return this.facade.ndjsonExportUrl; }
+  get rangeMenuOpen() { return this.facade.rangeMenuOpen; }
+  get activePreset() { return this.facade.activePreset; }
+  get dateFrom() { return this.facade.dateFrom; }
+  get dateTo() { return this.facade.dateTo; }
+  get hasActiveRange() { return this.facade.hasActiveRange; }
+  get activeRangeLabel() { return this.facade.activeRangeLabel; }
 
   ngOnInit(): void {
     this.facade.loadStats();
   }
 
   @HostListener('document:keydown.escape')
-  onEsc(): void { this.facade.closeExportMenu(); }
+  onEsc(): void {
+    this.facade.closeExportMenu();
+    this.facade.closeRangeMenu();
+  }
 
   toggleExportMenu(event: MouseEvent): void {
     event.stopPropagation();
@@ -46,6 +63,23 @@ export class HistoricoPage implements OnInit, OnDestroy {
   }
 
   closeExportMenu(): void { this.facade.closeExportMenu(); }
+
+  toggleRangeMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.customFrom = this.facade.dateFrom() ?? '';
+    this.customTo = this.facade.dateTo() ?? '';
+    this.facade.toggleRangeMenu();
+  }
+
+  closeRangeMenu(): void { this.facade.closeRangeMenu(); }
+
+  applyPreset(preset: RangePreset): void { this.facade.applyPreset(preset); }
+
+  applyCustomRange(): void {
+    this.facade.applyCustomRange(this.customFrom || null, this.customTo || null);
+  }
+
+  clearRange(): void { this.facade.clearRange(); }
 
   ngOnDestroy(): void {
     this.facade.ngOnDestroy();

@@ -139,7 +139,8 @@ button { font-family: inherit; }
   font-size: 13px;
 }
 
-/* ── Export dropdown ──────────────────────────────────────── */
+/* ── Range / Export shared dropdown chrome ─────────────────── */
+.range-dropdown,
 .export-dropdown {
   position: relative;
 
@@ -148,6 +149,163 @@ button { font-family: inherit; }
     transition: transform .15s;
   }
   .chev.open { transform: rotate(180deg); color: #FF4D4D; }
+}
+
+.range-dropdown .btn-ghost.active {
+  border-color: #FF4D4D;
+  color: #FF4D4D;
+  background: #FFECEC;
+
+  svg { color: #FF4D4D; }
+}
+
+/* ── Range dropdown menu ──────────────────────────────────── */
+.range-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 280px;
+  background: #fff;
+  border: 1px solid #E8E8E8;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  padding: 6px 6px 10px;
+  z-index: 20;
+  animation: menu-pop .12s ease-out;
+}
+
+.range-section-label {
+  padding: 8px 10px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #A0A0A0;
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+
+.range-section-label-sm {
+  padding-top: 12px;
+}
+
+.range-preset {
+  width: 100%;
+  background: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  color: #3D3D3D;
+  transition: background .12s;
+  text-align: left;
+
+  &:hover { background: #FAFAFA; }
+  &.active { background: #FFECEC; color: #FF4D4D; }
+  &.active svg { color: #FF4D4D; }
+}
+
+.range-preset-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.range-preset-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.range-preset-sub {
+  font-size: 11px;
+  color: #7A7A7A;
+}
+
+.range-preset.active .range-preset-sub { color: #B64040; }
+
+.range-custom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 4px 10px 10px;
+  border-bottom: 1px solid #F0F0F0;
+}
+
+.range-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.range-field-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #7A7A7A;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.range-field input {
+  border: 1.5px solid #E8E8E8;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: #3D3D3D;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:focus { outline: none; border-color: #FF4D4D; }
+}
+
+.range-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px 0;
+  gap: 8px;
+}
+
+.range-clear { font-size: 12px; }
+
+.range-apply {
+  height: 32px;
+  padding: 0 14px;
+  font-size: 12px;
+
+  &:disabled { opacity: .5; cursor: not-allowed; }
+}
+
+/* ── Active range banner ──────────────────────────────────── */
+.active-range-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FFECEC;
+  border: 1px solid #FAD4D4;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  color: #B64040;
+  flex-shrink: 0;
+
+  svg { color: #FF4D4D; flex-shrink: 0; }
+
+  strong { font-weight: 600; color: #FF4D4D; margin-left: -2px; }
+
+  .clear-range-btn {
+    margin-left: auto;
+    font-size: 12px;
+  }
+}
+
+.active-range-dates {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  color: #7A7A7A;
 }
 
 .export-menu {

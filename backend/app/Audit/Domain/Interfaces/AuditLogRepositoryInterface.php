@@ -91,10 +91,19 @@ interface AuditLogRepositoryInterface
      * rows for the restaurant, the created_at range they span, and the
      * count grouped by `YYYY-MM` of their original created_at.
      *
+     * The optional $dateFrom / $dateTo bounds narrow the snapshot by the
+     * event's original created_at (NOT by archived_at) — the panel
+     * filter answers "show me the corpus from this period", not "show
+     * me what got archived during this period".
+     *
      * The monthly breakdown is ordered chronologically. Empty when the
-     * restaurant has no archived rows.
+     * restaurant has no archived rows in the requested window.
      */
-    public function getArchivedStats(Uuid $restaurantId): ArchivedAuditStats;
+    public function getArchivedStats(
+        Uuid $restaurantId,
+        ?\DateTimeImmutable $dateFrom = null,
+        ?\DateTimeImmutable $dateTo = null,
+    ): ArchivedAuditStats;
 
     /**
      * Streams audit logs matching the criteria in chronological order

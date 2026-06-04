@@ -332,8 +332,11 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
         })->values()->all();
     }
 
-    public function getArchivedStats(Uuid $restaurantId): ArchivedAuditStats
-    {
+    public function getArchivedStats(
+        Uuid $restaurantId,
+        ?\DateTimeImmutable $dateFrom = null,
+        ?\DateTimeImmutable $dateTo = null,
+    ): ArchivedAuditStats {
         $restaurantIdInt = EloquentRestaurant::query()
             ->where('uuid', $restaurantId->value())
             ->value('id');
@@ -342,10 +345,14 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
             return ArchivedAuditStats::empty();
         }
 
-        $aggregate = EloquentAuditLog::query()
+        $baseQuery = fn () => EloquentAuditLog::query()
             ->withoutGlobalScopes()
             ->where('restaurant_id', $restaurantIdInt)
             ->whereNotNull('archived_at')
+            ->when($dateFrom !== null, fn ($q) => $q->where('created_at', '>=', $dateFrom->format('Y-m-d H:i:s')))
+            ->when($dateTo !== null, fn ($q) => $q->where('created_at', '<=', $dateTo->format('Y-m-d H:i:s')));
+
+        $aggregate = ($baseQuery)()
             ->selectRaw('COUNT(*) as total, MIN(created_at) as oldest, MAX(created_at) as newest')
             ->first();
 
@@ -362,10 +369,7 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
             ? new \DateTimeImmutable((string) $aggregate->newest)
             : null;
 
-        $rows = EloquentAuditLog::query()
-            ->withoutGlobalScopes()
-            ->where('restaurant_id', $restaurantIdInt)
-            ->whereNotNull('archived_at')
+        $rows = ($baseQuery)()
             ->selectRaw('SUBSTR(created_at, 1, 7) as month, COUNT(*) as count')
             ->groupBy('month')
             ->orderBy('month', 'asc')

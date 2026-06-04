@@ -8,5 +8,7 @@ final readonly class GetArchivedAuditStatsCommand
 {
     public function __construct(
         public string $restaurantId,
+        public ?string $dateFrom = null,
+        public ?string $dateTo = null,
     ) {}
 }

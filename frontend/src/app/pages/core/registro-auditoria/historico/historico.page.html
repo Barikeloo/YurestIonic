@@ -1,4 +1,4 @@
-<div class="historico-page" (click)="closeExportMenu()">
+<div class="historico-page" (click)="closeExportMenu(); closeRangeMenu()">
 
   <!-- Page head -->
   <div class="page-head">
@@ -24,6 +24,66 @@
       @if (lastUpdatedAt(); as updated) {
         <span class="last-updated">Actualizado a las {{ formatLastUpdated(updated) }}</span>
       }
+
+      <!-- Date-range dropdown -->
+      <div class="range-dropdown" (click)="$event.stopPropagation()">
+        <button
+          class="btn-ghost"
+          [class.active]="hasActiveRange()"
+          (click)="toggleRangeMenu($event)"
+          title="Filtrar por rango temporal"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          {{ activeRangeLabel() ?? 'Rango temporal' }}
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="chev" [class.open]="rangeMenuOpen()">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        @if (rangeMenuOpen()) {
+          <div class="range-menu">
+            <div class="range-section-label">Presets</div>
+            @for (preset of RANGE_PRESETS; track preset.id) {
+              <button
+                class="range-preset"
+                [class.active]="activePreset() === preset.id"
+                (click)="applyPreset(preset.id)"
+              >
+                <span class="range-preset-body">
+                  <span class="range-preset-label">{{ preset.label }}</span>
+                  <span class="range-preset-sub">{{ preset.sub }}</span>
+                </span>
+                @if (activePreset() === preset.id) {
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                }
+              </button>
+            }
+            <div class="range-section-label range-section-label-sm">Personalizado</div>
+            <div class="range-custom">
+              <label class="range-field">
+                <span class="range-field-label">Desde</span>
+                <input type="date" [(ngModel)]="customFrom" />
+              </label>
+              <label class="range-field">
+                <span class="range-field-label">Hasta</span>
+                <input type="date" [(ngModel)]="customTo" />
+              </label>
+            </div>
+            <div class="range-actions">
+              @if (hasActiveRange()) {
+                <button class="btn-link range-clear" (click)="clearRange()">Quitar filtro</button>
+              }
+              <button class="btn-primary range-apply" (click)="applyCustomRange()" [disabled]="!customFrom && !customTo">
+                Aplicar
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
       <button class="btn-ghost" (click)="reload()" [disabled]="isLoading()" title="Recargar">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" [class.spinning]="isLoading()">
           <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
@@ -91,6 +151,24 @@
       </button>
     </div>
   </div>
+
+  <!-- Active range banner -->
+  @if (hasActiveRange()) {
+    <div class="active-range-banner">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+      </svg>
+      Filtrando: <strong>{{ activeRangeLabel() }}</strong>
+      @if (dateFrom() || dateTo()) {
+        <span class="active-range-dates">
+          @if (dateFrom()) { <span>{{ dateFrom() }}</span> }
+          @if (dateFrom() && dateTo()) { <span> → </span> }
+          @if (dateTo()) { <span>{{ dateTo() }}</span> }
+        </span>
+      }
+      <button class="btn-link clear-range-btn" (click)="clearRange()">Quitar</button>
+    </div>
+  }
 
   <!-- Error state -->
   @if (loadError(); as err) {
