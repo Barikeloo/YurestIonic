@@ -9,6 +9,7 @@ use App\Audit\Domain\AuditLogPage;
 use App\Audit\Domain\Entity\AuditLog;
 use App\Audit\Domain\ListAuditLogsCriteria;
 use App\Audit\Domain\ValueObject\ActionSlug;
+use App\Audit\Domain\ValueObject\ArchivedAuditStats;
 use App\Shared\Domain\ValueObject\Uuid;
 
 interface AuditLogRepositoryInterface
@@ -84,4 +85,14 @@ interface AuditLogRepositoryInterface
         \DateTimeImmutable $threshold,
         bool $dryRun,
     ): array;
+
+    /**
+     * Returns the snapshot used by the admin history panel: total archived
+     * rows for the restaurant, the created_at range they span, and the
+     * count grouped by `YYYY-MM` of their original created_at.
+     *
+     * The monthly breakdown is ordered chronologically. Empty when the
+     * restaurant has no archived rows.
+     */
+    public function getArchivedStats(Uuid $restaurantId): ArchivedAuditStats;
 }

@@ -10,6 +10,8 @@ use App\Audit\Domain\Exception\InvalidArchiveThresholdException;
 use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
 use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Shared\Domain\ValueObject\Uuid;
+use Illuminate\Cache\ArrayStore;
+use Illuminate\Cache\Repository as CacheRepository;
 use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
@@ -18,13 +20,15 @@ class ArchiveOldAuditLogsTest extends TestCase
 {
     private AuditLogRepositoryInterface&MockInterface $repository;
     private AuditRecorderInterface&MockInterface $auditRecorder;
+    private CacheRepository $cache;
     private ArchiveOldAuditLogs $useCase;
 
     protected function setUp(): void
     {
         $this->repository = Mockery::mock(AuditLogRepositoryInterface::class);
         $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
-        $this->useCase = new ArchiveOldAuditLogs($this->repository, $this->auditRecorder);
+        $this->cache = new CacheRepository(new ArrayStore);
+        $this->useCase = new ArchiveOldAuditLogs($this->repository, $this->auditRecorder, $this->cache);
     }
 
     protected function tearDown(): void

@@ -10,6 +10,8 @@ use App\Audit\Domain\Entity\AuditLog;
 use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
 use App\Audit\Domain\ListAuditLogsCriteria;
 use App\Audit\Domain\ValueObject\ActionSlug;
+use App\Audit\Domain\ValueObject\ArchivedAuditStats;
+use App\Audit\Domain\ValueObject\MonthlyArchivedCount;
 use App\Audit\Infrastructure\Persistence\Models\EloquentAuditLog;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -328,6 +330,58 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
                 newestCreatedAt: $row->newest_created_at !== null ? new \DateTimeImmutable((string) $row->newest_created_at) : null,
             );
         })->values()->all();
+    }
+
+    public function getArchivedStats(Uuid $restaurantId): ArchivedAuditStats
+    {
+        $restaurantIdInt = EloquentRestaurant::query()
+            ->where('uuid', $restaurantId->value())
+            ->value('id');
+
+        if ($restaurantIdInt === null) {
+            return ArchivedAuditStats::empty();
+        }
+
+        $aggregate = EloquentAuditLog::query()
+            ->withoutGlobalScopes()
+            ->where('restaurant_id', $restaurantIdInt)
+            ->whereNotNull('archived_at')
+            ->selectRaw('COUNT(*) as total, MIN(created_at) as oldest, MAX(created_at) as newest')
+            ->first();
+
+        $total = (int) ($aggregate->total ?? 0);
+
+        if ($total === 0) {
+            return ArchivedAuditStats::empty();
+        }
+
+        $oldest = $aggregate->oldest !== null
+            ? new \DateTimeImmutable((string) $aggregate->oldest)
+            : null;
+        $newest = $aggregate->newest !== null
+            ? new \DateTimeImmutable((string) $aggregate->newest)
+            : null;
+
+        $rows = EloquentAuditLog::query()
+            ->withoutGlobalScopes()
+            ->where('restaurant_id', $restaurantIdInt)
+            ->whereNotNull('archived_at')
+            ->selectRaw('SUBSTR(created_at, 1, 7) as month, COUNT(*) as count')
+            ->groupBy('month')
+            ->orderBy('month', 'asc')
+            ->get();
+
+        $monthly = $rows->map(static fn ($row): MonthlyArchivedCount => new MonthlyArchivedCount(
+            month: (string) $row->month,
+            count: (int) $row->count,
+        ))->values()->all();
+
+        return new ArchivedAuditStats(
+            total: $total,
+            oldestCreatedAt: $oldest,
+            newestCreatedAt: $newest,
+            monthlyBreakdown: $monthly,
+        );
     }
 
     public function findAllByRestaurantOrdered(Uuid $restaurantId): array

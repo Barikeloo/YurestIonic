@@ -1,5 +1,6 @@
 <?php
 
+use App\Audit\Infrastructure\Entrypoint\Http\GetArchivedAuditStatsController;
 use App\Audit\Infrastructure\Entrypoint\Http\GetAuditEventController;
 use App\Audit\Infrastructure\Entrypoint\Http\ListAuditAlertsController;
 use App\Audit\Infrastructure\Entrypoint\Http\ListAuditEventsController;
@@ -301,8 +302,9 @@ Route::middleware([
     Route::post('/tpv/z-reports/generate', GenerateZReportController::class);
 
     Route::get('/admin/audit-log', ListAuditEventsController::class);
-    Route::get('/admin/audit-log/{uuid}', GetAuditEventController::class)->whereUuid('uuid');
+    Route::get('/admin/audit-log/archived-stats', GetArchivedAuditStatsController::class);
     Route::get('/admin/audit-log/verify', VerifyAuditChainController::class);
+    Route::get('/admin/audit-log/{uuid}', GetAuditEventController::class)->whereUuid('uuid');
 
     Route::get('/admin/audit-saved-views', ListAuditSavedViewsController::class);
     Route::post('/admin/audit-saved-views', CreateAuditSavedViewController::class);
