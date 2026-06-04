@@ -32,12 +32,14 @@ export class HistoricoFacade {
   private readonly _isLoading = signal<boolean>(false);
   private readonly _loadError = signal<string | null>(null);
   private readonly _lastUpdatedAt = signal<Date | null>(null);
+  private readonly _exportMenuOpen = signal<boolean>(false);
 
   // ── Public readonly ──────────────────────────────────────────
   public readonly stats: Signal<ArchivedAuditStatsApi | null> = this._stats.asReadonly();
   public readonly isLoading: Signal<boolean> = this._isLoading.asReadonly();
   public readonly loadError: Signal<string | null> = this._loadError.asReadonly();
   public readonly lastUpdatedAt: Signal<Date | null> = this._lastUpdatedAt.asReadonly();
+  public readonly exportMenuOpen: Signal<boolean> = this._exportMenuOpen.asReadonly();
 
   // ── Derived signals ──────────────────────────────────────────
   public readonly hasData = computed(() => (this._stats()?.total ?? 0) > 0);
@@ -98,11 +100,25 @@ export class HistoricoFacade {
     return Math.round(total / months);
   });
 
+  // Export URLs always carry include_archived=1: the histórico panel
+  // exists for the archived corpus, and the meta-event keeps a record
+  // of every download regardless of format.
+  public readonly csvExportUrl = computed<string>(
+    () => this.service.buildExportUrl('csv', { includeArchived: true }),
+  );
+
+  public readonly ndjsonExportUrl = computed<string>(
+    () => this.service.buildExportUrl('ndjson', { includeArchived: true }),
+  );
+
   // ── Setters ──────────────────────────────────────────────────
   public setStats(value: ArchivedAuditStatsApi | null): void { this._stats.set(value); }
   public setLoading(value: boolean): void { this._isLoading.set(value); }
   public setLoadError(value: string | null): void { this._loadError.set(value); }
   public setLastUpdatedAt(value: Date | null): void { this._lastUpdatedAt.set(value); }
+  public setExportMenuOpen(value: boolean): void { this._exportMenuOpen.set(value); }
+  public toggleExportMenu(): void { this._exportMenuOpen.update((v) => !v); }
+  public closeExportMenu(): void { this._exportMenuOpen.set(false); }
 
   // ── Business ────────────────────────────────────────────────
   public loadStats(): void {

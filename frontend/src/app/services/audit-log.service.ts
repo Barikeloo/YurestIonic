@@ -141,4 +141,20 @@ export class AuditLogService extends BaseApiService {
   public getArchivedStats(): Observable<ArchivedAuditStatsApi> {
     return this.get<ArchivedAuditStatsApi>('/admin/audit-log/archived-stats');
   }
+
+  public buildExportUrl(format: 'csv' | 'ndjson', filters: ListAuditEventsFilters = {}): string {
+    const base = this.apiUrl.endsWith('/api') ? this.apiUrl : `${this.apiUrl}/api`;
+    const params = new URLSearchParams();
+    params.set('format', format);
+    if (filters.category) params.set('category', filters.category);
+    if (filters.severity) params.set('severity', filters.severity);
+    if (filters.userId) params.set('user_id', filters.userId);
+    if (filters.deviceId) params.set('device_id', filters.deviceId);
+    if (filters.dateFrom) params.set('date_from', filters.dateFrom);
+    if (filters.dateTo) params.set('date_to', filters.dateTo);
+    if (filters.search) params.set('q', filters.search);
+    if (filters.anomalyOnly) params.set('anomaly_only', '1');
+    if (filters.includeArchived) params.set('include_archived', '1');
+    return `${base}/admin/audit-log/export?${params.toString()}`;
+  }
 }

@@ -1,4 +1,4 @@
-<div class="historico-page">
+<div class="historico-page" (click)="closeExportMenu()">
 
   <!-- Page head -->
   <div class="page-head">
@@ -31,6 +31,57 @@
         </svg>
         Recargar
       </button>
+
+      <!-- Export dropdown -->
+      <div class="export-dropdown" (click)="$event.stopPropagation()">
+        <button
+          class="btn-ghost"
+          (click)="toggleExportMenu($event)"
+          [disabled]="!hasData()"
+          [title]="hasData() ? 'Exportar histórico' : 'Sin datos que exportar'"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Exportar
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" class="chev" [class.open]="exportMenuOpen()">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+        @if (exportMenuOpen()) {
+          <div class="export-menu">
+            <a class="export-item" [href]="csvExportUrl()" download (click)="closeExportMenu()">
+              <span class="export-item-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                </svg>
+              </span>
+              <span class="export-item-body">
+                <span class="export-item-title">CSV</span>
+                <span class="export-item-sub">Compatible con Excel</span>
+              </span>
+            </a>
+            <a class="export-item" [href]="ndjsonExportUrl()" download (click)="closeExportMenu()">
+              <span class="export-item-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                </svg>
+              </span>
+              <span class="export-item-body">
+                <span class="export-item-title">NDJSON</span>
+                <span class="export-item-sub">Una línea JSON por evento</span>
+              </span>
+            </a>
+            <div class="export-menu-foot">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              Incluye archivados · queda registrado en auditoría
+            </div>
+          </div>
+        }
+      </div>
+
       <button class="btn-primary" (click)="openRegistroWithHistorico()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>

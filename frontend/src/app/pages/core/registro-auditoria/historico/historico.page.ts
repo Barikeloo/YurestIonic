@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HistoricoFacade } from './facades/historico.facade';
 
@@ -29,10 +29,23 @@ export class HistoricoPage implements OnInit, OnDestroy {
   get monthlyPoints() { return this.facade.monthlyPoints; }
   get peakMonth() { return this.facade.peakMonth; }
   get monthlyAverage() { return this.facade.monthlyAverage; }
+  get exportMenuOpen() { return this.facade.exportMenuOpen; }
+  get csvExportUrl() { return this.facade.csvExportUrl; }
+  get ndjsonExportUrl() { return this.facade.ndjsonExportUrl; }
 
   ngOnInit(): void {
     this.facade.loadStats();
   }
+
+  @HostListener('document:keydown.escape')
+  onEsc(): void { this.facade.closeExportMenu(); }
+
+  toggleExportMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.facade.toggleExportMenu();
+  }
+
+  closeExportMenu(): void { this.facade.closeExportMenu(); }
 
   ngOnDestroy(): void {
     this.facade.ngOnDestroy();
