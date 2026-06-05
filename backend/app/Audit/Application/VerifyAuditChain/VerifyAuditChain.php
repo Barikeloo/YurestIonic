@@ -6,6 +6,8 @@ namespace App\Audit\Application\VerifyAuditChain;
 
 use App\Audit\Domain\AuditChainHasher;
 use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
+use App\Audit\Domain\Interfaces\VerifyChainResultRepositoryInterface;
+use App\Audit\Domain\ValueObject\VerifyChainResult;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class VerifyAuditChain
@@ -13,6 +15,7 @@ final class VerifyAuditChain
     public function __construct(
         private readonly AuditLogRepositoryInterface $auditLogRepository,
         private readonly AuditChainHasher $hasher,
+        private readonly VerifyChainResultRepositoryInterface $verifyResultRepository,
     ) {}
 
     public function __invoke(VerifyAuditChainCommand $command): VerifyAuditChainResponse
@@ -57,6 +60,18 @@ final class VerifyAuditChain
 
             $prevHash = $event->integrityHash();
         }
+
+        $result = VerifyChainResult::create(
+            restaurantId: $restaurantUuid,
+            isValid: $firstBrokenIndex === null,
+            totalEvents: $total,
+            verifiedCount: $verified,
+            brokenEvents: $broken,
+            firstBrokenIndex: $firstBrokenIndex,
+            verifiedAt: new \DateTimeImmutable,
+        );
+
+        $this->verifyResultRepository->save($result);
 
         return VerifyAuditChainResponse::create(
             totalEvents: $total,

@@ -5,8 +5,10 @@ namespace App\Providers;
 use App\Audit\Domain\Interfaces\AlertNotifierInterface;
 use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
 use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Audit\Domain\Interfaces\VerifyChainResultRepositoryInterface;
 use App\Audit\Infrastructure\Persistence\EloquentAuditRecorder;
 use App\Audit\Infrastructure\Persistence\Repositories\EloquentAuditLogRepository;
+use App\Audit\Infrastructure\Persistence\Repositories\EloquentVerifyChainResultRepository;
 use App\Audit\Infrastructure\Services\DbAlertNotifier;
 use App\AuditSavedView\Domain\Interfaces\AuditSavedViewRepositoryInterface;
 use App\AuditSavedView\Infrastructure\Persistence\Repositories\EloquentAuditSavedViewRepository;
@@ -104,6 +106,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AuditLogRepositoryInterface::class, EloquentAuditLogRepository::class);
         $this->app->bind(AuditRecorderInterface::class, EloquentAuditRecorder::class);
         $this->app->bind(AuditSavedViewRepositoryInterface::class, EloquentAuditSavedViewRepository::class);
+        $this->app->bind(VerifyChainResultRepositoryInterface::class, EloquentVerifyChainResultRepository::class);
         $this->app->bind(AlertNotifierInterface::class, DbAlertNotifier::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
     }

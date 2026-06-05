@@ -121,6 +121,17 @@ export interface BrokenAuditEventApi {
   actual_hash: string;
 }
 
+export interface LatestVerifyResultApi {
+  latest: {
+    is_valid: boolean;
+    total_events: number;
+    verified_count: number;
+    broken_events: BrokenAuditEventApi[];
+    first_broken_index: number | null;
+    verified_at: string;
+  } | null;
+}
+
 export interface VerifyAuditChainApi {
   total_events: number;
   verified_count: number;
@@ -181,6 +192,10 @@ export class AuditLogService extends BaseApiService {
 
   public verifyChain(): Observable<VerifyAuditChainApi> {
     return this.get<VerifyAuditChainApi>('/admin/audit-log/verify');
+  }
+
+  public getLatestVerifyResult(): Observable<LatestVerifyResultApi> {
+    return this.get<LatestVerifyResultApi>('/admin/audit-log/verify/latest');
   }
 
   public buildExportUrl(format: 'csv' | 'ndjson', filters: ListAuditEventsFilters = {}): string {

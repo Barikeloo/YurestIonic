@@ -8,6 +8,7 @@ use App\Audit\Application\VerifyAuditChain\VerifyAuditChainResponse;
 use App\Audit\Domain\AuditChainHasher;
 use App\Audit\Domain\Entity\AuditLog;
 use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
+use App\Audit\Domain\Interfaces\VerifyChainResultRepositoryInterface;
 use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Audit\Domain\ValueObject\Category;
 use App\Audit\Domain\ValueObject\Severity;
@@ -19,14 +20,16 @@ use PHPUnit\Framework\TestCase;
 class VerifyAuditChainTest extends TestCase
 {
     private AuditLogRepositoryInterface&MockInterface $repository;
+    private VerifyChainResultRepositoryInterface&MockInterface $verifyResultRepo;
     private AuditChainHasher $hasher;
     private VerifyAuditChain $useCase;
 
     protected function setUp(): void
     {
         $this->repository = Mockery::mock(AuditLogRepositoryInterface::class);
+        $this->verifyResultRepo = Mockery::mock(VerifyChainResultRepositoryInterface::class);
         $this->hasher = new AuditChainHasher;
-        $this->useCase = new VerifyAuditChain($this->repository, $this->hasher);
+        $this->useCase = new VerifyAuditChain($this->repository, $this->hasher, $this->verifyResultRepo);
     }
 
     protected function tearDown(): void
@@ -127,6 +130,8 @@ class VerifyAuditChainTest extends TestCase
             ->once()
             ->andReturn([$event1Valid, $event2Valid]);
 
+        $this->verifyResultRepo->shouldReceive('save')->once();
+
         $command = new VerifyAuditChainCommand(restaurantId: $restaurantId->value());
         $response = ($this->useCase)($command);
 
@@ -160,6 +165,8 @@ class VerifyAuditChainTest extends TestCase
             ->once()
             ->andReturn([$event1]);
 
+        $this->verifyResultRepo->shouldReceive('save')->once();
+
         $command = new VerifyAuditChainCommand(restaurantId: $restaurantId->value());
         $response = ($this->useCase)($command);
 
@@ -178,6 +185,8 @@ class VerifyAuditChainTest extends TestCase
             ->shouldReceive('findAllByRestaurantOrdered')
             ->once()
             ->andReturn([]);
+
+        $this->verifyResultRepo->shouldReceive('save')->once();
 
         $command = new VerifyAuditChainCommand(restaurantId: $restaurantId->value());
         $response = ($this->useCase)($command);

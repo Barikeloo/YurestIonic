@@ -56,7 +56,7 @@ export class HistoricoPage implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.facade.loadStats();
-    this.facade.hydrateVerifyFromStorage();
+    this.facade.loadLatestVerify();
   }
 
   runVerify(): void { this.facade.runVerify(); }

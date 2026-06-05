@@ -15,9 +15,9 @@ final readonly class ArchivedAuditStats
 {
     /**
      * @param  list<MonthlyArchivedCount>  $monthlyBreakdown
-     * @param  list<CategoryArchivedCount> $byCategory
-     * @param  list<TopArchivedUser>       $topUsers
-     * @param  list<AnomalyKindCount>      $byAnomalyKind
+     * @param  list<CategoryArchivedCount>  $byCategory
+     * @param  list<TopArchivedUser>  $topUsers
+     * @param  list<AnomalyKindCount>  $byAnomalyKind
      */
     public function __construct(
         public int $total,
