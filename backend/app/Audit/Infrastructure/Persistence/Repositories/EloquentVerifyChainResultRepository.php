@@ -7,14 +7,14 @@ namespace App\Audit\Infrastructure\Persistence\Repositories;
 use App\Audit\Domain\Interfaces\VerifyChainResultRepositoryInterface;
 use App\Audit\Domain\ValueObject\VerifyChainResult;
 use App\Audit\Infrastructure\Persistence\Models\EloquentVerifyChainResult;
-use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 
 final class EloquentVerifyChainResultRepository implements VerifyChainResultRepositoryInterface
 {
     public function save(VerifyChainResult $result): void
     {
-        $model = new EloquentVerifyChainResult;
+        $model = new EloquentVerifyChainResult();
         $model->restaurant_id = $this->resolveRestaurantId($result->restaurantId);
         $model->is_valid = $result->isValid;
         $model->total_events = $result->totalEvents;
