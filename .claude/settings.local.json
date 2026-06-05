@@ -89,7 +89,9 @@
       "Bash(make test-e2e-videos *)",
       "Bash(make test-e2e-report *)",
       "Bash(git commit *)",
-      "Bash(make test *)"
+      "Bash(make test *)",
+      "Bash(node -e \"const r = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\\\$/i; console.log\\('Manolo:', r.test\\('8350191e-e979-4255-b9cc-0bb88b83a3d6'\\)\\); console.log\\('Maria:', r.test\\('c7f009d0-649a-40f9-8b23-26f37b10c015'\\)\\);\")",
+      "Bash(node -e \"const r = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\\\$/i; console.log\\('Manolo:', r.test\\('8350191e-e979-4255-b9cc-0bb88b83a3d6'\\)\\); console.log\\('Maria:', r.test\\('c7f009d0-649a-40f9-8b23-26f37b10c015'\\)\\); console.log\\('invalid:', r.test\\('not-a-uuid'\\)\\);\")"
     ]
   }
 }
