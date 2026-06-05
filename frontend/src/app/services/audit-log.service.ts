@@ -100,6 +100,11 @@ export interface TopArchivedUserApi {
   count: number;
 }
 
+export interface AnomalyKindCountApi {
+  kind: string;
+  count: number;
+}
+
 export interface ArchivedAuditStatsApi {
   total: number;
   oldest_created_at: string | null;
@@ -107,6 +112,7 @@ export interface ArchivedAuditStatsApi {
   monthly_breakdown: MonthlyArchivedCountApi[];
   by_category: CategoryArchivedCountApi[];
   top_users: TopArchivedUserApi[];
+  by_anomaly_kind: AnomalyKindCountApi[];
 }
 
 export interface BrokenAuditEventApi {

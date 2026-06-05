@@ -10,6 +10,7 @@ use App\Audit\Domain\Entity\AuditLog;
 use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
 use App\Audit\Domain\ListAuditLogsCriteria;
 use App\Audit\Domain\ValueObject\ActionSlug;
+use App\Audit\Domain\ValueObject\AnomalyKindCount;
 use App\Audit\Domain\ValueObject\ArchivedAuditStats;
 use App\Audit\Domain\ValueObject\CategoryArchivedCount;
 use App\Audit\Domain\ValueObject\MonthlyArchivedCount;
@@ -414,6 +415,18 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
             count: (int) $row->count,
         ))->values()->all();
 
+        $anomalyRows = ($baseQuery)()
+            ->whereNotNull('anomaly_kind')
+            ->selectRaw('anomaly_kind, COUNT(*) as count')
+            ->groupBy('anomaly_kind')
+            ->orderByDesc('count')
+            ->get();
+
+        $byAnomalyKind = $anomalyRows->map(static fn ($row): AnomalyKindCount => new AnomalyKindCount(
+            kind: (string) $row->anomaly_kind,
+            count: (int) $row->count,
+        ))->values()->all();
+
         return new ArchivedAuditStats(
             total: $total,
             oldestCreatedAt: $oldest,
@@ -421,6 +434,7 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
             monthlyBreakdown: $monthly,
             byCategory: $byCategory,
             topUsers: $topUsers,
+            byAnomalyKind: $byAnomalyKind,
         );
     }
 

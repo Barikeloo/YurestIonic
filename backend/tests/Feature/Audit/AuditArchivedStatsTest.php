@@ -250,6 +250,66 @@ class AuditArchivedStatsTest extends TestCase
         $response->assertJsonPath('top_users.4.count', 2);
     }
 
+    public function test_returns_by_anomaly_kind_grouped_and_sorted_by_count_desc(): void
+    {
+        $tenant = $this->createTenantSession('admin');
+        $restaurantId = $tenant['restaurant_id'];
+        $archivedAt = '2026-06-01 10:00:00';
+
+        // 2 auth_failed_burst + 1 caja_mismatch, plus a non-anomalous row.
+        $this->insertAuditLog($restaurantId, '2025-01-15 09:00:00', $archivedAt, 'auth', null, 'auth_failed_burst');
+        $this->insertAuditLog($restaurantId, '2025-01-16 09:00:00', $archivedAt, 'auth', null, 'auth_failed_burst');
+        $this->insertAuditLog($restaurantId, '2025-01-17 09:00:00', $archivedAt, 'caja', null, 'caja_mismatch');
+        $this->insertAuditLog($restaurantId, '2025-01-18 09:00:00', $archivedAt, 'system', null, null);
+
+        $response = $this
+            ->withSession($tenant['session'])
+            ->getJson('/api/admin/audit-log/archived-stats');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('by_anomaly_kind', [
+            ['kind' => 'auth_failed_burst', 'count' => 2],
+            ['kind' => 'caja_mismatch',     'count' => 1],
+        ]);
+    }
+
+    public function test_by_anomaly_kind_is_empty_array_when_no_anomalies_archived(): void
+    {
+        $tenant = $this->createTenantSession('admin');
+        $restaurantId = $tenant['restaurant_id'];
+        $archivedAt = '2026-06-01 10:00:00';
+
+        $this->insertAuditLog($restaurantId, '2025-01-15 09:00:00', $archivedAt, 'caja');
+        $this->insertAuditLog($restaurantId, '2025-01-16 09:00:00', $archivedAt, 'system');
+
+        $response = $this
+            ->withSession($tenant['session'])
+            ->getJson('/api/admin/audit-log/archived-stats');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('by_anomaly_kind', []);
+    }
+
+    public function test_by_anomaly_kind_only_counts_archived_rows(): void
+    {
+        $tenant = $this->createTenantSession('admin');
+        $restaurantId = $tenant['restaurant_id'];
+        $archivedAt = '2026-06-01 10:00:00';
+
+        // 1 archived anomaly + 1 live anomaly that must be ignored.
+        $this->insertAuditLog($restaurantId, '2025-01-15 09:00:00', $archivedAt, 'auth', null, 'auth_failed_burst');
+        $this->insertAuditLog($restaurantId, '2025-02-15 09:00:00', null, 'auth', null, 'auth_failed_burst');
+
+        $response = $this
+            ->withSession($tenant['session'])
+            ->getJson('/api/admin/audit-log/archived-stats');
+
+        $response->assertStatus(200);
+        $response->assertJsonPath('by_anomaly_kind', [
+            ['kind' => 'auth_failed_burst', 'count' => 1],
+        ]);
+    }
+
     public function test_result_is_cached_per_restaurant_for_five_minutes(): void
     {
         $tenant = $this->createTenantSession('admin');
@@ -284,6 +344,7 @@ class AuditArchivedStatsTest extends TestCase
         ?string $archivedAt,
         string $category = 'system',
         ?int $userId = null,
+        ?string $anomalyKind = null,
     ): string {
         $uuid = (string) Str::uuid();
 
@@ -298,7 +359,7 @@ class AuditArchivedStatsTest extends TestCase
             'summary' => 'Test event',
             'reason' => null,
             'session_id' => null,
-            'anomaly_kind' => null,
+            'anomaly_kind' => $anomalyKind,
             'integrity_hash' => str_repeat('0', 64),
             'prev_hash' => null,
             'metadata' => json_encode([]),

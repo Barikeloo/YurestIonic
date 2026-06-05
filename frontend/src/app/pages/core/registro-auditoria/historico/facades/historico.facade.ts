@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import {
+  AnomalyKindCountApi,
   ArchivedAuditStatsApi,
   AuditLogService,
   BrokenAuditEventApi,
@@ -49,6 +50,17 @@ export interface TopUserRow {
   count: number;
   initials: string;
 }
+
+export interface AnomalyKindRow {
+  kind: string;
+  label: string;
+  count: number;
+}
+
+const ANOMALY_LABELS_ES: Record<string, string> = {
+  auth_failed_burst: 'Burst de PIN fallidos',
+  caja_mismatch: 'Cierre de caja con descuadre',
+};
 
 const CATEGORY_LABELS_ES: Record<string, string> = {
   auth: 'Acceso',
@@ -211,6 +223,19 @@ export class HistoricoFacade {
       count: u.count,
       initials: userInitials(u.name),
     }));
+  });
+
+  public readonly anomalies = computed<AnomalyKindRow[]>(() => {
+    const raw = this._stats()?.by_anomaly_kind ?? [];
+    return raw.map((a: AnomalyKindCountApi) => ({
+      kind: a.kind,
+      label: ANOMALY_LABELS_ES[a.kind] ?? a.kind,
+      count: a.count,
+    }));
+  });
+
+  public readonly totalAnomalies = computed<number>(() => {
+    return this.anomalies().reduce((sum, a) => sum + a.count, 0);
   });
 
   public readonly monthlyAverage = computed<number>(() => {

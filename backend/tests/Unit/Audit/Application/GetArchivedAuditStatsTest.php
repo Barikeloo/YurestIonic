@@ -5,6 +5,7 @@ namespace Tests\Unit\Audit\Application;
 use App\Audit\Application\GetArchivedAuditStats\GetArchivedAuditStats;
 use App\Audit\Application\GetArchivedAuditStats\GetArchivedAuditStatsCommand;
 use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
+use App\Audit\Domain\ValueObject\AnomalyKindCount;
 use App\Audit\Domain\ValueObject\ArchivedAuditStats;
 use App\Audit\Domain\ValueObject\CategoryArchivedCount;
 use App\Audit\Domain\ValueObject\MonthlyArchivedCount;
@@ -153,9 +154,10 @@ class GetArchivedAuditStatsTest extends TestCase
             ['month' => '2025-01', 'count' => 3],
             ['month' => '2025-03', 'count' => 5],
         ], $payload['monthly_breakdown']);
+        $this->assertSame([], $payload['by_anomaly_kind']);
     }
 
-    public function test_serialises_by_category_and_top_users_into_response_payload(): void
+    public function test_serialises_by_category_top_users_and_by_anomaly_kind_into_response_payload(): void
     {
         $manoloUuid = Uuid::generate()->value();
         $mariaUuid = Uuid::generate()->value();
@@ -164,7 +166,7 @@ class GetArchivedAuditStatsTest extends TestCase
             ->shouldReceive('getArchivedStats')
             ->once()
             ->andReturn(new ArchivedAuditStats(
-                total: 6,
+                total: 8,
                 oldestCreatedAt: new \DateTimeImmutable('2025-01-15 09:00:00'),
                 newestCreatedAt: new \DateTimeImmutable('2025-03-25 18:00:00'),
                 monthlyBreakdown: [new MonthlyArchivedCount('2025-02', 6)],
@@ -175,6 +177,10 @@ class GetArchivedAuditStatsTest extends TestCase
                 topUsers: [
                     new TopArchivedUser($manoloUuid, 'Manolo', 'admin', 4),
                     new TopArchivedUser($mariaUuid, 'María', null, 2),
+                ],
+                byAnomalyKind: [
+                    new AnomalyKindCount('auth_failed_burst', 2),
+                    new AnomalyKindCount('caja_mismatch', 1),
                 ],
             ));
 
@@ -188,6 +194,10 @@ class GetArchivedAuditStatsTest extends TestCase
             ['uuid' => $manoloUuid, 'name' => 'Manolo', 'role' => 'admin', 'count' => 4],
             ['uuid' => $mariaUuid, 'name' => 'María', 'role' => null, 'count' => 2],
         ], $payload['top_users']);
+        $this->assertSame([
+            ['kind' => 'auth_failed_burst', 'count' => 2],
+            ['kind' => 'caja_mismatch',     'count' => 1],
+        ], $payload['by_anomaly_kind']);
     }
 
     public function test_empty_stats_serialises_to_empty_arrays_for_new_fields(): void
@@ -201,5 +211,6 @@ class GetArchivedAuditStatsTest extends TestCase
 
         $this->assertSame([], $payload['by_category']);
         $this->assertSame([], $payload['top_users']);
+        $this->assertSame([], $payload['by_anomaly_kind']);
     }
 }

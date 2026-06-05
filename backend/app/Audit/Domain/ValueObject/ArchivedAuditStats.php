@@ -17,6 +17,7 @@ final readonly class ArchivedAuditStats
      * @param  list<MonthlyArchivedCount>  $monthlyBreakdown
      * @param  list<CategoryArchivedCount> $byCategory
      * @param  list<TopArchivedUser>       $topUsers
+     * @param  list<AnomalyKindCount>      $byAnomalyKind
      */
     public function __construct(
         public int $total,
@@ -25,6 +26,7 @@ final readonly class ArchivedAuditStats
         public array $monthlyBreakdown,
         public array $byCategory = [],
         public array $topUsers = [],
+        public array $byAnomalyKind = [],
     ) {}
 
     public static function empty(): self
@@ -36,6 +38,7 @@ final readonly class ArchivedAuditStats
             monthlyBreakdown: [],
             byCategory: [],
             topUsers: [],
+            byAnomalyKind: [],
         );
     }
 }

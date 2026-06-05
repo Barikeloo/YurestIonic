@@ -212,6 +212,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   readonly jsonOpen = signal(false);
   readonly saveViewModalOpen = signal(false);
   readonly fromHistorico = signal<boolean>(false);
+  readonly filterAnomalyOnly = signal<boolean>(false);
 
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
 
@@ -257,6 +258,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     if (dateTo) filters.dateTo = dateTo;
     if (search.length >= MIN_SEARCH_CHARS) filters.search = search;
     if (this.includeArchived()) filters.includeArchived = true;
+    if (this.filterAnomalyOnly()) filters.anomalyOnly = true;
 
     return filters;
   });
@@ -369,6 +371,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
         const userId = params.get('userId');
         this.filterCategory.set(category ?? 'all');
         this.filterUser.set(userId ?? 'all');
+        this.filterAnomalyOnly.set(params.get('anomalyOnly') === '1');
         this.activeTab.set('all');
       } else if (this.fromHistorico()) {
         this.fromHistorico.set(false);
@@ -378,6 +381,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
         this.dateTo.set(isoToday());
         this.filterCategory.set('all');
         this.filterUser.set('all');
+        this.filterAnomalyOnly.set(false);
       }
     });
   }

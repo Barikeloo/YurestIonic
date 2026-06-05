@@ -51,6 +51,8 @@ export class HistoricoPage implements OnInit, OnDestroy {
   get verifyError() { return this.facade.verifyError; }
   get categoriesBreakdown() { return this.facade.categoriesBreakdown; }
   get topUsers() { return this.facade.topUsers; }
+  get anomalies() { return this.facade.anomalies; }
+  get totalAnomalies() { return this.facade.totalAnomalies; }
 
   ngOnInit(): void {
     this.facade.loadStats();
@@ -142,6 +144,15 @@ export class HistoricoPage implements OnInit, OnDestroy {
     const from = this.facade.dateFrom() ?? this.toIsoDate(this.facade.oldestDate());
     const to = this.facade.dateTo() ?? this.toIsoDate(this.facade.newestDate());
     const queryParams: Record<string, string | number> = { historico: 1, userId: userUuid };
+    if (from) queryParams['dateFrom'] = from;
+    if (to) queryParams['dateTo'] = to;
+    this.router.navigate(['/registro-auditoria'], { queryParams });
+  }
+
+  drillDownToAnomalies(): void {
+    const from = this.facade.dateFrom() ?? this.toIsoDate(this.facade.oldestDate());
+    const to = this.facade.dateTo() ?? this.toIsoDate(this.facade.newestDate());
+    const queryParams: Record<string, string | number> = { historico: 1, anomalyOnly: 1 };
     if (from) queryParams['dateFrom'] = from;
     if (to) queryParams['dateTo'] = to;
     this.router.navigate(['/registro-auditoria'], { queryParams });

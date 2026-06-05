@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Audit\Application\GetArchivedAuditStats;
 
+use App\Audit\Domain\ValueObject\AnomalyKindCount;
 use App\Audit\Domain\ValueObject\ArchivedAuditStats;
 use App\Audit\Domain\ValueObject\CategoryArchivedCount;
 use App\Audit\Domain\ValueObject\MonthlyArchivedCount;
@@ -51,6 +52,13 @@ final readonly class GetArchivedAuditStatsResponse
                     'count' => $u->count,
                 ],
                 $this->stats->topUsers,
+            ),
+            'by_anomaly_kind' => array_map(
+                static fn (AnomalyKindCount $a): array => [
+                    'kind' => $a->kind,
+                    'count' => $a->count,
+                ],
+                $this->stats->byAnomalyKind,
             ),
         ];
     }
