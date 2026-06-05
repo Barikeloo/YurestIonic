@@ -3,8 +3,18 @@ import { Subject, takeUntil } from 'rxjs';
 import {
   ArchivedAuditStatsApi,
   AuditLogService,
+  BrokenAuditEventApi,
   MonthlyArchivedCountApi,
+  VerifyAuditChainApi,
 } from '../../../../../services/audit-log.service';
+import { RestaurantContextFacade } from '../../../../../core/facades/restaurant-context.facade';
+import { AuthService } from '../../../../../core/services/auth.service';
+
+// TODO server-side persistence required before production. localStorage
+// works for the MVP but a real compliance run must store verifications
+// in the backend so any inspector/device sees the canonical state. See
+// PLAN_AUDIT_HISTORICO_TIER1.md (Decisiones tomadas).
+const CHAIN_VERIFY_STORAGE_PREFIX = 'audit_chain_verify:';
 
 const MONTH_LABELS_ES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
 
@@ -24,6 +34,17 @@ export interface PeakMonth {
 
 export type RangePreset = 'all' | 'lastMonth' | 'lastQuarter' | 'lastYear' | 'custom';
 
+export type VerifyState = 'idle' | 'loading' | 'success' | 'error';
+
+export interface VerifyResult {
+  isValid: boolean;
+  totalEvents: number;
+  verifiedCount: number;
+  brokenEvents: BrokenAuditEventApi[];
+  firstBrokenIndex: number | null;
+  verifiedAt: Date;
+}
+
 export interface RangePresetOption {
   id: RangePreset;
   label: string;
@@ -40,6 +61,8 @@ export const RANGE_PRESETS: ReadonlyArray<RangePresetOption> = [
 @Injectable()
 export class HistoricoFacade {
   private readonly service = inject(AuditLogService);
+  private readonly restaurantContextFacade = inject(RestaurantContextFacade);
+  private readonly authService = inject(AuthService);
   private readonly destroy$ = new Subject<void>();
 
   // ── Private state ────────────────────────────────────────────
@@ -52,6 +75,9 @@ export class HistoricoFacade {
   private readonly _activePreset = signal<RangePreset>('all');
   private readonly _dateFrom = signal<string | null>(null);
   private readonly _dateTo = signal<string | null>(null);
+  private readonly _verifyState = signal<VerifyState>('idle');
+  private readonly _verifyResult = signal<VerifyResult | null>(null);
+  private readonly _verifyError = signal<string | null>(null);
 
   // ── Public readonly ──────────────────────────────────────────
   public readonly stats: Signal<ArchivedAuditStatsApi | null> = this._stats.asReadonly();
@@ -63,6 +89,9 @@ export class HistoricoFacade {
   public readonly activePreset: Signal<RangePreset> = this._activePreset.asReadonly();
   public readonly dateFrom: Signal<string | null> = this._dateFrom.asReadonly();
   public readonly dateTo: Signal<string | null> = this._dateTo.asReadonly();
+  public readonly verifyState: Signal<VerifyState> = this._verifyState.asReadonly();
+  public readonly verifyResult: Signal<VerifyResult | null> = this._verifyResult.asReadonly();
+  public readonly verifyError: Signal<string | null> = this._verifyError.asReadonly();
 
   // ── Derived signals ──────────────────────────────────────────
   public readonly hasData = computed(() => (this._stats()?.total ?? 0) > 0);
@@ -242,6 +271,69 @@ export class HistoricoFacade {
           this.setLoading(false);
         },
       });
+  }
+
+  // ── Chain verification ──────────────────────────────────────
+  public hydrateVerifyFromStorage(): void {
+    const uuid = this.resolveRestaurantUuid();
+    if (!uuid) return;
+    const raw = localStorage.getItem(CHAIN_VERIFY_STORAGE_PREFIX + uuid);
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw) as Partial<VerifyResult> & { verifiedAt?: string };
+      if (!parsed.verifiedAt) return;
+      this._verifyResult.set({
+        isValid: !!parsed.isValid,
+        totalEvents: parsed.totalEvents ?? 0,
+        verifiedCount: parsed.verifiedCount ?? 0,
+        brokenEvents: Array.isArray(parsed.brokenEvents) ? parsed.brokenEvents : [],
+        firstBrokenIndex: parsed.firstBrokenIndex ?? null,
+        verifiedAt: new Date(parsed.verifiedAt),
+      });
+      this._verifyState.set('success');
+    } catch {
+      localStorage.removeItem(CHAIN_VERIFY_STORAGE_PREFIX + uuid);
+    }
+  }
+
+  public runVerify(): void {
+    this._verifyState.set('loading');
+    this._verifyError.set(null);
+    this.service
+      .verifyChain()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (response: VerifyAuditChainApi) => {
+          const result: VerifyResult = {
+            isValid: response.is_valid,
+            totalEvents: response.total_events,
+            verifiedCount: response.verified_count,
+            brokenEvents: response.broken_events,
+            firstBrokenIndex: response.first_broken_index,
+            verifiedAt: new Date(),
+          };
+          this._verifyResult.set(result);
+          this._verifyState.set('success');
+          this.persistVerifyResult(result);
+        },
+        error: (err: { message?: string }) => {
+          this._verifyError.set(err?.message ?? 'No se pudo verificar la cadena.');
+          this._verifyState.set('error');
+        },
+      });
+  }
+
+  private persistVerifyResult(result: VerifyResult): void {
+    const uuid = this.resolveRestaurantUuid();
+    if (!uuid) return;
+    localStorage.setItem(CHAIN_VERIFY_STORAGE_PREFIX + uuid, JSON.stringify(result));
+  }
+
+  private resolveRestaurantUuid(): string | null {
+    let uuid = this.restaurantContextFacade.selectedRestaurantUuid;
+    if (!uuid) uuid = localStorage.getItem('gestion_selected_restaurant_uuid');
+    if (!uuid) uuid = this.authService.currentUserSnapshot?.restaurantId ?? null;
+    return uuid;
   }
 
   public ngOnDestroy(): void {

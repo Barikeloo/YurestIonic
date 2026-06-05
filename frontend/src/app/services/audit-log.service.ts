@@ -95,6 +95,20 @@ export interface ArchivedAuditStatsApi {
   monthly_breakdown: MonthlyArchivedCountApi[];
 }
 
+export interface BrokenAuditEventApi {
+  uuid: string;
+  expected_hash: string;
+  actual_hash: string;
+}
+
+export interface VerifyAuditChainApi {
+  total_events: number;
+  verified_count: number;
+  broken_events: BrokenAuditEventApi[];
+  first_broken_index: number | null;
+  is_valid: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -143,6 +157,10 @@ export class AuditLogService extends BaseApiService {
     if (filters.dateFrom) params['date_from'] = filters.dateFrom;
     if (filters.dateTo) params['date_to'] = filters.dateTo;
     return this.get<ArchivedAuditStatsApi>('/admin/audit-log/archived-stats', params);
+  }
+
+  public verifyChain(): Observable<VerifyAuditChainApi> {
+    return this.get<VerifyAuditChainApi>('/admin/audit-log/verify');
   }
 
   public buildExportUrl(format: 'csv' | 'ndjson', filters: ListAuditEventsFilters = {}): string {

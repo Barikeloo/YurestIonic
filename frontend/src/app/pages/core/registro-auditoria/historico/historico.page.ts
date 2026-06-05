@@ -46,9 +46,25 @@ export class HistoricoPage implements OnInit, OnDestroy {
   get dateTo() { return this.facade.dateTo; }
   get hasActiveRange() { return this.facade.hasActiveRange; }
   get activeRangeLabel() { return this.facade.activeRangeLabel; }
+  get verifyState() { return this.facade.verifyState; }
+  get verifyResult() { return this.facade.verifyResult; }
+  get verifyError() { return this.facade.verifyError; }
 
   ngOnInit(): void {
     this.facade.loadStats();
+    this.facade.hydrateVerifyFromStorage();
+  }
+
+  runVerify(): void { this.facade.runVerify(); }
+
+  formatVerifiedAt(d: Date): string {
+    const diffMs = Date.now() - d.getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'justo ahora';
+    if (mins < 60) return `hace ${mins} min`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `hace ${hours} h`;
+    return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   @HostListener('document:keydown.escape')
@@ -96,6 +112,19 @@ export class HistoricoPage implements OnInit, OnDestroy {
     if (from) queryParams['dateFrom'] = from;
     if (to) queryParams['dateTo'] = to;
     this.router.navigate(['/registro-auditoria'], { queryParams });
+  }
+
+  drillDownToMonth(monthKey: string): void {
+    const [yearStr, monthStr] = monthKey.split('-');
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10);
+    if (Number.isNaN(year) || Number.isNaN(month)) return;
+    const lastDay = new Date(year, month, 0).getDate();
+    const dateFrom = `${yearStr}-${monthStr}-01`;
+    const dateTo = `${yearStr}-${monthStr}-${String(lastDay).padStart(2, '0')}`;
+    this.router.navigate(['/registro-auditoria'], {
+      queryParams: { historico: 1, dateFrom, dateTo },
+    });
   }
 
   private toIsoDate(d: Date | null): string | null {
