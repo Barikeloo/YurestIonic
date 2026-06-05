@@ -145,10 +145,14 @@ Leyenda: ✅ hecho · 🟡 en curso · ⚪ pendiente · ❌ bloqueado
 - SCSS: paleta de barras por categoría (auth=naranja, order=teal, caja=indigo, sale=verde, table=cyan, catalog=púrpura, config=gris, restaurant=ámbar, system=rojo). Avatares por rol (admin=rojo, supervisor=azul, operator=verde).
 - Registro-auditoria: subscription recoge también `category` y `userId` para aplicar filtros server-side. `exitHistoricoMode` los limpia.
 
-**TODOs (no parte de B):**
-- [ ] Tests unitarios del repositorio extendido (`getArchivedStats` con categorías y top users).
-- [ ] Test feature del endpoint con asserts del shape ampliado.
-- [ ] Actualizar tests existentes que construían `ArchivedAuditStats` directamente (la firma del constructor sigue compatible gracias a defaults).
+**Tests añadidos (Sesión B.5):**
+- ✅ Feature `AuditArchivedStatsTest` × 4 tests nuevos: by_category breakdown, top_users con shape completo, exclusión de events sin user_id, cap a 5.
+- ✅ Unit `GetArchivedAuditStatsTest` × 2 tests nuevos: serialización del response con by_category/top_users, empty stats devuelve `[]` en los nuevos campos.
+- Total backend: 784 → 790. Audit suite: 128 → 155 (+27 entre lo añadido aquí y lo ya acumulado en commits previos).
+
+**TODOs aún pendientes (no parte de B/B.5):**
+- [ ] Tests E2E del badge de verificación + drill-down por categoría/usuario.
+- [ ] Tests frontend unitarios del facade (computeds `categoriesBreakdown`, `topUsers`, hidrate desde localStorage).
 
 ### Sesión C — Anomalías históricas
 - Query nueva: `audit_logs WHERE anomaly_kind IS NOT NULL AND archived_at IS NOT NULL`.

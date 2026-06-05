@@ -219,11 +219,11 @@ docker compose exec api php artisan db:seed
 
 ## 3. Testing
 
-El proyecto se valida con tres suites complementarias: unitarios e integración del backend, tests de frontend, y end-to-end con Playwright contra el stack real (Docker + backend + frontend + MySQL seedeado). En conjunto suman **808 tests verdes** que cubren desde invariantes de dominio hasta el flujo completo TPV y todo el ciclo de retención de auditoría.
+El proyecto se valida con tres suites complementarias: unitarios e integración del backend, tests de frontend, y end-to-end con Playwright contra el stack real (Docker + backend + frontend + MySQL seedeado). En conjunto suman **814 tests verdes** que cubren desde invariantes de dominio hasta el flujo completo TPV y todo el ciclo de retención de auditoría.
 
 | Suite | Tests | Cómo correr |
 |---|---|---|
-| Backend (PHPUnit) | **784** (128 de auditoría) | `make test` |
+| Backend (PHPUnit) | **790** (155 de auditoría) | `make test` |
 | Frontend (Karma/Jasmine) | unit | `make test-frontend` |
 | E2E (Playwright contra backend real) | **24** | `make test-e2e` |
 
@@ -235,10 +235,10 @@ docker compose exec api php artisan test --filter=ChargeSessionEntityTest
 docker compose exec api php artisan test --filter=AuditRetentionLifecycleTest
 ```
 
-- 784 tests en verde, 0 deprecation warnings.
+- 790 tests en verde, 0 deprecation warnings.
 - **Unit**: entidades de dominio, Value Objects, validaciones de invariantes, cálculos (`AmountPerDiner`, hash de integridad del audit log), use cases con mocks (`GetArchivedAuditStats`, `ExportAuditEvents`, `ListAuditEvents`, `ArchiveOldAuditLogs`, `VerifyAuditChain`, `GetAuditEvent`, + CRUD `AuditSavedView`) y formatters byte-a-byte (`CsvAuditExportFormatter`, `NdjsonAuditExportFormatter`).
 - **Feature**: endpoints HTTP con base de datos en contenedor, autenticación, permisos, casos non-happy path (404, 409, 422, 403), y el **lifecycle test de retención** (`AuditRetentionLifecycleTest`) que recorre archive → stats → export → verify chain en una sola historia para detectar regresiones en los bordes entre piezas.
-- **Auditoría**: 128 tests específicos (28 feature + 84 unit domain + 16 unit `AuditSavedView`) que cubren listado con cursor, categorías, severidad, búsqueda, exportación CSV/NDJSON, archivado masivo, estadísticas de retención, verificación de cadena SHA-256, detector de anomalías (auth burst, caja mismatch), alertas y vistas guardadas.
+- **Auditoría**: 155 tests específicos que cubren listado con cursor, categorías, severidad, búsqueda, exportación CSV/NDJSON, archivado masivo, estadísticas de retención (incluido el desglose por categoría y top usuarios del panel histórico), verificación de cadena SHA-256, detector de anomalías (auth burst, caja mismatch), alertas y vistas guardadas.
 
 ### 3.2 Frontend — unit
 
