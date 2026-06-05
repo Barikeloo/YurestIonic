@@ -90,7 +90,20 @@ export class HistoricoPage implements OnInit, OnDestroy {
   goBackToRegistro(): void { this.router.navigate(['/registro-auditoria']); }
 
   openRegistroWithHistorico(): void {
-    this.router.navigate(['/registro-auditoria'], { queryParams: { historico: 1 } });
+    const from = this.facade.dateFrom() ?? this.toIsoDate(this.facade.oldestDate());
+    const to = this.facade.dateTo() ?? this.toIsoDate(this.facade.newestDate());
+    const queryParams: Record<string, string | number> = { historico: 1 };
+    if (from) queryParams['dateFrom'] = from;
+    if (to) queryParams['dateTo'] = to;
+    this.router.navigate(['/registro-auditoria'], { queryParams });
+  }
+
+  private toIsoDate(d: Date | null): string | null {
+    if (!d) return null;
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
 
   formatNumber(n: number): string { return n.toLocaleString('es-ES'); }

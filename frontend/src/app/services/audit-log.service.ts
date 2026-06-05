@@ -110,8 +110,8 @@ export class AuditLogService extends BaseApiService {
     if (filters.dateFrom) params['date_from'] = filters.dateFrom;
     if (filters.dateTo) params['date_to'] = filters.dateTo;
     if (filters.search) params['q'] = filters.search;
-    if (filters.anomalyOnly) params['anomaly_only'] = true;
-    if (filters.includeArchived) params['include_archived'] = true;
+    if (filters.anomalyOnly) params['anomaly_only'] = 1;
+    if (filters.includeArchived) params['include_archived'] = 1;
     if (filters.cursor) params['cursor'] = filters.cursor;
     if (filters.since) params['since'] = filters.since;
 

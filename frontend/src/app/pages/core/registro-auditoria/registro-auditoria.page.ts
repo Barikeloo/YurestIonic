@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy, signal, computed, effect, inject, HostListener } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -211,6 +212,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   readonly activeView = signal('sv-default');
   readonly jsonOpen = signal(false);
   readonly saveViewModalOpen = signal(false);
+  readonly fromHistorico = signal<boolean>(false);
 
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
 
@@ -335,6 +337,23 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
       const filters = this.serverFilters();
       this.facade.loadInitial(filters);
     });
+
+    // Reactive subscription: fires on every URL change, even if Ionic's
+    // router outlet reuses this component (which it does when navigating
+    // back from the histórico panel or from other pages).
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      if (params.get('historico') === '1') {
+        this.fromHistorico.set(true);
+        this.facade.setIncludeArchived(true);
+        this.dateFrom.set(params.get('dateFrom') ?? '');
+        this.dateTo.set(params.get('dateTo') ?? '');
+      } else if (this.fromHistorico()) {
+        this.fromHistorico.set(false);
+        this.facade.setIncludeArchived(false);
+        this.dateFrom.set(isoToday());
+        this.dateTo.set(isoToday());
+      }
+    });
   }
 
   ngOnInit(): void {
@@ -343,11 +362,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     this.facade.startAlertPolling();
     this.facade.loadUsersDirectory();
     this.facade.loadSavedViews();
-
-    // Deep-link from the histórico panel: ?historico=1 turns the toggle on.
-    if (this.route.snapshot.queryParamMap.get('historico') === '1') {
-      this.facade.setIncludeArchived(true);
-    }
   }
 
   ngOnDestroy(): void {
@@ -359,6 +373,25 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   goBack(): void { this.router.navigateByUrl('/app/gestion'); }
 
   goToHistorico(): void { this.router.navigateByUrl('/registro-auditoria/historico'); }
+
+  exitHistoricoMode(): void {
+    this.fromHistorico.set(false);
+    this.facade.setIncludeArchived(false);
+    this.dateFrom.set(isoToday());
+    this.dateTo.set(isoToday());
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { historico: null, dateFrom: null, dateTo: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  formatHistoricoDate(iso: string): string {
+    if (!iso) return '—';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
 
   selectTab(id: string): void { this.activeTab.set(id); }
 

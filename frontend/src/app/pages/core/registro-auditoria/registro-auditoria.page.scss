@@ -152,6 +152,60 @@ button { font-family: inherit; }
   }
 }
 
+/* Historico mode banner */
+.historico-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  background: linear-gradient(90deg, rgba(99, 102, 241, 0.10), rgba(168, 85, 247, 0.08));
+  border: 1px solid rgba(99, 102, 241, 0.28);
+  border-left: 4px solid #6366f1;
+  border-radius: 10px;
+  color: #312e81;
+  font-size: 14px;
+
+  .historico-banner-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.16);
+    color: #4f46e5;
+    flex-shrink: 0;
+  }
+
+  .historico-banner-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+
+    strong { color: #312e81; font-weight: 600; }
+    span   { color: #4338ca; font-size: 13px; }
+  }
+
+  .historico-banner-exit {
+    padding: 8px 14px;
+    background: #ffffff;
+    border: 1px solid rgba(99, 102, 241, 0.45);
+    border-radius: 8px;
+    color: #4338ca;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease;
+
+    &:hover {
+      background: #eef2ff;
+      border-color: #6366f1;
+    }
+  }
+}
+
 /* Layout */
 .audit-layout {
   display: grid;
