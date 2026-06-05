@@ -219,13 +219,13 @@ docker compose exec api php artisan db:seed
 
 ## 3. Testing
 
-El proyecto se valida con tres suites complementarias: unitarios e integración del backend, tests de frontend, y end-to-end con Playwright contra el stack real (Docker + backend + frontend + MySQL seedeado). En conjunto suman **814 tests verdes** que cubren desde invariantes de dominio hasta el flujo completo TPV y todo el ciclo de retención de auditoría.
+El proyecto se valida con tres suites complementarias: unitarios e integración del backend, tests de frontend, y end-to-end con Playwright contra el stack real (Docker + backend + frontend + MySQL seedeado). En conjunto suman **858 tests verdes** que cubren desde invariantes de dominio hasta el flujo completo TPV y todo el ciclo de retención de auditoría.
 
 | Suite | Tests | Cómo correr |
 |---|---|---|
-| Backend (PHPUnit) | **790** (155 de auditoría) | `make test` |
-| Frontend (Karma/Jasmine) | unit | `make test-frontend` |
-| E2E (Playwright contra backend real) | **24** | `make test-e2e` |
+| Backend (PHPUnit) | **802** (167 de auditoría) | `make test` |
+| Frontend (Karma/Jasmine) | **29** | `make test-frontend` |
+| E2E (Playwright contra backend real) | **27** | `make test-e2e` |
 
 ### 3.1 Backend — PHPUnit
 
@@ -235,10 +235,10 @@ docker compose exec api php artisan test --filter=ChargeSessionEntityTest
 docker compose exec api php artisan test --filter=AuditRetentionLifecycleTest
 ```
 
-- 790 tests en verde, 0 deprecation warnings.
-- **Unit**: entidades de dominio, Value Objects, validaciones de invariantes, cálculos (`AmountPerDiner`, hash de integridad del audit log), use cases con mocks (`GetArchivedAuditStats`, `ExportAuditEvents`, `ListAuditEvents`, `ArchiveOldAuditLogs`, `VerifyAuditChain`, `GetAuditEvent`, + CRUD `AuditSavedView`) y formatters byte-a-byte (`CsvAuditExportFormatter`, `NdjsonAuditExportFormatter`).
+- 802 tests en verde, 0 deprecation warnings.
+- **Unit**: entidades de dominio, Value Objects, validaciones de invariantes, cálculos (`AmountPerDiner`, hash de integridad del audit log), use cases con mocks (`GetArchivedAuditStats`, `ExportAuditEvents`, `ListAuditEvents`, `ArchiveOldAuditLogs`, `VerifyAuditChain`, `GetLatestVerifyResult`, `GetAuditEvent`, + CRUD `AuditSavedView`) y formatters byte-a-byte (`CsvAuditExportFormatter`, `NdjsonAuditExportFormatter`).
 - **Feature**: endpoints HTTP con base de datos en contenedor, autenticación, permisos, casos non-happy path (404, 409, 422, 403), y el **lifecycle test de retención** (`AuditRetentionLifecycleTest`) que recorre archive → stats → export → verify chain en una sola historia para detectar regresiones en los bordes entre piezas.
-- **Auditoría**: 155 tests específicos que cubren listado con cursor, categorías, severidad, búsqueda, exportación CSV/NDJSON, archivado masivo, estadísticas de retención (incluido el desglose por categoría y top usuarios del panel histórico), verificación de cadena SHA-256, detector de anomalías (auth burst, caja mismatch), alertas y vistas guardadas.
+- **Auditoría**: 167 tests específicos que cubren listado con cursor, categorías, severidad, búsqueda, exportación CSV/NDJSON, archivado masivo, estadísticas de retención (incluido el desglose por categoría, top usuarios y anomalías del panel histórico), verificación de cadena SHA-256, persistencia de resultado de verificación, detector de anomalías (auth burst, caja mismatch), alertas y vistas guardadas.
 
 ### 3.2 Frontend — unit
 
@@ -284,7 +284,7 @@ El plan E2E se desarrolló en 7 fases incrementales (detalle en [`PLAN_E2E.md`](
 | 4 | Flujo central TPV: mesa → comanda → cerrar cuenta → cobro efectivo → mesa libre | 1 |
 | 5 | Auditoría: el admin verifica los eventos generados por el flujo | 1 |
 | 6 | Hardening: Makefile targets + README + troubleshooting | — |
-| 7 | Auditoría — Historico: KPIs, chart, presets, export CSV, deep-link al registro vivo | 5 |
+| 7 | Auditoría — Historico: KPIs, chart, presets, export CSV, deep-link, verify card, categoría y usuario drill-down | 8 |
 
 Para el detalle de qué hay cubierto y qué no (cobros variantes, modificadores requeridos, split bills, transferencias, etc.) ver [`PLAN_E2E.md`](PLAN_E2E.md). El fixture de auditoría usa `seedAndArchiveRetentionDemo()` definido en `frontend/e2e/support/audit.ts`, que ejecuta `RetentionDemoSeeder` + `audit:archive-old` + `cache:clear`.
 
@@ -608,7 +608,7 @@ El sistema instrumenta **72 tipos de eventos** distribuidos en 9 categorías: `a
 Panel independiente que muestra el **corpus archivado** del restaurante. Se accede como una pestaña diferenciada dentro de Auditoría:
 
 - **KPIs de retención** — 4 tarjetas: total archivado, rango temporal (primer y último evento archivado), mes pico y media mensual.
-- **Badge de integridad de cadena** — Bloque destacado entre KPIs y gráfico que invoca `GET /admin/audit-log/verify` bajo demanda y muestra 5 estados visuales: no verificado (gris), verificando (azul con spinner), íntegra (verde), rota (rojo con recuento de corruptos) o error (naranja). El resultado y timestamp se persisten en `localStorage` por restaurante para que el badge sobreviva recargas. Punto único de prueba de compliance: un golpe de vista basta para confirmar que el corpus archivado mantiene la cadena SHA-256.
+- **Badge de integridad de cadena** — Bloque destacado entre KPIs y gráfico que invoca `GET /admin/audit-log/verify` bajo demanda y muestra 5 estados visuales: no verificado (gris), verificando (azul con spinner), íntegra (verde), rota (rojo con recuento de corruptos) o error (naranja). El resultado persiste en servidor (`audit_chain_verifications`), accesible vía `GET /admin/audit-log/verify/latest`, para que cualquier inspector o dispositivo vea el estado canónico de la cadena. Punto único de prueba de compliance: un golpe de vista basta para confirmar que el corpus archivado mantiene la cadena SHA-256.
 - **Gráfico de barras mensual interactivo** — Distribución de eventos archivados mes a mes con etiqueta de recuento siempre visible encima de la barra. Cada barra es un `<button>` accesible: hover con lift y saturación, focus visible, click → drill-down al registro vivo filtrado por ese mes (`/registro-auditoria?historico=1&dateFrom=YYYY-MM-01&dateTo=YYYY-MM-LL`).
 - **Desglose por categoría** — Tarjeta con lista de categorías (auth, order, caja, sale, table, catalog, config, restaurant, system) ordenadas por recuento descendente, cada una con su propia barra horizontal proporcional y paleta de color. Click en una fila → drill-down al registro vivo filtrado por esa categoría con el rango activo del panel.
 - **Top usuarios del corpus** — Tarjeta con los 5 usuarios más activos del corpus archivado: rank `#1`–`#5`, avatar con iniciales tintado por rol (`admin` rojo, `supervisor` azul, `operator` verde), nombre, rol y recuento en pill mono. Click → drill-down al registro vivo filtrado por usuario.
@@ -711,7 +711,7 @@ El comando acepta `--restaurant-uuid` para restringir el alcance y `--dry-run` p
 | **Hito 3 — Interfaz Backoffice** | 100% | Panel de gestión con ~1.600 líneas de componentes Angular. Formularios reactivos, validación en tiempo real, toasts de confirmación. |
 | **Hito 4 — Front de Venta (TPV)** | 100% | Flujo completo: mesas → apertura → pedido → cobro → cierre. Soporte para pagos parciales, división de cuenta (3 modos), y cierre de caja con Z-Report. |
 | **Hito 5 — Informes (Dashboard)** | 40% | Prototipo funcional con métricas clave. Pendiente: exportación a PDF/Excel, filtros avanzados, predicciones. |
-| **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor, live tail (auto-off en histórico), exportación CSV/NDJSON, banner contextual al llegar desde histórico, y panel **Histórico** con KPIs de retención, badge de integridad de cadena (5 estados, persistido localStorage), gráfico mensual clickable (drill-down por mes), desglose por categoría con barras horizontales coloreadas, top 5 usuarios con avatares por rol, presets de rango temporal, deep-link contextual. Archivado por antigüedad (90d → `archived_at`, retención legal 6 años, nunca borrado) y toggle "Mostrar histórico" con `include_archived=1`. Solo acceso `admin`. Verificación de cadena con `GET /api/admin/audit-log/verify`. |
+| **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor, live tail (auto-off en histórico), exportación CSV/NDJSON, banner contextual al llegar desde histórico, y panel **Histórico** con KPIs de retención, widget de anomalías (incidentes detectados en el corpus), badge de integridad de cadena (5 estados, persistido en servidor), gráfico mensual clickable (drill-down por mes), desglose por categoría con barras horizontales coloreadas, top 5 usuarios con avatares por rol, presets de rango temporal, deep-link contextual. Archivado por antigüedad (90d → `archived_at`, retención legal 6 años, nunca borrado) y toggle "Mostrar histórico" con `include_archived=1`. Solo acceso `admin`. Verificación de cadena con `GET /api/admin/audit-log/verify` y persistencia server-side del resultado vía `GET /api/admin/audit-log/verify/latest`. |
 | **Hito 7 — Mejoras operativas** | 80% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores. |
 
 ### Funcionalidades detalladas
@@ -743,12 +743,14 @@ El comando acepta `--restaurant-uuid` para restringir el alcance y `--dry-run` p
 | **Ventas** | Cancelación completa | Anulación de una venta con motivo obligatorio, generando registro de auditoría. |
 | **Ventas** | Reembolso parcial | Cancelación de líneas individuales de una venta ya cerrada mediante nota de abono (`parent_sale_id`). |
 | **Auditoría** | Exportación CSV/NDJSON | Stream de eventos (activos o archivados) en CSV (RFC-4180, UTF-8 BOM, CRLF) o NDJSON (una línea JSON por evento). Se registra meta-evento `audit.exported`. |
-| **Auditoría** | Panel Histórico | KPIs de retención (total archivado, rango temporal, mes pico, media mensual), gráfico de barras mensual clickable (drill-down por mes), desglose por categoría con barras horizontales y paleta dedicada, top 5 usuarios del corpus con avatar por rol, presets de rango temporal y selector de fechas personalizado. Todos los widgets respetan el rango activo. |
-| **Auditoría** | Badge integridad de cadena | Bloque en el panel histórico que invoca el endpoint `verify` bajo demanda y muestra 5 estados (no verificada/verificando/íntegra/rota/error) con recuento de eventos corruptos y timestamp de última verificación, persistido en `localStorage` por restaurante. |
+| **Auditoría** | Panel Histórico | KPIs de retención (total archivado, rango temporal, mes pico, media mensual), gráfico de barras mensual clickable (drill-down por mes), desglose por categoría con barras horizontales y paleta dedicada, top 5 usuarios del corpus con avatar por rol, widget de anomalías (incidentes detectados con sus etiquetas ES), presets de rango temporal y selector de fechas personalizado. Todos los widgets respetan el rango activo. |
+| **Auditoría** | Badge integridad de cadena | Bloque en el panel histórico que invoca el endpoint `verify` bajo demanda y muestra 5 estados (no verificada/verificando/íntegra/rota/error) con recuento de eventos corruptos y timestamp de última verificación. El resultado persiste en servidor (tabla `audit_chain_verifications`) para que cualquier inspector vea el estado canónico. |
 | **Auditoría** | Drill-down desde panel | Click en barra mensual, fila de categoría o fila de usuario en el panel histórico → navega al registro vivo con `?historico=1` y los filtros correspondientes (`dateFrom`/`dateTo`/`category`/`userId`). |
 | **Auditoría** | Banner "Vista del histórico" | Cuando el registro vivo se abre con `?historico=1`, aparece un banner morado con el rango activo y botón "Volver a registro normal" que limpia los filtros y los query params. El live tail se desactiva automáticamente sobre archivados. |
 | **Auditoría** | Deep-link histórico | Botón "Abrir registro" del CTA del panel que navega al registro vivo con `?historico=1` + el rango activo como `dateFrom`/`dateTo` (activa el toggle "Mostrar histórico"). |
 | **Auditoría** | Verificación de cadena | `GET /api/admin/audit-log/verify` que recorre todos los eventos (activos + archivados) y verifica la integridad SHA-256 de cada eslabón. |
+| **Auditoría** | Persistencia de verificación | El resultado de la verificación se persiste en `audit_chain_verifications` y se consulta vía `GET /admin/audit-log/verify/latest`. Cualquier inspector o dispositivo accede al estado canónico. |
+| **Auditoría** | Widget de anomalías | Tarjeta roja en el panel histórico que muestra el total de incidentes detectados en el corpus archivado, con pills por tipo (`auth_failed_burst`, `caja_mismatch`) y etiquetas en español. Incluye CTA "Ver en el registro" que navega al registro vivo filtrado por anomalías. |
 | **Auditoría** | Traza inmutable | 72 eventos instrumentados en 9 categorías. Cada evento almacena `before/after`, metadata, IP y device. Hash SHA-256 encadenado por restaurante para garantizar integridad. |
 | **Auditoría** | Detección de anomalías | Reglas server-side: `auth_failed_burst` (≥3 fallos PIN en 5 min) y `caja_mismatch` (descuadre en cierre). Se marcan en el evento y generan alerta. |
 | **Auditoría** | Alertas in-app | Tabla `audit_alerts` con notificaciones por anomalía. Dropdown con badge de no leídas, navegación directa al evento vinculado, polling 30s. |
@@ -1080,6 +1082,7 @@ POST   /api/tpv/cash-sessions/{id}/movements # Registrar movimiento de caja
 GET    /api/admin/audit-log               # Listar eventos (cursor, filtros, since)
 GET    /api/admin/audit-log/{uuid}        # Detalle de un evento
 GET    /api/admin/audit-log/verify        # Verificar cadena de hash por restaurante
+GET    /api/admin/audit-log/verify/latest # Último resultado de verificación persistido
 GET    /api/admin/audit-saved-views       # Listar vistas guardadas
 POST   /api/admin/audit-saved-views        # Crear vista guardada
 PATCH  /api/admin/audit-saved-views/{uuid} # Actualizar vista

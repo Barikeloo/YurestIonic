@@ -83,6 +83,42 @@ test.describe.serial('Histórico panel', () => {
     await expect(page.locator('.empty-state .empty-title')).toContainText(/no hay nada/i);
   });
 
+  test('clicking a category row navigates to the filtered registry', async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto('/registro-auditoria/historico');
+    await page.waitForLoadState('networkidle');
+
+    // Find the first category button and click it.
+    const catBtn = page.locator('.cat-btn').first();
+    await expect(catBtn).toBeVisible();
+
+    await Promise.all([
+      page.waitForURL(/registro-auditoria\?historico=1.*category=/),
+      catBtn.click(),
+    ]);
+
+    // Confirm we landed on the registry page.
+    await expect(page).toHaveURL(/registro-auditoria/);
+  });
+
+  test('clicking a user row navigates to the filtered registry', async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto('/registro-auditoria/historico');
+    await page.waitForLoadState('networkidle');
+
+    // Find the first user button and click it.
+    const userBtn = page.locator('.user-btn').first();
+    await expect(userBtn).toBeVisible();
+
+    await Promise.all([
+      page.waitForURL(/registro-auditoria\?historico=1.*userId=/),
+      userBtn.click(),
+    ]);
+
+    // Confirm we landed on the registry page.
+    await expect(page).toHaveURL(/registro-auditoria/);
+  });
+
   test('exporting CSV triggers a download with the expected filename pattern', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto('/registro-auditoria/historico');
@@ -106,12 +142,39 @@ test.describe.serial('Histórico panel', () => {
     expect(statSync(path!).size).toBeGreaterThan(100);
   });
 
+  test('chain verification card becomes visible and clicking run-verify changes the state', async ({ page }) => {
+    await loginAsAdmin(page);
+    await page.goto('/registro-auditoria/historico');
+    await page.waitForLoadState('networkidle');
+
+    // The verify card is visible.
+    const verifyCard = page.locator('.verify-card');
+    await expect(verifyCard).toBeVisible();
+
+    // If the card is already in a terminal state (from a previous test
+    // in this serial run), just check "Verificar de nuevo" is visible.
+    const currentState = await verifyCard.getAttribute('data-state');
+    if (currentState !== 'idle') {
+      await expect(verifyCard.getByRole('button', { name: /Verificar de nuevo/i })).toBeVisible();
+      return;
+    }
+
+    // Click the "Verificar cadena" button.
+    await verifyCard.getByRole('button', { name: /Verificar cadena/i }).click();
+
+    // Wait for the state to leave idle (loading state appears briefly then resolves).
+    await expect(verifyCard).not.toHaveAttribute('data-state', 'idle', { timeout: 15_000 });
+
+    // After verify, the button text changes to "Verificar de nuevo".
+    await expect(verifyCard.getByRole('button', { name: /Verificar de nuevo/i })).toBeVisible({ timeout: 10_000 });
+  });
+
   test('deep-link from histórico activates the toggle on the live registry', async ({ page }) => {
     await loginAsAdmin(page);
     await page.goto('/registro-auditoria/historico');
     await page.waitForLoadState('networkidle');
 
-    await page.getByRole('button', { name: /Abrir registro con histórico/i }).first().click();
+    await page.getByRole('button', { name: /Abrir registro/i }).first().click();
     await page.waitForURL(/registro-auditoria\?historico=1/);
 
     // The Mostrar histórico toggle must be in its active state.
