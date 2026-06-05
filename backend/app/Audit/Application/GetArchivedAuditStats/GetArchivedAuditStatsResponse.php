@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Audit\Application\GetArchivedAuditStats;
 
 use App\Audit\Domain\ValueObject\ArchivedAuditStats;
+use App\Audit\Domain\ValueObject\CategoryArchivedCount;
 use App\Audit\Domain\ValueObject\MonthlyArchivedCount;
+use App\Audit\Domain\ValueObject\TopArchivedUser;
 
 final readonly class GetArchivedAuditStatsResponse
 {
@@ -33,6 +35,22 @@ final readonly class GetArchivedAuditStatsResponse
                     'count' => $m->count,
                 ],
                 $this->stats->monthlyBreakdown,
+            ),
+            'by_category' => array_map(
+                static fn (CategoryArchivedCount $c): array => [
+                    'category' => $c->category,
+                    'count' => $c->count,
+                ],
+                $this->stats->byCategory,
+            ),
+            'top_users' => array_map(
+                static fn (TopArchivedUser $u): array => [
+                    'uuid' => $u->uuid,
+                    'name' => $u->name,
+                    'role' => $u->role,
+                    'count' => $u->count,
+                ],
+                $this->stats->topUsers,
             ),
         ];
     }

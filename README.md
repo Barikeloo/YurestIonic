@@ -608,13 +608,16 @@ El sistema instrumenta **72 tipos de eventos** distribuidos en 9 categorías: `a
 Panel independiente que muestra el **corpus archivado** del restaurante. Se accede como una pestaña diferenciada dentro de Auditoría:
 
 - **KPIs de retención** — 4 tarjetas: total archivado, rango temporal (primer y último evento archivado), mes pico y media mensual.
-- **Gráfico de barras mensual** — Distribución de eventos archivados mes a mes con barras verticales y etiqueta de recuento.
-- **Filtros por rango temporal** — Presets (`Todo el histórico`, `Último año`, `Último trimestre`, `Último mes`) y selector de fechas personalizado con botón "Aplicar". Los presets activos muestran un banner informativo y el botón se marca visualmente.
+- **Badge de integridad de cadena** — Bloque destacado entre KPIs y gráfico que invoca `GET /admin/audit-log/verify` bajo demanda y muestra 5 estados visuales: no verificado (gris), verificando (azul con spinner), íntegra (verde), rota (rojo con recuento de corruptos) o error (naranja). El resultado y timestamp se persisten en `localStorage` por restaurante para que el badge sobreviva recargas. Punto único de prueba de compliance: un golpe de vista basta para confirmar que el corpus archivado mantiene la cadena SHA-256.
+- **Gráfico de barras mensual interactivo** — Distribución de eventos archivados mes a mes con etiqueta de recuento siempre visible encima de la barra. Cada barra es un `<button>` accesible: hover con lift y saturación, focus visible, click → drill-down al registro vivo filtrado por ese mes (`/registro-auditoria?historico=1&dateFrom=YYYY-MM-01&dateTo=YYYY-MM-LL`).
+- **Desglose por categoría** — Tarjeta con lista de categorías (auth, order, caja, sale, table, catalog, config, restaurant, system) ordenadas por recuento descendente, cada una con su propia barra horizontal proporcional y paleta de color. Click en una fila → drill-down al registro vivo filtrado por esa categoría con el rango activo del panel.
+- **Top usuarios del corpus** — Tarjeta con los 5 usuarios más activos del corpus archivado: rank `#1`–`#5`, avatar con iniciales tintado por rol (`admin` rojo, `supervisor` azul, `operator` verde), nombre, rol y recuento en pill mono. Click → drill-down al registro vivo filtrado por usuario.
+- **Filtros por rango temporal** — Presets (`Todo el histórico`, `Último año`, `Último trimestre`, `Último mes`) y selector de fechas personalizado con botón "Aplicar". Todos los widgets del panel (KPIs, chart, desgloses) respetan el rango activo y se recalculan en conjunto.
 - **Exportación** — Menú desplegable con dos formatos:
   - **CSV** (RFC-4180, UTF-8 BOM, CRLF) — compatible con Excel.
   - **NDJSON** (una línea JSON por evento) — ideal para integraciones y pipelines de datos.
   - La exportación incluye archivados y queda registrada en la propia auditoría como meta-evento.
-- **Deep-link** — Botón "Abrir registro con histórico" que navega al registro vivo con el parámetro `?historico=1`, activando automáticamente el toggle "Mostrar histórico".
+- **Deep-link al registro vivo** — Botón "Abrir registro" en el CTA del pie del panel que navega al registro vivo con `?historico=1` + el rango activo del panel como `dateFrom`/`dateTo`. En el registro vivo aparece entonces un **banner morado "Vista del histórico"** con el rango aplicado y un botón "Volver a registro normal" que limpia los filtros y los query params. En modo histórico el **live tail se desactiva automáticamente** (los archivados son inmutables) y el botón se oculta.
 - **Estado vacío** — Cuando el filtro no produce resultados, se muestra un mensaje con la política de retención: 90 días activo → archivado → conservación legal indefinida.
 - **Estados de carga y error** — Skeleton cards durante carga y panel de error con botón de reintentar.
 
@@ -693,7 +696,7 @@ El comando acepta `--restaurant-uuid` para restringir el alcance y `--dry-run` p
 
 **Seeders de demostración:**
 - `AuditLogSeeder` — 50 eventos por restaurante con templates realistas (últimos 7 días) y cadena de hash real.
-- `RetentionDemoSeeder` — 40 eventos backdated (365–95 días) + 5 recientes para Bar Manolo, usado por los tests E2E del panel histórico. Idempotente (limpia y reinserta).
+- `RetentionDemoSeeder` — 40 eventos backdated (365–95 días) + 5 recientes para Bar Manolo, atribuidos en round-robin a los empleados del restaurante para que el widget de "Top usuarios" del panel histórico tenga datos significativos. Usado por los tests E2E del panel histórico. Idempotente (limpia y reinserta).
 
 ---
 
@@ -708,7 +711,7 @@ El comando acepta `--restaurant-uuid` para restringir el alcance y `--dry-run` p
 | **Hito 3 — Interfaz Backoffice** | 100% | Panel de gestión con ~1.600 líneas de componentes Angular. Formularios reactivos, validación en tiempo real, toasts de confirmación. |
 | **Hito 4 — Front de Venta (TPV)** | 100% | Flujo completo: mesas → apertura → pedido → cobro → cierre. Soporte para pagos parciales, división de cuenta (3 modos), y cierre de caja con Z-Report. |
 | **Hito 5 — Informes (Dashboard)** | 40% | Prototipo funcional con métricas clave. Pendiente: exportación a PDF/Excel, filtros avanzados, predicciones. |
-| **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor, live tail, exportación CSV/NDJSON, panel **Histórico** con KPIs de retención, gráfico mensual, presets de rango temporal y deep-link al registro vivo. Archivado por antigüedad (90d → `archived_at`, retención legal 6 años, nunca borrado) y toggle "Mostrar histórico" con `include_archived=1`. Solo acceso `admin`. Verificación de cadena con `GET /api/admin/audit-log/verify`. |
+| **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor, live tail (auto-off en histórico), exportación CSV/NDJSON, banner contextual al llegar desde histórico, y panel **Histórico** con KPIs de retención, badge de integridad de cadena (5 estados, persistido localStorage), gráfico mensual clickable (drill-down por mes), desglose por categoría con barras horizontales coloreadas, top 5 usuarios con avatares por rol, presets de rango temporal, deep-link contextual. Archivado por antigüedad (90d → `archived_at`, retención legal 6 años, nunca borrado) y toggle "Mostrar histórico" con `include_archived=1`. Solo acceso `admin`. Verificación de cadena con `GET /api/admin/audit-log/verify`. |
 | **Hito 7 — Mejoras operativas** | 80% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores. |
 
 ### Funcionalidades detalladas
@@ -740,8 +743,11 @@ El comando acepta `--restaurant-uuid` para restringir el alcance y `--dry-run` p
 | **Ventas** | Cancelación completa | Anulación de una venta con motivo obligatorio, generando registro de auditoría. |
 | **Ventas** | Reembolso parcial | Cancelación de líneas individuales de una venta ya cerrada mediante nota de abono (`parent_sale_id`). |
 | **Auditoría** | Exportación CSV/NDJSON | Stream de eventos (activos o archivados) en CSV (RFC-4180, UTF-8 BOM, CRLF) o NDJSON (una línea JSON por evento). Se registra meta-evento `audit.exported`. |
-| **Auditoría** | Panel Histórico | KPIs de retención (total archivado, rango temporal, mes pico, media mensual), gráfico de barras mensual, presets de rango temporal y selector de fechas personalizado. |
-| **Auditoría** | Deep-link histórico | Botón "Abrir registro con histórico" que navega al registro vivo con `?historico=1` activando el toggle "Mostrar histórico". |
+| **Auditoría** | Panel Histórico | KPIs de retención (total archivado, rango temporal, mes pico, media mensual), gráfico de barras mensual clickable (drill-down por mes), desglose por categoría con barras horizontales y paleta dedicada, top 5 usuarios del corpus con avatar por rol, presets de rango temporal y selector de fechas personalizado. Todos los widgets respetan el rango activo. |
+| **Auditoría** | Badge integridad de cadena | Bloque en el panel histórico que invoca el endpoint `verify` bajo demanda y muestra 5 estados (no verificada/verificando/íntegra/rota/error) con recuento de eventos corruptos y timestamp de última verificación, persistido en `localStorage` por restaurante. |
+| **Auditoría** | Drill-down desde panel | Click en barra mensual, fila de categoría o fila de usuario en el panel histórico → navega al registro vivo con `?historico=1` y los filtros correspondientes (`dateFrom`/`dateTo`/`category`/`userId`). |
+| **Auditoría** | Banner "Vista del histórico" | Cuando el registro vivo se abre con `?historico=1`, aparece un banner morado con el rango activo y botón "Volver a registro normal" que limpia los filtros y los query params. El live tail se desactiva automáticamente sobre archivados. |
+| **Auditoría** | Deep-link histórico | Botón "Abrir registro" del CTA del panel que navega al registro vivo con `?historico=1` + el rango activo como `dateFrom`/`dateTo` (activa el toggle "Mostrar histórico"). |
 | **Auditoría** | Verificación de cadena | `GET /api/admin/audit-log/verify` que recorre todos los eventos (activos + archivados) y verifica la integridad SHA-256 de cada eslabón. |
 | **Auditoría** | Traza inmutable | 72 eventos instrumentados en 9 categorías. Cada evento almacena `before/after`, metadata, IP y device. Hash SHA-256 encadenado por restaurante para garantizar integridad. |
 | **Auditoría** | Detección de anomalías | Reglas server-side: `auth_failed_burst` (≥3 fallos PIN en 5 min) y `caja_mismatch` (descuadre en cierre). Se marcan en el evento y generan alerta. |

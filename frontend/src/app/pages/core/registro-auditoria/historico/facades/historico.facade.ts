@@ -4,7 +4,9 @@ import {
   ArchivedAuditStatsApi,
   AuditLogService,
   BrokenAuditEventApi,
+  CategoryArchivedCountApi,
   MonthlyArchivedCountApi,
+  TopArchivedUserApi,
   VerifyAuditChainApi,
 } from '../../../../../services/audit-log.service';
 import { RestaurantContextFacade } from '../../../../../core/facades/restaurant-context.facade';
@@ -30,6 +32,45 @@ export interface PeakMonth {
   key: string;
   label: string;
   count: number;
+}
+
+export interface CategoryRow {
+  key: string;
+  label: string;
+  count: number;
+  ratio: number;
+  displayWidth: number;
+}
+
+export interface TopUserRow {
+  uuid: string;
+  name: string;
+  role: string | null;
+  count: number;
+  initials: string;
+}
+
+const CATEGORY_LABELS_ES: Record<string, string> = {
+  auth: 'Acceso',
+  order: 'Pedidos',
+  caja: 'Caja',
+  sale: 'Ventas',
+  table: 'Mesas',
+  catalog: 'Catálogo',
+  config: 'Config.',
+  restaurant: 'Restaurante',
+  system: 'Sistema',
+};
+
+function categoryLabel(raw: string): string {
+  return CATEGORY_LABELS_ES[raw] ?? raw.charAt(0).toUpperCase() + raw.slice(1);
+}
+
+function userInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 export type RangePreset = 'all' | 'lastMonth' | 'lastQuarter' | 'lastYear' | 'custom';
@@ -143,6 +184,33 @@ export class HistoricoFacade {
       (top, p) => (p.count > top.count ? { key: p.key, label: p.label, count: p.count } : top),
       { key: points[0].key, label: points[0].label, count: -1 },
     );
+  });
+
+  public readonly categoriesBreakdown = computed<CategoryRow[]>(() => {
+    const raw = this._stats()?.by_category ?? [];
+    if (raw.length === 0) return [];
+    const max = Math.max(...raw.map((c) => c.count));
+    return raw.map((c: CategoryArchivedCountApi) => {
+      const ratio = max > 0 ? c.count / max : 0;
+      return {
+        key: c.category,
+        label: categoryLabel(c.category),
+        count: c.count,
+        ratio,
+        displayWidth: Math.max(6, Math.round(ratio * 100)),
+      };
+    });
+  });
+
+  public readonly topUsers = computed<TopUserRow[]>(() => {
+    const raw = this._stats()?.top_users ?? [];
+    return raw.map((u: TopArchivedUserApi) => ({
+      uuid: u.uuid,
+      name: u.name,
+      role: u.role,
+      count: u.count,
+      initials: userInitials(u.name),
+    }));
   });
 
   public readonly monthlyAverage = computed<number>(() => {

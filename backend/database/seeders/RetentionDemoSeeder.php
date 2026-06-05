@@ -56,12 +56,21 @@ class RetentionDemoSeeder extends Seeder
             ->where('entity_type', self::ENTITY_TYPE)
             ->delete();
 
+        // Round-robin a handful of Bar Manolo employees through the seeded
+        // events so the panel's "top usuarios" widget has something to show.
+        // Falls back to null if no users are linked to the restaurant.
+        $userIds = DB::table('users')
+            ->where('restaurant_id', $restaurantId)
+            ->pluck('id')
+            ->all();
+
         $placeholderHash = str_repeat('0', 64);
         $inserted = 0;
         $oldest = null;
 
-        foreach ($this->buildPlan() as [$offsetDays, $action, $category, $severity]) {
+        foreach ($this->buildPlan() as $index => [$offsetDays, $action, $category, $severity]) {
             $createdAt = (new \DateTimeImmutable("-{$offsetDays} days"))->format('Y-m-d H:i:s');
+            $userId = count($userIds) > 0 ? $userIds[$index % count($userIds)] : null;
 
             DB::table('audit_logs')->insert([
                 'uuid' => (string) Str::uuid(),
@@ -78,7 +87,7 @@ class RetentionDemoSeeder extends Seeder
                 'integrity_hash' => $placeholderHash,
                 'prev_hash' => null,
                 'metadata' => json_encode(['offset_days' => $offsetDays]),
-                'user_id' => null,
+                'user_id' => $userId,
                 'before' => null,
                 'after' => null,
                 'ip_address' => '127.0.0.1',

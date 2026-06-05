@@ -382,6 +382,83 @@
       </div>
     </div>
 
+    <!-- ── Breakdown row: by category + top users ──────────────── -->
+    @if (categoriesBreakdown().length > 0 || topUsers().length > 0) {
+      <div class="breakdown-row">
+
+        <!-- By category -->
+        <div class="breakdown-card">
+          <div class="breakdown-head">
+            <div>
+              <div class="breakdown-title">Por categoría</div>
+              <div class="breakdown-sub">Reparto del corpus archivado · toca para filtrar el registro</div>
+            </div>
+          </div>
+          @if (categoriesBreakdown().length === 0) {
+            <div class="breakdown-empty">Sin actividad en el rango</div>
+          } @else {
+            <ul class="cat-list">
+              @for (cat of categoriesBreakdown(); track cat.key) {
+                <li class="cat-row">
+                  <button
+                    type="button"
+                    class="cat-btn"
+                    [title]="'Ver eventos archivados de ' + cat.label"
+                    [attr.aria-label]="'Filtrar registro por categoría ' + cat.label + ' con ' + formatNumber(cat.count) + ' eventos'"
+                    (click)="drillDownToCategory(cat.key)"
+                  >
+                    <span class="cat-label">{{ cat.label }}</span>
+                    <span class="cat-track">
+                      <span class="cat-fill" [style.width.%]="cat.displayWidth" [attr.data-cat]="cat.key"></span>
+                    </span>
+                    <span class="cat-count">{{ formatNumber(cat.count) }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <!-- Top users -->
+        <div class="breakdown-card">
+          <div class="breakdown-head">
+            <div>
+              <div class="breakdown-title">Top usuarios</div>
+              <div class="breakdown-sub">5 más activos del corpus · toca para filtrar el registro</div>
+            </div>
+          </div>
+          @if (topUsers().length === 0) {
+            <div class="breakdown-empty">Sin actividad atribuida en el rango</div>
+          } @else {
+            <ul class="user-list">
+              @for (user of topUsers(); track user.uuid; let i = $index) {
+                <li class="user-row">
+                  <button
+                    type="button"
+                    class="user-btn"
+                    [title]="'Ver eventos archivados de ' + user.name"
+                    [attr.aria-label]="'Filtrar registro por usuario ' + user.name + ' con ' + formatNumber(user.count) + ' eventos'"
+                    (click)="drillDownToUser(user.uuid)"
+                  >
+                    <span class="user-rank">{{ i + 1 }}</span>
+                    <span class="user-avatar" [attr.data-role]="user.role ?? 'unknown'">{{ user.initials }}</span>
+                    <span class="user-meta">
+                      <span class="user-name">{{ user.name }}</span>
+                      @if (user.role) {
+                        <span class="user-role">{{ user.role }}</span>
+                      }
+                    </span>
+                    <span class="user-count">{{ formatNumber(user.count) }}</span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+      </div>
+    }
+
     <!-- Footer call-to-action -->
     <div class="cta-card">
       <div class="cta-text">

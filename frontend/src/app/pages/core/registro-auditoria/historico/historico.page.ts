@@ -49,6 +49,8 @@ export class HistoricoPage implements OnInit, OnDestroy {
   get verifyState() { return this.facade.verifyState; }
   get verifyResult() { return this.facade.verifyResult; }
   get verifyError() { return this.facade.verifyError; }
+  get categoriesBreakdown() { return this.facade.categoriesBreakdown; }
+  get topUsers() { return this.facade.topUsers; }
 
   ngOnInit(): void {
     this.facade.loadStats();
@@ -125,6 +127,24 @@ export class HistoricoPage implements OnInit, OnDestroy {
     this.router.navigate(['/registro-auditoria'], {
       queryParams: { historico: 1, dateFrom, dateTo },
     });
+  }
+
+  drillDownToCategory(categoryKey: string): void {
+    const from = this.facade.dateFrom() ?? this.toIsoDate(this.facade.oldestDate());
+    const to = this.facade.dateTo() ?? this.toIsoDate(this.facade.newestDate());
+    const queryParams: Record<string, string | number> = { historico: 1, category: categoryKey };
+    if (from) queryParams['dateFrom'] = from;
+    if (to) queryParams['dateTo'] = to;
+    this.router.navigate(['/registro-auditoria'], { queryParams });
+  }
+
+  drillDownToUser(userUuid: string): void {
+    const from = this.facade.dateFrom() ?? this.toIsoDate(this.facade.oldestDate());
+    const to = this.facade.dateTo() ?? this.toIsoDate(this.facade.newestDate());
+    const queryParams: Record<string, string | number> = { historico: 1, userId: userUuid };
+    if (from) queryParams['dateFrom'] = from;
+    if (to) queryParams['dateTo'] = to;
+    this.router.navigate(['/registro-auditoria'], { queryParams });
   }
 
   private toIsoDate(d: Date | null): string | null {

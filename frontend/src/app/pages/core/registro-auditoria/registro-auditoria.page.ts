@@ -15,7 +15,6 @@ import { SaveViewModalComponent } from '../../../components/modals/save-view-mod
 
 const SEARCH_DEBOUNCE_MS = 350;
 const MIN_SEARCH_CHARS = 2;
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isoToday(): string { return new Date().toISOString().slice(0, 10); }
 
@@ -233,11 +232,14 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   });
 
   // ── Computed: server filters ───────────────────────────────
+  // Tab category is purposely NOT included here: tabs are a client-side
+  // navigation tool and must not trigger a server reload, otherwise the
+  // event list narrows to the tab's category and the counters of the
+  // other tabs collapse to 0 (they read from the in-memory list).
+  // The explicit category dropdown stays server-side for heavy filtering.
   readonly serverFilters = computed<ListAuditEventsFilters>(() => {
-    const tab = TABS.find(t => t.id === this.activeTab());
-    const tabCategory = tab?.cat ?? null;
     const dropdownCategory = this.filterCategory();
-    const category = tabCategory ?? (dropdownCategory !== 'all' ? dropdownCategory : null);
+    const category = dropdownCategory !== 'all' ? dropdownCategory : null;
 
     const severity = this.filterSeverity();
     const userId = this.filterUser();
@@ -249,7 +251,7 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     const filters: ListAuditEventsFilters = {};
     if (category) filters.category = category as AuditCategoryApi;
     if (severity !== 'all') filters.severity = severity as AuditSeverityApi;
-    if (userId !== 'all' && UUID_REGEX.test(userId)) filters.userId = userId;
+    if (userId !== 'all') filters.userId = userId;
     if (deviceId !== 'all') filters.deviceId = deviceId;
     if (dateFrom) filters.dateFrom = dateFrom;
     if (dateTo) filters.dateTo = dateTo;
@@ -261,9 +263,14 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
 
   // ── Presentation getters ───────────────────────────────────
   get filtered(): AuditEvent[] {
+    const tab = TABS.find(t => t.id === this.activeTab());
+    const tabCategory = tab?.cat ?? null;
     const chip = this.activeChip();
-    if (!chip) return this.events();
-    return this.events().filter((e: AuditEvent) => chipMatches(chip, e));
+
+    let result = this.events();
+    if (tabCategory) result = result.filter((e: AuditEvent) => e.cat === tabCategory);
+    if (chip) result = result.filter((e: AuditEvent) => chipMatches(chip, e));
+    return result;
   }
 
   get grouped(): Array<{ key: string; label: string; events: AuditEvent[] }> {
@@ -342,16 +349,35 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     // router outlet reuses this component (which it does when navigating
     // back from the histórico panel or from other pages).
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+      // Make sure the users directory is loaded even when Ionic reuses
+      // this page (ngOnInit doesn't refire). The facade no-ops if the
+      // directory is already populated.
+      this.facade.loadUsersDirectory();
+
       if (params.get('historico') === '1') {
         this.fromHistorico.set(true);
         this.facade.setIncludeArchived(true);
+        // Live tail polls every 5s without filter context and would
+        // pollute the archived view with recent events. Archived rows
+        // are immutable by definition, so live tail has no purpose here.
+        this.facade.setLiveTail(false);
         this.dateFrom.set(params.get('dateFrom') ?? '');
         this.dateTo.set(params.get('dateTo') ?? '');
+
+        // Optional scope from breakdown drill-downs in the histórico panel.
+        const category = params.get('category');
+        const userId = params.get('userId');
+        this.filterCategory.set(category ?? 'all');
+        this.filterUser.set(userId ?? 'all');
+        this.activeTab.set('all');
       } else if (this.fromHistorico()) {
         this.fromHistorico.set(false);
         this.facade.setIncludeArchived(false);
+        this.facade.setLiveTail(true);
         this.dateFrom.set(isoToday());
         this.dateTo.set(isoToday());
+        this.filterCategory.set('all');
+        this.filterUser.set('all');
       }
     });
   }
@@ -379,9 +405,11 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     this.facade.setIncludeArchived(false);
     this.dateFrom.set(isoToday());
     this.dateTo.set(isoToday());
+    this.filterCategory.set('all');
+    this.filterUser.set('all');
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { historico: null, dateFrom: null, dateTo: null },
+      queryParams: { historico: null, dateFrom: null, dateTo: null, category: null, userId: null },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });

@@ -261,6 +261,11 @@ export class RegistroAuditoriaFacade {
 
   // ── Users directory ────────────────────────────────────────
   public loadUsersDirectory(): void {
+    // Idempotent: skip if directory already populated. Allows callers
+    // (ngOnInit AND the reactive subscription that runs on every URL
+    // change) to invoke it without worrying about duplicate fetches.
+    if (Object.keys(this._usersDirectory()).length > 0) return;
+
     const tryFetch = (): boolean => {
       const restaurantUuid = this.resolveRestaurantUuid();
       if (!restaurantUuid) return false;
@@ -358,6 +363,7 @@ export class RegistroAuditoriaFacade {
   }
 
   public toggleLiveTail(): void { this._liveTail.update(v => !v); }
+  public setLiveTail(value: boolean): void { this._liveTail.set(value); }
 
   public toggleAlerts(): void { this._alertsOpen.update(v => !v); }
 

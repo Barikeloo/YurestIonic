@@ -88,11 +88,25 @@ export interface MonthlyArchivedCountApi {
   count: number;
 }
 
+export interface CategoryArchivedCountApi {
+  category: string;
+  count: number;
+}
+
+export interface TopArchivedUserApi {
+  uuid: string;
+  name: string;
+  role: string | null;
+  count: number;
+}
+
 export interface ArchivedAuditStatsApi {
   total: number;
   oldest_created_at: string | null;
   newest_created_at: string | null;
   monthly_breakdown: MonthlyArchivedCountApi[];
+  by_category: CategoryArchivedCountApi[];
+  top_users: TopArchivedUserApi[];
 }
 
 export interface BrokenAuditEventApi {

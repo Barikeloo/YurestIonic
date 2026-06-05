@@ -1,8 +1,10 @@
 # Plan — Audit Histórico Panel · Tier 1 mejoras
 
 > **Iniciado**: 2026-06-05
-> **Estado actual**: 🟡 En curso · Paso 11 de 11 (verificación manual final)
-> **Sesión activa**: A — Verificación de cadena + drill-down del chart
+> **Estado actual**: 🟡 Sesión B en verificación manual
+> **Sesión activa**: B — Desglose por categoría + Top usuarios
+
+> **Sesión A**: ✅ cerrada y commiteada (`cc586cb`).
 
 Mejoras al panel `/registro-auditoria/historico` orientadas a los 3 perfiles del usuario admin:
 - **Compliance**: prueba visual de integridad y trazabilidad
@@ -15,8 +17,8 @@ Mejoras al panel `/registro-auditoria/historico` orientadas a los 3 perfiles del
 
 | Sesión | Entregas | Estado |
 |---|---|---|
-| **A** | (4) Verificación de cadena en panel · (3) Drill-down del chart | 🟡 En curso |
-| **B** | (1) Desglose por categoría · (5) Top usuarios del corpus | ⚪ Pendiente |
+| **A** | (4) Verificación de cadena en panel · (3) Drill-down del chart | ✅ Cerrada (commit `cc586cb`) |
+| **B** | (1) Desglose por categoría · (5) Top usuarios del corpus | 🟡 En verificación manual |
 | **C** | (2) Anomalías históricas en timeline | ⚪ Pendiente |
 
 > Numeración (1–5) corresponde a las "Ideas Tier 1" originales (ver al final).
@@ -124,9 +126,29 @@ Leyenda: ✅ hecho · 🟡 en curso · ⚪ pendiente · ❌ bloqueado
 
 ## Sesiones futuras (Tier 1 restante)
 
-### Sesión B — Desglose por categoría + Top usuarios
-- Extender endpoint `archived-stats` con campos `by_category` y `top_users` (limit 5).
-- Mini-chart de pie/donut + lista de usuarios con avatar.
+### Sesión B — Desglose por categoría + Top usuarios (IMPLEMENTADA)
+
+**Backend:**
+- VOs nuevos `CategoryArchivedCount` y `TopArchivedUser`.
+- `ArchivedAuditStats` extendido con `byCategory[]` y `topUsers[]` (defaults `[]` para no romper constructores existentes).
+- `EloquentAuditLogRepository::getArchivedStats` añade dos queries: GROUP BY category y JOIN users + GROUP BY user, LIMIT 5.
+- Response `toArray()` con `by_category` y `top_users`.
+- `RetentionDemoSeeder` actualizado: round-robin de `user_id` para que la demo tenga datos en top users.
+
+**Frontend:**
+- Tipos `CategoryArchivedCountApi`, `TopArchivedUserApi` en service.
+- Facade: computed signals `categoriesBreakdown` (con label español + barra proporcional) y `topUsers` (con iniciales).
+- Page TS: getters + métodos `drillDownToCategory(cat)` y `drillDownToUser(uuid)`.
+- HTML: dos tarjetas en `grid-template-columns: 1fr 1fr` debajo del chart.
+  - Categorías: lista de filas con label + barra horizontal proporcional + count, color por categoría.
+  - Top usuarios: filas con rank, avatar (iniciales) tintado por rol, nombre/rol, count en pill mono.
+- SCSS: paleta de barras por categoría (auth=naranja, order=teal, caja=indigo, sale=verde, table=cyan, catalog=púrpura, config=gris, restaurant=ámbar, system=rojo). Avatares por rol (admin=rojo, supervisor=azul, operator=verde).
+- Registro-auditoria: subscription recoge también `category` y `userId` para aplicar filtros server-side. `exitHistoricoMode` los limpia.
+
+**TODOs (no parte de B):**
+- [ ] Tests unitarios del repositorio extendido (`getArchivedStats` con categorías y top users).
+- [ ] Test feature del endpoint con asserts del shape ampliado.
+- [ ] Actualizar tests existentes que construían `ArchivedAuditStats` directamente (la firma del constructor sigue compatible gracias a defaults).
 
 ### Sesión C — Anomalías históricas
 - Query nueva: `audit_logs WHERE anomaly_kind IS NOT NULL AND archived_at IS NOT NULL`.

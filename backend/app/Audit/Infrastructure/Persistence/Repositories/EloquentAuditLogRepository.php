@@ -11,7 +11,9 @@ use App\Audit\Domain\Interfaces\AuditLogRepositoryInterface;
 use App\Audit\Domain\ListAuditLogsCriteria;
 use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Audit\Domain\ValueObject\ArchivedAuditStats;
+use App\Audit\Domain\ValueObject\CategoryArchivedCount;
 use App\Audit\Domain\ValueObject\MonthlyArchivedCount;
+use App\Audit\Domain\ValueObject\TopArchivedUser;
 use App\Audit\Infrastructure\Persistence\Models\EloquentAuditLog;
 use App\Restaurant\Infrastructure\Persistence\Models\EloquentRestaurant;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -380,11 +382,45 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
             count: (int) $row->count,
         ))->values()->all();
 
+        $categoryRows = ($baseQuery)()
+            ->selectRaw('category, COUNT(*) as count')
+            ->groupBy('category')
+            ->orderByDesc('count')
+            ->get();
+
+        $byCategory = $categoryRows->map(static fn ($row): CategoryArchivedCount => new CategoryArchivedCount(
+            category: (string) $row->category,
+            count: (int) $row->count,
+        ))->values()->all();
+
+        $topUserRows = EloquentAuditLog::query()
+            ->withoutGlobalScopes()
+            ->where('audit_logs.restaurant_id', $restaurantIdInt)
+            ->whereNotNull('audit_logs.archived_at')
+            ->whereNotNull('audit_logs.user_id')
+            ->when($dateFrom !== null, fn ($q) => $q->where('audit_logs.created_at', '>=', $dateFrom->format('Y-m-d H:i:s')))
+            ->when($dateTo !== null, fn ($q) => $q->where('audit_logs.created_at', '<=', $dateTo->format('Y-m-d H:i:s')))
+            ->join('users', 'audit_logs.user_id', '=', 'users.id')
+            ->selectRaw('users.uuid as user_uuid, users.name as user_name, users.role as user_role, COUNT(audit_logs.id) as count')
+            ->groupBy('users.uuid', 'users.name', 'users.role')
+            ->orderByDesc('count')
+            ->limit(5)
+            ->get();
+
+        $topUsers = $topUserRows->map(static fn ($row): TopArchivedUser => new TopArchivedUser(
+            uuid: (string) $row->user_uuid,
+            name: (string) $row->user_name,
+            role: $row->user_role !== null ? (string) $row->user_role : null,
+            count: (int) $row->count,
+        ))->values()->all();
+
         return new ArchivedAuditStats(
             total: $total,
             oldestCreatedAt: $oldest,
             newestCreatedAt: $newest,
             monthlyBreakdown: $monthly,
+            byCategory: $byCategory,
+            topUsers: $topUsers,
         );
     }
 

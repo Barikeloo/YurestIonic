@@ -15,12 +15,16 @@ final readonly class ArchivedAuditStats
 {
     /**
      * @param  list<MonthlyArchivedCount>  $monthlyBreakdown
+     * @param  list<CategoryArchivedCount> $byCategory
+     * @param  list<TopArchivedUser>       $topUsers
      */
     public function __construct(
         public int $total,
         public ?\DateTimeImmutable $oldestCreatedAt,
         public ?\DateTimeImmutable $newestCreatedAt,
         public array $monthlyBreakdown,
+        public array $byCategory = [],
+        public array $topUsers = [],
     ) {}
 
     public static function empty(): self
@@ -30,6 +34,8 @@ final readonly class ArchivedAuditStats
             oldestCreatedAt: null,
             newestCreatedAt: null,
             monthlyBreakdown: [],
+            byCategory: [],
+            topUsers: [],
         );
     }
 }

@@ -168,11 +168,13 @@
           </div>
         }
       </div>
-      <!-- Live tail toggle -->
-      <button class="btn-ghost live" [class.on]="liveTail()" (click)="toggleLiveTail()" title="Live tail">
-        <span class="live-dot"></span>
-        Live tail
-      </button>
+      <!-- Live tail toggle (hidden in histórico mode — archived rows are immutable) -->
+      @if (!fromHistorico()) {
+        <button class="btn-ghost live" [class.on]="liveTail()" (click)="toggleLiveTail()" title="Live tail">
+          <span class="live-dot"></span>
+          Live tail
+        </button>
+      }
       <!-- Histórico -->
       <button class="btn-ghost" (click)="goToHistorico()" title="Panel de histórico archivado">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
