@@ -228,7 +228,6 @@
   overflow: hidden;
   touch-action: manipulation;
   user-select: none;
-  text-align: left;
 
   &:hover {
     border-color: #FF4D4D;
@@ -278,6 +277,8 @@
   padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 3px;
   flex: 1;
 }
