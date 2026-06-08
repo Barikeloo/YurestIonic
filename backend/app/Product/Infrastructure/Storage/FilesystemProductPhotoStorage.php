@@ -8,13 +8,15 @@ use App\Product\Domain\Exception\InvalidProductPhotoException;
 use App\Product\Domain\Interfaces\ProductPhotoStorageInterface;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
+use Intervention\Image\ImageManager;
 
 /**
  * Stores product photos on a configured Laravel filesystem disk (local/public in dev,
  * s3 → Cloudflare R2 in production). Returns the public URL to persist in image_src.
  *
- * NOTE (phase 1): the file is stored as received. Resizing/recompression with Intervention
- * Image is added in phase 2 — at which point the extension is normalised to a single format.
+ * Images are resized to a maximum of 1080 px on the longest side and converted to
+ * WebP format (quality 85) before storage.
  */
 class FilesystemProductPhotoStorage implements ProductPhotoStorageInterface
 {
@@ -23,6 +25,11 @@ class FilesystemProductPhotoStorage implements ProductPhotoStorageInterface
         'image/png' => 'png',
         'image/webp' => 'webp',
     ];
+
+    private const MAX_DIMENSION = 4096;
+    private const OUTPUT_EXTENSION = 'webp';
+    private const MAX_IMAGE_DIMENSION = 1080;
+    private const WEBP_QUALITY = 85;
 
     public function store(
         string $temporaryPath,
@@ -35,18 +42,29 @@ class FilesystemProductPhotoStorage implements ProductPhotoStorageInterface
             throw InvalidProductPhotoException::unreadable();
         }
 
-        $mime = (string) (new \finfo(FILEINFO_MIME_TYPE))->buffer($contents);
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $mime = (string) $finfo->buffer($contents);
         $extension = self::MIME_EXTENSIONS[$mime] ?? null;
         if ($extension === null) {
             throw InvalidProductPhotoException::unreadable();
         }
 
+        [$width, $height] = getimagesizefromstring($contents) ?: [0, 0];
+        if ($width > self::MAX_DIMENSION || $height > self::MAX_DIMENSION) {
+            throw InvalidProductPhotoException::unreadable();
+        }
+
+        $manager = new ImageManager(new GdDriver);
+        $image = $manager->read($contents);
+        $image->scaleDown(width: self::MAX_IMAGE_DIMENSION, height: self::MAX_IMAGE_DIMENSION);
+        $encoded = $image->toWebp(quality: self::WEBP_QUALITY);
+
         $disk = $this->disk();
-        $path = sprintf('products/%s/%s.%s', $restaurantUuid, $productUuid, $extension);
+        $path = sprintf('products/%s/%s.%s', $restaurantUuid, $productUuid, self::OUTPUT_EXTENSION);
 
         $this->deletePrevious($disk, $previousImageSrc, $path);
 
-        $disk->put($path, $contents, 'public');
+        $disk->put($path, (string) $encoded, 'public');
 
         return $disk->url($path);
     }

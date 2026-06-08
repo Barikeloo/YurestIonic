@@ -54,7 +54,7 @@ class UploadProductPhoto
         $this->productRepository->save($product);
 
         $token->markUsed();
-        $this->tokenRepository->save($token);
+        $this->tokenRepository->markAsUsed($token);
 
         $this->auditRecorder->record(new AuditEventDraft(
             restaurantId: $token->restaurantId(),

@@ -6,6 +6,6 @@ final class ProductPhotoUploadTokenExpiredException extends \DomainException
 {
     public static function withToken(string $token): self
     {
-        return new self("Photo upload token {$token} has expired.");
+        return new self('Photo upload token has expired.');
     }
 }

@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands([
         __DIR__.'/../app/Audit/Infrastructure/Entrypoint/Console',
+        __DIR__.'/../app/Product/Infrastructure/Entrypoint/Console',
     ])
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('audit:archive-old')
@@ -22,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
             ->mondays()
             ->at('02:00')
             ->withoutOverlapping(60);
+
+        $schedule->command('product-photos:delete-expired-tokens')
+            ->hourly();
     })
     ->withMiddleware(function (Middleware $middleware): void {
         //

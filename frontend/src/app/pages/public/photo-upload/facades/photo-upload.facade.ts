@@ -51,13 +51,11 @@ export class PhotoUploadFacade {
     this.token = token;
     this._state.set('validating');
 
-    await new Promise((r) => setTimeout(r, 900));
-
     try {
       const ctx = await new Promise<PhotoUploadContextResponse>((resolve, reject) => {
         this.uploadService.getContext(token).subscribe({ next: resolve, error: reject });
       });
-      this._context.set(ctx);
+      this._context.set(this.rewriteLocalhost(ctx));
       const secs = Math.max(0, Math.floor((new Date(ctx.expires_at).getTime() - Date.now()) / 1000));
       this._secondsLeft.set(secs);
       this._state.set('ready');
@@ -104,7 +102,9 @@ export class PhotoUploadFacade {
               this._uploadProgress.set(100);
               const body = event.body as { image_src: string };
               setTimeout(() => {
-                this._uploadedSrc.set(body.image_src);
+                this._uploadedSrc.set(
+                  body.image_src?.replace(/http:\/\/localhost(:\d+)?/, window.location.origin) ?? body.image_src,
+                );
                 this._state.set('success');
                 resolve();
               }, 360);
@@ -126,6 +126,16 @@ export class PhotoUploadFacade {
           },
         });
     });
+  }
+
+  private rewriteLocalhost(ctx: PhotoUploadContextResponse): PhotoUploadContextResponse {
+    if (ctx.image_src?.includes('localhost')) {
+      return {
+        ...ctx,
+        image_src: ctx.image_src.replace(/http:\/\/localhost(:\d+)?/, window.location.origin),
+      };
+    }
+    return ctx;
   }
 
   public cancelUpload(): void {

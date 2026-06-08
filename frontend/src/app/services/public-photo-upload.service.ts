@@ -6,6 +6,7 @@ export interface PhotoUploadContextResponse {
   product_name: string;
   image_src: string | null;
   expires_at: string;
+  restaurant_name: string;
 }
 
 export interface PhotoUploadResponse {

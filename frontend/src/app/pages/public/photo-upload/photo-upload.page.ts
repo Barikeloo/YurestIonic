@@ -41,6 +41,7 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
   protected readonly sheetOpen = signal(false);
   protected readonly isSuccessPulse = signal(false);
 
+
   readonly ringLen = 2 * Math.PI * 70; // r=70, matches SVG in template
 
   private token = '';
@@ -72,6 +73,9 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
     this.stopCamera();
     this.facade.destroy();
     this.audioCtx?.close();
+    this.token = '';
+    URL.revokeObjectURL(this.capturedSrc ?? '');
+    URL.revokeObjectURL(this.finalImageSrc() ?? '');
   }
 
   // ── Camera ──────────────────────────────────────────────
@@ -119,6 +123,7 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
       flash.classList.add('go');
     }
     if (!this.stream || !video?.videoWidth) return;
+    navigator.vibrate?.([12]);
     const c = document.createElement('canvas');
     c.width = video.videoWidth;
     c.height = video.videoHeight;
@@ -131,10 +136,11 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
   protected camGallery(): void { this.facade.setState('ready'); setTimeout(() => this.sheetOpen.set(true), 120); }
 
   // ── Crop ────────────────────────────────────────────────
+  private readonly CROP_SKIP_RATIO = 1.15;
+
   protected enterCrop(src: string): void {
     this.capturedSrc = src;
     this.cr.scale = 1; this.cr.tx = 0; this.cr.ty = 0;
-    this.facade.setState('crop');
 
     requestAnimationFrame(() => {
       const imgEl = this.cropImg?.nativeElement;
@@ -142,14 +148,29 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
       imgEl.onload = () => {
         this.cr.natW = imgEl.naturalWidth || 1200;
         this.cr.natH = imgEl.naturalHeight || 1200;
-        this.layoutCrop();
+        if (this.isNearSquare()) {
+          this.cropUse();
+        } else {
+          this.facade.setState('crop');
+          this.layoutCrop();
+        }
       };
       imgEl.src = src;
       if (imgEl.complete && imgEl.naturalWidth) {
         this.cr.natW = imgEl.naturalWidth; this.cr.natH = imgEl.naturalHeight;
-        this.layoutCrop();
+        if (this.isNearSquare()) {
+          this.cropUse();
+        } else {
+          this.facade.setState('crop');
+          this.layoutCrop();
+        }
       }
     });
+  }
+
+  private isNearSquare(): boolean {
+    const ratio = Math.max(this.cr.natW, this.cr.natH) / Math.min(this.cr.natW, this.cr.natH);
+    return ratio <= this.CROP_SKIP_RATIO;
   }
 
   private layoutCrop(): void {
@@ -198,50 +219,65 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
   protected cropBack(): void { this.facade.setState('ready'); }
   protected cropRetry(): void { this.goCamera(); }
 
-  protected cropUse(): void {
-    const blob = this.renderCrop();
+  protected async cropUse(): Promise<void> {
+    navigator.vibrate?.([12]);
+    const blob = await this.renderCrop();
     if (!blob) return;
     const previewUrl = URL.createObjectURL(blob);
     this.finalImageSrc.set(previewUrl);
     this.facade.upload(blob);
   }
 
-  private renderCrop(): Blob | null {
+  private renderCrop(): Promise<Blob | null> {
     const OUT = 1080;
     const c = document.createElement('canvas');
     c.width = OUT; c.height = OUT;
     const ctx = c.getContext('2d');
-    if (!ctx) return null;
+    if (!ctx) return Promise.resolve(null);
     ctx.fillStyle = '#000'; ctx.fillRect(0, 0, OUT, OUT);
     try {
       const img = this.cropImg?.nativeElement;
-      if (!img) return null;
+      if (!img) return Promise.resolve(null);
       const f = this.cr.base * this.cr.scale;
       const dl = this.cr.win / 2 - (this.cr.natW * f) / 2 + this.cr.tx;
       const dt = this.cr.win / 2 - (this.cr.natH * f) / 2 + this.cr.ty;
       ctx.drawImage(img, (0 - dl) / f, (0 - dt) / f, this.cr.win / f, this.cr.win / f, 0, 0, OUT, OUT);
-    } catch { return null; }
-    const dataUrl = c.toDataURL('image/jpeg', 0.9);
-    const arr = dataUrl.split(',');
-    const mime = arr[0].match(/:(.*?);/)![1];
-    const bstr = atob(arr[1]);
-    let n = bstr.length;
-    const u8 = new Uint8Array(n);
-    while (n--) u8[n] = bstr.charCodeAt(n);
-    return new Blob([u8], { type: mime });
+    } catch { return Promise.resolve(null); }
+    return new Promise((resolve) => c.toBlob((b) => resolve(b), 'image/jpeg', 0.9));
   }
 
   // ── Gallery sheet ────────────────────────────────────────
   protected goGallery(): void { this.sheetOpen.set(true); }
   protected closeSheet(): void { this.sheetOpen.set(false); }
 
-  protected onFileChange(e: Event): void {
+  protected async onFileChange(e: Event): Promise<void> {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
     this.sheetOpen.set(false);
-    const url = URL.createObjectURL(file);
     (e.target as HTMLInputElement).value = '';
+    const url = await this.normalizeExifOrientation(file);
     this.enterCrop(url);
+  }
+
+  private normalizeExifOrientation(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const img = new Image();
+        img.onload = () => {
+          const c = document.createElement('canvas');
+          c.width = img.naturalWidth;
+          c.height = img.naturalHeight;
+          c.getContext('2d')!.drawImage(img, 0, 0);
+          resolve(c.toDataURL('image/jpeg', 0.92));
+        };
+        img.onerror = () => resolve(dataUrl);
+        img.src = dataUrl;
+      };
+      reader.onerror = () => reject();
+      reader.readAsDataURL(file);
+    });
   }
 
   // ── Upload actions ───────────────────────────────────────
@@ -249,7 +285,7 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
 
   // ── Success / Error / Expired actions ───────────────────
   protected okAgain(): void { this.isSuccessPulse.set(false); this.facade.setState('ready'); }
-  protected errRetry(): void { const b = this.renderCrop(); if (b) this.facade.upload(b); }
+  protected async errRetry(): Promise<void> { const b = await this.renderCrop(); if (b) this.facade.upload(b); }
   protected errRestart(): void { this.facade.setState('ready'); }
   protected expRetry(): void { this.facade.setState('ready'); }
   protected usedRetry(): void { this.facade.setState('ready'); }

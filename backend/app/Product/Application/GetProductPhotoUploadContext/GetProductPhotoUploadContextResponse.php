@@ -8,17 +8,20 @@ final readonly class GetProductPhotoUploadContextResponse
         public string $productName,
         public ?string $imageSrc,
         public string $expiresAt,
+        public string $restaurantName,
     ) {}
 
     public static function create(
         string $productName,
         ?string $imageSrc,
         string $expiresAt,
+        string $restaurantName,
     ): self {
         return new self(
             productName: $productName,
             imageSrc: $imageSrc,
             expiresAt: $expiresAt,
+            restaurantName: $restaurantName,
         );
     }
 
@@ -28,6 +31,7 @@ final readonly class GetProductPhotoUploadContextResponse
             'product_name' => $this->productName,
             'image_src' => $this->imageSrc,
             'expires_at' => $this->expiresAt,
+            'restaurant_name' => $this->restaurantName,
         ];
     }
 }

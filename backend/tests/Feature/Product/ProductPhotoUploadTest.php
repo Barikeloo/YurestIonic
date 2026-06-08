@@ -14,13 +14,13 @@ class ProductPhotoUploadTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * Build an UploadedFile backed by a real (tiny) PNG so the flow works without the GD
-     * extension (UploadedFile::fake()->image() requires GD, absent in the API container).
+     * Build an UploadedFile backed by a real PNG (100×80) that GD can decode
+     * for Intervention Image processing (resize + WebP conversion).
      */
     private function realPhoto(string $name = 'plato.png'): UploadedFile
     {
         $png = base64_decode(
-            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+            'iVBORw0KGgoAAAANSUhEUgAAAGQAAABQCAIAAABga0e4AAAACXBIWXMAAA7EAAAOxAGVKw4bAAABQ0lEQVR4nO3aQQ6CMBQAUTCeSBZcSE7FhWTBnVyQmIa2wACKTeattIjBSb+ysH49H5W2uV19ASUxFmAswFiAsQBjAcYCjAUYCzAWYCzAWICxAGMBxgKMBRgLMBZgLMBYgLEAYwHGAowFGAswFmAswFiAsQBjAcYCjAXclw+3/ZhcH7rmCxfz7+qN//ybqp3V6Nx3+xnHEFgZw1XhnIY7JZ7f6Wi4Xtz+OjSG4WLucfL04jJN9o/h7APHGyc0dE1xaWJnjuHH0DVtP84OGSubIB7Yth9L77V/DJNf2NPTeFstQC++1tH7rNys5X4NkyeWsuO2xlLlTSliLMBYgLEAYwHGAowFGAswFmAswFiAsQBjAcYCjAUYCzAWYCzAWICxAGMBxgKMBRgLMBZgLMBYgLEAYwHGAowFGAswFmAswFiAsYA3LSBdlaS7LM0AAAAASUVORK5CYII='
         );
         $path = tempnam(sys_get_temp_dir(), 'photo').'.png';
         file_put_contents($path, $png);

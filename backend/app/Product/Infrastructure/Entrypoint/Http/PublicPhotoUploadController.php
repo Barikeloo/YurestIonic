@@ -10,6 +10,7 @@ use App\Product\Domain\Exception\ProductPhotoUploadTokenExpiredException;
 use App\Product\Domain\Exception\ProductPhotoUploadTokenNotFoundException;
 use App\Product\Infrastructure\Entrypoint\Http\Requests\UploadProductPhotoRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 
 final class PublicPhotoUploadController
 {
@@ -20,7 +21,7 @@ final class PublicPhotoUploadController
     public function __invoke(UploadProductPhotoRequest $request): JsonResponse
     {
         try {
-            $response = ($this->uploadPhoto)($request->toCommand());
+            $response = DB::transaction(fn() => ($this->uploadPhoto)($request->toCommand()));
         } catch (ProductPhotoUploadTokenNotFoundException|ProductNotFoundException $e) {
             return new JsonResponse(['message' => $e->getMessage()], 404);
         } catch (ProductPhotoUploadTokenExpiredException $e) {
