@@ -78,6 +78,9 @@
         <button type="button" class="btn-small" (click)="openModifiers()">
           Modificadores
         </button>
+        <button type="button" class="btn-small btn-small--photo" (click)="openPhotoQr()" [disabled]="!selectedProduct()">
+          📷 Añadir foto
+        </button>
         <button class="btn-login btn-login-inline" type="submit" [disabled]="isSaving()">
           {{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}
         </button>
@@ -92,3 +95,11 @@
   (closeModal)="closeModifiers()"
   (saved)="onModifiersSaved($event)"
 ></app-product-modifiers-modal>
+
+<app-photo-upload-qr-modal
+  [isOpen]="photoQrModalOpen()"
+  [productId]="selectedProduct()?.uuid ?? null"
+  [productName]="selectedProduct()?.name ?? null"
+  (closeModal)="closePhotoQr()"
+  (photoUploaded)="onPhotoUploaded($event)"
+></app-photo-upload-qr-modal>

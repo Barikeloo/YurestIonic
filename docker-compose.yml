@@ -12,6 +12,18 @@ services:
       - db
     command: php artisan serve --host=0.0.0.0 --port=8000
 
+  reverb:
+    build: ./docker/php
+    container_name: training_reverb
+    working_dir: /var/www
+    volumes:
+      - ./backend:/var/www
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    command: php artisan reverb:start --host=0.0.0.0 --port=8080
+
   frontend:
     build: ./docker/frontend
     container_name: training_frontend

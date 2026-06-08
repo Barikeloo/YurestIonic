@@ -61,8 +61,11 @@ use App\Order\Infrastructure\Entrypoint\Http\TransferOrderController;
 use App\Product\Infrastructure\Entrypoint\Http\ActivateController as ProductActivateController;
 use App\Product\Infrastructure\Entrypoint\Http\DeactivateController as ProductDeactivateController;
 use App\Product\Infrastructure\Entrypoint\Http\DeleteController as ProductDeleteController;
+use App\Product\Infrastructure\Entrypoint\Http\GeneratePhotoUploadTokenController;
 use App\Product\Infrastructure\Entrypoint\Http\GetCollectionController as ProductGetCollectionController;
 use App\Product\Infrastructure\Entrypoint\Http\GetController as ProductGetController;
+use App\Product\Infrastructure\Entrypoint\Http\PublicPhotoUploadContextController;
+use App\Product\Infrastructure\Entrypoint\Http\PublicPhotoUploadController;
 use App\Product\Infrastructure\Entrypoint\Http\PostController as ProductPostController;
 use App\Product\Infrastructure\Entrypoint\Http\PutController as ProductPutController;
 use App\Product\Infrastructure\Entrypoint\Http\TpvGetCollectionController as ProductTpvGetCollectionController;
@@ -142,6 +145,14 @@ use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/users', PostController::class);
+
+// Public QR product-photo upload (no auth — authorized by the signed ephemeral token).
+Route::middleware('throttle:30,1')->group(function (): void {
+    Route::get('/public/photo-upload/{token}', PublicPhotoUploadContextController::class)
+        ->where('token', '[A-Fa-f0-9]{64}');
+    Route::post('/public/photo-upload/{token}', PublicPhotoUploadController::class)
+        ->where('token', '[A-Fa-f0-9]{64}');
+});
 
 Route::middleware([
     EncryptCookies::class,
@@ -282,6 +293,7 @@ Route::middleware([
     Route::delete('/admin/products/{id}', ProductDeleteController::class)->whereUuid('id');
     Route::patch('/admin/products/{id}/activate', ProductActivateController::class)->whereUuid('id');
     Route::patch('/admin/products/{id}/deactivate', ProductDeactivateController::class)->whereUuid('id');
+    Route::post('/admin/products/{id}/photo-upload-token', GeneratePhotoUploadTokenController::class)->whereUuid('id');
     Route::get('/admin/products/{id}/variants', ListProductVariantsController::class)->whereUuid('id');
     Route::post('/admin/products/{id}/variants', CreateProductVariantController::class)->whereUuid('id');
     Route::put('/admin/products/{productId}/variants/{variantId}', UpdateProductVariantController::class)->whereUuid('productId')->whereUuid('variantId');

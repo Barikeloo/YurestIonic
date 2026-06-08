@@ -1,0 +1,219 @@
+:host {
+  --accent: #ff4d4d;
+  --accent-light: #ff7070;
+  --black: #0d0d0d;
+  --gray-900: #1a1a1a;
+  --gray-700: #3d3d3d;
+  --gray-500: #7a7a7a;
+  --gray-200: #e8e8e8;
+  --gray-100: #f4f4f4;
+  --white: #ffffff;
+  --green: #22c55e;
+  --amber: #f59e0b;
+  --font: 'DM Sans', sans-serif;
+  --radius: 14px;
+  --radius-2xl: 20px;
+  --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 300;
+  backdrop-filter: blur(3px);
+}
+
+.modal-content {
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  width: 92%;
+  max-width: 420px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.modal-title {
+  font-family: var(--font);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--black);
+}
+
+.modal-title-product {
+  font-weight: 500;
+  color: var(--gray-500);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--gray-500);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius);
+  transition: background 0.15s;
+
+  &:hover {
+    background: var(--gray-100);
+    color: var(--black);
+  }
+}
+
+// Body
+
+.modal-body {
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+
+  &--centered {
+    align-items: center;
+    text-align: center;
+  }
+}
+
+.modal-instruction {
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--gray-700);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.modal-hint {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--gray-500);
+  margin: 0;
+
+  &--error {
+    color: var(--accent);
+  }
+}
+
+// QR
+
+.qr-wrapper {
+  align-self: center;
+  padding: 12px;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+
+  canvas {
+    display: block;
+  }
+}
+
+// Countdown
+
+.countdown {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--gray-500);
+
+  strong {
+    color: var(--gray-900);
+    font-variant-numeric: tabular-nums;
+  }
+
+  &--urgent {
+    color: var(--amber);
+
+    strong {
+      color: var(--amber);
+    }
+  }
+}
+
+// State icons
+
+.state-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin-bottom: 8px;
+
+  &--success {
+    background: #dcfce7;
+    color: var(--green);
+  }
+
+  &--error {
+    background: #fee2e2;
+    color: var(--accent);
+  }
+
+  &--warning {
+    background: #fef3c7;
+    color: var(--amber);
+  }
+}
+
+// Preview
+
+.preview-img {
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  border: 1px solid var(--gray-200);
+}
+
+// Action button
+
+.btn-action {
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--white);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 22px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 4px;
+
+  &:hover {
+    background: var(--accent-light);
+  }
+}
+
+// Spinner
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--gray-200);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -255,6 +255,11 @@ final class AuditEventCatalog
             'severity' => 'warning',
             'summary' => 'Precio del producto {metadata.product_name} actualizado de {metadata.price_before_formatted} a {metadata.price_after_formatted}.',
         ],
+        'product.photo_updated' => [
+            'category' => 'catalog',
+            'severity' => 'info',
+            'summary' => 'Foto del producto {metadata.product_name} actualizada desde el móvil.',
+        ],
         'family.created' => [
             'category' => 'catalog',
             'severity' => 'info',

@@ -111,6 +111,14 @@ export class GestionProductsFacade {
     this._formData.set({ ...data });
   }
 
+  public applyPhoto(uuid: string, imageSrc: string): void {
+    this._products.update((current) =>
+      current.map((product) =>
+        product.uuid === uuid ? { ...product, imageSrc } : product,
+      ),
+    );
+  }
+
   public applyAllergens(uuid: string, allergens: AllergenCode[]): void {
     this._products.update((current) =>
       current.map((product) =>

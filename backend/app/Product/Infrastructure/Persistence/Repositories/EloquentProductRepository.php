@@ -70,6 +70,40 @@ class EloquentProductRepository implements ProductRepositoryInterface
         );
     }
 
+    public function findByIdAndRestaurant(string $id, string $restaurantUuid): ?Product
+    {
+        $model = $this->model->newQuery()
+            ->withoutGlobalScopes()
+            ->with(['family', 'tax'])
+            ->where('uuid', $id)
+            ->whereNull('deleted_at')
+            ->whereExists(static function ($query) use ($restaurantUuid): void {
+                $query->select(\Illuminate\Support\Facades\DB::raw(1))
+                    ->from('restaurants')
+                    ->whereColumn('restaurants.id', 'products.restaurant_id')
+                    ->where('restaurants.uuid', $restaurantUuid);
+            })
+            ->first();
+
+        if ($model === null || $model->family === null || $model->tax === null) {
+            return null;
+        }
+
+        return Product::fromPersistence(
+            id: $model->uuid,
+            familyId: $model->family->uuid,
+            taxId: $model->tax->uuid,
+            imageSrc: $model->image_src,
+            name: $model->name,
+            price: (int) $model->price,
+            stock: (int) $model->stock,
+            active: (bool) $model->active,
+            allergens: is_array($model->allergens) ? $model->allergens : [],
+            createdAt: $model->created_at->toDateTimeImmutable(),
+            updatedAt: $model->updated_at->toDateTimeImmutable(),
+        );
+    }
+
     public function findAll(bool $includeDeleted = false): array
     {
         $restaurantId = $this->tenantContext->requireRestaurantId();

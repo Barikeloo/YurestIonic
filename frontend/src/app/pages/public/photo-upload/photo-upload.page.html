@@ -1,0 +1,237 @@
+<div class="app">
+
+  <!-- ======================== VALIDANDO ======================== -->
+  <section class="screen center-screen" [class.active]="facade.state() === 'validating'">
+    <div class="spinner"></div>
+    <h2 class="state-title">Preparando…</h2>
+    <p class="state-text">Comprobando el enlace</p>
+  </section>
+
+  <!-- ======================== INICIO ======================== -->
+  <section class="screen" [class.active]="facade.state() === 'ready'">
+    <div class="topbar">
+      <div class="brand">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3c.6 2.5-1 3.5-1 5.2 0 1.3 1 2.3 1 2.3s1-1 1-2.3c0-.8-.3-1.4-.3-1.4 1.4.8 3.3 2.7 3.3 5.6a4 4 0 0 1-8 0c0-1.6.8-2.8 1.5-3.6-.1.7.2 1.3.6 1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <span class="name">TPV<small>Carta digital · Gestión</small></span>
+      </div>
+      <span class="expiry" [class.warn]="facade.isWarn()">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8" stroke="currentColor" stroke-width="1.8"/><path d="M12 9v4l2.5 1.5M9 2h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Caduca en <span class="expiry-time">{{ facade.formattedTime() }}</span>
+      </span>
+    </div>
+
+    <div class="scroll">
+      <div class="intro">
+        <p class="eyebrow">Foto del producto</p>
+        <h1 class="headline">Haz la foto del plato</h1>
+        <p class="sub">Usa la cámara o elige una imagen de tu galería. Aparecerá al instante en la pantalla del TPV.</p>
+      </div>
+
+      <div class="product">
+        <div class="thumb" aria-hidden="true">
+          @if (facade.context()?.image_src) {
+            <img [src]="facade.context()!.image_src" alt="" (error)="onImgError($event)" />
+          } @else {
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-9Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg>
+          }
+        </div>
+        <div class="meta">
+          <div class="pname">{{ facade.context()?.product_name ?? '—' }}</div>
+          <div class="pstate"><span class="dot"></span>
+            {{ facade.context()?.image_src ? 'Actualizar foto' : 'Sin foto principal' }}
+          </div>
+        </div>
+      </div>
+
+      <div class="hint">
+        <span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v5M12 8h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></span>
+        <span>Encuadra el plato con buena luz. Podrás recortar y revisar la foto antes de enviarla.</span>
+      </div>
+
+      <div class="spacer"></div>
+    </div>
+
+    <div class="dock">
+      <button class="btn btn-primary btn-block" (click)="goCamera()">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-9Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="13" r="3.4" stroke="currentColor" stroke-width="1.8"/></svg>
+        Hacer foto
+      </button>
+      <button class="btn btn-ghost btn-block" (click)="goGallery()">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="m4 16 4-4 3 3 4-4 5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="9.5" r="1.4" fill="currentColor"/></svg>
+        Elegir de la galería
+      </button>
+      <p class="legal">Enlace seguro y temporal · Solo para este producto</p>
+    </div>
+  </section>
+
+  <!-- ======================== CÁMARA ======================== -->
+  <section class="screen dark" [class.active]="facade.state() === 'camera'">
+    <div class="cam-stage">
+      <video #camVideo playsinline muted autoplay></video>
+      <div class="cam-overlay">
+        <div class="cam-vignette"></div>
+        <div class="cam-grid"></div>
+        <span class="cam-bracket tl"></span><span class="cam-bracket tr"></span>
+        <span class="cam-bracket bl"></span><span class="cam-bracket br"></span>
+      </div>
+      <div class="cam-flash flash" #camFlash></div>
+
+      <div class="cam-topbar">
+        <button class="round-btn" (click)="camClose()" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" fill="none"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <span class="cam-title">{{ facade.context()?.product_name ?? '' }}</span>
+        <span style="width:44px"></span>
+      </div>
+
+      <p class="cam-hint">Centra el plato dentro del marco</p>
+
+      <div class="cam-controls">
+        <button class="cam-side left" (click)="camGallery()" aria-label="Galería">
+          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="m4 16 4-4 3 3 4-4 5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="shutter" (click)="shoot()" aria-label="Disparar"></button>
+        <span style="width:50px"></span>
+      </div>
+    </div>
+    <input type="file" accept="image/*" capture="environment" hidden #camFileInput (change)="onFileChange($event)" />
+  </section>
+
+  <!-- ======================== RECORTE ======================== -->
+  <section class="screen crop-screen" [class.active]="facade.state() === 'crop'">
+    <div class="crop-head">
+      <button class="round-btn" (click)="cropBack()" aria-label="Volver">
+        <svg viewBox="0 0 24 24" fill="none"><path d="m15 5-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="t">Recorta la foto</span>
+      <span style="width:44px"></span>
+    </div>
+
+    <div class="crop-area">
+      <div class="crop-window" #cropWindow
+        (pointerdown)="onCropPointerDown($event)"
+        (pointermove)="onCropPointerMove($event)"
+        (pointerup)="onCropPointerUp()"
+        (pointercancel)="onCropPointerUp()">
+        <img #cropImg alt="Recorte" (error)="onImgError($event)" />
+        <div class="crop-thirds"></div>
+      </div>
+    </div>
+
+    <div class="zoom-row">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-3.2-3.2M8 11h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <input type="range" class="zoom" min="1" max="3" step="0.01" value="1" (input)="onZoomChange($event)" />
+      <svg class="big" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-3.2-3.2M11 8v6M8 11h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </div>
+
+    <div class="crop-actions">
+      <button class="btn btn-ghost" (click)="cropRetry()">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 9a8 8 0 0 1 14-3M20 15a8 8 0 0 1-14 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 3v3h-3M6 21v-3h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Repetir
+      </button>
+      <button class="btn btn-primary" (click)="cropUse()">
+        <svg viewBox="0 0 24 24" fill="none"><path d="m5 13 4 4L19 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Usar esta foto
+      </button>
+    </div>
+  </section>
+
+  <!-- ======================== SUBIENDO ======================== -->
+  <section class="screen center-screen" [class.active]="facade.state() === 'uploading'">
+    <div class="upload-photo">
+      @if (finalImageSrc()) {
+        <img [src]="finalImageSrc()" alt="" (error)="onImgError($event)" />
+      }
+      <div class="veil"></div>
+      <div class="ring-wrap">
+        <svg class="ring" width="156" height="156" viewBox="0 0 156 156">
+          <circle class="track" cx="78" cy="78" r="70"></circle>
+          <circle class="bar" cx="78" cy="78" r="70"
+            [style.stroke-dasharray]="ringLen"
+            [style.stroke-dashoffset]="ringLen * (1 - facade.uploadProgress() / 100)">
+          </circle>
+        </svg>
+        <span class="ring-pct">{{ facade.uploadProgress() }}%</span>
+      </div>
+    </div>
+    <h2 class="state-title">Subiendo foto…</h2>
+    <p class="state-text">No cierres esta ventana. Tardará solo unos segundos.</p>
+    <div class="linebar"><i [style.width.%]="facade.uploadProgress()"></i></div>
+    <button class="btn-text" (click)="uploadCancel()" style="margin-top:18px">Cancelar</button>
+  </section>
+
+  <!-- ======================== ÉXITO ======================== -->
+  <section class="screen center-screen" [class.active]="facade.state() === 'success'">
+    <div class="badge ok" [class.pulse]="isSuccessPulse()">
+      <svg viewBox="0 0 24 24" fill="none"><path class="check-path" d="m5 13 4.2 4.2L19 7.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h2 class="state-title">¡Foto enviada!</h2>
+    <p class="state-text">Ya aparece en la ficha del producto en el TPV. Puedes cerrar esta ventana.</p>
+    @if (facade.uploadedSrc()) {
+      <div class="done-thumb">
+        <img [src]="facade.uploadedSrc()" alt="Foto enviada" (error)="onImgError($event)" />
+      </div>
+    }
+    <div class="actions">
+      <button class="btn btn-ghost btn-block" (click)="okAgain()">Enviar otra foto</button>
+    </div>
+  </section>
+
+  <!-- ======================== ERROR ======================== -->
+  <section class="screen center-screen" [class.active]="facade.state() === 'error'">
+    <div class="badge err">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.9"/><path d="M12 7.5v5.5M12 16h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    </div>
+    <h2 class="state-title">No se pudo subir</h2>
+    <p class="state-text">Comprueba tu conexión e inténtalo de nuevo. La foto no se ha perdido.</p>
+    <div class="actions">
+      <button class="btn btn-primary btn-block" (click)="errRetry()">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 9a8 8 0 0 1 14-3M20 15a8 8 0 0 1-14 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 3v3h-3M6 21v-3h3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Reintentar
+      </button>
+      <button class="btn-text" (click)="errRestart()">Empezar de nuevo</button>
+    </div>
+  </section>
+
+  <!-- ======================== CADUCADO ======================== -->
+  <section class="screen center-screen" [class.active]="facade.state() === 'expired'">
+    <div class="badge wait">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 8.5V13l3 1.8M9 2h6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+    </div>
+    <h2 class="state-title">El enlace ha caducado</h2>
+    <p class="state-text">Por seguridad, el código QR solo dura 5 minutos. Genera uno nuevo desde el TPV y vuelve a escanearlo.</p>
+    <div class="actions">
+      <button class="btn btn-ghost btn-block" (click)="expRetry()">Volver a intentar</button>
+    </div>
+  </section>
+
+  <!-- ======================== YA USADO ======================== -->
+  <section class="screen center-screen" [class.active]="facade.state() === 'used'">
+    <div class="badge wait">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="m5 13 4 4L19 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </div>
+    <h2 class="state-title">Enlace ya utilizado</h2>
+    <p class="state-text">Este código QR ya fue usado para subir una foto. Genera uno nuevo desde el TPV para actualizarla.</p>
+    <div class="actions">
+      <button class="btn btn-ghost btn-block" (click)="usedRetry()">Cerrar</button>
+    </div>
+  </section>
+
+  <!-- ======================== SHEET GALERÍA ======================== -->
+  <div class="sheet-backdrop" [class.open]="sheetOpen()" (click)="closeSheet()">
+    <div class="sheet" (click)="$event.stopPropagation()">
+      <div class="grip"></div>
+      <h3>Elige una foto</h3>
+      <p>Selecciona una imagen de tu galería o de tus archivos.</p>
+      <label class="btn btn-soft btn-block" style="cursor:pointer">
+        <svg viewBox="0 0 24 24" fill="none" style="width:20px;height:20px"><path d="M12 16V4m0 0L8 8m4-4 4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        Buscar en mi dispositivo
+        <input type="file" accept="image/*" hidden #sheetFileInput (change)="onFileChange($event)" />
+      </label>
+      <button class="btn-text btn-block" (click)="closeSheet()" style="margin-top:4px">Cancelar</button>
+    </div>
+  </div>
+
+</div>

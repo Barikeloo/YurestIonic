@@ -184,6 +184,24 @@
   box-shadow: var(--shadow-sm);
 }
 
+.btn-small--photo {
+  border-color: #3b82f6;
+  color: #3b82f6;
+
+  &:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+    background: #eff6ff;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
 @media (max-width: 1024px) {
   .gestion-section-grid {
     grid-template-columns: 1fr;

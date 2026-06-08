@@ -54,6 +54,12 @@ interface UpdateProductPayload {
   allergens?: AllergenCode[];
 }
 
+export interface PhotoUploadTokenResponse {
+  token: string;
+  upload_url: string;
+  expires_at: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -83,4 +89,9 @@ export class ProductService extends BaseApiService {
   public deactivateProduct(id: string): Observable<ProductItem> {
     return this.patch<ProductItem>(`/admin/products/${id}/deactivate`);
   }
+
+  public generatePhotoUploadToken(id: string): Observable<PhotoUploadTokenResponse> {
+    return this.post<PhotoUploadTokenResponse>(`/admin/products/${id}/photo-upload-token`);
+  }
 }
+

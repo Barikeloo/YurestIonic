@@ -7,6 +7,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { ToggleComponent } from '../../../shared/components/toggle/toggle.component';
 import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
 import { ProductModifiersModalComponent } from '../product-modifiers-modal/product-modifiers-modal.component';
+import { PhotoUploadQrModalComponent, PhotoUploadedEvent } from '../photo-upload-qr-modal/photo-upload-qr-modal.component';
 
 export interface TaxOption {
   uuid?: string;
@@ -22,7 +23,7 @@ export interface FamilyOption {
 @Component({
   selector: 'app-products-management',
   standalone: true,
-  imports: [FormsModule, ToggleComponent, SearchBarComponent, ProductModifiersModalComponent],
+  imports: [FormsModule, ToggleComponent, SearchBarComponent, ProductModifiersModalComponent, PhotoUploadQrModalComponent],
   templateUrl: './products-management.component.html',
   styleUrls: ['./products-management.component.scss'],
 })
@@ -38,6 +39,7 @@ export class ProductsManagementComponent {
   public readonly isSaving = computed(() => this.facade().isSaving());
 
   public readonly modifiersModalOpen = signal(false);
+  public readonly photoQrModalOpen = signal(false);
   public readonly searchTerm = signal('');
 
   public readonly selectedProduct = computed<ProductRow | null>(() => {
@@ -71,6 +73,22 @@ export class ProductsManagementComponent {
 
   closeModifiers(): void {
     this.modifiersModalOpen.set(false);
+  }
+
+  openPhotoQr(): void {
+    if (!this.selectedProduct()) {
+      this.toastService.presentWarning('Selecciona un producto antes de añadir una foto.');
+      return;
+    }
+    this.photoQrModalOpen.set(true);
+  }
+
+  closePhotoQr(): void {
+    this.photoQrModalOpen.set(false);
+  }
+
+  onPhotoUploaded(event: PhotoUploadedEvent): void {
+    this.facade().applyPhoto(event.productId, event.imageSrc);
   }
 
   onModifiersSaved(updated: ProductItem): void {

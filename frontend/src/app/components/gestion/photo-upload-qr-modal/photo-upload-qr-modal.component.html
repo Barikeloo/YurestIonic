@@ -1,0 +1,72 @@
+@if (isOpen) {
+  <div class="modal-overlay" (click)="onClose()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <div class="modal-title">
+          Añadir foto
+          @if (productName) {
+            <span class="modal-title-product">— {{ productName }}</span>
+          }
+        </div>
+        <button class="close-btn" type="button" (click)="onClose()" aria-label="Cerrar">✕</button>
+      </div>
+
+      <!-- Loading -->
+      @if (isLoading()) {
+        <div class="modal-body modal-body--centered">
+          <div class="spinner"></div>
+          <p class="modal-hint">Generando código QR…</p>
+        </div>
+      }
+
+      <!-- Error -->
+      @if (hasError()) {
+        <div class="modal-body modal-body--centered">
+          <div class="state-icon state-icon--error">✕</div>
+          <p class="modal-hint modal-hint--error">No se pudo generar el código QR.</p>
+          <button class="btn-action" type="button" (click)="regenerate()">Intentar de nuevo</button>
+        </div>
+      }
+
+      <!-- QR ready -->
+      @if (isReady()) {
+        <div class="modal-body">
+          <p class="modal-instruction">
+            Escanea este código con tu móvil para subir la foto del producto.
+          </p>
+          <div class="qr-wrapper">
+            <canvas #qrCanvas></canvas>
+          </div>
+          <div class="countdown" [class.countdown--urgent]="secondsLeft() <= 60">
+            Expira en <strong>{{ formatCountdown(secondsLeft()) }}</strong>
+          </div>
+          <p class="modal-hint">La foto aparecerá aquí automáticamente al subirla.</p>
+        </div>
+      }
+
+      <!-- Uploaded -->
+      @if (isUploaded()) {
+        <div class="modal-body modal-body--centered">
+          <div class="state-icon state-icon--success">✓</div>
+          <p class="modal-hint">¡Foto actualizada correctamente!</p>
+          @if (uploadedImageSrc()) {
+            <img class="preview-img" [src]="uploadedImageSrc()" alt="Foto del producto" />
+          }
+          <button class="btn-action" type="button" (click)="onClose()">Cerrar</button>
+        </div>
+      }
+
+      <!-- Expired -->
+      @if (isExpired()) {
+        <div class="modal-body modal-body--centered">
+          <div class="state-icon state-icon--warning">⏱</div>
+          <p class="modal-hint">El código ha expirado.</p>
+          <button class="btn-action" type="button" (click)="regenerate()">Generar nuevo código</button>
+        </div>
+      }
+
+    </div>
+  </div>
+}

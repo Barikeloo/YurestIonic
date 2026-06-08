@@ -107,6 +107,12 @@ class Product
         $this->touch();
     }
 
+    public function changeImage(ProductImageSrc $imageSrc): void
+    {
+        $this->imageSrc = $imageSrc;
+        $this->touch();
+    }
+
     public function activate(): void
     {
         if (! $this->active) {
