@@ -9,10 +9,6 @@ export abstract class BaseApiService {
   protected readonly apiUrl: string = environment.apiUrl;
   protected readonly http: HttpClient = inject(HttpClient);
 
-  /**
-   * Default error message used when the backend response does not include a `message` field.
-   * Override in subclasses to provide a more specific fallback.
-   */
   protected readonly defaultErrorMessage: string = 'No se pudo completar la peticion.';
 
   protected get<T>(endpoint: string, params?: HttpParamsLike): Observable<T> {

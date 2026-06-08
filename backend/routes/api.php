@@ -146,7 +146,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::post('/users', PostController::class);
 
-// Public QR product-photo upload (no auth — authorized by the signed ephemeral token).
 Route::middleware('throttle:30,1')->group(function (): void {
     Route::get('/public/photo-upload/{token}', PublicPhotoUploadContextController::class)
         ->where('token', '[A-Fa-f0-9]{64}');
@@ -190,7 +189,6 @@ Route::middleware([
     Route::post('/tpv/orders/batch-lines', BatchAddLinesController::class);
     Route::post('/tpv/orders/menu-lines', OrderAddMenuLineController::class);
 
-    // Listado de menús activos para añadir a la comanda (reutiliza el controller admin).
     Route::get('/tpv/menus', MenuGetCollectionController::class);
     Route::get('/tpv/orders', OrderGetCollectionController::class);
     Route::get('/tpv/orders/{id}', OrderGetController::class)->whereUuid('id');
@@ -227,7 +225,6 @@ Route::middleware([
     Route::post('/tpv/cash-sessions/close', CloseCashSessionController::class);
     Route::get('/tpv/z-reports/{id}', GetZReportController::class)->whereUuid('id');
 
-    // Charge Sessions (pago a partes iguales)
     Route::post('/tpv/charge-sessions', CreateChargeSessionController::class);
     Route::get('/tpv/charge-sessions/current', GetCurrentChargeSessionController::class);
     Route::put('/tpv/charge-sessions/{id}/diners', UpdateChargeSessionDinersController::class)->whereUuid('id');
@@ -237,7 +234,6 @@ Route::middleware([
     Route::post('/tpv/charge-sessions/{id}/cancel', CancelChargeSessionController::class)->whereUuid('id');
 });
 
-// S3: Acciones contables sensibles requieren supervisor o admin
 Route::middleware([
     EncryptCookies::class,
     AddQueuedCookiesToResponse::class,

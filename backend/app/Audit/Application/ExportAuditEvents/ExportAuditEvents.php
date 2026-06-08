@@ -12,16 +12,6 @@ use App\Audit\Domain\ListAuditLogsCriteria;
 use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Shared\Domain\ValueObject\Uuid;
 
-/**
- * Streams every audit log matching the export filters as a generator
- * of domain entities. The HTTP layer wraps the generator in a
- * StreamedResponse so the bytes go out as they are produced and the
- * memory footprint stays flat regardless of the result size.
- *
- * Emits a meta-event (`audit.exported`) once the stream is fully
- * consumed — failed/aborted exports are intentionally NOT recorded:
- * a half-written CSV is not a "completed export" worth auditing.
- */
 final class ExportAuditEvents
 {
     public function __construct(
@@ -29,9 +19,6 @@ final class ExportAuditEvents
         private readonly AuditRecorderInterface $auditRecorder,
     ) {}
 
-    /**
-     * @return iterable<AuditLog>
-     */
     public function __invoke(ExportAuditEventsCommand $command): iterable
     {
         $criteria = new ListAuditLogsCriteria(

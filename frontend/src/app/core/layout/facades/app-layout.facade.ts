@@ -18,7 +18,6 @@ export class AppLayoutFacade {
 
   private restaurantNameCache: Map<string, string> = new Map();
 
-  // Métodos de negocio
   public refreshCajaStatus(): Observable<any> {
     const deviceId = this.authService.getDeviceId();
     if (!deviceId) {

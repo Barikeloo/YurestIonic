@@ -13,9 +13,6 @@ final readonly class MenuItemInput
         public int $position,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
     public static function fromArray(array $data, int $defaultPosition = 0): self
     {
         return new self(

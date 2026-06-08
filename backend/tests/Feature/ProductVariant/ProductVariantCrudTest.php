@@ -43,7 +43,7 @@ class ProductVariantCrudTest extends TestCase
 
     public function test_variant_full_crud_flow(): void
     {
-        // Create
+
         $createResponse = $this->withSession($this->tenant['session'])
             ->postJson("/api/admin/products/{$this->productId}/variants", [
                 'name' => 'Rojo',
@@ -68,7 +68,6 @@ class ProductVariantCrudTest extends TestCase
 
         $variantId = $createResponse->json('id');
 
-        // List
         $this->withSession($this->tenant['session'])
             ->getJson("/api/admin/products/{$this->productId}/variants")
             ->assertStatus(200)
@@ -77,14 +76,12 @@ class ProductVariantCrudTest extends TestCase
                 'name' => 'Rojo',
             ]);
 
-        // List empty for different product
         $otherProductId = $this->createAdditionalProduct();
         $this->withSession($this->tenant['session'])
             ->getJson("/api/admin/products/{$otherProductId}/variants")
             ->assertStatus(200)
             ->assertJson(['variants' => []]);
 
-        // Update
         $this->withSession($this->tenant['session'])
             ->putJson("/api/admin/products/{$this->productId}/variants/{$variantId}", [
                 'name' => 'Azul',
@@ -103,7 +100,6 @@ class ProductVariantCrudTest extends TestCase
                 'sort_order' => 2,
             ]);
 
-        // Update 404
         $this->withSession($this->tenant['session'])
             ->putJson("/api/admin/products/{$this->productId}/variants/" . $this->nonExistentUuid(), [
                 'name' => 'Test',
@@ -114,18 +110,15 @@ class ProductVariantCrudTest extends TestCase
             ])
             ->assertStatus(404);
 
-        // Delete
         $this->withSession($this->tenant['session'])
             ->deleteJson("/api/admin/products/{$this->productId}/variants/{$variantId}")
             ->assertStatus(204);
 
-        // Verify deletion via list
         $this->withSession($this->tenant['session'])
             ->getJson("/api/admin/products/{$this->productId}/variants")
             ->assertStatus(200)
             ->assertJson(['variants' => []]);
 
-        // Delete 404
         $this->withSession($this->tenant['session'])
             ->deleteJson("/api/admin/products/{$this->productId}/variants/{$variantId}")
             ->assertStatus(404);
@@ -133,12 +126,11 @@ class ProductVariantCrudTest extends TestCase
 
     public function test_create_variant_validation_errors(): void
     {
-        // Missing required fields
+
         $this->withSession($this->tenant['session'])
             ->postJson("/api/admin/products/{$this->productId}/variants", [])
             ->assertStatus(422);
 
-        // Empty name
         $this->withSession($this->tenant['session'])
             ->postJson("/api/admin/products/{$this->productId}/variants", [
                 'name' => '',
@@ -147,7 +139,6 @@ class ProductVariantCrudTest extends TestCase
             ])
             ->assertStatus(422);
 
-        // Negative price
         $this->withSession($this->tenant['session'])
             ->postJson("/api/admin/products/{$this->productId}/variants", [
                 'name' => 'Test',
@@ -156,7 +147,6 @@ class ProductVariantCrudTest extends TestCase
             ])
             ->assertStatus(422);
 
-        // Negative stock
         $this->withSession($this->tenant['session'])
             ->postJson("/api/admin/products/{$this->productId}/variants", [
                 'name' => 'Test',
@@ -165,7 +155,6 @@ class ProductVariantCrudTest extends TestCase
             ])
             ->assertStatus(422);
 
-        // Product not found
         $this->withSession($this->tenant['session'])
             ->postJson('/api/admin/products/' . $this->nonExistentUuid() . '/variants', [
                 'name' => 'Test',

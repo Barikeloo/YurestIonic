@@ -13,14 +13,9 @@ class ChargeSessionTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * Helper para crear una orden con líneas usando DB directamente
-     *
-     * @return array{id: int, uuid: string}
-     */
     private function createOrderWithLines(array $tenant, int $diners = 4, int $totalCents = 10000): array
     {
-        // Crear familia (usa restaurant_id numérico interno para FK)
+
         $familyId = DB::table('families')->insertGetId([
             'restaurant_id' => $tenant['restaurant_id'],
             'uuid' => (string) Str::uuid(),
@@ -29,7 +24,6 @@ class ChargeSessionTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Crear tax (usa restaurant_id numérico interno para FK)
         $taxId = DB::table('taxes')->insertGetId([
             'restaurant_id' => $tenant['restaurant_id'],
             'uuid' => (string) Str::uuid(),
@@ -40,9 +34,8 @@ class ChargeSessionTest extends TestCase
         ]);
 
         $productUuid = (string) Str::uuid();
-        $productPrice = 1000; // 10.00 €
+        $productPrice = 1000;
 
-        // Crear producto
         $productId = DB::table('products')->insertGetId([
             'restaurant_id' => $tenant['restaurant_id'],
             'uuid' => $productUuid,
@@ -55,7 +48,6 @@ class ChargeSessionTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Crear zona y mesa
         $zoneId = DB::table('zones')->insertGetId([
             'restaurant_id' => $tenant['restaurant_id'],
             'uuid' => (string) Str::uuid(),
@@ -75,10 +67,8 @@ class ChargeSessionTest extends TestCase
 
         $orderUuid = (string) Str::uuid();
 
-        // Obtener ID numérico del usuario
         $userId = DB::table('users')->where('uuid', $tenant['user_uuid'])->value('id');
 
-        // Crear orden
         $orderId = DB::table('orders')->insertGetId([
             'restaurant_id' => $tenant['restaurant_id'],
             'uuid' => $orderUuid,
@@ -91,7 +81,6 @@ class ChargeSessionTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Crear líneas para sumar el total
         $quantity = (int) ceil($totalCents / $productPrice);
         for ($i = 0; $i < $quantity; $i++) {
             DB::table('order_lines')->insert([
@@ -110,10 +99,6 @@ class ChargeSessionTest extends TestCase
 
         return ['id' => $orderId, 'uuid' => $orderUuid];
     }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // CreateChargeSession
-    // ═══════════════════════════════════════════════════════════════════════
 
     public function test_create_charge_session_returns_201_with_valid_data(): void
     {
@@ -155,7 +140,6 @@ class ChargeSessionTest extends TestCase
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant);
 
-        // Crear primera sesión
         $response1 = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
@@ -164,18 +148,19 @@ class ChargeSessionTest extends TestCase
         $response1->assertStatus(201);
         $sessionId = $response1->json('id');
 
-        // Crear segunda sesión - debe retornar la existente
         $response2 = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
-            'diners_count' => 5, // Diferente - pero no recalcula
+            'diners_count' => 5,
+
         ]);
         $response2->assertStatus(201);
 
-        // Verificar que es la misma sesión con mismos datos
         $this->assertEquals($sessionId, $response2->json('id'));
-        $this->assertEquals(4, $response2->json('diners_count')); // No cambió
-        $this->assertEquals(2500, $response2->json('suggested_per_diner_cents')); // No recalculó
+        $this->assertEquals(4, $response2->json('diners_count'));
+
+        $this->assertEquals(2500, $response2->json('suggested_per_diner_cents'));
+
     }
 
     public function test_create_charge_session_returns_422_when_missing_fields(): void
@@ -215,23 +200,17 @@ class ChargeSessionTest extends TestCase
         $response->assertJson(['message' => 'Order not found.']);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // GetActiveChargeSession
-    // ═══════════════════════════════════════════════════════════════════════
-
     public function test_get_active_charge_session_returns_200_when_session_exists(): void
     {
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant);
 
-        // Crear sesión
         $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
             'diners_count' => 4,
         ]);
 
-        // Consultar sesión activa
         $response = $this->withSession($tenant['session'])->getJson(
             '/api/tpv/charge-sessions/current?order_id='.$order['uuid']
         );
@@ -256,16 +235,11 @@ class ChargeSessionTest extends TestCase
         $response->assertJsonPath('message', fn ($m) => str_contains($m, 'not found.'));
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // RecordChargeSessionPayment
-    // ═══════════════════════════════════════════════════════════════════════
-
     public function test_record_payment_returns_201_and_updates_session(): void
     {
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant);
 
-        // Crear sesión
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
@@ -273,7 +247,6 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
-        // Crear cash session para poder registrar pagos
         $this->createCashSessionForTests($tenant, 'test-device-001');
 
         $response = $this->withSession($tenant['session'])->postJson(
@@ -302,7 +275,6 @@ class ChargeSessionTest extends TestCase
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant);
 
-        // Crear sesión con 2 comensales
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
@@ -310,10 +282,8 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
-        // Crear cash session para poder registrar pagos
         $this->createCashSessionForTests($tenant, 'test-device-001');
 
-        // Primer pago
         $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
@@ -325,7 +295,6 @@ class ChargeSessionTest extends TestCase
             ]
         );
 
-        // Segundo pago - completa la sesión
         $response = $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
@@ -337,7 +306,8 @@ class ChargeSessionTest extends TestCase
             ]
         );
 
-        $response->assertStatus(200); // 200 en lugar de 201 porque se completó
+        $response->assertStatus(200);
+
         $response->assertJson([
             'session_status' => 'completed',
             'is_session_complete' => true,
@@ -349,7 +319,6 @@ class ChargeSessionTest extends TestCase
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant);
 
-        // Crear sesión con 1 comensal
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
@@ -357,10 +326,8 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
-        // Crear cash session para poder registrar pagos
         $this->createCashSessionForTests($tenant, 'test-device-001');
 
-        // Pagar y completar sesión
         $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
@@ -372,7 +339,6 @@ class ChargeSessionTest extends TestCase
             ]
         );
 
-        // Intentar otro pago
         $response = $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
@@ -388,16 +354,11 @@ class ChargeSessionTest extends TestCase
         $response->assertJson(['message' => 'Charge session is not active.']);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // UpdateChargeSessionDiners
-    // ═══════════════════════════════════════════════════════════════════════
-
     public function test_update_diners_returns_200_when_no_payments(): void
     {
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant);
 
-        // Crear sesión
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
@@ -405,7 +366,6 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
-        // Actualizar comensales
         $response = $this->withSession($tenant['session'])->putJson(
             "/api/tpv/charge-sessions/{$sessionId}/diners",
             ['diners_count' => 5]
@@ -414,7 +374,8 @@ class ChargeSessionTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson([
             'diners_count' => 5,
-            'suggested_per_diner_cents' => 2000, // 10000/5 = 2000 cents = 20€
+            'suggested_per_diner_cents' => 2000,
+
             'status' => 'active',
         ]);
     }
@@ -444,7 +405,6 @@ class ChargeSessionTest extends TestCase
             ]
         )->assertStatus(201);
 
-        // Filosofía "Comensales mutables": llegan más comensales tras un pago.
         $response = $this->withSession($tenant['session'])->putJson(
             "/api/tpv/charge-sessions/{$sessionId}/diners",
             ['diners_count' => 5]
@@ -471,7 +431,6 @@ class ChargeSessionTest extends TestCase
 
         $this->createCashSessionForTests($tenant, 'test-device-001');
 
-        // Marcar dos comensales como pagados
         foreach ([1, 2] as $diner) {
             $this->withSession($tenant['session'])->postJson(
                 "/api/tpv/charge-sessions/{$sessionId}/payments",
@@ -485,27 +444,20 @@ class ChargeSessionTest extends TestCase
             )->assertStatus(201);
         }
 
-        // Intento bajar comensales por debajo de los que ya marcaron pago.
         $response = $this->withSession($tenant['session'])->putJson(
             "/api/tpv/charge-sessions/{$sessionId}/diners",
             ['diners_count' => 1]
         );
 
-        // TODO: verify - API returns 500; should be 422 (entity throws DomainException instead of InvalidDinerCountException)
         $response->assertStatus(422);
         $response->assertJsonPath('message', fn ($m) => str_contains($m, 'already-paid count'));
     }
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // CancelChargeSession
-    // ═══════════════════════════════════════════════════════════════════════
 
     public function test_cancel_session_returns_200_and_deactivates_session(): void
     {
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant);
 
-        // Crear sesión
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
@@ -513,7 +465,6 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
-        // Cancelar sesión
         $response = $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/cancel",
             [
@@ -535,7 +486,6 @@ class ChargeSessionTest extends TestCase
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant);
 
-        // Crear sesión
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
@@ -543,10 +493,8 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
-        // Crear cash session para poder registrar pagos
         $this->createCashSessionForTests($tenant, 'test-device-001');
 
-        // Registrar pago
         $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
@@ -558,7 +506,6 @@ class ChargeSessionTest extends TestCase
             ]
         );
 
-        // Cancelar sesión
         $response = $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/cancel",
             [
@@ -582,7 +529,6 @@ class ChargeSessionTest extends TestCase
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant);
 
-        // Crear sesión
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
@@ -590,7 +536,6 @@ class ChargeSessionTest extends TestCase
         ]);
         $sessionId = $createResponse->json('id');
 
-        // Cancelar sesión
         $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/cancel",
             [
@@ -598,7 +543,6 @@ class ChargeSessionTest extends TestCase
             ]
         );
 
-        // Intentar cancelar de nuevo
         $response = $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/cancel",
             [
@@ -610,37 +554,30 @@ class ChargeSessionTest extends TestCase
         $response->assertJson(['message' => 'Charge session is not active.']);
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // Escenario completo de la especificación
-    // ═══════════════════════════════════════════════════════════════════════
-
     public function test_complete_workflow_as_per_specification(): void
     {
         $tenant = $this->createTenantSession();
         $order = $this->createOrderWithLines($tenant, diners: 4, totalCents: 10000);
 
-        // Paso 1: Crear sesión de cobro
         $createResponse = $this->withSession($tenant['session'])->postJson('/api/tpv/charge-sessions', [
             'order_id' => $order['uuid'],
             'opened_by_user_id' => $tenant['user_uuid'],
             'diners_count' => 4,
         ]);
         $createResponse->assertStatus(201);
-        $this->assertEquals(2500, $createResponse->json('suggested_per_diner_cents')); // 100/4 = 25€
+        $this->assertEquals(2500, $createResponse->json('suggested_per_diner_cents'));
+
         $sessionId = $createResponse->json('id');
 
-        // Paso 2: Verificar que podemos editar comensales (sin pagos)
         $updateResponse = $this->withSession($tenant['session'])->putJson(
             "/api/tpv/charge-sessions/{$sessionId}/diners",
             ['diners_count' => 3]
         );
         $updateResponse->assertStatus(200);
-        $this->assertEquals(3333, $updateResponse->json('suggested_per_diner_cents')); // 100/3 ≈ 33.33€
+        $this->assertEquals(3333, $updateResponse->json('suggested_per_diner_cents'));
 
-        // Crear cash session para poder registrar pagos
         $this->createCashSessionForTests($tenant, 'test-device-001');
 
-        // Paso 3: Registrar primer pago
         $payment1Response = $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
@@ -654,8 +591,6 @@ class ChargeSessionTest extends TestCase
         $payment1Response->assertStatus(201);
         $this->assertEquals(3333, $payment1Response->json('amount_cents'));
 
-        // Paso 4: La filosofía permite seguir mutando comensales tras un pago
-        // mientras no bajemos por debajo de los que ya marcaron (paidCount=1).
         $updateOkResponse = $this->withSession($tenant['session'])->putJson(
             "/api/tpv/charge-sessions/{$sessionId}/diners",
             ['diners_count' => 2]
@@ -663,13 +598,11 @@ class ChargeSessionTest extends TestCase
         $updateOkResponse->assertStatus(200);
         $this->assertEquals(2, $updateOkResponse->json('diners_count'));
 
-        // Restablecemos a 3 para que el resto del workflow siga teniendo sentido.
         $this->withSession($tenant['session'])->putJson(
             "/api/tpv/charge-sessions/{$sessionId}/diners",
             ['diners_count' => 3]
         )->assertStatus(200);
 
-        // Paso 5: Registrar pagos restantes hasta completar
         $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
@@ -691,7 +624,6 @@ class ChargeSessionTest extends TestCase
             ]
         );
 
-        // Paso 6: Verificar que la sesión se completó
         $getResponse = $this->withSession($tenant['session'])->getJson(
             '/api/tpv/charge-sessions/current?order_id='.$order['uuid']
         );
@@ -699,7 +631,6 @@ class ChargeSessionTest extends TestCase
         $this->assertEquals('completed', $getResponse->json('status'));
         $this->assertEquals(3, count($getResponse->json('paid_diner_numbers')));
 
-        // Paso 7: Verificar que no se puede pagar más (sesión completada)
         $lastPaymentResponse = $this->withSession($tenant['session'])->postJson(
             "/api/tpv/charge-sessions/{$sessionId}/payments",
             [
@@ -710,6 +641,7 @@ class ChargeSessionTest extends TestCase
                 'device_id' => 'test-device-001',
             ]
         );
-        $lastPaymentResponse->assertStatus(409); // Ya completada, no se puede pagar más
+        $lastPaymentResponse->assertStatus(409);
+
     }
 }

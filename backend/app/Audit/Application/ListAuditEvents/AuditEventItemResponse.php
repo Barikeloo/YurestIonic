@@ -6,11 +6,7 @@ namespace App\Audit\Application\ListAuditEvents;
 
 final readonly class AuditEventItemResponse
 {
-    /**
-     * @param  array<string, mixed>  $metadata
-     * @param  array<string, mixed>|null  $before
-     * @param  array<string, mixed>|null  $after
-     */
+
     private function __construct(
         public string $uuid,
         public string $entityType,
@@ -33,11 +29,6 @@ final readonly class AuditEventItemResponse
         public string $createdAt,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $metadata
-     * @param  array<string, mixed>|null  $before
-     * @param  array<string, mixed>|null  $after
-     */
     public static function create(
         string $uuid,
         string $entityType,

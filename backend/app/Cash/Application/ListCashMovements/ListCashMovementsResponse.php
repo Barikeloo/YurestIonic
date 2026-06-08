@@ -6,16 +6,11 @@ namespace App\Cash\Application\ListCashMovements;
 
 final readonly class ListCashMovementsResponse
 {
-    /**
-     * @param  list<ListCashMovementsItemResponse>  $movements
-     */
+
     private function __construct(
         public array $movements,
     ) {}
 
-    /**
-     * @param  list<ListCashMovementsItemResponse>  $movements
-     */
     public static function create(array $movements): self
     {
         return new self(

@@ -41,8 +41,6 @@ final class DeleteOrderLine
             throw OrderIsNotOpenException::create();
         }
 
-        // En líneas de menú, devolvemos stock a cada producto elegido (vienen en menu_selections);
-        // en líneas de producto, solo a su productId.
         $productName = null;
         if ($line->isMenuLine()) {
             $productName = $line->menuName();

@@ -8,13 +8,6 @@ use App\Sale\Domain\Entity\ChargeSession;
 use App\Shared\Domain\ValueObject\Uuid;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Tests de la entidad ChargeSession con filosofía de "deuda viva".
- *
- * La entidad solo guarda snapshot (dinersCount + totalCents).
- * Los cálculos (remaining, suggested per diner) se hacen al vuelo
- * pasando los pagos acumulados como parámetro.
- */
 final class ChargeSessionEntityTest extends TestCase
 {
     public function test_can_create_charge_session(): void
@@ -24,8 +17,10 @@ final class ChargeSessionEntityTest extends TestCase
             Uuid::generate(),
             Uuid::generate(),
             Uuid::generate(),
-            4, // 4 diners
-            10000, // 100.00 EUR
+            4,
+
+            10000,
+
         );
 
         $this->assertEquals(4, $session->dinersCount());
@@ -44,7 +39,6 @@ final class ChargeSessionEntityTest extends TestCase
             10000,
         );
 
-        // Sin pagos, remaining = total
         $this->assertEquals(10000, $session->remainingAmount(0));
     }
 
@@ -59,10 +53,8 @@ final class ChargeSessionEntityTest extends TestCase
             10000,
         );
 
-        // Con 2500 pagados, remaining = 7500
         $this->assertEquals(7500, $session->remainingAmount(2500));
 
-        // Con todo pagado, remaining = 0
         $this->assertEquals(0, $session->remainingAmount(10000));
     }
 
@@ -77,7 +69,6 @@ final class ChargeSessionEntityTest extends TestCase
             10000,
         );
 
-        // Si por algún razón pagamos más, no debe quedar negativo
         $this->assertEquals(0, $session->remainingAmount(12000));
     }
 
@@ -92,7 +83,6 @@ final class ChargeSessionEntityTest extends TestCase
             10000,
         );
 
-        // 100€ / 4 = 25€ cada uno
         $this->assertEquals(2500, $session->amountForNextDiner(0, 4));
     }
 
@@ -107,7 +97,6 @@ final class ChargeSessionEntityTest extends TestCase
             10000,
         );
 
-        // Si ya pagaron 2500, quedan 7500 por 3 comensales = 2500
         $this->assertEquals(2500, $session->amountForNextDiner(2500, 3));
     }
 
@@ -119,16 +108,14 @@ final class ChargeSessionEntityTest extends TestCase
             Uuid::generate(),
             Uuid::generate(),
             3,
-            10000, // 100€ no divisible por 3
+            10000,
+
         );
 
-        // Primer comensal: floor(10000/3) = 3333
         $this->assertEquals(3333, $session->amountForNextDiner(0, 3));
 
-        // Segundo comensal (con 3333 pagados): floor(6667/2) = 3333
         $this->assertEquals(3333, $session->amountForNextDiner(3333, 2));
 
-        // Tercer comensal (con 6666 pagados): quedan 3334
         $this->assertEquals(3334, $session->amountForNextDiner(6666, 1));
     }
 
@@ -176,7 +163,6 @@ final class ChargeSessionEntityTest extends TestCase
             10000,
         );
 
-        // 2 comensales ya pagaron, puedo bajar a 3 o 2, pero no a 1
         $session->updateDinersCount(3, 2);
         $this->assertEquals(3, $session->dinersCount());
 
@@ -198,7 +184,6 @@ final class ChargeSessionEntityTest extends TestCase
         $this->expectException(\DomainException::class);
         $this->expectExceptionMessage('Cannot reduce diners below already-paid count');
 
-        // 2 comensales pagaron, no puedo bajar a 1
         $session->updateDinersCount(1, 2);
     }
 
@@ -251,7 +236,7 @@ final class ChargeSessionEntityTest extends TestCase
         );
 
         $session->markCompleted();
-        $session->markCompleted(); // No debe lanzar excepción
+        $session->markCompleted();
 
         $this->assertTrue($session->status()->isCompleted());
     }

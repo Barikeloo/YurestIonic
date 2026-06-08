@@ -6,14 +6,6 @@ namespace App\Menu\Domain\ValueObject;
 
 use App\Menu\Domain\Exception\MenuInvalidConfigurationException;
 
-/**
- * Regla de elección por sección: cuántos items debe elegir el comensal.
- *
- * Casos típicos:
- *   - min=1, max=1 → "elige UNO" (lo más común: primer plato, segundo plato)
- *   - min=0, max=1 → "opcional, máximo 1" (ej. postre o café)
- *   - min=1, max=2 → "elige 1 o 2" (raros)
- */
 final class MenuSectionChoiceRule
 {
     private function __construct(

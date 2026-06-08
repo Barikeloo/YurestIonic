@@ -6,10 +6,6 @@ export interface AllergenCatalogItem {
   icon: string;
 }
 
-/**
- * Los 14 alérgenos oficiales del Reglamento UE 1169/2011.
- * El orden refleja el orden habitual en cartas y etiquetado.
- */
 export const ALLERGEN_CATALOG: readonly AllergenCatalogItem[] = [
   { code: 'gluten', label: 'Gluten', icon: '🌾' },
   { code: 'crustaceans', label: 'Crustáceos', icon: '🦐' },

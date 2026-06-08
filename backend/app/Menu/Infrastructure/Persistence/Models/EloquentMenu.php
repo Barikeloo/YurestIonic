@@ -41,7 +41,7 @@ class EloquentMenu extends Model
             'validity_from' => 'date',
             'validity_to' => 'date',
             'available_days' => 'integer',
-            // available_from_time / available_to_time: dejados como string "HH:MM:SS"
+
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',

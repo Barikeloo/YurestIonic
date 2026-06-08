@@ -37,7 +37,7 @@ import type { FinanzasPeriod, FinanzasTab, ResumenVariant } from '../models/fina
 
 @Injectable()
 export class FinanzasFacade {
-  // ── UI State ─────────────────────────────────────────────────────────────
+
   private readonly _activeTab = signal<FinanzasTab>('resumen');
   private readonly _period    = signal<FinanzasPeriod>('today');
   private readonly _resumenVariant = signal<ResumenVariant>('A');
@@ -62,7 +62,6 @@ export class FinanzasFacade {
   public setResumenVariant(v: ResumenVariant): void { this._resumenVariant.set(v); }
   public setShowCompare(v: boolean): void   { this._showCompare.set(v); }
 
-  // ── Mock Data (all static) ────────────────────────────────────────────────
   public readonly meta          = MOCK_META;
   public readonly summary       = MOCK_SUMMARY;
   public readonly sparks        = MOCK_SPARKS;
@@ -96,7 +95,6 @@ export class FinanzasFacade {
   public readonly zonesLayout    = MOCK_ZONES_LAYOUT;
   public readonly cannibals      = MOCK_CANNIBALS;
 
-  // ── Computed derived values ────────────────────────────────────────────────
   public readonly totalRevenue  = computed(() => this.summary.revenue.v);
   public readonly cashTheoretical = computed(() =>
     this.cashSession.initial + this.byMethod.cash.v + this.cashSession.cashIn - this.cashSession.cashOut
@@ -104,7 +102,6 @@ export class FinanzasFacade {
   public readonly alertCount = computed(() => this.alerts.filter(a => a.type === 'critical').length);
   public readonly unreadAlerts = computed(() => this.alerts.length);
 
-  // ── Formatting helpers ─────────────────────────────────────────────────────
   public fmt(cents: number): string {
     return (cents / 100).toLocaleString('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 });
   }
@@ -121,9 +118,6 @@ export class FinanzasFacade {
     return `${n >= 0 ? '+' : ''}${n.toFixed(decimals)}%`;
   }
 
-  // ── SVG Chart helpers ──────────────────────────────────────────────────────
-
-  /** SVG path string for a sparkline */
   public sparklinePath(data: number[], W = 100, H = 24, pad = 2): string {
     if (!data.length) return '';
     const max = Math.max(...data, 1);
@@ -138,7 +132,6 @@ export class FinanzasFacade {
       .join(' ');
   }
 
-  /** SVG area fill path for sparkline */
   public sparklineArea(data: number[], W = 100, H = 24, pad = 2): string {
     const line = this.sparklinePath(data, W, H, pad);
     if (!line) return '';
@@ -147,7 +140,6 @@ export class FinanzasFacade {
     return `${line} L ${lastX} ${H} L ${firstX} ${H} Z`;
   }
 
-  /** Returns a bar's height as a percentage of the chart area (0–100) */
   public barPct(v: number, max: number): number {
     return max > 0 ? Math.max((v / max) * 95, v > 0 ? 2 : 0) : 0;
   }
@@ -164,7 +156,6 @@ export class FinanzasFacade {
     return v / (max || 1) > 0.55 ? '#fff' : '#0d0d0d';
   }
 
-  /** Donut chart SVG segments */
   public donutSegments(data: { label: string; v: number; color: string }[], size: number, thickness: number): Array<{
     color: string; label: string; v: number; frac: number; dashArray: string; dashOffset: string;
   }> {

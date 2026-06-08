@@ -6,9 +6,7 @@ namespace App\AuditSavedView\Application\ListAuditSavedViews;
 
 final readonly class AuditSavedViewItemResponse
 {
-    /**
-     * @param array<string, mixed> $filters
-     */
+
     private function __construct(
         public string $uuid,
         public string $name,
@@ -18,9 +16,6 @@ final readonly class AuditSavedViewItemResponse
         public string $updatedAt,
     ) {}
 
-    /**
-     * @param array<string, mixed> $filters
-     */
     public static function create(
         string $uuid,
         string $name,

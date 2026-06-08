@@ -6,18 +6,6 @@ namespace App\Audit\Infrastructure\Persistence\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * @property int $id
- * @property int $restaurant_id
- * @property bool $is_valid
- * @property int $total_events
- * @property int $verified_count
- * @property string $broken_events
- * @property int|null $first_broken_index
- * @property string $verified_at
- * @property string $created_at
- * @property string $updated_at
- */
 final class EloquentVerifyChainResult extends Model
 {
     protected $table = 'audit_chain_verifications';

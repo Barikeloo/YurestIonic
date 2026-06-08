@@ -11,29 +11,13 @@ interface TableRepositoryInterface
 
     public function findById(string $id): ?Table;
 
-    /**
-     * @return array<int, Table>
-     */
     public function findAll(bool $includeDeleted = false): array;
 
     public function deleteById(string $id): bool;
 
-    /**
-     * Find a table by zone ID and name (case-insensitive).
-     */
     public function findByZoneIdAndName(Uuid $zoneId, string $name, ?string $excludeId = null): ?Table;
 
-    /**
-     * Find multiple tables by their IDs.
-     *
-     * @return array<int, Table>
-     */
     public function findByIds(array $ids): array;
 
-    /**
-     * Find tables by merged table group ID.
-     *
-     * @return array<int, Table>
-     */
     public function findByMergedGroupId(string $groupId): array;
 }

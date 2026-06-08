@@ -18,7 +18,6 @@ class SaleSeeder extends Seeder
 
         $now = now();
 
-        // Create 2 sales from orders
         foreach ($orders->take(2) as $order) {
             $restaurantId = (int) $order->restaurant_id;
             $users = DB::table('users')
@@ -42,7 +41,6 @@ class SaleSeeder extends Seeder
                 'deleted_at' => null,
             ]);
 
-            // Add lines to sale if there are order_lines
             $orderLinesList = DB::table('order_lines')
                 ->where('restaurant_id', $restaurantId)
                 ->where('order_id', $order->id)

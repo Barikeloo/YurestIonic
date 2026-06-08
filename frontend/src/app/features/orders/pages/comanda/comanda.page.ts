@@ -90,8 +90,7 @@ export class ComandaPage implements OnInit, OnDestroy {
       modifiers: result.modifiers,
     });
 
-    // Diferimos el cierre para que el click sintético de pantalla táctil
-    // no aterrice en el botón que queda debajo del modal una vez cerrado.
+
     setTimeout(() => {
       this.selectedProduct = null;
       this.configModalOpen = false;
@@ -119,9 +118,7 @@ export class ComandaPage implements OnInit, OnDestroy {
 
     this.facade.addMenuLine(this.selectedMenu, result.selections, result.notes);
 
-    // Diferimos el cierre del modal a la siguiente macro-task para evitar
-    // que el click sintético se filtre al botón "Enviar comanda" que queda
-    // detrás del modal una vez se desmonta del DOM.
+
     setTimeout(() => {
       this.selectedMenu = null;
       this.menuConfigModalOpen = false;

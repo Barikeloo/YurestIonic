@@ -100,18 +100,26 @@ class MenuAvailabilityTest extends TestCase
     public function test_is_available_on_weekday(): void
     {
         $availability = MenuAvailability::create(
-            0b00001010, // Martes (bit 1) y Jueves (bit 3): 0b00001010 = 10
+            0b00001010,
+
             null,
             null,
         );
 
-        $this->assertTrue($availability->isAvailableOnWeekday(2)); // Martes
-        $this->assertTrue($availability->isAvailableOnWeekday(4)); // Jueves
-        $this->assertFalse($availability->isAvailableOnWeekday(1)); // Lunes
-        $this->assertFalse($availability->isAvailableOnWeekday(3)); // Miércoles
-        $this->assertFalse($availability->isAvailableOnWeekday(5)); // Viernes
-        $this->assertFalse($availability->isAvailableOnWeekday(6)); // Sábado
-        $this->assertFalse($availability->isAvailableOnWeekday(7)); // Domingo
+        $this->assertTrue($availability->isAvailableOnWeekday(2));
+
+        $this->assertTrue($availability->isAvailableOnWeekday(4));
+
+        $this->assertFalse($availability->isAvailableOnWeekday(1));
+
+        $this->assertFalse($availability->isAvailableOnWeekday(3));
+
+        $this->assertFalse($availability->isAvailableOnWeekday(5));
+
+        $this->assertFalse($availability->isAvailableOnWeekday(6));
+
+        $this->assertFalse($availability->isAvailableOnWeekday(7));
+
     }
 
     public function test_is_available_on_weekday_with_invalid_day_throws_exception(): void
@@ -143,25 +151,23 @@ class MenuAvailabilityTest extends TestCase
 
     public function test_is_available_at_respects_weekday(): void
     {
-        // Solo disponible en Lunes (bit 0)
+
         $availability = MenuAvailability::create(0b0000001, null, null);
 
-        // 2026-06-15 es Lunes
         $this->assertTrue($availability->isAvailableAt(new DateTimeImmutable('2026-06-15 10:00:00')));
-        // 2026-06-16 es Martes
+
         $this->assertFalse($availability->isAvailableAt(new DateTimeImmutable('2026-06-16 10:00:00')));
     }
 
     public function test_is_available_at_combines_weekday_and_time(): void
     {
-        // Solo disponible en Lunes de 10:00 a 14:00
+
         $availability = MenuAvailability::create(0b0000001, '10:00', '14:00');
 
-        // Lunes dentro del rango
         $this->assertTrue($availability->isAvailableAt(new DateTimeImmutable('2026-06-15 11:00:00')));
-        // Lunes fuera del rango
+
         $this->assertFalse($availability->isAvailableAt(new DateTimeImmutable('2026-06-15 09:00:00')));
-        // Martes dentro del rango (día incorrecto)
+
         $this->assertFalse($availability->isAvailableAt(new DateTimeImmutable('2026-06-16 11:00:00')));
     }
 

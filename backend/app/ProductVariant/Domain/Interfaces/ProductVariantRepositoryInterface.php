@@ -10,9 +10,6 @@ interface ProductVariantRepositoryInterface
 
     public function findById(string $id): ?ProductVariant;
 
-    /**
-     * @return ProductVariant[]
-     */
     public function findByProductId(string $productId): array;
 
     public function deleteById(string $id): bool;

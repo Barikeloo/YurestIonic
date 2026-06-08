@@ -140,7 +140,8 @@ export class MenusManagementComponent {
       if (now > to) return false;
     }
 
-    const isoDay = ((now.getDay() + 6) % 7) + 1; // 1=Mon..7=Sun
+    const isoDay = ((now.getDay() + 6) % 7) + 1;
+
     const bit = 1 << (isoDay - 1);
     if ((menu.availableDays & bit) === 0) return false;
 

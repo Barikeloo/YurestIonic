@@ -1,4 +1,3 @@
-
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PinAuthModalComponent, PinAuthResult } from '../../../../components/pin-auth-modal/pin-auth-modal.component';
@@ -33,26 +32,21 @@ export class MesasPage implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly tpvService = inject(TpvService);
 
-  // ----- UI state: open-table modal -----
   public modalOpen = false;
   public showPinAuthModal = false;
   public diners = 1;
   public openingOrder = false;
 
-  // ----- UI state: close-account modal -----
   public showPinAuthModalForCloseAccount = false;
   public closeAccountModalOpen = false;
   public closingAccount = false;
 
-  // ----- UI state: cobrar -----
   public showPinAuthModalForCharge = false;
 
-  // ----- UI state: floating table menu -----
   public tableMenuOpen = false;
   public tableMenuTable: TableWithStatus | null = null;
   public tableMenuPosition = { x: 0, y: 0 };
 
-  // ----- UI state: edit-diners modal -----
   public editDinersModalOpen = false;
   public editDinersValue = 1;
   public editDinersLoading = false;
@@ -61,21 +55,17 @@ export class MesasPage implements OnInit {
   public editDinersTable: TableWithStatus | null = null;
   public editDinersCheckingChargeSession = false;
 
-  // ----- UI state: line detail modal -----
   public detailModalOpen = false;
   public selectedLine: TpvOrderLine | null = null;
 
-  // ----- UI state: transfer-account modal -----
   public transferModalOpen = false;
   public transferLoading = false;
   public transferError: string | null = null;
   public transferSourceTable: TableWithStatus | null = null;
   public transferHasPartialPayments = false;
 
-  // Último traspaso de la mesa actualmente seleccionada (chip informativo en el panel).
   public lastTransfer: OrderTransferItem | null = null;
 
-  // ----- UI state: merge tables mode -----
   public isMergeMode = false;
   public selectedTablesForMerge: string[] = [];
   public mergingTables = false;
@@ -87,7 +77,7 @@ export class MesasPage implements OnInit {
   private dragStartY = 0;
   private dragOffsetX = 0;
   private dragOffsetY = 0;
-  private readonly DRAG_THRESHOLD = 8; // pixels para considerar arrastre vs click
+  private readonly DRAG_THRESHOLD = 8;
 
   public async ngOnInit(): Promise<void> {
     await this.facade.loadData();
@@ -140,7 +130,6 @@ export class MesasPage implements OnInit {
     return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   }
 
-  // ----- Open table flow -----
   public async openModal(): Promise<void> {
     const result = await this.facade.ensureCashSessionOpen();
 
@@ -205,7 +194,6 @@ export class MesasPage implements OnInit {
     }
   }
 
-  // ----- Close account flow -----
   public openCloseAccountModal(): void {
     if (!this.facade.selectedTable()?.order_id) {
       return;
@@ -250,7 +238,6 @@ export class MesasPage implements OnInit {
     }
   }
 
-  // ----- Charge flow -----
   public goToCobrar(): void {
     if (!this.facade.selectedTable()?.order_id) {
       return;
@@ -269,7 +256,6 @@ export class MesasPage implements OnInit {
     this.navigateToCaja();
   }
 
-  // ----- Navigation -----
   public goToComanda(): void {
     const orderId = this.facade.selectedTable()?.order_id;
 
@@ -288,7 +274,6 @@ export class MesasPage implements OnInit {
     }
   }
 
-  // ----- Floating menu -----
   public openTableMenu(event: Event, table: TableWithStatus): void {
     event.stopPropagation();
     this.tableMenuTable = table;
@@ -510,10 +495,9 @@ export class MesasPage implements OnInit {
     return this.facade.tables().filter((t) => t.occupied).map((t) => t.id);
   }
 
-  // ----- Merge tables mode -----
   public enterMergeMode(tableToSelect?: TableWithStatus | null): void {
     this.isMergeMode = true;
-    // Preseleccionar la mesa desde la que se abrió el menú
+
     if (tableToSelect) {
       this.selectedTablesForMerge = [tableToSelect.id];
     } else if (this.tableMenuTable) {
@@ -540,34 +524,29 @@ export class MesasPage implements OnInit {
     return this.selectedTablesForMerge.includes(tableId);
   }
 
-  // ----- Pointer Events Drag & Drop -----
   public onPointerDown(event: PointerEvent, table: TableWithStatus): void {
-    // Solo botón izquierdo
+
     if (event.button !== 0) { return; }
-    // Ignorar si estamos en modo merge (se usa click para seleccionar)
+
     if (this.isMergeMode) { return; }
 
     this.dragSourceTable = table;
     this.dragStartX = event.clientX;
     this.dragStartY = event.clientY;
 
-    // Guardar referencia al elemento DOM de la mesa original
     const mesaEl = (event.target as HTMLElement).closest('.mesa') as HTMLElement;
     this.dragSourceElement = mesaEl;
 
-    // Calcular offset del cursor respecto al elemento
     const rect = mesaEl.getBoundingClientRect();
     this.dragOffsetX = event.clientX - rect.left;
     this.dragOffsetY = event.clientY - rect.top;
 
-    // Capturar el pointer para recibir eventos incluso fuera del elemento
     mesaEl.setPointerCapture(event.pointerId);
 
     const onPointerMove = (e: PointerEvent): void => {
       const dx = e.clientX - this.dragStartX;
       const dy = e.clientY - this.dragStartY;
 
-      // Si todavía no hemos iniciado el drag y superamos el umbral
       if (!this.dragPreview && (Math.abs(dx) > this.DRAG_THRESHOLD || Math.abs(dy) > this.DRAG_THRESHOLD)) {
         this.startDragPreview(e.clientX, e.clientY);
       }
@@ -575,7 +554,6 @@ export class MesasPage implements OnInit {
       if (this.dragPreview) {
         this.moveDragPreview(e.clientX, e.clientY);
 
-        // Detectar mesa debajo
         this.dragPreview.style.display = 'none';
         const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
         this.dragPreview.style.display = '';
@@ -626,7 +604,6 @@ export class MesasPage implements OnInit {
 
     const rect = this.dragSourceElement.getBoundingClientRect();
 
-    // Clonar el elemento de la mesa para usar como preview
     const preview = this.dragSourceElement.cloneNode(true) as HTMLElement;
     preview.classList.add('mesa-drag-preview');
     preview.style.position = 'fixed';
@@ -643,7 +620,6 @@ export class MesasPage implements OnInit {
     document.body.appendChild(preview);
     this.dragPreview = preview;
 
-    // Reducir opacidad de la mesa original mientras arrastramos
     this.dragSourceElement.style.opacity = '0.4';
   }
 
@@ -659,7 +635,7 @@ export class MesasPage implements OnInit {
       document.body.removeChild(this.dragPreview);
       this.dragPreview = null;
     }
-    // Restaurar opacidad de la mesa original
+
     if (this.dragSourceElement) {
       this.dragSourceElement.style.opacity = '';
     }
@@ -689,7 +665,6 @@ export class MesasPage implements OnInit {
       return;
     }
 
-    // Si ambas mesas ya están en el mismo grupo, no hacer nada
     if (
       sourceTable.merged_table_group_id &&
       targetTable.merged_table_group_id &&
@@ -713,7 +688,6 @@ export class MesasPage implements OnInit {
       return;
     }
 
-    // Validar TO_CHARGE en todas las mesas seleccionadas
     for (const tableId of this.selectedTablesForMerge) {
       const table = this.facade.tables().find(t => t.id === tableId);
       if (table && this.hasTableToCharge(table)) {
@@ -748,7 +722,6 @@ export class MesasPage implements OnInit {
     }
   }
 
-  // ----- Line detail modal -----
   public openLineDetail(line: TpvOrderLine): void {
     this.selectedLine = line;
     this.detailModalOpen = true;
@@ -784,7 +757,6 @@ export class MesasPage implements OnInit {
     return line.menu_selections.map((s) => s.product_name).join(', ');
   }
 
-  // ----- Pure UI helpers -----
   public formatCents(cents: number): string {
     return (cents / 100).toFixed(2).replace('.', ',') + '€';
   }

@@ -17,9 +17,6 @@ final readonly class GetLatestVerifyResultResponse
         return new self(result: $result);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function toArray(): array
     {
         if ($this->result === null) {

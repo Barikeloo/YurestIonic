@@ -230,7 +230,6 @@ class MenuEntityTest extends TestCase
     public function test_is_available_at_returns_true_when_active_and_valid(): void
     {
         $menu = $this->createValidMenu(active: true);
-        // always available
 
         $this->assertTrue($menu->isAvailableAt(new DateTimeImmutable('2026-06-15 12:00:00')));
     }

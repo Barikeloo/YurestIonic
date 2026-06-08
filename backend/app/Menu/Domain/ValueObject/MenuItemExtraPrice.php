@@ -4,10 +4,6 @@ declare(strict_types=1);
 
 namespace App\Menu\Domain\ValueObject;
 
-/**
- * Suplemento (céntimos) aplicado sobre el precio del menú cuando el comensal
- * elige este item. 0 = sin suplemento. Ejemplo: "Solomillo +2,00 €" → 200.
- */
 final class MenuItemExtraPrice
 {
     private int $value;

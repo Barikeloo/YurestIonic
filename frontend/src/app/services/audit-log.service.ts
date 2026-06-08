@@ -51,10 +51,10 @@ export interface ListAuditEventsFilters {
   dateTo?: string;
   search?: string;
   anomalyOnly?: boolean;
-  /** Include archived events (admin only). */
+
   includeArchived?: boolean;
   cursor?: string;
-  /** Live tail: returns events newer than this uuid (ascending). */
+
   since?: string;
 }
 

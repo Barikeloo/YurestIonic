@@ -2,10 +2,6 @@
 
 namespace App\User\Domain\ValueObject;
 
-/**
- * Internal integer FK from users.restaurant_id to restaurants.id.
- * Not a UUID — represents the database internal id of the linked restaurant.
- */
 final class RestaurantInternalId
 {
     private const MIN_VALUE = 1;

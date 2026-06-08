@@ -99,7 +99,6 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
             ->withoutGlobalScopes()
             ->where('restaurant_id', $restaurantIdInt);
 
-        // Live tail mode (since) — mutually exclusive with cursor.
         if ($criteria->sinceUuid !== null) {
             $sinceInternalId = EloquentAuditLog::query()
                 ->withoutGlobalScopes()
@@ -126,7 +125,6 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
             );
         }
 
-        // Standard descending paginated list.
         $this->applyFilters($query, $criteria, $restaurantIdInt);
 
         if ($criteria->cursorCreatedAt !== null && $criteria->cursorInternalId !== null) {
@@ -456,7 +454,7 @@ final class EloquentAuditLogRepository implements AuditLogRepositoryInterface
         $this->applyFilters($query, $criteria, $restaurantIdInt);
 
         foreach ($query->orderBy('created_at', 'asc')->orderBy('id', 'asc')->lazy(1000) as $model) {
-            /** @var EloquentAuditLog $model */
+
             yield $this->toDomain($model);
         }
     }

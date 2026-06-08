@@ -25,7 +25,7 @@ final class GetArchivedAuditStatsRequest extends FormRequest
 
     public function toCommand(): GetArchivedAuditStatsCommand
     {
-        /** @var TenantContext $tenantContext */
+
         $tenantContext = app(TenantContext::class);
 
         return new GetArchivedAuditStatsCommand(

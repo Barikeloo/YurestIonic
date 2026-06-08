@@ -80,10 +80,8 @@ final class GetPaymentTicket
         $issuedAt = $latestPaidAt?->format(\DateTimeInterface::ATOM);
         $issuedTime = $latestPaidAt?->format('H:i');
 
-        // Obtener líneas de la venta (simplificado por ahora)
         $linesPayload = [];
 
-        // Obtener operario
         $operator = null;
         if ($sale->closedByUserId() !== null) {
             $operatorUser = $this->userRepository->findById($sale->closedByUserId()->value());
@@ -92,7 +90,6 @@ final class GetPaymentTicket
             }
         }
 
-        // Obtener Z-report number de la sesión de caja
         $zReportNumber = null;
         if ($sale->cashSessionId() !== null) {
             $cashSession = $this->cashSessionRepository->findByUuid($sale->cashSessionId());
@@ -101,7 +98,6 @@ final class GetPaymentTicket
             }
         }
 
-        // Tax breakdown (simplificado por ahora)
         $taxBreakdown = [];
 
         return GetPaymentTicketResponse::fromPayload(

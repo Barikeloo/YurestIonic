@@ -75,8 +75,6 @@
   }
 }
 
-// Body
-
 .modal-body {
   padding: 28px 24px;
   display: flex;
@@ -109,8 +107,6 @@
   }
 }
 
-// QR
-
 .qr-wrapper {
   align-self: center;
   padding: 12px;
@@ -123,8 +119,6 @@
     display: block;
   }
 }
-
-// Countdown
 
 .countdown {
   font-family: var(--font);
@@ -144,8 +138,6 @@
     }
   }
 }
-
-// State icons
 
 .state-icon {
   width: 64px;
@@ -173,8 +165,6 @@
   }
 }
 
-// Preview
-
 .preview-img {
   width: 160px;
   height: 160px;
@@ -182,8 +172,6 @@
   border-radius: var(--radius);
   border: 1px solid var(--gray-200);
 }
-
-// Action button
 
 .btn-action {
   font-family: var(--font);
@@ -202,8 +190,6 @@
     background: var(--accent-light);
   }
 }
-
-// Spinner
 
 .spinner {
   width: 40px;

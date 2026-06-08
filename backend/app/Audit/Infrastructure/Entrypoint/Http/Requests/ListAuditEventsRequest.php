@@ -34,7 +34,7 @@ final class ListAuditEventsRequest extends FormRequest
 
     public function toCommand(): ListAuditEventsCommand
     {
-        /** @var TenantContext $tenantContext */
+
         $tenantContext = app(TenantContext::class);
 
         return new ListAuditEventsCommand(

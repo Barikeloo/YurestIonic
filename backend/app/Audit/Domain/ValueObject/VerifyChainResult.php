@@ -8,9 +8,7 @@ use App\Shared\Domain\ValueObject\Uuid;
 
 final readonly class VerifyChainResult
 {
-    /**
-     * @param  list<array{uuid: string, expected_hash: string, actual_hash: string}>  $brokenEvents
-     */
+
     public function __construct(
         public Uuid $restaurantId,
         public bool $isValid,
@@ -21,9 +19,6 @@ final readonly class VerifyChainResult
         public \DateTimeImmutable $verifiedAt,
     ) {}
 
-    /**
-     * @param  list<array{uuid: string, expected_hash: string, actual_hash: string}>  $brokenEvents
-     */
     public static function create(
         Uuid $restaurantId,
         bool $isValid,

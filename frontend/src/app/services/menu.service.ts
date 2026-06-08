@@ -29,7 +29,7 @@ export interface MenuDto {
   archived: boolean;
   validity_from: string | null;
   validity_to: string | null;
-  /** ISO weekday bitmask (bit 0 = Monday ... bit 6 = Sunday). */
+
   available_days: number;
   available_from_time: string | null;
   available_to_time: string | null;
@@ -61,7 +61,7 @@ export interface CreateMenuPayload {
   price: number;
   validity_from?: string | null;
   validity_to?: string | null;
-  /** ISO weekday list (1=Monday ... 7=Sunday). */
+
   available_days: number[];
   available_from_time?: string | null;
   available_to_time?: string | null;
@@ -79,10 +79,6 @@ export interface ListMenusFilters {
   search?: string;
 }
 
-/**
- * Subset mínimo de un producto necesario para el editor y selector de menús.
- * Permite alimentar el componente sin acoplarlo al DTO completo de la Carta.
- */
 export interface MenuProductOption {
   id: string;
   name: string;

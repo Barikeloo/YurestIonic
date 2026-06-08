@@ -9,8 +9,5 @@ interface OrderTransferRepositoryInterface
 {
     public function save(OrderTransfer $transfer): void;
 
-    /**
-     * @return OrderTransfer[]
-     */
     public function findByOrderId(Uuid $orderId): array;
 }

@@ -6,11 +6,6 @@ namespace App\Audit\Infrastructure\Export;
 
 use App\Audit\Domain\Entity\AuditLog;
 
-/**
- * RFC-4180 CSV writer. Excel-friendly: UTF-8 BOM up front so Excel
- * detects the encoding and renders accents correctly, comma delimiter,
- * CRLF line endings, and standard double-quote escaping.
- */
 final class CsvAuditExportFormatter implements AuditExportFormatter
 {
     private const HEADERS = [
@@ -72,9 +67,6 @@ final class CsvAuditExportFormatter implements AuditExportFormatter
         return '';
     }
 
-    /**
-     * @param  list<string>  $fields
-     */
     private function csvLine(array $fields): string
     {
         $fh = fopen('php://temp', 'r+');
@@ -90,9 +82,6 @@ final class CsvAuditExportFormatter implements AuditExportFormatter
         return $line === false ? '' : $line;
     }
 
-    /**
-     * @param  array<string, mixed>|null  $value
-     */
     private function jsonCell(?array $value): string
     {
         if ($value === null || $value === []) {

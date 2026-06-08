@@ -136,7 +136,6 @@ export class MesasFacade {
     this._selectedTable.set(table);
     this._orderLines.set([]);
 
-    // Recolectar todas las mesas del grupo (o solo la mesa si no está fusionada)
     const tablesToLoad: TableWithStatus[] = [];
     if (table.merged_table_group_id) {
       const group = this.tablesByMergedGroup().get(table.merged_table_group_id);

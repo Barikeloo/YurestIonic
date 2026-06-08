@@ -10,10 +10,6 @@ interface ProductPhotoUploadTokenRepositoryInterface
 
     public function save(ProductPhotoUploadToken $token): void;
 
-    /**
-     * Atomically marks the token as used. Throws ProductPhotoUploadTokenAlreadyUsedException
-     * when another request already marked it (race-condition guard).
-     */
     public function markAsUsed(ProductPhotoUploadToken $token): void;
 
     public function deleteExpired(): int;

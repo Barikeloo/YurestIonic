@@ -202,8 +202,6 @@
   }
 }
 
-// ── Zona de foto del producto ──────────────────────────────────
-
 .product-photo-row {
   display: flex;
   align-items: center;
@@ -265,8 +263,6 @@
   &--ok    { color: #16a34a; }
   &--empty { color: var(--gray-400); }
 }
-
-// ── Lightbox ──────────────────────────────────────────────────────────────
 
 .lightbox-overlay {
   position: fixed;

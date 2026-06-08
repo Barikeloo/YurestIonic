@@ -17,7 +17,7 @@
 .mesas-list {
   max-height: 300px;
   overflow-y: auto;
-  // Custom scrollbar for better UX
+
   scrollbar-width: thin;
   scrollbar-color: var(--gray-300) var(--gray-100);
 
@@ -46,7 +46,7 @@
   justify-content: space-between;
   padding: 16px 0;
   border-bottom: 2px solid var(--gray-100);
-  // Optimized for tablet touch targets
+
   min-height: 60px;
 }
 

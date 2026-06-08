@@ -14,14 +14,9 @@ use App\Menu\Domain\ValueObject\MenuValidity;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 
-/**
- * Aggregate root del módulo Menu. Contiene sus secciones (que a su vez tienen items).
- */
 class Menu
 {
-    /**
-     * @param  MenuSection[]  $sections
-     */
+
     private function __construct(
         private Uuid $id,
         private Uuid $taxId,
@@ -37,9 +32,6 @@ class Menu
         private ?DomainDateTime $archivedAt = null,
     ) {}
 
-    /**
-     * @param  MenuSection[]  $sections
-     */
     public static function dddCreate(
         Uuid $taxId,
         MenuName $name,
@@ -71,9 +63,6 @@ class Menu
         );
     }
 
-    /**
-     * @param  MenuSection[]  $sections
-     */
     public static function fromPersistence(
         string $id,
         string $taxId,
@@ -127,9 +116,6 @@ class Menu
         $this->touch();
     }
 
-    /**
-     * @param  MenuSection[]  $sections
-     */
     public function replaceSections(array $sections): void
     {
         $this->ensureNotArchived();
@@ -185,7 +171,6 @@ class Menu
         return $this->availability->isAvailableAt($instant);
     }
 
-    // Getters
     public function id(): Uuid
     {
         return $this->id;
@@ -226,7 +211,6 @@ class Menu
         return $this->active;
     }
 
-    /** @return MenuSection[] */
     public function sections(): array
     {
         return $this->sections;

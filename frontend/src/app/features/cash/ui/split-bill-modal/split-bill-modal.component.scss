@@ -107,7 +107,6 @@
   flex: 1;
 }
 
-// ── Layout split con sidebar ───────────────────
 .modal-content-split {
   display: flex;
   flex: 1;
@@ -145,7 +144,6 @@
   letter-spacing: 0.5px;
 }
 
-// Equal mode
 .equal-mode {
   .parts-control {
     display: flex;
@@ -221,13 +219,11 @@
   }
 }
 
-// Lines mode v2 — Tap & Place
 .lines-mode-v2 {
   display: flex;
   flex-direction: column;
   gap: 14px;
 
-  // Barra de progreso global
   .lines-progress {
     display: flex;
     flex-direction: column;
@@ -258,7 +254,6 @@
     }
   }
 
-  // Hint contextual
   .lines-hint {
     padding: 8px 12px;
     border-radius: 8px;
@@ -295,7 +290,6 @@
     font-family: var(--font);
   }
 
-  // Pool de líneas
   .lines-pool {
     display: flex;
     flex-direction: column;
@@ -368,7 +362,6 @@
     margin-top: 1px;
   }
 
-  // Grid de comensales
   .diner-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -576,7 +569,6 @@
   &:hover { background: #1bb868; }
 }
 
-// Diner mode v2 (card-first)
 .diner-mode-v2 {
   display: flex;
   flex-direction: column;
@@ -706,8 +698,6 @@
     flex-direction: column;
     gap: 8px;
 
-    // Estado "sin comensal activo": líneas en read-only, atenuadas.
-    // Las pagadas conservan su propio estilo (ya están atenuadas y tachadas).
     &.no-active .diner-v2-line:not(.paid-line) {
       cursor: not-allowed;
       opacity: 0.7;
@@ -736,7 +726,6 @@
       background: color-mix(in srgb, var(--line-owner-color) 6%, white);
     }
 
-    // Línea asignada al comensal activo: tinte más fuerte y sombra suave.
     &.on-active {
       background: color-mix(in srgb, var(--line-owner-color) 14%, white);
       box-shadow: 0 0 0 2px color-mix(in srgb, var(--line-owner-color) 30%, transparent);
@@ -799,7 +788,6 @@
     white-space: nowrap;
   }
 
-  // CTA — footer del comensal activo
   .diner-v2-footer {
     --diner-color: #999;
     position: sticky;
@@ -885,7 +873,6 @@
   }
 }
 
-// ── Standalone mode (cuando se usa con wrapper externo) ───────────────
 .modal-box.standalone {
   width: 100%;
   max-width: 100%;
@@ -893,7 +880,6 @@
   overflow: hidden;
 }
 
-// ── Loading state ───────────────────────────────────────────────────────
 .loading-state {
   padding: 40px;
   text-align: center;
@@ -902,7 +888,6 @@
   font-size: 14px;
 }
 
-// ── Error state ────────────────────────────────────────────────────────
 .error-state {
   padding: 20px;
   text-align: center;
@@ -935,7 +920,6 @@
   }
 }
 
-// ── Session info ───────────────────────────────────────────────────────
 .session-info {
   padding: 4px 12px;
   background: var(--accent-soft);
@@ -946,7 +930,6 @@
   font-weight: 500;
 }
 
-// ── Part card states ──────────────────────────────────────────────────
 .part-card {
   &.paid {
     background: var(--green-soft);
@@ -967,7 +950,6 @@
   }
 }
 
-// ── Disabled button states ──────────────────────────────────────────────
 .btn-charge:disabled {
   background: var(--gray-300);
   cursor: not-allowed;
@@ -983,7 +965,6 @@
   background: var(--gray-100);
 }
 
-// ── Completed state ─────────────────────────────────────────────────────
 .completed-state {
   padding: 60px 40px;
   text-align: center;
@@ -1020,7 +1001,6 @@
   }
 }
 
-// ── Progress bar ────────────────────────────────────────────────────────
 .progress-bar {
   padding: 16px 24px 0;
 
@@ -1047,7 +1027,6 @@
   }
 }
 
-// ── Confirm button ─────────────────────────────────────────────────────
 .btn-confirm {
   padding: 12px 32px;
   border-radius: 8px;

@@ -6,18 +6,13 @@ namespace App\Audit\Application\ListAuditEvents;
 
 final readonly class ListAuditEventsResponse
 {
-    /**
-     * @param  list<AuditEventItemResponse>  $items
-     */
+
     private function __construct(
         public array $items,
         public ?string $nextCursor,
         public bool $hasMore,
     ) {}
 
-    /**
-     * @param  list<AuditEventItemResponse>  $items
-     */
     public static function create(
         array $items,
         ?string $nextCursor,

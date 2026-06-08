@@ -31,7 +31,6 @@ export class UsersManagementComponent {
 
   public readonly searchTerm = signal('');
 
-  // Búsqueda por nombre, email o etiqueta del rol (Operario / Supervisor / Admin).
   public readonly filteredUsers = computed<UserRow[]>(() => {
     const term = this.searchTerm().trim().toLowerCase();
     if (!term) return this.users();

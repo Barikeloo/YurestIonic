@@ -6,9 +6,7 @@ namespace App\Audit\Application\VerifyAuditChain;
 
 final readonly class VerifyAuditChainResponse
 {
-    /**
-     * @param  list<array{uuid: string, expected_hash: string, actual_hash: string}>  $brokenEvents
-     */
+
     private function __construct(
         public int $totalEvents,
         public int $verifiedCount,
@@ -17,9 +15,6 @@ final readonly class VerifyAuditChainResponse
         public bool $isValid,
     ) {}
 
-    /**
-     * @param  list<array{uuid: string, expected_hash: string, actual_hash: string}>  $brokenEvents
-     */
     public static function create(
         int $totalEvents,
         int $verifiedCount,
@@ -30,9 +25,6 @@ final readonly class VerifyAuditChainResponse
         return new self($totalEvents, $verifiedCount, $brokenEvents, $firstBrokenIndex, $isValid);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function toArray(): array
     {
         return [

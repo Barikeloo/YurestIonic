@@ -1,4 +1,3 @@
-
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionTaxesFacade, TaxRow, TaxFormData } from '../../../pages/core/gestion/facades/gestion-taxes.facade';
@@ -23,7 +22,6 @@ export class TaxesManagementComponent {
 
   public readonly searchTerm = signal('');
 
-  // Búsqueda por nombre o por porcentaje (texto), p.ej. "10" encuentra el 10%.
   public readonly filteredTaxes = computed<TaxRow[]>(() => {
     const term = this.searchTerm().trim().toLowerCase();
     if (!term) return this.taxes();

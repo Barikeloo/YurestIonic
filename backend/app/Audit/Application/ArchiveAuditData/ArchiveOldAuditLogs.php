@@ -13,17 +13,6 @@ use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Shared\Domain\ValueObject\Uuid;
 use Illuminate\Contracts\Cache\Repository as CacheRepository;
 
-/**
- * Marks every audit log older than the configured threshold as archived.
- *
- * Retention semantics live in PLAN_AUDIT_RETENTION.md: archived rows stay
- * in the same table (soft archive), the integrity chain is untouched, and
- * archived data is hidden from the default list endpoint but still
- * accessible to admins via include_archived=1 and to the chain verifier.
- *
- * This use case is invoked from the Laravel scheduler weekly, and from the
- * `audit:archive-old` console command for ad-hoc runs.
- */
 class ArchiveOldAuditLogs
 {
     public function __construct(

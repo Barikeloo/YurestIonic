@@ -8,10 +8,7 @@ use App\Sale\Domain\Entity\ChargeSession;
 
 final readonly class CreateChargeSessionResponse
 {
-    /**
-     * @param  array<int, array{order_line_id: string, diner_number: int}>  $lineAssignments
-     * @param  array<int, string>  $paidOrderLineIds
-     */
+
     private function __construct(
         public string $id,
         public string $orderId,
@@ -28,10 +25,6 @@ final readonly class CreateChargeSessionResponse
         public array $paidOrderLineIds = [],
     ) {}
 
-    /**
-     * @param  array<int, array{order_line_id: string, diner_number: int}>  $lineAssignments
-     * @param  array<int, string>  $paidOrderLineIds
-     */
     public static function create(
         string $id,
         string $orderId,
@@ -64,10 +57,6 @@ final readonly class CreateChargeSessionResponse
         );
     }
 
-    /**
-     * @param  array<int, array{order_line_id: string, diner_number: int}>  $lineAssignments
-     * @param  array<int, string>  $paidOrderLineIds
-     */
     public static function fromLiveDebt(
         ChargeSession $session,
         int $totalCents,

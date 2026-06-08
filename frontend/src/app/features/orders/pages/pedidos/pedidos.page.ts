@@ -60,8 +60,6 @@ export class PedidosPage implements OnInit, OnDestroy {
   protected readonly detailModalOpen = signal<boolean>(false);
   protected readonly selectedLine = signal<TpvOrderLine | null>(null);
 
-  // Local source of truth for the search input — keeps the field responsive
-  // while the actual filter is debounced into the facade.
   protected readonly searchDisplay = signal<string>('');
   private readonly _searchInput$ = new Subject<string>();
   private readonly _destroyRef = inject(DestroyRef);

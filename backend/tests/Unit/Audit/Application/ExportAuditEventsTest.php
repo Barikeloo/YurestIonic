@@ -83,9 +83,6 @@ class ExportAuditEventsTest extends TestCase
             ->shouldReceive('record')
             ->never();
 
-        // Invoke but don't iterate: the use case is a generator function, so
-        // its body only runs once consumed. An aborted client export must not
-        // leave an audit.exported entry pointing at a half-written download.
         ($this->useCase)(new ExportAuditEventsCommand($this->restaurantUuid, ExportFormat::Csv));
 
         $this->assertTrue(true, 'no expectations should fire when the generator is never iterated');

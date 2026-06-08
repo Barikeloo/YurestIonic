@@ -10,7 +10,7 @@ trait HasTenantScope
     protected static function bootHasTenantScope(): void
     {
         static::addGlobalScope('tenant', static function (Builder $builder): void {
-            /** @var TenantContext $tenantContext */
+
             $tenantContext = app(TenantContext::class);
             $restaurantId = $tenantContext->restaurantId();
 

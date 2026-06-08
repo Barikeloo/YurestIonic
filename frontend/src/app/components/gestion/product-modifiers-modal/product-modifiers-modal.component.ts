@@ -68,7 +68,6 @@ export class ProductModifiersModalComponent implements OnChanges {
   public readonly error = computed(() => this.facade.error());
   public readonly hasChanges = computed(() => this.facade.hasChanges());
 
-  // Estado local para edición inline de variantes y modificadores
   public readonly editingVariant = signal<VariantFormData | null>(null);
   public readonly editingModifier = signal<ModifierFormData | null>(null);
 
@@ -122,7 +121,6 @@ export class ProductModifiersModalComponent implements OnChanges {
     return this.facade.isAllergenSelected(code);
   }
 
-  // --- Variants ---
   public hasEditingVariant(): boolean {
     return this.editingVariant() !== null;
   }
@@ -191,7 +189,6 @@ export class ProductModifiersModalComponent implements OnChanges {
       .subscribe();
   }
 
-  // --- Modifiers ---
   public hasEditingModifier(): boolean {
     return this.editingModifier() !== null;
   }
@@ -293,7 +290,7 @@ export class ProductModifiersModalComponent implements OnChanges {
           this.closeModal.emit();
         },
         error: () => {
-          // El facade ya capturó el mensaje en `error`. El template lo muestra.
+
         },
       });
   }

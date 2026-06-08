@@ -6,9 +6,7 @@ namespace App\Menu\Application\Shared;
 
 final readonly class MenuSectionInput
 {
-    /**
-     * @param  MenuItemInput[]  $items
-     */
+
     public function __construct(
         public string $name,
         public int $position,
@@ -17,9 +15,6 @@ final readonly class MenuSectionInput
         public array $items,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $data
-     */
     public static function fromArray(array $data, int $defaultPosition = 0): self
     {
         $rawItems = $data['items'] ?? [];

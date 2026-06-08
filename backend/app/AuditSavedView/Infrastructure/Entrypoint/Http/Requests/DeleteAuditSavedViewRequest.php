@@ -31,7 +31,7 @@ final class DeleteAuditSavedViewRequest extends FormRequest
 
     public function toCommand(): DeleteAuditSavedViewCommand
     {
-        /** @var TenantContext $tenantContext */
+
         $tenantContext = app(TenantContext::class);
 
         return new DeleteAuditSavedViewCommand(

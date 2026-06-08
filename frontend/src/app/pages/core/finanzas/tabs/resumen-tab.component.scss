@@ -24,8 +24,6 @@
   gap: 16px;
 }
 
-// ── Card base ─────────────────────────────────────────────────────────────────
-
 .card {
   background: var(--white);
   border-radius: var(--radius);
@@ -43,8 +41,6 @@
     border-color: #f1e3b8;
   }
 }
-
-// ── Section header ────────────────────────────────────────────────────────────
 
 .section-head {
   display: flex;
@@ -66,8 +62,6 @@
   font-family: var(--font);
   margin-top: 2px;
 }
-
-// ── KPI row ───────────────────────────────────────────────────────────────────
 
 .kpi-row {
   display: grid;
@@ -150,7 +144,6 @@
   border-radius: 3px 0 0 3px;
 }
 
-// Trend chip
 .trend-chip {
   display: inline-flex;
   align-items: center;
@@ -168,7 +161,6 @@
   font-size: 10px;
 }
 
-// Badges
 .badge-live {
   font-size: 10px;
   font-weight: 700;
@@ -216,15 +208,11 @@
   font-family: var(--font);
 }
 
-// ── Charts grid ───────────────────────────────────────────────────────────────
-
 .charts-grid {
   display: grid;
   grid-template-columns: 1.6fr 1fr;
   gap: 16px;
 }
-
-// ── Bar chart ─────────────────────────────────────────────────────────────────
 
 .chart-legend {
   display: flex;
@@ -367,8 +355,6 @@
   white-space: nowrap;
 }
 
-// ── Top products ──────────────────────────────────────────────────────────────
-
 .ghost-btn {
   background: transparent;
   border: none;
@@ -451,15 +437,11 @@
   text-align: right;
 }
 
-// ── Middle row ────────────────────────────────────────────────────────────────
-
 .mid-row {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
 }
-
-// ── Donut chart ───────────────────────────────────────────────────────────────
 
 .donut-wrap {
   display: flex;
@@ -533,8 +515,6 @@
   color: var(--ink5);
   font-family: var(--font);
 }
-
-// ── Cash card ─────────────────────────────────────────────────────────────────
 
 .cash-card {
   cursor: pointer;
@@ -631,8 +611,6 @@
   &--red   { color: var(--accent); }
 }
 
-// ── Insights ──────────────────────────────────────────────────────────────────
-
 .insights-list {
   display: flex;
   flex-direction: column;
@@ -662,15 +640,11 @@
   line-height: 1.4;
 }
 
-// ── Operational row ───────────────────────────────────────────────────────────
-
 .ops-row {
   display: grid;
   grid-template-columns: 1.1fr 1.2fr 1fr;
   gap: 16px;
 }
-
-// ── Forecast card ─────────────────────────────────────────────────────────────
 
 .forecast-label {
   font-size: 11px;
@@ -753,8 +727,6 @@
   color: var(--ink2);
   line-height: 1.5;
 }
-
-// ── Open tables ───────────────────────────────────────────────────────────────
 
 .tables-list {
   display: flex;
@@ -839,8 +811,6 @@
   min-width: 70px;
   text-align: right;
 }
-
-// ── Pending payments ──────────────────────────────────────────────────────────
 
 .pending-list {
   display: flex;

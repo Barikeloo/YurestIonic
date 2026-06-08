@@ -11,9 +11,7 @@ use App\Shared\Domain\ValueObject\Uuid;
 
 class MenuSection
 {
-    /**
-     * @param  MenuItem[]  $items
-     */
+
     private function __construct(
         private Uuid $id,
         private Uuid $menuId,
@@ -27,9 +25,6 @@ class MenuSection
         }
     }
 
-    /**
-     * @param  MenuItem[]  $items
-     */
     public static function dddCreate(
         Uuid $menuId,
         MenuSectionName $name,
@@ -47,9 +42,6 @@ class MenuSection
         );
     }
 
-    /**
-     * @param  MenuItem[]  $items
-     */
     public static function fromPersistence(
         string $id,
         string $menuId,
@@ -94,7 +86,6 @@ class MenuSection
         return $this->choiceRule;
     }
 
-    /** @return MenuItem[] */
     public function items(): array
     {
         return $this->items;

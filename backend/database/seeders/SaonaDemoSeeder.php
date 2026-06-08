@@ -7,13 +7,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-/**
- * Demo seeder para el restaurante Bar Manolo.
- * Idempotente: se puede ejecutar varias veces sin duplicar datos.
- *
- * Ejecutar con:
- *   php artisan db:seed --class=SaonaDemoSeeder
- */
 class SaonaDemoSeeder extends Seeder
 {
     private const RESTAURANT_EMAIL = 'barmanolo@gmail.com';
@@ -42,13 +35,9 @@ class SaonaDemoSeeder extends Seeder
         $this->command->info('  Operadores: carlos/laura/javier/sofia@saona.com / 12345678 / PIN 3456-6789');
     }
 
-    /**
-     * Borra todos los datos operativos del restaurante Bar Manolo para dejar la
-     * demo en un estado conocido. Se respeta el orden de FKs.
-     */
     private function wipeExistingData(int $restaurantId): void
     {
-        // 1. Órdenes y ventas (borra en cascada order_lines, sales_lines, sale_payments)
+
         $orderIds = DB::table('orders')->where('restaurant_id', $restaurantId)->pluck('id');
         $saleIds = DB::table('sales')->where('restaurant_id', $restaurantId)->pluck('id');
 
@@ -63,7 +52,6 @@ class SaonaDemoSeeder extends Seeder
             DB::table('orders')->whereIn('id', $orderIds)->delete();
         }
 
-        // 2. Cajas (z_reports primero, luego movements, luego sessions)
         $cashSessionIds = DB::table('cash_sessions')->where('restaurant_id', $restaurantId)->pluck('id');
         if ($cashSessionIds->isNotEmpty()) {
             DB::table('z_reports')->whereIn('cash_session_id', $cashSessionIds)->delete();
@@ -71,18 +59,15 @@ class SaonaDemoSeeder extends Seeder
             DB::table('cash_sessions')->whereIn('id', $cashSessionIds)->delete();
         }
 
-        // 3. Logs de auditoría del restaurante (si la tabla existe y está ligada)
         if (DB::getSchemaBuilder()->hasTable('audit_logs')
             && DB::getSchemaBuilder()->hasColumn('audit_logs', 'restaurant_id')) {
             DB::table('audit_logs')->where('restaurant_id', $restaurantId)->delete();
         }
 
-        // 4. Quick access y catálogo
         DB::table('user_quick_accesses')->where('restaurant_id', $restaurantId)->delete();
         DB::table('tables')->where('restaurant_id', $restaurantId)->delete();
         DB::table('zones')->where('restaurant_id', $restaurantId)->delete();
 
-        // Menús referencian productos sin cascade, hay que borrarlos antes que products.
         if (DB::getSchemaBuilder()->hasTable('menus')) {
             DB::table('menus')->where('restaurant_id', $restaurantId)->delete();
         }
@@ -134,7 +119,6 @@ class SaonaDemoSeeder extends Seeder
         }
     }
 
-    /** @return array<string,int> email => user_id */
     private function seedUsers(int $restaurantId, $now): array
     {
         $password = Hash::make('12345678');
@@ -173,7 +157,6 @@ class SaonaDemoSeeder extends Seeder
         return $ids;
     }
 
-    /** @return array<string,int> family_name => family_id */
     private function seedFamilies(int $restaurantId, $now): array
     {
         $families = [
@@ -212,9 +195,6 @@ class SaonaDemoSeeder extends Seeder
         return $ids;
     }
 
-    /**
-     * @param  array<string,int>  $familyIds  family name => id
-     */
     private function seedProducts(int $restaurantId, array $familyIds, $now): void
     {
         $taxIds = DB::table('taxes')
@@ -224,9 +204,8 @@ class SaonaDemoSeeder extends Seeder
         $ivaGeneral = (int) $taxIds['IVA General'];
         $ivaReducido = (int) $taxIds['IVA Reducido'];
 
-        // price en céntimos
         $catalog = [
-            // ── Cafés y Desayunos ──
+
             ['fam' => 'Cafés y Desayunos', 'tax' => $ivaReducido, 'name' => 'Café solo',                 'price' => 160,  'stock' => 999],
             ['fam' => 'Cafés y Desayunos', 'tax' => $ivaReducido, 'name' => 'Café cortado',              'price' => 180,  'stock' => 999],
             ['fam' => 'Cafés y Desayunos', 'tax' => $ivaReducido, 'name' => 'Café con leche',            'price' => 210,  'stock' => 999],
@@ -253,7 +232,6 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Cafés y Desayunos', 'tax' => $ivaReducido, 'name' => 'Bocadillo de jamón',        'price' => 520,  'stock' => 60],
             ['fam' => 'Cafés y Desayunos', 'tax' => $ivaReducido, 'name' => 'Bocadillo de tortilla',     'price' => 480,  'stock' => 60],
 
-            // ── Brunch ──
             ['fam' => 'Brunch', 'tax' => $ivaReducido, 'name' => 'Tostada de aguacate',         'price' => 950,  'stock' => 60],
             ['fam' => 'Brunch', 'tax' => $ivaReducido, 'name' => 'Tostada de salmón',           'price' => 1290, 'stock' => 40],
             ['fam' => 'Brunch', 'tax' => $ivaReducido, 'name' => 'Tostada de hummus',           'price' => 890,  'stock' => 40],
@@ -272,7 +250,6 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Brunch', 'tax' => $ivaReducido, 'name' => 'Sandwich club',               'price' => 1190, 'stock' => 40],
             ['fam' => 'Brunch', 'tax' => $ivaReducido, 'name' => 'Sandwich vegetal',            'price' => 950,  'stock' => 40],
 
-            // ── Entrantes y Tapas ──
             ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Jamón ibérico de bellota',    'price' => 2490, 'stock' => 30],
             ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Tabla de quesos',             'price' => 1690, 'stock' => 30],
             ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Tabla de embutidos ibéricos', 'price' => 1890, 'stock' => 30],
@@ -298,7 +275,6 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Aceitunas marinadas',         'price' => 380,  'stock' => 100],
             ['fam' => 'Entrantes y Tapas', 'tax' => $ivaReducido, 'name' => 'Pan con tomate',              'price' => 320,  'stock' => 200],
 
-            // ── Ensaladas ──
             ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada César',           'price' => 1190, 'stock' => 50],
             ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada de la Casa',     'price' => 1250, 'stock' => 50],
             ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada de quinoa',       'price' => 1150, 'stock' => 40],
@@ -310,7 +286,6 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada templada de pulpo', 'price' => 1490, 'stock' => 25],
             ['fam' => 'Ensaladas', 'tax' => $ivaReducido, 'name' => 'Ensalada de queso de cabra y nueces', 'price' => 1290, 'stock' => 35],
 
-            // ── Arroces y Pastas ──
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Paella mixta',           'price' => 1450, 'stock' => 30],
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Paella de verduras',     'price' => 1350, 'stock' => 30],
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Paella de marisco',      'price' => 1690, 'stock' => 25],
@@ -331,7 +306,6 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Mac & cheese',           'price' => 1190, 'stock' => 30],
             ['fam' => 'Arroces y Pastas', 'tax' => $ivaReducido, 'name' => 'Canelones de la abuela', 'price' => 1290, 'stock' => 30],
 
-            // ── Carnes ──
             ['fam' => 'Carnes', 'tax' => $ivaReducido, 'name' => 'Entrecot a la brasa',            'price' => 2250, 'stock' => 20],
             ['fam' => 'Carnes', 'tax' => $ivaReducido, 'name' => 'Solomillo de ternera',           'price' => 2400, 'stock' => 15],
             ['fam' => 'Carnes', 'tax' => $ivaReducido, 'name' => 'Chuletón de vaca madurada',      'price' => 3490, 'stock' => 12],
@@ -349,7 +323,6 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Carnes', 'tax' => $ivaReducido, 'name' => 'Fajitas de pollo',               'price' => 1490, 'stock' => 30],
             ['fam' => 'Carnes', 'tax' => $ivaReducido, 'name' => 'Solomillo Wellington',           'price' => 2690, 'stock' => 12],
 
-            // ── Pescados ──
             ['fam' => 'Pescados', 'tax' => $ivaReducido, 'name' => 'Salmón a la plancha',        'price' => 1750, 'stock' => 25],
             ['fam' => 'Pescados', 'tax' => $ivaReducido, 'name' => 'Merluza al horno',           'price' => 1690, 'stock' => 25],
             ['fam' => 'Pescados', 'tax' => $ivaReducido, 'name' => 'Bacalao confitado',          'price' => 1790, 'stock' => 20],
@@ -361,7 +334,6 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Pescados', 'tax' => $ivaReducido, 'name' => 'Sepia a la plancha',         'price' => 1590, 'stock' => 25],
             ['fam' => 'Pescados', 'tax' => $ivaReducido, 'name' => 'Gambones a la plancha',      'price' => 1990, 'stock' => 25],
 
-            // ── Bebidas Frías ──
             ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Agua mineral 50cl',          'price' => 200,  'stock' => 200],
             ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Agua mineral 1L',            'price' => 300,  'stock' => 150],
             ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Agua con gas 50cl',          'price' => 250,  'stock' => 120],
@@ -386,8 +358,6 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Horchata',                   'price' => 380,  'stock' => 50],
             ['fam' => 'Bebidas Frías', 'tax' => $ivaGeneral, 'name' => 'Kombucha',                   'price' => 450,  'stock' => 40],
 
-            // ── Cervezas ──
-            // De barril: un único producto con variantes (caña / doble / jarra).
             ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'Cerveza de barril',              'price' => 200,  'stock' => 999],
             ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'Clara con limón',                'price' => 220,  'stock' => 999],
             ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'Estrella Galicia 33cl',          'price' => 280,  'stock' => 300],
@@ -414,15 +384,13 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'Lambic Kriek',                   'price' => 520,  'stock' => 40],
             ['fam' => 'Cervezas', 'tax' => $ivaGeneral, 'name' => 'Sidra natural',                  'price' => 380,  'stock' => 80],
 
-            // ── Vinos ──
-            // Casa (copa + botella)
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Tinto de la casa',                              'price' => 350,  'stock' => 999],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Blanco de la casa',                             'price' => 350,  'stock' => 999],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Rosado de la casa',                             'price' => 350,  'stock' => 999],
-            // Vermut (copa + botellín)
+
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Vermut rojo',                                   'price' => 350,  'stock' => 200],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Vermut blanco',                                 'price' => 350,  'stock' => 150],
-            // Tintos (copa + botella)
+
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Rioja Crianza (D.O.Ca. Rioja)',                 'price' => 420,  'stock' => 60],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Rioja Reserva (D.O.Ca. Rioja)',                 'price' => 590,  'stock' => 40],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Ribera del Duero Roble',                        'price' => 440,  'stock' => 40],
@@ -435,10 +403,10 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Somontano Tinto',                               'price' => 420,  'stock' => 25],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Malbec (Argentina)',                            'price' => 540,  'stock' => 25],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Cabernet Sauvignon (Chile)',                    'price' => 500,  'stock' => 25],
-            // Tintos premium (solo botella)
+
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Rioja Gran Reserva (D.O.Ca. Rioja)',            'price' => 3890, 'stock' => 25],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Pinot Noir (Borgoña)',                          'price' => 3490, 'stock' => 20],
-            // Blancos (copa + botella)
+
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Albariño (D.O. Rías Baixas)',                   'price' => 480,  'stock' => 50],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Verdejo (D.O. Rueda)',                          'price' => 370,  'stock' => 60],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Godello (D.O. Valdeorras)',                     'price' => 440,  'stock' => 30],
@@ -447,25 +415,23 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Riesling (Alemania)',                           'price' => 520,  'stock' => 25],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Txakoli (D.O. Getariako Txakolina)',            'price' => 460,  'stock' => 25],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Pazo de Señorans',                              'price' => 630,  'stock' => 20],
-            // Rosados (copa + botella)
+
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Rosado Navarra',                                'price' => 370,  'stock' => 30],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Rosado Provence',                               'price' => 540,  'stock' => 25],
-            // Espumosos (copa + botella)
+
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Cava Brut Nature',                              'price' => 420,  'stock' => 40],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Cava Reserva',                                  'price' => 520,  'stock' => 30],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Prosecco (Italia)',                             'price' => 480,  'stock' => 30],
-            // Champagne premium (solo botella)
+
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Champagne Moët & Chandon',                      'price' => 6890, 'stock' => 15],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Champagne Veuve Clicquot',                      'price' => 7990, 'stock' => 12],
-            // Generosos / Dulces (solo copa)
+
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Pedro Ximénez',                                 'price' => 480,  'stock' => 60],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Manzanilla',                                    'price' => 380,  'stock' => 60],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Fino',                                          'price' => 380,  'stock' => 60],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Oporto',                                        'price' => 480,  'stock' => 60],
             ['fam' => 'Vinos', 'tax' => $ivaGeneral, 'name' => 'Moscatel',                                      'price' => 380,  'stock' => 60],
 
-            // ── Cócteles y Destilados ──
-            // Cócteles clásicos
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Mojito',                  'price' => 850,  'stock' => 200],
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Mojito de fresa',         'price' => 890,  'stock' => 150],
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Caipirinha',              'price' => 850,  'stock' => 150],
@@ -482,7 +448,7 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Bloody Mary',             'price' => 890,  'stock' => 80],
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Long Island Iced Tea',    'price' => 990,  'stock' => 60],
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Cóctel sin alcohol de la casa', 'price' => 650, 'stock' => 100],
-            // Destilados
+
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Gin tonic',               'price' => 850,  'stock' => 999],
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Gin tonic premium',       'price' => 1090, 'stock' => 200],
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Vodka tonic',             'price' => 800,  'stock' => 200],
@@ -502,7 +468,6 @@ class SaonaDemoSeeder extends Seeder
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Chupito de hierbas',      'price' => 250,  'stock' => 999],
             ['fam' => 'Cócteles y Destilados', 'tax' => $ivaGeneral, 'name' => 'Chupito de Jägermeister', 'price' => 280,  'stock' => 999],
 
-            // ── Postres ──
             ['fam' => 'Postres', 'tax' => $ivaReducido, 'name' => 'Tarta de zanahoria',          'price' => 690,  'stock' => 30],
             ['fam' => 'Postres', 'tax' => $ivaReducido, 'name' => 'Tarta de queso al horno',     'price' => 720,  'stock' => 25],
             ['fam' => 'Postres', 'tax' => $ivaReducido, 'name' => 'Tarta de manzana',            'price' => 650,  'stock' => 25],
@@ -547,18 +512,10 @@ class SaonaDemoSeeder extends Seeder
         }
     }
 
-    /**
-     * Mapa producto => códigos de alérgenos (Reglamento UE 1169/2011).
-     *
-     * Códigos válidos: gluten, crustaceans, eggs, fish, peanuts, soy, dairy,
-     * nuts, celery, mustard, sesame, sulphites, lupin, molluscs.
-     *
-     * @return array<string,string[]>
-     */
     private function productAllergenMap(): array
     {
         return [
-            // ── Cafés y Desayunos ──
+
             'Café solo' => [],
             'Café cortado' => ['dairy'],
             'Café con leche' => ['dairy'],
@@ -585,7 +542,6 @@ class SaonaDemoSeeder extends Seeder
             'Bocadillo de jamón' => ['gluten'],
             'Bocadillo de tortilla' => ['gluten', 'eggs'],
 
-            // ── Brunch ──
             'Tostada de aguacate' => ['gluten'],
             'Tostada de salmón' => ['gluten', 'fish', 'dairy'],
             'Tostada de hummus' => ['gluten', 'sesame'],
@@ -604,7 +560,6 @@ class SaonaDemoSeeder extends Seeder
             'Sandwich club' => ['gluten', 'eggs', 'dairy'],
             'Sandwich vegetal' => ['gluten', 'eggs'],
 
-            // ── Entrantes y Tapas ──
             'Jamón ibérico de bellota' => [],
             'Tabla de quesos' => ['dairy'],
             'Tabla de embutidos ibéricos' => [],
@@ -630,7 +585,6 @@ class SaonaDemoSeeder extends Seeder
             'Aceitunas marinadas' => [],
             'Pan con tomate' => ['gluten'],
 
-            // ── Ensaladas ──
             'Ensalada César' => ['gluten', 'eggs', 'dairy', 'fish', 'mustard'],
             'Ensalada de la Casa' => ['fish', 'eggs'],
             'Ensalada de quinoa' => [],
@@ -642,7 +596,6 @@ class SaonaDemoSeeder extends Seeder
             'Ensalada templada de pulpo' => ['molluscs'],
             'Ensalada de queso de cabra y nueces' => ['dairy', 'nuts'],
 
-            // ── Arroces y Pastas ──
             'Paella mixta' => ['crustaceans', 'molluscs', 'fish'],
             'Paella de verduras' => [],
             'Paella de marisco' => ['crustaceans', 'molluscs', 'fish'],
@@ -663,7 +616,6 @@ class SaonaDemoSeeder extends Seeder
             'Mac & cheese' => ['gluten', 'dairy'],
             'Canelones de la abuela' => ['gluten', 'dairy', 'eggs'],
 
-            // ── Carnes ──
             'Entrecot a la brasa' => [],
             'Solomillo de ternera' => [],
             'Chuletón de vaca madurada' => [],
@@ -681,7 +633,6 @@ class SaonaDemoSeeder extends Seeder
             'Fajitas de pollo' => ['gluten', 'dairy'],
             'Solomillo Wellington' => ['gluten', 'eggs', 'dairy'],
 
-            // ── Pescados ──
             'Salmón a la plancha' => ['fish'],
             'Merluza al horno' => ['fish'],
             'Bacalao confitado' => ['fish'],
@@ -693,11 +644,8 @@ class SaonaDemoSeeder extends Seeder
             'Sepia a la plancha' => ['molluscs'],
             'Gambones a la plancha' => ['crustaceans'],
 
-            // ── Bebidas Frías ──
             'Smoothie de frutos rojos' => ['dairy'],
-            // Resto de bebidas frías sin alérgenos relevantes ⇒ [].
 
-            // ── Cervezas (gluten + sulfitos) ──
             'Cerveza de barril' => ['gluten', 'sulphites'],
             'Clara con limón' => ['gluten', 'sulphites'],
             'Estrella Galicia 33cl' => ['gluten', 'sulphites'],
@@ -724,7 +672,6 @@ class SaonaDemoSeeder extends Seeder
             'Lambic Kriek' => ['gluten', 'sulphites'],
             'Sidra natural' => ['sulphites'],
 
-            // ── Vinos (todos con sulfitos) ──
             'Tinto de la casa' => ['sulphites'],
             'Blanco de la casa' => ['sulphites'],
             'Rosado de la casa' => ['sulphites'],
@@ -765,7 +712,6 @@ class SaonaDemoSeeder extends Seeder
             'Oporto' => ['sulphites'],
             'Moscatel' => ['sulphites'],
 
-            // ── Cócteles y Destilados ──
             'Mojito' => ['sulphites'],
             'Mojito de fresa' => ['sulphites'],
             'Caipirinha' => ['sulphites'],
@@ -801,7 +747,6 @@ class SaonaDemoSeeder extends Seeder
             'Chupito de hierbas' => [],
             'Chupito de Jägermeister' => [],
 
-            // ── Postres ──
             'Tarta de zanahoria' => ['gluten', 'eggs', 'dairy', 'nuts'],
             'Tarta de queso al horno' => ['gluten', 'dairy', 'eggs'],
             'Tarta de manzana' => ['gluten', 'dairy', 'eggs'],
@@ -823,24 +768,12 @@ class SaonaDemoSeeder extends Seeder
         ];
     }
 
-    /**
-     * Siembra modificadores (extras y acompañamientos) por producto.
-     *
-     * Convenciones:
-     *  - Cada fila en `product_modifiers` es UNA opción dentro de un grupo.
-     *  - El grupo se determina por `type` (`extra` | `accompaniment`).
-     *  - `is_required` y `selection_type` se mantienen consistentes entre las
-     *    opciones de un mismo grupo (el front los aplica por grupo).
-     *  - Restricción de dominio: los modificadores `extra` no pueden ser `is_required`.
-     *  - Los precios están en céntimos.
-     */
     private function seedProductModifiers(int $restaurantId, $now): void
     {
         $productIds = DB::table('products')
             ->where('restaurant_id', $restaurantId)
             ->pluck('id', 'name');
 
-        // Acompañamientos típicos (single + required).
         $accSingleRequired = static function (array $options): array {
             return array_map(static fn (array $opt): array => [
                 'name' => $opt[0],
@@ -851,7 +784,6 @@ class SaonaDemoSeeder extends Seeder
             ], $options);
         };
 
-        // Extras (multi + opcional).
         $extrasMulti = static function (array $options): array {
             return array_map(static fn (array $opt): array => [
                 'name' => $opt[0],
@@ -863,7 +795,7 @@ class SaonaDemoSeeder extends Seeder
         };
 
         $catalog = [
-            // ─────────────── Cafés y Desayunos ───────────────
+
             'Café con leche' => array_merge(
                 $accSingleRequired([
                     ['Leche entera', 0],
@@ -929,7 +861,6 @@ class SaonaDemoSeeder extends Seeder
                 ['Rooibos', 0],
             ]),
 
-            // ─────────────── Brunch ───────────────
             'Tostada de aguacate' => $extrasMulti([
                 ['Huevo poché', 150],
                 ['Salmón ahumado', 300],
@@ -982,7 +913,6 @@ class SaonaDemoSeeder extends Seeder
                 ['Doble de queso', 150],
             ]),
 
-            // ─────────────── Ensaladas ───────────────
             'Ensalada César' => $extrasMulti([
                 ['Pollo a la plancha', 300],
                 ['Bacon crujiente', 200],
@@ -1012,7 +942,6 @@ class SaonaDemoSeeder extends Seeder
                 ['Bacon crujiente', 200],
             ]),
 
-            // ─────────────── Arroces y Pastas ───────────────
             'Paella mixta' => $extrasMulti([
                 ['Alioli', 50],
                 ['Pan rústico', 80],
@@ -1048,7 +977,6 @@ class SaonaDemoSeeder extends Seeder
                 ['Bechamel extra', 80],
             ]),
 
-            // ─────────────── Carnes ───────────────
             'Entrecot a la brasa' => array_merge(
                 $accSingleRequired([
                     ['Poco hecho', 0],
@@ -1133,7 +1061,6 @@ class SaonaDemoSeeder extends Seeder
                 ]),
             ),
 
-            // ─────────────── Pescados ───────────────
             'Salmón a la plancha' => array_merge(
                 $accSingleRequired([
                     ['Guarnición: Verduras al vapor', 0],
@@ -1181,7 +1108,6 @@ class SaonaDemoSeeder extends Seeder
                 ]),
             ),
 
-            // ─────────────── Bebidas Frías ───────────────
             'Refresco (Coca-Cola)' => $extrasMulti([
                 ['Sin azúcar (Zero)', 0],
                 ['Con hielo', 0],
@@ -1205,7 +1131,6 @@ class SaonaDemoSeeder extends Seeder
                 ['Con jengibre', 50],
             ]),
 
-            // ─────────────── Vinos y Cervezas ───────────────
             'Gin tonic' => array_merge(
                 $accSingleRequired([
                     ['Bombay Sapphire', 0],
@@ -1227,7 +1152,6 @@ class SaonaDemoSeeder extends Seeder
                 ['Daiquiri de fresa', 0],
             ]),
 
-            // ─────────────── Postres ───────────────
             'Brownie con helado' => $accSingleRequired([
                 ['Helado de vainilla', 0],
                 ['Helado de chocolate', 0],
@@ -1293,25 +1217,12 @@ class SaonaDemoSeeder extends Seeder
         }
     }
 
-    /**
-     * Siembra variantes (tamaños / formatos) por producto.
-     *
-     * Convenciones:
-     *  - Una variante es una alternativa MUTUAMENTE EXCLUYENTE del producto base
-     *    (copa vs. botella, individual vs. para 2/4, 2/3/4 bolas...).
-     *  - El front, cuando un producto tiene variantes, obliga a elegir una y su
-     *    `price` reemplaza al `price` base del producto.
-     *  - Los productos sin variante (refrescos, cócteles, postres puntuales,
-     *    champagnes premium, vinos generosos por copa) simplemente no aparecen
-     *    en este catálogo.
-     */
     private function seedProductVariants(int $restaurantId, $now): void
     {
         $productIds = DB::table('products')
             ->where('restaurant_id', $restaurantId)
             ->pluck('id', 'name');
 
-        // Copa + Botella (vinos / espumosos por referencia).
         $copaBotella = static function (int $priceCopa, int $priceBotella, int $stockCopa = 80, int $stockBotella = 30): array {
             return [
                 ['name' => 'Copa',    'price' => $priceCopa,    'stock' => $stockCopa],
@@ -1319,7 +1230,6 @@ class SaonaDemoSeeder extends Seeder
             ];
         };
 
-        // Individual / Para 2 (×1.7) / Para 4 (×3.2) — redondeo a múltiplos de 10 cts.
         $round10 = static fn (int $value): int => (int) (round($value / 10) * 10);
         $paellaRaciones = static function (int $individual, int $stock = 30) use ($round10): array {
             return [
@@ -1330,7 +1240,7 @@ class SaonaDemoSeeder extends Seeder
         };
 
         $catalog = [
-            // ─────────────── Cervezas de barril ───────────────
+
             'Cerveza de barril' => [
                 ['name' => 'Caña',  'price' => 200, 'stock' => 999],
                 ['name' => 'Doble', 'price' => 290, 'stock' => 999],
@@ -1342,12 +1252,10 @@ class SaonaDemoSeeder extends Seeder
                 ['name' => 'Jarra', 'price' => 510, 'stock' => 999],
             ],
 
-            // ─────────────── Vinos de la casa ───────────────
             'Tinto de la casa' => $copaBotella(350, 1490, 999, 50),
             'Blanco de la casa' => $copaBotella(350, 1490, 999, 50),
             'Rosado de la casa' => $copaBotella(350, 1490, 999, 50),
 
-            // ─────────────── Vermut (copa + botellín) ───────────────
             'Vermut rojo' => [
                 ['name' => 'Copa',     'price' => 350,  'stock' => 200],
                 ['name' => 'Botellín', 'price' => 1090, 'stock' => 30],
@@ -1357,7 +1265,6 @@ class SaonaDemoSeeder extends Seeder
                 ['name' => 'Botellín', 'price' => 1090, 'stock' => 25],
             ],
 
-            // ─────────────── Tintos ───────────────
             'Rioja Crianza (D.O.Ca. Rioja)' => $copaBotella(420, 1890, 100, 60),
             'Rioja Reserva (D.O.Ca. Rioja)' => $copaBotella(590, 2690, 80, 40),
             'Ribera del Duero Roble' => $copaBotella(440, 1990, 80, 40),
@@ -1371,7 +1278,6 @@ class SaonaDemoSeeder extends Seeder
             'Malbec (Argentina)' => $copaBotella(540, 2490, 60, 25),
             'Cabernet Sauvignon (Chile)' => $copaBotella(500, 2290, 60, 25),
 
-            // ─────────────── Blancos ───────────────
             'Albariño (D.O. Rías Baixas)' => $copaBotella(480, 2190, 100, 50),
             'Verdejo (D.O. Rueda)' => $copaBotella(370, 1690, 120, 60),
             'Godello (D.O. Valdeorras)' => $copaBotella(440, 1990, 80, 30),
@@ -1381,16 +1287,13 @@ class SaonaDemoSeeder extends Seeder
             'Txakoli (D.O. Getariako Txakolina)' => $copaBotella(460, 2090, 60, 25),
             'Pazo de Señorans' => $copaBotella(630, 2890, 40, 20),
 
-            // ─────────────── Rosados ───────────────
             'Rosado Navarra' => $copaBotella(370, 1690, 80, 30),
             'Rosado Provence' => $copaBotella(540, 2490, 50, 25),
 
-            // ─────────────── Espumosos ───────────────
             'Cava Brut Nature' => $copaBotella(420, 1890, 80, 40),
             'Cava Reserva' => $copaBotella(520, 2390, 60, 30),
             'Prosecco (Italia)' => $copaBotella(480, 2190, 60, 30),
 
-            // ─────────────── Arroces (Individual / Para 2 / Para 4) ───────────────
             'Paella mixta' => $paellaRaciones(1450, 30),
             'Paella de verduras' => $paellaRaciones(1350, 30),
             'Paella de marisco' => $paellaRaciones(1690, 25),
@@ -1399,7 +1302,6 @@ class SaonaDemoSeeder extends Seeder
             'Arroz del senyoret' => $paellaRaciones(1550, 25),
             'Fideuá de marisco' => $paellaRaciones(1590, 25),
 
-            // ─────────────── Helado (bolas) ───────────────
             'Helado' => [
                 ['name' => '2 bolas', 'price' => 400, 'stock' => 80],
                 ['name' => '3 bolas', 'price' => 580, 'stock' => 80],
@@ -1437,7 +1339,6 @@ class SaonaDemoSeeder extends Seeder
         }
     }
 
-    /** @return array<string,int> zone_name => zone_id */
     private function seedZones(int $restaurantId, $now): array
     {
         $zones = ['Terraza', 'Salón Principal', 'Barra', 'Reservado'];
@@ -1462,9 +1363,6 @@ class SaonaDemoSeeder extends Seeder
         return $ids;
     }
 
-    /**
-     * @param  array<string,int>  $zoneIds  zone name => id
-     */
     private function seedTables(int $restaurantId, array $zoneIds, $now): void
     {
         $layout = [
@@ -1490,9 +1388,6 @@ class SaonaDemoSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  array<string,int>  $userIds  email => id
-     */
     private function seedQuickAccess(int $restaurantId, array $userIds, $now): void
     {
         $i = 0;

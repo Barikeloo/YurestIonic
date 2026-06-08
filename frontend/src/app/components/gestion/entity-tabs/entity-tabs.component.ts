@@ -1,4 +1,3 @@
-
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ManagementEntityKey } from '../../../core/enums/management-entity-key.enum';
 

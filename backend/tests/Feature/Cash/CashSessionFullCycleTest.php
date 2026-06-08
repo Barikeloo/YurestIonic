@@ -28,7 +28,7 @@ class CashSessionFullCycleTest extends TestCase
 
     public function test_cash_session_full_cycle_flow(): void
     {
-        // 1. Open session
+
         $openResponse = $this->withSession($this->tenant['session'])
             ->postJson($this->api('/tpv/cash-sessions'), [
                 'device_id' => $this->deviceId,
@@ -50,7 +50,6 @@ class CashSessionFullCycleTest extends TestCase
         $sessionUuid = $openResponse->json('uuid');
         $this->assertNotEmpty($sessionUuid);
 
-        // 2. Get active session
         $this->withSession($this->tenant['session'])
             ->getJson($this->api('/tpv/cash-sessions/active?device_id=' . $this->deviceId))
             ->assertStatus(200)
@@ -59,12 +58,10 @@ class CashSessionFullCycleTest extends TestCase
                 'status' => 'open',
             ]);
 
-        // 3. Active session 204 when no session for different device
         $this->withSession($this->tenant['session'])
             ->getJson($this->api('/tpv/cash-sessions/active?device_id=other-device'))
             ->assertStatus(204);
 
-        // 4. Open duplicate returns 409
         $this->withSession($this->tenant['session'])
             ->postJson($this->api('/tpv/cash-sessions'), [
                 'device_id' => $this->deviceId,
@@ -73,7 +70,6 @@ class CashSessionFullCycleTest extends TestCase
             ])
             ->assertStatus(409);
 
-        // 5. Register cash movement (in)
         $this->withSession($this->tenant['session'])
             ->postJson($this->api('/tpv/cash-movements'), [
                 'cash_session_id' => $sessionUuid,
@@ -91,7 +87,6 @@ class CashSessionFullCycleTest extends TestCase
                 'reason_code' => 'change_refill',
             ]);
 
-        // 6. Register cash movement (out)
         $this->withSession($this->tenant['session'])
             ->postJson($this->api('/tpv/cash-movements'), [
                 'cash_session_id' => $sessionUuid,
@@ -102,7 +97,6 @@ class CashSessionFullCycleTest extends TestCase
             ])
             ->assertStatus(201);
 
-        // 7. List movements
         $this->withSession($this->tenant['session'])
             ->getJson($this->api('/tpv/cash-movements?cash_session_id=' . $sessionUuid))
             ->assertStatus(200)
@@ -110,7 +104,6 @@ class CashSessionFullCycleTest extends TestCase
             ->assertJsonFragment(['type' => 'in', 'amount_cents' => 10000])
             ->assertJsonFragment(['type' => 'out', 'amount_cents' => 5000]);
 
-        // 8. Start closing
         $startCloseResponse = $this->withSession($this->tenant['session'])
             ->postJson($this->api('/tpv/cash-sessions/start-closing'), [
                 'cash_session_id' => $sessionUuid,
@@ -122,7 +115,6 @@ class CashSessionFullCycleTest extends TestCase
             'status' => 'closing',
         ]);
 
-        // 9. Cancel closing
         $this->withSession($this->tenant['session'])
             ->postJson($this->api('/tpv/cash-sessions/cancel-closing'), [
                 'cash_session_id' => $sessionUuid,
@@ -133,7 +125,6 @@ class CashSessionFullCycleTest extends TestCase
                 'status' => 'open',
             ]);
 
-        // 10. Start closing again
         $this->withSession($this->tenant['session'])
             ->postJson($this->api('/tpv/cash-sessions/start-closing'), [
                 'cash_session_id' => $sessionUuid,
@@ -141,7 +132,6 @@ class CashSessionFullCycleTest extends TestCase
             ->assertStatus(200)
             ->assertJson(['status' => 'closing']);
 
-        // 11. Close session
         $closeResponse = $this->withSession($this->tenant['session'])
             ->postJson($this->api('/tpv/cash-sessions/close'), [
                 'cash_session_id' => $sessionUuid,
@@ -159,14 +149,12 @@ class CashSessionFullCycleTest extends TestCase
         $zReportNumber = $closeResponse->json('z_report_number');
         $this->assertNotNull($zReportNumber);
 
-        // 12. List sessions (closed)
         $listResponse = $this->withSession($this->tenant['session'])
             ->getJson($this->api('/tpv/cash-sessions'));
         $listResponse->assertStatus(200);
         $listResponse->assertJsonCount(1, 'sessions');
         $listResponse->assertJsonFragment(['uuid' => $sessionUuid, 'status' => 'closed']);
 
-        // 13. Get last closed
         $lastClosedResponse = $this->withSession($this->tenant['session'])
             ->getJson($this->api('/tpv/cash-sessions/last-closed'));
         $lastClosedResponse->assertStatus(200);
@@ -177,7 +165,6 @@ class CashSessionFullCycleTest extends TestCase
         $this->assertNotNull($lastClosedResponse->json('last_closed'));
         $this->assertNull($lastClosedResponse->json('orphan_session'));
 
-        // 14. Get session summary
         $this->withSession($this->tenant['session'])
             ->getJson($this->api('/tpv/cash-sessions/' . $sessionUuid . '/summary'))
             ->assertStatus(200)
@@ -189,7 +176,6 @@ class CashSessionFullCycleTest extends TestCase
                 'total_out_movements' => 5000,
             ]);
 
-        // 15. Get Z report
         $zReportUuid = $closeResponse->json('z_report.id');
         $this->withSession($this->tenant['session'])
             ->getJson($this->api('/tpv/z-reports/' . $zReportUuid))

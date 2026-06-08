@@ -17,7 +17,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
         $session = $this->createSuperAdminSession();
         $restaurantUuid = (string) Str::uuid();
 
-        // Create restaurant
         DB::table('restaurants')->insert([
             'uuid' => $restaurantUuid,
             'name' => 'Restaurant to Delete',
@@ -29,7 +28,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Create users for this restaurant
         $userName = 'test-user-'.Str::random(5);
         $userUuid = (string) Str::uuid();
         DB::table('users')->insert([
@@ -43,7 +41,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Create family
         $familyId = DB::table('families')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'restaurant_id' => DB::table('restaurants')->where('uuid', $restaurantUuid)->first()->id,
@@ -53,7 +50,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Create tax
         $taxId = DB::table('taxes')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'restaurant_id' => DB::table('restaurants')->where('uuid', $restaurantUuid)->first()->id,
@@ -63,7 +59,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Create product
         $productId = DB::table('products')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'restaurant_id' => DB::table('restaurants')->where('uuid', $restaurantUuid)->first()->id,
@@ -76,7 +71,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Create zone
         $zoneId = DB::table('zones')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'restaurant_id' => DB::table('restaurants')->where('uuid', $restaurantUuid)->first()->id,
@@ -85,7 +79,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Create table
         $tableId = DB::table('tables')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'restaurant_id' => DB::table('restaurants')->where('uuid', $restaurantUuid)->first()->id,
@@ -95,7 +88,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Create order
         $restaurantId = DB::table('restaurants')->where('uuid', $restaurantUuid)->first()->id;
         $userId = DB::table('users')->where('uuid', $userUuid)->first()->id;
 
@@ -111,7 +103,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Create order line
         DB::table('order_lines')->insert([
             'uuid' => (string) Str::uuid(),
             'restaurant_id' => $restaurantId,
@@ -125,7 +116,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Create sale
         $saleId = DB::table('sales')->insertGetId([
             'uuid' => (string) Str::uuid(),
             'restaurant_id' => $restaurantId,
@@ -136,7 +126,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Create sale line
         DB::table('sales_lines')->insert([
             'uuid' => (string) Str::uuid(),
             'restaurant_id' => $restaurantId,
@@ -149,7 +138,6 @@ final class DeleteRestaurantCascadeTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // Verify data exists before deletion
         $this->assertTrue(DB::table('restaurants')->where('uuid', $restaurantUuid)->exists());
         $this->assertTrue(DB::table('users')->where('uuid', $userUuid)->exists());
         $this->assertTrue(DB::table('families')->where('id', $familyId)->exists());
@@ -162,15 +150,12 @@ final class DeleteRestaurantCascadeTest extends TestCase
         $this->assertTrue(DB::table('sales')->where('id', $saleId)->exists());
         $this->assertTrue(DB::table('sales_lines')->where('sale_id', $saleId)->exists());
 
-        // Delete restaurant
         $response = $this->withSession($session['session'])->deleteJson("/api/superadmin/restaurants/{$restaurantUuid}");
         $response->assertStatus(204);
 
-        // Verify restaurant is soft-deleted (deleted_at is set)
         $restaurant = DB::table('restaurants')->where('uuid', $restaurantUuid)->first();
         $this->assertNotNull($restaurant->deleted_at);
 
-        // Verify all related data is also soft-deleted (cascade delete)
         $user = DB::table('users')->where('uuid', $userUuid)->first();
         $this->assertNotNull($user->deleted_at, 'User should be soft-deleted when restaurant is deleted');
 

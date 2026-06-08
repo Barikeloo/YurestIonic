@@ -13,7 +13,6 @@ export class ProductModifiersFacade implements OnDestroy {
   private readonly modifierService = inject(ProductModifierService);
   private readonly destroy$ = new Subject<void>();
 
-  // Signals privados — estado
   private readonly _product = signal<ProductRow | null>(null);
   private readonly _selectedAllergens = signal<AllergenCode[]>([]);
   private readonly _variants = signal<ProductVariantItem[]>([]);
@@ -23,7 +22,6 @@ export class ProductModifiersFacade implements OnDestroy {
   private readonly _isSaving = signal<boolean>(false);
   private readonly _error = signal<string | null>(null);
 
-  // Signals públicos — solo lectura
   public readonly product: Signal<ProductRow | null> = this._product.asReadonly();
   public readonly selectedAllergens: Signal<AllergenCode[]> = this._selectedAllergens.asReadonly();
   public readonly variants: Signal<ProductVariantItem[]> = this._variants.asReadonly();
@@ -86,7 +84,6 @@ export class ProductModifiersFacade implements OnDestroy {
     this._error.set(null);
   }
 
-  // Métodos de negocio
   public save(): Observable<ProductItem> {
     const product = this._product();
 

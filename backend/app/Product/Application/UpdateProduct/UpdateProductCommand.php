@@ -4,9 +4,7 @@ namespace App\Product\Application\UpdateProduct;
 
 final readonly class UpdateProductCommand
 {
-    /**
-     * @param  string[]  $allergens
-     */
+
     public function __construct(
         public string $id,
         public string $familyId,

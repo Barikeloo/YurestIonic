@@ -13,10 +13,7 @@ use App\Shared\Domain\ValueObject\Uuid;
 
 final class OrderLine
 {
-    /**
-     * @param  array<int, array{id: string, name: string, price: int, type: string}>|null  $modifiers
-     * @param  array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>|null  $menuSelections
-     */
+
     private function __construct(
         private readonly Uuid $id,
         private readonly Uuid $restaurantId,
@@ -45,9 +42,6 @@ final class OrderLine
         private readonly ?DomainDateTime $deletedAt = null,
     ) {}
 
-    /**
-     * @param  array<int, array{id: string, name: string, price: int, type: string}>|null  $modifiers
-     */
     public static function dddCreate(
         Uuid $id,
         Uuid $restaurantId,
@@ -96,13 +90,6 @@ final class OrderLine
         );
     }
 
-    /**
-     * Crea una línea que representa la elección de un menú completo. No tiene
-     * `productId`; el precio es el del menú y las elecciones del comensal viven
-     * en `menuSelections` (cada item: sección + producto + variante? + extras + suplemento).
-     *
-     * @param  array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>  $menuSelections
-     */
     public static function dddCreateMenuLine(
         Uuid $id,
         Uuid $restaurantId,
@@ -145,10 +132,6 @@ final class OrderLine
         );
     }
 
-    /**
-     * @param  array<int, array{id: string, name: string, price: int, type: string}>|null  $modifiers
-     * @param  array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>|null  $menuSelections
-     */
     public static function fromPersistence(
         string $id,
         string $restaurantId,
@@ -240,9 +223,6 @@ final class OrderLine
         return $this->menuName;
     }
 
-    /**
-     * @return array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>|null
-     */
     public function menuSelections(): ?array
     {
         return $this->menuSelections;
@@ -263,9 +243,6 @@ final class OrderLine
         return $this->variantName;
     }
 
-    /**
-     * @return array<int, array{id: string, name: string, price: int, type: string}>|null
-     */
     public function modifiers(): ?array
     {
         return $this->modifiers;
@@ -341,10 +318,6 @@ final class OrderLine
         return $this->notes;
     }
 
-    /**
-     * Clona la línea apuntando a otra orden (caso de uso: merge de mesas).
-     * Preserva si es línea de producto o de menú.
-     */
     public function clonedForOrder(Uuid $newId, Uuid $newOrderId): self
     {
         return new self(

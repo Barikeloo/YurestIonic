@@ -98,7 +98,7 @@ final class GetOrderPreTicket
             } else {
                 $name = 'Producto';
                 if ($line->productId() !== null) {
-                    // El nombre no está denormalizado en OrderLine; usamos el precio como fallback
+
                     $name = 'Producto';
                 }
                 $out[] = $this->itemLine($qty, $name, $price, $lineTotal, $width);

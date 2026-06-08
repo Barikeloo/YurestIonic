@@ -24,17 +24,14 @@ export class DeveloperDashboardFacade {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
-  // Signals for dashboard state
   private readonly companies = signal<CompanyGroup[]>([]);
   private readonly isLoading = signal<boolean>(true);
   private readonly error = signal<string | null>(null);
 
-  // Readonly signals for external consumption
   public readonly dashboardCompanies = computed(() => this.companies());
   public readonly dashboardLoading = computed(() => this.isLoading());
   public readonly dashboardError = computed(() => this.error());
 
-  // Getters for compatibility
   public get companiesValue(): CompanyGroup[] {
     return this.companies();
   }
@@ -47,7 +44,6 @@ export class DeveloperDashboardFacade {
     return this.error();
   }
 
-  // State setters
   public setCompanies(value: CompanyGroup[]): void {
     this.companies.set(value);
   }
@@ -60,7 +56,6 @@ export class DeveloperDashboardFacade {
     this.error.set(value);
   }
 
-  // Dashboard methods
   public loadRestaurants(): void {
     this.setIsLoading(true);
     this.setError(null);

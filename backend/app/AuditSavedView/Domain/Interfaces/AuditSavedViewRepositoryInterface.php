@@ -9,9 +9,7 @@ use App\Shared\Domain\ValueObject\Uuid;
 
 interface AuditSavedViewRepositoryInterface
 {
-    /**
-     * @return list<AuditSavedView>
-     */
+
     public function listByRestaurantAndUser(Uuid $restaurantId, Uuid $userId): array;
 
     public function findByUuid(Uuid $restaurantId, Uuid $uuid): ?AuditSavedView;

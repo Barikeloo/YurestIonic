@@ -10,9 +10,6 @@ interface ProductModifierRepositoryInterface
 
     public function findById(string $id): ?ProductModifier;
 
-    /**
-     * @return ProductModifier[]
-     */
     public function findByProductId(string $productId): array;
 
     public function deleteById(string $id): bool;

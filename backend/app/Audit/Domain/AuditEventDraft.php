@@ -9,11 +9,7 @@ use App\Shared\Domain\ValueObject\Uuid;
 
 final readonly class AuditEventDraft
 {
-    /**
-     * @param  array<string, mixed>|null  $before
-     * @param  array<string, mixed>|null  $after
-     * @param  array<string, mixed>  $metadata
-     */
+
     public function __construct(
         public ?Uuid $restaurantId,
         public ActionSlug $slug,
@@ -29,9 +25,6 @@ final readonly class AuditEventDraft
         public array $metadata = [],
     ) {}
 
-    /**
-     * @return array<string, mixed>
-     */
     public function toCatalogContext(): array
     {
         return [

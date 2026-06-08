@@ -7,13 +7,6 @@ namespace App\Menu\Domain\ValueObject;
 use App\Menu\Domain\Exception\MenuInvalidConfigurationException;
 use DateTimeImmutable;
 
-/**
- * Rango de validez de un menú. Ambos campos opcionales:
- *   - from == null && to == null → siempre vigente
- *   - solo from → vigente desde esa fecha en adelante
- *   - solo to   → vigente hasta esa fecha
- *   - ambos     → rango cerrado [from, to]
- */
 final class MenuValidity
 {
     private function __construct(

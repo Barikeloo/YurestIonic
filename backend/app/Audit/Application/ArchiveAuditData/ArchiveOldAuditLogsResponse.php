@@ -8,9 +8,7 @@ use App\Audit\Domain\ArchiveStats;
 
 final readonly class ArchiveOldAuditLogsResponse
 {
-    /**
-     * @param  list<ArchiveStats>  $perRestaurant
-     */
+
     private function __construct(
         public bool $dryRun,
         public \DateTimeImmutable $thresholdDate,
@@ -18,9 +16,6 @@ final readonly class ArchiveOldAuditLogsResponse
         public array $perRestaurant,
     ) {}
 
-    /**
-     * @param  list<ArchiveStats>  $perRestaurant
-     */
     public static function create(
         bool $dryRun,
         \DateTimeImmutable $thresholdDate,
@@ -39,9 +34,6 @@ final readonly class ArchiveOldAuditLogsResponse
         );
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function toArray(): array
     {
         return [

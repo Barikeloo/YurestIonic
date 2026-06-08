@@ -1,6 +1,6 @@
 # YurestIonic — TPV Profesional para Hostelería
 
-> **Versión:** Demo funcional — Mayo 2026  
+> **Versión:** Demo funcional — Junio 2026  
 > **Stack:** Laravel 12 (backend) + Angular 19 + Ionic (frontend)  
 > **Arquitectura:** DDD + Hexagonal + Multi-tenant  
 > **Licencia:** Propietaria  
@@ -35,7 +35,8 @@
    - [5.7 Dashboard de finanzas (prototipo)](#57-dashboard-de-finanzas-prototipo)
    - [5.8 Panel de Desarrollador (SuperAdmin)](#58-panel-de-desarrollador-superadmin--gestión-de-la-plataforma)
    - [5.9 Editor de Menús — Combos y menú del día](#59-editor-de-menús--combos-y-menú-del-día)
-   - [5.10 Registro de Auditoría](#510-registro-de-auditoría)
+    - [5.10 Registro de Auditoría](#510-registro-de-auditoría)
+    - [5.11 Subida de foto por QR](#511-subida-de-foto-por-qr)
 6. [Características implementadas](#6-características-implementadas)
 7. [Arquitectura](#7-arquitectura)
    - [7.1 Stack tecnológico](#71-stack-tecnológico)
@@ -223,7 +224,7 @@ El proyecto se valida con tres suites complementarias: unitarios e integración 
 
 | Suite | Tests | Cómo correr |
 |---|---|---|
-| Backend (PHPUnit) | **802** (167 de auditoría) | `make test` |
+| Backend (PHPUnit) | **810** (167 de auditoría) | `make test` |
 | Frontend (Karma/Jasmine) | **29** | `make test-frontend` |
 | E2E (Playwright contra backend real) | **27** | `make test-e2e` |
 
@@ -235,7 +236,7 @@ docker compose exec api php artisan test --filter=ChargeSessionEntityTest
 docker compose exec api php artisan test --filter=AuditRetentionLifecycleTest
 ```
 
-- 802 tests en verde, 0 deprecation warnings.
+- 810 tests en verde, 0 deprecation warnings.
 - **Unit**: entidades de dominio, Value Objects, validaciones de invariantes, cálculos (`AmountPerDiner`, hash de integridad del audit log), use cases con mocks (`GetArchivedAuditStats`, `ExportAuditEvents`, `ListAuditEvents`, `ArchiveOldAuditLogs`, `VerifyAuditChain`, `GetLatestVerifyResult`, `GetAuditEvent`, + CRUD `AuditSavedView`) y formatters byte-a-byte (`CsvAuditExportFormatter`, `NdjsonAuditExportFormatter`).
 - **Feature**: endpoints HTTP con base de datos en contenedor, autenticación, permisos, casos non-happy path (404, 409, 422, 403), y el **lifecycle test de retención** (`AuditRetentionLifecycleTest`) que recorre archive → stats → export → verify chain en una sola historia para detectar regresiones en los bordes entre piezas.
 - **Auditoría**: 167 tests específicos que cubren listado con cursor, categorías, severidad, búsqueda, exportación CSV/NDJSON, archivado masivo, estadísticas de retención (incluido el desglose por categoría, top usuarios y anomalías del panel histórico), verificación de cadena SHA-256, persistencia de resultado de verificación, detector de anomalías (auth burst, caja mismatch), alertas y vistas guardadas.
@@ -700,6 +701,50 @@ El comando acepta `--restaurant-uuid` para restringir el alcance y `--dry-run` p
 
 ---
 
+### 5.11 Subida de foto por QR
+
+El sistema permite que los clientes del restaurante **aporten fotos de sus consumiciones** escaneando un código QR. La foto se asocia automáticamente al producto correspondiente mediante un token firmado. El flujo está diseñado para ser usado desde el móvil del cliente sin necesidad de autenticación.
+
+#### Flujo completo
+
+1. **Generación del token** — El restaurador (admin/supervisor) genera un token de subida desde el backoffice para un producto concreto desde la pantalla de edición del producto → "Subir foto".
+2. **Impresión del QR** — El sistema muestra un código QR que el restaurador imprime y coloca en la mesa del cliente.
+3. **Escaneo** — El cliente escanea el QR con su móvil (cámara nativa o lector QR).
+4. **Validación** — La landing valida que el token no esté expirado (por defecto 90 minutos) ni haya sido usado previamente.
+5. **Captura** — Se abre la cámara del móvil del cliente. El flujo incluye:
+   - **Cámara** con disparador y vibración háptica (`navigator.vibrate([12])`) al capturar.
+   - **Crop** opcional: si la relación de aspecto de la foto es ≤ 1.15:1, se salta el paso de recorte.
+   - El botón "Volver" en el crop regresa a la cámara (no a inicio).
+   - Si la cámara no está disponible, se abre silenciosamente el selector de archivos del dispositivo.
+6. **Subida** — La foto se envía al backend, donde **se redimensiona** a un máximo de 1080px por lado (`scaleDown`) y **se convierte a WebP** (calidad 85) mediante **Intervention Image**. El archivo original se descarta.
+7. **Resultado** — La foto optimizada se asigna al producto y se muestra en tiempo real en el backoffice del restaurador.
+
+#### Optimización de imágenes (server-side)
+
+| Aspecto | Detalle |
+|---|---|
+| **Librería** | Intervention Image v3 (`intervention/image-laravel`) |
+| **Driver** | GD con WebP support (instalado en el contenedor Docker) |
+| **Redimensionado** | `scaleDown` a 1080px máx. (proporciones originales) |
+| **Formato salida** | WebP calidad 85 (~70–90% menor peso que JPEG) |
+| **Disco** | `public` (local) en desarrollo; S3-compatible en producción (`PRODUCT_PHOTOS_DISK`) |
+| **URL pública** | Las URLs (`image_src`) se reescriben automáticamente en el frontend para funcionar desde el móvil (reescritura `localhost → window.location.origin` + proxy de Angular) |
+
+#### Endpoints
+
+```
+GET  /api/public/photo-upload/{token}     # Validar token y obtener contexto del producto
+POST /api/public/photo-upload/{token}     # Subir foto (multipart/form-data)
+```
+
+#### Limpieza de tokens expirados
+
+```bash
+docker compose exec api php artisan product:delete-expired-photo-upload-tokens
+```
+
+---
+
 ## 6. Características implementadas
 
 ### Hitos del proyecto
@@ -712,7 +757,7 @@ El comando acepta `--restaurant-uuid` para restringir el alcance y `--dry-run` p
 | **Hito 4 — Front de Venta (TPV)** | 100% | Flujo completo: mesas → apertura → pedido → cobro → cierre. Soporte para pagos parciales, división de cuenta (3 modos), y cierre de caja con Z-Report. |
 | **Hito 5 — Informes (Dashboard)** | 40% | Prototipo funcional con métricas clave. Pendiente: exportación a PDF/Excel, filtros avanzados, predicciones. |
 | **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor, live tail (auto-off en histórico), exportación CSV/NDJSON, banner contextual al llegar desde histórico, y panel **Histórico** con KPIs de retención, widget de anomalías (incidentes detectados en el corpus), badge de integridad de cadena (5 estados, persistido en servidor), gráfico mensual clickable (drill-down por mes), desglose por categoría con barras horizontales coloreadas, top 5 usuarios con avatares por rol, presets de rango temporal, deep-link contextual. Archivado por antigüedad (90d → `archived_at`, retención legal 6 años, nunca borrado) y toggle "Mostrar histórico" con `include_archived=1`. Solo acceso `admin`. Verificación de cadena con `GET /api/admin/audit-log/verify` y persistencia server-side del resultado vía `GET /api/admin/audit-log/verify/latest`. |
-| **Hito 7 — Mejoras operativas** | 80% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores. |
+| **Hito 7 — Mejoras operativas** | 100% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores y subida de foto por QR con optimización server-side. |
 
 ### Funcionalidades detalladas
 
@@ -723,6 +768,8 @@ El comando acepta `--restaurant-uuid` para restringir el alcance y `--dry-run` p
 | **Auth** | Roles y permisos | 3 roles (`admin`, `supervisor`, `operator`) con guardas de navegación (`CanActivate`) en el frontend y middlewares de autorización en el backend. |
 | **Producto** | Modificadores | Cada producto puede tener opciones de personalización que se almacenan en `order_lines.notes` (ej: "sin cebolla", "extra queso"). |
 | **Producto** | Stock | Control de inventario básico con decremento automático al cerrar venta. |
+| **Producto** | Foto por QR | Generación de token firmado + QR para que clientes suban fotos desde su móvil sin autenticación. Validación de expiración (90 min) y uso único. |
+| **Producto** | Optimización server-side | Redimensionado a 1080px máx y conversión a WebP (calidad 85) mediante Intervention Image + GD. Las URLs se reescriben para acceso desde móvil. |
 | **Menú** | Editor visual | Editor drag & drop de menús con secciones reordenables, catálogo lateral filtrable y validación en tiempo real de reglas `min/max`. |
 | **Menú** | Vigencia y disponibilidad | Cabecera con `validity_from/to`, bitmask de `available_days` y franja `available_from_time/available_to_time` para activar el menú sólo en su ventana real. |
 | **Menú** | Suplementos por item | Cada `MenuItem` puede llevar un `extra_price` que se suma al precio base del menú si el comensal lo elige. |
@@ -787,6 +834,7 @@ El comando acepta `--restaurant-uuid` para restringir el alcance y `--dry-run` p
 | **Testing backend** | PHPUnit | 11.x |
 | **Testing frontend** | Karma + Jasmine | — |
 | **Linting PHP** | Laravel Pint | — |
+| **Procesado de imágenes** | Intervention Image + GD (WebP) | 3.x |
 | **Cliente DB** | DbGate | (contenedor) |
 
 ### 7.2 Patrón arquitectónico — DDD + Hexagonal
@@ -830,7 +878,7 @@ App/<Dominio>/
 | `SuperAdmin` | `SuperAdmin`, `Restaurant` (gestión) | Administración de la plataforma multi-tenant |
 | `Restaurant` | `Restaurant`, `RestaurantName` | Datos fiscales y de contacto del negocio |
 | `Family` | `Family`, `FamilyName` | Categorías del catálogo |
-| `Product` | `Product`, `Price`, `Stock` | Artículos del menú con precio, impuesto, imagen y modificadores |
+| `Product` | `Product`, `Price`, `Stock`, `ProductPhotoUploadToken` | Artículos del menú con precio, impuesto, imagen, modificadores y subida de foto por QR con token firmado |
 | `Menu` | `Menu`, `MenuSection`, `MenuItem`, `MenuValidity`, `MenuAvailability` | Productos compuestos con secciones, reglas de elección y ventana de disponibilidad |
 | `Tax` | `Tax`, `TaxPercentage` | Tipos de IVA aplicables |
 | `Zone` | `Zone`, `ZoneName` | Salones del local |
@@ -1014,6 +1062,13 @@ yurestionic/
 
 ## 9. API REST — Endpoints principales
 
+### Público (sin autenticación)
+
+```
+GET    /api/public/photo-upload/{token}      # Validar token y obtener contexto del producto
+POST   /api/public/photo-upload/{token}      # Subir foto (multipart/form-data)
+```
+
 ### Autenticación
 
 ```
@@ -1170,7 +1225,7 @@ POST   /api/admin/audit-alerts/{uuid}/read # Marcar una alerta como leída
 Esta sección es orientativa para cuando se migre de demo a producción real:
 
 - **Base de datos:** Migrar de MySQL local a servicio gestionado (AWS RDS, Google Cloud SQL, Azure Database). Habilitar backups automáticos diarios.
-- **Almacenamiento de imágenes:** Mover imágenes de productos de disco local a S3-compatible (AWS S3, MinIO, DigitalOcean Spaces).
+- **Almacenamiento de imágenes:** Mover imágenes de productos de disco local a S3-compatible (AWS S3, MinIO, DigitalOcean Spaces). El driver GD con WebP ya está instalado en el contenedor; el formato de salida es WebP calidad 85 (~70–90% menor peso que JPEG).
 - **Cache y colas:** Activar Redis para cache de sesiones, rate limiting y colas de jobs (generación de Z-Report pesado).
 - **SSL/TLS:** Configurar certificados Let's Encrypt en Nginx. Forzar HTTPS en todas las comunicaciones.
 - **Monitoreo:** Integrar Sentry para errores en frontend y backend. Logs centralizados con ELK o Loki.

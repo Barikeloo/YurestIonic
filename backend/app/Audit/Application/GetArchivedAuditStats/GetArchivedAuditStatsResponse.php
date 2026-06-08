@@ -21,9 +21,6 @@ final readonly class GetArchivedAuditStatsResponse
         return new self(stats: $stats);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function toArray(): array
     {
         return [

@@ -12,11 +12,7 @@ use App\Shared\Domain\ValueObject\Uuid;
 
 final class AuditLog
 {
-    /**
-     * @param  array<string, mixed>|null  $before
-     * @param  array<string, mixed>|null  $after
-     * @param  array<string, mixed>  $metadata
-     */
+
     private function __construct(
         private readonly Uuid $uuid,
         private readonly Uuid $restaurantId,
@@ -41,14 +37,6 @@ final class AuditLog
         private readonly ?\DateTimeImmutable $archivedAt = null,
     ) {}
 
-    /**
-     * Build a fully-resolved AuditLog ready to persist. Used by the recorder only.
-     * The recorder computes integrity_hash from prev_hash + this entity's fields before calling this.
-     *
-     * @param  array<string, mixed>|null  $before
-     * @param  array<string, mixed>|null  $after
-     * @param  array<string, mixed>  $metadata
-     */
     public static function dddCreate(
         Uuid $uuid,
         Uuid $restaurantId,
@@ -95,11 +83,6 @@ final class AuditLog
         );
     }
 
-    /**
-     * @param  array<string, mixed>|null  $before
-     * @param  array<string, mixed>|null  $after
-     * @param  array<string, mixed>  $metadata
-     */
     public static function fromPersistence(
         string $uuid,
         string $restaurantId,
@@ -213,7 +196,6 @@ final class AuditLog
         return $this->prevHash;
     }
 
-    /** @return array<string, mixed> */
     public function metadata(): array
     {
         return $this->metadata;
@@ -224,13 +206,11 @@ final class AuditLog
         return $this->userId;
     }
 
-    /** @return array<string, mixed>|null */
     public function before(): ?array
     {
         return $this->before;
     }
 
-    /** @return array<string, mixed>|null */
     public function after(): ?array
     {
         return $this->after;

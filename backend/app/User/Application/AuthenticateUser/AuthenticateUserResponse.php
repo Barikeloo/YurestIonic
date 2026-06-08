@@ -31,9 +31,6 @@ final readonly class AuthenticateUserResponse
         );
     }
 
-    /**
-     * @return array<string, bool|string|null>
-     */
     public function toArray(): array
     {
         return [

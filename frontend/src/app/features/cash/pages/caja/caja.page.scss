@@ -5,7 +5,7 @@
   background: var(--gray-50);
   display: flex;
   flex-direction: column;
-  // Optimized for tablet 1200x800
+
   max-width: 1200px;
   margin: 0 auto;
   width: 100%;
@@ -72,7 +72,6 @@
   color: var(--gray-500);
 }
 
-/* Pre-apertura */
 .pre-apertura {
   flex: 1;
   display: flex;
@@ -194,7 +193,6 @@
   }
 }
 
-/* Activa */
 .activa {
   padding: 24px;
   display: flex;
@@ -273,12 +271,10 @@
   justify-content: flex-end;
 }
 
-/* Arqueo */
 .arqueo {
   padding: 32px;
 }
 
-/* Histórico */
 .historico {
   padding: 32px;
   display: flex;
@@ -377,7 +373,6 @@
   }
 }
 
-// ── Split modal con DinersStatus a la derecha ───────────────────
 .split-modal-with-sidebar {
   position: fixed;
   top: 0;

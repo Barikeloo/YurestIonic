@@ -46,7 +46,7 @@ final class BatchAddLinesRequest extends FormRequest
 
     public function toCommand(): BatchAddLinesToOrderCommand
     {
-        /** @var TenantContext $tenantContext */
+
         $tenantContext = app(TenantContext::class);
 
         return new BatchAddLinesToOrderCommand(

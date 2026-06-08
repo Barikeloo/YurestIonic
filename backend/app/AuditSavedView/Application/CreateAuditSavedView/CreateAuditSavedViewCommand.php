@@ -6,9 +6,7 @@ namespace App\AuditSavedView\Application\CreateAuditSavedView;
 
 final readonly class CreateAuditSavedViewCommand
 {
-    /**
-     * @param array<string, mixed> $filters
-     */
+
     public function __construct(
         public string $restaurantId,
         public string $userId,

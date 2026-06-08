@@ -13,10 +13,9 @@ return new class extends Migration
             $table->foreignId('section_id')->constrained('menu_sections')->cascadeOnDelete();
             $table->uuid('uuid')->unique();
             $table->foreignId('product_id')->constrained('products');
-            // Variante opcional: si se fija, el camarero NO puede cambiarla;
-            // si null, se elegirá en el momento del pedido.
+
             $table->foreignId('variant_id')->nullable()->constrained('product_variants');
-            // Suplemento adicional al precio del menú (céntimos). 0 = sin coste extra.
+
             $table->unsignedInteger('extra_price')->default(0);
             $table->unsignedInteger('position')->default(0);
             $table->timestamps();

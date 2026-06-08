@@ -26,7 +26,6 @@ export class ProductosTabComponent {
   protected readonly sortKey    = signal<SortKey>('revenue');
   protected readonly hovered    = signal<string | null>(null);
 
-  // ── Enriched products (margin = (price-cost)×units, marginPct per unit) ────
   protected readonly enriched = computed((): Enriched[] =>
     this.facade.productRanking.map(p => {
       const margin = (p.price - p.cost) * p.units;
@@ -62,7 +61,6 @@ export class ProductosTabComponent {
     });
   });
 
-  // ── KPIs ─────────────────────────────────────────────────────────────────────
   protected readonly totalRevenue  = computed(() => this.enriched().reduce((s, p) => s + p.revenue, 0));
   protected readonly totalCost     = computed(() => this.enriched().reduce((s, p) => s + p.cost * p.units, 0));
   protected readonly totalMargin   = computed(() => this.totalRevenue() - this.totalCost());
@@ -106,7 +104,6 @@ export class ProductosTabComponent {
     return this.facade.byFamily.find(f => f.label === family)?.color ?? '#7a7a7a';
   }
 
-  // ── Formatting ────────────────────────────────────────────────────────────────
   protected fmt(v: number): string    { return this.facade.fmt(v); }
   protected fmtInt(n: number): string { return this.facade.fmtInt(n); }
 
@@ -131,7 +128,6 @@ export class ProductosTabComponent {
   protected trendColor(t: string): string { return t === 'up' ? '#1a9e5a' : t === 'down' ? '#ff4d4d' : '#a0a0a0'; }
   protected trendArrow(t: string): string { return t === 'up' ? '↗' : t === 'down' ? '↘' : '→'; }
 
-  // ── Sort ─────────────────────────────────────────────────────────────────────
   protected readonly sortLabel: Record<SortKey, string> = {
     revenue: 'ingresos', units: 'unidades', margin: 'margen €',
     marginPct: 'margen %', stock: 'stock', rotation: 'rotación',

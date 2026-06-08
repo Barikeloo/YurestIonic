@@ -13,9 +13,7 @@ use Illuminate\Support\Str;
 
 class AuditLogSeeder extends Seeder
 {
-    /**
-     * @var list<array{slug: string, entity_type: string, entity_id_prefix: string, severity_hint?: string, anomaly?: string, reason?: string, before?: array<string, mixed>, after?: array<string, mixed>, metadata?: array<string, mixed>}>
-     */
+
     private const TEMPLATES = [
         [
             'slug' => 'auth.login_pin_ok',
@@ -192,12 +190,6 @@ class AuditLogSeeder extends Seeder
         }
     }
 
-    /**
-     * Genera y persiste los eventos de auditoría para un restaurante concreto.
-     * Reutilizable desde otros seeders (p. ej. SaonaDemoSeeder) tras crear sus usuarios.
-     *
-     * @param  list<object{id: int, uuid: string}>  $users  Usuarios del restaurante (id interno + uuid).
-     */
     public function seedForRestaurant(int $restaurantId, string $restaurantUuid, array $users): void
     {
         if ($users === []) {
@@ -278,10 +270,6 @@ class AuditLogSeeder extends Seeder
         }
     }
 
-    /**
-     * @param  list<object>  $users
-     * @return list<array<string, mixed>>
-     */
     private function generateEventsForRestaurant(
         int $restaurantInternalId,
         string $restaurantUuid,
@@ -328,9 +316,6 @@ class AuditLogSeeder extends Seeder
         return $events;
     }
 
-    /**
-     * @param  array<string, mixed>  $template
-     */
     private function generateEntityId(array $template): string
     {
         $prefix = $template['entity_id_prefix'] ?? '';

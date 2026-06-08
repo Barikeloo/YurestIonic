@@ -136,7 +136,7 @@ class ArchiveOldAuditLogsTest extends TestCase
 
                 $now = new \DateTimeImmutable;
                 $expected = $now->modify('-30 days');
-                // Tolerate a couple of seconds between use case execution and assertion.
+
                 $this->assertLessThanOrEqual(2, abs($expected->getTimestamp() - $threshold->getTimestamp()));
 
                 return true;

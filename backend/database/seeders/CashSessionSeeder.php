@@ -27,7 +27,8 @@ class CashSessionSeeder extends Seeder
                 'closed_by_user_id' => null,
                 'opened_at' => $now->copy()->subHours(8),
                 'closed_at' => null,
-                'initial_amount_cents' => 50000, // 500.00€
+                'initial_amount_cents' => 50000,
+
                 'final_amount_cents' => null,
                 'expected_amount_cents' => null,
                 'discrepancy_cents' => null,
@@ -47,10 +48,14 @@ class CashSessionSeeder extends Seeder
                 'closed_by_user_id' => $user->id,
                 'opened_at' => $now->copy()->subDays(1)->subHours(4),
                 'closed_at' => $now->copy()->subDays(1)->subHours(2),
-                'initial_amount_cents' => 30000, // 300.00€
-                'final_amount_cents' => 28500, // 285.00€
-                'expected_amount_cents' => 28000, // 280.00€
-                'discrepancy_cents' => 500, // 5.00€ sobrante
+                'initial_amount_cents' => 30000,
+
+                'final_amount_cents' => 28500,
+
+                'expected_amount_cents' => 28000,
+
+                'discrepancy_cents' => 500,
+
                 'discrepancy_reason' => 'Propina no declarada',
                 'z_report_number' => 1,
                 'z_report_hash' => hash('sha256', 'Z-1'),

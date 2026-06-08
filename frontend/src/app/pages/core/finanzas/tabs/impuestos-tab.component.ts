@@ -18,13 +18,11 @@ export class ImpuestosTabComponent {
 
   protected readonly q = computed<QuarterVat>(() => this.facade.quarterly[this.activeQ()]);
 
-  // Period (today) totals — static since breakdown is static mock
   protected readonly breakdown  = this.facade.taxBreakdown;
   protected readonly totalBase  = this.breakdown.reduce((s, t) => s + t.base, 0);
   protected readonly totalTax   = this.breakdown.reduce((s, t) => s + t.tax, 0);
   protected readonly totalGross = this.totalBase + this.totalTax;
 
-  // Quarterly totals (reactive)
   protected readonly qTotalTax = computed(() => {
     const d = this.q();
     return d.tax4 + d.tax10 + d.tax21;
@@ -34,7 +32,6 @@ export class ImpuestosTabComponent {
     return d.base4 + d.base10 + d.base21;
   });
 
-  // 3-col cards in Modelo 303 section
   protected readonly m303Rates = computed(() => {
     const d = this.q();
     return [
@@ -44,7 +41,6 @@ export class ImpuestosTabComponent {
     ];
   });
 
-  // Rows for faux PDF table in modal
   protected readonly pdfRows = computed(() => {
     const d = this.q();
     return [

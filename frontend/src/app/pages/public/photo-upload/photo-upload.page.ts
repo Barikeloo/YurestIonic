@@ -29,20 +29,16 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
   @ViewChild('camFileInput') camFileInput?: ElementRef<HTMLInputElement>;
   @ViewChild('sheetFileInput') sheetFileInput?: ElementRef<HTMLInputElement>;
 
-  // Camera
   private stream: MediaStream | null = null;
 
-  // Crop
   private cr = { natW: 1, natH: 1, base: 1, scale: 1, tx: 0, ty: 0, win: 320, dragging: false, sx: 0, sy: 0 };
   protected capturedSrc: string | null = null;
   protected finalImageSrc = signal<string | null>(null);
 
-  // UI
   protected readonly sheetOpen = signal(false);
   protected readonly isSuccessPulse = signal(false);
 
-
-  readonly ringLen = 2 * Math.PI * 70; // r=70, matches SVG in template
+  readonly ringLen = 2 * Math.PI * 70;
 
   private token = '';
   private audioCtx: AudioContext | null = null;
@@ -78,7 +74,6 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
     URL.revokeObjectURL(this.finalImageSrc() ?? '');
   }
 
-  // ── Camera ──────────────────────────────────────────────
   protected async goCamera(): Promise<void> {
     this.facade.setState('camera');
     await this.startCamera();
@@ -135,7 +130,6 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
   protected camClose(): void { this.facade.setState('ready'); }
   protected camGallery(): void { this.facade.setState('ready'); setTimeout(() => this.sheetOpen.set(true), 120); }
 
-  // ── Crop ────────────────────────────────────────────────
   private readonly CROP_SKIP_RATIO = 1.15;
 
   protected enterCrop(src: string): void {

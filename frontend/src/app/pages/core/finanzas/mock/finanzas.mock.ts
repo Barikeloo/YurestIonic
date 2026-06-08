@@ -25,7 +25,6 @@ import {
   ZoneData,
 } from '../models/finanzas.models';
 
-// ─── Meta ────────────────────────────────────────────────────────────────────
 export const MOCK_META = {
   restaurant: 'La Tasca de Miguel',
   device: 'TPV Sala',
@@ -33,7 +32,6 @@ export const MOCK_META = {
   date: 'Jueves, 14 mayo 2026',
 };
 
-// ─── Summary KPIs ────────────────────────────────────────────────────────────
 export const MOCK_SUMMARY = {
   revenue:   { v: 247385, prev: 218940, deltaPct: 13.0 },
   tickets:   { v: 84,     prev: 76,     deltaPct: 10.5 },
@@ -44,7 +42,6 @@ export const MOCK_SUMMARY = {
   cashOpen:  { v: 318240, status: 'open' },
 };
 
-// ─── Sparklines (últimos 14 días) ────────────────────────────────────────────
 export const MOCK_SPARKS = {
   revenue:   [1840, 2010, 2190, 1780, 2350, 2470, 2820, 2030, 1950, 2110, 2280, 2410, 2189, 2473],
   tickets:   [62,   68,   72,   60,   78,   82,   96,   70,   65,   71,   75,   79,   76,   84  ],
@@ -52,7 +49,6 @@ export const MOCK_SPARKS = {
   items:     [228,  245,  267,  220,  286,  305,  358,  256,  240,  268,  280,  295,  289,  312 ],
 };
 
-// ─── Ventas por hora (hoy) ────────────────────────────────────────────────────
 export const MOCK_BY_HOUR: HourData[] = [
   { l: '08', v:  4280, n: 8  },
   { l: '09', v:  8950, n: 14 },
@@ -72,7 +68,6 @@ export const MOCK_BY_HOUR: HourData[] = [
   { l: '23', v:     0, n: 0  },
 ];
 
-// ─── Ventas por hora (ayer) ───────────────────────────────────────────────────
 export const MOCK_BY_HOUR_PREV: HourData[] = [
   { l: '08', v:  3920 }, { l: '09', v:  7480 }, { l: '10', v:  5860 },
   { l: '11', v:  4720 }, { l: '12', v:  9840 }, { l: '13', v: 25180 },
@@ -82,7 +77,6 @@ export const MOCK_BY_HOUR_PREV: HourData[] = [
   { l: '23', v:     0 },
 ];
 
-// ─── Ventas por hora (mismo día semana pasada) ────────────────────────────────
 export const MOCK_BY_HOUR_LAST_WEEK: HourData[] = [
   { l: '08', v:  4180 }, { l: '09', v:  9120 }, { l: '10', v:  6580 },
   { l: '11', v:  5440 }, { l: '12', v: 11820 }, { l: '13', v: 29240 },
@@ -92,7 +86,6 @@ export const MOCK_BY_HOUR_LAST_WEEK: HourData[] = [
   { l: '23', v:     0 },
 ];
 
-// ─── Evolución últimos 14 días ────────────────────────────────────────────────
 export const MOCK_BY_DAY = [
   { l: '1 may', v: 184000, n: 62 }, { l: '2 may', v: 201000, n: 68 },
   { l: '3 may', v: 219000, n: 72 }, { l: '4 may', v: 178000, n: 60 },
@@ -103,7 +96,6 @@ export const MOCK_BY_DAY = [
   { l: '13 may', v: 218940, n: 76 }, { l: '14 may', v: 247385, n: 84 },
 ];
 
-// ─── Heatmap día × hora ───────────────────────────────────────────────────────
 function makeHeatmap(): HeatmapRow[] {
   const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
   const hours = ['08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23'];
@@ -127,7 +119,6 @@ function makeHeatmap(): HeatmapRow[] {
 }
 export const MOCK_HEATMAP: HeatmapRow[] = makeHeatmap();
 
-// ─── Top productos ────────────────────────────────────────────────────────────
 export const MOCK_TOP_PRODUCTS: TopProduct[] = [
   { name: 'Cerveza caña',         family: 'Bebidas',  units: 124, revenue: 24800, cost:  400, avgDaily: 110, stock: 500, color: '#1a9e5a' },
   { name: 'Croquetas de jamón',   family: 'Tapas',    units:  38, revenue: 22800, cost: 2500, avgDaily:  34, stock:  80, color: '#ff4d4d' },
@@ -146,7 +137,6 @@ export const MOCK_TOP_PRODUCTS: TopProduct[] = [
   { name: 'Agua mineral',         family: 'Bebidas',  units:  67, revenue:  4690, cost:  200, avgDaily:  70, stock: 300, color: '#1a9e5a' },
 ];
 
-// Productos sin ventas en últimos 7 días
 export const MOCK_DEAD_STOCK = [
   { name: 'Gazpacho andaluz',  family: 'Tapas',    stock: 18, lastSale: 'hace 12 días', price: 580 },
   { name: 'Sangría jarra 1L',  family: 'Bebidas',  stock:  5, lastSale: 'hace 8 días',  price: 1800 },
@@ -154,7 +144,6 @@ export const MOCK_DEAD_STOCK = [
   { name: 'Tiramisú',          family: 'Postres',  stock:  7, lastSale: 'hace 9 días',  price: 680 },
 ];
 
-// ─── Distribución por familia ─────────────────────────────────────────────────
 export const MOCK_BY_FAMILY: FamilyData[] = [
   { label: 'Bebidas',  v:  89240, color: '#1a9e5a' },
   { label: 'Tapas',    v:  78650, color: '#ff4d4d' },
@@ -163,7 +152,6 @@ export const MOCK_BY_FAMILY: FamilyData[] = [
   { label: 'Menú',     v:  15000, color: '#0077cc' },
 ];
 
-// ─── Por método de pago ────────────────────────────────────────────────────────
 export const MOCK_BY_METHOD = {
   cash:       { v:  78420, n: 31 },
   card:       { v: 132680, n: 38 },
@@ -172,7 +160,6 @@ export const MOCK_BY_METHOD = {
   invitation: { v:   5155, n: 3  },
 };
 
-// ─── Tickets / Pedidos ────────────────────────────────────────────────────────
 export const MOCK_ORDERS: Order[] = [
   { id: 'T-0512', zone: 'Mesa 8',     status: 'paid',      total:  8940, tip: 200, method: 'card',  time: '22:38', diners: 4,
     lines: [{ name: 'Croquetas', qty: 2, unitPrice: 1400, tax: 10, total: 2800 }, { name: 'Pulpo',  qty: 1, unitPrice: 1800, tax: 10, total: 1800 }, { name: 'Vino tinto', qty: 2, unitPrice: 350, tax: 21, total: 700 }, { name: 'Café solo', qty: 2, unitPrice: 150, tax: 10, total: 300 }] },
@@ -198,7 +185,6 @@ export const MOCK_ORDERS: Order[] = [
   { id: 'T-0497', zone: 'Mesa 11',    status: 'paid',      total:  6540, tip: 150, method: 'card',  time: '20:10', diners: 3 },
 ];
 
-// ─── Alertas ──────────────────────────────────────────────────────────────────
 export const MOCK_ALERTS: FinanzasAlert[] = [
   { id: 1, type: 'warning',  title: 'Descuadre en sesión #134',        sub: '−25,00 € en sesión de Ana L.',          time: 'hace 6 días', tab: 'caja'      },
   { id: 2, type: 'critical', title: 'Pulpo a la gallega · stock crítico', sub: 'Quedan 6 uds, agotará el sábado',    time: 'hace 2h',     tab: 'productos' },
@@ -207,7 +193,6 @@ export const MOCK_ALERTS: FinanzasAlert[] = [
   { id: 5, type: 'info',     title: 'Modelo 303 – T2 cierra en 47 días', sub: 'Vence 20 julio 2026',                time: 'recordatorio',tab: 'impuestos' },
 ];
 
-// ─── Empleados ────────────────────────────────────────────────────────────────
 export const MOCK_EMPLOYEES: Employee[] = [
   { id: 'mg', name: 'María García', role: 'Encargada', initials: 'MG', color: '#ff4d4d',
     shift: '08:00 – cierre · 14h 38m', tickets: 28, revenue: 84620, avgTicket: 3023, items: 102,
@@ -231,7 +216,6 @@ export const MOCK_EMPLOYEES: Employee[] = [
     sparkRevenue: [8,9,10,9,11,12,13,10,9,10,11,12,9,8] },
 ];
 
-// ─── Cross-sell ───────────────────────────────────────────────────────────────
 export const MOCK_CROSS_SELL: CrossSellPair[] = [
   { a: 'Chuletón 400g',      b: 'Vino tinto (copa)', together: 73, total: 9 },
   { a: 'Croquetas de jamón', b: 'Cerveza caña',       together: 68, total: 38 },
@@ -242,7 +226,6 @@ export const MOCK_CROSS_SELL: CrossSellPair[] = [
   { a: 'Calamares fritos',   b: 'Cerveza caña',       together: 57, total: 7 },
 ];
 
-// ─── Tendencias de productos ──────────────────────────────────────────────────
 function mkSpark(base: number, dir: 'up' | 'down' | 'flat'): number[] {
   return Array.from({ length: 14 }, (_, i) => {
     const t = i / 13;
@@ -275,14 +258,12 @@ export const MOCK_OPEN_TABLES: OpenTable[] = [
   { id: 'M-1',  zone: 'Mesa 1',    diners: 6, opened: '20:42', minutesOpen: 116, current: 15640, waiter: 'María G.',  state: 'eating',   lastEvent: 'Segunda ronda 22:20',    alert: 'long' },
 ];
 
-// ─── Pendientes de cobro ──────────────────────────────────────────────────────
 export const MOCK_PENDING_PAYMENTS: PendingPayment[] = [
   { id: 'T-0514', zone: 'Mesa 1',  total: 15640, since: '22:20', issue: 'cuenta_pedida' },
   { id: 'T-0511', zone: 'Mesa 12', total:  4380, since: '22:32', issue: 'sin_imprimir'  },
   { id: 'T-0507', zone: 'Mesa 4',  total:  3780, since: '21:54', issue: 'sin_imprimir'  },
 ];
 
-// ─── Anulaciones ─────────────────────────────────────────────────────────────
 export const MOCK_CANCELLATIONS: Cancellation[] = [
   { id: 'T-0504', date: '14/05 21:24', zone: 'Mesa 10', amount: 12450, reason: 'Cliente insatisfecho – plato frío',       who: 'María G.',  authorizedBy: 'María G.',  category: 'queja'      },
   { id: 'T-0498', date: '14/05 18:42', zone: 'Mesa 7',  amount:  3680, reason: 'Error en pedido – duplicado',             who: 'Pedro M.',  authorizedBy: 'María G.',  category: 'error'      },
@@ -292,7 +273,6 @@ export const MOCK_CANCELLATIONS: Cancellation[] = [
   { id: 'T-0418', date: '10/05 14:50', zone: 'Mesa 8',  amount:  6450, reason: 'Cliente cancela antes de servir',         who: 'Ana L.',    authorizedBy: 'Ana L.',    category: 'cancelacion'},
 ];
 
-// ─── Pre-cierre ────────────────────────────────────────────────────────────────
 export const MOCK_PRE_CLOSE = {
   openTablesCount: 6,
   openTablesAmount: 47380,
@@ -311,7 +291,6 @@ export const MOCK_PRE_CLOSE = {
   ] as PreCloseItem[],
 };
 
-// ─── Sesión de caja activa ────────────────────────────────────────────────────
 export const MOCK_CASH_SESSION = {
   id: '135',
   operator: 'María G.',
@@ -326,7 +305,6 @@ export const MOCK_CASH_SESSION = {
   ] as CashMovementItem[],
 };
 
-// ─── Historial de sesiones ─────────────────────────────────────────────────────
 export const MOCK_CASH_HISTORY: CashSessionHistory[] = [
   { id: '134', opened: '13/05 08:02', closed: '13/05 23:58', operator: 'Ana L.',   sales: 218940, theoretical: 116940, counted: 91940, diff: -25000, tickets: 76 },
   { id: '133', opened: '12/05 08:10', closed: '12/05 23:42', operator: 'María G.', sales: 241280, theoretical: 126280, counted: 126280, diff: 0,     tickets: 79 },
@@ -338,7 +316,6 @@ export const MOCK_CASH_HISTORY: CashSessionHistory[] = [
   { id: '127', opened: '06/05 08:04', closed: '06/05 23:50', operator: 'María G.', sales: 247000, theoretical: 128000, counted: 128400, diff: 400,   tickets: 82 },
 ];
 
-// ─── Forecast ─────────────────────────────────────────────────────────────────
 export const MOCK_FORECAST: Forecast = {
   currentTime: '22:38',
   closed: 247385,
@@ -348,14 +325,12 @@ export const MOCK_FORECAST: Forecast = {
   confidence: 78,
 };
 
-// ─── IVA desglose hoy ────────────────────────────────────────────────────────
 export const MOCK_TAX_BREAKDOWN: TaxSlab[] = [
   { rate:  4, label: 'IVA Superreducido', note: 'Pan, productos básicos', base:   7374, tax:    295, total:   7669 },
   { rate: 10, label: 'IVA Reducido',      note: 'Comidas y hostelería',   base: 168132, tax:  16813, total: 184945 },
   { rate: 21, label: 'IVA General',       note: 'Bebidas alcohólicas',    base:  45185, tax:   9489, total:  54674 },
 ];
 
-// ─── IVA trimestral ────────────────────────────────────────────────────────────
 export const MOCK_QUARTERLY: Record<string, QuarterVat> = {
   T1: { period: 'T1 · ene-mar · 2026', elapsed: 100, base4: 1129800, tax4:  45192, base10: 6943200, tax10: 694320, base21: 2427700, tax21: 509817 },
   T2: { period: 'T2 · abr-jun · 2026', elapsed:  47, base4:  531100, tax4:  21244, base10: 3263400, tax10: 326340, base21: 1141000, tax21: 239610 },
@@ -363,7 +338,6 @@ export const MOCK_QUARTERLY: Record<string, QuarterVat> = {
   T4: { period: 'T4 · oct-dic · 2026', elapsed:   0, base4:       0, tax4:      0, base10:       0, tax10:      0, base21:       0, tax21:      0 },
 };
 
-// ─── Hardware ─────────────────────────────────────────────────────────────────
 export const MOCK_HARDWARE: HardwareItem[] = [
   { id: 'tpv-sala',   name: 'TPV Sala',          status: 'ok',      icon: '⌗', detail: 'Online · sync hace 12s' },
   { id: 'imp-cocina', name: 'Impresora cocina',   status: 'warning', icon: '◰', detail: 'Papel bajo (15%)' },
@@ -373,14 +347,12 @@ export const MOCK_HARDWARE: HardwareItem[] = [
   { id: 'kds-coc',    name: 'KDS cocina',         status: 'error',   icon: '◷', detail: 'Sin conexión hace 4 min', critical: true },
 ];
 
-// ─── Locales ──────────────────────────────────────────────────────────────────
 export const MOCK_LOCATIONS: Location[] = [
   { id: 'l1', name: 'La Tasca de Miguel',  city: 'Madrid · Malasaña',   revenue: 247385, tickets:  84, isCurrent: true  },
   { id: 'l2', name: 'La Tasca II',         city: 'Madrid · Lavapiés',   revenue: 198420, tickets:  67 },
   { id: 'l3', name: 'La Tasca Express',    city: 'Madrid · Chamberí',   revenue: 124680, tickets:  48 },
 ];
 
-// ─── Ticket Detail (ejemplo para modal) ───────────────────────────────────────
 const _td_lines = [
   { name: 'Chuletón 400g',        qty: 2, unitPrice: 2890, total: 5780, tax: 10 },
   { name: 'Pulpo a la gallega',   qty: 1, unitPrice: 1500, total: 1500, tax: 10 },
@@ -423,7 +395,6 @@ export const MOCK_TICKET_DETAIL: TicketDetail = {
   tipsTotal: _td_tipsTotal,
 };
 
-// ─── Ranking completo de productos (con precio de venta) ──────────────────────
 export const MOCK_PRODUCT_RANKING: ProductRanking[] = [
   { name: 'Cerveza caña',       family: 'Bebidas',  units: 124, revenue: 24800, cost:  72, price: 200,  avgDaily: 108, stock: 240, pct: 9.4 },
   { name: 'Vino tinto (copa)',  family: 'Bebidas',  units:  67, revenue: 23450, cost: 105, price: 350,  avgDaily:  62, stock:  84, pct: 8.9 },
@@ -442,7 +413,6 @@ export const MOCK_PRODUCT_RANKING: ProductRanking[] = [
   { name: 'Flan casero',        family: 'Postres',  units:  14, revenue:  6300, cost: 120, price: 450,  avgDaily:  13, stock:  22, pct: 2.4 },
 ];
 
-// ─── Mapa de zonas del local ──────────────────────────────────────────────────
 export const MOCK_ZONES_LAYOUT: ZoneData[] = [
   { id: 'sala',      name: 'Sala interior', x:  5, y:  5, w: 50, h: 60, revenue: 124680, tickets: 42, occupancy: 78 },
   { id: 'barra',     name: 'Barra',         x: 60, y:  5, w: 35, h: 18, revenue:  28440, tickets: 18, occupancy: 55 },
@@ -451,7 +421,6 @@ export const MOCK_ZONES_LAYOUT: ZoneData[] = [
   { id: 'privado',   name: 'Salón privado', x: 40, y: 70, w: 55, h: 25, revenue:   6505, tickets:  2, occupancy: 18 },
 ];
 
-// ─── Pares de canibalización ──────────────────────────────────────────────────
 export const MOCK_CANNIBALS: CannibalPair[] = [
   { a: 'Croquetas de jamón', b: 'Patatas bravas', overlap: 82, note: 'Aparecen casi siempre juntos pero rara vez ambos al inicio. Pueden estar canibalizando entrantes.' },
   { a: 'Coca-Cola',          b: 'Agua mineral',   overlap: 71, note: 'Comparten ocasión de consumo. Considerar combo.' },

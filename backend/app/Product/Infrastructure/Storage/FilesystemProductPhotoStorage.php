@@ -11,13 +11,6 @@ use Illuminate\Support\Facades\Storage;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Intervention\Image\ImageManager;
 
-/**
- * Stores product photos on a configured Laravel filesystem disk (local/public in dev,
- * s3 → Cloudflare R2 in production). Returns the public URL to persist in image_src.
- *
- * Images are resized to a maximum of 1080 px on the longest side and converted to
- * WebP format (quality 85) before storage.
- */
 class FilesystemProductPhotoStorage implements ProductPhotoStorageInterface
 {
     private const MIME_EXTENSIONS = [
@@ -73,16 +66,11 @@ class FilesystemProductPhotoStorage implements ProductPhotoStorageInterface
     {
         $diskName = config('product_photos.disk') ?? 'public';
 
-        /** @var FilesystemAdapter $disk */
         $disk = Storage::disk($diskName);
 
         return $disk;
     }
 
-    /**
-     * Remove the previously stored file to avoid orphans, when it is a managed file on this
-     * disk and differs from the new path (e.g. a different extension).
-     */
     private function deletePrevious(FilesystemAdapter $disk, ?string $previousImageSrc, string $newPath): void
     {
         if ($previousImageSrc === null || $previousImageSrc === '') {
@@ -91,7 +79,8 @@ class FilesystemProductPhotoStorage implements ProductPhotoStorageInterface
 
         $base = rtrim($disk->url(''), '/').'/';
         if (! str_starts_with($previousImageSrc, $base)) {
-            return; // external/unmanaged URL — leave it alone.
+            return;
+
         }
 
         $previousPath = substr($previousImageSrc, strlen($base));

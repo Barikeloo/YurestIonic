@@ -1,6 +1,5 @@
 import { Component, Input } from '@angular/core';
 
-
 export interface DinerPayment {
   number: number;
   paid: boolean;
@@ -21,17 +20,11 @@ export class DinersStatusComponent {
   @Input() paidDiners: number[] = [];
   @Input() compact = false;
   @Input() amountPerDiner: number | null = null;
-  /**
-   * Importe real (céntimos) por comensal cuando se cobra por líneas
-   * asignadas. Si está presente, sobrescribe el reparto equitativo. El padre
-   * (caja.page) puede calcularlo a partir de `line_assignments` + precios.
-   */
+
   @Input() dinerAmounts: Record<number, number> | null = null;
 
   get paidTotal(): number {
-    // Fuente de verdad única: lo que el BE reporta como pagado en la sesión.
-    // No sumamos `dinerAmounts` ni `amountPerDiner` porque divergen cuando se
-    // mezclan modos de cobro (líneas + equal split + manual).
+
     return Math.max(0, this.total - this.remainingTotal);
   }
 

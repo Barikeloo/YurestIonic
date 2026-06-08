@@ -28,9 +28,6 @@ final readonly class UpdateTaxResponse
         );
     }
 
-    /**
-     * @return array<string, int|string>
-     */
     public function toArray(): array
     {
         return [

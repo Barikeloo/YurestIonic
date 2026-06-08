@@ -8,9 +8,7 @@ use App\Audit\Domain\Entity\AuditLog;
 
 final readonly class AuditLogPage
 {
-    /**
-     * @param  list<AuditLog>  $items
-     */
+
     public function __construct(
         public array $items,
         public ?\DateTimeImmutable $nextCursorCreatedAt,

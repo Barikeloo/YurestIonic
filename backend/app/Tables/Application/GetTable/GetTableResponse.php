@@ -28,9 +28,6 @@ final readonly class GetTableResponse
         );
     }
 
-    /**
-     * @return array<string, string>
-     */
     public function toArray(): array
     {
         return [

@@ -1,4 +1,3 @@
-// ── Paleta local (con fallback a tokens del proyecto) ──────────────
 $primary: #1A6FE8;
 $primary-soft: rgba(26, 111, 232, 0.10);
 $primary-strong: rgba(26, 111, 232, 0.32);
@@ -13,8 +12,6 @@ $gray-400: #9ca3af;
 $gray-500: #6b7280;
 $gray-600: #4b5563;
 $gray-700: #374151;
-
-// Targets touch ≥ 44px (Apple HIG / WCAG 2.5.5). Primarios 56px.
 
 .mcm-overlay {
   position: fixed;
@@ -53,7 +50,6 @@ $gray-700: #374151;
   to   { opacity: 1; transform: none; }
 }
 
-// ── Cabecera ───────────────────────────────────────────────────────
 .mcm-head {
   display: grid;
   grid-template-columns: 1fr auto auto;
@@ -142,7 +138,6 @@ $gray-700: #374151;
   &:active { transform: scale(.94); }
 }
 
-// ── Contenido (rail + canvas) ──────────────────────────────────────
 .mcm-content {
   flex: 1;
   display: grid;
@@ -151,7 +146,6 @@ $gray-700: #374151;
   min-height: 0;
 }
 
-// Rail lateral
 .mcm-rail {
   background: $gray-50;
   border-right: 1px solid $gray-150;
@@ -245,7 +239,6 @@ $gray-700: #374151;
   text-align: center;
 }
 
-// Canvas
 .mcm-canvas {
   padding: 22px 26px 18px;
   overflow-y: auto;
@@ -295,7 +288,6 @@ $gray-700: #374151;
   &-max { color: $gray-500; }
 }
 
-// Grid de productos
 .mcm-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -320,7 +312,6 @@ $gray-700: #374151;
   isolation: isolate;
   transition: border-color .18s, background .18s, box-shadow .18s, transform .12s;
 
-  // Halo sutil radial-azul para reforzar el estado seleccionado
   &::before {
     content: '';
     position: absolute;
@@ -349,7 +340,6 @@ $gray-700: #374151;
   }
 }
 
-// Cinta de suplemento (top-left): siempre visible cuando hay extra_price
 .mcm-card__ribbon {
   position: absolute;
   top: 0;
@@ -365,7 +355,6 @@ $gray-700: #374151;
   box-shadow: 0 4px 10px rgba(255, 143, 31, 0.28);
 }
 
-// Check de selección (top-right): aparece solo cuando is-selected
 .mcm-card__check {
   position: absolute;
   top: 12px;
@@ -392,14 +381,14 @@ $gray-700: #374151;
   transform: scale(1) rotate(0);
 }
 
-// Cuerpo de la card (nombre del producto, ocupa el espacio central)
 .mcm-card__body {
   position: relative;
   z-index: 1;
   flex: 1;
   display: flex;
   align-items: center;
-  padding-top: 14px; // deja sitio al ribbon/check
+  padding-top: 14px;
+
 }
 
 .mcm-card__name {
@@ -409,7 +398,7 @@ $gray-700: #374151;
   line-height: 1.25;
   letter-spacing: -0.1px;
   word-break: break-word;
-  // Limitar a 3 líneas con elipsis para mantener altura uniforme
+
   display: -webkit-box;
   -webkit-line-clamp: 3;
   line-clamp: 3;
@@ -417,7 +406,6 @@ $gray-700: #374151;
   overflow: hidden;
 }
 
-// Pie de card: tags de estado (Incluido / Suplemento) y personalizable
 .mcm-card__foot {
   position: relative;
   z-index: 1;
@@ -458,7 +446,6 @@ $gray-700: #374151;
   }
 }
 
-// Refuerzo visual en seleccionado: el tag "Incluido" se vuelve azul
 .mcm-card.is-selected .mcm-card__tag--included {
   background: $primary-soft;
   color: $primary;
@@ -478,7 +465,6 @@ $gray-700: #374151;
   border-radius: 12px;
 }
 
-// ── Personalización (variantes y extras del producto elegido) ──────
 .mcm-customize {
   background: $gray-50;
   border: 1px solid $gray-150;
@@ -602,7 +588,6 @@ $gray-700: #374151;
   color: $primary;
 }
 
-// ── Notas ──────────────────────────────────────────────────────────
 .mcm-notes {
   display: flex;
   flex-direction: column;
@@ -640,7 +625,6 @@ $gray-700: #374151;
   }
 }
 
-// ── Footer ─────────────────────────────────────────────────────────
 .mcm-foot {
   border-top: 1px solid $gray-150;
   background: #fff;
@@ -757,7 +741,6 @@ $gray-700: #374151;
   }
 }
 
-// ── Responsive: portrait tablet o pantallas estrechas ──────────────
 @media (max-width: 880px) {
   .mcm-overlay { padding: 12px; }
 
@@ -780,7 +763,6 @@ $gray-700: #374151;
     grid-template-columns: 1fr;
   }
 
-  // El rail pasa a ser una fila horizontal de pasos (scroll horizontal si no entran)
   .mcm-rail {
     flex-direction: row;
     overflow-x: auto;

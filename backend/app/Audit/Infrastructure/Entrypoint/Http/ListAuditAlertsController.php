@@ -14,7 +14,7 @@ final class ListAuditAlertsController
 {
     public function __invoke(): JsonResponse
     {
-        /** @var TenantContext $tenantContext */
+
         $tenantContext = app(TenantContext::class);
         $restaurantUuid = $tenantContext->restaurantUuid();
 
@@ -63,13 +63,6 @@ final class ListAuditAlertsController
         ], 200);
     }
 
-    /**
-     * Best-effort lookup for legacy alerts that were created before audit_log_uuid was wired.
-     * Matches by (restaurant_id, action, entity_type, entity_id) within a ±60s window
-     * around the alert's created_at, picking the closest audit log.
-     *
-     * @return array<string, string> Map of alert.uuid → audit_log.uuid
-     */
     private function resolveLegacyAuditLogUuids($alerts, int $restaurantId): array
     {
         $orphans = $alerts->filter(fn ($a) => $a->audit_log_uuid === null);

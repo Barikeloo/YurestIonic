@@ -75,10 +75,10 @@ class AuditEventCatalogTest extends TestCase
     {
         $result = AuditEventCatalog::resolve(
             ActionSlug::create('caja.opened'),
-            [], // no context at all
+            [],
+
         );
 
-        // Should use '—' for missing placeholders
         $this->assertStringContainsString('—', $result['summary']);
     }
 

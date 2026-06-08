@@ -12,20 +12,18 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->uuid('charge_session_id');
 
-            // Datos del pago
-            $table->integer('diner_number'); // Número de comensal (1, 2, 3...)
-            $table->integer('amount_cents');
-            $table->string('payment_method', 20); // cash, card, bizum, etc.
-            $table->string('status', 20)->default('completed'); // completed, cancelled
+            $table->integer('diner_number');
 
-            // Timestamps
+            $table->integer('amount_cents');
+            $table->string('payment_method', 20);
+
+            $table->string('status', 20)->default('completed');
+
             $table->timestamps();
 
-            // Indices
             $table->index('charge_session_id');
             $table->unique(['charge_session_id', 'diner_number', 'status'], 'unique_diner_payment');
 
-            // Foreign key
             $table->foreign('charge_session_id')
                 ->references('id')
                 ->on('charge_sessions')

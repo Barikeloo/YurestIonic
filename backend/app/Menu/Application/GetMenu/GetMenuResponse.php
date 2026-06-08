@@ -9,9 +9,7 @@ use App\Menu\Domain\Entity\Menu;
 
 final readonly class GetMenuResponse
 {
-    /**
-     * @param  array<string, mixed>  $data
-     */
+
     private function __construct(public array $data) {}
 
     public static function fromEntity(Menu $menu): self
@@ -19,9 +17,6 @@ final readonly class GetMenuResponse
         return new self(MenuView::toArray($menu));
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function toArray(): array
     {
         return $this->data;

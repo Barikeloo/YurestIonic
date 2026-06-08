@@ -1,6 +1,5 @@
 @import 'variables.scss';
 
-// Overlay principal
 .pin-auth-overlay {
   position: fixed;
   top: 0;
@@ -16,7 +15,6 @@
   animation: fadeIn 0.3s ease-out;
 }
 
-// Contenedor del modal
 .pin-auth-content {
   background: var(--white);
   border-radius: 24px;
@@ -27,7 +25,6 @@
   animation: scaleIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-// Header
 .pin-auth-header {
   text-align: center;
   margin-bottom: 24px;
@@ -47,7 +44,6 @@
   font-family: var(--font);
 }
 
-// Display de PIN
 .pin-display {
   display: flex;
   justify-content: center;
@@ -70,7 +66,6 @@
   }
 }
 
-// Error
 .pin-error {
   font-size: 13px;
   color: var(--accent);
@@ -85,7 +80,6 @@
   margin-bottom: 16px;
 }
 
-// Teclado numérico
 .pin-keypad {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -134,7 +128,6 @@
   font-size: 16px;
 }
 
-// Botón cancelar
 .btn-cancel {
   width: 100%;
   padding: 14px;
@@ -158,7 +151,6 @@
   }
 }
 
-// Animación de éxito
 .success-container {
   display: flex;
   flex-direction: column;
@@ -207,7 +199,6 @@
   animation: fadeInUp 0.5s ease-out 0.5s both;
 }
 
-// Keyframes
 @keyframes fadeIn {
   from {
     opacity: 0;

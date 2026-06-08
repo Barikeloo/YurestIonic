@@ -117,9 +117,6 @@ class CsvAuditExportFormatterTest extends TestCase
         $this->assertSame('', $this->formatter->footer());
     }
 
-    /**
-     * @param  array<string, mixed>  $metadata
-     */
     private function makeLog(
         string $uuid,
         string $entityType,

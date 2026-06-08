@@ -103,7 +103,7 @@ export class CajaPage implements OnInit, OnDestroy {
   protected readonly router = inject(Router);
   protected readonly toastService = inject(ToastService);
 
-  // Computed signals from facade
+
   public readonly state = computed(() => this.sessionFacade.state());
   public readonly activeSession = computed(() => this.sessionFacade.activeSession());
   public readonly loading = computed(() => this.sessionFacade.loading());
@@ -112,21 +112,15 @@ export class CajaPage implements OnInit, OnDestroy {
   public readonly sessionSummary = computed(() => this.sessionFacade.sessionSummary());
   public readonly isClosingInProgress = computed(() => this.sessionFacade.isClosingInProgress());
 
-  // Computed signals from payment facade
+
   public readonly paymentState = computed(() => this.paymentFacade.paymentState());
   public readonly isProcessingPayment = computed(() => this.paymentFacade.isProcessing());
   public readonly currentChargeSession = computed(() => this.paymentFacade.chargeSession());
   public readonly currentDinerNumber = computed(() => this.paymentFacade.dinerNumber());
   public readonly loadedChargeSession = computed(() => this.paymentFacade.session());
 
-  /**
-   * Importe real (en céntimos) por comensal, calculado sobre las líneas que el
-   * cajero ha asignado en la charge session. Sólo incluye comensales que tienen
-   * al menos una línea asignada — el resto delega en el reparto equitativo de
-   * `diners-status`. Permite que la sidebar muestre lo realmente cobrado por
-   * cada comensal en split por líneas, en lugar de un reparto equitativo
-   * engañoso.
-   */
+
+
   public readonly dinerAmountsByLines = computed<Record<number, number> | null>(() => {
     const session = this.loadedChargeSession();
     if (!session || !session.line_assignments?.length) return null;
@@ -153,30 +147,17 @@ export class CajaPage implements OnInit, OnDestroy {
   public showPaymentSuccess = false;
   public selectedTable: PendingTable | null = null;
   public selectedTableLines: OrderLine[] = [];
-  // Mapa estable de precios (céntimos) por order_line_id, capturado al cargar
-  // las líneas del pedido. Se mantiene íntegro aunque `selectedTableLines` se
-  // reduzca tras un cobro parcial — así `dinerAmountsByLines` puede calcular
-  // el importe real por comensal aunque el array de líneas ya no esté completo.
+
   private linePrices = new Map<string, number>();
   public currentUser: { id: string } | null = null;
   public fromMesas = false;
   public isPartialPayment = false;
   public paidDiners: number[] = [];
-  /**
-   * Comensales que ya pagaron su parte en la "ronda equal" actual de esta orden.
-   * Se usa cuando el toggle "Incluir comensales ya pagados" reparte el remanente
-   * entre TODOS los comensales: a medida que cada uno paga, sale de la ronda.
-   * Solo se vacía al cambiar de orden.
-   */
+
+
   public equalRoundPaidDinerNumbers: number[] = [];
-  /**
-   * Cuota fija de la ronda equal en curso. Se persiste aquí (no en el modal)
-   * porque el modal se destruye en cada cobro y la cuota debe sobrevivir a
-   * todos los cobros equal para que el reparto sea estable
-   * (8,80 / 8,80 / 8,80 / 8,80, con el último absorbiendo el resto por
-   * redondeo). Se invalida en cambio de orden, refund de línea, cambio de
-   * `diners_count` o cambio del toggle.
-   */
+
+
   public equalRoundFixedPartCents: number | null = null;
   private lastPaymentWasEqualPart = false;
   private lastSplitOrderId: string | null = null;
@@ -208,12 +189,8 @@ export class CajaPage implements OnInit, OnDestroy {
     this.deviceId = this.authService.getDeviceId();
   }
 
-  /**
-   * Construye el nombre y los modificadores a mostrar para una línea de orden.
-   * Los menús se renderizan con `menu_name` como nombre y las selecciones del
-   * menú se proyectan como modificadores (`Sección: Producto`, sub-extras), de
-   * forma que los modales de cobro las muestren sin más lógica.
-   */
+
+
   private buildPaymentLineLabel(l: TpvOrderLine): {
     name: string;
     variantName: string | null;
@@ -985,15 +962,11 @@ export class CajaPage implements OnInit, OnDestroy {
         catchError((error) => {
           if (error.status === 404) return of(null);
           console.error('Error fetching charge session in onSplitBill:', error);
-          // Si falla por otro motivo (transitorio), preservamos la sesión que
-          // ya tengamos cargada para no perder paidDiners ni remaining_cents.
+
           return of(this.loadedChargeSession());
         })
       ),
-      // Recargamos SIEMPRE las líneas del pedido al reabrir el split modal:
-      // tras un cobro parcial, `selectedTableLines` queda con sólo las líneas
-      // del comensal cobrado, así que sin esto el modal se reabriría con un
-      // pool vacío y mostraría "todas las líneas asignadas" erróneamente.
+
       orderLines: this.tpvService.getOrderLines(orderId).pipe(
         take(1),
         catchError(() => of([])),
@@ -1029,8 +1002,7 @@ export class CajaPage implements OnInit, OnDestroy {
 
         this.originalOrderTotal = originalTotal;
 
-        // Evitamos que una recarga "stale" (por ejemplo, por race condition
-        // tras un cobro) sobrescriba datos más recientes que ya teníamos.
+
         const loaded = this.loadedChargeSession();
         const useSession = chargeSession && loaded
           ? (new Date(chargeSession.updated_at) >= new Date(loaded.updated_at)
@@ -1051,8 +1023,7 @@ export class CajaPage implements OnInit, OnDestroy {
             this.updatePendingTableTotal(this.selectedTable.order_id, useSession.remaining_cents);
           }
         } else {
-          // Solo reseteamos paidDiners si no teníamos charge session previa
-          // (evita perder estado por un error transitorio de red).
+
           if (!loaded) {
             this.paidDiners = [];
           }
@@ -1207,9 +1178,7 @@ export class CajaPage implements OnInit, OnDestroy {
               console.log('[CajaPage] Payment done - freshSession.paid_diner_numbers:', freshSession.paid_diner_numbers);
               console.log('[CajaPage] Payment done - freshSession.remaining_cents:', freshSession.remaining_cents);
 
-              // Si el pago fue en modo equal, lo añadimos a la ronda equal:
-              // así, cuando el toggle "Incluir ya pagados" está ON, el comensal
-              // queda fuera del próximo grid (ya pagó su cuota equal).
+
               const dinerNum = this.currentDinerNumber();
               if (this.lastPaymentWasEqualPart && dinerNum !== null) {
                 if (!this.equalRoundPaidDinerNumbers.includes(dinerNum)) {
@@ -1217,11 +1186,7 @@ export class CajaPage implements OnInit, OnDestroy {
                   console.log('[CajaPage] Tracked equal-round paid diner:', dinerNum);
                 }
               } else if (this.equalRoundFixedPartCents !== null) {
-                // Pago por líneas (o cualquier cobro no-equal): el divisor de la
-                // ronda equal cambia porque entra un nuevo comensal al grupo de
-                // pagados. La cuota fija de la ronda anterior queda obsoleta:
-                // la invalidamos para que la siguiente apertura del modal
-                // recalcule sobre el nuevo `remaining` y el nuevo `splitting`.
+
                 this.equalRoundFixedPartCents = null;
                 console.log('[CajaPage] Equal round quota invalidated by non-equal payment');
               }
@@ -1253,14 +1218,14 @@ export class CajaPage implements OnInit, OnDestroy {
             map((paidResponse) => {
               const paidTotal = paidResponse.total_cents;
               const originalTotal = this.originalOrderTotal || this.selectedTable?.total || 0;
-              
+
               this.paidDiners = [];
               console.log('Reset paidDiners for manual partial payment');
 
               const isOrderComplete = paidTotal >= originalTotal;
-              
+
               const isManual = !!data.isManualPartial;
-              
+
               return { type: 'partial' as const, isOrderComplete, orderId, isManual };
             }),
             catchError((error) => {
@@ -1431,22 +1396,18 @@ export class CajaPage implements OnInit, OnDestroy {
 
     if (total > 0) {
       if (data.isEqualPart) {
-        // Mantenemos todas las líneas de la mesa para que el cobrar-modal
-        // muestre el resumen completo en reparto equitativo.
+
         this.selectedTableLines = this.selectedTableLines.map((l) => ({ ...l }));
         this.currentPaymentAmount = data.amount || total;
         console.log('Set currentPaymentAmount:', this.currentPaymentAmount);
-        // NO mutamos selectedTable.total aquí: es el total pendiente de la
-        // mesa completa, no solo la cuota de este comensal.
+
         this.fromMesas = false;
         this.isPartialPayment = true;
       } else {
-        // Cobro por líneas: sólo las líneas del comensal actual.
-        // Preservamos variantName, modifiers y diner para no perder info.
+
         this.selectedTableLines = selectedLines.map((l) => ({ ...l }));
         this.currentPaymentAmount = total;
-        // Es un cobro parcial siempre que haya una charge session activa
-        // o haya más de un comensal en la mesa.
+
         this.isPartialPayment = !!data.chargeSessionId || (this.selectedTable?.diners ?? 1) > 1;
       }
       this.showSplitModal = false;
@@ -1481,8 +1442,7 @@ export class CajaPage implements OnInit, OnDestroy {
       })
       .subscribe({
         next: (updated) => {
-          // Un refund sube `remaining_cents` y vuelve a meter al comensal en
-          // el reparto: la cuota fija anterior ya no representa el reparto.
+
           this.equalRoundFixedPartCents = null;
           this.onChargeSessionUpdated(updated);
         },

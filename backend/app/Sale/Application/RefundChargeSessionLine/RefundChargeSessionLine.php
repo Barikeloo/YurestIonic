@@ -57,8 +57,6 @@ final class RefundChargeSessionLine
         $sale->cancel($refundedByUuid, $reason);
         $this->saleRepository->save($sale);
 
-        // Al reembolsar, la línea vuelve al pool de pendientes: quitamos su
-        // asignación al comensal para que pueda reasignarse libremente.
         $this->assignmentRepository->deleteByOrderLineIds(
             $sessionUuid,
             [Uuid::create($command->orderLineId)],

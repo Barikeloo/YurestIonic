@@ -29,13 +29,6 @@ use App\Tax\Domain\Exception\TaxNotFoundException;
 use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
 use DomainException;
 
-/**
- * Añade una línea de tipo "menú" a una orden abierta. A diferencia de
- * AddLineToOrder (un producto), esta línea representa el menú completo y guarda
- * en `menu_selections` las elecciones del comensal por sección, con variantes
- * y modificadores ya resueltos para que el ticket / cocina puedan renderizarse
- * sin tener que volver a leer el menú.
- */
 final class AddMenuLineToOrder
 {
     public function __construct(
@@ -67,7 +60,6 @@ final class AddMenuLineToOrder
             throw TaxNotFoundException::withId($menu->taxId()->value());
         }
 
-        // Indexa secciones del menú por id para validación rápida.
         $sectionsById = [];
         foreach ($menu->sections() as $section) {
             $sectionsById[$section->id()->value()] = $section;
@@ -75,14 +67,13 @@ final class AddMenuLineToOrder
 
         $this->validateChoiceRules($menu, $command->selections, $sectionsById);
 
-        // Construye el JSON denormalizado y calcula extras.
         [$menuSelectionsJson, $extrasTotal] = $this->buildSelectionsJson($command->selections, $sectionsById);
 
-        // Stock: una unidad de cada producto elegido por unidad de menú añadida.
         foreach ($menuSelectionsJson as $selection) {
             $product = $this->productRepository->findById($selection['product_id']);
             if ($product === null) {
-                continue; // ya validado arriba; defensivo
+                continue;
+
             }
             $product->decreaseStock(1);
             $this->productRepository->save($product);
@@ -130,13 +121,6 @@ final class AddMenuLineToOrder
         return AddMenuLineToOrderResponse::create($orderLine);
     }
 
-    /**
-     * Verifica que cada sección reciba un número de selecciones dentro de su rango
-     * min/max y que cada producto elegido pertenezca a esa sección.
-     *
-     * @param  array<int, array{section_id: string, product_id: string, variant_id: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>}>  $selections
-     * @param  array<string, MenuSection>  $sectionsById
-     */
     private function validateChoiceRules(Menu $menu, array $selections, array $sectionsById): void
     {
         $countBySection = [];
@@ -172,14 +156,6 @@ final class AddMenuLineToOrder
         }
     }
 
-    /**
-     * Para cada selección resuelve nombres (producto, variante) y precios, validando
-     * que el producto exista y esté activo. Devuelve [selecciones_json, total_extras].
-     *
-     * @param  array<int, array{section_id: string, product_id: string, variant_id: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>}>  $selections
-     * @param  array<string, MenuSection>  $sectionsById
-     * @return array{0: array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>, 1: int}
-     */
     private function buildSelectionsJson(array $selections, array $sectionsById): array
     {
         $extrasTotal = 0;
@@ -196,7 +172,6 @@ final class AddMenuLineToOrder
                 throw ProductNotActiveException::withId($sel['product_id']);
             }
 
-            // Localiza el item del menú correspondiente (para obtener su extraPrice).
             $menuItemExtraPrice = 0;
             foreach ($section->items() as $item) {
                 if ($item->productId()->value() === $sel['product_id']) {

@@ -1,4 +1,3 @@
-
 import { Component, computed, inject, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { IonContent, IonSpinner } from '@ionic/angular/standalone';
@@ -35,7 +34,6 @@ export class DeveloperDashboardPage implements OnInit {
     private readonly router = inject(Router);
     private readonly toastService = inject(ToastService);
 
-    // Computed signals from facade
     public readonly companies = computed(() => this.dashboardFacade.dashboardCompanies());
     public readonly isLoading = computed(() => this.dashboardFacade.dashboardLoading());
 

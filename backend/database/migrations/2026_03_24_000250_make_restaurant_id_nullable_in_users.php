@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Make restaurant_id nullable for administrative users
+
             $table->unsignedBigInteger('restaurant_id')->nullable()->change();
         });
     }

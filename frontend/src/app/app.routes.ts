@@ -94,7 +94,7 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/core/home/home.page').then((m) => m.HomePage),
   },
   {
-    // Public QR photo-upload — no AuthGuard; access controlled by the signed ephemeral token.
+
     path: 'u/foto/:token',
     loadComponent: () =>
       import('./pages/public/photo-upload/photo-upload.page').then((m) => m.PhotoUploadPage),

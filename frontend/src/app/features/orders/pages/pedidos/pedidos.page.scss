@@ -23,7 +23,6 @@
   color: #7A7A7A;
 }
 
-// ── Layout ─────────────────────────────────────
 .pedidos-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
@@ -39,7 +38,6 @@
   min-height: 0;
 }
 
-// ── Tabs ───────────────────────────────────────
 .pedidos-tabs {
   display: flex;
   gap: 10px;
@@ -75,7 +73,6 @@
   &:active { transform: scale(0.97); }
 }
 
-// ── KPIs ───────────────────────────────────────
 .summary-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -107,7 +104,6 @@
   letter-spacing: -0.5px;
 }
 
-// ── Smart filter chips ─────────────────────────
 .pedidos-chips {
   display: flex;
   gap: 8px;
@@ -184,7 +180,6 @@
   opacity: 0.7;
 }
 
-// ── Toolbar ────────────────────────────────────
 .pedidos-toolbar {
   display: grid;
   grid-template-columns: 1fr 1fr 160px 160px minmax(0, 1fr) 48px;
@@ -242,7 +237,6 @@
   &:active { transform: scale(0.95); }
 }
 
-// ── List ───────────────────────────────────────
 .pedidos-list-wrap {
   border: 1px solid #E8E8E8;
   border-radius: 14px;
@@ -350,7 +344,6 @@
   color: #A0A0A0;
 }
 
-// ── Detail panel ───────────────────────────────
 .pedido-detail {
   border: 1px solid #E8E8E8;
   border-radius: 14px;
@@ -504,7 +497,6 @@
   }
 }
 
-// ── Action panel ───────────────────────────────
 .pedido-detail-actions {
   display: flex;
   flex-direction: column;
@@ -519,7 +511,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 
-  // If the last secondary button is alone in a row, let it span both columns
   > .action-secondary:last-child:nth-child(odd) {
     grid-column: span 2;
   }
@@ -620,7 +611,6 @@
   }
 }
 
-// ── Refresh indicator ──────────────────────────
 .refresh-indicator {
   display: flex;
   align-items: center;
@@ -644,7 +634,6 @@
   100% { opacity: 1; transform: scale(1); }
 }
 
-// ── Responsive ─────────────────────────────────
 @media (max-width: 1100px) {
   .pedidos-layout { grid-template-columns: minmax(0, 1fr) 360px; }
   .summary-strip { grid-template-columns: repeat(2, 1fr); }

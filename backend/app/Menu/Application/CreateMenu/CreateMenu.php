@@ -37,7 +37,6 @@ class CreateMenu
             $command->availableToTime,
         );
 
-        // Generamos el id del menú antes para que las secciones lo conozcan.
         $menuId = Uuid::generate();
         $sections = MenuSectionsBuilder::build($menuId, $command->sections);
 

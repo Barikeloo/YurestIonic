@@ -9,9 +9,7 @@ use App\Shared\Domain\ValueObject\Uuid;
 
 final class AuditSavedView
 {
-    /**
-     * @param array<string, mixed> $filters
-     */
+
     private function __construct(
         private readonly Uuid $uuid,
         private readonly Uuid $restaurantId,
@@ -23,9 +21,6 @@ final class AuditSavedView
         private readonly DomainDateTime $updatedAt,
     ) {}
 
-    /**
-     * @param array<string, mixed> $filters
-     */
     public static function dddCreate(
         Uuid $uuid,
         Uuid $restaurantId,
@@ -50,9 +45,6 @@ final class AuditSavedView
         );
     }
 
-    /**
-     * @param array<string, mixed> $filters
-     */
     public static function fromPersistence(
         string $uuid,
         string $restaurantId,
@@ -100,7 +92,6 @@ final class AuditSavedView
         return $this->icon;
     }
 
-    /** @return array<string, mixed> */
     public function filters(): array
     {
         return $this->filters;
@@ -116,9 +107,6 @@ final class AuditSavedView
         return $this->updatedAt;
     }
 
-    /**
-     * @param array<string, mixed> $filters
-     */
     public function withUpdatedFilters(array $filters, DomainDateTime $updatedAt): self
     {
         return new self(

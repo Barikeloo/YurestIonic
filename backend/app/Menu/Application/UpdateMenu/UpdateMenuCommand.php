@@ -8,9 +8,7 @@ use App\Menu\Application\Shared\MenuSectionInput;
 
 final readonly class UpdateMenuCommand
 {
-    /**
-     * @param  MenuSectionInput[]  $sections
-     */
+
     public function __construct(
         public string $id,
         public string $taxId,

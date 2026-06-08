@@ -25,7 +25,6 @@ button { font-family: inherit; }
   overflow-y: auto;
 }
 
-/* ── Page head ─────────────────────────────────────────────── */
 .page-head {
   display: flex;
   justify-content: space-between;
@@ -139,7 +138,6 @@ button { font-family: inherit; }
   font-size: 13px;
 }
 
-/* ── Range / Export shared dropdown chrome ─────────────────── */
 .range-dropdown,
 .export-dropdown {
   position: relative;
@@ -159,7 +157,6 @@ button { font-family: inherit; }
   svg { color: #FF4D4D; }
 }
 
-/* ── Range dropdown menu ──────────────────────────────────── */
 .range-menu {
   position: absolute;
   top: calc(100% + 6px);
@@ -279,7 +276,6 @@ button { font-family: inherit; }
   &:disabled { opacity: .5; cursor: not-allowed; }
 }
 
-/* ── Active range banner ──────────────────────────────────── */
 .active-range-banner {
   display: flex;
   align-items: center;
@@ -387,7 +383,6 @@ button { font-family: inherit; }
 .spinning { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
 
-/* ── Error banner ─────────────────────────────────────────── */
 .error-banner {
   background: #FBECEC;
   border: 1px solid #F5C2C2;
@@ -403,7 +398,6 @@ button { font-family: inherit; }
   span { flex: 1; }
 }
 
-/* ── KPI grid ─────────────────────────────────────────────── */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -458,7 +452,6 @@ button { font-family: inherit; }
   color: #7A7A7A;
 }
 
-/* ── Chain verification card ───────────────────────────────── */
 .verify-card {
   margin-bottom: 16px;
   padding: 14px 18px;
@@ -539,8 +532,6 @@ button { font-family: inherit; }
   font-size: 13px;
 }
 
-
-/* ── Anomaly widget ───────────────────────────────────────── */
 .anomaly-card {
   margin-bottom: 16px;
   padding: 14px 18px;
@@ -609,7 +600,6 @@ button { font-family: inherit; }
   flex-shrink: 0;
 }
 
-/* ── Chart card ───────────────────────────────────────────── */
 .chart-card {
   border: 1px solid #E8E8E8;
   border-radius: 14px;
@@ -755,7 +745,6 @@ button { font-family: inherit; }
   transition: color 160ms ease, font-weight 160ms ease;
 }
 
-/* ── Breakdown row (categories + top users) ────────────────── */
 .breakdown-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -805,7 +794,6 @@ button { font-family: inherit; }
   text-align: center;
 }
 
-/* Categories */
 .cat-list {
   list-style: none;
   margin: 0;
@@ -869,7 +857,6 @@ button { font-family: inherit; }
   background: linear-gradient(90deg, #6366f1 0%, #4f46e5 100%);
   transition: filter 140ms ease, width 220ms ease;
 
-  /* Category-specific accents */
   &[data-cat="auth"]       { background: linear-gradient(90deg, #f97316, #ea580c); }
   &[data-cat="order"]      { background: linear-gradient(90deg, #14b8a6, #0d9488); }
   &[data-cat="caja"]       { background: linear-gradient(90deg, #6366f1, #4f46e5); }
@@ -889,7 +876,6 @@ button { font-family: inherit; }
   text-align: right;
 }
 
-/* Top users */
 .user-list {
   list-style: none;
   margin: 0;
@@ -992,7 +978,6 @@ button { font-family: inherit; }
   text-align: center;
 }
 
-/* ── CTA card ─────────────────────────────────────────────── */
 .cta-card {
   border: 1px solid #E8E8E8;
   border-radius: 14px;
@@ -1023,7 +1008,6 @@ button { font-family: inherit; }
   margin-top: 2px;
 }
 
-/* ── Empty state ──────────────────────────────────────────── */
 .empty-state {
   background: #fff;
   border: 1px solid #E8E8E8;
@@ -1093,7 +1077,6 @@ button { font-family: inherit; }
   color: #3D3D3D;
 }
 
-/* ── Skeletons ────────────────────────────────────────────── */
 .skel {
   background: linear-gradient(90deg, #F0F0F0 0%, #E8E8E8 50%, #F0F0F0 100%);
   background-size: 200% 100%;
@@ -1114,7 +1097,6 @@ button { font-family: inherit; }
 .skeleton-chart { padding: 18px 20px; }
 .skel-chart { height: 200px; }
 
-/* ── Responsive ───────────────────────────────────────────── */
 @media (max-width: 960px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
   .page-head { flex-direction: column; }

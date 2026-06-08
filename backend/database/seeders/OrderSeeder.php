@@ -14,7 +14,8 @@ class OrderSeeder extends Seeder
         $restaurants = DB::table('restaurants')->pluck('id')->toArray();
 
         if (empty($restaurants)) {
-            return; // No data to seed
+            return;
+
         }
 
         $orders = [];

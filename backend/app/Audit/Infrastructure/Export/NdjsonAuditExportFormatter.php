@@ -6,11 +6,6 @@ namespace App\Audit\Infrastructure\Export;
 
 use App\Audit\Domain\Entity\AuditLog;
 
-/**
- * Newline-delimited JSON — one full event per line. Suited for forensic
- * or ETL pipelines that want the structured payload (metadata, before,
- * after) without CSV escaping. No preamble, no footer.
- */
 final class NdjsonAuditExportFormatter implements AuditExportFormatter
 {
     public function header(): string

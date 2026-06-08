@@ -1,4 +1,3 @@
-
 import { Component, effect, inject, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
@@ -74,14 +73,12 @@ export class AppLayoutPage implements OnInit, OnDestroy {
       this.currentUser = user;
       this.isAdminUser = user?.role === UserRole.ADMIN;
 
-      // Limpiar contexto persistido si el usuario no es admin
       if (!this.isAdminUser) {
         this.adminSelectedContext = false;
         this.restaurantContextFacade.clearRestaurantContext();
         localStorage.removeItem('gestion_selected_restaurant_uuid');
       }
 
-      // Solo establecer el contexto del usuario autenticado si no ha sido seleccionado manualmente por admin
       if (user?.restaurantName && !this.adminSelectedContext) {
         this.contextService.setActiveRestaurant({
           id: user.restaurantId,
@@ -97,7 +94,7 @@ export class AppLayoutPage implements OnInit, OnDestroy {
     this.contextSubscription = this.contextService.activeRestaurant$.subscribe((context) => {
       if (context?.name) {
         this.activeRestaurantName = context.name;
-        // Marcar que el contexto ha sido seleccionado manualmente
+
         if (this.isAdminUser) {
           this.adminSelectedContext = true;
         }

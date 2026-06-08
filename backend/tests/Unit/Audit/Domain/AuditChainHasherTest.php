@@ -73,7 +73,8 @@ class AuditChainHasherTest extends TestCase
             createdAtIso: '2026-06-01 10:00:00',
             actionSlug: 'order.created',
             entityType: 'order',
-            entityId: 'order-2', // different
+            entityId: 'order-2',
+
             userUuid: null,
             summary: 'Pedido creado',
             metadata: [],
@@ -119,7 +120,6 @@ class AuditChainHasherTest extends TestCase
         $this->assertNotNull($chainedHash);
         $this->assertNotSame($prevHash, $chainedHash);
 
-        // tampered prevHash should produce different result
         $tamperedHash = $this->hasher->compute(
             prevHash: 'tampered',
             uuid: 'b0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
@@ -170,7 +170,6 @@ class AuditChainHasherTest extends TestCase
             after: null,
         );
 
-        // Canonical JSON sorts keys, so both should produce the same hash
         $this->assertSame($hash2, $hash1);
     }
 }

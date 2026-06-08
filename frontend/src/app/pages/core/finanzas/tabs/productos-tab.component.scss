@@ -11,7 +11,6 @@
 .card-title { font-size: 14px; font-weight: 700; color: #0d0d0d; }
 .card-sub   { font-size: 11.5px; color: #7a7a7a; margin-top: 2px; }
 
-// ── KPI Strip ─────────────────────────────────────────────────────────────────
 .kpi-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .kpi-card {
   background: #fff;
@@ -32,20 +31,16 @@
 }
 .kpi-sub { font-size: 10.5px; color: #a0a0a0; margin-top: 3px; }
 
-// ── Top row ───────────────────────────────────────────────────────────────────
 .top-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px; align-items: start; }
 
-// ── VBar ─────────────────────────────────────────────────────────────────────
 .vbar-chart { display: flex; align-items: flex-end; gap: 8px; height: 170px; padding-bottom: 4px; }
 .vbar-col   { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
 .vbar-pct   { font-size: 10px; font-family: 'DM Mono', monospace; font-weight: 700; color: #a0a0a0; margin-bottom: 4px; }
 .vbar-fill  { width: 100%; border-radius: 5px 5px 0 0; min-height: 3px; }
 .vbar-label { font-size: 9.5px; color: #5a5a5a; font-weight: 600; margin-top: 5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 
-// ── Section header (title + badge row) ───────────────────────────────────────
 .section-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
 
-// ── Badges ────────────────────────────────────────────────────────────────────
 .badge {
   font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 8px; flex-shrink: 0;
   &--red   { background: #ffecec; color: #ff4d4d; }
@@ -53,7 +48,6 @@
   &--gray  { background: #f4f4f4; color: #7a7a7a; }
 }
 
-// ── Stock crítico items ───────────────────────────────────────────────────────
 .alert-items { display: flex; flex-direction: column; gap: 7px; }
 .alert-item {
   display: flex; align-items: center; justify-content: space-between;
@@ -68,7 +62,6 @@
 .days-unit    { font-size: 10px; color: #a0a0a0; font-weight: 400; }
 .empty-ok     { font-size: 12px; color: #1a9e5a; font-weight: 600; padding: 8px 0; }
 
-// ── Sin ventas items ──────────────────────────────────────────────────────────
 .dead-items { display: flex; flex-direction: column; gap: 7px; }
 .dead-item  { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; background: #fafafa; border-radius: 8px; border: 1px solid #f4f4f4; }
 .dead-item-l { min-width: 0; }
@@ -86,10 +79,8 @@
   &:hover { border-color: #0d0d0d; color: #0d0d0d; }
 }
 
-// ── Mid row ───────────────────────────────────────────────────────────────────
 .mid-row { display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px; align-items: start; }
 
-// ── Cross-sell list ───────────────────────────────────────────────────────────
 .cs-list { display: flex; flex-direction: column; gap: 8px; }
 .cs-item {
   display: grid; grid-template-columns: 1fr 80px; align-items: center; gap: 10px;
@@ -111,7 +102,6 @@
 .cs-pct       { font-size: 18px; font-weight: 700; color: #1a9e5a; line-height: 1; }
 .cs-meta      { font-size: 10px; color: #a0a0a0; margin-top: 2px; }
 
-// ── Canibalización ────────────────────────────────────────────────────────────
 .cannibal-box {
   margin-top: 14px; padding: 12px;
   background: #fff8e6; border: 1px solid #f1e3b8; border-radius: 10px;
@@ -128,7 +118,6 @@
 }
 .cannibal-note { color: #7a7a7a; font-size: 11px; margin-top: 1px; }
 
-// ── Zones heatmap ─────────────────────────────────────────────────────────────
 .zones-inner  { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; align-items: stretch; }
 .zones-floor  {
   position: relative; aspect-ratio: 4/3;
@@ -162,7 +151,6 @@
 .zone-stat-tickets { font-size: 10px; color: #7a7a7a; }
 .zone-stat-occ     { font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 600; }
 
-// ── Filters ───────────────────────────────────────────────────────────────────
 .filters-card  { padding: 14px 18px; }
 .filters-row   { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .filter-group  { display: flex; align-items: center; gap: 8px; }
@@ -193,7 +181,6 @@
 }
 .toggle-text { font-size: 12.5px; color: #3d3d3d; }
 
-// ── Ranking table ─────────────────────────────────────────────────────────────
 .table-wrap { overflow-x: auto; }
 .rtable {
   width: 100%; border-collapse: collapse; font-size: 12.5px;
@@ -225,29 +212,24 @@
 .fw7     { font-weight: 700; }
 .green   { color: #1a9e5a; }
 
-// ── Margin % cell ─────────────────────────────────────────────────────────────
 .mpct-cell     { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
 .mpct-bar-track { width: 40px; height: 4px; background: #f4f4f4; border-radius: 2px; overflow: hidden; }
 .mpct-bar      { height: 100%; border-radius: 2px; }
 .mpct-val      { font-size: 12px; font-weight: 600; color: #0d0d0d; min-width: 38px; text-align: right; }
 
-// ── Stock cell ────────────────────────────────────────────────────────────────
 .stock-cell     { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
 .stock-num      { font-size: 13px; font-weight: 600; min-width: 30px; text-align: right; }
 .stock-bar-track { width: 36px; height: 4px; background: #f4f4f4; border-radius: 2px; overflow: hidden; }
 .stock-bar      { height: 100%; border-radius: 2px; }
 
-// ── Rotation cell ─────────────────────────────────────────────────────────────
 .rotation-dash { font-size: 12px; color: #a0a0a0; }
 .rotation-val  { font-size: 13px; font-weight: 600; }
 .rotation-unit { font-size: 10px; color: #a0a0a0; font-weight: 400; }
 
-// ── Trend cell ────────────────────────────────────────────────────────────────
 .trend-cell  { display: flex; align-items: center; gap: 8px; justify-content: flex-end; }
 .spark       { width: 50px; height: 20px; display: block; }
 .trend-arrow { font-size: 11px; font-weight: 700; white-space: nowrap; }
 
-// ── Table footer ──────────────────────────────────────────────────────────────
 .table-footer {
   display: flex; justify-content: space-between; align-items: center;
   padding: 10px 4px 0; border-top: 1px solid #f4f4f4; margin-top: 8px;

@@ -87,10 +87,6 @@ final class RecordChargeSessionPayment
             $payment['diner_number'] = $command->dinerNumber;
         }
 
-        // Sólo "consumimos" como sale_lines las order_lines explícitamente
-        // asignadas a este comensal en la sesión. En split equitativo (o si el
-        // comensal no tiene líneas asignadas) pasamos un array vacío para que
-        // CreateSale registre el pago monetario sin marcar líneas como pagadas.
         $orderLineIds = [];
         if ($command->dinerNumber !== null) {
             $paidLineIds = array_flip($this->responseBuilder->collectPaidOrderLineIds($session));
@@ -98,8 +94,7 @@ final class RecordChargeSessionPayment
             foreach ($assignments as $assignment) {
                 if ($assignment->dinerNumber() === $command->dinerNumber) {
                     $lineId = $assignment->orderLineId()->value();
-                    // Si la línea ya fue pagada en una venta anterior, la
-                    // excluimos para no cobrarla dos veces al reabrir el comensal.
+
                     if (! isset($paidLineIds[$lineId])) {
                         $orderLineIds[] = $lineId;
                     }

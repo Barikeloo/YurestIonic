@@ -1,6 +1,5 @@
 .informes { display: flex; flex-direction: column; gap: 16px; }
 
-// ── Card container ──────────────────────────────────────────────────────────
 .card {
   background: #fff;
   border: 1px solid #e8e8e8;
@@ -9,7 +8,6 @@
   box-shadow: 0 1px 3px rgba(0,0,0,.04);
 }
 
-// ── Segment ─────────────────────────────────────────────────────────────────
 .seg-row { display: flex; justify-content: flex-end; }
 .seg-group { display: inline-flex; gap: 2px; background: #f4f4f4; border-radius: 10px; padding: 3px; }
 .seg-btn {
@@ -26,12 +24,10 @@
   &.active { background: #fff; color: #0d0d0d; font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
 }
 
-// ── Section header ───────────────────────────────────────────────────────────
 .section-head { margin-bottom: 14px; }
 .section-title { font-size: 13px; font-weight: 700; color: #0d0d0d; font-family: 'DM Sans', sans-serif; }
 .section-sub   { font-size: 11px; color: #a0a0a0; margin-top: 2px; font-family: 'DM Sans', sans-serif; }
 
-// ── Reports 3-column grid ────────────────────────────────────────────────────
 .reports-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -102,7 +98,6 @@
   &:hover { opacity: 0.85; }
 }
 
-// ── Export history table ─────────────────────────────────────────────────────
 .table-wrap {
   overflow-x: auto;
   border-radius: 12px;
@@ -166,7 +161,6 @@
   &:hover { border-color: #0077cc; color: #0077cc; }
 }
 
-// ── Banner cards ─────────────────────────────────────────────────────────────
 .banner-card {
   border-radius: 14px;
   padding: 16px;
@@ -217,7 +211,6 @@
   &:hover { opacity: 0.85; }
 }
 
-// ── Integrations 3-column grid ───────────────────────────────────────────────
 .intg-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -357,7 +350,6 @@
   font-family: 'DM Sans', sans-serif;
 }
 
-// ── Scheduled reports ────────────────────────────────────────────────────────
 .row-inactive td { color: #a0a0a0 !important; }
 
 .toggle {

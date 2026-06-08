@@ -6,16 +6,11 @@ namespace App\Cash\Application\ListCashSessions;
 
 final readonly class ListCashSessionsResponse
 {
-    /**
-     * @param  list<ListCashSessionsItemResponse>  $sessions
-     */
+
     private function __construct(
         public array $sessions,
     ) {}
 
-    /**
-     * @param  list<ListCashSessionsItemResponse>  $sessions
-     */
     public static function create(array $sessions): self
     {
         return new self(

@@ -9,10 +9,6 @@ use App\Menu\Domain\Exception\MenuNotFoundException;
 use App\Menu\Infrastructure\Entrypoint\Http\Requests\ArchiveMenuRequest;
 use Illuminate\Http\JsonResponse;
 
-/**
- * "Delete" en HTTP, archivado a nivel de dominio (soft delete).
- * Los menús referenciados por pedidos antiguos sobreviven.
- */
 final class DeleteController
 {
     public function __construct(

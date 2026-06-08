@@ -14,21 +14,17 @@ final class TicketTextFormatter
     {
         $lines = [];
 
-        // Cabecera con datos del restaurante
         $lines[] = $this->doubleDivider($width);
         $lines = array_merge($lines, $this->restaurantBlock($data['restaurant'] ?? null, $width));
         $lines[] = $this->doubleDivider($width);
 
-        // Tipo de documento
         $lines[] = $this->center('RECIBO DE PAGO', $width);
         $lines[] = $this->center('(NO CIERRA MESA)', $width);
         $lines[] = $this->divider($width);
 
-        // Datos del ticket
         $lines = array_merge($lines, $this->headerInfo($data, $width, 'issued_at', 'issued_time'));
         $lines[] = $this->divider($width);
 
-        // Pagos
         $lines[] = $this->center('FORMA DE PAGO', $width);
         $lines[] = $this->divider($width);
         $payments = $data['payments'] ?? [];
@@ -44,7 +40,6 @@ final class TicketTextFormatter
 
         $lines[] = $this->doubleDivider($width);
 
-        // Estado de la cuenta
         if (isset($data['total_consumed_cents'])) {
             $lines[] = $this->kv('Total consumido', $this->formatAmount((int) $data['total_consumed_cents']), $width);
         }
@@ -55,7 +50,6 @@ final class TicketTextFormatter
             $lines[] = $this->kv('DEUDA RESTANTE', $this->formatAmount((int) $data['remaining_cents']), $width);
         }
 
-        // IVA desglosado (si hay)
         $taxBreakdown = $data['tax_breakdown'] ?? [];
         if (count($taxBreakdown) > 0) {
             $lines[] = $this->divider($width);
@@ -73,12 +67,10 @@ final class TicketTextFormatter
     {
         $lines = [];
 
-        // Cabecera con datos del restaurante
         $lines[] = $this->doubleDivider($width);
         $lines = array_merge($lines, $this->restaurantBlock($data['restaurant'] ?? null, $width));
         $lines[] = $this->doubleDivider($width);
 
-        // Tipo de documento - Factura simplificada
         $ticketNumber = ! empty($data['ticket_number']) ? (string) $data['ticket_number'] : '';
         $lines[] = $this->center('FACTURA SIMPLIFICADA', $width);
         if ($ticketNumber !== '') {
@@ -86,11 +78,9 @@ final class TicketTextFormatter
         }
         $lines[] = $this->divider($width);
 
-        // Datos del ticket
         $lines = array_merge($lines, $this->headerInfo($data, $width, 'created_at', 'created_time', false));
         $lines[] = $this->divider($width);
 
-        // Líneas de consumo con cabecera
         $orderLines = $data['order_lines'] ?? [];
         if (count($orderLines) > 0) {
             $lines[] = $this->lineHeader($width);
@@ -105,7 +95,6 @@ final class TicketTextFormatter
             $lines[] = $this->divider($width);
         }
 
-        // Subtotal y desglose de IVA
         $totalConsumed = (int) ($data['total_consumed_cents'] ?? 0);
 
         $taxBreakdown = $data['tax_breakdown'] ?? [];
@@ -118,12 +107,10 @@ final class TicketTextFormatter
             $lines = array_merge($lines, $this->taxBlock($taxBreakdown, $width));
         }
 
-        // TOTAL destacado
         $lines[] = $this->doubleDivider($width);
         $lines[] = $this->kv('TOTAL', $this->formatAmount($totalConsumed), $width);
         $lines[] = $this->doubleDivider($width);
 
-        // Formas de pago
         $payments = $data['payments_snapshot'] ?? [];
         if (count($payments) > 0) {
             $lines[] = $this->center('FORMA DE PAGO', $width);
@@ -136,7 +123,6 @@ final class TicketTextFormatter
             $lines[] = $this->divider($width);
         }
 
-        // Pie de página
         $lines[] = $this->center('MESA CERRADA', $width);
         $lines[] = '';
         $lines[] = $this->center('GRACIAS POR SU VISITA', $width);
@@ -190,7 +176,6 @@ final class TicketTextFormatter
             }
         }
 
-        // Mesa y operario en una línea si caben
         $table = $data['table'] ?? null;
         $operator = $data['operator'] ?? null;
         $tableStr = ($table !== null && ! empty($table['name'])) ? 'Mesa: '.$table['name'] : '';
@@ -203,7 +188,6 @@ final class TicketTextFormatter
             $lines[] = $operatorStr;
         }
 
-        // Ticket y Z-Report
         $ticketStr = '';
         if ($isPayment && ! empty($data['ticket_number'])) {
             $ticketStr = 'Ticket: '.$data['ticket_number'];
@@ -222,7 +206,7 @@ final class TicketTextFormatter
 
     private function lineHeader(int $width): string
     {
-        // Columnas fijas: Descripción | Uds | Importe
+
         $descWidth = $width - 13;
 
         return $this->padRight('DESCRIPCION', $descWidth).$this->padLeft('UDS', 4).$this->padLeft('IMPORTE', 9);
@@ -230,7 +214,7 @@ final class TicketTextFormatter
 
     private function lineItem(string $name, int $qty, int $totalCents, int $width): string
     {
-        // Columnas fijas: nombre (descWidth) + qty (4) + importe (9)
+
         $descWidth = $width - 13;
         $name = $this->truncate($name, $descWidth);
         $total = $this->formatCents($totalCents);
@@ -238,12 +222,6 @@ final class TicketTextFormatter
         return $this->padRight($name, $descWidth).$this->padLeft((string) $qty, 4).$this->padLeft($total, 9);
     }
 
-    /**
-     * Sub-renglones para una línea de consumo: variante (· Para 2) y modifiers
-     * (+ Salsa BBQ). Se imprimen indentados bajo el producto.
-     *
-     * @return list<string>
-     */
     private function lineDetails(array $line, int $width): array
     {
         $details = [];
@@ -296,7 +274,7 @@ final class TicketTextFormatter
 
     private function formatDate(string $isoDate): string
     {
-        // Convierte 2026-05-12T14:32:00+00:00 a 12/05/2026
+
         if (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $isoDate, $m) === 1) {
             return $m[3].'/'.$m[2].'/'.$m[1];
         }
@@ -389,7 +367,7 @@ final class TicketTextFormatter
 
     private function formatAmount(int $cents): string
     {
-        // Versión corta para usar en líneas estrechas
+
         $sign = $cents < 0 ? '-' : '';
         $abs = abs($cents);
         $euros = (int) floor($abs / 100);
@@ -400,7 +378,7 @@ final class TicketTextFormatter
 
     private function formatCents(int $cents): string
     {
-        // Sin "EUR" para columnas estrechas (líneas de items, IVA)
+
         $sign = $cents < 0 ? '-' : '';
         $abs = abs($cents);
         $euros = (int) floor($abs / 100);

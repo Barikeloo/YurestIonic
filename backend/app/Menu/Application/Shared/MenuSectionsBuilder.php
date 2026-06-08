@@ -12,20 +12,9 @@ use App\Menu\Domain\ValueObject\MenuSectionChoiceRule;
 use App\Menu\Domain\ValueObject\MenuSectionName;
 use App\Shared\Domain\ValueObject\Uuid;
 
-/**
- * Convierte la lista de MenuSectionInput recibida del controlador
- * en entidades de dominio (MenuSection con sus MenuItems).
- *
- * El menuId se asigna después por el aggregate al persistir; aquí usamos
- * un Uuid placeholder porque MenuSection requiere menuId en construcción.
- * Esto refleja la realidad: las secciones pertenecen al menú que las contiene.
- */
 final class MenuSectionsBuilder
 {
-    /**
-     * @param  MenuSectionInput[]  $sectionInputs
-     * @return MenuSection[]
-     */
+
     public static function build(Uuid $menuId, array $sectionInputs): array
     {
         if ($sectionInputs === []) {
@@ -47,9 +36,6 @@ final class MenuSectionsBuilder
         return $sections;
     }
 
-    /**
-     * @return MenuItem[]
-     */
     private static function buildItems(MenuSectionInput $sectionInput): array
     {
         if ($sectionInput->items === []) {
@@ -59,7 +45,8 @@ final class MenuSectionsBuilder
         $items = [];
         foreach ($sectionInput->items as $itemInput) {
             $items[] = MenuItem::dddCreate(
-                sectionId: Uuid::generate(), // placeholder; el repositorio re-vincula vía la sección padre
+                sectionId: Uuid::generate(),
+
                 productId: Uuid::create($itemInput->productId),
                 variantId: $itemInput->variantId !== null ? Uuid::create($itemInput->variantId) : null,
                 extraPrice: MenuItemExtraPrice::create($itemInput->extraPrice),

@@ -24,7 +24,6 @@ final class MenuPrice
         return new self($value);
     }
 
-    /** Céntimos */
     public function value(): int
     {
         return $this->value;

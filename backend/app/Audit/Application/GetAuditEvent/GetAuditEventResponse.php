@@ -8,11 +8,7 @@ use App\Audit\Domain\Entity\AuditLog;
 
 final readonly class GetAuditEventResponse
 {
-    /**
-     * @param  array<string, mixed>  $metadata
-     * @param  array<string, mixed>|null  $before
-     * @param  array<string, mixed>|null  $after
-     */
+
     private function __construct(
         public string $uuid,
         public string $entityType,
@@ -35,11 +31,6 @@ final readonly class GetAuditEventResponse
         public string $createdAt,
     ) {}
 
-    /**
-     * @param  array<string, mixed>  $metadata
-     * @param  array<string, mixed>|null  $before
-     * @param  array<string, mixed>|null  $after
-     */
     public static function create(
         string $uuid,
         string $entityType,

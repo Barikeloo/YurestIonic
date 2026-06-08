@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 namespace App\Shared\Domain\ValueObject;
 
-/**
- * Monetary amount in cents. May be negative (for credit notes, discrepancies,
- * deltas...). VOs that require non-negative semantics (prices, quantities)
- * must validate at their own boundary, not rely on Money.
- */
 final class Money
 {
     private function __construct(private readonly int $cents) {}

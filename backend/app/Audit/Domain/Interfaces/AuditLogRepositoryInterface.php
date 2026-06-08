@@ -16,37 +16,12 @@ interface AuditLogRepositoryInterface
 {
     public function save(AuditLog $auditLog): void;
 
-    /**
-     * Reads a single audit log. By default archived rows are hidden — set
-     * $includeArchived to true for admin lookups that need the historical
-     * record (e.g. when reviewing the chain verification details).
-     */
     public function findByUuid(Uuid $restaurantId, Uuid $uuid, bool $includeArchived = false): ?AuditLog;
 
-    /**
-     * Lists audit logs according to the criteria. The criteria carries its own
-     * `includeArchived` flag; archived rows are excluded by default.
-     */
     public function list(ListAuditLogsCriteria $criteria): AuditLogPage;
 
-    /**
-     * Returns the latest integrity_hash for the restaurant chain. Used by the recorder
-     * to build the chain. Must lock the chain head until commit (SELECT ... FOR UPDATE).
-     * Returns null if the restaurant has no audit logs yet.
-     *
-     * Always reads across active + archived rows: the chain head is the last row
-     * appended, regardless of whether it has been archived since.
-     */
     public function lockAndGetLastHashForRestaurant(Uuid $restaurantId): ?string;
 
-    /**
-     * Counts how many events with the given slug were recorded for the given user
-     * within the last $withinSeconds. Used by the anomaly detector for burst rules.
-     *
-     * Archived rows are excluded by default because anomaly windows are minutes,
-     * not months. The flag exists for completeness should we ever recount over a
-     * historical window.
-     */
     public function countRecentByActionAndUser(
         Uuid $restaurantId,
         ActionSlug $slug,
@@ -55,68 +30,19 @@ interface AuditLogRepositoryInterface
         bool $includeArchived = false,
     ): int;
 
-    /**
-     * Returns every audit log for a restaurant ordered by id ASC (oldest first).
-     * Used by the chain verifier to walk the entire chain sequentially.
-     *
-     * Always reads across active + archived rows. Archiving must not break chain
-     * verification, so this method does not accept an includeArchived flag.
-     *
-     * @return list<AuditLog>
-     */
     public function findAllByRestaurantOrdered(Uuid $restaurantId): array;
 
-    /**
-     * Marks every unarchived log older than $threshold as archived. Returns
-     * stats per restaurant for the operator.
-     *
-     *  - When $restaurantId is null, the operation runs across every
-     *    restaurant; the returned list has one entry per restaurant that
-     *    had matching rows.
-     *  - When $restaurantId is set, the list contains at most one entry
-     *    (or zero if nothing matched for that restaurant).
-     *  - When $dryRun is true the rows are NOT modified; the same stats
-     *    are computed so the operator can preview the impact.
-     *
-     * @return list<ArchiveStats>
-     */
     public function bulkArchive(
         ?Uuid $restaurantId,
         \DateTimeImmutable $threshold,
         bool $dryRun,
     ): array;
 
-    /**
-     * Returns the snapshot used by the admin history panel: total archived
-     * rows for the restaurant, the created_at range they span, and the
-     * count grouped by `YYYY-MM` of their original created_at.
-     *
-     * The optional $dateFrom / $dateTo bounds narrow the snapshot by the
-     * event's original created_at (NOT by archived_at) — the panel
-     * filter answers "show me the corpus from this period", not "show
-     * me what got archived during this period".
-     *
-     * The monthly breakdown is ordered chronologically. Empty when the
-     * restaurant has no archived rows in the requested window.
-     */
     public function getArchivedStats(
         Uuid $restaurantId,
         ?\DateTimeImmutable $dateFrom = null,
         ?\DateTimeImmutable $dateTo = null,
     ): ArchivedAuditStats;
 
-    /**
-     * Streams audit logs matching the criteria in chronological order
-     * (created_at, id ASC) WITHOUT loading the whole result set into
-     * memory. The repository is expected to chunk the query (e.g.
-     * Eloquent's lazy()/cursor()) so the export endpoint can write
-     * megabytes of CSV/NDJSON without hitting the memory limit.
-     *
-     * The criteria's `cursor*`, `limit` and `sinceUuid` fields are
-     * ignored — the export covers the entire match. `includeArchived`
-     * controls whether archived rows are part of the stream.
-     *
-     * @return iterable<AuditLog>
-     */
     public function streamForExport(ListAuditLogsCriteria $criteria): iterable;
 }

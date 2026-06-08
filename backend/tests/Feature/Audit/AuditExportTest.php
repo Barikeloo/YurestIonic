@@ -70,8 +70,7 @@ class AuditExportTest extends TestCase
 
         $default = $this->withSession($tenant['session'])->get('/api/admin/audit-log/export');
         $defaultLines = preg_split("/\r\n/", trim($default->streamedContent()));
-        // 1 header + 1 row + 1 meta-event audit.exported emitted before this call returned.
-        // Cap to 2 to avoid coupling with the meta-event ordering; we just assert the archived row is not in.
+
         $this->assertSame(2, count($defaultLines));
         $this->assertStringNotContainsString('2025-01-01', $default->streamedContent());
 
@@ -112,7 +111,7 @@ class AuditExportTest extends TestCase
         $response = $this
             ->withSession($tenant['session'])
             ->get('/api/admin/audit-log/export?format=csv&include_archived=1');
-        $response->streamedContent(); // consume the generator end-to-end
+        $response->streamedContent();
 
         $exported = DB::table('audit_logs')
             ->where('restaurant_id', $restaurantId)

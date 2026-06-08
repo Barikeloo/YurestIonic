@@ -7,10 +7,6 @@ namespace App\Product\Infrastructure\Notification;
 use App\Product\Domain\Interfaces\ProductPhotoUploadNotifierInterface;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Phase 1 implementation: records the upload so the flow is observable end-to-end while the
- * realtime transport (Reverb) is wired up in phase 3.
- */
 class LogProductPhotoUploadNotifier implements ProductPhotoUploadNotifierInterface
 {
     public function uploaded(string $token, string $productUuid, string $imageUrl): void

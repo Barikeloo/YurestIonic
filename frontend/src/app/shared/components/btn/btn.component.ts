@@ -1,4 +1,3 @@
-
 import { Component, Input } from '@angular/core';
 import { BtnVariant } from '../../../core/enums/btn-variant.enum';
 import { BtnSize } from '../../../core/enums/btn-size.enum';

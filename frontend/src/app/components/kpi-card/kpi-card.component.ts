@@ -1,4 +1,3 @@
-
 import { Component, Input } from '@angular/core';
 import { CardComponent } from '../../shared/components/card/card.component';
 

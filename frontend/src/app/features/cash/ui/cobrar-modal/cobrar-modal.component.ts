@@ -14,13 +14,13 @@ export interface OrderLineModifier {
 export interface OrderLine {
   id?: string;
   name: string;
-  /** Importe total de la línea (cantidad × precio unitario, sin contar modificadores). */
+
   price: number;
   diner?: number | null;
   quantity?: number;
   unitPrice?: number;
   variantName?: string | null;
-  /** Porcentaje de IVA (ej. 10, 21). El precio se asume con IVA incluido (PVP). */
+
   taxPercentage?: number;
   modifiers?: OrderLineModifier[] | null;
 }
@@ -67,12 +67,10 @@ export class CobrarModalComponent implements OnChanges {
   public inputAmount = 0;
   public tip = 0;
 
-  // Una sola opción lateral activa a la vez (mutex)
   public sideOption: SideOption = null;
 
   public showSecondaryMethods = false;
 
-  // Fiscal data
   public fiscalNif = '';
   public fiscalName = '';
   public fiscalAddress = '';
@@ -91,7 +89,6 @@ export class CobrarModalComponent implements OnChanges {
   public readonly cashQuickAmounts = [4000, 5000, 6000, 10000, 20000, 50000];
   public readonly tipPresets = [100, 200, 500, 1000];
 
-  // ---- Derivados desde sideOption ----
   public get partialMode(): boolean { return this.sideOption === 'partial'; }
   public get tipMode(): boolean { return this.sideOption === 'tip'; }
   public get fiscalMode(): boolean { return this.sideOption === 'fiscal'; }
@@ -127,28 +124,15 @@ export class CobrarModalComponent implements OnChanges {
     return idx >= 0 ? idx : 0;
   }
 
-  /**
-   * Importe total de modificadores de una línea (suma de precios de extras
-   * cuando estén informados). Devuelve 0 si la línea no tiene modificadores
-   * o si los precios no vienen poblados.
-   */
   public modifiersTotal(line: OrderLine): number {
     if (!line.modifiers) return 0;
     return line.modifiers.reduce((acc, m) => acc + (m.price ?? 0), 0);
   }
 
-  /**
-   * Total real de la línea: precio base + suma de modificadores con coste.
-   */
   public lineTotal(line: OrderLine): number {
     return line.price + this.modifiersTotal(line);
   }
 
-  /**
-   * Desglose de IVA por tipo. Asume que los precios incluyen IVA (PVP), que
-   * es lo habitual en hostelería ES. Devuelve [] si ninguna línea tiene
-   * `taxPercentage` informado.
-   */
   public get taxBreakdown(): TaxLine[] {
     const grouped = new Map<number, number>();
     let hasAnyTax = false;
@@ -224,7 +208,7 @@ export class CobrarModalComponent implements OnChanges {
   public selectMethod(method: PaymentMethod): void {
     this.method = method;
     this.showSecondaryMethods = false;
-    // Si entras a Invitación con propina activa, cierra propina
+
     if (method === PaymentMethod.INVITATION && this.tipMode) {
       this.sideOption = null;
     }
@@ -237,14 +221,13 @@ export class CobrarModalComponent implements OnChanges {
     this.showSecondaryMethods = !this.showSecondaryMethods;
   }
 
-  // Mutex: toggla la opción lateral. Si haces clic en la activa, se cierra.
   public toggleSide(opt: Exclude<SideOption, null>): void {
     if (this.sideOption === opt) {
       this.sideOption = null;
       if (opt === 'partial') this.inputAmount = this.total;
       return;
     }
-    // Cambiando de panel → resetear estado relacionado
+
     if (this.sideOption === 'partial' && opt !== 'partial') {
       this.inputAmount = this.total;
     }

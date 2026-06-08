@@ -5,12 +5,6 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Permite que una order_line represente un menú completo en lugar de un único
- * producto: product_id pasa a ser opcional y se añaden los campos para enlazar
- * el menú y guardar las elecciones del comensal (sección, producto, variante,
- * extras y suplemento del menú).
- */
 return new class extends Migration
 {
     public function up(): void

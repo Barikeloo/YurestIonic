@@ -58,7 +58,6 @@ final class BatchAddLinesToOrder
         $productResults = [];
         $menuResults = [];
 
-        // ── Product lines ──────────────────────────────────────
         foreach ($command->productLines as $line) {
             $result = $this->processProductLine($command, $line);
             $productResults[] = $result;
@@ -72,7 +71,6 @@ final class BatchAddLinesToOrder
             ];
         }
 
-        // ── Menu lines ─────────────────────────────────────────
         foreach ($command->menuLines as $line) {
             $result = $this->processMenuLine($command, $line);
             $menuResults[] = $result;
@@ -86,7 +84,6 @@ final class BatchAddLinesToOrder
             ];
         }
 
-        // ── Single batch audit event ───────────────────────────
         $this->auditRecorder->record(new AuditEventDraft(
             restaurantId: Uuid::create($command->restaurantId),
             slug: ActionSlug::create('order.comanda_sent'),
@@ -112,10 +109,6 @@ final class BatchAddLinesToOrder
         );
     }
 
-    /**
-     * @param array{product_id: string, quantity: int, variant_id: ?string, modifiers: ?list<array{id: string, name: string, price: int, type: string}>, diner_number: ?int} $line
-     * @return array{id: string, product_name: string, quantity: int, price: int, tax_percentage: int, merged: bool}
-     */
     private function processProductLine(BatchAddLinesToOrderCommand $command, array $line): array
     {
         $product = $this->productRepository->findById($line['product_id']);
@@ -224,10 +217,6 @@ final class BatchAddLinesToOrder
         ];
     }
 
-    /**
-     * @param array{menu_id: string, notes: ?string, selections: list<array{section_id: string, product_id: string, variant_id: ?string, modifiers: list<array{id: string, name: string, price: int, type: string}>}>} $line
-     * @return array{id: string, menu_name: string, quantity: int, price: int, tax_percentage: int}
-     */
     private function processMenuLine(BatchAddLinesToOrderCommand $command, array $line): array
     {
         $menu = $this->menuRepository->findById($line['menu_id'], includeArchived: false);
@@ -286,10 +275,6 @@ final class BatchAddLinesToOrder
         ];
     }
 
-    /**
-     * @param array<int, array{section_id: string, product_id: string, variant_id: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>}> $selections
-     * @param array<string, \App\Menu\Domain\Entity\MenuSection> $sectionsById
-     */
     private function validateChoiceRules(\App\Menu\Domain\Entity\Menu $menu, array $selections, array $sectionsById): void
     {
         $countBySection = [];
@@ -325,11 +310,6 @@ final class BatchAddLinesToOrder
         }
     }
 
-    /**
-     * @param array<int, array{section_id: string, product_id: string, variant_id: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>}> $selections
-     * @param array<string, \App\Menu\Domain\Entity\MenuSection> $sectionsById
-     * @return array{0: array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>, 1: int}
-     */
     private function buildSelectionsJson(array $selections, array $sectionsById): array
     {
         $extrasTotal = 0;

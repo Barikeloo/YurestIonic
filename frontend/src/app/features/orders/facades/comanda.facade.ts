@@ -51,7 +51,7 @@ export interface CartMenuLine {
   menuId: string;
   menuName: string;
   taxId: string;
-  /** Precio total de la unidad del menú (base + suplementos + modificadores). */
+
   unitPrice: number;
   quantity: number;
   selections: CartMenuLineSelection[];
@@ -66,7 +66,7 @@ export class ComandaFacade {
   public readonly instanceId = Math.random().toString(36).slice(2, 8);
 
   constructor() {
-    // eslint-disable-next-line no-console
+
     console.log('[ComandaFacade] CONSTRUCTOR instance', this.instanceId);
   }
 
@@ -86,7 +86,7 @@ export class ComandaFacade {
   private readonly _closing = signal<boolean>(false);
   private readonly _closeError = signal<string | null>(null);
   private readonly _menus = signal<TpvMenu[]>([]);
-  /** 'products' (catálogo clásico) o 'menus' (cards de menu para añadir como línea menu). */
+
   private readonly _activeCatalog = signal<'products' | 'menus'>('products');
   private readonly _cartMenuLines = signal<CartMenuLine[]>([]);
 
@@ -207,10 +207,6 @@ export class ComandaFacade {
     this._activeCatalog.set(catalog);
   }
 
-  /**
-   * Añade un menú al cart local (no toca backend). Se enviará junto al resto
-   * de líneas cuando el camarero pulse "Enviar comanda".
-   */
   public addMenuLine(
     menu: TpvMenu,
     selections: MenuSelectionPayload[],
@@ -294,7 +290,6 @@ export class ComandaFacade {
     return product.stock > this.getCartQuantity(line.productId);
   }
 
-  // ----- Cart -----
   public addToCart(
     product: TpvProductItem,
     config?: { variantId?: string; variantName?: string; variantPrice?: number; modifiers?: SelectedModifier[] },
@@ -305,7 +300,6 @@ export class ComandaFacade {
 
     const lines = this._cartLines();
 
-    // Si hay config con variant, buscar línea con mismo product+variant
     const existing = config?.variantId
       ? lines.find((line) => line.productId === product.id && line.variantId === config.variantId)
       : lines.find((line) => line.productId === product.id && !line.variantId);

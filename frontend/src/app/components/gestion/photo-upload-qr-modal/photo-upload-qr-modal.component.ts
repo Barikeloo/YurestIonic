@@ -26,7 +26,6 @@ export interface PhotoUploadedEvent {
 
 type ModalState = 'idle' | 'loading' | 'ready' | 'uploaded' | 'expired' | 'error';
 
-// Minimum seconds remaining to consider a cached token reusable.
 const MIN_REUSE_SECONDS = 15;
 
 @Component({
@@ -54,15 +53,11 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
   protected readonly uploadedImageSrc = signal<string | null>(null);
   protected readonly secondsLeft = signal(0);
 
-  // Incrementing this signal is the only way to trigger a QR re-render.
-  // Using a dedicated trigger avoids the case where state/tokenData don't
-  // change (same token reused) so the effect would not fire otherwise.
   private readonly qrRenderTrigger = signal(0);
 
   private unsubscribeEcho: (() => void) | null = null;
   private countdownInterval: ReturnType<typeof setInterval> | null = null;
 
-  // Tracks which productId owns the cached token so we can detect product changes.
   private cachedForProductId: string | null = null;
 
   protected readonly isLoading = computed(() => this.state() === 'loading');
@@ -96,21 +91,19 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
     }
   }
 
-  // ── Open logic ────────────────────────────────────────────
-
   private async tryOpen(): Promise<void> {
     const cached = this.tokenData();
 
     if (cached && this.canReuse(cached)) {
-      // Resume with the existing token — no new API call needed.
+
       this.state.set('ready');
       this.startCountdown(cached.expires_at);
       this.subscribeToChannel(cached.token);
-      this.scheduleQrRender(); // canvas was destroyed when modal closed; redraw it
+      this.scheduleQrRender();
+
       return;
     }
 
-    // Token is stale, used, or belongs to a different product — generate fresh.
     this.hardReset();
     await this.open();
   }
@@ -136,7 +129,7 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
   }
 
   private canReuse(token: PhotoUploadTokenResponse): boolean {
-    // Never reuse if the upload already completed or the product changed.
+
     if (this.state() === 'uploaded') return false;
     if (this.cachedForProductId !== this.productId) return false;
 
@@ -152,12 +145,9 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
    */
   private pauseOnClose(): void {
     this.cleanup();
-    // Intentionally NOT clearing tokenData or state here.
+
   }
 
-  /**
-   * Full reset — clears everything. Used before generating a new token.
-   */
   private hardReset(): void {
     this.cleanup();
     this.state.set('idle');
@@ -166,8 +156,6 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
     this.secondsLeft.set(0);
     this.cachedForProductId = null;
   }
-
-  // ── Real-time / countdown ─────────────────────────────────
 
   private subscribeToChannel(token: string): void {
     this.unsubscribeEcho = this.echoService.listenOnce<{ product_uuid: string; image_src: string }>(
@@ -207,14 +195,11 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
 
   // ── QR render ─────────────────────────────────────────────
 
-  // Tracks qrRenderTrigger so it fires on both new tokens AND token reuse
-  // (where state/tokenData signals don't change and wouldn't re-trigger the effect).
   readonly _qrEffect = effect(() => {
     const trigger = this.qrRenderTrigger();
     const token = this.tokenData();
     if (trigger === 0 || !token) return;
 
-    // Wait one microtask so Angular has rendered the @if block and the canvas exists.
     Promise.resolve().then(() => {
       const canvas = this.qrCanvas?.nativeElement;
       if (!canvas) return;

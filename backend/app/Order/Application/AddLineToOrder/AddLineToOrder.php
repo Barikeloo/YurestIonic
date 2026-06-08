@@ -91,7 +91,6 @@ final class AddLineToOrder
             }
         }
 
-        // Añadir precio de modifiers al precio base
         $modifierTotal = 0;
         if ($command->modifiers !== null) {
             foreach ($command->modifiers as $modifier) {

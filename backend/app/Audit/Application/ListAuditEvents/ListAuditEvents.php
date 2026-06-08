@@ -72,9 +72,6 @@ final class ListAuditEvents
         );
     }
 
-    /**
-     * @return array{0: ?\DateTimeImmutable, 1: ?int}
-     */
     private function decodeCursor(?string $cursor): array
     {
         if ($cursor === null || $cursor === '') {

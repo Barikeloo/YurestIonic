@@ -15,15 +15,15 @@ return new class extends Migration
             $table->foreignId('tax_id')->constrained('taxes');
             $table->string('name');
             $table->text('description')->nullable();
-            $table->unsignedInteger('price'); // céntimos
+            $table->unsignedInteger('price');
+
             $table->boolean('active')->default(true);
-            // Validez (opcional): si ambos null, el menú es permanente
+
             $table->date('validity_from')->nullable();
             $table->date('validity_to')->nullable();
-            // Disponibilidad semanal (bitmask 7 bits, bit 0 = Lunes ... bit 6 = Domingo)
-            // 127 (0b1111111) = todos los días
+
             $table->unsignedTinyInteger('available_days')->default(127);
-            // Franja horaria opcional (si null/null, todo el día)
+
             $table->time('available_from_time')->nullable();
             $table->time('available_to_time')->nullable();
             $table->timestamps();

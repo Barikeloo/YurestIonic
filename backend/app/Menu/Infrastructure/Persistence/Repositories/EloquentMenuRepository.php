@@ -30,8 +30,6 @@ class EloquentMenuRepository implements MenuRepositoryInterface
 
         $tax = EloquentTax::query()->where('uuid', $menu->taxId()->value())->firstOrFail();
 
-        // Resolución de FKs (uuid → id local) por producto/variante.
-        // Lo hacemos fuera de la transacción para fallar pronto si hay datos inconsistentes.
         [$productIdMap, $variantIdMap] = $this->resolveProductsAndVariants($menu);
 
         DB::transaction(function () use ($menu, $restaurantId, $tax, $productIdMap, $variantIdMap): void {
@@ -55,13 +53,11 @@ class EloquentMenuRepository implements MenuRepositoryInterface
                 'deleted_at' => $menu->archivedAt()?->value(),
             ];
 
-            /** @var EloquentMenu $menuModel */
             $menuModel = $this->model->newQuery()->withTrashed()->updateOrCreate(
                 ['uuid' => $menu->id()->value()],
                 $values,
             );
 
-            // Reemplazamos por completo las secciones (cascade borra sus items).
             EloquentMenuSection::query()->where('menu_id', $menuModel->id)->delete();
 
             foreach ($menu->sections() as $section) {
@@ -125,7 +121,7 @@ class EloquentMenuRepository implements MenuRepositoryInterface
         if ($archivedFilter === true) {
             $query->onlyTrashed();
         } elseif ($archivedFilter === false) {
-            // por defecto Eloquent excluye los trashed, ok
+
         } else {
             $query->withTrashed();
         }
@@ -156,9 +152,6 @@ class EloquentMenuRepository implements MenuRepositoryInterface
             ->exists();
     }
 
-    /**
-     * @return array{0: array<string, int>, 1: array<string, int>} mapas uuid→id (local) para productos y variantes
-     */
     private function resolveProductsAndVariants(Menu $menu): array
     {
         $productUuids = [];
@@ -186,7 +179,6 @@ class EloquentMenuRepository implements MenuRepositoryInterface
                 ->pluck('id', 'uuid')
                 ->all();
 
-        // Validación: todos los productos referenciados deben existir
         foreach ($productUuids as $uuid) {
             if (! isset($productIdMap[$uuid])) {
                 throw new \RuntimeException("Product with uuid {$uuid} not found.");
@@ -208,7 +200,7 @@ class EloquentMenuRepository implements MenuRepositoryInterface
             $items = [];
             foreach ($sectionModel->items as $itemModel) {
                 if ($itemModel->product === null) {
-                    // El producto fue eliminado; se omite el item (no rompemos la carga).
+
                     continue;
                 }
                 $items[] = MenuItem::fromPersistence(
@@ -221,7 +213,6 @@ class EloquentMenuRepository implements MenuRepositoryInterface
                 );
             }
 
-            // Si la sección quedó sin items por eliminaciones, la omitimos también
             if ($items === []) {
                 continue;
             }
@@ -236,11 +227,6 @@ class EloquentMenuRepository implements MenuRepositoryInterface
                 items: $items,
             );
         }
-
-        // Si todas las secciones quedaron vacías por borrado de productos, marcamos
-        // el menú como archivado implícito devolviendo null no es opción aquí
-        // (la entidad exige al menos 1 sección). Asumimos que esto NO ocurre en
-        // condiciones normales gracias a las FKs RESTRICT.
 
         return Menu::fromPersistence(
             id: $model->uuid,

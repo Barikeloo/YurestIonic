@@ -12,7 +12,6 @@
   background: #F4F4F4;
 }
 
-// ── Top bar ────────────────────────────────────
 .comanda-topbar {
   display: flex;
   align-items: center;
@@ -85,7 +84,6 @@
   &:active { transform: scale(0.98); }
 }
 
-// ── Loading ────────────────────────────────────
 .loading-state {
   flex: 1;
   display: flex;
@@ -95,7 +93,6 @@
   color: #7A7A7A;
 }
 
-// ── Main layout ────────────────────────────────
 .comanda-layout {
   flex: 1;
   display: grid;
@@ -103,7 +100,6 @@
   overflow: hidden;
 }
 
-// ── Products area ──────────────────────────────
 .products-area {
   display: flex;
   flex-direction: column;
@@ -214,7 +210,6 @@
   gap: 14px;
 }
 
-// ── Product card ──────────────────────────────────────────────
 .product-card {
   position: relative;
   background: #fff;
@@ -238,7 +233,6 @@
   &:active { transform: translateY(0) scale(0.98); }
 }
 
-// ── Visual header (foto o placeholder con inicial) ────────────
 .product-visual {
   position: relative;
   width: 100%;
@@ -272,7 +266,6 @@
   background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
 }
 
-// ── Text area ─────────────────────────────────────────────────
 .product-info {
   padding: 10px 12px 12px;
   display: flex;
@@ -303,7 +296,6 @@
   margin-top: 2px;
 }
 
-// ── Stock badge (sobre la imagen) ─────────────────────────────
 .stock-badge {
   position: absolute;
   top: 8px;
@@ -326,7 +318,6 @@
   &.stock-zero { background: rgba(0,0,0,0.45); }
 }
 
-// ── Variantes de estado ───────────────────────────────────────
 .product-card {
   &:disabled,
   &.out-of-stock {
@@ -360,7 +351,6 @@
   color: #A0A0A0;
 }
 
-// ── Sidebar ────────────────────────────────────
 .comanda-sidebar {
   border-left: 1px solid #E8E8E8;
   background: #fff;
@@ -524,7 +514,6 @@
   &:hover { background: #FFECEC; color: #FF4D4D; }
 }
 
-// ── Cart qty controls ─────────────────────────
 .cart-qty-controls {
   display: flex;
   align-items: center;
@@ -573,7 +562,6 @@
   font-family: 'DM Mono', monospace;
 }
 
-// ── Actions ────────────────────────────────────
 .order-actions {
   padding: 16px 20px 20px;
   display: flex;
@@ -645,7 +633,6 @@
   color: #CC2222;
 }
 
-// ── Modals ─────────────────────────────────────
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -791,7 +778,6 @@
   color: #CC2222;
 }
 
-// ── Ticket screen ──────────────────────────────
 .ticket-box { text-align: center; }
 
 .ticket-icon {
@@ -840,7 +826,6 @@
   margin-top: 10px;
 }
 
-// ── Responsive ─────────────────────────────────
 @media (max-width: 1100px) {
   .comanda-layout { grid-template-columns: 1fr 360px; }
 }
@@ -860,7 +845,6 @@
   }
 }
 
-// --- Variant / Modifier display in cart lines ---
 .line-variant {
   display: inline-block;
   font-size: 12px;
@@ -905,7 +889,6 @@
   max-width: 200px;
 }
 
-// --- Line detail modal ---
 .line-detail-box {
   max-width: 420px;
   width: 92%;

@@ -28,8 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
             ->hourly();
     })
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+
     })->create();

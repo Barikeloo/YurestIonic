@@ -20,7 +20,8 @@ class UserSeeder extends Seeder
         $restaurantId = DB::table('restaurants')->first()?->id;
 
         if (! $restaurantId) {
-            return; // No restaurant to seed users
+            return;
+
         }
 
         DB::table('users')->upsert([

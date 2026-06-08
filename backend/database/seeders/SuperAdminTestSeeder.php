@@ -10,7 +10,7 @@ final class SuperAdminTestSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create test superadmin with known credentials for testing
+
         DB::table('super_admins')->insert([
             'uuid' => 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
             'name' => 'Developer (Test)',
@@ -20,7 +20,6 @@ final class SuperAdminTestSeeder extends Seeder
             'updated_at' => now(),
         ]);
 
-        // Create some test restaurants with different companies (tax_ids)
         $restaurants = [
             [
                 'uuid' => '11111111-1111-4111-8111-111111111111',
@@ -56,9 +55,9 @@ final class SuperAdminTestSeeder extends Seeder
 
         DB::table('restaurants')->insert($restaurants);
 
-        // Create test admin user for the first restaurant
         DB::table('users')->insert([
-            'restaurant_id' => 1, // ID of first restaurant
+            'restaurant_id' => 1,
+
             'uuid' => 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1',
             'name' => 'Admin Zentral',
             'email' => 'admin@zentral.tpv.local',

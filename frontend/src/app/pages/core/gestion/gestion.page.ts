@@ -238,11 +238,11 @@ export class GestionPage {
     private readonly tableService: TableService,
     private readonly router: Router,
   ) {
-    // Suscribirse al usuario actual para determinar si es admin
+
     this.authService.currentUser$.pipe(take(1)).subscribe((user) => {
       this.isAdminUser = user?.role === UserRole.ADMIN;
 
-      // Limpiar contexto persistido si el usuario no es admin
+
       if (!this.isAdminUser) {
         this.clearPersistedSelectedRestaurant();
       }
@@ -403,10 +403,8 @@ export class GestionPage {
     return this.managementRestaurants().find((restaurant) => restaurant.id === this.managementState.restaurantId) ?? null;
   }
 
-  /**
-   * Productos del restaurante actual mapeados al shape mínimo (`MenuProductOption`)
-   * que consume el editor de menús. Evita acoplar el módulo de menús al DTO completo.
-   */
+
+
   public get menuProductOptions(): Array<{ id: string; name: string; price: number; active: boolean }> {
     return this.selectedData.products
       .filter((p) => !!p.uuid)
@@ -1210,7 +1208,7 @@ export class GestionPage {
   }
 
   private persistSelectedRestaurant(restaurantId: number): void {
-    // Solo persistir si el usuario es admin
+
     if (this.isAdminUser) {
       const restaurant = this.managementRestaurants().find((r) => r.id === restaurantId);
       if (restaurant?.uuid) {
@@ -1220,7 +1218,7 @@ export class GestionPage {
   }
 
   private getPersistedSelectedRestaurantUuid(): string | null {
-    // Solo restaurar si el usuario es admin
+
     if (this.isAdminUser) {
       return localStorage.getItem('gestion_selected_restaurant_uuid');
     }
@@ -1286,7 +1284,7 @@ export class GestionPage {
           this.managementState.restaurantId = selectedId;
           this.syncForms();
 
-          // Solo establecer el contexto si es el primer restaurante y no hay selección persistida
+
           const firstRestaurant = restaurants[0];
           if (firstRestaurant?.uuid && !persistedUuid) {
             this.restaurantService

@@ -14,14 +14,6 @@ export interface PhotoUploadResponse {
   image_src: string;
 }
 
-/**
- * Calls the two public photo-upload endpoints using relative URLs so the Angular dev-server
- * proxy forwards them transparently.  This makes the flow work from any device on the LAN
- * (mobile scanning the QR) without CORS issues or "localhost" resolution problems.
- *
- * Desktop:  /api/...  →  proxy  →  localhost:8000/api/...
- * Mobile:   192.168.x.x:4200/api/...  →  same proxy  →  localhost:8000/api/...
- */
 @Injectable({ providedIn: 'root' })
 export class PublicPhotoUploadService {
   private readonly http = inject(HttpClient);

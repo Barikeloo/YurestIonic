@@ -145,12 +145,6 @@ final class Order
         $this->updatedAt = DomainDateTime::now();
     }
 
-    /**
-     * Traspasa la comanda a otra mesa. Solo permitido si la comanda está
-     * abierta o por cobrar; cerradas o canceladas se rechazan. La validación
-     * de que la mesa destino esté libre es responsabilidad del caso de uso,
-     * no del agregado.
-     */
     public function transferTo(Uuid $newTableId): void
     {
         if (! $this->status->isOpen() && ! $this->status->isToCharge()) {

@@ -22,7 +22,7 @@ final class ListAuditSavedViewsRequest extends FormRequest
 
     public function toCommand(): ListAuditSavedViewsCommand
     {
-        /** @var TenantContext $tenantContext */
+
         $tenantContext = app(TenantContext::class);
 
         return new ListAuditSavedViewsCommand(

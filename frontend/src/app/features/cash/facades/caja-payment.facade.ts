@@ -15,7 +15,6 @@ export class CajaPaymentFacade {
 
   private readonly destroy$ = new Subject<void>();
 
-  // Signals for payment state
   private readonly state = signal<PaymentState>(PaymentState.IDLE);
   private readonly currentChargeSession = signal<{ id: string; amountPerDiner: number } | null>(null);
   private readonly currentDinerNumber = signal<number | null>(null);
@@ -26,7 +25,6 @@ export class CajaPaymentFacade {
 
   public readonly paidLineIds = computed(() => Array.from(this.paidOrderLineIds()));
 
-  // Readonly signals for external consumption
   public readonly loading = computed(() => this.state() === PaymentState.LOADING);
   public readonly processing = computed(() => this.state() === PaymentState.PROCESSING);
   public readonly success = computed(() => this.state() === PaymentState.SUCCESS);
@@ -37,7 +35,6 @@ export class CajaPaymentFacade {
   public readonly isProcessing = computed(() => this.isProcessingPayment());
   public readonly paymentError = computed(() => this.error());
 
-  // Getters for compatibility
   public get currentChargeSessionValue(): { id: string; amountPerDiner: number } | null {
     return this.currentChargeSession();
   }
@@ -54,7 +51,6 @@ export class CajaPaymentFacade {
     return this.isProcessingPayment();
   }
 
-  // State setters
   public setState(value: PaymentState): void {
     this.state.set(value);
   }
@@ -90,7 +86,6 @@ export class CajaPaymentFacade {
     this.paidOrderLineIds.set(new Set());
   }
 
-  // Payment methods
   public createChargeSession(request: CreateChargeSessionRequest): Observable<ChargeSession> {
     this.setState(PaymentState.LOADING);
     return this.chargeSessionService.createChargeSession(request);
@@ -116,7 +111,6 @@ export class CajaPaymentFacade {
     return this.chargeSessionService.cancelChargeSession(sessionId, request);
   }
 
-  // Helper methods
   public getDeviceId(): string {
     return this.authService.getDeviceId();
   }

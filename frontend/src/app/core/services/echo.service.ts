@@ -29,10 +29,6 @@ export class EchoService implements OnDestroy {
     return this.echo;
   }
 
-  /**
-   * Subscribe to a public channel and listen to a named event.
-   * Returns an unsubscribe callback — call it when done to avoid leaks.
-   */
   listenOnce<T>(
     channelName: string,
     eventName: string,

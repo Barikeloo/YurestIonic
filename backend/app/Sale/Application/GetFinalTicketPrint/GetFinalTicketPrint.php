@@ -42,17 +42,14 @@ final class GetFinalTicketPrint
 
         $taxBreakdown = $this->buildTaxBreakdown($orderUuid->value());
 
-        // Obtener hora
         $createdTime = $ticket->createdAt()->format('H:i');
 
-        // Obtener líneas de la orden con nombres de productos
         $orderLines = $this->orderLineRepository->findByOrderId($orderUuid);
         $orderLinesPayload = [];
         $productNameCache = [];
         foreach ($orderLines as $line) {
             if ($line->isMenuLine()) {
-                // Líneas de menú: usamos su nombre denormalizado y exponemos
-                // las selecciones del comensal para que el ticket las pueda renderizar.
+
                 $orderLinesPayload[] = [
                     'name' => $line->menuName() ?? 'Menú',
                     'quantity' => $line->quantity()->value(),
@@ -84,14 +81,12 @@ final class GetFinalTicketPrint
             ];
         }
 
-        // Obtener operario (del ticket)
         $operator = null;
         $operatorUser = $this->userRepository->findById($ticket->closedByUserId()->value());
         if ($operatorUser !== null) {
             $operator = $operatorUser->name()->value();
         }
 
-        // Obtener Z-report number (de la sesión de caja - por ahora null, se puede obtener de la venta)
         $zReportNumber = null;
 
         return GetFinalTicketPrintResponse::fromPayload(

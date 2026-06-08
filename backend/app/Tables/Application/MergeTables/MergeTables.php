@@ -35,7 +35,6 @@ final class MergeTables
             throw TablesNotFoundException::create();
         }
 
-        // Expandir cada mesa fusionada a TODAS las mesas de su grupo
         $allTables = [];
         foreach ($inputTables as $table) {
             if ($table->isMerged()) {
@@ -48,7 +47,6 @@ final class MergeTables
             }
         }
 
-        // Si todas las mesas ya están en el mismo grupo, no hacer nada
         $groupIds = array_values(array_unique(
             array_map(
                 static fn ($table): ?string => $table->mergedTableGroupId()?->value(),
@@ -64,7 +62,6 @@ final class MergeTables
             );
         }
 
-        // Validar misma zona
         $firstTable = reset($allTables);
         $zoneId = $firstTable->zoneId();
         foreach ($allTables as $table) {
@@ -73,7 +70,6 @@ final class MergeTables
             }
         }
 
-        // Validar TO_CHARGE
         foreach ($allTables as $table) {
             $order = $this->orderRepository->findByTableId($table->id());
             if ($order !== null && $order->status()->isToCharge()) {
@@ -81,7 +77,6 @@ final class MergeTables
             }
         }
 
-        // Consolidar órdenes abiertas del grupo en una sola
         $openOrders = [];
         foreach ($allTables as $table) {
             $order = $this->orderRepository->findByTableId($table->id());
@@ -96,8 +91,7 @@ final class MergeTables
                 $secondaryOrder = $openOrders[$i];
                 $lines = $this->orderLineRepository->findByOrderId($secondaryOrder->id());
                 foreach ($lines as $line) {
-                    // clonedForOrder preserva el tipo de línea (producto o menú) y
-                    // copia todos los campos relevantes, evitando el branching aquí.
+
                     $newLine = $line->clonedForOrder(
                         newId: Uuid::generate(),
                         newOrderId: $primaryOrder->id(),
@@ -109,7 +103,6 @@ final class MergeTables
             }
         }
 
-        // Generar nuevo groupId y fusionar TODAS las mesas
         $groupId = Uuid::generate();
         foreach ($allTables as $table) {
             $table->mergeWith($groupId);

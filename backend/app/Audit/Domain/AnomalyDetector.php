@@ -16,10 +16,6 @@ final class AnomalyDetector
         private readonly AuditLogRepositoryInterface $repository,
     ) {}
 
-    /**
-     * Evaluates anomaly rules against the draft. Returns the anomaly_kind to stamp on
-     * the row, or null if no rule matched.
-     */
     public function detect(AuditEventDraft $draft): ?string
     {
         $slug = $draft->slug->value();

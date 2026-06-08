@@ -72,7 +72,6 @@ export class GestionMenusFacade {
   public readonly isSaving: Signal<boolean> = this._isSaving.asReadonly();
   public readonly editingId: Signal<string | null> = this._editingId.asReadonly();
 
-  /** Aplica el filtro y la búsqueda local sobre la lista cargada. */
   public readonly filteredMenus: Signal<MenuRow[]> = computed(() => {
     const term = this._search().trim().toLowerCase();
     let list = this._menus();
@@ -103,7 +102,7 @@ export class GestionMenusFacade {
     this._isLoading.set(true);
 
     try {
-      // Siempre cargamos la lista completa; el filtrado de UI se aplica en cliente.
+
       const response = await firstValueFrom(this.menuService.listMenus());
       const items = Array.isArray(response) ? (response as MenuDto[]) : response.data;
       this._menus.set(items.map(toRow));
@@ -181,7 +180,7 @@ export class GestionMenusFacade {
   public async archive(id: string): Promise<OperationResult> {
     try {
       await firstValueFrom(this.menuService.archiveMenu(id));
-      // Marcamos como archivado en local en lugar de quitarlo, para mostrarlo en el filtro "archivados".
+
       this._menus.update((current) =>
         current.map((m) =>
           m.id === id

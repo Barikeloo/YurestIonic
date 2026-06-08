@@ -8,9 +8,7 @@ use InvalidArgumentException;
 
 final class ProductAllergens
 {
-    /**
-     * 14 alérgenos oficiales del Reglamento UE 1169/2011.
-     */
+
     public const ALLERGENS = [
         'gluten',
         'crustaceans',
@@ -28,9 +26,6 @@ final class ProductAllergens
         'molluscs',
     ];
 
-    /**
-     * @var string[]
-     */
     private array $codes;
 
     private function __construct(array $codes)
@@ -47,9 +42,6 @@ final class ProductAllergens
         $this->codes = $unique;
     }
 
-    /**
-     * @param  string[]  $codes
-     */
     public static function create(array $codes): self
     {
         return new self($codes);
@@ -60,9 +52,6 @@ final class ProductAllergens
         return new self([]);
     }
 
-    /**
-     * @return string[]
-     */
     public function values(): array
     {
         return $this->codes;

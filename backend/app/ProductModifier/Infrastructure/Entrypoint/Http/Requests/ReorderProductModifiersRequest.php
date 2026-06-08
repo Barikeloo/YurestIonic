@@ -23,7 +23,7 @@ final class ReorderProductModifiersRequest extends FormRequest
 
     public function toCommand(string $productId): ReorderProductModifiersCommand
     {
-        /** @var array<int, array{id: string, sort_order: int}> $items */
+
         $items = (array) $this->input('items');
 
         return new ReorderProductModifiersCommand(

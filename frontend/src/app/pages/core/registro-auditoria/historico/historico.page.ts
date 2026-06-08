@@ -18,12 +18,9 @@ export class HistoricoPage implements OnInit, OnDestroy {
 
   readonly RANGE_PRESETS = RANGE_PRESETS;
 
-  // Local model bound to the custom-range date inputs. Applied on the
-  // "Aplicar" button; doesn't reload until the user confirms.
   customFrom = '';
   customTo = '';
 
-  // Facade signal proxies
   get stats() { return this.facade.stats; }
   get isLoading() { return this.facade.isLoading; }
   get loadError() { return this.facade.loadError; }

@@ -25,9 +25,6 @@ final readonly class GetZoneResponse
         );
     }
 
-    /**
-     * @return array<string, string>
-     */
     public function toArray(): array
     {
         return [

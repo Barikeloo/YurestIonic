@@ -148,7 +148,6 @@ class AuditArchivedStatsTest extends TestCase
         $restaurantId = $tenant['restaurant_id'];
         $archivedAt = '2026-06-01 10:00:00';
 
-        // 3 caja + 2 sale + 1 order, plus a non-archived row that must be ignored.
         $this->insertAuditLog($restaurantId, '2025-01-15 09:00:00', $archivedAt, 'caja');
         $this->insertAuditLog($restaurantId, '2025-01-16 09:00:00', $archivedAt, 'caja');
         $this->insertAuditLog($restaurantId, '2025-01-17 09:00:00', $archivedAt, 'caja');
@@ -179,7 +178,6 @@ class AuditArchivedStatsTest extends TestCase
         $maria  = $this->insertRestaurantUser($restaurantId, 'María',  'supervisor');
         $carlos = $this->insertRestaurantUser($restaurantId, 'Carlos', 'operator');
 
-        // Manolo: 4, María: 2, Carlos: 1
         foreach (range(1, 4) as $d) $this->insertAuditLog($restaurantId, "2025-01-0{$d} 09:00:00", $archivedAt, 'caja', $manolo['id']);
         foreach (range(5, 6) as $d) $this->insertAuditLog($restaurantId, "2025-01-0{$d} 09:00:00", $archivedAt, 'sale', $maria['id']);
         $this->insertAuditLog($restaurantId, '2025-01-07 09:00:00', $archivedAt, 'order', $carlos['id']);
@@ -204,7 +202,6 @@ class AuditArchivedStatsTest extends TestCase
 
         $manolo = $this->insertRestaurantUser($restaurantId, 'Manolo', 'admin');
 
-        // 2 system-attributed (user_id = null) + 1 attributed to Manolo.
         $this->insertAuditLog($restaurantId, '2025-01-01 09:00:00', $archivedAt, 'system', null);
         $this->insertAuditLog($restaurantId, '2025-01-02 09:00:00', $archivedAt, 'system', null);
         $this->insertAuditLog($restaurantId, '2025-01-03 09:00:00', $archivedAt, 'caja', $manolo['id']);
@@ -225,7 +222,6 @@ class AuditArchivedStatsTest extends TestCase
         $restaurantId = $tenant['restaurant_id'];
         $archivedAt = '2026-06-01 10:00:00';
 
-        // 6 users, each with a different count so the ordering is unambiguous.
         $users = [];
         $base = new \DateTimeImmutable('2025-01-01 09:00:00');
         $offset = 0;
@@ -256,7 +252,6 @@ class AuditArchivedStatsTest extends TestCase
         $restaurantId = $tenant['restaurant_id'];
         $archivedAt = '2026-06-01 10:00:00';
 
-        // 2 auth_failed_burst + 1 caja_mismatch, plus a non-anomalous row.
         $this->insertAuditLog($restaurantId, '2025-01-15 09:00:00', $archivedAt, 'auth', null, 'auth_failed_burst');
         $this->insertAuditLog($restaurantId, '2025-01-16 09:00:00', $archivedAt, 'auth', null, 'auth_failed_burst');
         $this->insertAuditLog($restaurantId, '2025-01-17 09:00:00', $archivedAt, 'caja', null, 'caja_mismatch');
@@ -296,7 +291,6 @@ class AuditArchivedStatsTest extends TestCase
         $restaurantId = $tenant['restaurant_id'];
         $archivedAt = '2026-06-01 10:00:00';
 
-        // 1 archived anomaly + 1 live anomaly that must be ignored.
         $this->insertAuditLog($restaurantId, '2025-01-15 09:00:00', $archivedAt, 'auth', null, 'auth_failed_burst');
         $this->insertAuditLog($restaurantId, '2025-02-15 09:00:00', null, 'auth', null, 'auth_failed_burst');
 
@@ -322,7 +316,6 @@ class AuditArchivedStatsTest extends TestCase
             ->getJson('/api/admin/audit-log/archived-stats');
         $first->assertJsonPath('total', 1);
 
-        // Insert a row that would change the stats; cached response must not see it.
         $this->insertAuditLog($restaurantId, '2025-02-15 09:00:00', '2026-06-01 10:00:00');
 
         $cached = $this
@@ -375,9 +368,6 @@ class AuditArchivedStatsTest extends TestCase
         return $uuid;
     }
 
-    /**
-     * @return array{id: int, uuid: string, name: string, role: string}
-     */
     private function insertRestaurantUser(int $restaurantId, string $name, string $role): array
     {
         $uuid = (string) Str::uuid();

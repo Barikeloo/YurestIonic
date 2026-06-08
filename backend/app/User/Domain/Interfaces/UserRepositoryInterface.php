@@ -35,14 +35,8 @@ interface UserRepositoryInterface
 
     public function updatePinHash(string $uuid, string $pinHash): void;
 
-    /**
-     * @return array<array{uuid: string, name: string, email: string, role: string}>
-     */
     public function getByRestaurantUuid(string $restaurantUuid): array;
 
-    /**
-     * @param  array<string, string>  $updates
-     */
     public function updatePartial(string $uuid, array $updates): void;
 
     public function delete(string $uuid): void;

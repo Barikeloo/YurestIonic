@@ -91,19 +91,11 @@ final class CreateSale
 
             $orderLines = $this->orderLineRepository->findByOrderId($orderUuid);
 
-            // Semántica de $orderLineIds:
-            //   - null            => todas las líneas (cobro completo TPV).
-            //   - array vacío     => ninguna línea (pago monetario sobre charge
-            //                        session sin consumir líneas, p. ej. split
-            //                        equitativo o comensal sin líneas asignadas).
-            //   - array con ids   => sólo esas líneas (cobro por líneas).
             if ($orderLineIds !== null) {
                 if (count($orderLineIds) === 0) {
                     $orderLines = [];
                 } else {
-                    // Comparamos por valor string del UUID. `in_array(..., true)`
-                    // sobre objetos Uuid usaría identidad de instancia y siempre
-                    // devolvería false, dejando $orderLines vacío y sin SaleLines.
+
                     $lineIdLookup = array_flip($orderLineIds);
                     $orderLines = array_filter(
                         $orderLines,
@@ -154,12 +146,6 @@ final class CreateSale
                 );
                 $this->saleLineRepository->save($saleLine);
             }
-
-            // Las `line_assignments` de las líneas cobradas se conservan: el front
-            // las necesita para agrupar las líneas pagadas bajo su comensal y
-            // ofrecer el botón de reembolso. `paid_order_line_ids` (derivado de
-            // SaleLines activas) sigue siendo la fuente de verdad de "qué está
-            // pagado"; las assignments quedan como "quién pagó qué".
 
             $orderJustClosed = false;
             $order = $this->orderRepository->findByUuid($orderUuid);

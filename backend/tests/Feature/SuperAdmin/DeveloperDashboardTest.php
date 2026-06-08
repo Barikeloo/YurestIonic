@@ -120,7 +120,6 @@ final class DeveloperDashboardTest extends TestCase
     {
         $session = $this->createSuperAdminSession();
 
-        // Create restaurants with same tax_id
         DB::table('restaurants')->insert([
             ['uuid' => (string) Str::uuid(), 'name' => 'Restaurant A', 'legal_name' => 'Restaurant A S.L.', 'tax_id' => 'SHARED123', 'email' => 'rest-a@local.test', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],
             ['uuid' => (string) Str::uuid(), 'name' => 'Restaurant B', 'legal_name' => 'Restaurant B S.L.', 'tax_id' => 'SHARED123', 'email' => 'rest-b@local.test', 'password' => Hash::make('pass'), 'created_at' => now(), 'updated_at' => now()],

@@ -40,7 +40,6 @@ final class CancelSale
 
         $cancelledByUuid = Uuid::create($command->cancelledByUserId);
 
-        // 1. Cancelar la venta
         $sale->cancel(
             cancelledByUserId: $cancelledByUuid,
             reason: $command->reason,
@@ -48,20 +47,17 @@ final class CancelSale
 
         $this->saleRepository->save($sale);
 
-        // 2. Reabrir la orden asociada
         $order = $this->orderRepository->findByUuid($sale->orderId());
         if ($order !== null) {
             $order->reopen($cancelledByUuid);
             $this->orderRepository->save($order);
         }
 
-        // 3. Eliminar los pagos asociados
         $payments = $this->salePaymentRepository->findBySaleId($sale->id());
         foreach ($payments as $payment) {
             $this->salePaymentRepository->delete($payment->id());
         }
 
-        // 4. Registrar movimiento de caja compensatorio (cash out)
         $cashRefundedCents = 0;
         $cashSessionId = $sale->cashSessionId();
         if ($cashSessionId !== null) {

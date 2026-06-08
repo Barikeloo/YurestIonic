@@ -8,9 +8,7 @@ use App\Order\Domain\Entity\OrderLine;
 
 final class AddMenuLineToOrderResponse
 {
-    /**
-     * @param  array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>  $menuSelections
-     */
+
     private function __construct(
         public readonly string $id,
         public readonly string $uuid,
@@ -38,7 +36,6 @@ final class AddMenuLineToOrderResponse
         );
     }
 
-    /** @return array<string, mixed> */
     public function toArray(): array
     {
         return [

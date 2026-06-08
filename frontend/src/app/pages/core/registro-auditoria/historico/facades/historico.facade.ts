@@ -109,7 +109,6 @@ export class HistoricoFacade {
   private readonly service = inject(AuditLogService);
   private readonly destroy$ = new Subject<void>();
 
-  // ── Private state ────────────────────────────────────────────
   private readonly _stats = signal<ArchivedAuditStatsApi | null>(null);
   private readonly _isLoading = signal<boolean>(false);
   private readonly _loadError = signal<string | null>(null);
@@ -123,7 +122,6 @@ export class HistoricoFacade {
   private readonly _verifyResult = signal<VerifyResult | null>(null);
   private readonly _verifyError = signal<string | null>(null);
 
-  // ── Public readonly ──────────────────────────────────────────
   public readonly stats: Signal<ArchivedAuditStatsApi | null> = this._stats.asReadonly();
   public readonly isLoading: Signal<boolean> = this._isLoading.asReadonly();
   public readonly loadError: Signal<string | null> = this._loadError.asReadonly();
@@ -137,7 +135,6 @@ export class HistoricoFacade {
   public readonly verifyResult: Signal<VerifyResult | null> = this._verifyResult.asReadonly();
   public readonly verifyError: Signal<string | null> = this._verifyError.asReadonly();
 
-  // ── Derived signals ──────────────────────────────────────────
   public readonly hasData = computed(() => (this._stats()?.total ?? 0) > 0);
 
   public readonly total = computed(() => this._stats()?.total ?? 0);
@@ -237,9 +234,7 @@ export class HistoricoFacade {
   });
 
   // Export URLs always carry include_archived=1: the histórico panel
-  // exists for the archived corpus, and the meta-event keeps a record
-  // of every download regardless of format. Date range is forwarded
-  // so an exported file matches what the user currently sees.
+
   public readonly csvExportUrl = computed<string>(() => this.service.buildExportUrl('csv', {
     includeArchived: true,
     dateFrom: this._dateFrom() ?? undefined,
@@ -267,7 +262,6 @@ export class HistoricoFacade {
     return 'Personalizado';
   });
 
-  // ── Setters ──────────────────────────────────────────────────
   public setStats(value: ArchivedAuditStatsApi | null): void { this._stats.set(value); }
   public setLoading(value: boolean): void { this._isLoading.set(value); }
   public setLoadError(value: string | null): void { this._loadError.set(value); }
@@ -279,11 +273,6 @@ export class HistoricoFacade {
   public toggleRangeMenu(): void { this._rangeMenuOpen.update((v) => !v); }
   public closeRangeMenu(): void { this._rangeMenuOpen.set(false); }
 
-  /**
-   * Apply a preset range. Setting 'all' clears the filter; the others
-   * compute date_from = today - N and leave date_to open (the panel
-   * scope is always "up to today"). Triggers an immediate reload.
-   */
   public applyPreset(preset: RangePreset): void {
     if (preset === this._activePreset()) {
       this.closeRangeMenu();
@@ -305,10 +294,6 @@ export class HistoricoFacade {
     this.loadStats();
   }
 
-  /**
-   * Apply an explicit date range from the date pickers. Either bound
-   * is optional but at least one is required to qualify as 'custom'.
-   */
   public applyCustomRange(from: string | null, to: string | null): void {
     const cleanFrom = from && from.length > 0 ? from : null;
     const cleanTo = to && to.length > 0 ? to : null;
@@ -334,7 +319,6 @@ export class HistoricoFacade {
     return d.toISOString().slice(0, 10);
   }
 
-  // ── Business ────────────────────────────────────────────────
   public loadStats(): void {
     this.setLoading(true);
     this.setLoadError(null);
@@ -357,7 +341,6 @@ export class HistoricoFacade {
       });
   }
 
-  // ── Chain verification ──────────────────────────────────────
   public loadLatestVerify(): void {
     this.service
       .getLatestVerifyResult()
@@ -415,7 +398,7 @@ function formatYearMonth(d: Date): string {
 }
 
 function formatMonthKey(key: string): string {
-  // key = "YYYY-MM"
+
   const [y, m] = key.split('-');
   const mi = Math.max(0, Math.min(11, Number(m) - 1));
   return `${MONTH_LABELS_ES[mi]} ${y.slice(2)}`;

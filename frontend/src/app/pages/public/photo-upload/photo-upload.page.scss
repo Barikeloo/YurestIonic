@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Mono:wght@500&display=swap');
 
 :host {
-  /* ── Color ──────────────────────── */
+
   --bg:          #fafafa;
   --bg-2:        #f4f4f4;
   --surface:     #ffffff;
@@ -27,7 +27,6 @@
   --on-dark:      #fafafa;
   --on-dark-soft: rgba(250,250,250,.66);
 
-  /* ── Shape ──────────────────────── */
   --r-sm:   8px;
   --r-md:   10px;
   --r-lg:   14px;
@@ -37,14 +36,12 @@
   --shadow-md: 0 4px 14px rgba(0,0,0,0.12);
   --shadow-lg: 0 32px 80px rgba(0,0,0,0.22);
 
-  /* ── Type ───────────────────────── */
   --font: 'DM Sans', sans-serif;
   --mono: 'DM Mono', monospace;
 
   --safe-t: env(safe-area-inset-top,    0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
 
-  /* Host as body */
   display: flex;
   justify-content: center;
   width: 100%;
@@ -61,7 +58,6 @@
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-/* ── App column ───────────────────────────── */
 .app {
   position: relative;
   width: 100%;
@@ -81,7 +77,6 @@
   }
 }
 
-/* ── Screens ──────────────────────────────── */
 .screen {
   position: absolute;
   inset: 0;
@@ -108,7 +103,6 @@
   flex-direction: column;
 }
 
-/* ── Top bar ──────────────────────────────── */
 .topbar {
   display: flex;
   align-items: center;
@@ -153,7 +147,6 @@
 .expiry.warn { color: var(--accent); border-color: #f5d0d0; background: var(--accent-soft); }
 .expiry.warn svg { color: var(--accent); }
 
-/* ── Intro / ready ───────────────────────── */
 .intro { padding: 18px 22px 0; }
 .eyebrow {
   font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
@@ -173,7 +166,6 @@
   margin: 0; max-width: 38ch; text-wrap: pretty;
 }
 
-/* product card */
 .product {
   margin: 22px 22px 0;
   background: var(--surface);
@@ -218,7 +210,6 @@
 
 .spacer { flex: 1; min-height: 18px; }
 
-/* ── Bottom dock ─────────────────────────── */
 .dock {
   padding: 16px 20px calc(var(--safe-b) + 18px);
   background: linear-gradient(to top, var(--bg) 70%, rgba(251,246,240,0));
@@ -226,7 +217,6 @@
 }
 .dock .legal { text-align: center; font-size: 12px; color: var(--ink-faint); margin-top: 2px; }
 
-/* ── Buttons ─────────────────────────────── */
 .btn {
   appearance: none; border: none;
   font-family: var(--font); font-weight: 700; font-size: 16.5px; letter-spacing: -0.01em;
@@ -253,7 +243,6 @@
 .btn-text:active { background: rgba(0,0,0,.04); }
 .btn-block { width: 100%; }
 
-/* ── Cámara ──────────────────────────────── */
 .cam-stage {
   position: absolute; inset: 0;
   background: #000; overflow: hidden;
@@ -333,7 +322,6 @@
 .flash.go { animation:flash .42s ease; }
 @keyframes flash { 0%{opacity:0} 12%{opacity:.9} 100%{opacity:0} }
 
-/* ── Recorte ─────────────────────────────── */
 .crop-screen { background:var(--dark); color:var(--on-dark); }
 .crop-head {
   padding:calc(var(--safe-t) + 16px) 18px 8px;
@@ -402,7 +390,6 @@ input[type="range"].zoom::-moz-range-thumb {
 }
 .crop-actions .crop-btn svg { width:21px; height:21px; }
 
-/* ── Subiendo ────────────────────────────── */
 .center-screen {
   align-items:center; justify-content:center;
   text-align:center; padding:32px 28px calc(var(--safe-b) + 28px); gap:0;
@@ -435,7 +422,6 @@ input[type="range"].zoom::-moz-range-thumb {
 }
 .linebar > i { display:block; height:100%; background:var(--accent); border-radius:inherit; transition:width .25s ease; }
 
-/* ── Badges (success / error / expired) ───── */
 .badge {
   width:104px; height:104px; border-radius:50%;
   display:grid; place-items:center; margin-bottom:26px; position:relative;
@@ -464,7 +450,6 @@ input[type="range"].zoom::-moz-range-thumb {
 
 .center-screen .actions { margin-top:30px; display:flex; flex-direction:column; gap:8px; width:min(100%, 320px); }
 
-/* ── Gallery sheet ───────────────────────── */
 .sheet-backdrop {
   position:absolute; inset:0; z-index:20;
   background:rgba(22,16,9,.4);
@@ -484,7 +469,6 @@ input[type="range"].zoom::-moz-range-thumb {
 .sheet h3 { font-family:var(--font); font-size:17px; margin:0 0 4px; }
 .sheet p { margin:0 0 14px; font-size:13px; color:var(--ink-soft); }
 
-/* ── Spinner (validating) ────────────────── */
 .spinner {
   width:46px; height:46px; border-radius:50%;
   border:4px solid var(--line); border-top-color:var(--accent);
@@ -499,5 +483,4 @@ input[type="range"].zoom::-moz-range-thumb {
 img.img-failed {
   background: linear-gradient(135deg, #e8e8e8 0%, #d3d3d3 100%);
 }
-
 

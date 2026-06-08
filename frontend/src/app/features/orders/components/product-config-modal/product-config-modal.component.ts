@@ -97,7 +97,6 @@ export class ProductConfigModalComponent {
     if (!this._product()) return false;
     if (this.hasVariants() && !this._selectedVariantId()) return false;
 
-    // Si hay acompañamientos obligatorios, verificar que se seleccionó uno
     const requiredAccompaniments = this.accompaniments().filter((a) => a.is_required);
     if (requiredAccompaniments.length > 0) {
       const selectedIds = this._selectedModifierIds();
@@ -115,12 +114,12 @@ export class ProductConfigModalComponent {
       return;
     }
 
-    // Auto-seleccionar acompañamientos obligatorios single por defecto
     const defaultModifiers = new Set<string>();
     for (const mod of this.accompaniments()) {
       if (mod.is_required && mod.selection_type === 'single') {
         defaultModifiers.add(mod.id);
-        break; // Solo el primer obligatorio
+        break;
+
       }
     }
     this._selectedModifierIds.set(defaultModifiers);
@@ -160,11 +159,11 @@ export class ProductConfigModalComponent {
       const next = new Set(current);
       if (modifier.selection_type === 'single') {
         if (next.has(modifier.id)) {
-          // Ya seleccionado: permitir deseleccionar ("ninguno")
+
           next.delete(modifier.id);
           return next;
         }
-        // No seleccionado: seleccionar y deseleccionar otros del mismo grupo
+
         const sameGroup = modifier.type === 'extra'
           ? this.extras().filter((m) => m.selection_type === 'single')
           : this.accompaniments().filter((m) => m.selection_type === 'single');
@@ -174,7 +173,7 @@ export class ProductConfigModalComponent {
         next.add(modifier.id);
         return next;
       }
-      // multi: toggle normal
+
       if (next.has(modifier.id)) {
         next.delete(modifier.id);
       } else {

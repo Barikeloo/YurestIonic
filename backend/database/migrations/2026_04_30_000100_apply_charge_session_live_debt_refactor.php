@@ -8,14 +8,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. La tabla charge_session_payments deja de existir: los pagos viven
-        // ahora exclusivamente en sale_payments con charge_session_id como
-        // etiqueta opcional.
+
         Schema::dropIfExists('charge_session_payments');
 
-        // 2. Las columnas congeladas (amount_per_diner, paid_diners_count,
-        // prepaid_cents) ya no existen en el dominio: la cuota y la deuda se
-        // calculan al vuelo a partir de los SalePayments.
         Schema::table('charge_sessions', function (Blueprint $table) {
             if (Schema::hasColumn('charge_sessions', 'amount_per_diner')) {
                 $table->dropColumn('amount_per_diner');
@@ -28,10 +23,6 @@ return new class extends Migration
             }
         });
 
-        // 3. SalePayment recibe etiquetas opcionales para trazar a qué sesión
-        // de cobro pertenece y, dentro de ella, a qué comensal. Sin FK estricta
-        // porque sale_payments usa bigInt + composites mientras charge_sessions
-        // usa UUID; la integridad se garantiza en el caso de uso.
         Schema::table('sale_payments', function (Blueprint $table) {
             $table->uuid('charge_session_id')->nullable()->after('cash_session_id');
             $table->unsignedSmallInteger('diner_number')->nullable()->after('charge_session_id');

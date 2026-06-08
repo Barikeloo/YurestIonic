@@ -14,8 +14,7 @@ return new class extends Migration
             $table->uuid('uuid')->unique();
             $table->string('name');
             $table->unsignedInteger('position')->default(0);
-            // Reglas de elección: típicamente 1/1 (elige UNA opción), pero
-            // soportamos rangos para casos como "elige hasta 2 platos".
+
             $table->unsignedSmallInteger('min_choices')->default(1);
             $table->unsignedSmallInteger('max_choices')->default(1);
             $table->timestamps();

@@ -10,16 +10,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
-/**
- * Walks the retention story from end to end against the same DB the
- * production endpoints touch — archive a backdated corpus, query the
- * stats endpoint, stream an export, verify the chain across the
- * archive boundary, and make sure both meta-events landed.
- *
- * Catches regressions where the pieces work in isolation but stop
- * talking to each other (cache key mismatch, archive flag flip,
- * audit recorder drift).
- */
 class AuditRetentionLifecycleTest extends TestCase
 {
     use RefreshDatabase;
@@ -38,8 +28,6 @@ class AuditRetentionLifecycleTest extends TestCase
         $restaurantId = $tenant['restaurant_id'];
         $restaurantUuid = $tenant['restaurant_uuid'];
 
-        // Build a properly-hashed chain of events so the verifier passes
-        // end-to-end. ~45 backdated (> 90 days) and ~5 recent ones.
         $prevUuid = null;
         $expectedArchived = 0;
         for ($monthsAgo = 12; $monthsAgo >= 4; $monthsAgo--) {
@@ -54,7 +42,6 @@ class AuditRetentionLifecycleTest extends TestCase
             $prevUuid = $this->insertChainedEvent($restaurantId, $restaurantUuid, $prevUuid, $createdAt, 'sale.recorded');
         }
 
-        // 1) Run the archive use case the same way the cron does.
         $archive = $this->app->make(ArchiveOldAuditLogs::class);
         $archiveResponse = ($archive)(new ArchiveOldAuditLogsCommand(
             olderThanDays: 90,
@@ -77,7 +64,6 @@ class AuditRetentionLifecycleTest extends TestCase
             'recent rows must stay live',
         );
 
-        // 2) Stats endpoint sees the archived corpus.
         $stats = $this->withSession($tenant['session'])->getJson('/api/admin/audit-log/archived-stats');
         $stats->assertStatus(200);
         $stats->assertJsonPath('total', $expectedArchived);
@@ -86,26 +72,21 @@ class AuditRetentionLifecycleTest extends TestCase
         $this->assertNotNull($statsBody['newest_created_at']);
         $this->assertGreaterThan(0, count($statsBody['monthly_breakdown']));
 
-        // 3) Export streams the archived rows (with include_archived) as CSV.
         $export = $this->withSession($tenant['session'])
             ->get('/api/admin/audit-log/export?include_archived=1&format=csv');
         $export->assertStatus(200);
         $body = $export->streamedContent();
         $lines = preg_split("/\r\n/", trim($body));
-        // Header + every row (archived + live) + the audit.exported we are about
-        // to emit isn't visible here because it lands after the stream completes.
+
         $this->assertGreaterThanOrEqual($expectedArchived + 1, count($lines));
         $this->assertStringStartsWith("\xEF\xBB\xBF", $body);
         $this->assertStringContainsString('caja.opened', $body);
 
-        // 4) Chain verifier walks archived + live rows (and the audit.archived
-        // meta-event that the use case appended to the tail of the chain).
         $verify = $this->withSession($tenant['session'])->getJson('/api/admin/audit-log/verify');
         $verify->assertStatus(200);
         $verify->assertJsonPath('is_valid', true);
         $verify->assertJsonPath('broken_events', []);
 
-        // 5) Meta-events landed.
         $this->assertSame(
             1,
             DB::table('audit_logs')->where('restaurant_id', $restaurantId)->where('action', 'audit.archived')->count(),
@@ -150,11 +131,9 @@ class AuditRetentionLifecycleTest extends TestCase
         $this->insertEvent($restaurantId, (new \DateTimeImmutable('-200 days'))->format('Y-m-d H:i:s'));
         $this->insertEvent($restaurantId, (new \DateTimeImmutable('-150 days'))->format('Y-m-d H:i:s'));
 
-        // First call: nothing archived yet, total should be 0 and cached.
         $first = $this->withSession($tenant['session'])->getJson('/api/admin/audit-log/archived-stats');
         $first->assertJsonPath('total', 0);
 
-        // Run the archive — this must invalidate the unfiltered cache key.
         $archive = $this->app->make(ArchiveOldAuditLogs::class);
         ($archive)(new ArchiveOldAuditLogsCommand(olderThanDays: 90, restaurantUuid: $restaurantUuid, dryRun: false));
 

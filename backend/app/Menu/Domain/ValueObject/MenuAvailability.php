@@ -7,16 +7,9 @@ namespace App\Menu\Domain\ValueObject;
 use App\Menu\Domain\Exception\MenuInvalidConfigurationException;
 use DateTimeImmutable;
 
-/**
- * Disponibilidad semanal de un menú.
- *
- * - daysBitmask: 7 bits. Bit 0 = Lunes ... Bit 6 = Domingo. 127 = todos los días.
- * - fromTime / toTime: franja horaria opcional. Si ambos null, disponible todo el día.
- *   Si solo uno está informado se considera configuración inválida.
- */
 final class MenuAvailability
 {
-    public const ALL_DAYS = 0b1111111; // 127
+    public const ALL_DAYS = 0b1111111;
 
     private const TIME_FORMAT = 'H:i:s';
 
@@ -38,11 +31,6 @@ final class MenuAvailability
         }
     }
 
-    /**
-     * @param  int  $daysBitmask  0..127
-     * @param  string|null  $fromTime  "HH:MM" o "HH:MM:SS"
-     * @param  string|null  $toTime  "HH:MM" o "HH:MM:SS"
-     */
     public static function create(int $daysBitmask, ?string $fromTime, ?string $toTime): self
     {
         return new self(
@@ -77,9 +65,6 @@ final class MenuAvailability
         return $this->fromTime === null && $this->toTime === null;
     }
 
-    /**
-     * @param  int  $isoWeekday  1=Lunes ... 7=Domingo
-     */
     public function isAvailableOnWeekday(int $isoWeekday): bool
     {
         if ($isoWeekday < 1 || $isoWeekday > 7) {
@@ -105,7 +90,7 @@ final class MenuAvailability
 
     private static function normalizeTime(string $time): string
     {
-        // Acepta "HH:MM" o "HH:MM:SS" y normaliza a "HH:MM:SS"
+
         if (preg_match('/^\d{2}:\d{2}$/', $time)) {
             return $time.':00';
         }

@@ -34,7 +34,7 @@ final class ExportAuditEventsRequest extends FormRequest
 
     public function toCommand(): ExportAuditEventsCommand
     {
-        /** @var TenantContext $tenantContext */
+
         $tenantContext = app(TenantContext::class);
 
         return new ExportAuditEventsCommand(

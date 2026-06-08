@@ -18,7 +18,6 @@ class OrderLineSeeder extends Seeder
 
         $now = now();
 
-        // Agregar líneas a cada orden
         foreach ($orders as $order) {
             $restaurantId = (int) $order->restaurant_id;
             $products = DB::table('products')

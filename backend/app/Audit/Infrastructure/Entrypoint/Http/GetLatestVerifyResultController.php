@@ -18,7 +18,7 @@ final class GetLatestVerifyResultController
     public function __invoke(): JsonResponse
     {
         try {
-            /** @var TenantContext $tenantContext */
+
             $tenantContext = app(TenantContext::class);
 
             $command = new GetLatestVerifyResultCommand(

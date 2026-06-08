@@ -19,7 +19,6 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
     {
         parent::setUp();
 
-        // Create superadmin test user
         $this->superAdminUuid = 'a0000000-0000-4000-8000-000000000001';
         $this->restaurantUuid = '11111111-1111-4111-8111-111111111111';
         EloquentSuperAdmin::create([
@@ -29,7 +28,6 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
             'password' => bcrypt('dev123456'),
         ]);
 
-        // Create test restaurant
         EloquentRestaurant::create([
             'uuid' => $this->restaurantUuid,
             'name' => 'Restaurant Zentral',
@@ -42,7 +40,7 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
 
     public function test_superadmin_can_edit_restaurant(): void
     {
-        // 1. Login as superadmin
+
         $response = $this->post('/api/superadmin/login', [
             'email' => 'dev@tpv.local',
             'password' => 'dev123456',
@@ -50,7 +48,6 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
 
         $response->assertStatus(200);
 
-        // 2. Update restaurant
         $response = $this->withSession(['super_admin_id' => $this->superAdminUuid])
             ->put('/api/superadmin/restaurants/'.$this->restaurantUuid, [
                 'name' => 'Restaurant Zentral Updated',
@@ -66,7 +63,6 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
             'email',
         ]);
 
-        // 3. Verify in database
         $restaurant = EloquentRestaurant::where('uuid', $this->restaurantUuid)->first();
         $this->assertEquals('Restaurant Zentral Updated', $restaurant->name);
         $this->assertEquals('Restaurant Zentral SL Updated', $restaurant->legal_name);
@@ -83,7 +79,7 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
 
     public function test_superadmin_gets_404_for_nonexistent_restaurant(): void
     {
-        // Login first
+
         $this->post('/api/superadmin/login', [
             'email' => 'dev@tpv.local',
             'password' => 'dev123456',
@@ -98,11 +94,10 @@ final class EditRestaurantAsSuperAdminTest extends TestCase
 
     public function test_superadmin_restaurants_route_exists(): void
     {
-        // Test that we can access GET route to confirm routes are loaded
+
         $response = $this->withSession(['super_admin_id' => $this->superAdminUuid])
             ->get('/api/superadmin/restaurants/'.$this->restaurantUuid);
 
-        // Should not be 404 (not found route) but 200 or 50x (server error)
         $this->assertNotEquals(404, $response->status(), 'Route does not exist. Get: '.$response->status().' - '.$response->getContent());
     }
 }

@@ -54,14 +54,14 @@ final class ChargeSessionResponseBuilder
             }
             $activeSaleIds[$sale->uuid()->value()] = true;
             foreach ($this->salePaymentRepository->findBySaleId($sale->uuid()) as $payment) {
-                /** @var SalePayment $payment */
+
                 $paidCents += $payment->amount()->toCents();
             }
         }
 
         $paidDinerNumbers = [];
         foreach ($this->salePaymentRepository->findByChargeSessionId($session->id()) as $payment) {
-            /** @var SalePayment $payment */
+
             if ($payment->dinerNumber() === null) {
                 continue;
             }
@@ -74,9 +74,6 @@ final class ChargeSessionResponseBuilder
         return [$totalCents, $paidCents, array_values(array_unique($paidDinerNumbers))];
     }
 
-    /**
-     * @return array<int, array{order_line_id: string, diner_number: int}>
-     */
     public function collectLineAssignments(ChargeSession $session): array
     {
         $assignments = $this->assignmentRepository->findBySessionId($session->id());
@@ -87,12 +84,6 @@ final class ChargeSessionResponseBuilder
         ], $assignments);
     }
 
-    /**
-     * IDs de order_lines de la order de la sesión que ya están en alguna sale —
-     * el front las debe descartar del pool de pendientes.
-     *
-     * @return array<int, string>
-     */
     public function collectPaidOrderLineIds(ChargeSession $session): array
     {
         $orderUuid = $session->orderId();

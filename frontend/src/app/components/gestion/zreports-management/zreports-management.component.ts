@@ -1,4 +1,3 @@
-
 import { Component, EventEmitter, Input, Output, signal } from '@angular/core';
 import { CardComponent } from '../../../shared/components/card/card.component';
 import { BadgeComponent } from '../../../shared/components/badge/badge.component';
@@ -47,9 +46,6 @@ export class ZReportsManagementComponent {
   public showReportModal = false;
   public readonly searchTerm = signal('');
 
-  // Búsqueda por número Z ("12", "Z12", "Z #12") o por fecha legible.
-  // Getter (no computed) porque `reports` es un @Input() clásico, no signal,
-  // y queremos que cambios en el input desde el padre se reflejen siempre.
   public get filteredReports(): ZReportRow[] {
     const term = this.searchTerm().trim().toLowerCase();
     if (!term) return this.reports;

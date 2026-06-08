@@ -13,10 +13,6 @@ class ProductPhotoUploadTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * Build an UploadedFile backed by a real PNG (100×80) that GD can decode
-     * for Intervention Image processing (resize + WebP conversion).
-     */
     private function realPhoto(string $name = 'plato.png'): UploadedFile
     {
         $png = base64_decode(
@@ -28,9 +24,6 @@ class ProductPhotoUploadTest extends TestCase
         return new UploadedFile($path, $name, 'image/png', null, true);
     }
 
-    /**
-     * @return array{session: array<string, mixed>, productId: string}
-     */
     private function createProduct(): array
     {
         $tenant = $this->createTenantSession('admin');
@@ -65,7 +58,6 @@ class ProductPhotoUploadTest extends TestCase
 
         ['session' => $session, 'productId' => $productId] = $this->createProduct();
 
-        // 1. Admin generates an upload token.
         $tokenResponse = $this->withSession($session)
             ->postJson("/api/admin/products/{$productId}/photo-upload-token");
 
@@ -76,12 +68,10 @@ class ProductPhotoUploadTest extends TestCase
         $this->assertMatchesRegularExpression('/^[a-f0-9]{64}$/', $token);
         $this->assertStringContainsString("/u/foto/{$token}", $tokenResponse->json('upload_url'));
 
-        // 2. Mobile fetches context (public, no auth).
         $this->getJson("/api/public/photo-upload/{$token}")
             ->assertStatus(200)
             ->assertJson(['product_name' => 'Coca Cola', 'image_src' => null]);
 
-        // 3. Mobile uploads the photo.
         $upload = $this->postJson("/api/public/photo-upload/{$token}", [
             'photo' => $this->realPhoto(),
         ]);
@@ -91,15 +81,12 @@ class ProductPhotoUploadTest extends TestCase
         $imageSrc = $upload->json('image_src');
         $this->assertNotNull($imageSrc);
 
-        // The file lives on the disk under the deterministic product path.
         $this->assertNotEmpty(Storage::disk('public')->allFiles('products'));
 
-        // 4. The product now carries the new image.
         $this->withSession($session)->getJson("/api/admin/products/{$productId}")
             ->assertStatus(200)
             ->assertJson(['image_src' => $imageSrc]);
 
-        // 5. The token is single-use: context and re-upload are now rejected.
         $this->getJson("/api/public/photo-upload/{$token}")->assertStatus(409);
         $this->postJson("/api/public/photo-upload/{$token}", [
             'photo' => $this->realPhoto('otra.png'),

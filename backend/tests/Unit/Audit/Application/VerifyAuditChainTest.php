@@ -67,7 +67,6 @@ class VerifyAuditChainTest extends TestCase
             prevHash: null,
         );
 
-        // Compute actual hashes using the hasher
         $hash1 = $this->hasher->compute(
             prevHash: null,
             uuid: $event1->uuid()->value(),
@@ -97,7 +96,6 @@ class VerifyAuditChainTest extends TestCase
             after: $event2->after(),
         );
 
-        // Rebuild logs with correct hashes
         $event1Valid = AuditLog::dddCreate(
             uuid: $event1->uuid(),
             restaurantId: $restaurantId,
@@ -156,7 +154,8 @@ class VerifyAuditChainTest extends TestCase
             category: Category::create('order'),
             severity: Severity::create('info'),
             summary: 'Event 1',
-            integrityHash: 'tampered-hash', // does not match computed
+            integrityHash: 'tampered-hash',
+
             prevHash: null,
         );
 

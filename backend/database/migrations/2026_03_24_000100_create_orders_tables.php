@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Tabla de órdenes/pedidos
+
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();
@@ -24,7 +24,6 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        // Tabla de líneas de órdenes
         Schema::create('order_lines', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid')->unique();

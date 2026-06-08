@@ -28,12 +28,10 @@ export class PermissionsService {
   public readonly isSupervisor: Signal<boolean> = computed(() => this.role() === 'supervisor');
   public readonly isOperator: Signal<boolean> = computed(() => this.role() === 'operator');
 
-  // Convenience: any role at supervisor level or above
   public readonly isSupervisorOrAbove: Signal<boolean> = computed(
     () => this.isAdmin() || this.isSupervisor(),
   );
 
-  // ── Order-specific capabilities ───────────────
   public readonly canCancelOrders: Signal<boolean> = this.isSupervisorOrAbove;
   public readonly canReopenOrders: Signal<boolean> = this.isSupervisorOrAbove;
   public readonly canDeleteOrders: Signal<boolean> = this.isSupervisorOrAbove;

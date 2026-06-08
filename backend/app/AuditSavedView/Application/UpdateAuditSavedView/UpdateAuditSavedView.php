@@ -34,8 +34,7 @@ final class UpdateAuditSavedView
         }
 
         if ($command->icon !== null) {
-            // Rebuild with new icon. Since there's no dedicated withUpdatedIcon,
-            // we rebuild from current state.
+
             $updated = \App\AuditSavedView\Domain\Entity\AuditSavedView::dddCreate(
                 uuid: $updated->uuid(),
                 restaurantId: $updated->restaurantId(),

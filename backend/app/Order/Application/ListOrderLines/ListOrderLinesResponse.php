@@ -6,10 +6,7 @@ use App\Order\Domain\Entity\OrderLine;
 
 final class ListOrderLinesResponse
 {
-    /**
-     * @param  array<int, array{id: string, name: string, price: int, type: string}>|null  $modifiers
-     * @param  array<int, array{section_name: string, product_id: string, product_name: string, variant_id: ?string, variant_name: ?string, modifiers: array<int, array{id: string, name: string, price: int, type: string}>, extra_price: int}>|null  $menu_selections
-     */
+
     public function __construct(
         public readonly string $id,
         public readonly string $uuid,

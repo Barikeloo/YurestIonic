@@ -95,7 +95,8 @@ class CreateMenuTest extends TestCase
             price: 0,
             validityFrom: '2026-01-01',
             validityTo: '2026-12-31',
-            availableDays: 62, // L-V
+            availableDays: 62,
+
             availableFromTime: '10:00',
             availableToTime: '22:00',
             active: true,

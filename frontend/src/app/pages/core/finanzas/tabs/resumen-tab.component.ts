@@ -37,7 +37,6 @@ export class ResumenTabComponent {
   protected trendBg(d: number):     string { return d >= 0 ? '#e8f7ef' : '#ffecec'; }
   protected trendArrow(d: number):  string { return d >= 0 ? '↑' : '↓'; }
 
-  // ── Sparkline ──────────────────────────────────────────────────────────────
   protected sparkPath(data: number[], W = 100, H = 24): string {
     if (!data.length) return '';
     const max = Math.max(...data, 1);
@@ -66,7 +65,7 @@ export class ResumenTabComponent {
   }
 
   // ── BarChart ───────────────────────────────────────────────────────────────
-  // Uses SVG viewBox 0 0 100 100 (same as design)
+
   protected readonly CHART_PAD = 2;
 
   protected get barItems(): BarItem[] {
@@ -135,7 +134,6 @@ export class ResumenTabComponent {
     return this.hoveredDonut() === i ? this.donutThickness + 2 : this.donutThickness;
   }
 
-  // ── Open tables ────────────────────────────────────────────────────────────
   protected tableStateLabel(s: string): string {
     const m: Record<string, string> = { eating: 'Comiendo', paying: 'Cobrando', ordering: 'Pidiendo', idle: 'Inactiva' };
     return m[s] || s;
@@ -150,7 +148,6 @@ export class ResumenTabComponent {
     return this.facade.openTables.reduce((s, t) => s + t.current, 0);
   }
 
-  // ── Methods ────────────────────────────────────────────────────────────────
   protected methodEntries(): { key: string; label: string; color: string; v: number; n: number }[] {
     const m = this.facade.byMethod;
     return [
@@ -162,7 +159,6 @@ export class ResumenTabComponent {
     ];
   }
 
-  // ── Forecast ───────────────────────────────────────────────────────────────
   protected get forecastProgress(): number {
     const f = this.facade.forecast;
     return (f.closed / f.projection) * 100;
@@ -173,7 +169,6 @@ export class ResumenTabComponent {
     return this.facade.pendingPayments.reduce((s, p) => s + p.total, 0);
   }
 
-  // ── Insights ───────────────────────────────────────────────────────────────
   protected readonly insights = [
     { icon: '★', text: 'Pico de comida a las 14h con 394 € · refuerza turno', color: '#ff4d4d' },
     { icon: '↑', text: 'Bebidas tira el carro: 36% del total (vs 32% ayer)',  color: '#1a9e5a' },

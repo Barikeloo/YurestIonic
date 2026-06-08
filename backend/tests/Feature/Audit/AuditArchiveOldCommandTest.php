@@ -16,7 +16,6 @@ class AuditArchiveOldCommandTest extends TestCase
         $tenant = $this->createTenantSession();
         $restaurantId = $tenant['restaurant_id'];
 
-        // Two rows older than 90 days, one row from yesterday (should NOT be archived).
         $this->insertAuditLog($restaurantId, now()->subDays(120));
         $this->insertAuditLog($restaurantId, now()->subDays(100));
         $recentUuid = $this->insertAuditLog($restaurantId, now()->subDay());
@@ -77,7 +76,8 @@ class AuditArchiveOldCommandTest extends TestCase
     public function test_rejects_zero_or_negative_threshold(): void
     {
         $this->artisan('audit:archive-old', ['--older-than-days' => 0])
-            ->assertExitCode(2); // Command::INVALID
+            ->assertExitCode(2);
+
     }
 
     public function test_re_running_is_idempotent(): void
@@ -90,7 +90,6 @@ class AuditArchiveOldCommandTest extends TestCase
         $this->artisan('audit:archive-old', ['--older-than-days' => 90])->assertExitCode(0);
         $firstArchivedAt = DB::table('audit_logs')->where('restaurant_id', $restaurantId)->value('archived_at');
 
-        // Sleep one second so we can detect a re-archive if it happens.
         sleep(1);
 
         $this->artisan('audit:archive-old', ['--older-than-days' => 90])

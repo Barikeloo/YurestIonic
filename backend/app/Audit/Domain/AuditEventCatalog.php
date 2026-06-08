@@ -11,15 +11,9 @@ use App\Audit\Domain\ValueObject\Severity;
 
 final class AuditEventCatalog
 {
-    /**
-     * Central registry of every audit event the system can emit.
-     * Adding a new event = adding one entry here + emitting from the corresponding use case.
-     * Slug not present here = UnknownAuditActionException at record time.
-     *
-     * @var array<string, array{category: string, severity: string, summary: string}>
-     */
+
     private const EVENTS = [
-        // Auth
+
         'auth.login_pin_ok' => [
             'category' => 'auth',
             'severity' => 'success',
@@ -36,7 +30,6 @@ final class AuditEventCatalog
             'summary' => 'Dispositivo {device_id} vinculado al usuario.',
         ],
 
-        // Order
         'order.created' => [
             'category' => 'order',
             'severity' => 'info',
@@ -138,7 +131,6 @@ final class AuditEventCatalog
             'summary' => 'Línea {entity_id} añadida a venta {metadata.sale_id}: {metadata.quantity}×.',
         ],
 
-        // Caja
         'caja.opened' => [
             'category' => 'caja',
             'severity' => 'info',
@@ -175,7 +167,6 @@ final class AuditEventCatalog
             'summary' => 'Generado informe Z #{metadata.report_number} con total de {metadata.total_sales_formatted}.',
         ],
 
-        // Sale
         'sale.created' => [
             'category' => 'sale',
             'severity' => 'success',
@@ -192,7 +183,6 @@ final class AuditEventCatalog
             'summary' => 'Venta {entity_id} cancelada. Motivo: {reason}.',
         ],
 
-        // Config (gestión de usuarios y ajustes del restaurante)
         'user.created' => [
             'category' => 'config',
             'severity' => 'warning',
@@ -224,7 +214,6 @@ final class AuditEventCatalog
             'summary' => 'Impuesto {metadata.tax_name} ({metadata.percentage}%) eliminado.',
         ],
 
-        // Catalog
         'product.created' => [
             'category' => 'catalog',
             'severity' => 'info',
@@ -332,7 +321,6 @@ final class AuditEventCatalog
             'summary' => 'Variante {before.name} eliminada (producto {metadata.product_id}).',
         ],
 
-        // Auth
         'auth.login_successful' => [
             'category' => 'auth',
             'severity' => 'info',
@@ -349,7 +337,6 @@ final class AuditEventCatalog
             'summary' => 'Contraseña cambiada para {entity_id}.',
         ],
 
-        // Restaurant
         'restaurant.created' => [
             'category' => 'config',
             'severity' => 'info',
@@ -361,7 +348,6 @@ final class AuditEventCatalog
             'summary' => 'Restaurante {metadata.restaurant_name} actualizado.',
         ],
 
-        // Tables
         'table.created' => [
             'category' => 'table',
             'severity' => 'info',
@@ -403,7 +389,6 @@ final class AuditEventCatalog
             'summary' => 'Zona {metadata.zone_name} eliminada.',
         ],
 
-        // System
         'audit.archived' => [
             'category' => 'system',
             'severity' => 'info',
@@ -417,10 +402,6 @@ final class AuditEventCatalog
         ],
     ];
 
-    /**
-     * @param  array<string, mixed>  $context  Top-level keys (entity_id, device_id...) + nested metadata/before/after.
-     * @return array{category: Category, severity: Severity, summary: string}
-     */
     public static function resolve(ActionSlug $slug, array $context): array
     {
         $slugValue = $slug->value();
@@ -443,17 +424,11 @@ final class AuditEventCatalog
         return isset(self::EVENTS[$slug]);
     }
 
-    /**
-     * @return list<string>
-     */
     public static function allSlugs(): array
     {
         return array_keys(self::EVENTS);
     }
 
-    /**
-     * Replaces {key} and {prefix.nested.key} placeholders. Missing keys render as "—".
-     */
     private static function renderTemplate(string $template, array $context): string
     {
         return preg_replace_callback(

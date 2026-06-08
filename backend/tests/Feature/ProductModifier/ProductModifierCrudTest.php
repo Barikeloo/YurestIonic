@@ -43,7 +43,7 @@ class ProductModifierCrudTest extends TestCase
 
     public function test_modifier_full_crud_flow(): void
     {
-        // Create
+
         $createResponse = $this->withSession($this->tenant['session'])
             ->postJson("/api/admin/products/{$this->productId}/modifiers", [
                 'name' => 'Extra queso',
@@ -72,7 +72,6 @@ class ProductModifierCrudTest extends TestCase
 
         $modifierId = $createResponse->json('id');
 
-        // List
         $this->withSession($this->tenant['session'])
             ->getJson("/api/admin/products/{$this->productId}/modifiers")
             ->assertStatus(200)
@@ -81,14 +80,12 @@ class ProductModifierCrudTest extends TestCase
                 'name' => 'Extra queso',
             ]);
 
-        // List empty for different product
         $otherProductId = $this->createAdditionalProduct();
         $this->withSession($this->tenant['session'])
             ->getJson("/api/admin/products/{$otherProductId}/modifiers")
             ->assertStatus(200)
             ->assertJson(['modifiers' => []]);
 
-        // Update
         $this->withSession($this->tenant['session'])
             ->putJson("/api/admin/products/{$this->productId}/modifiers/{$modifierId}", [
                 'name' => 'Extra cheddar',
@@ -108,7 +105,6 @@ class ProductModifierCrudTest extends TestCase
                 'sort_order' => 2,
             ]);
 
-        // Update validation: extra + required
         $this->withSession($this->tenant['session'])
             ->putJson("/api/admin/products/{$this->productId}/modifiers/{$modifierId}", [
                 'name' => 'Extra queso',
@@ -121,7 +117,6 @@ class ProductModifierCrudTest extends TestCase
             ])
             ->assertStatus(422);
 
-        // Update 404
         $this->withSession($this->tenant['session'])
             ->putJson("/api/admin/products/{$this->productId}/modifiers/" . $this->nonExistentUuid(), [
                 'name' => 'Test',
@@ -134,18 +129,15 @@ class ProductModifierCrudTest extends TestCase
             ])
             ->assertStatus(404);
 
-        // Delete
         $this->withSession($this->tenant['session'])
             ->deleteJson("/api/admin/products/{$this->productId}/modifiers/{$modifierId}")
             ->assertStatus(204);
 
-        // Verify deletion via list
         $this->withSession($this->tenant['session'])
             ->getJson("/api/admin/products/{$this->productId}/modifiers")
             ->assertStatus(200)
             ->assertJson(['modifiers' => []]);
 
-        // Delete 404
         $this->withSession($this->tenant['session'])
             ->deleteJson("/api/admin/products/{$this->productId}/modifiers/{$modifierId}")
             ->assertStatus(404);
@@ -172,12 +164,11 @@ class ProductModifierCrudTest extends TestCase
 
     public function test_create_modifier_validation_errors(): void
     {
-        // Missing required fields
+
         $this->withSession($this->tenant['session'])
             ->postJson("/api/admin/products/{$this->productId}/modifiers", [])
             ->assertStatus(422);
 
-        // Invalid type
         $this->withSession($this->tenant['session'])
             ->postJson("/api/admin/products/{$this->productId}/modifiers", [
                 'name' => 'Test',
@@ -186,7 +177,6 @@ class ProductModifierCrudTest extends TestCase
             ])
             ->assertStatus(422);
 
-        // Empty name
         $this->withSession($this->tenant['session'])
             ->postJson("/api/admin/products/{$this->productId}/modifiers", [
                 'name' => '',
@@ -195,7 +185,6 @@ class ProductModifierCrudTest extends TestCase
             ])
             ->assertStatus(422);
 
-        // Negative price
         $this->withSession($this->tenant['session'])
             ->postJson("/api/admin/products/{$this->productId}/modifiers", [
                 'name' => 'Test',
@@ -204,7 +193,6 @@ class ProductModifierCrudTest extends TestCase
             ])
             ->assertStatus(422);
 
-        // Extra + required
         $this->withSession($this->tenant['session'])
             ->postJson("/api/admin/products/{$this->productId}/modifiers", [
                 'name' => 'Test',
@@ -214,7 +202,6 @@ class ProductModifierCrudTest extends TestCase
             ])
             ->assertStatus(422);
 
-        // Product not found
         $this->withSession($this->tenant['session'])
             ->postJson('/api/admin/products/' . $this->nonExistentUuid() . '/modifiers', [
                 'name' => 'Test',
@@ -272,14 +259,13 @@ class ProductModifierCrudTest extends TestCase
 
     public function test_reorder_validation_errors(): void
     {
-        // Empty items
+
         $this->withSession($this->tenant['session'])
             ->putJson("/api/admin/products/{$this->productId}/modifiers/reorder", [
                 'items' => [],
             ])
             ->assertStatus(422);
 
-        // Missing id
         $this->withSession($this->tenant['session'])
             ->putJson("/api/admin/products/{$this->productId}/modifiers/reorder", [
                 'items' => [

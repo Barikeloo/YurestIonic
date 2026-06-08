@@ -7,17 +7,9 @@ namespace App\Menu\Application\Shared;
 use App\Menu\Domain\Entity\Menu;
 use App\Menu\Domain\Entity\MenuSection;
 
-/**
- * Convierte un Menu del dominio en su representación serializable para HTTP.
- *
- * Es un helper estático para mantener todas las Responses (Create/Update/Get/List)
- * con el mismo shape sin duplicar código.
- */
 final class MenuView
 {
-    /**
-     * @return array<string, mixed>
-     */
+
     public static function toArray(Menu $menu): array
     {
         $validity = $menu->validity();
@@ -43,9 +35,6 @@ final class MenuView
         ];
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     private static function sectionToArray(MenuSection $section): array
     {
         return [

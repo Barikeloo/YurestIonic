@@ -28,9 +28,6 @@ final readonly class GetTaxResponse
         );
     }
 
-    /**
-     * @return array<string, int|string>
-     */
     public function toArray(): array
     {
         return [

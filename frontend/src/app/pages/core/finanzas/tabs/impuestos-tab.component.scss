@@ -17,14 +17,12 @@
 .card-sub   { font-size: 11.5px; color: #7a7a7a; margin-top: 2px; }
 .mono { font-family: 'DM Mono', monospace; }
 
-// ── Top row ───────────────────────────────────────────────────────────────────
 .top-row {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
   gap: 16px;
 }
 
-// ── VAT rows ──────────────────────────────────────────────────────────────────
 .vat-rows {
   display: flex;
   flex-direction: column;
@@ -125,7 +123,6 @@
   }
 }
 
-// ── Resumen periodo ───────────────────────────────────────────────────────────
 .resumen-body {
   display: flex;
   flex-direction: column;
@@ -191,7 +188,6 @@
   strong { color: #0d0d0d; }
 }
 
-// ── Modelo 303 card ───────────────────────────────────────────────────────────
 .m303-card {
   background: linear-gradient(180deg, #fff 0%, #fafafa 100%);
   border: 1px solid #e8e8e8;
@@ -241,7 +237,6 @@
   margin-top: 2px;
 }
 
-// Quarter segment
 .segment {
   display: flex;
   background: #f4f4f4;
@@ -273,7 +268,6 @@
   &:hover:not(.seg-btn--active) { color: #0d0d0d; }
 }
 
-// Progress row
 .m303-progress-row {
   display: flex;
   align-items: center;
@@ -323,7 +317,6 @@
   flex-shrink: 0;
 }
 
-// Rate cards grid
 .m303-rate-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -405,7 +398,6 @@
   margin: 10px 0;
 }
 
-// Dark total bar
 .m303-total-bar {
   margin-top: 18px;
   padding: 14px 18px;
@@ -468,7 +460,6 @@
   &:hover { opacity: 0.88; }
 }
 
-// ── Modal ─────────────────────────────────────────────────────────────────────
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -546,7 +537,6 @@
   background: #fafafa;
 }
 
-// ── Faux PDF ──────────────────────────────────────────────────────────────────
 .pdf-preview {
   background: #fff;
   border: 1px solid #d3d3d3;
@@ -729,7 +719,6 @@
 .bold { font-weight: 700; }
 .red  { color: #ff4d4d; }
 
-// ── Modal footer ──────────────────────────────────────────────────────────────
 .modal-foot {
   padding: 14px 24px;
   border-top: 1px solid #e8e8e8;

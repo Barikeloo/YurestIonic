@@ -34,7 +34,7 @@ final class UpdateAuditSavedViewRequest extends FormRequest
 
     public function toCommand(): UpdateAuditSavedViewCommand
     {
-        /** @var TenantContext $tenantContext */
+
         $tenantContext = app(TenantContext::class);
 
         return new UpdateAuditSavedViewCommand(

@@ -95,7 +95,6 @@ button { font-family: inherit; }
   &.live.on .live-dot { background: #FF4D4D; }
 }
 
-/* Tabs */
 .audit-tabs {
   display: flex;
   gap: 10px;
@@ -152,7 +151,6 @@ button { font-family: inherit; }
   }
 }
 
-/* Historico mode banner */
 .historico-banner {
   display: flex;
   align-items: center;
@@ -206,7 +204,6 @@ button { font-family: inherit; }
   }
 }
 
-/* Layout */
 .audit-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 420px;
@@ -222,7 +219,6 @@ button { font-family: inherit; }
   min-height: 0;
 }
 
-/* KPIs */
 .summary-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -284,7 +280,6 @@ button { font-family: inherit; }
   display: block;
 }
 
-/* Refresh row */
 .refresh-row {
   display: flex;
   align-items: center;
@@ -340,7 +335,6 @@ button { font-family: inherit; }
   100% { opacity: 1; transform: scale(1); }
 }
 
-/* Waterfall chart */
 .waterfall {
   background: #fff;
   border: 1px solid #E8E8E8;
@@ -442,7 +436,6 @@ button { font-family: inherit; }
   margin-top: -2px;
 }
 
-/* Smart filter chips */
 .audit-chips {
   display: flex;
   gap: 8px;
@@ -509,7 +502,6 @@ button { font-family: inherit; }
   opacity: .8;
 }
 
-/* Toolbar */
 .audit-toolbar {
   display: grid;
   grid-template-columns: 1.1fr 1fr 1.1fr 0.9fr 1.4fr minmax(0, 1.6fr) 48px;
@@ -689,7 +681,6 @@ button { font-family: inherit; }
   &:active { transform: scale(.95); }
 }
 
-/* List */
 .audit-list-wrap {
   border: 1px solid #E8E8E8;
   border-radius: 14px;
@@ -927,7 +918,6 @@ button { font-family: inherit; }
   transition: color .15s, transform .15s;
 }
 
-/* Severity */
 .sev-info     { background: #EAF1FD; color: #1A6FE8; }
 .sev-warning  { background: #FFF4E6; color: #D97706; }
 .sev-danger   { background: #FBECEC; color: #B64040; }
@@ -958,7 +948,6 @@ button { font-family: inherit; }
   text-transform: uppercase;
 }
 
-/* Empty state */
 .empty-state {
   flex: 1;
   display: flex;
@@ -997,7 +986,6 @@ button { font-family: inherit; }
 
 .empty-state .btn-ghost { margin-top: 6px; }
 
-/* Detail panel */
 .audit-detail {
   border: 1px solid #E8E8E8;
   border-radius: 14px;
@@ -1127,7 +1115,6 @@ button { font-family: inherit; }
   gap: 6px;
 }
 
-/* Who block */
 .who-row {
   display: flex;
   align-items: center;
@@ -1200,7 +1187,6 @@ button { font-family: inherit; }
   &:hover { color: #FF4D4D; }
 }
 
-/* Diff block */
 .diff-table {
   border: 1px solid #E8E8E8;
   border-radius: 10px;
@@ -1266,7 +1252,6 @@ button { font-family: inherit; }
   .arrow { color: #C8C8C8; }
 }
 
-/* Context */
 .context-prose {
   font-size: 13.5px;
   color: #3D3D3D;
@@ -1328,7 +1313,6 @@ button { font-family: inherit; }
   .p { color: #A0A0A0; }
 }
 
-/* Hash row */
 .hash-row {
   display: flex;
   align-items: center;
@@ -1376,7 +1360,6 @@ button { font-family: inherit; }
   }
 }
 
-/* Related events */
 .related-list {
   display: flex;
   flex-direction: column;
@@ -1447,7 +1430,6 @@ button { font-family: inherit; }
   }
 }
 
-/* Detail footer */
 .detail-footer {
   border-top: 1px solid #F0F0F0;
   padding: 14px 18px 18px;
@@ -1517,7 +1499,6 @@ button { font-family: inherit; }
   }
 }
 
-/* Anomaly badge */
 .anomaly-badge {
   display: inline-flex;
   align-items: center;
@@ -1539,7 +1520,6 @@ button { font-family: inherit; }
   &.sev-warning  { background: #FFE9DA; color: #C2410C; }
 }
 
-/* Row hover actions */
 .row-hover-actions {
   position: absolute;
   right: 38px; top: 50%;
@@ -1564,7 +1544,6 @@ button { font-family: inherit; }
   &:hover { background: #FFECEC; border-color: #FF4D4D; color: #FF4D4D; }
 }
 
-/* Saved views */
 .saved-views { position: relative; }
 
 .saved-views-trigger {
@@ -1661,7 +1640,6 @@ button { font-family: inherit; }
   &:hover { color: #FF4D4D; border-color: #FF4D4D; }
 }
 
-/* Audit-of-audit footer bar — lives inside .audit-list-wrap */
 .audit-of-audit {
   flex-shrink: 0;
   background: #FAFAFA;
@@ -1708,7 +1686,6 @@ button { font-family: inherit; }
   background: #fff;
 }
 
-/* Toast */
 .toast {
   position: fixed;
   left: 50%;
@@ -1733,7 +1710,6 @@ button { font-family: inherit; }
   to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
-/* Skeleton */
 .skel {
   background: linear-gradient(90deg, #F0F0F0 0%, #F8F8F8 50%, #F0F0F0 100%);
   background-size: 200% 100%;
@@ -1749,7 +1725,6 @@ button { font-family: inherit; }
   to   { transform: rotate(360deg); }
 }
 
-/* ── Alert bell & dropdown ─────────────────────────────────── */
 .alert-bell-wrap {
   position: relative;
 }
@@ -1949,7 +1924,6 @@ button { font-family: inherit; }
 .alert-item:hover { background: #FAFBFC; }
 .alert-item:active { transform: scale(0.998); }
 
-/* ── Unread state — vibrant, attention-grabbing ─────────────── */
 .alert-item.unread { background: #FFFBF4; }
 .alert-item.unread:hover { background: #FFF6E6; }
 
@@ -1968,7 +1942,6 @@ button { font-family: inherit; }
   flex-shrink: 0;
 }
 
-/* ── Side stripe — severity-coded only when unread ──────────── */
 .alert-stripe {
   position: absolute;
   left: 0;
@@ -1984,7 +1957,6 @@ button { font-family: inherit; }
 .alert-item.unread.sev-info     .alert-stripe { background: #1A6FE8; }
 .alert-item.unread.sev-success  .alert-stripe { background: #1A9E5A; }
 
-/* ── Icon block — full color when unread, muted when read ───── */
 .alert-icon {
   flex-shrink: 0;
   width: 30px;
@@ -2017,7 +1989,6 @@ button { font-family: inherit; }
   margin-bottom: 4px;
 }
 
-/* ── Typography hierarchy — bold/dark when unread, light when read ── */
 .alert-kind-label {
   font-size: 12.5px;
   font-weight: 600;
@@ -2103,7 +2074,6 @@ button { font-family: inherit; }
   color: #3D3D3D;
 }
 
-/* Highlight pulse for an event row when navigated from an alert */
 .event-row.pulse-highlight {
   animation: row-pulse 1.6s ease-out 1;
 }

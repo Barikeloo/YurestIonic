@@ -58,7 +58,7 @@ class AnomalyDetectorTest extends TestCase
             ->shouldReceive('countRecentByActionAndUser')
             ->once()
             ->with($restaurantId, Mockery::type(ActionSlug::class), $userId, 300)
-            ->andReturn(3); // 3 prior + this one = 4 >= 3
+            ->andReturn(3);
 
         $result = $this->detector->detect($draft);
 
@@ -78,7 +78,7 @@ class AnomalyDetectorTest extends TestCase
         $this->repository
             ->shouldReceive('countRecentByActionAndUser')
             ->once()
-            ->andReturn(1); // 1 prior + this one = 2 < 3
+            ->andReturn(1);
 
         $result = $this->detector->detect($draft);
 

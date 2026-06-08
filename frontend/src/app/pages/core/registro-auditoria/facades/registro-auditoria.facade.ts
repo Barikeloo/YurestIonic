@@ -91,13 +91,11 @@ export class RegistroAuditoriaFacade {
   private readonly restaurantContextFacade = inject(RestaurantContextFacade);
   private readonly authService = inject(AuthService);
 
-  // ── Constants exposed ────────────────────────────────────────
   public readonly TABS = TABS;
   public readonly CHIPS = CHIPS;
   public readonly CATEGORIES = CATEGORIES;
   public readonly SEV_LABEL = SEV_LABEL;
 
-  // ── Private state ────────────────────────────────────────────
   private readonly _events = signal<AuditEvent[]>([]);
   private readonly _includeArchived = signal<boolean>(false);
   private rawApiEvents: AuditEventApi[] = [];
@@ -123,16 +121,13 @@ export class RegistroAuditoriaFacade {
   private readonly _unreadAlertCount = signal(0);
   private readonly _alertsOpen = signal(false);
 
-  // ── Timers ───────────────────────────────────────────────────
   private refreshTimer?: ReturnType<typeof setInterval>;
   private liveTailTimer?: ReturnType<typeof setInterval>;
   private toastTimer?: ReturnType<typeof setTimeout>;
   private alertTimer?: ReturnType<typeof setInterval>;
 
-  // ── Race guard ───────────────────────────────────────────────
   private loadVersion = 0;
 
-  // ── Public readonly signals ────────────────────────────────
   public readonly events: Signal<AuditEvent[]> = this._events.asReadonly();
   public readonly includeArchived: Signal<boolean> = this._includeArchived.asReadonly();
   public readonly usersDirectory: Signal<Record<string, UserDirectoryEntry>> = this._usersDirectory.asReadonly();
@@ -157,7 +152,6 @@ export class RegistroAuditoriaFacade {
   public readonly unreadAlertCount: Signal<number> = this._unreadAlertCount.asReadonly();
   public readonly alertsOpen: Signal<boolean> = this._alertsOpen.asReadonly();
 
-  // ── Computed: merged saved views (defaults + backend) ──────
   public readonly mergedSavedViews = computed<AuditSavedViewMergedItem[]>(() => {
     const backend = this._savedViews().map((v): AuditSavedViewMergedItem => ({
       id: v.uuid,
@@ -170,7 +164,6 @@ export class RegistroAuditoriaFacade {
     return [...defaults, ...backend];
   });
 
-  // ── Data loading ───────────────────────────────────────────
   public loadInitial(filters: ListAuditEventsFilters): void {
     const version = ++this.loadVersion;
     this._isLoading.set(true);
@@ -231,7 +224,6 @@ export class RegistroAuditoriaFacade {
     });
   }
 
-  // ── Live tail ──────────────────────────────────────────────
   public startRefreshTimer(): void {
     this.refreshTimer = setInterval(() => {
       if (this._liveTail()) this._refreshCount.update(c => (c + 1) % 30);
@@ -255,15 +247,13 @@ export class RegistroAuditoriaFacade {
         this.rawApiEvents = [...resp.data, ...this.rawApiEvents];
         this._events.update(prev => [...adapted, ...prev]);
       },
-      error: () => { /* silencioso */ },
+      error: () => {
+ },
     });
   }
 
-  // ── Users directory ────────────────────────────────────────
   public loadUsersDirectory(): void {
-    // Idempotent: skip if directory already populated. Allows callers
-    // (ngOnInit AND the reactive subscription that runs on every URL
-    // change) to invoke it without worrying about duplicate fetches.
+
     if (Object.keys(this._usersDirectory()).length > 0) return;
 
     const tryFetch = (): boolean => {
@@ -275,9 +265,6 @@ export class RegistroAuditoriaFacade {
 
     if (tryFetch()) return;
 
-    // Page reloaded directly — currentUser is being rehydrated by getMe() asynchronously.
-    // Wait for it once and retry, otherwise the directory stays empty and audit log
-    // entries render as "Usuario desconocido".
     this.authService.currentUser$
       .pipe(filter((u): u is AuthUser => u !== null), take(1))
       .subscribe(() => tryFetch());
@@ -304,7 +291,8 @@ export class RegistroAuditoriaFacade {
         this._usersDirectory.set(dir);
         this.reAdaptEventsWithDirectory();
       },
-      error: () => { /* silenciamos */ },
+      error: () => {
+ },
     });
   }
 
@@ -314,7 +302,6 @@ export class RegistroAuditoriaFacade {
     this._events.set(this.rawApiEvents.map(api => adaptApiEvent(api, dir)));
   }
 
-  // ── Saved Views CRUD ───────────────────────────────────────
   public loadSavedViews(): void {
     this._isLoadingViews.set(true);
     this.auditLogService.listSavedViews().subscribe({
@@ -383,8 +370,6 @@ export class RegistroAuditoriaFacade {
 
   public setAlertsOpen(value: boolean): void { this._alertsOpen.set(value); }
 
-  // ── Lifecycle ────────────────────────────────────────────────
-  // ── Alert methods ──────────────────────────────────────────
   public loadAlerts(): void {
     this.auditAlertService.listAlerts().subscribe({
       next: (res) => {

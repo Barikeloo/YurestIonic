@@ -13,7 +13,7 @@ final class MarkAllAlertsReadController
 {
     public function __invoke(): JsonResponse
     {
-        /** @var TenantContext $tenantContext */
+
         $tenantContext = app(TenantContext::class);
         $restaurantUuid = $tenantContext->restaurantUuid();
 

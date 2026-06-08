@@ -1,4 +1,3 @@
-
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { GestionProductsFacade, ProductRow, ProductFormData } from '../../../pages/core/gestion/facades/gestion-products.facade';
@@ -51,7 +50,6 @@ export class ProductsManagementComponent {
     return this.products()[index] ?? null;
   });
 
-  // Búsqueda por nombre del producto y por nombre de su familia, todo lowercase.
   public readonly filteredProducts = computed<ProductRow[]>(() => {
     const term = this.searchTerm().trim().toLowerCase();
     if (!term) return this.products();

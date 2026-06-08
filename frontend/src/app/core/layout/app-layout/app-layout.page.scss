@@ -174,7 +174,6 @@
   transform: translateX(2px);
 }
 
-// Estado: caja abierta — verde, discreto
 .caja-chip.open {
   border-color: #b9e7cb;
   background: #f3fbf6;
@@ -204,7 +203,6 @@
   }
 }
 
-// Estado: caja cerrada — llamada a la acción en accent
 .caja-chip.closed {
   border-color: var(--accent);
   background: var(--white);

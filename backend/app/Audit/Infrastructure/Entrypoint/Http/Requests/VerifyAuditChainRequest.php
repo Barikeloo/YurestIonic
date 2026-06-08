@@ -22,7 +22,7 @@ final class VerifyAuditChainRequest extends FormRequest
 
     public function toCommand(): VerifyAuditChainCommand
     {
-        /** @var TenantContext $tenantContext */
+
         $tenantContext = app(TenantContext::class);
 
         return new VerifyAuditChainCommand(

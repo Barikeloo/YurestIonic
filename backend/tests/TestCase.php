@@ -9,9 +9,7 @@ use Illuminate\Support\Str;
 
 abstract class TestCase extends BaseTestCase
 {
-    /**
-     * @return array{session: array<string, string>, super_admin_uuid: string}
-     */
+
     protected function createSuperAdminSession(): array
     {
         $superAdminUuid = (string) Str::uuid();
@@ -31,9 +29,6 @@ abstract class TestCase extends BaseTestCase
         ];
     }
 
-    /**
-     * @return array{session: array<string, string>, restaurant_id: int, restaurant_uuid: string, user_uuid: string}
-     */
     protected function createTenantSession(string $role = 'operator'): array
     {
         $restaurantUuid = (string) Str::uuid();
@@ -68,11 +63,6 @@ abstract class TestCase extends BaseTestCase
         ];
     }
 
-    /**
-     * Crea una cash session activa para tests de cobros.
-     *
-     * @param array<string, mixed> $tenant
-     */
     protected function createCashSessionForTests(array $tenant, string $deviceId = 'test-device-001'): void
     {
         DB::table('cash_sessions')->insert([

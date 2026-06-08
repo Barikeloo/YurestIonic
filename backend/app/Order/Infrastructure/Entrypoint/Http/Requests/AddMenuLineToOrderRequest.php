@@ -48,7 +48,6 @@ final class AddMenuLineToOrderRequest extends FormRequest
             throw new \RuntimeException('Authenticated user is required.');
         }
 
-        /** @var array<int, array{section_id: string, product_id: string, variant_id: ?string, modifiers: ?array<int, array{id: string, name: string, price: int, type: string}>}> $rawSelections */
         $rawSelections = $this->input('selections', []);
 
         $selections = array_map(static function (array $sel): array {

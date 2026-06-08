@@ -24,10 +24,6 @@ interface EditorItem {
   extraPrice: number;
 }
 
-/**
- * Versión enriquecida de MenuProductOption con familyId, necesaria solo
- * para el filtrado por familia en el sidebar del catálogo.
- */
 interface CatalogProduct {
   id: string;
   name: string;
@@ -50,7 +46,7 @@ interface EditorHeader {
   taxId: string;
   validityFrom: string;
   validityTo: string;
-  /** Bitmask de días ISO (bit 0 = Lunes ... bit 6 = Domingo) */
+
   availableDays: number;
   availableFromTime: string;
   availableToTime: string;
@@ -115,10 +111,9 @@ export class GestionMenusEditorPage implements OnInit {
   protected readonly catalog = signal<CatalogProduct[]>([]);
   protected readonly taxes = signal<TaxItem[]>([]);
   protected readonly families = signal<FamilyItem[]>([]);
-  /** Variantes por producto, cargadas lazy cuando un producto se añade a una sección. */
+
   protected readonly variantsByProduct = signal<Record<string, ProductVariantItem[]>>({});
 
-  /** Estado del sidebar de catálogo */
   protected readonly catalogSearch = signal<string>('');
   protected readonly catalogFamilyFilter = signal<string | null>(null);
 
@@ -127,7 +122,6 @@ export class GestionMenusEditorPage implements OnInit {
   protected readonly productSearchByItem = signal<Record<string, string>>({});
   protected readonly errorMessages = signal<string[]>([]);
 
-  /** IDs de las drop-lists destino de productos (una por sección). */
   public readonly itemsDropIds = computed(() =>
     this.sections().map((_, i) => `section-${i}`),
   );
@@ -150,7 +144,7 @@ export class GestionMenusEditorPage implements OnInit {
 
     this.isLoading.set(true);
     try {
-      // Carga inicial: productos + impuestos + familias en paralelo
+
       const [productsResponse, taxesResponse, familiesResponse] = await Promise.all([
         firstValueFrom(this.productService.listProducts()),
         firstValueFrom(this.taxService.listTaxes()),
@@ -189,10 +183,6 @@ export class GestionMenusEditorPage implements OnInit {
     }
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Header
-  // ──────────────────────────────────────────────────────────────────────────
-
   public updateHeader<K extends keyof EditorHeader>(key: K, value: EditorHeader[K]): void {
     this.header.update((h) => ({ ...h, [key]: value }));
   }
@@ -212,10 +202,6 @@ export class GestionMenusEditorPage implements OnInit {
     return (this.header().availableDays & bit) !== 0;
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Sections / Items
-  // ──────────────────────────────────────────────────────────────────────────
-
   public addSection(): void {
     this.sections.update((list) => [...list, DEFAULT_SECTION()]);
   }
@@ -230,12 +216,6 @@ export class GestionMenusEditorPage implements OnInit {
     );
   }
 
-  /**
-   * Modo de elección para mostrar como chips:
-   * - `single-required`: el comensal está obligado a elegir exactamente 1 producto.
-   * - `single-optional`: puede elegir 1 producto o ninguno.
-   * - `multi`: combinación libre min/max (≥1 productos o rangos custom).
-   */
   public sectionChoiceMode(section: EditorSection): 'single-required' | 'single-optional' | 'multi' {
     if (section.minChoices === 1 && section.maxChoices === 1) return 'single-required';
     if (section.minChoices === 0 && section.maxChoices === 1) return 'single-optional';
@@ -251,7 +231,7 @@ export class GestionMenusEditorPage implements OnInit {
         if (i !== sectionIdx) return section;
         if (mode === 'single-required') return { ...section, minChoices: 1, maxChoices: 1 };
         if (mode === 'single-optional') return { ...section, minChoices: 0, maxChoices: 1 };
-        // multi: si ya era multi, mantenemos valores; si no, default 1..2
+
         if (section.maxChoices > 1) return section;
         return { ...section, minChoices: 1, maxChoices: 2 };
       }),
@@ -337,7 +317,6 @@ export class GestionMenusEditorPage implements OnInit {
       return;
     }
 
-    // Drop from catalog sidebar → create a new item
     if (fromContainer === 'catalog-sidebar') {
       const product = event.item.data as CatalogProduct;
       this.sections.update((list) =>
@@ -380,18 +359,10 @@ export class GestionMenusEditorPage implements OnInit {
     });
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Lookups y helpers
-  // ──────────────────────────────────────────────────────────────────────────
-
   public productName(productId: string): string {
     return this.products().find((p) => p.id === productId)?.name ?? '— producto eliminado —';
   }
 
-  /**
-   * Precio de referencia para mostrar en la fila del item.
-   * Si hay variante seleccionada, usa el precio de la variante; si no, el del producto base.
-   */
   public itemReferencePriceEuros(item: EditorItem): string {
     if (item.variantId) {
       const variant = this.variantsByProduct()[item.productId]?.find((v) => v.id === item.variantId);
@@ -406,25 +377,20 @@ export class GestionMenusEditorPage implements OnInit {
     return `${(p.price / 100).toFixed(2).replace('.', ',')}€`;
   }
 
-  /** Variantes del producto (vacío si aún no se han cargado o el producto no tiene). */
   public productVariants(productId: string): ProductVariantItem[] {
     return this.variantsByProduct()[productId] ?? [];
   }
 
-  /**
-   * Carga las variantes de un producto si no están cacheadas. Si la API falla,
-   * lo logueamos y dejamos el array vacío — un producto sin variantes lookea igual.
-   */
   public async ensureVariantsLoaded(productId: string): Promise<void> {
     if (this.variantsByProduct()[productId] !== undefined) return;
-    // Marcamos con array vacío para evitar peticiones duplicadas mientras carga.
+
     this.variantsByProduct.update((current) => ({ ...current, [productId]: [] }));
     try {
       const response = await firstValueFrom(this.productVariantService.listVariants(productId));
       const active = response.variants.filter((v) => v.active).sort((a, b) => a.sort_order - b.sort_order);
       this.variantsByProduct.update((current) => ({ ...current, [productId]: active }));
     } catch {
-      // No hacemos toast — la mayoría de productos no tienen variantes y el endpoint puede devolver 404.
+
     }
   }
 

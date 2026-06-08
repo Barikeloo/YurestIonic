@@ -169,7 +169,6 @@ final class ShardKeyPlanTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // TODO: verify — the route api/families doesn't exist yet; when implemented, this should return 400 with the context message
         $this->withSession([
             'super_admin_id' => $superAdminUuid,
         ])->getJson('/api/families')
@@ -203,7 +202,6 @@ final class ShardKeyPlanTest extends TestCase
                 'restaurant_id' => $restaurantUuid,
             ]);
 
-        // TODO: verify — route api/families doesn't exist yet
         $this->withSession([
             'super_admin_id' => $superAdminUuid,
             'tenant_restaurant_uuid' => $restaurantUuid,
@@ -305,7 +303,6 @@ final class ShardKeyPlanTest extends TestCase
             'updated_at' => now(),
         ]);
 
-        // TODO: verify — route api/orders/{uuid}/lines doesn't exist yet; when implemented, this should return 200 with the order lines
         $this->withSession([
             'auth_user_id' => $userUuid,
         ])->getJson('/api/orders/'.$orderUuid.'/lines')

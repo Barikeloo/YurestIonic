@@ -31,7 +31,7 @@ final class UpdateRestaurant
 
     public function __invoke(UpdateRestaurantCommand $command): UpdateRestaurantResponse
     {
-        // Authorization check
+
         if (! $command->isSuperAdmin) {
             if (! is_string($command->authUserUuid) || $command->authUserUuid === '') {
                 throw NotAuthenticatedException::create();
@@ -66,7 +66,6 @@ final class UpdateRestaurant
                 }
             }
 
-            // Check if trying to update legal data
             if ($command->legalName !== null || $command->taxId !== null) {
                 throw CannotUpdateLegalDataException::create();
             }
