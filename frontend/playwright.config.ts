@@ -38,7 +38,7 @@ export default defineConfig({
   projects: [
     {
       name: 'stateful',
-      testMatch: ['**/cash/**', '**/tpv/**', '**/audit/**'],
+      testMatch: ['**/cash/**', '**/tpv/**', '**/audit/**', '**/public/**'],
       use: { ...devices['Desktop Chrome'] },
       fullyParallel: false,
     },

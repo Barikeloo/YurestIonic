@@ -139,4 +139,99 @@ class ProductPhotoUploadTest extends TestCase
             'photo' => UploadedFile::fake()->create('document.pdf', 100, 'application/pdf'),
         ])->assertStatus(422);
     }
+
+    public function test_expired_token_returns_410(): void
+    {
+        Storage::fake('public');
+        config()->set('product_photos.disk', 'public');
+
+        $tenant = $this->createTenantSession('admin');
+        $familyId = $this->withSession($tenant['session'])
+            ->postJson('/api/admin/families', ['name' => 'Bebidas'])->json('id');
+        $taxId = $this->withSession($tenant['session'])
+            ->postJson('/api/admin/taxes', ['name' => 'IVA', 'percentage' => 21])->json('id');
+        $productId = $this->withSession($tenant['session'])
+            ->postJson('/api/admin/products', [
+                'family_id' => $familyId, 'tax_id' => $taxId,
+                'image_src' => null, 'name' => 'Test', 'price' => 100, 'stock' => 1,
+            ])->json('id');
+
+        config()->set('product_photos.token_ttl_minutes', 0);
+
+        $token = $this->withSession($tenant['session'])
+            ->postJson("/api/admin/products/{$productId}/photo-upload-token")
+            ->json('token');
+
+        $this->getJson("/api/public/photo-upload/{$token}")->assertStatus(410);
+        $this->postJson("/api/public/photo-upload/{$token}", [
+            'photo' => $this->realPhoto(),
+        ])->assertStatus(410);
+    }
+
+    public function test_upload_without_photo_returns_422(): void
+    {
+        Storage::fake('public');
+        config()->set('product_photos.disk', 'public');
+
+        ['session' => $session, 'productId' => $productId] = $this->createProduct();
+
+        $token = $this->withSession($session)
+            ->postJson("/api/admin/products/{$productId}/photo-upload-token")
+            ->json('token');
+
+        $this->postJson("/api/public/photo-upload/{$token}", [])->assertStatus(422);
+    }
+
+    public function test_upload_oversize_file_returns_422(): void
+    {
+        Storage::fake('public');
+        config()->set('product_photos.disk', 'public');
+
+        ['session' => $session, 'productId' => $productId] = $this->createProduct();
+
+        $token = $this->withSession($session)
+            ->postJson("/api/admin/products/{$productId}/photo-upload-token")
+            ->json('token');
+
+        $oversize = UploadedFile::fake()->create('huge.jpg', 10241, 'image/jpeg');
+
+        $this->postJson("/api/public/photo-upload/{$token}", [
+            'photo' => $oversize,
+        ])->assertStatus(422);
+    }
+
+    public function test_context_returns_correct_json_structure(): void
+    {
+        Storage::fake('public');
+        config()->set('product_photos.disk', 'public');
+
+        ['session' => $session, 'productId' => $productId] = $this->createProduct();
+
+        $token = $this->withSession($session)
+            ->postJson("/api/admin/products/{$productId}/photo-upload-token")
+            ->json('token');
+
+        $this->getJson("/api/public/photo-upload/{$token}")
+            ->assertStatus(200)
+            ->assertJsonStructure([
+                'product_name',
+                'image_src',
+                'expires_at',
+                'restaurant_name',
+            ]);
+    }
+
+    public function test_upload_to_nonexistent_token_returns_404(): void
+    {
+        $token = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
+        $this->postJson("/api/public/photo-upload/{$token}", [
+            'photo' => $this->realPhoto(),
+        ])->assertStatus(404);
+    }
+
+    public function test_context_with_invalid_token_format_returns_404(): void
+    {
+        $this->getJson('/api/public/photo-upload/not-a-hex-token')->assertStatus(404);
+    }
 }
