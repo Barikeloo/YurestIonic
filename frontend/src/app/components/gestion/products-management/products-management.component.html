@@ -76,7 +76,10 @@
       </div>
       <!-- Foto del producto -->
       <div class="product-photo-row">
-        <div class="product-photo-thumb" [class.has-photo]="selectedProduct()?.image_src">
+        <div class="product-photo-thumb" [class.has-photo]="selectedProduct()?.image_src"
+             [class.clickable]="selectedProduct()?.image_src"
+             (click)="selectedProduct()?.image_src && openLightbox(selectedProduct()!.image_src!)"
+             [attr.title]="selectedProduct()?.image_src ? 'Click para ampliar' : null">
           @if (selectedProduct()?.image_src) {
             <img [src]="selectedProduct()!.image_src!" alt="Foto del producto" />
           } @else {
@@ -121,3 +124,10 @@
   (closeModal)="closePhotoQr()"
   (photoUploaded)="onPhotoUploaded($event)"
 ></app-photo-upload-qr-modal>
+
+@if (lightboxSrc()) {
+  <div class="lightbox-overlay" (click)="closeLightbox()" (keydown.escape)="closeLightbox()" tabindex="0" role="dialog" aria-modal="true" aria-label="Vista ampliada de la foto">
+    <button class="lightbox-close" type="button" (click)="closeLightbox()" aria-label="Cerrar">✕</button>
+    <img class="lightbox-img" [src]="lightboxSrc()!" alt="Foto ampliada" (click)="$event.stopPropagation()" />
+  </div>
+}

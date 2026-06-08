@@ -40,6 +40,7 @@ export class ProductsManagementComponent {
 
   public readonly modifiersModalOpen = signal(false);
   public readonly photoQrModalOpen = signal(false);
+  public readonly lightboxSrc = signal<string | null>(null);
   public readonly searchTerm = signal('');
 
   public readonly selectedProduct = computed<ProductRow | null>(() => {
@@ -89,6 +90,14 @@ export class ProductsManagementComponent {
 
   onPhotoUploaded(event: PhotoUploadedEvent): void {
     this.facade().applyPhoto(event.productId, event.imageSrc);
+  }
+
+  openLightbox(src: string): void {
+    this.lightboxSrc.set(src);
+  }
+
+  closeLightbox(): void {
+    this.lightboxSrc.set(null);
   }
 
   onModifiersSaved(updated: ProductItem): void {
