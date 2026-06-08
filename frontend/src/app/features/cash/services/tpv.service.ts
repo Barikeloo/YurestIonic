@@ -35,6 +35,7 @@ export interface TpvProductItem {
   price: number;
   family_id: string;
   tax_id: string;
+  image_src: string | null;
   active: boolean;
   stock: number;
   variants?: TpvVariantItem[];

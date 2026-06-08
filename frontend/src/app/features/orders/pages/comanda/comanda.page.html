@@ -80,7 +80,13 @@
                       {{ isOutOfStock(product) ? '0' : getAvailableStock(product) }}
                     </div>
                   }
-                  <div class="product-initial">{{ product.name[0] }}</div>
+                  <div class="product-thumb">
+                    @if (product.image_src) {
+                      <img [src]="product.image_src" [alt]="product.name" />
+                    } @else {
+                      <span class="product-initial">{{ product.name[0] }}</span>
+                    }
+                  </div>
                   <div class="product-name">{{ product.name }}</div>
                   <div class="product-price">{{ formatCents(product.price) }}</div>
                 </button>
