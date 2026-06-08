@@ -75,20 +75,23 @@
                   [disabled]="isOutOfStock(product)"
                   (click)="addToCart(product)"
                   >
-                  @if (isOutOfStock(product) || getAvailableStock(product) <= 15) {
-                    <div class="stock-badge" [class.stock-low]="getAvailableStock(product) <= 15 && getAvailableStock(product) > 0" [class.stock-zero]="isOutOfStock(product)">
-                      {{ isOutOfStock(product) ? '0' : getAvailableStock(product) }}
-                    </div>
-                  }
-                  <div class="product-thumb">
+                  <!-- Cabecera visual: foto o placeholder con inicial -->
+                  <div class="product-visual">
                     @if (product.image_src) {
                       <img [src]="product.image_src" [alt]="product.name" />
                     } @else {
                       <span class="product-initial">{{ product.name[0] }}</span>
                     }
+                    @if (isOutOfStock(product) || getAvailableStock(product) <= 15) {
+                      <div class="stock-badge" [class.stock-low]="getAvailableStock(product) <= 15 && getAvailableStock(product) > 0" [class.stock-zero]="isOutOfStock(product)">
+                        {{ isOutOfStock(product) ? 'Agotado' : getAvailableStock(product) }}
+                      </div>
+                    }
                   </div>
-                  <div class="product-name">{{ product.name }}</div>
-                  <div class="product-price">{{ formatCents(product.price) }}</div>
+                  <div class="product-info">
+                    <div class="product-name">{{ product.name }}</div>
+                    <div class="product-price">{{ formatCents(product.price) }}</div>
+                  </div>
                 </button>
               }
               @if ((facade.products() | filterBy:'family_id':facade.activeFamilyId() | search:facade.searchQuery():['name']).length === 0) {
