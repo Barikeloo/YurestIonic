@@ -202,6 +202,60 @@
   }
 }
 
+// ── Zona de foto del producto ──────────────────────────────────
+
+.product-photo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  background: var(--gray-50);
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius);
+}
+
+.product-photo-thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 10px;
+  background: var(--gray-100);
+  border: 1.5px dashed var(--gray-300);
+  display: grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  color: var(--gray-400);
+
+  svg { width: 28px; height: 28px; }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  &.has-photo {
+    border-style: solid;
+    border-color: var(--gray-200);
+    background: transparent;
+  }
+}
+
+.product-photo-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-label {
+  font-size: 12px;
+  font-weight: 600;
+
+  &--ok    { color: #16a34a; }
+  &--empty { color: var(--gray-400); }
+}
+
 @media (max-width: 1024px) {
   .gestion-section-grid {
     grid-template-columns: 1fr;

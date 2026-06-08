@@ -6,6 +6,7 @@ export interface ProductRow {
   uuid?: string;
   family_id: string;
   tax_id: string;
+  image_src: string | null;
   name: string;
   price: number;
   stock: number;
@@ -73,6 +74,7 @@ export class GestionProductsFacade {
         uuid: product.id,
         family_id: product.family_id,
         tax_id: product.tax_id,
+        image_src: product.image_src ?? null,
         name: product.name,
         price: product.price,
         stock: product.stock,
@@ -114,7 +116,7 @@ export class GestionProductsFacade {
   public applyPhoto(uuid: string, imageSrc: string): void {
     this._products.update((current) =>
       current.map((product) =>
-        product.uuid === uuid ? { ...product, imageSrc } : product,
+        product.uuid === uuid ? { ...product, image_src: imageSrc } : product,
       ),
     );
   }
@@ -195,6 +197,7 @@ export class GestionProductsFacade {
           uuid: finalProduct.id,
           family_id: finalProduct.family_id,
           tax_id: finalProduct.tax_id,
+          image_src: finalProduct.image_src ?? selected.image_src ?? null,
           name: finalProduct.name,
           price: finalProduct.price,
           stock: finalProduct.stock,
@@ -216,6 +219,7 @@ export class GestionProductsFacade {
         uuid: finalProduct.id,
         family_id: finalProduct.family_id,
         tax_id: finalProduct.tax_id,
+        image_src: finalProduct.image_src ?? null,
         name: finalProduct.name,
         price: finalProduct.price,
         stock: finalProduct.stock,

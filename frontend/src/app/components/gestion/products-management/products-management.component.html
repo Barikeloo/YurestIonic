@@ -74,12 +74,30 @@
           <input id="mg-product-stock" type="number" class="form-input" [ngModel]="formData().stock" (ngModelChange)="updateForm('stock', +$event)" name="mg-product-stock" placeholder="0" required />
         </div>
       </div>
+      <!-- Foto del producto -->
+      <div class="product-photo-row">
+        <div class="product-photo-thumb" [class.has-photo]="selectedProduct()?.image_src">
+          @if (selectedProduct()?.image_src) {
+            <img [src]="selectedProduct()!.image_src!" alt="Foto del producto" />
+          } @else {
+            <svg viewBox="0 0 24 24" fill="none"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2L8 5h8l1.5 2h2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-9Z" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="1.5"/></svg>
+          }
+        </div>
+        <div class="product-photo-meta">
+          @if (selectedProduct()?.image_src) {
+            <span class="photo-label photo-label--ok">Foto añadida</span>
+          } @else {
+            <span class="photo-label photo-label--empty">Sin foto</span>
+          }
+          <button type="button" class="btn-small btn-small--photo" (click)="openPhotoQr()" [disabled]="!selectedProduct()">
+            📷 {{ selectedProduct()?.image_src ? 'Cambiar foto' : 'Añadir foto' }}
+          </button>
+        </div>
+      </div>
+
       <div class="gestion-form-actions">
         <button type="button" class="btn-small" (click)="openModifiers()">
           Modificadores
-        </button>
-        <button type="button" class="btn-small btn-small--photo" (click)="openPhotoQr()" [disabled]="!selectedProduct()">
-          📷 Añadir foto
         </button>
         <button class="btn-login btn-login-inline" type="submit" [disabled]="isSaving()">
           {{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}
