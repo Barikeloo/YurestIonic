@@ -112,7 +112,8 @@ frontend/src/app/
 │   └── product.service.ts                    ← añadido generatePhotoUploadToken()
 │
 ├── core/services/
-│   └── echo.service.ts                       ← NEW (cliente Laravel Echo/Reverb)
+│   ├── echo.service.ts                       ← NEW (cliente Laravel Echo/Reverb)
+│   └── photo-upload-token-cache.service.ts   ← NEW (singleton root, Map<productId, token>)
 │
 ├── components/gestion/
 │   ├── photo-upload-qr-modal/                ← NEW (botón, QR, countdown, estados)
@@ -157,18 +158,18 @@ docker/php/Dockerfile  ← extensión pcntl añadida (necesaria para Reverb)
 | `product_id` | `FK` | Producto al que pertenece |
 | `restaurant_id` | `FK` | Tenant — siempre validado |
 | `expires_at` | `timestamp` | TTL configurable (default 10 min) |
-| `used_at` | `timestamp?` | Nulo = disponible; rellenado = de un solo uso |
+| `used_at` | `timestamp?` | Nulo = nunca subida; rellenado = timestamp del último upload (no bloquea reusos) |
 
 ---
 
 ## Máquina de estados (página móvil)
 
 ```
-validating → ready ──[Hacer foto]──▶ camera ──[Shoot]──▶ crop ──[Usar]──▶ uploading ──▶ success
-                  └──[Galería]──▶ crop ───────────────────────────────────────────▶
-                                                                  uploading ──▶ error ──[Retry]──▶ uploading
+validating → ready ──[Hacer foto]──▶ camera ──[Shoot]──▶ crop ──[Usar]──▶ preview ──[Subir esta]──▶ uploading ──▶ success
+                  └──[Galería]──▶ crop ─────────────────────────────────▶          └──[Repetir]──▶ camera
+                                                                                      uploading ──▶ error ──[Retry]──▶ uploading
+success ──[Cambiar foto]──▶ camera   (mismo token, hasta que expire)
 ready ◀──[Timeout]── expired
-ready ◀────────────── used (409)
 ```
 
 ---
@@ -340,7 +341,8 @@ En producción las fotos deben almacenarse en la nube y redimensionarse para no 
 | Decisión | Razón |
 |---|---|
 | Canal de broadcast **público** (no privado) | El `token` (64 hex aleatorios) actúa de secreto. No hay usuario autenticado en el móvil, así que un canal privado requeriría auth extra sin beneficio real. |
-| Token de **un solo uso** | Evita que dos móviles suban fotos para el mismo QR (condición de carrera). El primero en subir lo marca `used_at`, el segundo recibe 409. |
+| Token **multi-uso hasta expiración** | El token puede usarse tantas veces como se quiera hasta que caduque. `used_at` se actualiza en cada upload para trazabilidad, pero no bloquea reusos. El operador puede cambiar la foto N veces con el mismo QR activo. |
+| `PhotoUploadTokenCacheService` **singleton (`providedIn: 'root'`)** | El token se guarda en un `Map<productId, token>` que sobrevive navegaciones y destrucción del componente. Al reabrir el modal se reutiliza el token existente si le quedan >15 s, sin generar uno nuevo. |
 | `findByIdAndRestaurant()` **sin `TenantContext`** | Los endpoints públicos no tienen sesión, así que no hay tenant resuelto. El filtro de restaurante viene del propio token firmado. |
 | `ProductPhotoStorageInterface` como **port** | Permite cambiar el backend de almacenamiento (local → R2 → S3) sin tocar los use cases. La implementación actual es `FilesystemProductPhotoStorage`. |
 | Notifier como **port** | En Fase 1 se inyecta el notifier de log. En Fase 3 se swappea por `BroadcastProductPhotoUploadNotifier` sin cambiar el use case. |
@@ -370,11 +372,11 @@ En producción las fotos deben almacenarse en la nube y redimensionarse para no 
         └── PublicPhotoUploadService.getContext(token)
               └── PublicPhotoUploadContextController (GET /public/photo-upload/{token})
                     └── GetProductPhotoUploadContext (use case)
-        └── [cámara → recorte canvas 1080×1080 → blob]
+        └── [cámara → recorte canvas 1080×1080 → preview "¿Queda bien?" → confirmar]
         └── PublicPhotoUploadService.uploadPhoto(token, blob)
               └── PublicPhotoUploadController (POST /public/photo-upload/{token})
                     └── UploadProductPhoto (use case)
-                          ├── valida token (existe, no expirado, no usado)
+                          ├── valida token (existe, no expirado)
                           ├── FilesystemProductPhotoStorage.store() → guarda en disk
                           ├── Product.changeImage(ProductImageSrc)
                           ├── ProductRepository.save()

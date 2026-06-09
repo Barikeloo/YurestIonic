@@ -11,6 +11,7 @@ export type UploadState =
   | 'ready'
   | 'camera'
   | 'crop'
+  | 'preview'
   | 'uploading'
   | 'success'
   | 'error'
@@ -102,9 +103,8 @@ export class PhotoUploadFacade {
               this._uploadProgress.set(100);
               const body = event.body as { image_src: string };
               setTimeout(() => {
-                this._uploadedSrc.set(
-                  body.image_src?.replace(/http:\/\/localhost(:\d+)?/, window.location.origin) ?? body.image_src,
-                );
+                const src = body.image_src?.replace(/http:\/\/localhost(:\d+)?/, window.location.origin) ?? body.image_src;
+                this._uploadedSrc.set(src ? `${src}?v=${Date.now()}` : src);
                 this._state.set('success');
                 resolve();
               }, 360);

@@ -18,6 +18,7 @@ import QRCode from 'qrcode';
 import { PhotoUploadTokenResponse, ProductService } from '../../../services/product.service';
 import { EchoService } from '../../../core/services/echo.service';
 import { ToastService } from '../../../core/services/toast.service';
+import { PhotoUploadTokenCacheService } from '../../../core/services/photo-upload-token-cache.service';
 
 export interface PhotoUploadedEvent {
   productId: string;
@@ -47,6 +48,7 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
   private readonly productService = inject(ProductService);
   private readonly echoService = inject(EchoService);
   private readonly toastService = inject(ToastService);
+  private readonly tokenCacheService = inject(PhotoUploadTokenCacheService);
 
   protected readonly state = signal<ModalState>('idle');
   protected readonly tokenData = signal<PhotoUploadTokenResponse | null>(null);
@@ -57,8 +59,6 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
 
   private unsubscribeEcho: (() => void) | null = null;
   private countdownInterval: ReturnType<typeof setInterval> | null = null;
-
-  private cachedForProductId: string | null = null;
 
   protected readonly isLoading = computed(() => this.state() === 'loading');
   protected readonly isReady = computed(() => this.state() === 'ready');
@@ -92,15 +92,16 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
   }
 
   private async tryOpen(): Promise<void> {
-    const cached = this.tokenData();
+    const cached = this.productId ? this.tokenCacheService.get(this.productId) : undefined;
 
     if (cached && this.canReuse(cached)) {
-
+      this.tokenData.set(cached);
       this.state.set('ready');
       this.startCountdown(cached.expires_at);
-      this.subscribeToChannel(cached.token);
+      if (!this.unsubscribeEcho) {
+        this.subscribeToChannel(cached.token);
+      }
       this.scheduleQrRender();
-
       return;
     }
 
@@ -114,7 +115,7 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
     try {
       const token = await firstValueFrom(this.productService.generatePhotoUploadToken(this.productId!));
       this.tokenData.set(token);
-      this.cachedForProductId = this.productId;
+      this.tokenCacheService.set(this.productId!, token);
       this.state.set('ready');
       this.startCountdown(token.expires_at);
       this.subscribeToChannel(token.token);
@@ -129,10 +130,6 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
   }
 
   private canReuse(token: PhotoUploadTokenResponse): boolean {
-
-    if (this.state() === 'uploaded') return false;
-    if (this.cachedForProductId !== this.productId) return false;
-
     const secsLeft = Math.floor((new Date(token.expires_at).getTime() - Date.now()) / 1000);
     return secsLeft > MIN_REUSE_SECONDS;
   }
@@ -144,8 +141,7 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
    * token in memory so it can be reused if the modal reopens before expiry.
    */
   private pauseOnClose(): void {
-    this.cleanup();
-
+    this.stopCountdown();
   }
 
   private hardReset(): void {
@@ -154,7 +150,9 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
     this.tokenData.set(null);
     this.uploadedImageSrc.set(null);
     this.secondsLeft.set(0);
-    this.cachedForProductId = null;
+    if (this.productId) {
+      this.tokenCacheService.clear(this.productId);
+    }
   }
 
   private subscribeToChannel(token: string): void {
@@ -162,11 +160,13 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
       `photo-upload.${token}`,
       'photo.uploaded',
       (data) => {
-        this.uploadedImageSrc.set(data.image_src);
+        const src = `${data.image_src}?v=${Date.now()}`;
+        this.uploadedImageSrc.set(src);
         this.state.set('uploaded');
-        this.cleanup();
-        this.photoUploaded.emit({ productId: data.product_uuid, imageSrc: data.image_src });
-        this.toastService.presentSuccess('Foto actualizada correctamente.');
+        this.photoUploaded.emit({ productId: data.product_uuid, imageSrc: src });
+        this.toastService.presentSuccess(
+          `Foto de "${this.productName ?? 'producto'}" actualizada correctamente.`,
+        );
       },
     );
   }
@@ -184,13 +184,17 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
     this.countdownInterval = setInterval(tick, 1000);
   }
 
-  private cleanup(): void {
-    this.unsubscribeEcho?.();
-    this.unsubscribeEcho = null;
+  private stopCountdown(): void {
     if (this.countdownInterval !== null) {
       clearInterval(this.countdownInterval);
       this.countdownInterval = null;
     }
+  }
+
+  private cleanup(): void {
+    this.unsubscribeEcho?.();
+    this.unsubscribeEcho = null;
+    this.stopCountdown();
   }
 
   // ── QR render ─────────────────────────────────────────────

@@ -34,6 +34,7 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
   private cr = { natW: 1, natH: 1, base: 1, scale: 1, tx: 0, ty: 0, win: 320, dragging: false, sx: 0, sy: 0 };
   protected capturedSrc: string | null = null;
   protected finalImageSrc = signal<string | null>(null);
+  private pendingBlob: Blob | null = null;
 
   protected readonly sheetOpen = signal(false);
   protected readonly isSuccessPulse = signal(false);
@@ -217,9 +218,21 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
     navigator.vibrate?.([12]);
     const blob = await this.renderCrop();
     if (!blob) return;
+    this.pendingBlob = blob;
     const previewUrl = URL.createObjectURL(blob);
     this.finalImageSrc.set(previewUrl);
-    this.facade.upload(blob);
+    this.facade.setState('preview');
+  }
+
+  protected previewConfirm(): void {
+    if (!this.pendingBlob) return;
+    navigator.vibrate?.([12]);
+    this.facade.upload(this.pendingBlob);
+  }
+
+  protected previewRetry(): void {
+    this.pendingBlob = null;
+    this.goCamera();
   }
 
   private renderCrop(): Promise<Blob | null> {
@@ -275,11 +288,11 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
   }
 
   // ── Upload actions ───────────────────────────────────────
-  protected uploadCancel(): void { this.facade.cancelUpload(); this.facade.setState('crop'); }
+  protected uploadCancel(): void { this.facade.cancelUpload(); this.facade.setState('preview'); }
 
   // ── Success / Error / Expired actions ───────────────────
-  protected okAgain(): void { this.isSuccessPulse.set(false); this.facade.setState('ready'); }
-  protected async errRetry(): Promise<void> { const b = await this.renderCrop(); if (b) this.facade.upload(b); }
+  protected okAgain(): void { this.isSuccessPulse.set(false); this.pendingBlob = null; this.goCamera(); }
+  protected errRetry(): void { if (this.pendingBlob) this.facade.upload(this.pendingBlob); }
   protected errRestart(): void { this.facade.setState('ready'); }
   protected expRetry(): void { this.facade.setState('ready'); }
   protected usedRetry(): void { this.facade.setState('ready'); }

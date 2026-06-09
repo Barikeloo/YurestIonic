@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Product\Infrastructure\Persistence\Repositories;
 
 use App\Product\Domain\Entity\ProductPhotoUploadToken;
-use App\Product\Domain\Exception\ProductPhotoUploadTokenAlreadyUsedException;
+
 use App\Product\Domain\Interfaces\ProductPhotoUploadTokenRepositoryInterface;
 use App\Product\Infrastructure\Persistence\Models\EloquentProduct;
 use App\Product\Infrastructure\Persistence\Models\EloquentProductPhotoUploadToken;
@@ -67,17 +67,12 @@ class EloquentProductPhotoUploadTokenRepository implements ProductPhotoUploadTok
 
     public function markAsUsed(ProductPhotoUploadToken $token): void
     {
-        $affected = $this->model->newQuery()
+        $this->model->newQuery()
             ->where('uuid', $token->id()->value())
-            ->whereNull('used_at')
             ->update([
                 'used_at' => $token->usedAt()?->value() ?? now(),
                 'updated_at' => now(),
             ]);
-
-        if ($affected === 0) {
-            throw ProductPhotoUploadTokenAlreadyUsedException::withToken($token->token());
-        }
     }
 
     public function deleteExpired(): int

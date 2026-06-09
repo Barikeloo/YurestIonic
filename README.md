@@ -710,14 +710,17 @@ El sistema permite que los clientes del restaurante **aporten fotos de sus consu
 1. **Generación del token** — El restaurador (admin/supervisor) genera un token de subida desde el backoffice para un producto concreto desde la pantalla de edición del producto → "Subir foto".
 2. **Impresión del QR** — El sistema muestra un código QR que el restaurador imprime y coloca en la mesa del cliente.
 3. **Escaneo** — El cliente escanea el QR con su móvil (cámara nativa o lector QR).
-4. **Validación** — La landing valida que el token no esté expirado (por defecto 90 minutos) ni haya sido usado previamente.
+4. **Validación** — La landing valida que el token no esté expirado (por defecto 10 minutos). El token es **multi-uso**: puede usarse para subir y cambiar la foto tantas veces como se quiera mientras no haya caducado.
 5. **Captura** — Se abre la cámara del móvil del cliente. El flujo incluye:
    - **Cámara** con disparador y vibración háptica (`navigator.vibrate([12])`) al capturar.
    - **Crop** opcional: si la relación de aspecto de la foto es ≤ 1.15:1, se salta el paso de recorte.
    - El botón "Volver" en el crop regresa a la cámara (no a inicio).
+   - **Preview "¿Queda bien?"** — tras el crop, se muestra la foto a tamaño completo antes de subirla. "Repetir foto" vuelve a la cámara; "Subir esta" confirma la subida.
    - Si la cámara no está disponible, se abre silenciosamente el selector de archivos del dispositivo.
 6. **Subida** — La foto se envía al backend, donde **se redimensiona** a un máximo de 1080px por lado (`scaleDown`) y **se convierte a WebP** (calidad 85) mediante **Intervention Image**. El archivo original se descarta.
-7. **Resultado** — La foto optimizada se asigna al producto y se muestra en tiempo real en el backoffice del restaurador.
+7. **Resultado** — La foto optimizada se asigna al producto y se muestra en tiempo real en el backoffice del restaurador. La pantalla de éxito ofrece el botón **"Cambiar foto"** para volver a la cámara y subir otra versión con el mismo token activo.
+
+**Persistencia del token (TPV):** El modal del TPV guarda el token en `PhotoUploadTokenCacheService` (`providedIn: 'root'`). Si el operador cierra el modal y lo vuelve a abrir —incluso después de navegar a otra pantalla— se reutiliza el token existente mientras le quede más de 15 s de vida, evitando generar un nuevo QR innecesariamente.
 
 #### Optimización de imágenes (server-side)
 
@@ -768,7 +771,7 @@ docker compose exec api php artisan product:delete-expired-photo-upload-tokens
 | **Auth** | Roles y permisos | 3 roles (`admin`, `supervisor`, `operator`) con guardas de navegación (`CanActivate`) en el frontend y middlewares de autorización en el backend. |
 | **Producto** | Modificadores | Cada producto puede tener opciones de personalización que se almacenan en `order_lines.notes` (ej: "sin cebolla", "extra queso"). |
 | **Producto** | Stock | Control de inventario básico con decremento automático al cerrar venta. |
-| **Producto** | Foto por QR | Generación de token firmado + QR para que clientes suban fotos desde su móvil sin autenticación. Validación de expiración (90 min) y uso único. |
+| **Producto** | Foto por QR | Token firmado + QR para subir y cambiar la foto desde el móvil sin autenticación. Multi-uso hasta expiración (10 min). Preview antes de subir, botón "Cambiar foto" en éxito. Token cacheado en servicio singleton para sobrevivir navegaciones. |
 | **Producto** | Optimización server-side | Redimensionado a 1080px máx y conversión a WebP (calidad 85) mediante Intervention Image + GD. Las URLs se reescriben para acceso desde móvil. |
 | **Menú** | Editor visual | Editor drag & drop de menús con secciones reordenables, catálogo lateral filtrable y validación en tiempo real de reglas `min/max`. |
 | **Menú** | Vigencia y disponibilidad | Cabecera con `validity_from/to`, bitmask de `available_days` y franja `available_from_time/available_to_time` para activar el menú sólo en su ventana real. |

@@ -389,6 +389,29 @@ input[type="range"].zoom::-moz-range-thumb {
   transform:scale(0.97);
 }
 .crop-actions .crop-btn svg { width:21px; height:21px; }
+.crop-actions .crop-btn.crop-btn-ghost {
+  background: transparent;
+  color: var(--on-dark);
+  border: 1.5px solid rgba(255,255,255,.28);
+  box-shadow: none;
+}
+.crop-actions .crop-btn.crop-btn-ghost:active { background: rgba(255,255,255,.1); }
+
+.preview-area {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 12px 24px;
+  overflow: hidden;
+}
+.preview-img {
+  width: 100%;
+  max-width: min(82vw, 340px);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.16), 0 8px 40px rgba(0,0,0,.5);
+}
 
 .center-screen {
   align-items:center; justify-content:center;
