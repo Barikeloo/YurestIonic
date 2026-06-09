@@ -1,223 +1,69 @@
 <div class="ventas">
 
-  <!-- ── Top: gráfico + totales del filtro ──────────────────────────────────── -->
-  <div class="ventas-top-grid">
-
-    <!-- Chart card -->
-    <div class="card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">{{ chartMode() === 'line' ? 'Evolución del periodo' : 'Mapa de calor · día × hora' }}</div>
-          <div class="card-sub">{{ chartMode() === 'line' ? 'Últimos 14 días' : 'Últimas 4 semanas · intensidad por ingresos' }}</div>
+  @if (showSkeleton()) {
+    <!-- ── Skeleton: chart + totals ─────────────────────────────────────────── -->
+    <div class="ventas-top-grid">
+      <div class="card">
+        <div class="card-header">
+          <span class="sk sk--title"></span>
+          <span class="sk sk--title-sm"></span>
         </div>
-        <div class="chart-toggle">
-          <button class="toggle-btn" [class.active]="chartMode() === 'line'"    (click)="chartMode.set('line')">📈 Línea</button>
-          <button class="toggle-btn" [class.active]="chartMode() === 'heatmap'" (click)="chartMode.set('heatmap')">▦ Heatmap</button>
-        </div>
-      </div>
-
-      @if (chartMode() === 'line') {
-        <div class="line-chart-wrap">
-          <svg viewBox="0 0 100 60" preserveAspectRatio="none" class="line-svg">
-            <defs>
-              <linearGradient id="lineGradV" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%"   stop-color="#ff4d4d" stop-opacity="0.2"/>
-                <stop offset="100%" stop-color="#ff4d4d" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            <line x1="3" x2="97" y1="15.75" y2="15.75" stroke="#f4f4f4" stroke-width="0.2"/>
-            <line x1="3" x2="97" y1="31.5"  y2="31.5"  stroke="#f4f4f4" stroke-width="0.2"/>
-            <line x1="3" x2="97" y1="47.25" y2="47.25" stroke="#f4f4f4" stroke-width="0.2"/>
-            <path [attr.d]="lineAreaD()" fill="url(#lineGradV)"/>
-            <path [attr.d]="linePathD()" fill="none" stroke="#ff4d4d" stroke-width="0.7" stroke-linejoin="round" stroke-linecap="round"/>
-          </svg>
-          <div class="line-labels">
-            @for (d of facade.byDay; track $index; let i = $index) {
-              <span [class.visible]="i === 0 || i === 6 || i === facade.byDay.length - 1">{{ d.l }}</span>
-            }
-          </div>
-        </div>
-      }
-
-      @if (chartMode() === 'heatmap') {
-        <div class="heatmap-wrap">
-          <div class="heatmap-grid">
-            <div class="heatmap-day-col">
-              <div class="heatmap-corner"></div>
-              @for (row of facade.heatmap; track row.day) {
-                <div class="heatmap-day-label">{{ row.day }}</div>
-              }
-            </div>
-            <div class="heatmap-cells-col">
-              <div class="heatmap-hour-row">
-                @for (h of facade.heatmap[0].hours; track h.h) {
-                  <div class="heatmap-hour-label">{{ h.h }}</div>
-                }
-              </div>
-              @for (row of facade.heatmap; track row.day) {
-                <div class="heatmap-row">
-                  @for (cell of row.hours; track cell.h) {
-                    <div class="heatmap-cell"
-                      [style.background]="heatBg(cell.v)"
-                      [style.color]="heatText(cell.v)"
-                      [title]="fmt(cell.v) + ' · ' + cell.n + ' tickets · ' + row.day + ' ' + cell.h + 'h'">
-                      {{ cell.n > 0 ? cell.n : '' }}
-                    </div>
-                  }
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-      }
-    </div>
-
-    <!-- Totales del filtro card -->
-    <div class="card totales-card">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Totales del filtro</div>
-          <div class="card-sub">{{ filteredOrders().length }} pedidos</div>
+        <div class="sk sk--chart" style="height:80px;margin:12px 16px"></div>
+        <div class="sk-bar-labels" style="padding:0 16px 12px">
+          @for (_ of [1,2,3,4,5,6,7,8,9,10,11,12,13,14]; track $index) {
+            <span class="sk" style="height:10px;width:14px"></span>
+          }
         </div>
       </div>
-      <div class="totales-body">
-        <div class="totales-main">
-          <div class="totales-label">Total bruto</div>
-          <div class="totales-value">{{ fmtNum(totalFiltered()) }}</div>
+      <div class="card totales-card">
+        <div class="card-header">
+          <span class="sk sk--title"></span>
+          <span class="sk sk--title-sm"></span>
         </div>
-        <div class="totales-methods">
-          <div class="totales-method method--cash">
-            <div class="method-pill-label">Efectivo</div>
-            <div class="method-pill-val method-pill-val--cash">{{ fmt(cashFiltered()) }}</div>
+        <div class="totales-body" style="opacity:0.3">
+          <div class="totales-main">
+            <span class="sk sk--value" style="width:100px"></span>
           </div>
-          <div class="totales-method method--card">
-            <div class="method-pill-label">Tarjeta</div>
-            <div class="method-pill-val">{{ fmt(cardFiltered()) }}</div>
-          </div>
-        </div>
-        <div class="totales-tips-row">
-          <span class="tips-label">Propinas</span>
-          <span class="tips-value">{{ fmt(tipsFiltered()) }}</span>
         </div>
       </div>
     </div>
 
-  </div>
-
-  <!-- ── Filters card ────────────────────────────────────────────────────────── -->
-  <div class="card filters-card">
-    <div class="filters-row">
-
-      <div class="search-wrap" [class.search-focused]="false">
-        <span class="search-icon">⌕</span>
-        <input class="search-input" placeholder="Buscar por ID o zona…"
-          [value]="searchQuery()"
-          (input)="searchQuery.set($any($event.target).value)"/>
-        @if (searchQuery()) {
-          <button class="search-clear" (click)="searchQuery.set('')">×</button>
-        }
-      </div>
-
-      <div class="filter-sep"></div>
-
-      <div class="filter-group">
-        @for (s of statuses; track s.v) {
-          <button class="filter-btn" [class.active]="filterStatus() === s.v" (click)="filterStatus.set(s.v)">{{ s.l }}</button>
-        }
-      </div>
-
-      <div class="filter-group">
-        @for (m of methods; track m.v) {
-          <button class="filter-btn" [class.active]="filterMethod() === m.v" (click)="filterMethod.set(m.v)">{{ m.l }}</button>
-        }
-      </div>
-
-      <div class="amount-range">
-        <span class="amount-sym">€</span>
-        <input type="number" class="amount-input" placeholder="min"
-          [value]="minAmount()"
-          (input)="minAmount.set($any($event.target).value)"/>
-        <span class="amount-dash">—</span>
-        <input type="number" class="amount-input" placeholder="max"
-          [value]="maxAmount()"
-          (input)="maxAmount.set($any($event.target).value)"/>
-      </div>
-
-      <div class="filter-spacer"></div>
-
-      @if (hasFilters()) {
-        <button class="clear-btn" (click)="clearFilters()">× Limpiar</button>
-      }
-      <button class="csv-btn">⤓ CSV</button>
-
-    </div>
-  </div>
-
-  <!-- ── Tabla ───────────────────────────────────────────────────────────────── -->
-  @if (filteredOrders().length === 0) {
-    <div class="card">
-      <div class="empty-state">
-        <span class="empty-icon">⌕</span>
-        <div>
-          <div class="empty-title">Sin tickets con estos filtros</div>
-          <div class="empty-sub">Prueba a ampliar el rango o limpiar filtros</div>
+    <!-- ── Skeleton: filters ────────────────────────────────────────────────── -->
+    <div class="card filters-card" style="pointer-events:none">
+      <div class="filters-row">
+        <div class="search-wrap">
+          <span class="sk" style="width:180px;height:30px;border-radius:6px;display:block"></span>
+        </div>
+        <div class="filter-group">
+          @for (_ of [1,2,3]; track $index) {
+            <span class="sk" style="width:60px;height:26px;border-radius:6px;display:inline-block"></span>
+          }
+        </div>
+        <div class="filter-group">
+          @for (_ of [1,2,3,4,5]; track $index) {
+            <span class="sk" style="width:50px;height:26px;border-radius:6px;display:inline-block"></span>
+          }
         </div>
       </div>
     </div>
-  } @else {
-    <div class="card table-card">
+
+    <!-- ── Skeleton: table ──────────────────────────────────────────────────── -->
+    <div class="card table-card" style="pointer-events:none">
       <div class="table-wrap">
         <table class="data-table">
           <thead>
             <tr>
-              <th class="th-sort" (click)="setSort('id')">Ticket <span class="sort-icon">{{ sortIcon('id') }}</span></th>
-              <th>Zona</th>
-              <th>Estado</th>
-              <th>Pago</th>
-              <th class="align-right th-sort" (click)="setSort('total')">Total <span class="sort-icon">{{ sortIcon('total') }}</span></th>
-              <th class="align-right th-sort" (click)="setSort('tip')">Propina <span class="sort-icon">{{ sortIcon('tip') }}</span></th>
-              <th class="align-right">Com.</th>
-              <th class="th-sort" (click)="setSort('time')">Hora <span class="sort-icon">{{ sortIcon('time') }}</span></th>
-              <th class="align-right" style="width:70px"></th>
+              @for (_ of [1,2,3,4,5,6,7,8,9]; track $index) {
+                <th><span class="sk" style="width:40px;height:12px;display:inline-block;border-radius:4px"></span></th>
+              }
             </tr>
           </thead>
           <tbody>
-            @for (o of sortedOrders(); track o.id) {
-              <tr class="ticket-row" (click)="openTicket(o)">
-                <td><span class="ticket-id">{{ o.id }}</span></td>
-                <td><span class="zone-label">{{ o.zone }}</span></td>
-                <td>
-                  <span class="status-badge"
-                    [style.color]="statusColor(o.status)"
-                    [style.background]="statusBg(o.status)">
-                    <span class="status-dot" [style.background]="statusColor(o.status)"></span>
-                    {{ statusLabel(o.status) }}
-                  </span>
-                </td>
-                <td>
-                  <span class="method-chip"
-                    [style.color]="methodColor(o.method)"
-                    [style.background]="methodBg(o.method)">
-                    {{ methodLabel(o.method) }}
-                  </span>
-                </td>
-                <td class="align-right">
-                  <span class="mono bold"
-                    [style.color]="o.status === 'cancelled' ? '#a0a0a0' : '#0d0d0d'"
-                    [style.text-decoration]="o.status === 'cancelled' ? 'line-through' : 'none'">
-                    {{ fmt(o.total) }}
-                  </span>
-                </td>
-                <td class="align-right">
-                  <span class="mono" [style.color]="o.tip > 0 ? '#1a9e5a' : '#a0a0a0'">
-                    {{ o.tip > 0 ? fmt(o.tip) : '—' }}
-                  </span>
-                </td>
-                <td class="align-right"><span class="mono" style="color:#5a5a5a">{{ o.diners }}</span></td>
-                <td><span class="mono" style="color:#5a5a5a">{{ o.time }}</span></td>
-                <td class="align-right">
-                  <button class="ver-btn" (click)="$event.stopPropagation(); openTicket(o)">Ver →</button>
-                </td>
+            @for (_ of [1,2,3,4,5]; track $index) {
+              <tr>
+                @for (_ of [1,2,3,4,5,6,7,8,9]; track $index) {
+                  <td><span class="sk" style="width:30px;height:10px;display:inline-block;border-radius:4px"></span></td>
+                }
               </tr>
             }
           </tbody>
@@ -225,19 +71,253 @@
       </div>
     </div>
 
-    <!-- Paginación -->
+    <!-- ── Skeleton: pagination ─────────────────────────────────────────────── -->
     <div class="pagination-row">
-      <span class="pagination-info">
-        Mostrando <strong>{{ filteredOrders().length }}</strong> de <strong>{{ facade.orders.length }}</strong> tickets del día
-      </span>
-      <div class="pagination-btns">
-        <button class="pag-nav" [disabled]="page() === 1" (click)="page.set(page() - 1)">← Anterior</button>
-        @for (p of pages; track p) {
-          <button class="pag-num" [class.active]="page() === p" (click)="page.set(p)">{{ p }}</button>
+      <span class="sk" style="width:120px;height:12px;display:inline-block;border-radius:4px"></span>
+    </div>
+
+  } @else {
+
+    <!-- ── Top: gráfico + totales del filtro ──────────────────────────────────── -->
+    <div class="ventas-top-grid">
+
+      <!-- Chart card -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">{{ chartMode() === 'line' ? 'Evolución del periodo' : 'Mapa de calor · día × hora' }}</div>
+            <div class="card-sub">{{ chartMode() === 'line' ? 'Últimos 14 días' : 'Últimas 4 semanas · intensidad por ingresos' }}</div>
+          </div>
+          <div class="chart-toggle">
+            <button class="toggle-btn" [class.active]="chartMode() === 'line'"    (click)="chartMode.set('line')">📈 Línea</button>
+            <button class="toggle-btn" [class.active]="chartMode() === 'heatmap'" (click)="chartMode.set('heatmap')">▦ Heatmap</button>
+          </div>
+        </div>
+
+        @if (chartMode() === 'line') {
+          <div class="line-chart-wrap">
+            <svg viewBox="0 0 100 60" preserveAspectRatio="none" class="line-svg">
+              <defs>
+                <linearGradient id="lineGradV" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%"   stop-color="#ff4d4d" stop-opacity="0.2"/>
+                  <stop offset="100%" stop-color="#ff4d4d" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <line x1="3" x2="97" y1="15.75" y2="15.75" stroke="#f4f4f4" stroke-width="0.2"/>
+              <line x1="3" x2="97" y1="31.5"  y2="31.5"  stroke="#f4f4f4" stroke-width="0.2"/>
+              <line x1="3" x2="97" y1="47.25" y2="47.25" stroke="#f4f4f4" stroke-width="0.2"/>
+              <path [attr.d]="lineAreaD()" fill="url(#lineGradV)"/>
+              <path [attr.d]="linePathD()" fill="none" stroke="#ff4d4d" stroke-width="0.7" stroke-linejoin="round" stroke-linecap="round"/>
+            </svg>
+            <div class="line-labels">
+              @for (d of facade.byDay; track $index; let i = $index) {
+                <span [class.visible]="i === 0 || i === 6 || i === facade.byDay.length - 1">{{ d.l }}</span>
+              }
+            </div>
+          </div>
         }
-        <button class="pag-nav" (click)="page.set(page() + 1)">Siguiente →</button>
+
+        @if (chartMode() === 'heatmap') {
+          <div class="heatmap-wrap">
+            <div class="heatmap-grid">
+              <div class="heatmap-day-col">
+                <div class="heatmap-corner"></div>
+              @for (row of facade.heatmap(); track row.day) {
+                <div class="heatmap-day-label">{{ row.day }}</div>
+              }
+            </div>
+            <div class="heatmap-cells-col">
+              <div class="heatmap-hour-row">
+                @for (h of facade.heatmap()[0].hours; track h.h) {
+                  <div class="heatmap-hour-label">{{ h.h }}</div>
+                }
+              </div>
+              @for (row of facade.heatmap(); track row.day) {
+                  <div class="heatmap-row">
+                    @for (cell of row.hours; track cell.h) {
+                      <div class="heatmap-cell"
+                        [style.background]="heatBg(cell.v)"
+                        [style.color]="heatText(cell.v)"
+                        [title]="fmt(cell.v) + ' · ' + cell.n + ' tickets · ' + row.day + ' ' + cell.h + 'h'">
+                        {{ cell.n > 0 ? cell.n : '' }}
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Totales del filtro card -->
+      <div class="card totales-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Totales del filtro</div>
+            <div class="card-sub">{{ filteredOrders().length }} pedidos</div>
+          </div>
+        </div>
+        <div class="totales-body">
+          <div class="totales-main">
+            <div class="totales-label">Total bruto</div>
+            <div class="totales-value">{{ fmtNum(totalFiltered()) }}</div>
+          </div>
+          <div class="totales-methods">
+            <div class="totales-method method--cash">
+              <div class="method-pill-label">Efectivo</div>
+              <div class="method-pill-val method-pill-val--cash">{{ fmt(cashFiltered()) }}</div>
+            </div>
+            <div class="totales-method method--card">
+              <div class="method-pill-label">Tarjeta</div>
+              <div class="method-pill-val">{{ fmt(cardFiltered()) }}</div>
+            </div>
+          </div>
+          <div class="totales-tips-row">
+            <span class="tips-label">Propinas</span>
+            <span class="tips-value">{{ fmt(tipsFiltered()) }}</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Filters card ────────────────────────────────────────────────────────── -->
+    <div class="card filters-card">
+      <div class="filters-row">
+
+        <div class="search-wrap" [class.search-focused]="false">
+          <span class="search-icon">⌕</span>
+          <input class="search-input" placeholder="Buscar por ID o zona…"
+            [value]="searchQuery()"
+            (input)="searchQuery.set($any($event.target).value)"/>
+          @if (searchQuery()) {
+            <button class="search-clear" (click)="searchQuery.set('')">×</button>
+          }
+        </div>
+
+        <div class="filter-sep"></div>
+
+        <div class="filter-group">
+          @for (s of statuses; track s.v) {
+            <button class="filter-btn" [class.active]="filterStatus() === s.v" (click)="filterStatus.set(s.v)">{{ s.l }}</button>
+          }
+        </div>
+
+        <div class="filter-group">
+          @for (m of methods; track m.v) {
+            <button class="filter-btn" [class.active]="filterMethod() === m.v" (click)="filterMethod.set(m.v)">{{ m.l }}</button>
+          }
+        </div>
+
+        <div class="amount-range">
+          <span class="amount-sym">€</span>
+          <input type="number" class="amount-input" placeholder="min"
+            [value]="minAmount()"
+            (input)="minAmount.set($any($event.target).value)"/>
+          <span class="amount-dash">—</span>
+          <input type="number" class="amount-input" placeholder="max"
+            [value]="maxAmount()"
+            (input)="maxAmount.set($any($event.target).value)"/>
+        </div>
+
+        <div class="filter-spacer"></div>
+
+        @if (hasFilters()) {
+          <button class="clear-btn" (click)="clearFilters()">× Limpiar</button>
+        }
+        <button class="csv-btn">⤓ CSV</button>
+
       </div>
     </div>
+
+    <!-- ── Tabla ───────────────────────────────────────────────────────────────── -->
+    @if (filteredOrders().length === 0) {
+      <div class="card">
+        <div class="empty-state">
+          <span class="empty-icon">⌕</span>
+          <div>
+            <div class="empty-title">Sin tickets con estos filtros</div>
+            <div class="empty-sub">Prueba a ampliar el rango o limpiar filtros</div>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="card table-card">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="th-sort" (click)="setSort('id')">Ticket <span class="sort-icon">{{ sortIcon('id') }}</span></th>
+                <th>Zona</th>
+                <th>Estado</th>
+                <th>Pago</th>
+                <th class="align-right th-sort" (click)="setSort('total')">Total <span class="sort-icon">{{ sortIcon('total') }}</span></th>
+                <th class="align-right th-sort" (click)="setSort('tip')">Propina <span class="sort-icon">{{ sortIcon('tip') }}</span></th>
+                <th class="align-right">Com.</th>
+                <th class="th-sort" (click)="setSort('time')">Hora <span class="sort-icon">{{ sortIcon('time') }}</span></th>
+                <th class="align-right" style="width:70px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (o of sortedOrders(); track o.id) {
+                <tr class="ticket-row" (click)="openTicket(o)">
+                  <td><span class="ticket-id">{{ o.id }}</span></td>
+                  <td><span class="zone-label">{{ o.zone }}</span></td>
+                  <td>
+                    <span class="status-badge"
+                      [style.color]="statusColor(o.status)"
+                      [style.background]="statusBg(o.status)">
+                      <span class="status-dot" [style.background]="statusColor(o.status)"></span>
+                      {{ statusLabel(o.status) }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="method-chip"
+                      [style.color]="methodColor(o.method)"
+                      [style.background]="methodBg(o.method)">
+                      {{ methodLabel(o.method) }}
+                    </span>
+                  </td>
+                  <td class="align-right">
+                    <span class="mono bold"
+                      [style.color]="o.status === 'cancelled' ? '#a0a0a0' : '#0d0d0d'"
+                      [style.text-decoration]="o.status === 'cancelled' ? 'line-through' : 'none'">
+                      {{ fmt(o.total) }}
+                    </span>
+                  </td>
+                  <td class="align-right">
+                    <span class="mono" [style.color]="o.tip > 0 ? '#1a9e5a' : '#a0a0a0'">
+                      {{ o.tip > 0 ? fmt(o.tip) : '—' }}
+                    </span>
+                  </td>
+                  <td class="align-right"><span class="mono" style="color:#5a5a5a">{{ o.diners }}</span></td>
+                  <td><span class="mono" style="color:#5a5a5a">{{ o.time }}</span></td>
+                  <td class="align-right">
+                    <button class="ver-btn" (click)="$event.stopPropagation(); openTicket(o)">Ver →</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Paginación -->
+      <div class="pagination-row">
+        <span class="pagination-info">
+          Mostrando <strong>{{ filteredOrders().length }}</strong> de <strong>{{ totalCount() }}</strong> tickets del día
+        </span>
+        <div class="pagination-btns">
+          <button class="pag-nav" [disabled]="page() === 1" (click)="page.set(page() - 1)">← Anterior</button>
+          @for (p of pages(); track p) {
+            <button class="pag-num" [class.active]="page() === p" (click)="page.set(p)">{{ p }}</button>
+          }
+          <button class="pag-nav" (click)="page.set(page() + 1)">Siguiente →</button>
+        </div>
+      </div>
+    }
+
   }
 
 </div>
@@ -245,7 +325,7 @@
 <!-- ── Modal de detalle de ticket ─────────────────────────────────────────── -->
 @if (selectedTicket()) {
   @let ticket = selectedTicket()!;
-  @let detail = facade.ticketDetail;
+  @let detail = facade.ticketDetail();
   <div class="modal-overlay" (click)="closeTicket()">
     <div class="modal-box" (click)="$event.stopPropagation()">
 
@@ -378,13 +458,13 @@
       <!-- Footer -->
       <div class="modal-footer">
         <div class="modal-footer-left">
-          <button class="modal-btn modal-btn--outline">🖨 Imprimir ticket</button>
-          <button class="modal-btn modal-btn--outline">📧 Email cliente</button>
-          <button class="modal-btn modal-btn--outline">📄 Factura PDF</button>
+          <button class="modal-btn modal-btn--outline" (click)="printTicket()">🖨 Imprimir ticket</button>
+          <button class="modal-btn modal-btn--outline" (click)="emailTicket()">📧 Email cliente</button>
+          <button class="modal-btn modal-btn--outline" (click)="downloadPdf()">📄 Factura PDF</button>
         </div>
         <div class="modal-footer-right">
           @if (ticket.status !== 'cancelled') {
-            <button class="modal-btn modal-btn--danger">Anular ticket</button>
+            <button class="modal-btn modal-btn--danger" (click)="cancelTicket()">Anular ticket</button>
           }
           <button class="modal-btn modal-btn--fill" (click)="closeTicket()">Cerrar</button>
         </div>

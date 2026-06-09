@@ -117,6 +117,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AuditSavedViewRepositoryInterface::class, EloquentAuditSavedViewRepository::class);
         $this->app->bind(VerifyChainResultRepositoryInterface::class, EloquentVerifyChainResultRepository::class);
         $this->app->bind(AlertNotifierInterface::class, DbAlertNotifier::class);
+        $this->app->bind(\App\Reporting\Domain\Interfaces\ReportingRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
     }
 

@@ -1,14 +1,16 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { FinanzasFacade } from '../facades/finanzas.facade';
-import type { ProductRanking, ZoneData } from '../models/finanzas.models';
+import type { ProductRanking } from '../models/finanzas.models';
 
 type SortKey = 'revenue' | 'units' | 'margin' | 'marginPct' | 'stock' | 'rotation';
 
 type Enriched = ProductRanking & {
-  margin: number;
-  mPct:   number;
-  days:   number;
-  alert:  'critical' | 'low' | null;
+  margin:      number;
+  mPct:        number;
+  days:        number;
+  alert:       'critical' | 'low' | null;
+  trendSpark:  number[];
+  familyColor: string;
 };
 
 @Component({
@@ -21,112 +23,109 @@ type Enriched = ProductRanking & {
 export class ProductosTabComponent {
   protected readonly facade = inject(FinanzasFacade);
 
-  protected readonly filterFam  = signal('all');
-  protected readonly showAlerts = signal(false);
-  protected readonly sortKey    = signal<SortKey>('revenue');
-  protected readonly hovered    = signal<string | null>(null);
+  // ── MVP feature flags ─────────────────────────────────────────────────────
+  protected readonly showCostCols  = false; // no cost data until cost module is implemented
+  protected readonly showStockCols = false; // no stock data until inventory module is implemented
 
-  protected readonly enriched = computed((): Enriched[] =>
-    this.facade.productRanking.map(p => {
-      const margin = (p.price - p.cost) * p.units;
-      const mPct   = p.price > 0 ? ((p.price - p.cost) / p.price) * 100 : 0;
-      const days   = p.stock >= 999 ? Infinity : p.avgDaily > 0 ? p.stock / p.avgDaily : Infinity;
-      const alert  = days < 2 ? 'critical' as const : days < 5 ? 'low' as const : null;
-      return { ...p, margin, mPct, days, alert };
-    })
-  );
+  protected readonly filterFam = signal('all');
+  protected readonly sortKey   = signal<SortKey>('revenue');
+
+  constructor() {
+    effect(() => {
+      this.facade.period(); // react to period changes
+      this.filterFam.set('all');
+    });
+  }
+
+  protected readonly enriched = computed((): Enriched[] => {
+    const items = this.facade.productsReport()?.items;
+
+    if (items) {
+      return items.map(p => ({
+        name: p.name, family: p.family, units: p.units, revenue: p.revenue,
+        cost: p.cost, price: p.price, avgDaily: p.avg_daily, stock: 999, pct: p.pct,
+        margin: 0, mPct: 0, days: Infinity, alert: null,
+        trendSpark:  p.trend_spark,
+        familyColor: p.family_color,
+      }));
+    }
+
+    return this.facade.productRanking.map(p => ({
+      ...p, margin: 0, mPct: 0, days: Infinity, alert: null,
+      trendSpark: [], familyColor: '#7a7a7a',
+    }));
+  });
 
   protected readonly families = computed(() =>
     ['all', ...Array.from(new Set(this.enriched().map(p => p.family)))]
   );
 
   protected readonly filtered = computed(() => {
-    const fam  = this.filterFam();
-    const only = this.showAlerts();
-    let list   = this.enriched();
-    if (fam !== 'all') list = list.filter(p => p.family === fam);
-    if (only)          list = list.filter(p => p.alert !== null);
-    return list;
+    const fam = this.filterFam();
+    const list = this.enriched();
+    return fam === 'all' ? list : list.filter(p => p.family === fam);
   });
 
   protected readonly sorted = computed(() => {
     const key = this.sortKey();
     return [...this.filtered()].sort((a, b) => {
-      if (key === 'units')     return b.units  - a.units;
-      if (key === 'margin')    return b.margin - a.margin;
-      if (key === 'marginPct') return b.mPct   - a.mPct;
-      if (key === 'stock')     return a.stock  - b.stock;
-      if (key === 'rotation')  return a.days   - b.days;
+      if (key === 'units') return b.units - a.units;
       return b.revenue - a.revenue;
     });
   });
 
-  protected readonly totalRevenue  = computed(() => this.enriched().reduce((s, p) => s + p.revenue, 0));
-  protected readonly totalCost     = computed(() => this.enriched().reduce((s, p) => s + p.cost * p.units, 0));
-  protected readonly totalMargin   = computed(() => this.totalRevenue() - this.totalCost());
-  protected readonly overallPct    = computed(() => {
-    const r = this.totalRevenue(); return r > 0 ? (this.totalMargin() / r) * 100 : 0;
-  });
-  protected readonly criticalCount = computed(() => this.enriched().filter(p => p.alert === 'critical').length);
-  protected readonly lowCount      = computed(() => this.enriched().filter(p => p.alert === 'low').length);
-  protected readonly deadCount     = this.facade.deadStock.length;
-  protected readonly criticalList  = computed(() => this.enriched().filter(p => p.alert).slice(0, 5));
-  protected readonly filteredMargin = computed(() => this.filtered().reduce((s, p) => s + p.margin, 0));
-  protected readonly bestMarginNames = computed(() =>
-    [...this.enriched()].sort((a, b) => b.margin - a.margin).slice(0, 3).map(p => p.name)
-  );
+  protected readonly totalRevenue   = computed(() => this.enriched().reduce((s, p) => s + p.revenue, 0));
+  protected readonly totalUnits     = computed(() => this.enriched().reduce((s, p) => s + p.units, 0));
+  protected readonly familyCount    = computed(() => new Set(this.enriched().map(p => p.family)).size);
+  protected readonly filteredRevenue = computed(() => this.filtered().reduce((s, p) => s + p.revenue, 0));
 
-  // ── Zones ─────────────────────────────────────────────────────────────────────
-  protected readonly zoneMaxRev  = Math.max(...this.facade.zonesLayout.map(z => z.revenue), 1);
-  protected readonly zoneTotal   = this.facade.zonesLayout.reduce((s, z) => s + z.revenue, 0);
-  protected readonly zonesSorted = computed(() =>
-    [...this.facade.zonesLayout].sort((a, b) => b.revenue - a.revenue)
-  );
-
-  protected zoneIntensity(zone: ZoneData): string {
-    const t = zone.revenue / this.zoneMaxRev;
-    const opacity = (0.15 + t * 0.75).toFixed(2);
-    return `rgba(255, 77, 77, ${opacity})`;
-  }
-  protected zoneTextColor(zone: ZoneData): string {
-    return zone.revenue / this.zoneMaxRev > 0.5 ? '#fff' : '#0d0d0d';
-  }
-  protected zoneRevPct(zone: ZoneData): number {
-    return Math.round(zone.revenue / this.zoneTotal * 100);
-  }
-  protected zoneOccColor(zone: ZoneData): string {
-    return zone.occupancy > 75 ? '#1a9e5a' : zone.occupancy > 40 ? '#d18a1c' : '#ff4d4d';
+  // ── Trend: compare avg last 3 days vs avg days 4–6 ago ───────────────────
+  protected trendInfo(spark: number[]): { trend: string; delta: number | null; spark: number[] } | null {
+    if (!spark || spark.length < 7) return null;
+    const recent = spark.slice(-3).reduce((a, b) => a + b, 0) / 3;
+    const older  = spark.slice(-7, -4).reduce((a, b) => a + b, 0) / 3;
+    if (recent === 0 && older === 0) return null;
+    const delta = older > 0 ? ((recent - older) / older) * 100 : null;
+    const trend = delta !== null
+      ? (delta > 10 ? 'up' : delta < -10 ? 'down' : 'flat')
+      : (recent > 0 ? 'up' : 'flat');
+    return { trend, delta, spark };
   }
 
-  // ── Family chart ──────────────────────────────────────────────────────────────
-  protected readonly familyMax = Math.max(...this.facade.byFamily.map(f => f.v), 1);
-  protected familyColor(family: string): string {
-    return this.facade.byFamily.find(f => f.label === family)?.color ?? '#7a7a7a';
-  }
-
-  protected fmt(v: number): string    { return this.facade.fmt(v); }
-  protected fmtInt(n: number): string { return this.facade.fmtInt(n); }
-
-  protected daysStr(days: number): string {
-    return isFinite(days) ? days.toFixed(1).replace('.', ',') : '—';
-  }
-  protected isInfinite(days: number): boolean { return !isFinite(days); }
-  protected marginBarColor(pct: number): string {
-    return pct >= 60 ? '#1a9e5a' : pct >= 40 ? '#d18a1c' : '#ff4d4d';
-  }
-  protected stockBarPct(stock: number): number { return Math.min(stock / 50 * 100, 100); }
-  protected stockColor(alert: 'critical' | 'low' | null): string {
-    return alert === 'critical' ? '#ff4d4d' : alert === 'low' ? '#d18a1c' : '#1a9e5a';
-  }
-
-  // ── Trend ─────────────────────────────────────────────────────────────────────
-  protected trendInfo(name: string): { trend: string; delta: number; spark: number[] } | null {
-    return this.facade.productTrends[name] ?? null;
-  }
   protected sparkPath(data: number[]): string { return this.facade.sparklinePath(data, 50, 20); }
   protected sparkArea(data: number[]): string { return this.facade.sparklineArea(data, 50, 20); }
   protected trendColor(t: string): string { return t === 'up' ? '#1a9e5a' : t === 'down' ? '#ff4d4d' : '#a0a0a0'; }
   protected trendArrow(t: string): string { return t === 'up' ? '↗' : t === 'down' ? '↘' : '→'; }
+
+  // ── Family chart ──────────────────────────────────────────────────────────
+  protected get familyMax(): number {
+    return Math.max(...this.facade.byFamily.map(f => f.v), 1);
+  }
+
+  // ── CSV export ────────────────────────────────────────────────────────────
+  protected exportCsv(): void {
+    const rows   = this.sorted();
+    const period = this.facade.periodLabel();
+    const header = ['Producto', 'Familia', 'Unidades', 'Ingresos (€)', '% sobre periodo'];
+    const lines  = rows.map(p => [
+      `"${p.name.replace(/"/g, '""')}"`,
+      `"${p.family.replace(/"/g, '""')}"`,
+      p.units,
+      (p.revenue / 100).toFixed(2),
+      p.pct.toFixed(2),
+    ].join(';'));
+    const csv  = [header.join(';'), ...lines].join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = `productos-${period}-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  protected fmt(v: number): string    { return this.facade.fmt(v); }
+  protected fmtInt(n: number): string { return this.facade.fmtInt(n); }
 
   protected readonly sortLabel: Record<SortKey, string> = {
     revenue: 'ingresos', units: 'unidades', margin: 'margen €',

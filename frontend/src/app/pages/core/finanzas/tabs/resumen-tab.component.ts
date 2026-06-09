@@ -21,7 +21,7 @@ interface DonutSeg {
 })
 export class ResumenTabComponent {
   protected readonly facade = inject(FinanzasFacade);
-  protected readonly s = this.facade.summary;
+  protected get s() { return this.facade.summary; }
 
   protected readonly hoveredBar  = signal<number | null>(null);
   protected readonly hoveredDonut = signal<number | null>(null);
@@ -166,12 +166,6 @@ export class ResumenTabComponent {
 
   // ── Pending payments ───────────────────────────────────────────────────────
   protected get pendingTotal(): number {
-    return this.facade.pendingPayments.reduce((s, p) => s + p.total, 0);
+    return this.facade.pendingPayments().reduce((s, p) => s + p.total, 0);
   }
-
-  protected readonly insights = [
-    { icon: '★', text: 'Pico de comida a las 14h con 394 € · refuerza turno', color: '#ff4d4d' },
-    { icon: '↑', text: 'Bebidas tira el carro: 36% del total (vs 32% ayer)',  color: '#1a9e5a' },
-    { icon: '⚠', text: '4 productos sin ventas en 7 días · revisar carta',    color: '#d18a1c' },
-  ];
 }

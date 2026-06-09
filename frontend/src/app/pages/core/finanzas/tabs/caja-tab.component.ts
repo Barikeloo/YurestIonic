@@ -16,11 +16,11 @@ export class CajaTabComponent {
   protected readonly cancelCat  = signal<string>('all');
 
   protected readonly theoretical = this.facade.cashTheoretical;
-  protected readonly s = this.facade.cashSession;
+  protected readonly s           = this.facade.cashSession;
 
   protected readonly filteredMovements = computed(() => {
     const f = this.movFilter();
-    return this.s.movements.filter(m => f === 'all' || m.type === f);
+    return this.s().movements.filter(m => f === 'all' || m.type === f);
   });
 
   protected readonly filteredCancellations = computed(() => {
@@ -62,11 +62,13 @@ export class CajaTabComponent {
   }
 
   protected sessionBreakdown(): { label: string; value: string; color: string }[] {
+    const session = this.s();
+    const cashSales = this.facade.cashSummary()?.total_cash_payments ?? this.facade.byMethod.cash.v;
     return [
-      { label: 'Fondo inicial',    value: this.fmt(this.s.initial),              color: '#5a5a5a' },
-      { label: 'Ventas efectivo',  value: this.fmt(this.facade.byMethod.cash.v), color: '#1a9e5a' },
-      { label: 'Entradas',         value: `+ ${this.fmt(this.s.cashIn)}`,        color: '#1a9e5a' },
-      { label: 'Salidas',          value: `− ${this.fmt(this.s.cashOut)}`,       color: '#ff4d4d' },
+      { label: 'Fondo inicial',    value: this.fmt(session.initial),              color: '#5a5a5a' },
+      { label: 'Ventas efectivo',  value: this.fmt(cashSales),                    color: '#1a9e5a' },
+      { label: 'Entradas',         value: `+ ${this.fmt(session.cashIn)}`,        color: '#1a9e5a' },
+      { label: 'Salidas',          value: `− ${this.fmt(session.cashOut)}`,       color: '#ff4d4d' },
     ];
   }
 

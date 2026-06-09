@@ -1,341 +1,369 @@
 <div class="productos">
 
-  <!-- ── KPI strip ─────────────────────────────────────────────────────────── -->
-  <div class="kpi-strip">
-    <div class="kpi-card kpi-card--accent-red">
-      <div class="kpi-label">Ingresos productos</div>
-      <div class="kpi-value">{{ fmt(totalRevenue()) }}</div>
-      <div class="kpi-sub">Periodo · sumado de líneas</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">Coste mercancía</div>
-      <div class="kpi-value kpi-value--gray">− {{ fmt(totalCost()) }}</div>
-      <div class="kpi-sub">Suma coste × unidades vendidas</div>
-    </div>
-    <div class="kpi-card kpi-card--accent-green">
-      <div class="kpi-label">Beneficio bruto</div>
-      <div class="kpi-value kpi-value--green">{{ fmt(totalMargin()) }}</div>
-      <div class="kpi-sub">Margen del {{ overallPct().toFixed(1).replace('.', ',') }}%</div>
-    </div>
-    <div class="kpi-card" [class.kpi-card--accent-red]="criticalCount() > 0" [class.kpi-card--accent-amber]="!criticalCount() && lowCount() > 0">
-      <div class="kpi-label">Alertas stock</div>
-      <div class="kpi-value" [style.color]="criticalCount() > 0 ? '#ff4d4d' : lowCount() > 0 ? '#d18a1c' : '#0d0d0d'">{{ criticalCount() + lowCount() }}</div>
-      <div class="kpi-sub">{{ criticalCount() }} crítico · {{ lowCount() }} bajo · {{ deadCount }} sin venta</div>
-    </div>
-  </div>
+  @if (facade.loadingProducts()) {
 
-  <!-- ── Top row: 1.4fr 1fr 1fr ───────────────────────────────────────────── -->
-  <div class="top-row">
-
-    <!-- Ventas por familia -->
-    <div class="card">
-      <div class="section-header">
-        <div class="card-title">Ventas por familia</div>
-        <div class="card-sub">Distribución de ingresos del periodo</div>
-      </div>
-      <div class="vbar-chart">
-        @for (f of facade.byFamily; track f.label) {
-          <div class="vbar-col">
-            <span class="vbar-pct">{{ ((f.v / totalRevenue()) * 100).toFixed(0) }}%</span>
-            <div class="vbar-fill" [style.height.%]="(f.v / familyMax) * 90" [style.background]="f.color"></div>
-            <span class="vbar-label">{{ f.label }}</span>
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- Stock crítico -->
-    <div class="card">
-      <div class="section-header">
-        <div>
-          <div class="card-title">Stock crítico</div>
-          <div class="card-sub">Productos que agotarán pronto</div>
+    <!-- ── Skeleton: KPI strip ────────────────────────────────────────────── -->
+    <div class="kpi-strip">
+      @for (_ of [1,2,3,4]; track $index) {
+        <div class="kpi-card" style="pointer-events:none">
+          <span class="sk sk--label" style="width:65%"></span>
+          <div class="sk sk--value"></div>
+          <span class="sk sk--sub"></span>
         </div>
-        <span class="badge" [class.badge--red]="criticalCount() > 0" [class.badge--amber]="!criticalCount()">{{ criticalCount() + lowCount() }}</span>
-      </div>
-      <div class="alert-items">
-        @for (p of criticalList(); track p.name) {
-          <div class="alert-item" [class.alert-item--critical]="p.alert === 'critical'" [class.alert-item--low]="p.alert === 'low'">
-            <div class="alert-item-l">
-              <div class="alert-name">{{ p.name }}</div>
-              <div class="alert-sub">Stock {{ p.stock }} · vende {{ p.avgDaily }}/día</div>
-            </div>
-            <div class="alert-days" [style.color]="p.alert === 'critical' ? '#ff4d4d' : '#d18a1c'">
-              {{ daysStr(p.days) }}<span class="days-unit"> días</span>
-            </div>
-          </div>
-        }
-        @if (criticalList().length === 0) {
-          <div class="empty-ok">✓ Stock saludable</div>
-        }
-      </div>
+      }
     </div>
 
-    <!-- Sin ventas -->
-    <div class="card">
-      <div class="section-header">
-        <div>
-          <div class="card-title">Sin ventas</div>
-          <div class="card-sub">Activos sin movimiento 7 días</div>
+    <!-- ── Skeleton: top row ──────────────────────────────────────────────── -->
+    <div class="top-row">
+      <div class="card">
+        <div class="sk-sect">
+          <span class="sk sk--title"></span>
+          <span class="sk sk--title-sm"></span>
         </div>
-        <span class="badge badge--gray">{{ deadCount }}</span>
+        <div class="sk sk--block"></div>
       </div>
-      <div class="dead-items">
-        @for (d of facade.deadStock; track d.name) {
-          <div class="dead-item">
-            <div class="dead-item-l">
-              <div class="dead-name">{{ d.name }}</div>
-              <div class="dead-sub">{{ d.lastSale }}</div>
-            </div>
-            <button class="btn-outline-xs">Desactivar</button>
+      @for (_ of [1,2]; track $index) {
+        <div class="card">
+          <div class="sk-sect">
+            <span class="sk sk--title"></span>
+            <span class="sk sk--title-sm"></span>
           </div>
+          <div class="sk sk--block-sm"></div>
+        </div>
+      }
+    </div>
+
+    <!-- ── Skeleton: mid row ──────────────────────────────────────────────── -->
+    <div class="mid-row">
+      @for (_ of [1,2]; track $index) {
+        <div class="card">
+          <div class="sk-sect">
+            <span class="sk sk--title"></span>
+            <span class="sk sk--title-sm"></span>
+          </div>
+          <div class="sk sk--block-sm"></div>
+        </div>
+      }
+    </div>
+
+    <!-- ── Skeleton: table ────────────────────────────────────────────────── -->
+    <div class="card">
+      <div class="sk-sect" style="margin-bottom:18px">
+        <span class="sk sk--title"></span>
+      </div>
+      @for (_ of [1,2,3,4,5,6,7,8]; track $index) {
+        <div class="sk-prod-row">
+          <span class="sk" style="height:16px;border-radius:4px"></span>
+          <span class="sk sk--label" style="display:inline-block;width:140px"></span>
+          <span class="sk sk--label" style="display:inline-block;width:70px"></span>
+          <span class="sk" style="height:14px;width:70px;border-radius:4px"></span>
+          <span class="sk" style="height:14px;width:70px;border-radius:4px"></span>
+          <span class="sk" style="height:20px;width:60px;border-radius:6px"></span>
+        </div>
+      }
+    </div>
+
+  } @else {
+
+    <!-- ── KPI strip ─────────────────────────────────────────────────────── -->
+    <div class="kpi-strip">
+      <div class="kpi-card kpi-card--accent-red">
+        <div class="kpi-label">Ingresos productos</div>
+        <div class="kpi-value">{{ fmt(totalRevenue()) }}</div>
+        <div class="kpi-sub">Periodo · sumado de líneas de venta</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Unidades vendidas</div>
+        <div class="kpi-value">{{ fmtInt(totalUnits()) }}</div>
+        <div class="kpi-sub">{{ familyCount() }} familia{{ familyCount() !== 1 ? 's' : '' }} activa{{ familyCount() !== 1 ? 's' : '' }}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Beneficio bruto</div>
+        <div class="kpi-value kpi-value--gray">—</div>
+        <div class="kpi-sub">Sin módulo de costes activo</div>
+      </div>
+      <div class="kpi-card" [class.kpi-card--accent-red]="(facade.productsReport()?.alert_count ?? 0) > 0">
+        <div class="kpi-label">Alertas stock</div>
+        @if (facade.productsReport()) {
+          <div class="kpi-value" [class.kpi-value--gray]="facade.productsReport()!.alert_count === 0">
+            {{ fmtInt(facade.productsReport()!.alert_count) }}
+          </div>
+          <div class="kpi-sub">{{ facade.productsReport()!.alert_count > 0 ? 'productos bajo mínimo' : 'Stock en buen estado' }}</div>
+        } @else {
+          <div class="kpi-value kpi-value--gray">—</div>
+          <div class="kpi-sub">Cargando...</div>
         }
       </div>
     </div>
 
-  </div>
+    <!-- ── Top row: 1.4fr 1fr 1fr ────────────────────────────────────────── -->
+    <div class="top-row">
 
-  <!-- ── Cross-sell + Zones (1fr 1.2fr) ────────────────────────────────────── -->
-  <div class="mid-row">
-
-    <!-- Cross-sell -->
-    <div class="card">
-      <div class="section-header">
-        <div class="card-title">Productos que se piden juntos</div>
-        <div class="card-sub">% de pedidos con A que también incluyen B</div>
-      </div>
-      <div class="cs-list">
-        @for (p of facade.crossSell; track $index) {
-          <div class="cs-item" [class.cs-item--top]="p.highlight === 'top'">
-            <div class="cs-item-l">
-              <div class="cs-names">
-                <span class="cs-name">{{ p.a }}</span>
-                <span class="cs-plus">+</span>
-                <span class="cs-name">{{ p.b }}</span>
-                @if (p.highlight === 'top') {
-                  <span class="cs-top-badge">★ Top</span>
-                }
+      <!-- Ventas por familia -->
+      <div class="card">
+        <div class="section-header">
+          <div class="card-title">Ventas por familia</div>
+          <div class="card-sub">Distribución de ingresos del periodo</div>
+        </div>
+        @if (facade.byFamily.length > 0 && totalRevenue() > 0) {
+          <div class="vbar-chart">
+            @for (f of facade.byFamily; track f.label) {
+              <div class="vbar-col">
+                <span class="vbar-pct">{{ ((f.v / totalRevenue()) * 100).toFixed(0) }}%</span>
+                <div class="vbar-fill" [style.height.%]="(f.v / familyMax) * 90" [style.background]="f.color"></div>
+                <span class="vbar-label">{{ f.label }}</span>
               </div>
-              <div class="cs-bar-track">
-                <div class="cs-bar" [style.width.%]="p.together"></div>
-              </div>
-            </div>
-            <div class="cs-item-r">
-              <div class="cs-pct mono">{{ p.together }}%</div>
-              <div class="cs-meta">en {{ p.total }} pedidos</div>
-            </div>
+            }
+          </div>
+        } @else {
+          <div class="no-data-placeholder">
+            <div class="no-data-icon">📊</div>
+            <div class="no-data-title">Sin datos de familias</div>
+            <div class="no-data-sub">No hay ventas registradas en este periodo</div>
           </div>
         }
       </div>
 
-      <!-- Canibalización -->
-      <div class="cannibal-box">
-        <div class="cannibal-head">
-          <span class="cannibal-icon">⚠</span>
-          <span class="cannibal-label">Posible canibalización</span>
-        </div>
-        @for (c of facade.cannibals; track $index) {
-          <div class="cannibal-row" [class.cannibal-row--last]="$last">
-            <div class="cannibal-text">
-              <strong>{{ c.a }}</strong> ↔ <strong>{{ c.b }}</strong> · {{ c.overlap }}% solapamiento
-            </div>
-            <div class="cannibal-note">{{ c.note }}</div>
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="card-title">Stock crítico</div>
+            <div class="card-sub">Productos con stock ≤ 10 unidades</div>
           </div>
-        }
-      </div>
-    </div>
-
-    <!-- Zonas heatmap -->
-    <div class="card">
-      <div class="section-header">
-        <div class="card-title">Rendimiento por zona</div>
-        <div class="card-sub">Plano del local · intensidad por ingresos</div>
-      </div>
-      <div class="zones-inner">
-
-        <!-- Floor plan -->
-        <div class="zones-floor">
-          @for (z of facade.zonesLayout; track z.id) {
-            <div
-              class="zone-block"
-              [class.zone-block--hovered]="hovered() === z.id"
-              [style.left.%]="z.x"
-              [style.top.%]="z.y"
-              [style.width.%]="z.w"
-              [style.height.%]="z.h"
-              [style.background]="zoneIntensity(z)"
-              (mouseenter)="hovered.set(z.id)"
-              (mouseleave)="hovered.set(null)"
-            >
-              <div class="zone-name" [style.color]="zoneTextColor(z)">{{ z.name }}</div>
-              <div class="zone-rev mono" [style.color]="zoneTextColor(z)">{{ fmt(z.revenue) }}</div>
-              <div class="zone-detail" [style.color]="zoneTextColor(z) === '#fff' ? 'rgba(255,255,255,0.75)' : '#7a7a7a'">
-                {{ zoneRevPct(z) }}% · ocup. {{ z.occupancy }}%
-              </div>
-            </div>
-          }
-          <div class="zones-floor-hint">Plano esquemático</div>
         </div>
-
-        <!-- Stats column -->
-        <div class="zones-stats">
-          @for (z of zonesSorted(); track z.id; let i = $index) {
-            <div
-              class="zone-stat"
-              [class.zone-stat--hovered]="hovered() === z.id"
-              (mouseenter)="hovered.set(z.id)"
-              (mouseleave)="hovered.set(null)"
-            >
-              <div class="zone-stat-top">
-                <span class="zone-stat-name">
-                  <span class="zone-rank" [class.zone-rank--1]="i === 0">{{ i + 1 }}</span>
-                  {{ z.name }}
+        @if ((facade.productsReport()?.stock_critical?.length ?? 0) > 0) {
+          <div class="stock-list">
+            @for (item of facade.productsReport()!.stock_critical; track item.name) {
+              <div class="stock-row">
+                <span class="stock-name">{{ item.name }}</span>
+                <span class="stock-fam">{{ item.family }}</span>
+                <span class="stock-badge"
+                  [class.stock-badge--out]="item.stock === 0"
+                  [class.stock-badge--critical]="item.stock > 0 && item.stock <= 5"
+                  [class.stock-badge--low]="item.stock > 5">
+                  {{ item.stock === 0 ? 'Agotado' : item.stock + ' uds' }}
                 </span>
-                <span class="zone-stat-rev mono">{{ fmt(z.revenue) }}</span>
               </div>
-              <div class="zone-stat-bot">
-                <span class="zone-stat-tickets">{{ z.tickets }} tickets</span>
-                <span class="zone-stat-occ mono" [style.color]="zoneOccColor(z)">Ocupación {{ z.occupancy }}%</span>
-              </div>
-            </div>
-          }
-        </div>
+            }
+          </div>
+        } @else if (facade.productsReport()) {
+          <div class="no-data-placeholder">
+            <div class="no-data-icon">✅</div>
+            <div class="no-data-title">Stock en buen estado</div>
+            <div class="no-data-sub">Todos los productos tienen stock suficiente</div>
+          </div>
+        } @else {
+          <div class="no-data-placeholder">
+            <div class="no-data-icon">📦</div>
+            <div class="no-data-title">Cargando stock...</div>
+            <div class="no-data-sub"></div>
+          </div>
+        }
+      </div>
 
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="card-title">Sin ventas</div>
+            <div class="card-sub">Productos activos sin movimiento en 7 días</div>
+          </div>
+        </div>
+        @if ((facade.productsReport()?.no_sales_7d?.length ?? 0) > 0) {
+          <div class="stock-list">
+            @for (item of facade.productsReport()!.no_sales_7d; track item.name) {
+              <div class="stock-row">
+                <span class="stock-name">{{ item.name }}</span>
+                <span class="stock-fam">{{ item.family }}</span>
+                <span class="stock-days">Sin venta 7d</span>
+              </div>
+            }
+          </div>
+        } @else if (facade.productsReport()) {
+          <div class="no-data-placeholder">
+            <div class="no-data-icon">📈</div>
+            <div class="no-data-title">Todos activos</div>
+            <div class="no-data-sub">Todos los productos tienen movimiento en los últimos 7 días</div>
+          </div>
+        } @else {
+          <div class="no-data-placeholder">
+            <div class="no-data-icon">📦</div>
+            <div class="no-data-title">Cargando...</div>
+            <div class="no-data-sub"></div>
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <!-- ── Cross-sell + Zones ─────────────────────────────────────────────── -->
+    <div class="mid-row">
+
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="card-title">Productos que se piden juntos</div>
+            <div class="card-sub">% de pedidos con A que también incluyen B</div>
+          </div>
+        </div>
+        <div class="no-data-placeholder">
+          <div class="no-data-icon">🔗</div>
+          <div class="no-data-title">Análisis de cross-selling</div>
+          <div class="no-data-sub">Requiere un mínimo de historial de ventas para calcular correlaciones</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="card-title">Rendimiento por zona</div>
+            <div class="card-sub">Ingresos por zona del local · periodo seleccionado</div>
+          </div>
+        </div>
+        @if ((facade.productsReport()?.by_zone?.length ?? 0) > 0) {
+          @let zoneMax = facade.productsReport()!.by_zone[0].revenue;
+          <div class="zone-rank-list">
+            @for (z of facade.productsReport()!.by_zone; track z.name; let i = $index) {
+              <div class="zone-rank-row">
+                <span class="zone-rank-pos" [class.zone-rank-pos--top]="i === 0">{{ i + 1 }}</span>
+                <div class="zone-rank-body">
+                  <div class="zone-rank-top">
+                    <span class="zone-rank-name">{{ z.name }}</span>
+                    <span class="zone-rank-rev mono fw7">{{ fmt(z.revenue) }}</span>
+                  </div>
+                  <div class="zone-bar-track">
+                    <div class="zone-bar" [style.width.%]="(z.revenue / zoneMax) * 100"></div>
+                  </div>
+                  <span class="zone-rank-tickets">{{ z.tickets }} ticket{{ z.tickets !== 1 ? 's' : '' }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        } @else if (facade.productsReport()) {
+          <div class="no-data-placeholder">
+            <div class="no-data-icon">🗺️</div>
+            <div class="no-data-title">Sin datos de zonas</div>
+            <div class="no-data-sub">No hay ventas por mesa registradas en este periodo</div>
+          </div>
+        } @else {
+          <div class="no-data-placeholder">
+            <div class="no-data-icon">🗺️</div>
+            <div class="no-data-title">Cargando...</div>
+            <div class="no-data-sub"></div>
+          </div>
+        }
+      </div>
+
+    </div>
+
+    <!-- ── Filters ────────────────────────────────────────────────────────── -->
+    <div class="card filters-card">
+      <div class="filters-row">
+        <div class="filter-group">
+          <span class="filter-label">Familia</span>
+          <div class="segment">
+            @for (f of families(); track f) {
+              <button
+                class="seg-btn"
+                [class.seg-btn--active]="filterFam() === f"
+                (click)="filterFam.set(f)"
+              >{{ f === 'all' ? 'Todas' : f }}</button>
+            }
+          </div>
+        </div>
+        <div class="filter-spacer"></div>
+        <span class="filter-count">{{ filtered().length }} producto{{ filtered().length !== 1 ? 's' : '' }}</span>
+        <button class="btn-outline-sm" (click)="exportCsv()">⤓ Exportar CSV</button>
       </div>
     </div>
 
-  </div>
-
-  <!-- ── Filters ────────────────────────────────────────────────────────────── -->
-  <div class="card filters-card">
-    <div class="filters-row">
-      <div class="filter-group">
-        <span class="filter-label">Familia</span>
-        <div class="segment">
-          @for (f of families(); track f) {
-            <button
-              class="seg-btn"
-              [class.seg-btn--active]="filterFam() === f"
-              (click)="filterFam.set(f)"
-            >{{ f === 'all' ? 'Todas' : f }}</button>
-          }
-        </div>
-      </div>
-      <div class="filter-divider"></div>
-      <label class="toggle-label-row">
-        <span class="toggle-wrap" [class.toggle-on]="showAlerts()">
-          <input type="checkbox" class="toggle-input" [checked]="showAlerts()" (change)="showAlerts.set($any($event.target).checked)">
-          <span class="toggle-thumb"></span>
-        </span>
-        <span class="toggle-text">Solo con alertas</span>
-      </label>
-      <div class="filter-spacer"></div>
-      <span class="filter-count">{{ filtered().length }} producto{{ filtered().length !== 1 ? 's' : '' }}</span>
-      <button class="btn-outline-sm">⤓ Exportar CSV</button>
-    </div>
-  </div>
-
-  <!-- ── Ranking table ──────────────────────────────────────────────────────── -->
-  <div class="card">
-    <div class="table-wrap">
-      <table class="rtable">
-        <thead>
-          <tr>
-            <th class="th-num">#</th>
-            <th class="th-product">Producto</th>
-            <th>Familia</th>
-            <th class="th-r th-sort" (click)="setSort('units')">
-              Uds <span class="si" [class.si--on]="sortKey() === 'units'">↓</span>
-            </th>
-            <th class="th-r th-sort" (click)="setSort('revenue')">
-              Ingresos <span class="si" [class.si--on]="sortKey() === 'revenue'">↓</span>
-            </th>
-            <th class="th-r th-sort" (click)="setSort('margin')">
-              Margen € <span class="si" [class.si--on]="sortKey() === 'margin'">↓</span>
-            </th>
-            <th class="th-r th-sort" (click)="setSort('marginPct')">
-              Margen % <span class="si" [class.si--on]="sortKey() === 'marginPct'">↓</span>
-            </th>
-            <th class="th-r th-sort" (click)="setSort('stock')">
-              Stock <span class="si" [class.si--on]="sortKey() === 'stock'">↓</span>
-            </th>
-            <th class="th-r th-sort" (click)="setSort('rotation')">
-              Rotación <span class="si" [class.si--on]="sortKey() === 'rotation'">↓</span>
-            </th>
-            <th class="th-r th-trend">Tendencia 14d</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (p of sorted(); track p.name; let i = $index) {
-            @let ti = trendInfo(p.name);
-            @let isBest = bestMarginNames().includes(p.name);
+    <!-- ── Ranking table ───────────────────────────────────────────────────── -->
+    <div class="card">
+      <div class="table-wrap">
+        <table class="rtable">
+          <thead>
             <tr>
-              <td class="td-num" [class.td-num--top]="i < 3">{{ i + 1 }}</td>
-              <td class="td-product">
-                <div class="product-cell">
-                  <span class="product-name">{{ p.name }}</span>
-                  @if (isBest) { <span class="best-badge">Top margen</span> }
-                </div>
-              </td>
-              <td>
-                <span class="family-cell">
-                  <span class="family-dot" [style.background]="familyColor(p.family)"></span>
-                  <span class="family-text">{{ p.family }}</span>
-                </span>
-              </td>
-              <td class="td-r mono">{{ p.units }}</td>
-              <td class="td-r mono fw7">{{ fmt(p.revenue) }}</td>
-              <td class="td-r mono fw6 green">{{ fmt(p.margin) }}</td>
-              <td class="td-r">
-                <div class="mpct-cell">
-                  <div class="mpct-bar-track">
-                    <div class="mpct-bar" [style.width.%]="p.mPct" [style.background]="marginBarColor(p.mPct)"></div>
-                  </div>
-                  <span class="mpct-val mono">{{ p.mPct.toFixed(0) }}%</span>
-                </div>
-              </td>
-              <td class="td-r">
-                <div class="stock-cell">
-                  <span class="stock-num mono" [style.color]="stockColor(p.alert)">{{ p.stock >= 999 ? '∞' : p.stock }}</span>
-                  @if (p.stock < 999) {
-                    <div class="stock-bar-track">
-                      <div class="stock-bar" [style.width.%]="stockBarPct(p.stock)" [style.background]="stockColor(p.alert)"></div>
-                    </div>
-                  }
-                </div>
-              </td>
-              <td class="td-r">
-                @if (isInfinite(p.days) || p.days > 30) {
-                  <span class="rotation-dash mono">—</span>
-                } @else {
-                  <span class="rotation-val mono" [style.color]="p.alert === 'critical' ? '#ff4d4d' : p.alert === 'low' ? '#d18a1c' : '#5a5a5a'">
-                    {{ daysStr(p.days) }}<span class="rotation-unit"> días</span>
-                  </span>
-                }
-              </td>
-              <td class="td-r">
-                @if (ti) {
-                  <div class="trend-cell">
-                    <svg class="spark" viewBox="0 0 50 20" preserveAspectRatio="none">
-                      <path [attr.d]="sparkArea(ti.spark)" [attr.fill]="trendColor(ti.trend)" fill-opacity="0.15"/>
-                      <path [attr.d]="sparkPath(ti.spark)" fill="none" [attr.stroke]="trendColor(ti.trend)" stroke-width="1.3"/>
-                    </svg>
-                    <span class="trend-arrow mono" [style.color]="trendColor(ti.trend)">
-                      {{ trendArrow(ti.trend) }} {{ ti.delta >= 0 ? '+' : '' }}{{ ti.delta.toFixed(1).replace('.', ',') }}%
-                    </span>
-                  </div>
-                }
-              </td>
+              <th class="th-num">#</th>
+              <th class="th-product">Producto</th>
+              <th>Familia</th>
+              <th class="th-r th-sort" (click)="setSort('units')">
+                Uds <span class="si" [class.si--on]="sortKey() === 'units'">↓</span>
+              </th>
+              <th class="th-r th-sort" (click)="setSort('revenue')">
+                Ingresos <span class="si" [class.si--on]="sortKey() === 'revenue'">↓</span>
+              </th>
+              <th class="th-r">% periodo</th>
+              <th class="th-r th-trend">Tendencia 14d</th>
             </tr>
-          }
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            @if (sorted().length === 0) {
+              <tr>
+                <td colspan="7" class="td-empty">
+                  <div class="table-empty">
+                    <div class="table-empty-icon">📋</div>
+                    <div class="table-empty-title">Sin productos en este periodo</div>
+                    <div class="table-empty-sub">No hay líneas de venta registradas para el periodo seleccionado</div>
+                  </div>
+                </td>
+              </tr>
+            } @else {
+              @for (p of sorted(); track p.name; let i = $index) {
+                @let ti = trendInfo(p.trendSpark);
+                <tr>
+                  <td class="td-num" [class.td-num--top]="i < 3">{{ i + 1 }}</td>
+                  <td class="td-product">
+                    <div class="product-cell">
+                      <span class="product-name">{{ p.name }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="family-cell">
+                      <span class="family-dot" [style.background]="p.familyColor"></span>
+                      <span class="family-text">{{ p.family }}</span>
+                    </span>
+                  </td>
+                  <td class="td-r mono">{{ p.units }}</td>
+                  <td class="td-r mono fw7">{{ fmt(p.revenue) }}</td>
+                  <td class="td-r">
+                    <div class="pct-cell">
+                      <div class="pct-bar-track">
+                        <div class="pct-bar" [style.width.%]="p.pct" [style.background]="p.familyColor"></div>
+                      </div>
+                      <span class="pct-val mono">{{ p.pct.toFixed(1).replace('.', ',') }}%</span>
+                    </div>
+                  </td>
+                  <td class="td-r">
+                    @if (ti) {
+                      <div class="trend-cell">
+                        <svg class="spark" viewBox="0 0 50 20" preserveAspectRatio="none">
+                          <path [attr.d]="sparkArea(ti.spark)" [attr.fill]="trendColor(ti.trend)" fill-opacity="0.15"/>
+                          <path [attr.d]="sparkPath(ti.spark)" fill="none" [attr.stroke]="trendColor(ti.trend)" stroke-width="1.3"/>
+                        </svg>
+                        @if (ti.delta !== null) {
+                          <span class="trend-arrow mono" [style.color]="trendColor(ti.trend)">
+                            {{ trendArrow(ti.trend) }} {{ ti.delta >= 0 ? '+' : '' }}{{ ti.delta.toFixed(1).replace('.', ',') }}%
+                          </span>
+                        } @else {
+                          <span class="trend-new">Nuevo</span>
+                        }
+                      </div>
+                    } @else {
+                      <span class="rotation-dash mono">—</span>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-footer">
+        <span class="footer-l">Ordenado por {{ sortLabel[sortKey()] }}</span>
+        <span class="footer-r">{{ filtered().length }} producto{{ filtered().length !== 1 ? 's' : '' }} · <strong class="mono">{{ fmt(filteredRevenue()) }}</strong> ingresos</span>
+      </div>
     </div>
 
-    <div class="table-footer">
-      <span class="footer-l">Ordenado por {{ sortLabel[sortKey()] }}</span>
-      <span class="footer-r">Beneficio del filtro: <strong class="mono green">{{ fmt(filteredMargin()) }}</strong></span>
-    </div>
-  </div>
+  }
 
 </div>

@@ -364,3 +364,54 @@
   font-weight: 700;
   color: #5a5a5a;
 }
+
+.emp-role { font-size: 11px; color: #7a7a7a; }
+
+.detail-card--empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 200px; gap: 10px;
+}
+.detail-empty-icon { font-size: 28px; opacity: 0.25; }
+.detail-empty-text { font-size: 13px; color: #b0b0b0; text-align: center; }
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 16px; gap: 8px; text-align: center;
+}
+.empty-icon  { font-size: 32px; opacity: 0.25; }
+.empty-title { font-size: 14px; font-weight: 700; color: #7a7a7a; }
+.empty-sub   { font-size: 12px; color: #b0b0b0; }
+
+// ── Skeleton ─────────────────────────────────────────────────────────────────
+.sk {
+  display: block; flex-shrink: 0;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
+  background-size: 400% 100%;
+  animation: sk-shimmer 1.5s ease-in-out infinite;
+  border-radius: 5px;
+}
+@keyframes sk-shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+.sk--label    { height: 10px; width: 60%; }
+.sk--value    { height: 26px; width: 70%; margin: 6px 0; }
+.sk--sub      { height: 9px; width: 45%; }
+.sk--avatar   { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; }
+.sk--spark    { height: 28px; width: 100%; border-radius: 4px; display: block; margin-top: 8px; }
+.sk--block    { height: 60px; border-radius: 8px; }
+.sk--block-sm { height: 40px; border-radius: 8px; }
+
+.sk-emp-card {
+  background: #fff; border: 1px solid #e8e8e8; border-radius: 14px; padding: 16px;
+}
+.sk-emp-header {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
+}
+.sk-emp-stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px;
+}
+.sk-detail-card {
+  background: #fff; border: 1px solid #e8e8e8; border-radius: 14px; padding: 20px;
+  display: flex; flex-direction: column; gap: 0;
+}

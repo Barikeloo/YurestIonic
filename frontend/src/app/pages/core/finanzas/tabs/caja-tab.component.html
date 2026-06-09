@@ -18,10 +18,10 @@
           <div class="session-icon">💼</div>
           <div>
             <div class="session-title-row">
-              <span class="session-title">Sesión #{{ s.id }}</span>
+              <span class="session-title">Sesión #{{ s().id }}</span>
               <span class="session-badge">● Abierta</span>
             </div>
-            <div class="session-sub">{{ s.operator }} · Apertura {{ s.opened }} · 14h 38m transcurridas</div>
+            <div class="session-sub">{{ s().operator }} · Apertura {{ s().opened }}</div>
           </div>
         </div>
         <div class="session-actions">
@@ -85,7 +85,7 @@
         <div class="card-header">
           <div>
             <div class="card-title">Historial de sesiones</div>
-            <div class="card-sub">Últimas {{ facade.cashHistory.length }} sesiones cerradas</div>
+            <div class="card-sub">Últimas {{ facade.cashHistory().length }} sesiones cerradas</div>
           </div>
           <button class="btn-ver-todas">Ver todas →</button>
         </div>
@@ -102,7 +102,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (h of facade.cashHistory; track h.id) {
+              @for (h of facade.cashHistory(); track h.id) {
                 <tr class="hist-row">
                   <td>
                     <div class="hist-id">#{{ h.id }}</div>

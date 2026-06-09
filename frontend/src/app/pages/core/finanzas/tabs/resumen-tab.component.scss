@@ -863,3 +863,88 @@
   flex-shrink: 0;
   margin-left: 12px;
 }
+
+// ── Skeleton screen ─────────────────────────────────────────────────────────
+
+.sk {
+  display: block;
+  flex-shrink: 0;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e4e4e4 50%, #f0f0f0 75%);
+  background-size: 400% 100%;
+  animation: sk-shimmer 1.5s ease-in-out infinite;
+  border-radius: 5px;
+}
+
+@keyframes sk-shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.sk--label    { height: 10px; width: 60%; }
+.sk--chip     { height: 18px; width: 44px; border-radius: 6px; }
+.sk--value    { height: 28px; width: 75%; margin: 6px 0; }
+.sk--sub      { height: 10px; width: 45%; }
+.sk--spark    { height: 32px; margin-top: 10px; border-radius: 6px; }
+.sk--title    { height: 13px; width: 110px; }
+.sk--title-sm { height: 11px; width: 180px; }
+.sk--chart    { height: 210px; border-radius: 8px; }
+.sk--donut    { width: 140px; height: 140px; border-radius: 50% !important; }
+.sk--cash-box { height: 62px; border-radius: 12px; }
+.sk--insight  { height: 38px; margin-bottom: 8px; &:last-child { margin-bottom: 0; } }
+.sk--tbl-ico  { width: 34px; height: 34px; border-radius: 8px !important; }
+
+.sk-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sk-sect {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 16px;
+}
+
+.sk-product-row {
+  display: grid;
+  grid-template-columns: 24px 1fr 60px 64px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line2);
+  &:last-child { border-bottom: none; }
+}
+
+.sk-table-row {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line2);
+  &:last-child { border-bottom: none; }
+}
+
+.sk-pending-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line2);
+  &:last-child { border-bottom: none; }
+}
+
+.sk-cash-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.sk-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 2px 0;
+  gap: 3px;
+}

@@ -1,6 +1,12 @@
 <?php
 
 use App\Audit\Infrastructure\Entrypoint\Http\ExportAuditEventsController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetDashboardSummaryController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetSalesReportController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetSaleDetailController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetHeatmapController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetProductsReportController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetEmployeesReportController;
 use App\Audit\Infrastructure\Entrypoint\Http\GetArchivedAuditStatsController;
 use App\Audit\Infrastructure\Entrypoint\Http\GetAuditEventController;
 use App\Audit\Infrastructure\Entrypoint\Http\ListAuditAlertsController;
@@ -326,6 +332,13 @@ Route::middleware([
     Route::get('/admin/audit-alerts', ListAuditAlertsController::class);
     Route::post('/admin/audit-alerts/read-all', MarkAllAlertsReadController::class);
     Route::post('/admin/audit-alerts/{uuid}/read', MarkAlertReadController::class)->whereUuid('uuid');
+
+    Route::get('/admin/reports/summary', GetDashboardSummaryController::class);
+    Route::get('/admin/reports/sales', GetSalesReportController::class);
+    Route::get('/admin/reports/sales/{uuid}', GetSaleDetailController::class)->whereUuid('uuid');
+    Route::get('/admin/reports/heatmap', GetHeatmapController::class);
+    Route::get('/admin/reports/products', GetProductsReportController::class);
+    Route::get('/admin/reports/employees', GetEmployeesReportController::class);
 });
 
 Route::middleware([

@@ -296,6 +296,7 @@ export const MOCK_CASH_SESSION = {
   operator: 'María G.',
   opened: '08:00',
   initial: 20000,
+  cashPayments: 78420,
   cashIn:  15000,
   cashOut:  8500,
   movements: [

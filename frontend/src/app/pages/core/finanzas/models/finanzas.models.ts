@@ -46,7 +46,7 @@ export interface TopProduct {
 }
 
 export interface FinanzasAlert {
-  id: number;
+  id: string | number;
   type: 'warning' | 'critical' | 'info';
   title: string;
   sub: string;
@@ -278,3 +278,178 @@ export interface TaxSlab {
 export type FinanzasPeriod = 'today' | 'yesterday' | 'week' | 'month';
 export type FinanzasTab = 'resumen' | 'ventas' | 'productos' | 'empleados' | 'caja' | 'impuestos' | 'informes';
 export type ResumenVariant = 'A' | 'B' | 'C';
+
+// ── API response types (Fase 2+) ──────────────────────────────────────────
+
+export interface KpiApiMetric {
+  v: number;
+  prev: number;
+  delta_pct: number;
+}
+
+export interface SalePaymentRow {
+  method: string;
+  amount: number;
+  tip?: number;
+}
+
+export interface SaleRow {
+  uuid: string;
+  ticket_number: number;
+  value_date: string;
+  total: number;
+  status: string;
+  zone_name: string;
+  table_name: string;
+  diners: number;
+  opened_by: string;
+  payment_methods: SalePaymentRow[];
+  tips_total: number;
+}
+
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  per_page: number;
+  last_page: number;
+}
+
+export interface SalesTotals {
+  revenue: number;
+  cash: number;
+  card: number;
+  bizum: number;
+  other: number;
+  tips: number;
+}
+
+export interface ProductReportItem {
+  name: string;
+  family: string;
+  family_color: string;
+  units: number;
+  revenue: number;
+  cost: number;
+  price: number;
+  pct: number;
+  avg_daily: number;
+  trend_spark: number[];
+}
+
+export interface EmployeeReportItem {
+  user_uuid: string;
+  name: string;
+  role: string;
+  initials: string;
+  color: string;
+  tickets: number;
+  revenue: number;
+  avg_ticket: number;
+  items_sold: number;
+  tips: number;
+  discounts: number;
+  cancellations: number;
+  spark_revenue: number[];
+}
+
+export interface QuarterlyTax {
+  quarter: string;
+  period: string;
+  elapsed_pct: number;
+  rates: { rate: number; base: number; tax: number }[];
+}
+
+export interface DashboardSummaryResponse {
+  period: FinanzasPeriod;
+  date_label: string;
+  kpis: {
+    revenue:    KpiApiMetric;
+    tickets:    KpiApiMetric;
+    avg_ticket: KpiApiMetric;
+    items_sold: KpiApiMetric;
+    diners:     KpiApiMetric;
+  };
+  sparks: {
+    revenue:    number[];
+    tickets:    number[];
+    avg_ticket: number[];
+    items:      number[];
+  };
+  by_hour:      { l: string; v: number; n?: number }[];
+  by_hour_prev: { l: string; v: number }[];
+  by_day:       { l: string; v: number; n?: number }[];
+  by_family:    { label: string; v: number }[];
+  top_products: { name: string; family: string; units: number; revenue: number }[];
+  by_payment_method: {
+    cash:       number;
+    card:       number;
+    bizum:      number;
+    voucher:    number;
+    invitation: number;
+    other:      number;
+  };
+}
+
+export interface SalesReportResponse {
+  data:   SaleRow[];
+  meta:   PaginationMeta;
+  totals: SalesTotals;
+}
+
+export interface SaleDetailResponse {
+  uuid: string;
+  ticket_number: number;
+  value_date: string;
+  status: string;
+  zone_name: string;
+  table_name: string;
+  diners: number;
+  opened_by: string;
+  duration_minutes: number;
+  lines: {
+    product_name: string;
+    family_name: string;
+    qty: number;
+    unit_price: number;
+    tax_pct: number;
+    total: number;
+  }[];
+  payments: { method: string; amount: number; tip?: number }[];
+  tax_breakdown: { rate: number; base: number; tax: number }[];
+  subtotal: number;
+  tax_total: number;
+  tips_total: number;
+  cancel_reason: string | null;
+}
+
+export interface StockAlertItem {
+  name: string;
+  family: string;
+  stock: number;
+}
+
+export interface ZoneReportItem {
+  name: string;
+  revenue: number;
+  tickets: number;
+}
+
+export interface ProductsReportResponse {
+  period_revenue: number;
+  items: ProductReportItem[];
+  stock_critical: StockAlertItem[];
+  no_sales_7d: StockAlertItem[];
+  alert_count: number;
+  by_zone: ZoneReportItem[];
+}
+
+export interface EmployeesReportResponse {
+  items: EmployeeReportItem[];
+}
+
+export interface TaxReportResponse {
+  period_label: string;
+  breakdown:    TaxSlab[];
+  tips_card:    number;
+  quarterly:    QuarterlyTax;
+}

@@ -3,33 +3,10 @@
   <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
   <div class="fin-topbar" (click)="$event.stopPropagation()">
 
-    <!-- Back + Location -->
+    <!-- Back + restaurant name -->
     <button class="topbar-back" (click)="goBack()">← Gestión</button>
     <div class="topbar-sep"></div>
-
-    <!-- Location selector -->
-    <div class="location-selector" style="position:relative">
-      <button class="location-btn" (click)="toggleLocation()">
-        <span class="location-dot"></span>
-        {{ currentLocation.name }}
-        <span class="location-caret">▾</span>
-      </button>
-      @if (locationOpen()) {
-        <div class="topbar-dropdown location-dropdown">
-          <div class="dropdown-head">Locales</div>
-          @for (loc of facade.locations; track loc.id) {
-            <button class="dropdown-item" [class.active]="loc.isCurrent" (click)="selectLocation(loc.id)">
-              <span class="loc-dot" [style.background]="loc.isCurrent ? '#ff4d4d' : '#a0a0a0'"></span>
-              <div class="loc-info">
-                <div class="loc-name">{{ loc.name }}</div>
-                <div class="loc-city">{{ loc.city }}</div>
-              </div>
-              <span class="loc-rev">{{ (loc.revenue / 100) | number:'1.0-0' }}</span>
-            </button>
-          }
-        </div>
-      }
-    </div>
+    <span class="topbar-restaurant">{{ facade.restaurantName() }}</span>
 
     <div class="topbar-sep"></div>
     <span class="fin-label">FINANZAS</span>
@@ -52,45 +29,6 @@
       <span class="kbd-hint">⌘K</span>
     </button>
 
-    <!-- Hardware status -->
-    <div style="position:relative">
-      <button class="hw-btn" [class.open]="hardwareOpen()" (click)="toggleHardware(); $event.stopPropagation()">
-        <span class="hw-dot" [style.background]="hwColors[hwOverall]"
-              [style.box-shadow]="hwOverall !== 'ok' ? '0 0 0 4px ' + hwColors[hwOverall] + '22' : 'none'"></span>
-        Hardware
-        @if (hwIssueCount > 0) {
-          <span class="hw-badge" [style.background]="hwColors[hwOverall]">{{ hwIssueCount }}</span>
-        }
-      </button>
-      @if (hardwareOpen()) {
-        <div class="topbar-dropdown hw-dropdown" (click)="$event.stopPropagation()">
-          <div class="dropdown-head">
-            <span>Estado del hardware</span>
-            <span style="font-size:11px;color:#7a7a7a;font-weight:400">
-              {{ facade.hardware.length - hwIssueCount }} OK
-              @if (hwWarningCount > 0) {
-                <span style="color:#d18a1c"> · {{ hwWarningCount }} aviso</span>
-              }
-              @if (hwErrorCount > 0) {
-                <span style="color:#ff4d4d"> · {{ hwErrorCount }} crítico</span>
-              }
-            </span>
-          </div>
-          @for (h of facade.hardware; track h.id; let i = $index) {
-            <div class="hw-item" [style.border-top]="i === 0 ? 'none' : '1px solid #f4f4f4'"
-                 [style.background]="hwBgs[h.status]">
-              <div class="hw-icon" [style.background]="hwColors[h.status] + '15'" [style.color]="hwColors[h.status]">{{ h.icon }}</div>
-              <div class="hw-info">
-                <div class="hw-name">{{ h.name }}</div>
-                <div class="hw-detail">{{ h.detail }}</div>
-              </div>
-              <span class="hw-status-dot" [style.background]="hwColors[h.status]"></span>
-            </div>
-          }
-        </div>
-      }
-    </div>
-
     <!-- Alerts bell -->
     <div style="position:relative">
       <button class="alerts-btn" [class.open]="alertsOpen()" (click)="toggleAlerts(); $event.stopPropagation()">
@@ -107,7 +45,7 @@
             <span>Alertas</span>
             <button class="mark-read-btn" (click)="markAlertsRead()">Marcar leídos</button>
           </div>
-          @for (a of facade.alerts; track a.id) {
+          @for (a of facade.alerts(); track a.id) {
             <button class="alert-item" (click)="navigateFromAlert(a.tab)">
               <div class="alert-icon" [style.background]="alertTypeColors[a.type] + '18'"
                    [style.color]="alertTypeColors[a.type]">{{ alertTypeIcons[a.type] }}</div>
@@ -117,6 +55,9 @@
               </div>
               <span class="alert-time">{{ a.time }}</span>
             </button>
+          }
+          @if (facade.alerts().length === 0 && !facade.loadingAlerts()) {
+            <div class="alerts-empty">Sin alertas pendientes</div>
           }
         </div>
       }

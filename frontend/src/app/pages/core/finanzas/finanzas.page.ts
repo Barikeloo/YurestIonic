@@ -1,6 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Location } from '@angular/common';
-import { Router } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
 import { FinanzasFacade } from './facades/finanzas.facade';
 import { ResumenTabComponent } from './tabs/resumen-tab.component';
@@ -29,14 +28,11 @@ import type { FinanzasTab, FinanzasPeriod } from './models/finanzas.models';
     InformesTabComponent,
   ],
 })
-export class FinanzasPage {
+export class FinanzasPage implements OnInit {
   protected readonly facade = inject(FinanzasFacade);
-  private readonly router = inject(Router);
   private readonly location = inject(Location);
 
   protected readonly alertsOpen = signal(false);
-  protected readonly hardwareOpen = signal(false);
-  protected readonly locationOpen = signal(false);
 
   protected readonly tabs: Array<{ key: FinanzasTab; label: string; icon: string }> = [
     { key: 'resumen',    label: 'Resumen',    icon: '◴' },
@@ -55,12 +51,6 @@ export class FinanzasPage {
     { key: 'month',     label: 'Este mes' },
   ];
 
-  protected readonly hwColors: Record<string, string> = {
-    ok: '#1a9e5a', warning: '#d18a1c', error: '#ff4d4d',
-  };
-  protected readonly hwBgs: Record<string, string> = {
-    ok: 'transparent', warning: '#fbf2dc55', error: '#ffecec',
-  };
   protected readonly alertTypeIcons: Record<string, string> = {
     warning: '⚠', critical: '◉', info: '○',
   };
@@ -68,62 +58,24 @@ export class FinanzasPage {
     warning: '#d18a1c', critical: '#ff4d4d', info: '#0077cc',
   };
 
+  ngOnInit(): void {
+    this.facade.init();
+  }
+
   protected goBack(): void {
     this.location.back();
   }
 
   protected toggleAlerts(): void {
     this.alertsOpen.update(v => !v);
-    this.hardwareOpen.set(false);
-    this.locationOpen.set(false);
-  }
-
-  protected toggleHardware(): void {
-    this.hardwareOpen.update(v => !v);
-    this.alertsOpen.set(false);
-    this.locationOpen.set(false);
-  }
-
-  protected toggleLocation(): void {
-    this.locationOpen.update(v => !v);
-    this.alertsOpen.set(false);
-    this.hardwareOpen.set(false);
   }
 
   protected closeAllDropdowns(): void {
     this.alertsOpen.set(false);
-    this.hardwareOpen.set(false);
-    this.locationOpen.set(false);
-  }
-
-  protected get hwOverall(): 'ok' | 'warning' | 'error' {
-    const hw = this.facade.hardware;
-    if (hw.some(h => h.status === 'error')) return 'error';
-    if (hw.some(h => h.status === 'warning')) return 'warning';
-    return 'ok';
-  }
-
-  protected get hwIssueCount(): number {
-    return this.facade.hardware.filter(h => h.status !== 'ok').length;
-  }
-
-  protected get hwWarningCount(): number {
-    return this.facade.hardware.filter(h => h.status === 'warning').length;
-  }
-
-  protected get hwErrorCount(): number {
-    return this.facade.hardware.filter(h => h.status === 'error').length;
-  }
-
-  protected get currentLocation() {
-    return this.facade.locations.find(l => l.isCurrent) ?? this.facade.locations[0];
-  }
-
-  protected selectLocation(id: string): void {
-    this.locationOpen.set(false);
   }
 
   protected markAlertsRead(): void {
+    this.facade.markAlertsRead();
     this.alertsOpen.set(false);
   }
 

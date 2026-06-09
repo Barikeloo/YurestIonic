@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FinanzasFacade } from '../facades/finanzas.facade';
-import type { Employee } from '../models/finanzas.models';
+import type { EmployeeReportItem } from '../models/finanzas.models';
 
 type SortKey = 'revenue' | 'tickets' | 'avg' | 'tips';
 
@@ -14,51 +14,54 @@ type SortKey = 'revenue' | 'tickets' | 'avg' | 'tips';
 export class EmpleadosTabComponent {
   protected readonly facade = inject(FinanzasFacade);
 
-  protected readonly selectedId = signal<string>('mg');
+  protected readonly selectedId = signal<string | null>(null);
   protected readonly sortKey    = signal<SortKey>('revenue');
 
-  protected readonly sortedEmps = computed(() => {
+  private get items(): EmployeeReportItem[] {
+    return this.facade.employeesReport()?.items ?? [];
+  }
+
+  protected readonly sortedEmps = computed((): EmployeeReportItem[] => {
     const key = this.sortKey();
-    return [...this.facade.employees].sort((a, b) => {
+    return [...this.items].sort((a, b) => {
       if (key === 'tickets') return b.tickets - a.tickets;
-      if (key === 'avg')     return b.avgTicket - a.avgTicket;
+      if (key === 'avg')     return b.avg_ticket - a.avg_ticket;
       if (key === 'tips')    return b.tips - a.tips;
       return b.revenue - a.revenue;
     });
   });
 
-  protected readonly selectedEmp = computed(() =>
-    this.facade.employees.find(e => e.id === this.selectedId()) ?? null
+  protected readonly selectedEmp = computed((): EmployeeReportItem | null =>
+    this.items.find(e => e.user_uuid === this.selectedId()) ?? null
   );
 
-  protected readonly totalRevenue  = computed(() => this.facade.employees.reduce((s, e) => s + e.revenue, 0));
-  protected readonly totalTickets  = computed(() => this.facade.employees.reduce((s, e) => s + e.tickets, 0));
-  protected readonly totalTips     = computed(() => this.facade.employees.reduce((s, e) => s + e.tips, 0));
-  protected readonly totalDiscount = computed(() => this.facade.employees.reduce((s, e) => s + e.discounts, 0));
-  protected readonly activeCount   = computed(() => this.facade.employees.filter(e => e.active).length);
+  protected readonly totalRevenue  = computed(() => this.items.reduce((s, e) => s + e.revenue, 0));
+  protected readonly totalTickets  = computed(() => this.items.reduce((s, e) => s + e.tickets, 0));
+  protected readonly totalTips     = computed(() => this.items.reduce((s, e) => s + e.tips, 0));
+  protected readonly totalDiscount = computed(() => this.items.reduce((s, e) => s + e.discounts, 0));
 
   protected tipsRatioPct(): string {
     const r = this.totalRevenue();
     return r > 0 ? (this.totalTips() / r * 100).toFixed(1).replace('.', ',') : '0,0';
   }
 
-  protected sparkPath(data: number[]): string       { return this.facade.sparklinePath(data, 100, 28); }
-  protected sparkArea(data: number[]): string       { return this.facade.sparklineArea(data, 100, 28); }
-  protected sparkPathLg(data: number[]): string     { return this.facade.sparklinePath(data, 100, 60); }
-  protected sparkAreaLg(data: number[]): string     { return this.facade.sparklineArea(data, 100, 60); }
+  protected sparkPath(data: number[]): string   { return this.facade.sparklinePath(data, 100, 28); }
+  protected sparkArea(data: number[]): string   { return this.facade.sparklineArea(data, 100, 28); }
+  protected sparkPathLg(data: number[]): string { return this.facade.sparklinePath(data, 100, 60); }
+  protected sparkAreaLg(data: number[]): string { return this.facade.sparklineArea(data, 100, 60); }
+  protected fmt(v: number): string              { return this.facade.fmt(v); }
+  protected fmtInt(n: number): string           { return this.facade.fmtInt(n); }
 
-  protected fmt(v: number): string { return this.facade.fmt(v); }
-
-  protected tipsRatio(e: Employee): string {
+  protected tipsRatio(e: EmployeeReportItem): string {
     return (e.revenue > 0 ? (e.tips / e.revenue) * 100 : 0).toFixed(1).replace('.', ',');
   }
-  protected discRatio(e: Employee): string {
+  protected discRatio(e: EmployeeReportItem): string {
     return (e.revenue > 0 ? (e.discounts / e.revenue) * 100 : 0).toFixed(1).replace('.', ',');
   }
-  protected discRatioNum(e: Employee): number {
+  protected discRatioNum(e: EmployeeReportItem): number {
     return e.revenue > 0 ? (e.discounts / e.revenue) * 100 : 0;
   }
 
-  protected select(id: string): void { this.selectedId.set(id); }
+  protected select(uuid: string): void  { this.selectedId.set(uuid); }
   protected setSort(key: SortKey): void { this.sortKey.set(key); }
 }

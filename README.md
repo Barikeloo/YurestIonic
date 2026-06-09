@@ -435,17 +435,21 @@ El sistema soporta combinaciones de métodos dentro de una misma sesión de cobr
   - Discrepancia detectada y justificación.
   - **Hash SHA-256** encadenado con el Z anterior para garantizar la integridad fiscal de la secuencia.
 
-### 5.7 Dashboard de finanzas (prototipo)
+### 5.7 Dashboard de finanzas
 
-Accesible desde el menú lateral para roles `admin` y `supervisor`. Muestra:
+Accesible desde el menú lateral para roles `admin` y `supervisor`. Consta de 7 tabs con datos reales servidos por el dominio `Reporting` del backend (endpoints propios bajo `/api/admin/reports/`):
 
-- **Ventas por período** — Selector de rango de fechas con gráfica de evolución diaria.
-- **Producto estrella** — Artículo más vendido en el período seleccionado.
-- **Ticket medio** — Importe promedio por venta.
-- **Métodos de pago** — Distribución porcentual (pie chart) de efectivo vs tarjeta vs otros.
-- **Top camareros** — Ranking de operadores por volumen de ventas.
+- **Resumen** — KPIs del período: ingresos totales, ticket medio, tickets servidos, propinas. Mesas activas en tiempo real. Sparkline 14 días. Top 3 métodos de pago.
+- **Ventas** — Tabla paginada de tickets con detalle de líneas, método de pago y anulaciones. Heatmap día×hora de intensidad de ventas. Filtros por estado.
+- **Productos** — Ranking de artículos por ingresos con tendencia 14 días (badge "Nuevo" si sin historial), ventas por familia, stock crítico/sin ventas, rendimiento por zona.
+- **Empleados** — Cards por empleado con spark de tendencia, panel de detalle con KPIs (ingresos, ticket medio, propinas, descuentos), gráfico de tendencia 14 días. Solo aparecen empleados con ventas en el período seleccionado.
+- **Caja** — Vista de sesiones de caja activas y cerradas con resumen de movimientos y arqueo.
+- **Impuestos** — Pendiente: desglose IVA por tipo, base imponible, cuota y resumen trimestral (Modelo 303).
+- **Informes** — Pendiente: descarga CSV/PDF de todos los reportes anteriores.
 
-> Estado actual: **Prototipo funcional**. Los datos no son reales, pero la interfaz está lista para integrar datos reales en el futuro.
+El estado reactivo del dashboard se gestiona en `FinanzasFacade` con Angular Signals + `toObservable(_period).pipe(switchMap(...))` para recarga automática al cambiar el período seleccionado. Skeleton loaders en todos los tabs.
+
+> El detalle técnico de implementación y decisiones de diseño está en [`DASHBOARD_FINANZAS_PLAN.md`](./DASHBOARD_FINANZAS_PLAN.md).
 
 ### 5.8 Panel de Desarrollador (SuperAdmin) — Gestión de la plataforma
 
@@ -758,7 +762,7 @@ docker compose exec api php artisan product:delete-expired-photo-upload-tokens
 | **Hito 2 — API REST Backoffice** | 100% | CRUD completo de familias, impuestos, productos, zonas, mesas y usuarios. Auth dual (email/password + PIN de 4 dígitos). SuperAdmin con gestión multi-restaurante. |
 | **Hito 3 — Interfaz Backoffice** | 100% | Panel de gestión con ~1.600 líneas de componentes Angular. Formularios reactivos, validación en tiempo real, toasts de confirmación. |
 | **Hito 4 — Front de Venta (TPV)** | 100% | Flujo completo: mesas → apertura → pedido → cobro → cierre. Soporte para pagos parciales, división de cuenta (3 modos), y cierre de caja con Z-Report. |
-| **Hito 5 — Informes (Dashboard)** | 40% | Prototipo funcional con métricas clave. Pendiente: exportación a PDF/Excel, filtros avanzados, predicciones. |
+| **Hito 5 — Informes (Dashboard)** | 75% | 5 de 7 tabs conectados a datos reales (Resumen, Ventas, Productos, Empleados, Caja). Pendiente: Tab Impuestos (desglose IVA / Modelo 303) y Tab Informes (exportación PDF/CSV). |
 | **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor, live tail (auto-off en histórico), exportación CSV/NDJSON, banner contextual al llegar desde histórico, y panel **Histórico** con KPIs de retención, widget de anomalías (incidentes detectados en el corpus), badge de integridad de cadena (5 estados, persistido en servidor), gráfico mensual clickable (drill-down por mes), desglose por categoría con barras horizontales coloreadas, top 5 usuarios con avatares por rol, presets de rango temporal, deep-link contextual. Archivado por antigüedad (90d → `archived_at`, retención legal 6 años, nunca borrado) y toggle "Mostrar histórico" con `include_archived=1`. Solo acceso `admin`. Verificación de cadena con `GET /api/admin/audit-log/verify` y persistencia server-side del resultado vía `GET /api/admin/audit-log/verify/latest`. |
 | **Hito 7 — Mejoras operativas** | 100% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores y subida de foto por QR con optimización server-side. |
 
@@ -1134,6 +1138,17 @@ PUT    /api/tpv/cash-sessions/{id}/close   # Cerrar sesión y generar Z-Report
 POST   /api/tpv/cash-sessions/{id}/movements # Registrar movimiento de caja
 ```
 
+### Reporting / Dashboard (requiere rol `admin` o `supervisor`)
+
+```
+GET    /api/admin/reports/summary?period=today|yesterday|week|month    # KPIs + métodos de pago + spark
+GET    /api/admin/reports/sales?period=...&page=1&per_page=50          # Lista de tickets paginada
+GET    /api/admin/reports/sales/{uuid}                                 # Detalle de un ticket
+GET    /api/admin/reports/heatmap?period=...                           # Matriz día×hora de ventas
+GET    /api/admin/reports/products?period=...                          # Ranking productos + stock + zonas
+GET    /api/admin/reports/employees?period=...                         # Ranking empleados + spark 14d
+```
+
 ### Auditoría (requiere rol `admin`)
 
 ```
@@ -1197,6 +1212,7 @@ POST   /api/admin/audit-alerts/{uuid}/read # Marcar una alerta como leída
 | [`PLAN_SEMANA_CTO.md`](./PLAN_SEMANA_CTO.md) | CTO / Dirección | Plan de presentación: guion de demo, decisiones técnicas a justificar, estructura de la presentación |
 | [`MENU_FEATURE_README.md`](./MENU_FEATURE_README.md) | Equipo de desarrollo | Detalle técnico del módulo Menús: estructura del dominio, migraciones, casos de uso, integración con OrderLine/SaleLine y áreas de mejora pendientes |
 | [`docs/registro-auditoria-plan.md`](./docs/registro-auditoria-plan.md) | Tech Lead / Arquitecto | Plan técnico completo del módulo Auditoría: decisiones de diseño (A–H), hitos 1–5, cobertura de 45 slugs instrumentados, backend DDD + frontend Signals |
+| [`DASHBOARD_FINANZAS_PLAN.md`](./DASHBOARD_FINANZAS_PLAN.md) | Tech Lead / Backend | Plan técnico del Dashboard de Finanzas: contratos API, decisiones de diseño, estado de fases, deuda técnica |
 
 ---
 
@@ -1204,7 +1220,7 @@ POST   /api/admin/audit-alerts/{uuid}/read # Marcar una alerta como leída
 
 ### Corto plazo (1–2 meses)
 
-1. **Dashboard de finanzas v2** — Evolucionar el prototipo actual a panel completo: exportación PDF/Excel, comparativa intermensual, predicción de stock.
+1. **Dashboard de finanzas — fases pendientes** — Tab Impuestos (desglose IVA por tipo, base imponible y resumen trimestral Modelo 303) y Tab Informes (exportación real a CSV/PDF de los reportes existentes).
 2. **Impresión de tickets** — Integración con impresoras térmicas ESC/POS para ticket de cocina y ticket de cliente.
 3. **WebSockets** — Sincronización en tiempo real del estado de mesas entre múltiples tabletas del mismo restaurante.
 

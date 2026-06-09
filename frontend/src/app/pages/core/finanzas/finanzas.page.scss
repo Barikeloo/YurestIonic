@@ -84,6 +84,14 @@
   white-space: nowrap;
 }
 
+.topbar-restaurant {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--black);
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
 .location-selector { position: relative; }
 
 .location-btn {

@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { FinanzasFacade } from '../facades/finanzas.facade';
-import type { Order } from '../models/finanzas.models';
+import { ToastService } from '../../../../core/services/toast.service';
+import type { Order, SaleRow } from '../models/finanzas.models';
 
 type SortKey = 'id' | 'total' | 'tip' | 'time';
 
@@ -13,6 +14,7 @@ type SortKey = 'id' | 'total' | 'tip' | 'time';
 })
 export class VentasTabComponent {
   protected readonly facade = inject(FinanzasFacade);
+  private readonly toast = inject(ToastService);
 
   protected readonly chartMode    = signal<'line' | 'heatmap'>('line');
   protected readonly filterStatus = signal<'all' | 'paid' | 'cancelled'>('all');
@@ -26,11 +28,34 @@ export class VentasTabComponent {
   protected readonly page         = signal(1);
   protected readonly selectedTicket = signal<Order | null>(null);
 
+  protected readonly showSkeleton = computed(() =>
+    this.facade.loadingSales() && !this.facade.salesReport()
+  );
+
+  protected readonly salesOrders = computed((): Order[] => {
+    const report = this.facade.salesReport();
+    if (!report) return [];
+    return report.data.map(s => ({
+      id:     s.uuid,
+      zone:   s.table_name !== '—' && s.table_name ? `${s.zone_name} · ${s.table_name}` : s.zone_name,
+      status: s.status === 'closed' ? 'paid' : s.status as Order['status'],
+      total:  s.total,
+      tip:    s.tips_total,
+      method: this.deriveMethod(s),
+      time:   this.formatValueDate(s.value_date),
+      diners: s.diners,
+    }));
+  });
+
+  protected readonly totalCount = computed(() =>
+    this.facade.salesReport()?.meta.total ?? 0
+  );
+
   protected readonly filteredOrders = computed(() => {
     const q   = this.searchQuery().toLowerCase();
     const min = this.minAmount() ? parseFloat(this.minAmount()) * 100 : null;
     const max = this.maxAmount() ? parseFloat(this.maxAmount()) * 100 : null;
-    return this.facade.orders.filter(o => {
+    return this.salesOrders().filter(o => {
       if (this.filterStatus() !== 'all' && o.status !== this.filterStatus()) return false;
       if (this.filterMethod() !== 'all' && o.method !== this.filterMethod()) return false;
       if (this.filterZone()   !== 'all' && !o.zone.startsWith(this.filterZone())) return false;
@@ -69,9 +94,9 @@ export class VentasTabComponent {
     !!this.minAmount() || !!this.maxAmount()
   );
 
-  protected readonly heatMax = Math.max(
-    ...([] as number[]).concat(...(this.facade.heatmap.map(r => r.hours.map(h => h.v)) as number[][])), 1
-  );
+  protected readonly heatMax = computed(() => Math.max(
+    ...([] as number[]).concat(...(this.facade.heatmap().map(r => r.hours.map(h => h.v)) as number[][])), 1
+  ));
 
   protected linePathD = computed(() => {
     const data = this.facade.byDay;
@@ -115,8 +140,8 @@ export class VentasTabComponent {
   protected taxColor(rate: number): string {
     return ({ 4: '#1a9e5a', 10: '#0077cc', 21: '#ff4d4d' } as Record<number,string>)[rate] ?? '#a0a0a0';
   }
-  protected heatBg(v: number):   string { return this.facade.heatBg(v, this.heatMax, '#ff4d4d'); }
-  protected heatText(v: number): string { return this.facade.heatText(v, this.heatMax); }
+  protected heatBg(v: number):   string { return this.facade.heatBg(v, this.heatMax(), '#ff4d4d'); }
+  protected heatText(v: number): string { return this.facade.heatText(v, this.heatMax()); }
 
   protected setSort(key: SortKey): void {
     if (this.sortKey() === key) {
@@ -140,10 +165,51 @@ export class VentasTabComponent {
     this.maxAmount.set('');
   }
 
-  protected openTicket(order: Order): void { this.selectedTicket.set(order); }
-  protected closeTicket(): void            { this.selectedTicket.set(null); }
+  protected openTicket(order: Order): void {
+    this.selectedTicket.set(order);
+    this.facade.loadSaleDetail(order.id);
+  }
+  protected closeTicket(): void { this.selectedTicket.set(null); }
 
-  protected readonly pages = [1, 2, 3, 4, 5];
+  protected printTicket(): void {
+    window.print();
+  }
+
+  protected async emailTicket(): Promise<void> {
+    const detail = this.facade.ticketDetail();
+    const email = '';
+    const subject = encodeURIComponent(`Ticket ${detail.id}`);
+    const body = encodeURIComponent(
+      `Ticket: ${detail.id}\nTotal: ${this.facade.fmt(detail.subtotal + detail.tipsTotal)}\nGracias por su visita.`
+    );
+    window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+    await this.toast.presentSuccess('Cliente de correo abierto');
+  }
+
+  protected async downloadPdf(): Promise<void> {
+    await this.toast.presentInfo('Función de PDF próximamente');
+  }
+
+  protected async cancelTicket(): Promise<void> {
+    await this.toast.presentWarning('Anulación de ticket no disponible desde esta vista');
+  }
+
+  protected readonly pages = computed(() => {
+    const last = this.facade.salesReport()?.meta.last_page ?? 1;
+    return Array.from({ length: Math.min(last, 5) }, (_, i) => i + 1);
+  });
+
+  private deriveMethod(s: SaleRow): string {
+    const methods = s.payment_methods ?? [];
+    if (methods.length === 0) return '—';
+    if (methods.length === 1) return methods[0].method;
+    return 'mixed';
+  }
+
+  private formatValueDate(iso: string): string {
+    const d = new Date(iso);
+    return d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
 
   protected readonly statuses = [
     { v: 'all'       as const, l: 'Todos'   },

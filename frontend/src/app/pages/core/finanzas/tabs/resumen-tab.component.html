@@ -1,7 +1,152 @@
 <div class="resumen-tab">
 
-  <!-- ── KPI row ──────────────────────────────────────────────────────────── -->
-  <div class="kpi-row">
+  @if (facade.loadingSummary()) {
+    <!-- ── Skeleton: KPI row ──────────────────────────────────────────────── -->
+    <div class="kpi-row">
+      @for (_ of [1,2,3,4,5]; track $index) {
+        <div class="kpi-card" style="pointer-events:none">
+          <div class="sk-head">
+            <span class="sk sk--label"></span>
+            <span class="sk sk--chip"></span>
+          </div>
+          <div class="sk sk--value"></div>
+          <div class="sk sk--sub"></div>
+          <div class="sk sk--spark"></div>
+        </div>
+      }
+    </div>
+
+    <!-- ── Skeleton: charts row ──────────────────────────────────────────── -->
+    <div class="charts-grid">
+      <div class="card">
+        <div class="sk-sect">
+          <span class="sk sk--title"></span>
+          <span class="sk sk--title-sm"></span>
+        </div>
+        <div class="sk sk--chart"></div>
+        <div class="sk-bar-labels">
+          @for (_ of [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24]; track $index) {
+            <span class="sk" style="height:10px;width:14px"></span>
+          }
+        </div>
+      </div>
+      <div class="card">
+        <div class="sk-head">
+          <div class="sk-sect" style="margin-bottom:0">
+            <span class="sk sk--title"></span>
+            <span class="sk sk--title-sm"></span>
+          </div>
+          <span class="sk sk--chip" style="width:60px"></span>
+        </div>
+        @for (_ of [1,2,3,4,5]; track $index) {
+          <div class="sk-product-row">
+            <span class="sk" style="width:24px;height:18px;border-radius:4px"></span>
+            <div>
+              <span class="sk sk--label" style="display:block;margin-bottom:3px"></span>
+              <span class="sk sk--sub" style="display:block"></span>
+            </div>
+            <span class="sk" style="width:60px;height:4px;border-radius:2px"></span>
+            <span class="sk" style="width:50px;height:14px;border-radius:4px"></span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ── Skeleton: mid row ─────────────────────────────────────────────── -->
+    <div class="mid-row">
+      <div class="card">
+        <div class="sk-sect">
+          <span class="sk sk--title"></span>
+          <span class="sk sk--title-sm"></span>
+        </div>
+        <div class="donut-wrap">
+          <div class="sk sk--donut"></div>
+          <div style="flex:1">
+            @for (_ of [1,2,3,4,5]; track $index) {
+              <div style="display:flex;justify-content:space-between;margin-bottom:8px;align-items:center">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="sk" style="width:8px;height:8px;border-radius:2px"></span>
+                  <span class="sk sk--label" style="width:80px;display:inline-block"></span>
+                </div>
+                <div style="text-align:right">
+                  <span class="sk" style="width:55px;height:13px;display:block;border-radius:4px;margin-bottom:2px"></span>
+                  <span class="sk" style="width:36px;height:10px;display:block;border-radius:4px"></span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+      <div class="card cash-card" style="pointer-events:none">
+        <div class="sk-head">
+          <div class="sk-sect" style="margin-bottom:0">
+            <span class="sk sk--title"></span>
+            <span class="sk sk--title-sm"></span>
+          </div>
+          <span class="sk sk--chip" style="width:70px"></span>
+        </div>
+        <div class="sk sk--cash-box"></div>
+        <div class="sk-cash-grid">
+          <div><span class="sk sk--label" style="display:block;margin-bottom:3px"></span><span class="sk" style="height:14px;width:55%;display:block;border-radius:4px"></span></div>
+          <div><span class="sk sk--label" style="display:block;margin-bottom:3px"></span><span class="sk" style="height:14px;width:55%;display:block;border-radius:4px"></span></div>
+          <div><span class="sk sk--label" style="display:block;margin-bottom:3px"></span><span class="sk" style="height:14px;width:55%;display:block;border-radius:4px"></span></div>
+          <div><span class="sk sk--label" style="display:block;margin-bottom:3px"></span><span class="sk" style="height:14px;width:55%;display:block;border-radius:4px"></span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sk-sect">
+          <span class="sk sk--title" style="width:80px"></span>
+        </div>
+        @for (_ of [1,2,3]; track $index) {
+          <div class="sk sk--insight"></div>
+        }
+      </div>
+    </div>
+
+    <!-- ── Skeleton: ops row ─────────────────────────────────────────────── -->
+    <div class="ops-row">
+      <div class="card">
+        <div class="sk-head">
+          <div class="sk-sect" style="margin-bottom:0">
+            <span class="sk sk--title"></span>
+            <span class="sk sk--title-sm"></span>
+          </div>
+          <span class="sk sk--chip" style="width:40px"></span>
+        </div>
+        @for (_ of [1,2,3,4]; track $index) {
+          <div class="sk-table-row">
+            <span class="sk sk--tbl-ico"></span>
+            <div>
+              <span class="sk sk--label" style="display:block;margin-bottom:3px;width:120px"></span>
+              <span class="sk sk--sub" style="display:block"></span>
+            </div>
+            <span class="sk" style="width:50px;height:14px;border-radius:4px"></span>
+          </div>
+        }
+      </div>
+      <div class="card card--amber">
+        <div class="sk-head">
+          <div class="sk-sect" style="margin-bottom:0">
+            <span class="sk sk--title"></span>
+            <span class="sk sk--title-sm"></span>
+          </div>
+          <span class="sk" style="width:22px;height:18px;border-radius:20px"></span>
+        </div>
+        @for (_ of [1,2,3]; track $index) {
+          <div class="sk-pending-row">
+            <div>
+              <span class="sk sk--label" style="display:block;margin-bottom:3px;width:100px"></span>
+              <span class="sk sk--sub" style="display:block"></span>
+            </div>
+            <span class="sk" style="width:50px;height:14px;border-radius:4px"></span>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+
+    <!-- ── KPI row ──────────────────────────────────────────────────────────── -->
+    <div class="kpi-row">
 
     <!-- Ingresos totales -->
     <div class="kpi-card" (click)="facade.setTab('ventas')">
@@ -263,7 +408,7 @@
       </div>
 
       <div class="top-products">
-        @for (p of facade.topProducts.slice(0, 5); track p.name; let i = $index) {
+        @for (p of facade.topProducts().slice(0, 5); track p.name; let i = $index) {
           <div class="product-row" [class.product-row--last]="i === 4">
             <span class="product-rank" [class.product-rank--first]="i === 0">{{ i + 1 }}</span>
             <div class="product-info">
@@ -272,7 +417,7 @@
             </div>
             <div class="product-bar-wrap">
               <div class="product-bar-fill"
-                   [style.width.%]="(p.units / facade.topProducts[0].units) * 100"
+                   [style.width.%]="(p.units / facade.topProducts()[0].units) * 100"
                    [style.background]="p.color"></div>
             </div>
             <span class="product-rev">{{ fmt(p.revenue) }}</span>
@@ -355,7 +500,7 @@
             <span class="kpi-label">Caja actual</span>
             <span class="badge-green-sm">● Abierta</span>
           </div>
-          <div class="section-sub">{{ facade.cashSession.operator }} · desde {{ facade.cashSession.opened }}</div>
+          <div class="section-sub">{{ facade.cashSession().operator }} · desde {{ facade.cashSession().opened }}</div>
         </div>
         <button class="outline-btn" (click)="$event.stopPropagation(); facade.setTab('caja')">Cerrar caja →</button>
       </div>
@@ -368,19 +513,19 @@
       <div class="cash-grid">
         <div class="cash-stat">
           <span class="cash-stat-label">Fondo inicial</span>
-          <span class="cash-stat-val">{{ fmt(facade.cashSession.initial) }}</span>
+          <span class="cash-stat-val">{{ fmt(facade.cashSession().initial) }}</span>
         </div>
         <div class="cash-stat">
           <span class="cash-stat-label">Ventas efectivo</span>
-          <span class="cash-stat-val cash-stat-val--green">{{ fmt(facade.byMethod.cash.v) }}</span>
+          <span class="cash-stat-val cash-stat-val--green">{{ fmt(facade.cashSession().cashPayments) }}</span>
         </div>
         <div class="cash-stat">
           <span class="cash-stat-label">Entradas</span>
-          <span class="cash-stat-val cash-stat-val--green">+ {{ fmt(facade.cashSession.cashIn) }}</span>
+          <span class="cash-stat-val cash-stat-val--green">+ {{ fmt(facade.cashSession().cashIn) }}</span>
         </div>
         <div class="cash-stat">
           <span class="cash-stat-label">Salidas</span>
-          <span class="cash-stat-val cash-stat-val--red">− {{ fmt(facade.cashSession.cashOut) }}</span>
+          <span class="cash-stat-val cash-stat-val--red">− {{ fmt(facade.cashSession().cashOut) }}</span>
         </div>
       </div>
     </div>
@@ -389,7 +534,7 @@
     <div class="card">
       <div class="section-title" style="margin-bottom:10px">Insights del día</div>
       <div class="insights-list">
-        @for (ins of insights; track ins.icon) {
+        @for (ins of facade.insights(); track $index) {
           <div class="insight-item"
                [style.background]="ins.color + '0c'"
                [style.border-left]="'2px solid ' + ins.color">
@@ -405,7 +550,8 @@
   <!-- ── Operational row ───────────────────────────────────────────────────── -->
   <div class="ops-row">
 
-    <!-- Forecast card -->
+    <!-- Forecast card — oculto en MVP (sin modelo ML) -->
+    @if (false) {
     <div class="card card--blue">
       <div class="section-head">
         <div>
@@ -433,6 +579,7 @@
         Basado en patrón de jueves últimas 4 semanas, ritmo actual y meteorología.
       </div>
     </div>
+    }
 
     <!-- Open tables card -->
     <div class="card">
@@ -476,18 +623,18 @@
     </div>
 
     <!-- Pending payments card -->
-    @if (facade.pendingPayments.length > 0) {
+    @if (facade.pendingPayments().length > 0) {
       <div class="card card--amber">
         <div class="section-head">
           <div>
             <div class="section-title">Pendientes de cobro</div>
-            <div class="section-sub">{{ facade.pendingPayments.length }} tickets · {{ fmt(pendingTotal) }} sin cerrar</div>
+            <div class="section-sub">{{ facade.pendingPayments().length }} tickets · {{ fmt(pendingTotal) }} sin cerrar</div>
           </div>
-          <span class="badge-count">{{ facade.pendingPayments.length }}</span>
+          <span class="badge-count">{{ facade.pendingPayments().length }}</span>
         </div>
 
         <div class="pending-list">
-          @for (p of facade.pendingPayments; track p.id; let i = $index) {
+          @for (p of facade.pendingPayments(); track p.id; let i = $index) {
             <div class="pending-row" [class.pending-row--last]="i === facade.pendingPayments.length - 1">
               <div class="pending-info">
                 <div class="pending-id-row">
@@ -506,5 +653,7 @@
     }
 
   </div>
+
+  }
 
 </div>
