@@ -31,7 +31,50 @@
 }
 .kpi-sub { font-size: 10.5px; color: #a0a0a0; margin-top: 3px; }
 
+// legacy rows replaced — kept for skeleton fallback
 .top-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px; align-items: start; }
+
+// ── New layout rows ───────────────────────────────────────────────────────────
+.analytics-row     { display: grid; grid-template-columns: 1.55fr 1fr; gap: 16px; align-items: start; }
+.analytics-right   { display: flex; flex-direction: column; gap: 16px; }
+.operational-row   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+
+// ── Table card with integrated filters ───────────────────────────────────────
+.table-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.table-card-title-block { flex-shrink: 0; }
+.table-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: flex-end;
+}
+.seg-sort {
+  display: flex;
+  background: #f4f4f4;
+  border-radius: 7px;
+  padding: 2px;
+  gap: 2px;
+}
+.seg-sort-btn {
+  padding: 4px 11px;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #7a7a7a;
+  cursor: pointer;
+  &--on { background: #fff; color: #0d0d0d; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,.09); }
+}
 
 .vbar-chart { display: flex; align-items: flex-end; gap: 8px; height: 170px; padding-bottom: 4px; }
 .vbar-col   { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
@@ -77,6 +120,94 @@
   padding: 6px 12px; border-radius: 7px; border: 1px solid #e8e8e8; background: #fff;
   color: #5a5a5a; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap;
   &:hover { border-color: #0d0d0d; color: #0d0d0d; }
+}
+
+// ── Matrix chips legend ───────────────────────────────────────────────────────
+.matrix-chips {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.matrix-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+}
+.matrix-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.matrix-chip-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.matrix-chip-desc {
+  font-size: 10.5px;
+  color: #9a9a9a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ── Cross-sell compact list ───────────────────────────────────────────────────
+.cs-list-compact { display: flex; flex-direction: column; gap: 1px; }
+
+.csc-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  transition: background 0.1s;
+  &:hover { background: #fafafa; }
+  &--top { background: #f0faf5; &:hover { background: #e6f5ee; } }
+}
+.csc-rank {
+  font-size: 11px;
+  font-weight: 700;
+  color: #c0c0c0;
+  width: 14px;
+  text-align: right;
+  flex-shrink: 0;
+  .csc-row--top & { color: #1a9e5a; }
+}
+.csc-names {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow: hidden;
+}
+.csc-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0d0d0d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.csc-plus {
+  font-size: 10px;
+  color: #c0c0c0;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.csc-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: #5a5a5a;
+  flex-shrink: 0;
+  .csc-row--top & { color: #1a9e5a; }
 }
 
 .mid-row { display: grid; grid-template-columns: 1fr 1.2fr; gap: 16px; align-items: start; }

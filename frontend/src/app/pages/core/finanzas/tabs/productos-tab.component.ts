@@ -1,5 +1,6 @@
 import { Component, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { SlicePipe } from '@angular/common';
 import { FinanzasFacade } from '../facades/finanzas.facade';
 import type { ProductReportItem } from '../models/finanzas.models';
 
@@ -30,7 +31,7 @@ const QMETA: Record<QuadrantKey, { color: string; label: string; icon: string; d
   templateUrl: './productos-tab.component.html',
   styleUrls: ['./productos-tab.component.scss'],
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, SlicePipe],
 })
 export class ProductosTabComponent {
   protected readonly facade    = inject(FinanzasFacade);
@@ -115,7 +116,7 @@ export class ProductosTabComponent {
   protected readonly familyCount     = computed(() => new Set(this.enriched().map(p => p.family)).size);
   protected readonly filteredRevenue = computed(() => this.filtered().reduce((s, p) => s + p.revenue, 0));
 
-  // ── Matrix — viewBox 0 0 480 280, inner area x:40–440, y:40–240 ──────────
+  // ── Matrix — viewBox 0 0 420 340, inner area x:40–380, y:20–300 ──────────
   protected readonly matrixPoints = computed((): MatrixPoint[] => {
     const items = this.enriched();
     if (items.length < 2) return [];
@@ -125,22 +126,22 @@ export class ProductosTabComponent {
     const medR = this.median(items.map(p => p.revenue));
     return items.map(p => ({
       ...p,
-      cx:       40  + (p.units   / maxU) * 400,
-      cy:       240 - (p.revenue / maxR) * 200,
+      cx:       40  + (p.units   / maxU) * 340,
+      cy:       300 - (p.revenue / maxR) * 280,
       quadrant: this.quadrantOf(p.units, p.revenue, medU, medR),
     }));
   });
 
   protected readonly matrixMedX = computed(() => {
     const items = this.enriched();
-    if (!items.length) return 240;
-    return 40 + (this.median(items.map(p => p.units)) / Math.max(...items.map(p => p.units), 1)) * 400;
+    if (!items.length) return 210;
+    return 40 + (this.median(items.map(p => p.units)) / Math.max(...items.map(p => p.units), 1)) * 340;
   });
 
   protected readonly matrixMedY = computed(() => {
     const items = this.enriched();
-    if (!items.length) return 140;
-    return 240 - (this.median(items.map(p => p.revenue)) / Math.max(...items.map(p => p.revenue), 1)) * 200;
+    if (!items.length) return 160;
+    return 300 - (this.median(items.map(p => p.revenue)) / Math.max(...items.map(p => p.revenue), 1)) * 280;
   });
 
   protected readonly selectedQuadrant = computed(() => {
