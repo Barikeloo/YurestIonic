@@ -38,10 +38,7 @@ export class FinanzasService extends BaseApiService {
     return this.get<{ data: HeatmapRow[] }>('/admin/reports/heatmap');
   }
 
-  getTaxes(period: FinanzasPeriod, quarter?: string): Observable<TaxReportResponse> {
-    return this.get<TaxReportResponse>(
-      '/admin/reports/taxes',
-      quarter ? { quarter } : { period },
-    );
+  getTaxes(period: FinanzasPeriod, quarter: string): Observable<TaxReportResponse> {
+    return this.get<TaxReportResponse>('/admin/reports/taxes', { period, quarter });
   }
 }

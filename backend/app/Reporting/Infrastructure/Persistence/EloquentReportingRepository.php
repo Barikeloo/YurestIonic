@@ -862,4 +862,138 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
 
         return ['items' => $items];
     }
+
+    public function getTaxReport(int $restaurantId, DateRange $range, DateRange $qRange, string $quarter, int $year): array
+    {
+        $from  = $range->from->format('Y-m-d H:i:s');
+        $to    = $range->to->format('Y-m-d H:i:s');
+        $qFrom = $qRange->from->format('Y-m-d H:i:s');
+        $qTo   = $qRange->to->format('Y-m-d H:i:s');
+
+        $restaurant = DB::table('restaurants')
+            ->where('id', $restaurantId)
+            ->select('name', 'legal_name', 'tax_id')
+            ->first();
+
+        $breakdown = $this->buildTaxBreakdown($restaurantId, $from, $to);
+        $tipsCard  = $this->fetchTipsCard($restaurantId, $from, $to);
+        $quarterly = $this->buildQuarterly($restaurantId, $qFrom, $qTo, $quarter, $year);
+
+        return [
+            'period_label' => $range->label,
+            'breakdown'    => $breakdown,
+            'tips_card'    => $tipsCard,
+            'quarterly'    => $quarterly,
+            'restaurant'   => [
+                'name'       => $restaurant?->name ?? '',
+                'legal_name' => $restaurant?->legal_name ?? $restaurant?->name ?? '',
+                'tax_id'     => $restaurant?->tax_id ?? '—',
+            ],
+        ];
+    }
+
+    private function buildTaxBreakdown(int $restaurantId, string $from, string $to): array
+    {
+        $rows = DB::table('sales_lines as sl')
+            ->join('sales as s', 's.id', '=', 'sl.sale_id')
+            ->where('s.restaurant_id', $restaurantId)
+            ->where('s.status', 'closed')
+            ->whereBetween('s.value_date', [$from, $to])
+            ->whereNull('s.deleted_at')
+            ->whereNull('sl.deleted_at')
+            ->selectRaw('
+                sl.tax_percentage                                      AS rate,
+                COUNT(DISTINCT sl.product_id)                          AS products,
+                SUM(sl.price * sl.quantity)                            AS base,
+                SUM(sl.price * sl.quantity * sl.tax_percentage / 100)  AS tax
+            ')
+            ->groupBy('sl.tax_percentage')
+            ->orderBy('sl.tax_percentage')
+            ->get();
+
+        $labels = [
+            4  => 'Superreducido',
+            10 => 'Reducido · hostelería',
+            21 => 'General',
+        ];
+
+        $result = [];
+        foreach ($rows as $row) {
+            $rate     = (int) $row->rate;
+            $base     = (int) $row->base;
+            $tax      = (int) round((float) $row->tax);
+            $total    = $base + $tax;
+            $products = (int) $row->products;
+
+            $result[] = [
+                'rate'  => $rate,
+                'label' => $labels[$rate] ?? "IVA {$rate}%",
+                'note'  => "{$products} " . ($products === 1 ? 'artículo' : 'artículos') . ' distintos',
+                'base'  => $base,
+                'tax'   => $tax,
+                'total' => $total,
+            ];
+        }
+
+        return $result;
+    }
+
+    private function fetchTipsCard(int $restaurantId, string $from, string $to): int
+    {
+        $result = DB::table('sale_payments as sp')
+            ->join('sales as s', 's.id', '=', 'sp.sale_id')
+            ->where('s.restaurant_id', $restaurantId)
+            ->where('s.status', 'closed')
+            ->where('sp.method', 'tip')
+            ->whereBetween('s.value_date', [$from, $to])
+            ->whereNull('s.deleted_at')
+            ->whereNull('sp.deleted_at')
+            ->value(DB::raw('COALESCE(SUM(sp.amount_cents), 0)'));
+
+        return (int) $result;
+    }
+
+    private function buildQuarterly(int $restaurantId, string $qFrom, string $qTo, string $quarter, int $year): array
+    {
+        $rows = DB::table('sales_lines as sl')
+            ->join('sales as s', 's.id', '=', 'sl.sale_id')
+            ->where('s.restaurant_id', $restaurantId)
+            ->where('s.status', 'closed')
+            ->whereBetween('s.value_date', [$qFrom, $qTo])
+            ->whereNull('s.deleted_at')
+            ->whereNull('sl.deleted_at')
+            ->selectRaw('
+                sl.tax_percentage                                      AS rate,
+                SUM(sl.price * sl.quantity)                            AS base,
+                SUM(sl.price * sl.quantity * sl.tax_percentage / 100)  AS tax
+            ')
+            ->groupBy('sl.tax_percentage')
+            ->orderBy('sl.tax_percentage')
+            ->get();
+
+        $quarterLabels = [
+            'T1' => "T1 · ene-mar {$year}",
+            'T2' => "T2 · abr-jun {$year}",
+            'T3' => "T3 · jul-sep {$year}",
+            'T4' => "T4 · oct-dic {$year}",
+        ];
+
+        $rates = [];
+        foreach ($rows as $row) {
+            $base    = (int) $row->base;
+            $tax     = (int) round((float) $row->tax);
+            $rates[] = [
+                'rate' => (int) $row->rate,
+                'base' => $base,
+                'tax'  => $tax,
+            ];
+        }
+
+        return [
+            'quarter'     => $quarter,
+            'period'      => $quarterLabels[$quarter] ?? "{$quarter} {$year}",
+            'elapsed_pct' => DateRange::quarterElapsedPct($year, $quarter),
+            'rates'       => $rates,
+        ];
+    }
 }

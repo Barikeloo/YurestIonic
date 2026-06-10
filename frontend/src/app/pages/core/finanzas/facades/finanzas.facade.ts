@@ -1,6 +1,6 @@
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, EMPTY, forkJoin, switchMap } from 'rxjs';
+import { catchError, combineLatest, EMPTY, forkJoin, switchMap } from 'rxjs';
 import { AuditAlertApi, AuditAlertService } from '../../../../services/audit-alert.service';
 import { AppContextService } from '../../../../core/services/app-context.service';
 import { FinanzasService } from '../../../../services/finanzas.service';
@@ -57,9 +57,11 @@ import type {
   OpenTable,
   PendingPayment,
   ProductsReportResponse,
+  Quarter,
   ResumenVariant,
   SaleDetailResponse,
   SalesReportResponse,
+  TaxReportResponse,
   TicketDetail,
   TopProduct,
 } from '../models/finanzas.models';
@@ -82,6 +84,14 @@ interface Insight {
 }
 
 const FAMILY_PALETTE = ['#ff4d4d','#1a9e5a','#0077cc','#d18a1c','#7857d6','#3d3d3d','#ff8800','#9b59b6'];
+
+function currentQuarter(): Quarter {
+  const m = new Date().getMonth();
+  if (m < 3) return 'T1';
+  if (m < 6) return 'T2';
+  if (m < 9) return 'T3';
+  return 'T4';
+}
 
 @Injectable()
 export class FinanzasFacade {
@@ -129,6 +139,12 @@ export class FinanzasFacade {
   private readonly _employeesReport  = signal<EmployeesReportResponse | null>(null);
   private readonly _loadingEmployees = signal(false);
 
+  // ── Tax report state ─────────────────────────────────────────────────────
+  private readonly _taxReport    = signal<TaxReportResponse | null>(null);
+  private readonly _loadingTaxes = signal(false);
+  private readonly _activeQ      = signal<Quarter>(currentQuarter());
+  private readonly _activeQ$     = toObservable(this._activeQ);
+
   // ── Open orders state ────────────────────────────────────────────────────
   private readonly _openOrders       = signal<TpvOrder[]>([]);
   private readonly _openOrdersLoaded = signal(false);
@@ -162,6 +178,9 @@ export class FinanzasFacade {
   public readonly loadingProducts  = this._loadingProducts.asReadonly();
   public readonly employeesReport  = this._employeesReport.asReadonly();
   public readonly loadingEmployees = this._loadingEmployees.asReadonly();
+  public readonly taxReport        = this._taxReport.asReadonly();
+  public readonly loadingTaxes     = this._loadingTaxes.asReadonly();
+  public readonly activeQ          = this._activeQ.asReadonly();
 
   public readonly restaurantName = computed(() => this._restaurantCtx()?.name ?? '');
 
@@ -218,10 +237,11 @@ export class FinanzasFacade {
   });
 
   // ── Setters ───────────────────────────────────────────────────────────────
-  public setTab(tab: FinanzasTab): void         { this._activeTab.set(tab); }
-  public setPeriod(p: FinanzasPeriod): void     { this._period.set(p); }
+  public setTab(tab: FinanzasTab): void             { this._activeTab.set(tab); }
+  public setPeriod(p: FinanzasPeriod): void         { this._period.set(p); }
   public setResumenVariant(v: ResumenVariant): void { this._resumenVariant.set(v); }
-  public setShowCompare(v: boolean): void       { this._showCompare.set(v); }
+  public setShowCompare(v: boolean): void           { this._showCompare.set(v); }
+  public setActiveQ(q: Quarter): void               { this._activeQ.set(q); }
 
   // ── Init ──────────────────────────────────────────────────────────────────
   public init(): void {
@@ -286,6 +306,21 @@ export class FinanzasFacade {
       .subscribe(res => {
         this._employeesReport.set(res);
         this._loadingEmployees.set(false);
+      });
+
+    combineLatest([this._periodChanges$, this._activeQ$])
+      .pipe(
+        switchMap(([period, quarter]) => {
+          this._loadingTaxes.set(true);
+          return this.finanzasService.getTaxes(period, quarter).pipe(
+            catchError(() => { this._loadingTaxes.set(false); return EMPTY; }),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(res => {
+        this._taxReport.set(res);
+        this._loadingTaxes.set(false);
       });
 
     this.finanzasService.getHeatmap()

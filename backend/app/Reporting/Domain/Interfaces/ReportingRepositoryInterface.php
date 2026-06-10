@@ -19,4 +19,6 @@ interface ReportingRepositoryInterface
     public function getProductsReport(int $restaurantId, DateRange $range): array;
 
     public function getEmployeesReport(int $restaurantId, DateRange $range): array;
+
+    public function getTaxReport(int $restaurantId, DateRange $range, DateRange $qRange, string $quarter, int $year): array;
 }

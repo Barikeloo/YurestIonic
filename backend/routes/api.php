@@ -7,6 +7,7 @@ use App\Reporting\Infrastructure\Entrypoint\Http\GetSaleDetailController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetHeatmapController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetProductsReportController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetEmployeesReportController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetTaxReportController;
 use App\Audit\Infrastructure\Entrypoint\Http\GetArchivedAuditStatsController;
 use App\Audit\Infrastructure\Entrypoint\Http\GetAuditEventController;
 use App\Audit\Infrastructure\Entrypoint\Http\ListAuditAlertsController;
@@ -339,6 +340,7 @@ Route::middleware([
     Route::get('/admin/reports/heatmap', GetHeatmapController::class);
     Route::get('/admin/reports/products', GetProductsReportController::class);
     Route::get('/admin/reports/employees', GetEmployeesReportController::class);
+    Route::get('/admin/reports/taxes', GetTaxReportController::class);
 });
 
 Route::middleware([

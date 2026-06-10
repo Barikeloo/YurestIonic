@@ -447,9 +447,18 @@ export interface EmployeesReportResponse {
   items: EmployeeReportItem[];
 }
 
+export interface RestaurantInfo {
+  name:       string;
+  legal_name: string;
+  tax_id:     string;
+}
+
+export type Quarter = 'T1' | 'T2' | 'T3' | 'T4';
+
 export interface TaxReportResponse {
   period_label: string;
   breakdown:    TaxSlab[];
   tips_card:    number;
   quarterly:    QuarterlyTax;
+  restaurant:   RestaurantInfo;
 }

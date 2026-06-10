@@ -56,6 +56,62 @@ final readonly class DateRange
         };
     }
 
+    public static function forQuarter(int $year, string $quarter): self
+    {
+        $ranges = [
+            'T1' => ['01-01', '03-31', 'T1 · ene-mar'],
+            'T2' => ['04-01', '06-30', 'T2 · abr-jun'],
+            'T3' => ['07-01', '09-30', 'T3 · jul-sep'],
+            'T4' => ['10-01', '12-31', 'T4 · oct-dic'],
+        ];
+
+        if (!isset($ranges[$quarter])) {
+            throw new \InvalidArgumentException("Invalid quarter: {$quarter}");
+        }
+
+        [$startMd, $endMd, $label] = $ranges[$quarter];
+
+        $from = new \DateTimeImmutable("{$year}-{$startMd} 00:00:00");
+        $to   = new \DateTimeImmutable("{$year}-{$endMd} 23:59:59");
+
+        return new self(
+            from:     $from,
+            to:       $to,
+            prevFrom: $from->modify('-1 year'),
+            prevTo:   $to->modify('-1 year'),
+            label:    "{$label} {$year}",
+        );
+    }
+
+    public static function currentQuarter(): string
+    {
+        $month = (int) (new \DateTimeImmutable('now'))->format('n');
+        return match (true) {
+            $month <= 3  => 'T1',
+            $month <= 6  => 'T2',
+            $month <= 9  => 'T3',
+            default      => 'T4',
+        };
+    }
+
+    public static function quarterElapsedPct(int $year, string $quarter): int
+    {
+        $range = self::forQuarter($year, $quarter);
+        $now   = new \DateTimeImmutable('now');
+
+        if ($now < $range->from) {
+            return 0;
+        }
+        if ($now > $range->to) {
+            return 100;
+        }
+
+        $total   = $range->to->getTimestamp() - $range->from->getTimestamp();
+        $elapsed = $now->getTimestamp()        - $range->from->getTimestamp();
+
+        return (int) round(($elapsed / $total) * 100);
+    }
+
     private static function fmtDate(\DateTimeImmutable $d): string
     {
         $months = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
