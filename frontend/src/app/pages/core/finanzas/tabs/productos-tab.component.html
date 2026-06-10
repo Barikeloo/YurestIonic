@@ -1,8 +1,6 @@
 <div class="productos">
 
   @if (facade.loadingProducts()) {
-
-    <!-- ── Skeleton: KPI strip ────────────────────────────────────────────── -->
     <div class="kpi-strip">
       @for (_ of [1,2,3,4]; track $index) {
         <div class="kpi-card" style="pointer-events:none">
@@ -12,45 +10,19 @@
         </div>
       }
     </div>
-
-    <!-- ── Skeleton: top row ──────────────────────────────────────────────── -->
     <div class="top-row">
-      <div class="card">
-        <div class="sk-sect">
-          <span class="sk sk--title"></span>
-          <span class="sk sk--title-sm"></span>
-        </div>
-        <div class="sk sk--block"></div>
-      </div>
+      <div class="card"><div class="sk-sect"><span class="sk sk--title"></span><span class="sk sk--title-sm"></span></div><div class="sk sk--block"></div></div>
       @for (_ of [1,2]; track $index) {
-        <div class="card">
-          <div class="sk-sect">
-            <span class="sk sk--title"></span>
-            <span class="sk sk--title-sm"></span>
-          </div>
-          <div class="sk sk--block-sm"></div>
-        </div>
+        <div class="card"><div class="sk-sect"><span class="sk sk--title"></span><span class="sk sk--title-sm"></span></div><div class="sk sk--block-sm"></div></div>
       }
     </div>
-
-    <!-- ── Skeleton: mid row ──────────────────────────────────────────────── -->
     <div class="mid-row">
       @for (_ of [1,2]; track $index) {
-        <div class="card">
-          <div class="sk-sect">
-            <span class="sk sk--title"></span>
-            <span class="sk sk--title-sm"></span>
-          </div>
-          <div class="sk sk--block-sm"></div>
-        </div>
+        <div class="card"><div class="sk-sect"><span class="sk sk--title"></span><span class="sk sk--title-sm"></span></div><div class="sk sk--block-sm"></div></div>
       }
     </div>
-
-    <!-- ── Skeleton: table ────────────────────────────────────────────────── -->
     <div class="card">
-      <div class="sk-sect" style="margin-bottom:18px">
-        <span class="sk sk--title"></span>
-      </div>
+      <div class="sk-sect" style="margin-bottom:18px"><span class="sk sk--title"></span></div>
       @for (_ of [1,2,3,4,5,6,7,8]; track $index) {
         <div class="sk-prod-row">
           <span class="sk" style="height:16px;border-radius:4px"></span>
@@ -85,26 +57,18 @@
       <div class="kpi-card" [class.kpi-card--accent-red]="(facade.productsReport()?.alert_count ?? 0) > 0">
         <div class="kpi-label">Alertas stock</div>
         @if (facade.productsReport()) {
-          <div class="kpi-value" [class.kpi-value--gray]="facade.productsReport()!.alert_count === 0">
-            {{ fmtInt(facade.productsReport()!.alert_count) }}
-          </div>
+          <div class="kpi-value" [class.kpi-value--gray]="facade.productsReport()!.alert_count === 0">{{ fmtInt(facade.productsReport()!.alert_count) }}</div>
           <div class="kpi-sub">{{ facade.productsReport()!.alert_count > 0 ? 'productos bajo mínimo' : 'Stock en buen estado' }}</div>
         } @else {
-          <div class="kpi-value kpi-value--gray">—</div>
-          <div class="kpi-sub">Cargando...</div>
+          <div class="kpi-value kpi-value--gray">—</div><div class="kpi-sub">Cargando...</div>
         }
       </div>
     </div>
 
-    <!-- ── Top row: 1.4fr 1fr 1fr ────────────────────────────────────────── -->
+    <!-- ── Top row: ventas familia · stock crítico · sin ventas ──────────── -->
     <div class="top-row">
-
-      <!-- Ventas por familia -->
       <div class="card">
-        <div class="section-header">
-          <div class="card-title">Ventas por familia</div>
-          <div class="card-sub">Distribución de ingresos del periodo</div>
-        </div>
+        <div class="section-header"><div class="card-title">Ventas por familia</div><div class="card-sub">Distribución de ingresos del periodo</div></div>
         @if (facade.byFamily.length > 0 && totalRevenue() > 0) {
           <div class="vbar-chart">
             @for (f of facade.byFamily; track f.label) {
@@ -116,58 +80,29 @@
             }
           </div>
         } @else {
-          <div class="no-data-placeholder">
-            <div class="no-data-icon">📊</div>
-            <div class="no-data-title">Sin datos de familias</div>
-            <div class="no-data-sub">No hay ventas registradas en este periodo</div>
-          </div>
+          <div class="no-data-placeholder"><div class="no-data-icon">📊</div><div class="no-data-title">Sin datos de familias</div><div class="no-data-sub">No hay ventas en este periodo</div></div>
         }
       </div>
-
       <div class="card">
-        <div class="section-header">
-          <div>
-            <div class="card-title">Stock crítico</div>
-            <div class="card-sub">Productos con stock ≤ 10 unidades</div>
-          </div>
-        </div>
+        <div class="section-header"><div class="card-title">Stock crítico</div><div class="card-sub">Productos con stock ≤ 10 unidades</div></div>
         @if ((facade.productsReport()?.stock_critical?.length ?? 0) > 0) {
           <div class="stock-list">
             @for (item of facade.productsReport()!.stock_critical; track item.name) {
               <div class="stock-row">
                 <span class="stock-name">{{ item.name }}</span>
                 <span class="stock-fam">{{ item.family }}</span>
-                <span class="stock-badge"
-                  [class.stock-badge--out]="item.stock === 0"
-                  [class.stock-badge--critical]="item.stock > 0 && item.stock <= 5"
-                  [class.stock-badge--low]="item.stock > 5">
+                <span class="stock-badge" [class.stock-badge--out]="item.stock===0" [class.stock-badge--critical]="item.stock>0&&item.stock<=5" [class.stock-badge--low]="item.stock>5">
                   {{ item.stock === 0 ? 'Agotado' : item.stock + ' uds' }}
                 </span>
               </div>
             }
           </div>
         } @else if (facade.productsReport()) {
-          <div class="no-data-placeholder">
-            <div class="no-data-icon">✅</div>
-            <div class="no-data-title">Stock en buen estado</div>
-            <div class="no-data-sub">Todos los productos tienen stock suficiente</div>
-          </div>
-        } @else {
-          <div class="no-data-placeholder">
-            <div class="no-data-icon">📦</div>
-            <div class="no-data-title">Cargando stock...</div>
-            <div class="no-data-sub"></div>
-          </div>
+          <div class="no-data-placeholder"><div class="no-data-icon">✅</div><div class="no-data-title">Stock en buen estado</div><div class="no-data-sub">Todos los productos tienen stock suficiente</div></div>
         }
       </div>
-
       <div class="card">
-        <div class="section-header">
-          <div>
-            <div class="card-title">Sin ventas</div>
-            <div class="card-sub">Productos activos sin movimiento en 7 días</div>
-          </div>
-        </div>
+        <div class="section-header"><div class="card-title">Sin ventas</div><div class="card-sub">Productos activos sin movimiento en 7 días</div></div>
         @if ((facade.productsReport()?.no_sales_7d?.length ?? 0) > 0) {
           <div class="stock-list">
             @for (item of facade.productsReport()!.no_sales_7d; track item.name) {
@@ -179,99 +114,185 @@
             }
           </div>
         } @else if (facade.productsReport()) {
-          <div class="no-data-placeholder">
-            <div class="no-data-icon">📈</div>
-            <div class="no-data-title">Todos activos</div>
-            <div class="no-data-sub">Todos los productos tienen movimiento en los últimos 7 días</div>
+          <div class="no-data-placeholder"><div class="no-data-icon">📈</div><div class="no-data-title">Todos activos</div><div class="no-data-sub">Todos los productos tienen movimiento en los últimos 7 días</div></div>
+        }
+      </div>
+    </div>
+
+    <!-- ── Mid row: matriz de ingeniería · zonas ─────────────────────────── -->
+    <div class="mid-row">
+
+      <!-- Matriz de ingeniería de menú -->
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="card-title">Ingeniería de menú</div>
+            <div class="card-sub">Ingresos × Unidades — haz clic en un producto para ver su detalle</div>
           </div>
+        </div>
+
+        @if (matrixPoints().length < 2) {
+          <div class="no-data-placeholder"><div class="no-data-icon">📊</div><div class="no-data-title">Sin datos suficientes</div><div class="no-data-sub">Se necesitan al menos 2 productos con ventas</div></div>
         } @else {
-          <div class="no-data-placeholder">
-            <div class="no-data-icon">📦</div>
-            <div class="no-data-title">Cargando...</div>
-            <div class="no-data-sub"></div>
+          <div class="matrix-legend">
+            @for (q of [['star','#1a9e5a','⭐ Estrella'],['enigma','#0077cc','❓ Enigma'],['horse','#d18a1c','🐎 Caballo'],['dog','#9b9b9b','🐕 Perro']]; track q[0]) {
+              <span class="matrix-leg-item"><span class="matrix-leg-dot" [style.background]="q[1]"></span>{{ q[2] }}</span>
+            }
+          </div>
+
+          <div class="matrix-svg-wrap"
+               (mousemove)="onMatrixMove($event)"
+               (mouseleave)="onMatrixLeave()">
+
+            <svg viewBox="0 0 480 280" class="matrix-svg" preserveAspectRatio="xMidYMid meet">
+
+              <!-- Quadrant backgrounds -->
+              <rect [attr.x]="matrixMedX()" y="40" [attr.width]="440-matrixMedX()" [attr.height]="matrixMedY()-40" fill="#1a9e5a" fill-opacity="0.06"/>
+              <rect x="40" y="40" [attr.width]="matrixMedX()-40" [attr.height]="matrixMedY()-40" fill="#0077cc" fill-opacity="0.06"/>
+              <rect [attr.x]="matrixMedX()" [attr.y]="matrixMedY()" [attr.width]="440-matrixMedX()" [attr.height]="240-matrixMedY()" fill="#d18a1c" fill-opacity="0.06"/>
+              <rect x="40" [attr.y]="matrixMedY()" [attr.width]="matrixMedX()-40" [attr.height]="240-matrixMedY()" fill="#9b9b9b" fill-opacity="0.06"/>
+
+              <!-- Median lines -->
+              <line [attr.x1]="matrixMedX()" [attr.x2]="matrixMedX()" y1="36" y2="244" stroke="#c8c8c8" stroke-width="1.5" stroke-dasharray="5 4"/>
+              <line x1="36" x2="444" [attr.y1]="matrixMedY()" [attr.y2]="matrixMedY()" stroke="#c8c8c8" stroke-width="1.5" stroke-dasharray="5 4"/>
+
+              <!-- Axes -->
+              <line x1="40" x2="440" y1="240" y2="240" stroke="#e0e0e0" stroke-width="1"/>
+              <line x1="40" y1="40" x2="40" y2="240" stroke="#e0e0e0" stroke-width="1"/>
+
+              <!-- Corner labels -->
+              <text x="444" y="52"  text-anchor="end"   font-size="10" fill="#1a9e5a" font-weight="600" font-family="DM Sans, sans-serif">⭐ Estrella</text>
+              <text x="36"  y="52"  text-anchor="start" font-size="10" fill="#0077cc" font-weight="600" font-family="DM Sans, sans-serif">❓ Enigma</text>
+              <text x="444" y="238" text-anchor="end"   font-size="10" fill="#d18a1c" font-weight="600" font-family="DM Sans, sans-serif">🐎 Caballo</text>
+              <text x="36"  y="238" text-anchor="start" font-size="10" fill="#9b9b9b" font-weight="600" font-family="DM Sans, sans-serif">🐕 Perro</text>
+
+              <!-- Axis labels -->
+              <text x="240" y="272" text-anchor="middle" font-size="9" fill="#b0b0b0" font-family="DM Sans, sans-serif">Unidades vendidas →</text>
+              <text x="12"  y="140" text-anchor="middle" font-size="9" fill="#b0b0b0" font-family="DM Sans, sans-serif" transform="rotate(-90,12,140)">Ingresos ↑</text>
+
+              <!-- Product dots -->
+              @for (pt of matrixPoints(); track pt.name) {
+                <circle
+                  [attr.cx]="pt.cx"
+                  [attr.cy]="pt.cy"
+                  [attr.r]="matrixHovered()?.name === pt.name ? 8 : 5"
+                  [attr.fill]="QMETA[pt.quadrant].color"
+                  [attr.fill-opacity]="matrixHovered()?.name === pt.name ? 1 : 0.72"
+                  stroke="#fff"
+                  [attr.stroke-width]="matrixHovered()?.name === pt.name ? 2.5 : 1.5"
+                  style="cursor:pointer"
+                  (mouseenter)="matrixHovered.set(pt)"
+                  (click)="openProduct(pt)"
+                />
+              }
+
+            </svg>
+
+            <!-- Matrix tooltip -->
+            @if (matrixHovered(); as mh) {
+              <div class="matrix-tooltip"
+                   [class.matrix-tooltip--flip-x]="matrixTipX() > matrixWrapWidth() * 0.55"
+                   [class.matrix-tooltip--flip-y]="matrixTipY() < 100"
+                   [style.left.px]="matrixTipX()"
+                   [style.top.px]="matrixTipY()">
+                <div class="mt-head">
+                  <span class="mt-name">{{ mh.name }}</span>
+                  <span class="mt-abc" [style.color]="abcColor(mh.abc)" [style.background]="abcColor(mh.abc) + '22'">{{ mh.abc }}</span>
+                </div>
+                <div class="mt-quadrant" [style.color]="QMETA[mh.quadrant].color">{{ QMETA[mh.quadrant].icon }} {{ QMETA[mh.quadrant].label }}</div>
+                <div class="mt-desc">{{ QMETA[mh.quadrant].desc }}</div>
+                <div class="mt-divider"></div>
+                <div class="mt-row"><span class="mt-lbl">Ingresos</span><span class="mt-val mono">{{ fmt(mh.revenue) }}</span></div>
+                <div class="mt-row"><span class="mt-lbl">Unidades</span><span class="mt-val mono">{{ fmtInt(mh.units) }}</span></div>
+                @if (mh.revDelta !== null) {
+                  <div class="mt-row">
+                    <span class="mt-lbl">vs anterior</span>
+                    <span class="mt-val mono" [style.color]="deltaColor(mh.revDelta)">{{ deltaArrow(mh.revDelta) }} {{ fmtDelta(mh.revDelta) }}</span>
+                  </div>
+                }
+                <div class="mt-hint">Clic para ver detalle</div>
+              </div>
+            }
+
           </div>
         }
       </div>
 
-    </div>
-
-    <!-- ── Cross-sell + Zones ─────────────────────────────────────────────── -->
-    <div class="mid-row">
-
+      <!-- Rendimiento por zona -->
       <div class="card">
-        <div class="section-header">
-          <div>
-            <div class="card-title">Productos que se piden juntos</div>
-            <div class="card-sub">% de pedidos con A que también incluyen B</div>
-          </div>
-        </div>
-        <div class="no-data-placeholder">
-          <div class="no-data-icon">🔗</div>
-          <div class="no-data-title">Análisis de cross-selling</div>
-          <div class="no-data-sub">Requiere un mínimo de historial de ventas para calcular correlaciones</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="section-header">
-          <div>
-            <div class="card-title">Rendimiento por zona</div>
-            <div class="card-sub">Ingresos por zona del local · periodo seleccionado</div>
-          </div>
-        </div>
+        <div class="section-header"><div class="card-title">Rendimiento por zona</div><div class="card-sub">Ingresos por zona del local · periodo seleccionado</div></div>
         @if ((facade.productsReport()?.by_zone?.length ?? 0) > 0) {
           @let zoneMax = facade.productsReport()!.by_zone[0].revenue;
           <div class="zone-rank-list">
             @for (z of facade.productsReport()!.by_zone; track z.name; let i = $index) {
               <div class="zone-rank-row">
-                <span class="zone-rank-pos" [class.zone-rank-pos--top]="i === 0">{{ i + 1 }}</span>
+                <span class="zone-rank-pos" [class.zone-rank-pos--top]="i===0">{{ i+1 }}</span>
                 <div class="zone-rank-body">
-                  <div class="zone-rank-top">
-                    <span class="zone-rank-name">{{ z.name }}</span>
-                    <span class="zone-rank-rev mono fw7">{{ fmt(z.revenue) }}</span>
-                  </div>
-                  <div class="zone-bar-track">
-                    <div class="zone-bar" [style.width.%]="(z.revenue / zoneMax) * 100"></div>
-                  </div>
-                  <span class="zone-rank-tickets">{{ z.tickets }} ticket{{ z.tickets !== 1 ? 's' : '' }}</span>
+                  <div class="zone-rank-top"><span class="zone-rank-name">{{ z.name }}</span><span class="zone-rank-rev mono fw7">{{ fmt(z.revenue) }}</span></div>
+                  <div class="zone-bar-track"><div class="zone-bar" [style.width.%]="(z.revenue/zoneMax)*100"></div></div>
+                  <span class="zone-rank-tickets">{{ z.tickets }} ticket{{ z.tickets!==1?'s':'' }}</span>
                 </div>
               </div>
             }
           </div>
         } @else if (facade.productsReport()) {
-          <div class="no-data-placeholder">
-            <div class="no-data-icon">🗺️</div>
-            <div class="no-data-title">Sin datos de zonas</div>
-            <div class="no-data-sub">No hay ventas por mesa registradas en este periodo</div>
-          </div>
-        } @else {
-          <div class="no-data-placeholder">
-            <div class="no-data-icon">🗺️</div>
-            <div class="no-data-title">Cargando...</div>
-            <div class="no-data-sub"></div>
-          </div>
+          <div class="no-data-placeholder"><div class="no-data-icon">🗺️</div><div class="no-data-title">Sin datos de zonas</div><div class="no-data-sub">No hay ventas por mesa registradas en este periodo</div></div>
         }
       </div>
 
     </div>
 
-    <!-- ── Filters ────────────────────────────────────────────────────────── -->
+    <!-- ── Cross-sell ─────────────────────────────────────────────────────── -->
+    <div class="card">
+      <div class="section-header">
+        <div>
+          <div class="card-title">Productos que se piden juntos</div>
+          <div class="card-sub">Pares de productos más habituales en el mismo ticket · úsalos para crear combos o entrenar al equipo en upselling</div>
+        </div>
+      </div>
+      @if ((facade.productsReport()?.cross_sell?.length ?? 0) > 0) {
+        <div class="cross-sell-grid">
+          @for (pair of facade.productsReport()!.cross_sell; track pair.a + pair.b; let i = $index) {
+            <div class="cs-pair">
+              <span class="cs-rank mono">{{ i + 1 }}</span>
+              <div class="cs-products">
+                <span class="cs-product">{{ pair.a }}</span>
+                <span class="cs-plus">+</span>
+                <span class="cs-product">{{ pair.b }}</span>
+              </div>
+              <div class="cs-meta">
+                <span class="cs-count mono">{{ pair.together }}×</span>
+                <span class="cs-label">juntos</span>
+              </div>
+            </div>
+          }
+        </div>
+      } @else if (facade.productsReport()) {
+        <div class="no-data-placeholder"><div class="no-data-icon">🔗</div><div class="no-data-title">Sin combinaciones detectadas</div><div class="no-data-sub">No se encontraron pares de productos en el mismo ticket en este periodo</div></div>
+      }
+    </div>
+
+    <!-- ── Filters + Search ───────────────────────────────────────────────── -->
     <div class="card filters-card">
       <div class="filters-row">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input class="search-input" type="text" placeholder="Buscar producto o familia…"
+                 [ngModel]="search()" (ngModelChange)="search.set($event)"/>
+          @if (search()) {
+            <button class="search-clear" (click)="search.set('')">×</button>
+          }
+        </div>
         <div class="filter-group">
           <span class="filter-label">Familia</span>
           <div class="segment">
             @for (f of families(); track f) {
-              <button
-                class="seg-btn"
-                [class.seg-btn--active]="filterFam() === f"
-                (click)="filterFam.set(f)"
-              >{{ f === 'all' ? 'Todas' : f }}</button>
+              <button class="seg-btn" [class.seg-btn--active]="filterFam()===f" (click)="filterFam.set(f)">{{ f==='all'?'Todas':f }}</button>
             }
           </div>
         </div>
         <div class="filter-spacer"></div>
-        <span class="filter-count">{{ filtered().length }} producto{{ filtered().length !== 1 ? 's' : '' }}</span>
+        <span class="filter-count">{{ filtered().length }} producto{{ filtered().length!==1?'s':'' }}</span>
         <button class="btn-outline-sm" (click)="exportCsv()">⤓ Exportar CSV</button>
       </div>
     </div>
@@ -285,12 +306,9 @@
               <th class="th-num">#</th>
               <th class="th-product">Producto</th>
               <th>Familia</th>
-              <th class="th-r th-sort" (click)="setSort('units')">
-                Uds <span class="si" [class.si--on]="sortKey() === 'units'">↓</span>
-              </th>
-              <th class="th-r th-sort" (click)="setSort('revenue')">
-                Ingresos <span class="si" [class.si--on]="sortKey() === 'revenue'">↓</span>
-              </th>
+              <th class="th-r th-sort" (click)="setSort('units')">Uds <span class="si" [class.si--on]="sortKey()==='units'">↓</span></th>
+              <th class="th-r th-sort" (click)="setSort('revenue')">Ingresos <span class="si" [class.si--on]="sortKey()==='revenue'">↓</span></th>
+              <th class="th-r">vs anterior</th>
               <th class="th-r">% periodo</th>
               <th class="th-r th-trend">Tendencia 14d</th>
             </tr>
@@ -298,37 +316,41 @@
           <tbody>
             @if (sorted().length === 0) {
               <tr>
-                <td colspan="7" class="td-empty">
+                <td colspan="8" class="td-empty">
                   <div class="table-empty">
                     <div class="table-empty-icon">📋</div>
-                    <div class="table-empty-title">Sin productos en este periodo</div>
-                    <div class="table-empty-sub">No hay líneas de venta registradas para el periodo seleccionado</div>
+                    <div class="table-empty-title">{{ search() ? 'Sin resultados para "' + search() + '"' : 'Sin productos en este periodo' }}</div>
+                    <div class="table-empty-sub">{{ search() ? 'Prueba con otro nombre o familia' : 'No hay líneas de venta registradas para el periodo seleccionado' }}</div>
                   </div>
                 </td>
               </tr>
             } @else {
               @for (p of sorted(); track p.name; let i = $index) {
-                @let ti = trendInfo(p.trendSpark);
-                <tr>
-                  <td class="td-num" [class.td-num--top]="i < 3">{{ i + 1 }}</td>
+                @let ti = trendInfo(p.trend_spark);
+                <tr class="tr-clickable" (click)="openProduct(p)">
+                  <td class="td-num" [class.td-num--top]="i<3">{{ i+1 }}</td>
                   <td class="td-product">
                     <div class="product-cell">
+                      <span class="abc-badge" [style.color]="abcColor(p.abc)" [style.background]="abcColor(p.abc)+'18'">{{ p.abc }}</span>
                       <span class="product-name">{{ p.name }}</span>
                     </div>
                   </td>
                   <td>
                     <span class="family-cell">
-                      <span class="family-dot" [style.background]="p.familyColor"></span>
+                      <span class="family-dot" [style.background]="p.family_color"></span>
                       <span class="family-text">{{ p.family }}</span>
                     </span>
                   </td>
                   <td class="td-r mono">{{ p.units }}</td>
                   <td class="td-r mono fw7">{{ fmt(p.revenue) }}</td>
                   <td class="td-r">
+                    <span class="delta-cell mono" [style.color]="deltaColor(p.revDelta)">
+                      {{ deltaArrow(p.revDelta) }} {{ fmtDelta(p.revDelta) }}
+                    </span>
+                  </td>
+                  <td class="td-r">
                     <div class="pct-cell">
-                      <div class="pct-bar-track">
-                        <div class="pct-bar" [style.width.%]="p.pct" [style.background]="p.familyColor"></div>
-                      </div>
+                      <div class="pct-bar-track"><div class="pct-bar" [style.width.%]="p.pct" [style.background]="p.family_color"></div></div>
                       <span class="pct-val mono">{{ p.pct.toFixed(1).replace('.', ',') }}%</span>
                     </div>
                   </td>
@@ -336,13 +358,11 @@
                     @if (ti) {
                       <div class="trend-cell">
                         <svg class="spark" viewBox="0 0 50 20" preserveAspectRatio="none">
-                          <path [attr.d]="sparkArea(ti.spark)" [attr.fill]="trendColor(ti.trend)" fill-opacity="0.15"/>
-                          <path [attr.d]="sparkPath(ti.spark)" fill="none" [attr.stroke]="trendColor(ti.trend)" stroke-width="1.3"/>
+                          <path [attr.d]="sparkArea(p.trend_spark)" [attr.fill]="trendColor(ti.trend)" fill-opacity="0.15"/>
+                          <path [attr.d]="sparkPath(p.trend_spark)" fill="none" [attr.stroke]="trendColor(ti.trend)" stroke-width="1.3"/>
                         </svg>
                         @if (ti.delta !== null) {
-                          <span class="trend-arrow mono" [style.color]="trendColor(ti.trend)">
-                            {{ trendArrow(ti.trend) }} {{ ti.delta >= 0 ? '+' : '' }}{{ ti.delta.toFixed(1).replace('.', ',') }}%
-                          </span>
+                          <span class="trend-arrow mono" [style.color]="trendColor(ti.trend)">{{ trendArrow(ti.trend) }} {{ ti.delta>=0?'+':'' }}{{ ti.delta.toFixed(1).replace('.', ',') }}%</span>
                         } @else {
                           <span class="trend-new">Nuevo</span>
                         }
@@ -357,13 +377,149 @@
           </tbody>
         </table>
       </div>
-
       <div class="table-footer">
         <span class="footer-l">Ordenado por {{ sortLabel[sortKey()] }}</span>
-        <span class="footer-r">{{ filtered().length }} producto{{ filtered().length !== 1 ? 's' : '' }} · <strong class="mono">{{ fmt(filteredRevenue()) }}</strong> ingresos</span>
+        <span class="footer-r">{{ filtered().length }} producto{{ filtered().length!==1?'s':'' }} · <strong class="mono">{{ fmt(filteredRevenue()) }}</strong> ingresos</span>
       </div>
     </div>
 
   }
 
 </div>
+
+<!-- ── Product detail modal ──────────────────────────────────────────────── -->
+@if (selected(); as p) {
+  @let ti = trendInfo(p.trend_spark);
+  @let sq = selectedQuadrant();
+  <div class="modal-backdrop" (click)="closeProduct()">
+    <div class="modal-panel" (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="modal-head">
+        <div class="modal-head-l">
+          <span class="modal-fam-dot" [style.background]="p.family_color"></span>
+          <div>
+            <div class="modal-title-row">
+              <span class="modal-title">{{ p.name }}</span>
+              <span class="modal-abc" [style.color]="abcColor(p.abc)" [style.background]="abcColor(p.abc)+'1a'">{{ p.abc }}</span>
+              @if (sq) {
+                <span class="modal-quadrant-badge" [style.color]="sq.color" [style.background]="sq.color+'1a'">{{ sq.icon }} {{ sq.label }}</span>
+              }
+            </div>
+            <div class="modal-sub">
+              <span class="modal-fam-badge" [style.color]="p.family_color" [style.background]="p.family_color+'18'">{{ p.family }}</span>
+              <span class="modal-price mono">PVP {{ fmt(p.price) }}</span>
+            </div>
+          </div>
+        </div>
+        <button class="modal-close-btn" (click)="closeProduct()">×</button>
+      </div>
+
+      <!-- KPI grid -->
+      <div class="modal-kpis">
+        <div class="modal-kpi">
+          <div class="modal-kpi-lbl">Ingresos periodo</div>
+          <div class="modal-kpi-val mono">{{ fmt(p.revenue) }}</div>
+        </div>
+        <div class="modal-kpi">
+          <div class="modal-kpi-lbl">Unidades vendidas</div>
+          <div class="modal-kpi-val mono">{{ fmtInt(p.units) }}</div>
+        </div>
+        <div class="modal-kpi">
+          <div class="modal-kpi-lbl">Media diaria (14d)</div>
+          <div class="modal-kpi-val mono">{{ p.avg_daily.toFixed(1) }} uds</div>
+        </div>
+        <div class="modal-kpi">
+          <div class="modal-kpi-lbl">% del periodo</div>
+          <div class="modal-kpi-val mono">{{ p.pct.toFixed(1).replace('.', ',') }}%</div>
+        </div>
+        <div class="modal-kpi">
+          <div class="modal-kpi-lbl">Tendencia 7d</div>
+          <div class="modal-kpi-val" [style.color]="ti ? trendColor(ti.trend) : '#a0a0a0'">
+            @if (ti) {
+              {{ trendArrow(ti.trend) }}<span class="mono"> {{ ti.delta !== null ? (ti.delta>=0?'+':'') + ti.delta.toFixed(1).replace('.', ',') + '%' : 'Nuevo' }}</span>
+            } @else {
+              <span class="mono">—</span>
+            }
+          </div>
+        </div>
+        <div class="modal-kpi">
+          <div class="modal-kpi-lbl">Precio venta</div>
+          <div class="modal-kpi-val mono">{{ fmt(p.price) }}</div>
+        </div>
+      </div>
+
+      <!-- Comparativa periodo anterior -->
+      @if (p.prev_revenue > 0 || p.prev_units > 0) {
+        <div class="modal-comparison">
+          <span class="mc-label">vs periodo anterior</span>
+          <div class="mc-items">
+            <div class="mc-item">
+              <span class="mc-key">Ingresos</span>
+              <span class="mc-delta" [style.color]="deltaColor(p.revDelta)">{{ deltaArrow(p.revDelta) }} {{ fmtDelta(p.revDelta) }}</span>
+              <span class="mc-prev mono">ant. {{ fmt(p.prev_revenue) }}</span>
+            </div>
+            <div class="mc-sep"></div>
+            <div class="mc-item">
+              <span class="mc-key">Unidades</span>
+              <span class="mc-delta" [style.color]="deltaColor(p.unitsDelta)">{{ deltaArrow(p.unitsDelta) }} {{ fmtDelta(p.unitsDelta) }}</span>
+              <span class="mc-prev mono">ant. {{ fmtInt(p.prev_units) }}</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Dual-line chart -->
+      <div class="modal-chart-wrap">
+        <div class="modal-chart-head">
+          <span class="modal-chart-title">Evolución últimos 14 días</span>
+          <div class="modal-chart-legend">
+            <span class="legend-dot" style="background:#0077cc"></span><span class="legend-lbl">Ingresos</span>
+            <span class="legend-dot legend-dot--dashed" style="border-color:#1a9e5a"></span><span class="legend-lbl">Unidades</span>
+          </div>
+        </div>
+
+        <div class="chart-svg-wrap" (mousemove)="onChartMove($event)" (mouseleave)="onChartLeave()">
+          <svg class="detail-chart" viewBox="0 0 520 160" preserveAspectRatio="xMidYMid meet">
+            @for (y of gridY(160); track y) { <line x1="10" x2="510" [attr.y1]="y" [attr.y2]="y" stroke="#f0f0f0" stroke-width="1"/> }
+            @for (x of gridX(520); track x) { <line [attr.x1]="x" [attr.x2]="x" y1="10" y2="150" stroke="#f8f8f8" stroke-width="1"/> }
+            <path [attr.d]="areaPath(p.revenue_spark,520,160)" fill="#0077cc" fill-opacity="0.07"/>
+            <path [attr.d]="linePath(p.revenue_spark,520,160)" fill="none" stroke="#0077cc" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+            <path [attr.d]="areaPath(p.trend_spark,520,160)" fill="#1a9e5a" fill-opacity="0.07"/>
+            <path [attr.d]="linePath(p.trend_spark,520,160)" fill="none" stroke="#1a9e5a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="5 3"/>
+            @for (pt of chartPoints(p.revenue_spark,520,160); track pt.x) {
+              @if (pt.active) { <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="2.5" fill="#0077cc"/> }
+            }
+            @for (pt of chartPoints(p.trend_spark,520,160); track pt.x) {
+              @if (pt.active) { <circle [attr.cx]="pt.x" [attr.cy]="pt.y" r="2.5" fill="#1a9e5a"/> }
+            }
+            @if (hoveredDay() !== null) {
+              <line [attr.x1]="hovX()" [attr.x2]="hovX()" y1="8" y2="152" stroke="#0d0d0d" stroke-width="1" stroke-dasharray="4 3" opacity="0.18"/>
+              <circle [attr.cx]="hovX()" [attr.cy]="hovY(p.revenue_spark)" r="5" fill="#0077cc" stroke="#fff" stroke-width="2"/>
+              <circle [attr.cx]="hovX()" [attr.cy]="hovY(p.trend_spark)"   r="5" fill="#1a9e5a" stroke="#fff" stroke-width="2"/>
+            }
+          </svg>
+
+          @if (hoveredDay() !== null) {
+            <div class="chart-tooltip" [class.chart-tooltip--flip]="(hoveredDay()??0)>9" [style.left.px]="tipX()" [style.top.px]="tipY()">
+              <div class="tt-date">{{ chartDates()[hoveredDay()!] }}</div>
+              <div class="tt-row"><span class="tt-dot" style="background:#0077cc"></span><span>{{ fmt(p.revenue_spark[hoveredDay()!]) }}</span></div>
+              <div class="tt-row"><span class="tt-dot" style="background:#1a9e5a"></span><span>{{ p.trend_spark[hoveredDay()!] }} uds</span></div>
+            </div>
+          }
+        </div>
+
+        <div class="chart-x-labels">
+          @for (d of chartDates(); track d; let i = $index) {
+            <span class="chart-x-lbl">{{ i%2===0?d:'' }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn-ghost" (click)="closeProduct()">Cerrar</button>
+      </div>
+
+    </div>
+  </div>
+}

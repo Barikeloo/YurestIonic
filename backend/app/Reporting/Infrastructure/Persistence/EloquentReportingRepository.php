@@ -644,6 +644,7 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
             ->whereNotNull('sl.product_id')
             ->selectRaw('
                 p.id as product_id,
+                p.uuid as product_uuid,
                 p.name as name,
                 f.id as family_id,
                 f.name as family,
@@ -663,10 +664,53 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
                 'no_sales_7d'    => $noSales7d,
                 'alert_count'    => $alertCount,
                 'by_zone'        => $byZone,
+                'cross_sell'     => [],
             ];
         }
 
         $productIds = $rows->pluck('product_id')->all();
+
+        // ── Previous period comparison ────────────────────────────────────────
+        $prevFrom = $range->prevFrom->format('Y-m-d H:i:s');
+        $prevTo   = $range->prevTo->format('Y-m-d H:i:s');
+
+        $prevRows = DB::table('sales_lines as sl')
+            ->join('sales as s', 's.id', '=', 'sl.sale_id')
+            ->join('products as p', 'p.id', '=', 'sl.product_id')
+            ->where('s.restaurant_id', $restaurantId)
+            ->where('s.status', 'closed')
+            ->whereBetween('s.value_date', [$prevFrom, $prevTo])
+            ->whereNull('s.deleted_at')
+            ->whereNull('sl.deleted_at')
+            ->whereNull('p.deleted_at')
+            ->whereNotNull('sl.product_id')
+            ->selectRaw('p.id as product_id, SUM(sl.quantity) as prev_units, SUM(sl.quantity * sl.price) as prev_revenue')
+            ->groupBy('p.id')
+            ->get()
+            ->keyBy('product_id');
+
+        // ── Cross-sell pairs ──────────────────────────────────────────────────
+        $crossSell = DB::table('sales_lines as sl1')
+            ->join('sales_lines as sl2', 'sl1.sale_id', '=', 'sl2.sale_id')
+            ->join('products as p1', 'p1.id', '=', 'sl1.product_id')
+            ->join('products as p2', 'p2.id', '=', 'sl2.product_id')
+            ->join('sales as s', 's.id', '=', 'sl1.sale_id')
+            ->where('s.restaurant_id', $restaurantId)
+            ->where('s.status', 'closed')
+            ->whereBetween('s.value_date', [$from, $to])
+            ->whereNull('s.deleted_at')
+            ->whereNull('sl1.deleted_at')
+            ->whereNull('sl2.deleted_at')
+            ->whereNotNull('sl1.product_id')
+            ->whereNotNull('sl2.product_id')
+            ->whereRaw('sl1.product_id < sl2.product_id')
+            ->selectRaw('p1.name as a, p2.name as b, COUNT(DISTINCT sl1.sale_id) as together')
+            ->groupBy('sl1.product_id', 'sl2.product_id', 'p1.name', 'p2.name')
+            ->orderByRaw('COUNT(DISTINCT sl1.sale_id) DESC')
+            ->limit(10)
+            ->get()
+            ->map(fn ($r) => ['a' => $r->a, 'b' => $r->b, 'together' => (int) $r->together])
+            ->toArray();
 
         $sparkSince = now()->subDays(13)->toDateString();
         $sparkRows  = DB::table('sales_lines as sl')
@@ -677,13 +721,15 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
             ->whereDate('s.value_date', '>=', $sparkSince)
             ->whereNull('s.deleted_at')
             ->whereNull('sl.deleted_at')
-            ->selectRaw('sl.product_id, DATE(s.value_date) as d, SUM(sl.quantity) as qty')
+            ->selectRaw('sl.product_id, DATE(s.value_date) as d, SUM(sl.quantity) as qty, SUM(sl.quantity * sl.price) as rev')
             ->groupBy('sl.product_id', DB::raw('DATE(s.value_date)'))
             ->get();
 
-        $sparkMap = [];
+        $sparkMap   = [];
+        $revSparkMap = [];
         foreach ($sparkRows as $r) {
-            $sparkMap[(int) $r->product_id][$r->d] = (int) $r->qty;
+            $sparkMap[(int) $r->product_id][$r->d]    = (int) $r->qty;
+            $revSparkMap[(int) $r->product_id][$r->d] = (int) $r->rev;
         }
 
         $dates = [];
@@ -708,30 +754,41 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
             $rev   = (int) $row->revenue;
             $pct   = $periodRevenue > 0 ? round(($rev / $periodRevenue) * 100, 2) : 0.0;
 
-            $spark = [];
+            $spark    = [];
+            $revSpark = [];
             foreach ($dates as $d) {
-                $spark[] = $sparkMap[$pid][$d] ?? 0;
+                $spark[]    = $sparkMap[$pid][$d]    ?? 0;
+                $revSpark[] = $revSparkMap[$pid][$d] ?? 0;
             }
 
             $avgDaily = array_sum($spark) / 14;
 
+            $prevData    = $prevRows->get($pid);
+            $prevRevenue = $prevData ? (int) $prevData->prev_revenue : 0;
+            $prevUnits   = $prevData ? (int) $prevData->prev_units   : 0;
+
             $items[] = [
-                'name'         => $row->name,
-                'family'       => $row->family,
-                'family_color' => $familyColors[$fid],
-                'units'        => $units,
-                'revenue'      => $rev,
-                'cost'         => 0,
-                'price'        => (int) $row->price,
-                'pct'          => $pct,
-                'avg_daily'    => round($avgDaily, 2),
-                'trend_spark'  => $spark,
+                'product_uuid'  => $row->product_uuid,
+                'name'          => $row->name,
+                'family'        => $row->family,
+                'family_color'  => $familyColors[$fid],
+                'units'         => $units,
+                'revenue'       => $rev,
+                'prev_revenue'  => $prevRevenue,
+                'prev_units'    => $prevUnits,
+                'cost'          => 0,
+                'price'         => (int) $row->price,
+                'pct'           => $pct,
+                'avg_daily'     => round($avgDaily, 2),
+                'trend_spark'   => $spark,
+                'revenue_spark' => $revSpark,
             ];
         }
 
         return [
             'period_revenue' => $periodRevenue,
             'items'          => $items,
+            'cross_sell'     => $crossSell,
             'stock_critical' => $stockCritical,
             'no_sales_7d'    => $noSales7d,
             'alert_count'    => $alertCount,

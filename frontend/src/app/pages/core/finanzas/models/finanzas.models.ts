@@ -324,16 +324,26 @@ export interface SalesTotals {
 }
 
 export interface ProductReportItem {
-  name: string;
-  family: string;
-  family_color: string;
-  units: number;
-  revenue: number;
-  cost: number;
-  price: number;
-  pct: number;
-  avg_daily: number;
-  trend_spark: number[];
+  product_uuid:  string;
+  name:          string;
+  family:        string;
+  family_color:  string;
+  units:         number;
+  revenue:       number;
+  prev_revenue:  number;
+  prev_units:    number;
+  cost:          number;
+  price:         number;
+  pct:           number;
+  avg_daily:     number;
+  trend_spark:   number[];
+  revenue_spark: number[];
+}
+
+export interface CrossSellItem {
+  a:        string;
+  b:        string;
+  together: number;
 }
 
 export interface EmployeeReportItem {
@@ -436,11 +446,12 @@ export interface ZoneReportItem {
 
 export interface ProductsReportResponse {
   period_revenue: number;
-  items: ProductReportItem[];
+  items:          ProductReportItem[];
+  cross_sell:     CrossSellItem[];
   stock_critical: StockAlertItem[];
-  no_sales_7d: StockAlertItem[];
-  alert_count: number;
-  by_zone: ZoneReportItem[];
+  no_sales_7d:    StockAlertItem[];
+  alert_count:    number;
+  by_zone:        ZoneReportItem[];
 }
 
 export interface EmployeesReportResponse {
