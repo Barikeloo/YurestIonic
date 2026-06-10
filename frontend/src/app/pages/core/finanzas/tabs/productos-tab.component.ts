@@ -2,6 +2,7 @@ import { Component, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SlicePipe } from '@angular/common';
 import { FinanzasFacade } from '../facades/finanzas.facade';
+import { IconComponent, type IconName } from '../../../../shared/components/icon/icon.component';
 import type { ProductReportItem } from '../models/finanzas.models';
 
 type SortKey    = 'revenue' | 'units' | 'margin' | 'marginPct' | 'stock' | 'rotation';
@@ -19,11 +20,11 @@ type Enriched = ProductReportItem & {
 
 type MatrixPoint = Enriched & { cx: number; cy: number; quadrant: QuadrantKey };
 
-const QMETA: Record<QuadrantKey, { color: string; label: string; icon: string; desc: string }> = {
-  star:   { color: '#1a9e5a', label: 'Estrella', icon: '⭐', desc: 'Alta venta · altos ingresos — proteger y potenciar' },
-  enigma: { color: '#0077cc', label: 'Enigma',   icon: '❓', desc: 'Alto ingreso · poca venta — mejorar visibilidad en carta' },
-  horse:  { color: '#d18a1c', label: 'Caballo',  icon: '🐎', desc: 'Mucha venta · bajo ingreso — revisar precio de venta' },
-  dog:    { color: '#9b9b9b', label: 'Perro',    icon: '🐕', desc: 'Poca venta · bajo ingreso — evaluar retirada de carta' },
+const QMETA: Record<QuadrantKey, { color: string; label: string; icon: IconName; desc: string }> = {
+  star:   { color: '#1a9e5a', label: 'Estrella', icon: 'star',          desc: 'Alta venta · altos ingresos — proteger y potenciar' },
+  enigma: { color: '#0077cc', label: 'Enigma',   icon: 'gem',           desc: 'Alto ingreso · poca venta — mejorar visibilidad en carta' },
+  horse:  { color: '#d18a1c', label: 'Caballo',  icon: 'bar-chart',     desc: 'Mucha venta · bajo ingreso — revisar precio de venta' },
+  dog:    { color: '#9b9b9b', label: 'Perro',    icon: 'trending-down', desc: 'Poca venta · bajo ingreso — evaluar retirada de carta' },
 };
 
 @Component({
@@ -31,11 +32,12 @@ const QMETA: Record<QuadrantKey, { color: string; label: string; icon: string; d
   templateUrl: './productos-tab.component.html',
   styleUrls: ['./productos-tab.component.scss'],
   standalone: true,
-  imports: [FormsModule, SlicePipe],
+  imports: [FormsModule, SlicePipe, IconComponent],
 })
 export class ProductosTabComponent {
   protected readonly facade    = inject(FinanzasFacade);
   protected readonly QMETA     = QMETA;
+  protected readonly quadKeys: QuadrantKey[] = ['star', 'enigma', 'horse', 'dog'];
   protected readonly showCostCols  = false;
   protected readonly showStockCols = false;
 
@@ -116,7 +118,7 @@ export class ProductosTabComponent {
   protected readonly familyCount     = computed(() => new Set(this.enriched().map(p => p.family)).size);
   protected readonly filteredRevenue = computed(() => this.filtered().reduce((s, p) => s + p.revenue, 0));
 
-  // ── Matrix — viewBox 0 0 420 340, inner area x:40–380, y:20–300 ──────────
+  // ── Matrix — viewBox 0 0 360 300, plot area x:40–340, y:20–260 ───────────
   protected readonly matrixPoints = computed((): MatrixPoint[] => {
     const items = this.enriched();
     if (items.length < 2) return [];
@@ -126,22 +128,22 @@ export class ProductosTabComponent {
     const medR = this.median(items.map(p => p.revenue));
     return items.map(p => ({
       ...p,
-      cx:       40  + (p.units   / maxU) * 340,
-      cy:       300 - (p.revenue / maxR) * 280,
+      cx:       40  + (p.units   / maxU) * 300,
+      cy:       260 - (p.revenue / maxR) * 240,
       quadrant: this.quadrantOf(p.units, p.revenue, medU, medR),
     }));
   });
 
   protected readonly matrixMedX = computed(() => {
     const items = this.enriched();
-    if (!items.length) return 210;
-    return 40 + (this.median(items.map(p => p.units)) / Math.max(...items.map(p => p.units), 1)) * 340;
+    if (!items.length) return 190;
+    return 40 + (this.median(items.map(p => p.units)) / Math.max(...items.map(p => p.units), 1)) * 300;
   });
 
   protected readonly matrixMedY = computed(() => {
     const items = this.enriched();
-    if (!items.length) return 160;
-    return 300 - (this.median(items.map(p => p.revenue)) / Math.max(...items.map(p => p.revenue), 1)) * 280;
+    if (!items.length) return 140;
+    return 260 - (this.median(items.map(p => p.revenue)) / Math.max(...items.map(p => p.revenue), 1)) * 240;
   });
 
   protected readonly selectedQuadrant = computed(() => {
