@@ -24,9 +24,8 @@
         </div>
       }
     </div>
-    <div class="card"><div class="sk-sect"><span class="sk sk--title"></span><span class="sk sk--title-sm"></span></div><div class="sk sk--block"></div></div>
-    <div class="insights-row">
-      @for (_ of [1,2]; track $index) {
+    <div class="analytics-row">
+      @for (_ of [1,2,3]; track $index) {
         <div class="card"><div class="sk-sect"><span class="sk sk--title"></span><span class="sk sk--title-sm"></span></div><div class="sk sk--block-sm"></div></div>
       }
     </div>
@@ -185,26 +184,27 @@
     </div>
 
     <!-- ── Analytics row: matriz (izq) · familia + cross-sell (dcha) ──────── -->
-    <!-- Ingeniería de menú (ancho completo) -->
-    <div class="card">
-      <div class="section-header">
-        <div>
-          <div class="card-title">Ingeniería de menú</div>
-          <div class="card-sub">Posición estratégica de cada producto · pasa el ratón o haz clic en un punto para ver su detalle</div>
+    <!-- Analytics row: matriz (pequeña) + familia + cross-sell ──────────── -->
+    <div class="analytics-row">
+
+      <!-- Ingeniería de menú -->
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="card-title">Ingeniería de menú</div>
+            <div class="card-sub">Posición de cada producto · clic para ver detalle</div>
+          </div>
         </div>
-      </div>
 
-      @if (matrixPoints().length < 2) {
-        <div class="no-data-placeholder"><div class="no-data-icon"><app-icon name="bar-chart" [size]="26" [strokeWidth]="1.6"/></div><div class="no-data-title">Sin datos suficientes</div><div class="no-data-sub">Se necesitan al menos 2 productos con ventas</div></div>
-      } @else {
-
-        <div class="matrix-body">
+        @if (matrixPoints().length < 2) {
+          <div class="no-data-placeholder"><div class="no-data-icon"><app-icon name="bar-chart" [size]="26" [strokeWidth]="1.6"/></div><div class="no-data-title">Sin datos suficientes</div><div class="no-data-sub">Se necesitan al menos 2 productos con ventas</div></div>
+        } @else {
 
           <div class="matrix-svg-wrap"
                (mousemove)="onMatrixMove($event)"
                (mouseleave)="onMatrixLeave()">
 
-            <svg viewBox="0 0 360 300" class="matrix-svg" preserveAspectRatio="xMidYMid meet">
+            <svg viewBox="0 0 300 300" class="matrix-svg" preserveAspectRatio="xMidYMid meet">
 
               <defs>
                 <filter id="dot-shadow" x="-50%" y="-50%" width="200%" height="200%">
@@ -213,28 +213,28 @@
               </defs>
 
               <!-- Quadrant fills -->
-              <rect [attr.x]="matrixMedX()" y="20" [attr.width]="340-matrixMedX()" [attr.height]="matrixMedY()-20" fill="#1a9e5a" fill-opacity="0.06"/>
+              <rect [attr.x]="matrixMedX()" y="20" [attr.width]="280-matrixMedX()" [attr.height]="matrixMedY()-20" fill="#1a9e5a" fill-opacity="0.06"/>
               <rect x="40" y="20" [attr.width]="matrixMedX()-40" [attr.height]="matrixMedY()-20" fill="#0077cc" fill-opacity="0.06"/>
-              <rect [attr.x]="matrixMedX()" [attr.y]="matrixMedY()" [attr.width]="340-matrixMedX()" [attr.height]="260-matrixMedY()" fill="#d18a1c" fill-opacity="0.06"/>
+              <rect [attr.x]="matrixMedX()" [attr.y]="matrixMedY()" [attr.width]="280-matrixMedX()" [attr.height]="260-matrixMedY()" fill="#d18a1c" fill-opacity="0.06"/>
               <rect x="40" [attr.y]="matrixMedY()" [attr.width]="matrixMedX()-40" [attr.height]="260-matrixMedY()" fill="#9b9b9b" fill-opacity="0.04"/>
 
               <!-- Median dividers -->
               <line [attr.x1]="matrixMedX()" [attr.x2]="matrixMedX()" y1="20" y2="260" stroke="#dcdcdc" stroke-width="1" stroke-dasharray="3 4"/>
-              <line x1="40" x2="340" [attr.y1]="matrixMedY()" [attr.y2]="matrixMedY()" stroke="#dcdcdc" stroke-width="1" stroke-dasharray="3 4"/>
+              <line x1="40" x2="280" [attr.y1]="matrixMedY()" [attr.y2]="matrixMedY()" stroke="#dcdcdc" stroke-width="1" stroke-dasharray="3 4"/>
 
               <!-- Axes -->
-              <line x1="40" x2="340" y1="260" y2="260" stroke="#e8e8e8" stroke-width="1.5"/>
+              <line x1="40" x2="280" y1="260" y2="260" stroke="#e8e8e8" stroke-width="1.5"/>
               <line x1="40" y1="20" x2="40" y2="260" stroke="#e8e8e8" stroke-width="1.5"/>
 
               <!-- Quadrant corner labels -->
-              <text x="334" y="33" text-anchor="end"   font-size="9" font-weight="700" fill="#1a9e5a" fill-opacity="0.65" font-family="DM Sans, sans-serif">Estrella</text>
+              <text x="274" y="33" text-anchor="end"   font-size="9" font-weight="700" fill="#1a9e5a" fill-opacity="0.65" font-family="DM Sans, sans-serif">Estrella</text>
               <text x="46"  y="33" text-anchor="start" font-size="9" font-weight="700" fill="#0077cc" fill-opacity="0.65" font-family="DM Sans, sans-serif">Enigma</text>
-              <text x="334" y="252" text-anchor="end"   font-size="9" font-weight="700" fill="#d18a1c" fill-opacity="0.7" font-family="DM Sans, sans-serif">Caballo</text>
+              <text x="274" y="252" text-anchor="end"   font-size="9" font-weight="700" fill="#d18a1c" fill-opacity="0.7" font-family="DM Sans, sans-serif">Caballo</text>
               <text x="46"  y="252" text-anchor="start" font-size="9" font-weight="700" fill="#9b9b9b" fill-opacity="0.8" font-family="DM Sans, sans-serif">Perro</text>
 
               <!-- Axis labels -->
-              <text x="190" y="286" text-anchor="middle" font-size="8.5" fill="#bcbcbc" font-family="DM Sans, sans-serif" letter-spacing="0.3">Unidades vendidas →</text>
-              <text x="15" y="140" text-anchor="middle" font-size="8.5" fill="#bcbcbc" font-family="DM Sans, sans-serif" transform="rotate(-90,15,140)">Ingresos ↑</text>
+              <text x="160" y="286" text-anchor="middle" font-size="8.5" fill="#bcbcbc" font-family="DM Sans, sans-serif" letter-spacing="0.3">Unidades vendidas →</text>
+              <text x="14" y="140" text-anchor="middle" font-size="8.5" fill="#bcbcbc" font-family="DM Sans, sans-serif" transform="rotate(-90,14,140)">Ingresos ↑</text>
 
               <!-- Product dots -->
               @for (pt of matrixPoints(); track pt.name) {
@@ -285,27 +285,8 @@
             }
 
           </div>
-
-          <!-- Guía de cuadrantes -->
-          <div class="matrix-guide">
-            @for (k of quadKeys; track k) {
-              <div class="guide-item" [style.border-left-color]="QMETA[k].color">
-                <div class="guide-head">
-                  <span class="guide-icon" [style.color]="QMETA[k].color" [style.background]="QMETA[k].color + '14'"><app-icon [name]="QMETA[k].icon" [size]="15"/></span>
-                  <span class="guide-label" [style.color]="QMETA[k].color">{{ QMETA[k].label }}</span>
-                  <span class="guide-count">{{ quadCounts()[k] }} {{ quadCounts()[k] === 1 ? 'producto' : 'productos' }}</span>
-                </div>
-                <div class="guide-desc">{{ QMETA[k].desc }}</div>
-              </div>
-            }
-          </div>
-
-        </div>
-      }
-    </div>
-
-    <!-- Insights row: familia + cross-sell ──────────────────────────────── -->
-    <div class="insights-row">
+        }
+      </div>
 
       <div class="card">
         <div class="section-header"><div class="card-title">Ventas por familia</div><div class="card-sub">Distribución de ingresos del periodo</div></div>

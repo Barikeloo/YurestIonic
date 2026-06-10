@@ -103,7 +103,8 @@
       "Bash(git -C /Users/yurest/Desktop/Worksito/yurestionic commit -m \"refactor\\(productos\\): reorganize layout and redesign menu engineering matrix\")",
       "Bash(git -C /Users/yurest/Desktop/Worksito/yurestionic add -A)",
       "Bash(git -C /Users/yurest/Desktop/Worksito/yurestionic commit -m \"feat\\(ui\\): add reusable SVG icon component and refine menu engineering matrix\" -m \"Replace all emojis in productos tab with Lucide-style app-icon component. Make matrix compact \\(360x300, centered, max 380px\\), slim icon legend, subtle quadrant corner labels and refined dots/medians.\")",
-      "Bash(git -C /Users/yurest/Desktop/Worksito/yurestionic commit -m \"refactor\\(productos\\): make menu engineering matrix full-width with side quadrant guide\")"
+      "Bash(git -C /Users/yurest/Desktop/Worksito/yurestionic commit -m \"refactor\\(productos\\): make menu engineering matrix full-width with side quadrant guide\")",
+      "Bash(git -C /Users/yurest/Desktop/Worksito/yurestionic commit -m \"refactor\\(productos\\): shrink menu engineering matrix to small square in shared row\")"
     ]
   }
 }

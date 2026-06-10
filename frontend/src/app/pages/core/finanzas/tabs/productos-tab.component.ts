@@ -37,7 +37,6 @@ const QMETA: Record<QuadrantKey, { color: string; label: string; icon: IconName;
 export class ProductosTabComponent {
   protected readonly facade    = inject(FinanzasFacade);
   protected readonly QMETA     = QMETA;
-  protected readonly quadKeys: QuadrantKey[] = ['star', 'enigma', 'horse', 'dog'];
   protected readonly showCostCols  = false;
   protected readonly showStockCols = false;
 
@@ -118,7 +117,7 @@ export class ProductosTabComponent {
   protected readonly familyCount     = computed(() => new Set(this.enriched().map(p => p.family)).size);
   protected readonly filteredRevenue = computed(() => this.filtered().reduce((s, p) => s + p.revenue, 0));
 
-  // ── Matrix — viewBox 0 0 360 300, plot area x:40–340, y:20–260 ───────────
+  // ── Matrix — viewBox 0 0 300 300, square plot x:40–280, y:20–260 ─────────
   protected readonly matrixPoints = computed((): MatrixPoint[] => {
     const items = this.enriched();
     if (items.length < 2) return [];
@@ -128,7 +127,7 @@ export class ProductosTabComponent {
     const medR = this.median(items.map(p => p.revenue));
     return items.map(p => ({
       ...p,
-      cx:       40  + (p.units   / maxU) * 300,
+      cx:       40  + (p.units   / maxU) * 240,
       cy:       260 - (p.revenue / maxR) * 240,
       quadrant: this.quadrantOf(p.units, p.revenue, medU, medR),
     }));
@@ -136,20 +135,14 @@ export class ProductosTabComponent {
 
   protected readonly matrixMedX = computed(() => {
     const items = this.enriched();
-    if (!items.length) return 190;
-    return 40 + (this.median(items.map(p => p.units)) / Math.max(...items.map(p => p.units), 1)) * 300;
+    if (!items.length) return 160;
+    return 40 + (this.median(items.map(p => p.units)) / Math.max(...items.map(p => p.units), 1)) * 240;
   });
 
   protected readonly matrixMedY = computed(() => {
     const items = this.enriched();
     if (!items.length) return 140;
     return 260 - (this.median(items.map(p => p.revenue)) / Math.max(...items.map(p => p.revenue), 1)) * 240;
-  });
-
-  protected readonly quadCounts = computed((): Record<QuadrantKey, number> => {
-    const counts: Record<QuadrantKey, number> = { star: 0, enigma: 0, horse: 0, dog: 0 };
-    for (const pt of this.matrixPoints()) counts[pt.quadrant]++;
-    return counts;
   });
 
   protected readonly selectedQuadrant = computed(() => {
