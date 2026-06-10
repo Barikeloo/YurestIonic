@@ -24,12 +24,11 @@
         </div>
       }
     </div>
-    <div class="analytics-row">
-      <div class="card"><div class="sk-sect"><span class="sk sk--title"></span><span class="sk sk--title-sm"></span></div><div class="sk sk--block"></div></div>
-      <div class="analytics-right">
+    <div class="card"><div class="sk-sect"><span class="sk sk--title"></span><span class="sk sk--title-sm"></span></div><div class="sk sk--block"></div></div>
+    <div class="insights-row">
+      @for (_ of [1,2]; track $index) {
         <div class="card"><div class="sk-sect"><span class="sk sk--title"></span><span class="sk sk--title-sm"></span></div><div class="sk sk--block-sm"></div></div>
-        <div class="card"><div class="sk-sect"><span class="sk sk--title"></span><span class="sk sk--title-sm"></span></div><div class="sk sk--block-sm"></div></div>
-      </div>
+      }
     </div>
     <div class="operational-row">
       @for (_ of [1,2,3]; track $index) {
@@ -186,29 +185,20 @@
     </div>
 
     <!-- ── Analytics row: matriz (izq) · familia + cross-sell (dcha) ──────── -->
-    <div class="analytics-row">
-
-      <!-- Ingeniería de menú -->
-      <div class="card">
-        <div class="section-header">
-          <div>
-            <div class="card-title">Ingeniería de menú</div>
-            <div class="card-sub">Posición estratégica de cada producto · haz clic para ver el detalle</div>
-          </div>
+    <!-- Ingeniería de menú (ancho completo) -->
+    <div class="card">
+      <div class="section-header">
+        <div>
+          <div class="card-title">Ingeniería de menú</div>
+          <div class="card-sub">Posición estratégica de cada producto · pasa el ratón o haz clic en un punto para ver su detalle</div>
         </div>
+      </div>
 
-        @if (matrixPoints().length < 2) {
-          <div class="no-data-placeholder"><div class="no-data-icon"><app-icon name="bar-chart" [size]="26" [strokeWidth]="1.6"/></div><div class="no-data-title">Sin datos suficientes</div><div class="no-data-sub">Se necesitan al menos 2 productos con ventas</div></div>
-        } @else {
+      @if (matrixPoints().length < 2) {
+        <div class="no-data-placeholder"><div class="no-data-icon"><app-icon name="bar-chart" [size]="26" [strokeWidth]="1.6"/></div><div class="no-data-title">Sin datos suficientes</div><div class="no-data-sub">Se necesitan al menos 2 productos con ventas</div></div>
+      } @else {
 
-          <div class="matrix-legend">
-            @for (k of quadKeys; track k) {
-              <span class="mleg" [style.color]="QMETA[k].color">
-                <app-icon [name]="QMETA[k].icon" [size]="13"/>
-                <span class="mleg-txt">{{ QMETA[k].label }}</span>
-              </span>
-            }
-          </div>
+        <div class="matrix-body">
 
           <div class="matrix-svg-wrap"
                (mousemove)="onMatrixMove($event)"
@@ -295,56 +285,71 @@
             }
 
           </div>
+
+          <!-- Guía de cuadrantes -->
+          <div class="matrix-guide">
+            @for (k of quadKeys; track k) {
+              <div class="guide-item" [style.border-left-color]="QMETA[k].color">
+                <div class="guide-head">
+                  <span class="guide-icon" [style.color]="QMETA[k].color" [style.background]="QMETA[k].color + '14'"><app-icon [name]="QMETA[k].icon" [size]="15"/></span>
+                  <span class="guide-label" [style.color]="QMETA[k].color">{{ QMETA[k].label }}</span>
+                  <span class="guide-count">{{ quadCounts()[k] }} {{ quadCounts()[k] === 1 ? 'producto' : 'productos' }}</span>
+                </div>
+                <div class="guide-desc">{{ QMETA[k].desc }}</div>
+              </div>
+            }
+          </div>
+
+        </div>
+      }
+    </div>
+
+    <!-- Insights row: familia + cross-sell ──────────────────────────────── -->
+    <div class="insights-row">
+
+      <div class="card">
+        <div class="section-header"><div class="card-title">Ventas por familia</div><div class="card-sub">Distribución de ingresos del periodo</div></div>
+        @if (facade.byFamily.length > 0 && totalRevenue() > 0) {
+          <div class="vbar-chart">
+            @for (f of facade.byFamily; track f.label) {
+              <div class="vbar-col">
+                <span class="vbar-pct">{{ ((f.v / totalRevenue()) * 100).toFixed(0) }}%</span>
+                <div class="vbar-fill" [style.height.%]="(f.v / familyMax) * 90" [style.background]="f.color"></div>
+                <span class="vbar-label">{{ f.label }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="no-data-placeholder"><div class="no-data-icon"><app-icon name="bar-chart" [size]="26" [strokeWidth]="1.6"/></div><div class="no-data-title">Sin datos de familias</div><div class="no-data-sub">No hay ventas en este periodo</div></div>
         }
       </div>
 
-      <!-- Columna derecha: familia + cross-sell -->
-      <div class="analytics-right">
-
-        <div class="card">
-          <div class="section-header"><div class="card-title">Ventas por familia</div><div class="card-sub">Distribución de ingresos del periodo</div></div>
-          @if (facade.byFamily.length > 0 && totalRevenue() > 0) {
-            <div class="vbar-chart">
-              @for (f of facade.byFamily; track f.label) {
-                <div class="vbar-col">
-                  <span class="vbar-pct">{{ ((f.v / totalRevenue()) * 100).toFixed(0) }}%</span>
-                  <div class="vbar-fill" [style.height.%]="(f.v / familyMax) * 90" [style.background]="f.color"></div>
-                  <span class="vbar-label">{{ f.label }}</span>
-                </div>
-              }
-            </div>
-          } @else {
-            <div class="no-data-placeholder"><div class="no-data-icon"><app-icon name="bar-chart" [size]="26" [strokeWidth]="1.6"/></div><div class="no-data-title">Sin datos de familias</div><div class="no-data-sub">No hay ventas en este periodo</div></div>
-          }
-        </div>
-
-        <div class="card">
-          <div class="section-header">
-            <div>
-              <div class="card-title">Se piden juntos</div>
-              <div class="card-sub">Pares más habituales en el mismo ticket — ideal para combos</div>
-            </div>
+      <div class="card">
+        <div class="section-header">
+          <div>
+            <div class="card-title">Se piden juntos</div>
+            <div class="card-sub">Pares más habituales en el mismo ticket — ideal para combos</div>
           </div>
-          @if ((facade.productsReport()?.cross_sell?.length ?? 0) > 0) {
-            <div class="cs-list-compact">
-              @for (pair of facade.productsReport()!.cross_sell | slice:0:6; track pair.a + pair.b; let i = $index) {
-                <div class="csc-row" [class.csc-row--top]="i === 0">
-                  <span class="csc-rank mono">{{ i + 1 }}</span>
-                  <div class="csc-names">
-                    <span class="csc-name">{{ pair.a }}</span>
-                    <span class="csc-plus">+</span>
-                    <span class="csc-name">{{ pair.b }}</span>
-                  </div>
-                  <span class="csc-count mono">{{ pair.together }}×</span>
-                </div>
-              }
-            </div>
-          } @else if (facade.productsReport()) {
-            <div class="no-data-placeholder"><div class="no-data-icon"><app-icon name="link" [size]="26" [strokeWidth]="1.6"/></div><div class="no-data-title">Sin combinaciones detectadas</div><div class="no-data-sub">No se encontraron pares frecuentes en este periodo</div></div>
-          }
         </div>
-
+        @if ((facade.productsReport()?.cross_sell?.length ?? 0) > 0) {
+          <div class="cs-list-compact">
+            @for (pair of facade.productsReport()!.cross_sell | slice:0:6; track pair.a + pair.b; let i = $index) {
+              <div class="csc-row" [class.csc-row--top]="i === 0">
+                <span class="csc-rank mono">{{ i + 1 }}</span>
+                <div class="csc-names">
+                  <span class="csc-name">{{ pair.a }}</span>
+                  <span class="csc-plus">+</span>
+                  <span class="csc-name">{{ pair.b }}</span>
+                </div>
+                <span class="csc-count mono">{{ pair.together }}×</span>
+              </div>
+            }
+          </div>
+        } @else if (facade.productsReport()) {
+          <div class="no-data-placeholder"><div class="no-data-icon"><app-icon name="link" [size]="26" [strokeWidth]="1.6"/></div><div class="no-data-title">Sin combinaciones detectadas</div><div class="no-data-sub">No se encontraron pares frecuentes en este periodo</div></div>
+        }
       </div>
+
     </div>
 
     <!-- ── Operational row: zonas · stock crítico · sin ventas ───────────── -->

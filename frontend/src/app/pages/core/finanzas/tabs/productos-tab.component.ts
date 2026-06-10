@@ -146,6 +146,12 @@ export class ProductosTabComponent {
     return 260 - (this.median(items.map(p => p.revenue)) / Math.max(...items.map(p => p.revenue), 1)) * 240;
   });
 
+  protected readonly quadCounts = computed((): Record<QuadrantKey, number> => {
+    const counts: Record<QuadrantKey, number> = { star: 0, enigma: 0, horse: 0, dog: 0 };
+    for (const pt of this.matrixPoints()) counts[pt.quadrant]++;
+    return counts;
+  });
+
   protected readonly selectedQuadrant = computed(() => {
     const p  = this.selected();
     const pt = this.matrixPoints().find(mp => mp.name === p?.name);
