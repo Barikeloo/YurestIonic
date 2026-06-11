@@ -83,6 +83,76 @@ final readonly class DateRange
         );
     }
 
+    public static function lastWeek(): self
+    {
+        $now = new \DateTimeImmutable('now');
+        $today = new \DateTimeImmutable('today midnight');
+
+        $dow = (int) $today->format('N') - 1;
+        $lastWeekMonday = $today->modify('-'.($dow + 7).' days');
+        $lastWeekSunday = $lastWeekMonday->modify('+6 days 23:59:59');
+
+        return new self(
+            from:     $lastWeekMonday,
+            to:       $lastWeekSunday,
+            prevFrom: $lastWeekMonday->modify('-7 days'),
+            prevTo:   $lastWeekSunday->modify('-7 days'),
+            label:    'Semana pasada · ' . self::fmtDate($lastWeekMonday) . ' – ' . self::fmtDate($lastWeekSunday),
+        );
+    }
+
+    public static function lastMonth(): self
+    {
+        $today = new \DateTimeImmutable('today midnight');
+        $firstOfThisMonth = new \DateTimeImmutable('first day of this month midnight');
+        $lastOfLastMonth = $firstOfThisMonth->modify('-1 second');
+        $firstOfLastMonth = new \DateTimeImmutable('first day of last month midnight');
+
+        return new self(
+            from:     $firstOfLastMonth,
+            to:       $lastOfLastMonth,
+            prevFrom: $firstOfLastMonth->modify('-1 month'),
+            prevTo:   $lastOfLastMonth->modify('-1 month'),
+            label:    'Mes pasado · ' . self::fmtMonth($firstOfLastMonth),
+        );
+    }
+
+    public static function lastQuarter(): self
+    {
+        $now = new \DateTimeImmutable('now');
+        $month = (int) $now->format('n');
+
+        $quarterMap = [
+            1 => ['year' => (int) $now->format('Y') - 1, 'quarter' => 'Q4'],
+            2 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q1'],
+            3 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q1'],
+            4 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q1'],
+            5 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q2'],
+            6 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q2'],
+            7 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q2'],
+            8 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q3'],
+            9 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q3'],
+            10 => ['year' => (int) $now->format('Y'),    'quarter' => 'Q3'],
+            11 => ['year' => (int) $now->format('Y'),    'quarter' => 'Q4'],
+            12 => ['year' => (int) $now->format('Y'),    'quarter' => 'Q4'],
+        ];
+
+        $prev = $quarterMap[$month];
+
+        return self::forQuarter($prev['year'], $prev['quarter']);
+    }
+
+    public static function fromFrequency(string $frequency): self
+    {
+        return match ($frequency) {
+            'daily'    => self::fromPeriod('yesterday'),
+            'weekly'   => self::lastWeek(),
+            'monthly'  => self::lastMonth(),
+            'quarterly' => self::lastQuarter(),
+            default => throw new \InvalidArgumentException("Invalid frequency: {$frequency}"),
+        };
+    }
+
     public static function currentQuarter(): string
     {
         $month = (int) (new \DateTimeImmutable('now'))->format('n');

@@ -18,6 +18,12 @@ use App\Reporting\Infrastructure\Entrypoint\Http\ListReportExportsController;
 use App\Reporting\Infrastructure\Entrypoint\Http\DownloadReportExportController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetTaxReportController;
 use App\Reporting\Infrastructure\Entrypoint\Http\SendTaxReportController;
+use App\Reporting\Infrastructure\Entrypoint\Http\ListScheduledReportsController;
+use App\Reporting\Infrastructure\Entrypoint\Http\CreateScheduledReportController;
+use App\Reporting\Infrastructure\Entrypoint\Http\UpdateScheduledReportController;
+use App\Reporting\Infrastructure\Entrypoint\Http\DeleteScheduledReportController;
+use App\Reporting\Infrastructure\Entrypoint\Http\ToggleScheduledReportController;
+use App\Reporting\Infrastructure\Entrypoint\Http\SendScheduledReportNowController;
 use App\Audit\Infrastructure\Entrypoint\Http\GetArchivedAuditStatsController;
 use App\Audit\Infrastructure\Entrypoint\Http\GetAuditEventController;
 use App\Audit\Infrastructure\Entrypoint\Http\ListAuditAlertsController;
@@ -361,6 +367,13 @@ Route::middleware([
     Route::get('/admin/reports/export/{type}', ExportReportController::class);
     Route::get('/admin/reports/exports', ListReportExportsController::class);
     Route::get('/admin/reports/exports/{uuid}/download', DownloadReportExportController::class)->whereUuid('uuid');
+
+    Route::get('/admin/reports/scheduled', ListScheduledReportsController::class);
+    Route::post('/admin/reports/scheduled', CreateScheduledReportController::class);
+    Route::put('/admin/reports/scheduled/{uuid}', UpdateScheduledReportController::class)->whereUuid('uuid');
+    Route::delete('/admin/reports/scheduled/{uuid}', DeleteScheduledReportController::class)->whereUuid('uuid');
+    Route::put('/admin/reports/scheduled/{uuid}/toggle', ToggleScheduledReportController::class)->whereUuid('uuid');
+    Route::post('/admin/reports/scheduled/{uuid}/send', SendScheduledReportNowController::class)->whereUuid('uuid');
 });
 
 Route::middleware([

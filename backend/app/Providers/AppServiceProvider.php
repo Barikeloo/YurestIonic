@@ -44,6 +44,8 @@ use App\ProductModifier\Domain\Interfaces\ProductModifierRepositoryInterface;
 use App\ProductModifier\Infrastructure\Persistence\Repositories\EloquentProductModifierRepository;
 use App\ProductVariant\Domain\Interfaces\ProductVariantRepositoryInterface;
 use App\ProductVariant\Infrastructure\Persistence\Repositories\EloquentProductVariantRepository;
+use App\Reporting\Domain\Interfaces\ScheduledReportRepositoryInterface;
+use App\Reporting\Infrastructure\Persistence\EloquentScheduledReportRepository;
 use App\Restaurant\Domain\Interfaces\RestaurantCascadeDeleteInterface;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
 use App\Restaurant\Infrastructure\Persistence\Repositories\EloquentRestaurantRepository;
@@ -117,9 +119,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AuditSavedViewRepositoryInterface::class, EloquentAuditSavedViewRepository::class);
         $this->app->bind(VerifyChainResultRepositoryInterface::class, EloquentVerifyChainResultRepository::class);
         $this->app->bind(AlertNotifierInterface::class, DbAlertNotifier::class);
+        $this->app->bind(ScheduledReportRepositoryInterface::class, EloquentScheduledReportRepository::class);
         $this->app->bind(\App\Reporting\Domain\Interfaces\ReportingRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
         $this->app->bind(\App\Reporting\Domain\Interfaces\ReportExportRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportExportRepository::class);
         $this->app->bind(\App\Reporting\Domain\Interfaces\ReportExportStorageInterface::class, \App\Reporting\Infrastructure\Persistence\LocalReportExportStorage::class);
+        $this->app->bind(\App\Reporting\Application\Shared\ReportFileGeneratorInterface::class, \App\Reporting\Infrastructure\Services\ReportFileGenerator::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
     }
 
