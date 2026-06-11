@@ -57,6 +57,159 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
         ];
     }
 
+    public function getRestaurantInfo(int $restaurantId): array
+    {
+        $restaurant = DB::table('restaurants')
+            ->where('id', $restaurantId)
+            ->select('name', 'legal_name', 'tax_id')
+            ->first();
+
+        return [
+            'name'       => $restaurant?->name ?? '',
+            'legal_name' => $restaurant?->legal_name ?? $restaurant?->name ?? '',
+            'tax_id'     => $restaurant?->tax_id ?? '—',
+        ];
+    }
+
+    public function getFamiliesReport(int $restaurantId, DateRange $range): array
+    {
+        $current = $this->fetchFamilyTotals($restaurantId, $range->from->format('Y-m-d H:i:s'), $range->to->format('Y-m-d H:i:s'));
+        $prev    = $this->fetchFamilyTotals($restaurantId, $range->prevFrom->format('Y-m-d H:i:s'), $range->prevTo->format('Y-m-d H:i:s'));
+
+        $families = [];
+        foreach ($current as $fid => $row) {
+            $families[] = [
+                'label'        => $row['label'],
+                'revenue'      => $row['revenue'],
+                'units'        => $row['units'],
+                'prev_revenue' => $prev[$fid]['revenue'] ?? 0,
+            ];
+        }
+
+        return [
+            'families'   => $families,
+            'prev_total' => array_sum(array_column($prev, 'revenue')),
+        ];
+    }
+
+    public function getCashReport(int $restaurantId, DateRange $range): array
+    {
+        $from = $range->from->format('Y-m-d H:i:s');
+        $to   = $range->to->format('Y-m-d H:i:s');
+
+        $sessionRows = DB::table('cash_sessions as cs')
+            ->leftJoin('users as uo', 'uo.id', '=', 'cs.opened_by_user_id')
+            ->leftJoin('users as uc', 'uc.id', '=', 'cs.closed_by_user_id')
+            ->where('cs.restaurant_id', $restaurantId)
+            ->where('cs.status', 'closed')
+            ->whereBetween('cs.closed_at', [$from, $to])
+            ->whereNull('cs.deleted_at')
+            ->orderBy('cs.closed_at', 'DESC')
+            ->selectRaw('
+                cs.id                   as id,
+                cs.opened_at            as opened_at,
+                cs.closed_at            as closed_at,
+                uo.name                 as opened_by,
+                uc.name                 as closed_by,
+                cs.initial_amount_cents as initial_amount,
+                cs.expected_amount_cents as expected_amount,
+                cs.final_amount_cents   as final_amount,
+                cs.discrepancy_cents    as discrepancy,
+                cs.discrepancy_reason   as discrepancy_reason,
+                cs.z_report_number      as z_report_number
+            ')
+            ->get();
+
+        $sessions = $sessionRows->map(fn ($r) => [
+            'opened_at'          => $r->opened_at,
+            'closed_at'          => $r->closed_at,
+            'opened_by'          => $r->opened_by ?? '—',
+            'closed_by'          => $r->closed_by ?? '—',
+            'initial_amount'     => (int) $r->initial_amount,
+            'expected_amount'    => (int) $r->expected_amount,
+            'final_amount'       => (int) $r->final_amount,
+            'discrepancy'        => (int) $r->discrepancy,
+            'discrepancy_reason' => $r->discrepancy_reason,
+            'z_report_number'    => $r->z_report_number !== null ? (int) $r->z_report_number : null,
+        ])->toArray();
+
+        $sessionIds = $sessionRows->pluck('id')->map(fn ($id) => (int) $id)->all();
+
+        $movements = [];
+        $totalIn = $totalOut = 0;
+
+        if ($sessionIds !== []) {
+            $movementRows = DB::table('cash_movements as cm')
+                ->leftJoin('users as u', 'u.id', '=', 'cm.user_id')
+                ->where('cm.restaurant_id', $restaurantId)
+                ->whereIn('cm.cash_session_id', $sessionIds)
+                ->whereNull('cm.deleted_at')
+                ->orderBy('cm.created_at', 'ASC')
+                ->selectRaw('
+                    cm.created_at  as created_at,
+                    cm.type        as type,
+                    cm.reason_code as reason_code,
+                    cm.amount_cents as amount,
+                    cm.description as description,
+                    u.name         as user_name
+                ')
+                ->get();
+
+            foreach ($movementRows as $r) {
+                $amount = (int) $r->amount;
+                if ($r->type === 'in') {
+                    $totalIn += $amount;
+                } else {
+                    $totalOut += $amount;
+                }
+
+                $movements[] = [
+                    'created_at'  => $r->created_at,
+                    'type'        => $r->type,
+                    'reason_code' => $r->reason_code,
+                    'amount'      => $amount,
+                    'description' => $r->description,
+                    'user_name'   => $r->user_name ?? '—',
+                ];
+            }
+        }
+
+        return [
+            'sessions'          => $sessions,
+            'movements'         => $movements,
+            'total_in'          => $totalIn,
+            'total_out'         => $totalOut,
+            'net'               => $totalIn - $totalOut,
+            'discrepancy_total' => (int) array_sum(array_column($sessions, 'discrepancy')),
+        ];
+    }
+
+    private function fetchFamilyTotals(int $restaurantId, string $from, string $to): array
+    {
+        return DB::table('sales_lines as sl')
+            ->join('sales as s', 's.id', '=', 'sl.sale_id')
+            ->join('products as p', 'p.id', '=', 'sl.product_id')
+            ->join('families as f', 'f.id', '=', 'p.family_id')
+            ->where('s.restaurant_id', $restaurantId)
+            ->where('s.status', 'closed')
+            ->whereBetween('s.value_date', [$from, $to])
+            ->whereNull('s.deleted_at')
+            ->whereNull('sl.deleted_at')
+            ->whereNull('p.deleted_at')
+            ->whereNull('f.deleted_at')
+            ->whereNotNull('sl.product_id')
+            ->selectRaw('f.id as family_id, f.name as label, SUM(sl.quantity * sl.price) as revenue, SUM(sl.quantity) as units')
+            ->groupBy('f.id', 'f.name')
+            ->orderByRaw('SUM(sl.quantity * sl.price) DESC')
+            ->get()
+            ->mapWithKeys(fn ($r) => [(int) $r->family_id => [
+                'label'   => $r->label,
+                'revenue' => (int) $r->revenue,
+                'units'   => (int) $r->units,
+            ]])
+            ->toArray();
+    }
+
     private function fetchKpis(int $restaurantId, string $from, string $to): object
     {
         return DB::table('sales')
@@ -798,8 +951,10 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
 
     public function getEmployeesReport(int $restaurantId, DateRange $range): array
     {
-        $from = $range->from->format('Y-m-d H:i:s');
-        $to   = $range->to->format('Y-m-d H:i:s');
+        $from     = $range->from->format('Y-m-d H:i:s');
+        $to       = $range->to->format('Y-m-d H:i:s');
+        $prevFrom = $range->prevFrom->format('Y-m-d H:i:s');
+        $prevTo   = $range->prevTo->format('Y-m-d H:i:s');
 
         $rows = DB::table('sales as s')
             ->join('sales_lines as sl', function ($join) {
@@ -861,6 +1016,80 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
             $cancelMap[(int) $r->user_id] = (int) $r->cnt;
         }
 
+        $discountRows = DB::table('sales as s')
+            ->join('sales_lines as sl', function ($join) {
+                $join->on('sl.sale_id', '=', 's.id')->whereNull('sl.deleted_at');
+            })
+            ->join('order_lines as ol', 'ol.id', '=', 'sl.order_line_id')
+            ->where('s.restaurant_id', $restaurantId)
+            ->where('s.status', 'closed')
+            ->whereBetween('s.value_date', [$from, $to])
+            ->whereNull('s.deleted_at')
+            ->whereIn('s.opened_by_user_id', $userIds)
+            ->selectRaw('
+                s.opened_by_user_id as user_id,
+                SUM(COALESCE(ol.discount_amount_cents, 0)) as discounts,
+                SUM(CASE WHEN ol.is_invitation = 1 THEN 1 ELSE 0 END) as invitations
+            ')
+            ->groupBy('s.opened_by_user_id')
+            ->get();
+
+        $discountMap   = [];
+        $invitationMap = [];
+        foreach ($discountRows as $r) {
+            $discountMap[(int) $r->user_id]   = (int) $r->discounts;
+            $invitationMap[(int) $r->user_id] = (int) $r->invitations;
+        }
+
+        $prevRows = DB::table('sales as s')
+            ->where('s.restaurant_id', $restaurantId)
+            ->where('s.status', 'closed')
+            ->whereBetween('s.value_date', [$prevFrom, $prevTo])
+            ->whereNull('s.deleted_at')
+            ->whereIn('s.opened_by_user_id', $userIds)
+            ->selectRaw('s.opened_by_user_id as user_id, COUNT(DISTINCT s.id) as tickets, SUM(s.total) as revenue')
+            ->groupBy('s.opened_by_user_id')
+            ->get();
+
+        $prevMap = [];
+        foreach ($prevRows as $r) {
+            $prevMap[(int) $r->user_id] = ['revenue' => (int) $r->revenue, 'tickets' => (int) $r->tickets];
+        }
+
+        $topRows = DB::table('sales as s')
+            ->join('sales_lines as sl', function ($join) {
+                $join->on('sl.sale_id', '=', 's.id')->whereNull('sl.deleted_at');
+            })
+            ->join('products as p', 'p.id', '=', 'sl.product_id')
+            ->where('s.restaurant_id', $restaurantId)
+            ->where('s.status', 'closed')
+            ->whereBetween('s.value_date', [$from, $to])
+            ->whereNull('s.deleted_at')
+            ->whereIn('s.opened_by_user_id', $userIds)
+            ->whereNotNull('sl.product_id')
+            ->selectRaw('
+                s.opened_by_user_id as user_id,
+                p.name as name,
+                SUM(sl.quantity) as units,
+                SUM(sl.quantity * sl.price) as revenue
+            ')
+            ->groupBy('s.opened_by_user_id', 'p.name')
+            ->orderByRaw('s.opened_by_user_id, SUM(sl.quantity * sl.price) DESC')
+            ->get();
+
+        $topProductsMap = [];
+        foreach ($topRows as $r) {
+            $uid = (int) $r->user_id;
+            if (count($topProductsMap[$uid] ?? []) >= 3) {
+                continue;
+            }
+            $topProductsMap[$uid][] = [
+                'name'    => $r->name,
+                'units'   => (int) $r->units,
+                'revenue' => (int) $r->revenue,
+            ];
+        }
+
         $sparkSince = now()->subDays(13)->toDateString();
         $sparkRows  = DB::table('sales as s')
             ->where('s.restaurant_id', $restaurantId)
@@ -911,8 +1140,12 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
                 'avg_ticket'    => $tickets > 0 ? (int) round($revenue / $tickets) : 0,
                 'items_sold'    => (int) $row->items_sold,
                 'tips'          => $tipsMap[$uid] ?? 0,
-                'discounts'     => 0,
+                'discounts'     => $discountMap[$uid] ?? 0,
+                'invitations'   => $invitationMap[$uid] ?? 0,
                 'cancellations' => $cancelMap[$uid] ?? 0,
+                'prev_revenue'  => $prevMap[$uid]['revenue'] ?? 0,
+                'prev_tickets'  => $prevMap[$uid]['tickets'] ?? 0,
+                'top_products'  => $topProductsMap[$uid] ?? [],
                 'spark_revenue' => $spark,
             ];
         }
@@ -927,11 +1160,6 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
         $qFrom = $qRange->from->format('Y-m-d H:i:s');
         $qTo   = $qRange->to->format('Y-m-d H:i:s');
 
-        $restaurant = DB::table('restaurants')
-            ->where('id', $restaurantId)
-            ->select('name', 'legal_name', 'tax_id')
-            ->first();
-
         $breakdown = $this->buildTaxBreakdown($restaurantId, $from, $to);
         $tipsCard  = $this->fetchTipsCard($restaurantId, $from, $to);
         $quarterly = $this->buildQuarterly($restaurantId, $qFrom, $qTo, $quarter, $year);
@@ -941,11 +1169,7 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
             'breakdown'    => $breakdown,
             'tips_card'    => $tipsCard,
             'quarterly'    => $quarterly,
-            'restaurant'   => [
-                'name'       => $restaurant?->name ?? '',
-                'legal_name' => $restaurant?->legal_name ?? $restaurant?->name ?? '',
-                'tax_id'     => $restaurant?->tax_id ?? '—',
-            ],
+            'restaurant'   => $this->getRestaurantInfo($restaurantId),
         ];
     }
 

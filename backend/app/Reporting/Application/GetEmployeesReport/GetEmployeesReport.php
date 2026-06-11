@@ -22,6 +22,10 @@ final readonly class GetEmployeesReport
             range:        $range,
         );
 
-        return GetEmployeesReportResponse::create(items: $result['items']);
+        return GetEmployeesReportResponse::create(
+            items:       $result['items'],
+            periodLabel: $range->label,
+            restaurant:  $this->repository->getRestaurantInfo($command->restaurantId),
+        );
     }
 }

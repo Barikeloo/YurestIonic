@@ -118,6 +118,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(VerifyChainResultRepositoryInterface::class, EloquentVerifyChainResultRepository::class);
         $this->app->bind(AlertNotifierInterface::class, DbAlertNotifier::class);
         $this->app->bind(\App\Reporting\Domain\Interfaces\ReportingRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
+        $this->app->bind(\App\Reporting\Domain\Interfaces\ReportExportRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportExportRepository::class);
+        $this->app->bind(\App\Reporting\Domain\Interfaces\ReportExportStorageInterface::class, \App\Reporting\Infrastructure\Persistence\LocalReportExportStorage::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
     }
 

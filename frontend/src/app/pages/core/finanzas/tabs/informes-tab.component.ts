@@ -1,9 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FinanzasFacade } from '../facades/finanzas.facade';
+import { IconComponent, IconName } from '../../../../shared/components/icon/icon.component';
 
 interface ReportTemplate {
   id: string;
-  icon: string;
+  iconName: IconName;
   title: string;
   sub: string;
   color: string;
@@ -32,72 +34,75 @@ interface ScheduledReport {
   next: string;
 }
 
-interface ExportHistory {
-  name: string;
-  format: string;
-  size: string;
-  date: string;
-  user: string;
-}
-
 @Component({
   selector: 'app-finanzas-informes-tab',
   templateUrl: './informes-tab.component.html',
   styleUrls: ['./informes-tab.component.scss'],
   standalone: true,
-  imports: [],
+  imports: [IconComponent],
 })
 export class InformesTabComponent {
   protected readonly facade = inject(FinanzasFacade);
+  private readonly sanitizer = inject(DomSanitizer);
+
+  protected readonly previewSafeUrl = computed<SafeResourceUrl | null>(() => {
+    const p = this.facade.preview();
+    return p ? this.sanitizer.bypassSecurityTrustResourceUrl(p.url) : null;
+  });
 
   protected readonly activeSection = signal<'predefinidos' | 'integraciones' | 'programados'>('predefinidos');
   protected readonly lastSelected = signal<string | null>(null);
 
   protected readonly templates: ReportTemplate[] = [
     {
-      id: 'daily', icon: '📅', title: 'Resumen diario',
+      id: 'daily', iconName: 'calendar', title: 'Resumen diario',
       sub: 'Ventas, tickets y caja de un día concreto',
       color: '#ff4d4d', formats: ['PDF', 'CSV'],
       preview: ['Ingresos del día', 'N° tickets / comensales', 'Desglose por método', 'Estado de caja'],
     },
     {
-      id: 'products', icon: '🍴', title: 'Ventas por producto',
+      id: 'products', iconName: 'utensils', title: 'Ventas por producto',
       sub: 'Ranking completo, ingresos y unidades',
-      color: '#d18a1c', formats: ['CSV', 'Excel'],
+      color: '#d18a1c', formats: ['PDF', 'CSV'],
       preview: ['Producto', 'Familia', 'Unidades', 'Ingresos', 'Stock actual'],
     },
     {
-      id: 'families', icon: '📊', title: 'Ventas por familia',
+      id: 'families', iconName: 'bar-chart', title: 'Ventas por familia',
       sub: 'Distribución por categoría',
       color: '#0077cc', formats: ['CSV', 'PDF'],
       preview: ['Bebidas, Tapas, Raciones', '% sobre total', 'Comparativa periodo anterior'],
     },
     {
-      id: 'cash', icon: '💼', title: 'Movimientos de caja',
+      id: 'cash', iconName: 'wallet', title: 'Movimientos de caja',
       sub: 'Entradas, salidas y arqueos',
       color: '#1a9e5a', formats: ['CSV', 'PDF'],
       preview: ['Movimientos manuales', 'Sesiones cerradas', 'Descuadres con motivo'],
     },
     {
-      id: 'taxes', icon: '🧾', title: 'Desglose de impuestos',
+      id: 'taxes', iconName: 'receipt', title: 'Desglose de impuestos',
       sub: 'Para el gestor · listo Modelo 303',
       color: '#7857d6', formats: ['PDF', 'CSV'],
       preview: ['Base por tramo', 'IVA repercutido', 'Casillas Modelo 303'],
     },
     {
-      id: 'tips', icon: '💚', title: 'Propinas declaradas',
+      id: 'tips', iconName: 'coins', title: 'Propinas declaradas',
       sub: 'Por empleado y método',
-      color: '#1a9e5a', formats: ['CSV'],
-      preview: ['Propina por turno', 'Por camarero', 'Solo tarjeta'],
+      color: '#1a9e5a', formats: ['PDF', 'CSV'],
+      preview: ['Propina por empleado', 'Tickets y ventas', '% sobre ventas'],
     },
   ];
 
-  protected readonly history: ExportHistory[] = [
-    { name: 'Resumen diario · 15/05/2026',       format: 'PDF', size: '184 KB', date: 'Hoy 09:12',    user: 'María G.' },
-    { name: 'Ventas por producto · semana 19',    format: 'CSV', size: '42 KB',  date: 'Ayer 18:30',   user: 'Juan P.' },
-    { name: 'Modelo 303 · T1 2026',               format: 'PDF', size: '276 KB', date: '12/05 14:15',  user: 'María G.' },
-    { name: 'Movimientos caja · abril',           format: 'CSV', size: '128 KB', date: '03/05 11:48',  user: 'Juan P.' },
-  ];
+  protected formatSize(bytes: number): string {
+    if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if (bytes >= 1024) return Math.round(bytes / 1024) + ' KB';
+    return bytes + ' B';
+  }
+
+  protected formatDate(iso: string): string {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
 
   protected readonly integrations: Integration[] = [
     { id: 'holded',   logo: 'H',  name: 'Holded',               desc: 'ERP contable y facturación',      color: '#0077cc', features: ['Sincroniza ventas y tickets', 'Crea facturas automáticamente', 'IVA repercutido al cierre'],      plan: 'Plus',    connected: true  },
@@ -117,6 +122,10 @@ export class InformesTabComponent {
   protected get activeCount(): number { return this.scheduledReports.filter(s => s.active).length; }
 
   protected selectReport(id: string): void { this.lastSelected.set(id); }
+
+  protected download(r: ReportTemplate, format: string): void {
+    this.facade.downloadReport(r.id, format);
+  }
 
   protected toggleScheduled(id: number): void {
     this.scheduledReports = this.scheduledReports.map(s =>

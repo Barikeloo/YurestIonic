@@ -57,6 +57,16 @@ export abstract class BaseApiService {
     return `${base}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
   }
 
+  protected downloadBlob(endpoint: string, params?: HttpParamsLike): Observable<Blob> {
+    return this.http
+      .get(this.buildUrl(endpoint), {
+        params,
+        responseType: 'blob',
+        withCredentials: true,
+      })
+      .pipe(catchError((error: HttpErrorResponse) => this.handleError(error)));
+  }
+
   private handleError(error: HttpErrorResponse): Observable<never> {
     return throwError(() => new Error(this.extractErrorMessage(error)));
   }

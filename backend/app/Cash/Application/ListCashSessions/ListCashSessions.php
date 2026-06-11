@@ -9,6 +9,7 @@ use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\User\Domain\Interfaces\UserRepositoryInterface;
 
 final class ListCashSessions
 {
@@ -16,12 +17,19 @@ final class ListCashSessions
         private readonly CashSessionRepositoryInterface $cashSessionRepository,
         private readonly CashMovementRepositoryInterface $cashMovementRepository,
         private readonly SalePaymentRepositoryInterface $salePaymentRepository,
+        private readonly UserRepositoryInterface $userRepository,
     ) {}
 
     public function __invoke(ListCashSessionsCommand $command): ListCashSessionsResponse
     {
-        $sessions = $this->cashSessionRepository->findClosedByRestaurantId(
+        $sessions = $this->cashSessionRepository->findByRestaurantId(
             Uuid::create($command->restaurantId),
+        );
+
+        usort($sessions, fn (CashSession $a, CashSession $b) =>
+            ($b->closedAt()?->value() ?? $b->openedAt()?->value())
+            <=>
+            ($a->closedAt()?->value() ?? $a->openedAt()?->value())
         );
 
         $items = array_map(
@@ -55,6 +63,8 @@ final class ListCashSessions
             $paymentsCount++;
         }
 
+        $operator = $this->userRepository->findById($session->openedByUserId()->value());
+
         return ListCashSessionsItemResponse::create(
             uuid: $session->uuid()->value(),
             deviceId: $session->deviceId()->value(),
@@ -79,6 +89,7 @@ final class ListCashSessions
             net: $totalSales,
             movIn: $totalInMovements,
             movOut: $totalOutMovements,
+            operatorName: $operator?->name()->value(),
         );
     }
 }

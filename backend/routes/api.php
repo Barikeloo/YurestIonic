@@ -1,13 +1,23 @@
 <?php
 
 use App\Audit\Infrastructure\Entrypoint\Http\ExportAuditEventsController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetCashPdfController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetDailyPdfController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetFamiliesPdfController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetDashboardSummaryController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetSalesReportController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetSaleDetailController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetHeatmapController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetProductsPdfController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetProductsReportController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetEmployeesReportController;
+use App\Reporting\Infrastructure\Entrypoint\Http\ExportReportController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetTaxPdfController;
+use App\Reporting\Infrastructure\Entrypoint\Http\GetTipsPdfController;
+use App\Reporting\Infrastructure\Entrypoint\Http\ListReportExportsController;
+use App\Reporting\Infrastructure\Entrypoint\Http\DownloadReportExportController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetTaxReportController;
+use App\Reporting\Infrastructure\Entrypoint\Http\SendTaxReportController;
 use App\Audit\Infrastructure\Entrypoint\Http\GetArchivedAuditStatsController;
 use App\Audit\Infrastructure\Entrypoint\Http\GetAuditEventController;
 use App\Audit\Infrastructure\Entrypoint\Http\ListAuditAlertsController;
@@ -335,12 +345,22 @@ Route::middleware([
     Route::post('/admin/audit-alerts/{uuid}/read', MarkAlertReadController::class)->whereUuid('uuid');
 
     Route::get('/admin/reports/summary', GetDashboardSummaryController::class);
+    Route::get('/admin/reports/daily/pdf', GetDailyPdfController::class);
     Route::get('/admin/reports/sales', GetSalesReportController::class);
     Route::get('/admin/reports/sales/{uuid}', GetSaleDetailController::class)->whereUuid('uuid');
     Route::get('/admin/reports/heatmap', GetHeatmapController::class);
     Route::get('/admin/reports/products', GetProductsReportController::class);
+    Route::get('/admin/reports/products/pdf', GetProductsPdfController::class);
+    Route::get('/admin/reports/families/pdf', GetFamiliesPdfController::class);
+    Route::get('/admin/reports/tips/pdf', GetTipsPdfController::class);
+    Route::get('/admin/reports/cash/pdf', GetCashPdfController::class);
     Route::get('/admin/reports/employees', GetEmployeesReportController::class);
     Route::get('/admin/reports/taxes', GetTaxReportController::class);
+    Route::get('/admin/reports/taxes/pdf', GetTaxPdfController::class);
+    Route::post('/admin/reports/taxes/send', SendTaxReportController::class);
+    Route::get('/admin/reports/export/{type}', ExportReportController::class);
+    Route::get('/admin/reports/exports', ListReportExportsController::class);
+    Route::get('/admin/reports/exports/{uuid}/download', DownloadReportExportController::class)->whereUuid('uuid');
 });
 
 Route::middleware([

@@ -16,7 +16,7 @@
     <!-- ── Skeleton: sort row ─────────────────────────────────────────────── -->
     <div class="sort-row">
       <span class="sk sk--label" style="width:220px"></span>
-      <span class="sk sk--label" style="width:280px"></span>
+      <span class="sk sk--label" style="width:320px"></span>
     </div>
 
     <!-- ── Skeleton: main grid ───────────────────────────────────────────── -->
@@ -84,13 +84,20 @@
         <button class="seg-btn" [class.seg-btn--active]="sortKey() === 'revenue'" (click)="setSort('revenue')">Por ingresos</button>
         <button class="seg-btn" [class.seg-btn--active]="sortKey() === 'tickets'" (click)="setSort('tickets')">Tickets</button>
         <button class="seg-btn" [class.seg-btn--active]="sortKey() === 'avg'"     (click)="setSort('avg')">Ticket medio</button>
+        <button class="seg-btn" [class.seg-btn--active]="sortKey() === 'items'"   (click)="setSort('items')">Art./ticket</button>
         <button class="seg-btn" [class.seg-btn--active]="sortKey() === 'tips'"    (click)="setSort('tips')">Propinas</button>
       </div>
     </div>
 
-    @if (sortedEmps().length === 0) {
+    @if (filteredEmps().length === 0 && sortedEmps().length > 0) {
       <div class="empty-state">
-        <div class="empty-icon">👤</div>
+        <app-icon name="search" [size]="28" />
+        <div class="empty-title">Sin resultados</div>
+        <div class="empty-sub">Ningún empleado coincide con «{{ searchTerm() }}»</div>
+      </div>
+    } @else if (sortedEmps().length === 0) {
+      <div class="empty-state">
+        <app-icon name="users" [size]="32" />
         <div class="empty-title">Sin datos de empleados</div>
         <div class="empty-sub">No hay ventas atribuidas a empleados en este periodo</div>
       </div>
@@ -100,11 +107,25 @@
       <div class="main-row">
 
         <!-- Employee cards -->
-        <div class="cards-grid">
-          @for (e of sortedEmps(); track e.user_uuid) {
+        <div class="cards-grid-wrap">
+          <div class="search-bar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="search-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input class="search-input" type="text" placeholder="Buscar empleado…" (input)="searchTerm.set($any($event.target).value)" [value]="searchTerm()" />
+            @if (searchTerm()) {
+              <button class="search-clear" (click)="searchTerm.set('')"><app-icon name="x" [size]="14" /></button>
+            }
+          </div>
+          <div class="cards-grid">
+          @for (e of filteredEmps(); track e.user_uuid) {
             <div class="emp-card" [class.emp-card--selected]="selectedId() === e.user_uuid" (click)="select(e.user_uuid)">
 
               <div class="emp-header">
+                @if (e.rank <= 3) {
+                  <div class="podium" [class.podium--1]="e.rank === 1" [class.podium--2]="e.rank === 2" [class.podium--3]="e.rank === 3">
+                    <app-icon name="trophy" [size]="11" />
+                    <span>{{ e.rank }}</span>
+                  </div>
+                }
                 <div class="emp-avatar" [style.background]="e.color">{{ e.initials }}</div>
                 <div class="emp-meta">
                   <div class="emp-name-row">
@@ -118,10 +139,16 @@
                 <div class="emp-stat">
                   <div class="st-lbl">Ingresos</div>
                   <div class="st-val mono">{{ fmt(e.revenue) }}</div>
+                  @if (e.revDelta !== null) {
+                    <span class="st-delta" [style.color]="deltaColor(e.revDelta)">{{ deltaArrow(e.revDelta) }} {{ fmtDelta(e.revDelta) }}</span>
+                  }
                 </div>
                 <div class="emp-stat">
                   <div class="st-lbl">Tickets</div>
                   <div class="st-val mono">{{ e.tickets }}</div>
+                  @if (e.ticketsDelta !== null) {
+                    <span class="st-delta" [style.color]="deltaColor(e.ticketsDelta)">{{ deltaArrow(e.ticketsDelta) }} {{ fmtDelta(e.ticketsDelta) }}</span>
+                  }
                 </div>
                 <div class="emp-stat">
                   <div class="st-lbl">Ticket medio</div>
@@ -141,17 +168,22 @@
               </div>
 
               <div class="emp-flags">
-                @if (e.discounts > 1500) {
-                  <span class="flag flag--warn">⚑ Mucho dto.</span>
+                @if (isHighDiscounter(e)) {
+                  <span class="flag flag--warn"><app-icon name="alert-triangle" [size]="10" /> Dto. elevado</span>
+                }
+                @if (e.invitations > 0) {
+                  <span class="flag flag--info"><app-icon name="star" [size]="10" /> {{ e.invitations }} invitación{{ e.invitations !== 1 ? 'es' : '' }}</span>
                 }
                 @if (e.cancellations > 0) {
-                  <span class="flag flag--critical">⚑ {{ e.cancellations }} anulación{{ e.cancellations !== 1 ? 'es' : '' }}</span>
+                  <span class="flag flag--critical"><app-icon name="x" [size]="10" /> {{ e.cancellations }} anulación{{ e.cancellations !== 1 ? 'es' : '' }}</span>
                 }
               </div>
 
             </div>
           }
         </div>
+
+        </div><!-- /.cards-grid-wrap -->
 
         <!-- Detail panel -->
         @if (selectedEmp()) {
@@ -170,22 +202,49 @@
               <div class="dkpi">
                 <div class="dkpi-lbl">Ingresos</div>
                 <div class="dkpi-val mono" [style.color]="e.color">{{ fmt(e.revenue) }}</div>
+                <div class="dkpi-delta" [style.color]="deltaColor(e.revDelta)">{{ deltaArrow(e.revDelta) }} {{ fmtDelta(e.revDelta) }}</div>
                 <div class="dkpi-sub">{{ e.tickets }} tickets</div>
               </div>
               <div class="dkpi">
                 <div class="dkpi-lbl">Ticket medio</div>
                 <div class="dkpi-val mono">{{ fmt(e.avg_ticket) }}</div>
-                <div class="dkpi-sub">{{ e.items_sold }} productos</div>
+                <div class="dkpi-bench" [style.color]="benchColor(e.avg_ticket, teamAvgTicket())">{{ benchLabel(e.avg_ticket, teamAvgTicket()) }}</div>
               </div>
               <div class="dkpi">
                 <div class="dkpi-lbl">Propinas</div>
                 <div class="dkpi-val mono dkpi-val--green">{{ fmt(e.tips) }}</div>
+                <div class="dkpi-bench" [style.color]="benchColor(e.tipsPct, teamTipsPct())">{{ benchLabel(e.tipsPct, teamTipsPct()) }}</div>
                 <div class="dkpi-sub">{{ tipsRatio(e) }}% s/ventas</div>
               </div>
               <div class="dkpi">
                 <div class="dkpi-lbl">Descuentos</div>
-                <div class="dkpi-val mono" [style.color]="discRatioNum(e) > 3 ? '#d18a1c' : '#5a5a5a'">{{ fmt(e.discounts) }}</div>
-                <div class="dkpi-sub">{{ discRatio(e) }}% s/ventas</div>
+                <div class="dkpi-val mono" [style.color]="isHighDiscounter(e) ? '#d18a1c' : '#5a5a5a'">{{ fmt(e.discounts) }}</div>
+                <div class="dkpi-bench" [style.color]="isHighDiscounter(e) ? '#ff4d4d' : '#1a9e5a'">
+                  {{ discRatio(e) }}% · {{ isHighDiscounter(e) ? 'Sobre media' : 'En media' }}
+                </div>
+              </div>
+            </div>
+
+            <div class="detail-kpis-secondary">
+              <div class="dkpi">
+                <div class="dkpi-lbl">Artículos / ticket</div>
+                <div class="dkpi-val mono">{{ e.itemsPerTicket.toFixed(2).replace('.', ',') }}</div>
+                <div class="dkpi-bench" [style.color]="benchColor(e.itemsPerTicket, teamItemsPerTicket())">{{ benchLabel(e.itemsPerTicket, teamItemsPerTicket()) }}</div>
+              </div>
+              <div class="dkpi">
+                <div class="dkpi-lbl">Artículos vendidos</div>
+                <div class="dkpi-val mono">{{ fmtInt(e.items_sold) }}</div>
+                <div class="dkpi-sub">{{ e.tickets }} tickets</div>
+              </div>
+              <div class="dkpi">
+                <div class="dkpi-lbl">Anulaciones</div>
+                <div class="dkpi-val mono" [style.color]="e.cancellations > 0 ? '#ff4d4d' : '#1a9e5a'">{{ e.cancellations }}</div>
+                <div class="dkpi-sub">Total del periodo</div>
+              </div>
+              <div class="dkpi">
+                <div class="dkpi-lbl">Invitaciones</div>
+                <div class="dkpi-val mono" [style.color]="e.invitations > 0 ? '#d18a1c' : '#1a9e5a'">{{ e.invitations }}</div>
+                <div class="dkpi-sub">Cortesías del periodo</div>
               </div>
             </div>
 
@@ -199,21 +258,38 @@
               </div>
             </div>
 
+            @if (e.top_products.length > 0) {
+              <div class="top-products">
+                <div class="top-products-title">Top productos vendidos</div>
+                @for (p of e.top_products; track $index) {
+                  <div class="top-product-row">
+                    <span class="top-pos" [class.top-pos--1]="$index === 0" [class.top-pos--2]="$index === 1" [class.top-pos--3]="$index === 2">#{{ $index + 1 }}</span>
+                    <span class="top-name">{{ p.name }}</span>
+                    <span class="top-meta">{{ p.units }} uds · {{ fmt(p.revenue) }}</span>
+                  </div>
+                }
+              </div>
+            }
+
             <div class="detail-stat-boxes">
               <div class="stat-box">
-                <div class="stat-box-lbl">Anulaciones</div>
-                <div class="stat-box-val mono" [style.color]="e.cancellations > 0 ? '#ff4d4d' : '#1a9e5a'">{{ e.cancellations }}</div>
+                <div class="stat-box-lbl">Descuentos reales</div>
+                <div class="stat-box-val mono" [style.color]="isHighDiscounter(e) ? '#d18a1c' : '#5a5a5a'">{{ fmt(e.discounts) }}</div>
+                <div class="stat-box-sub">{{ discRatio(e) }}% s/ventas</div>
               </div>
               <div class="stat-box">
-                <div class="stat-box-lbl">Artículos vendidos</div>
-                <div class="stat-box-val mono">{{ fmtInt(e.items_sold) }}</div>
+                <div class="stat-box-lbl">Ticket medio vs equipo</div>
+                <div class="stat-box-val mono" [style.color]="benchColor(e.avg_ticket, teamAvgTicket())">
+                  {{ e.avg_ticket > 0 ? ((e.avg_ticket / teamAvgTicket()) * 100).toFixed(0) : '—' }}%
+                </div>
+                <div class="stat-box-sub" [style.color]="benchColor(e.avg_ticket, teamAvgTicket())">{{ benchLabel(e.avg_ticket, teamAvgTicket()) }}</div>
               </div>
             </div>
 
           </div>
         } @else {
           <div class="detail-card detail-card--empty">
-            <div class="detail-empty-icon">👆</div>
+            <app-icon name="search" [size]="28" />
             <div class="detail-empty-text">Selecciona un empleado para ver su detalle</div>
           </div>
         }

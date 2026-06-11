@@ -74,4 +74,13 @@ export class ImpuestosTabComponent {
   }
 
   protected setQ(q: Quarter): void { this.facade.setActiveQ(q); }
+
+  protected downloadPdf(): void { this.facade.downloadTaxPdf(); }
+
+  protected sendToGestor(): void {
+    const email = prompt('Email del gestor:');
+    if (email && email.includes('@')) {
+      this.facade.sendTaxPdf(email);
+    }
+  }
 }

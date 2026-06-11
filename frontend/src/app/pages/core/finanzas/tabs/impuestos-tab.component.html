@@ -252,7 +252,7 @@
           </div>
           <div class="m303-total-actions">
             <button class="btn-borrador" (click)="show303.set(true)">📄 Borrador 303</button>
-            <button class="btn-pdf" disabled style="opacity:0.4;cursor:not-allowed">⤓ PDF gestor</button>
+            <button class="btn-pdf" (click)="downloadPdf()">⤓ PDF gestor</button>
           </div>
         </div>
 
@@ -375,10 +375,10 @@
 
       <!-- Modal footer -->
       <div class="modal-foot">
-        <button class="btn-ghost" (click)="show303.set(false)">Cerrar</button>
-        <div class="modal-foot-actions">
-          <button class="btn-outline-sm" disabled style="opacity:0.4;cursor:not-allowed">📧 Enviar al gestor</button>
-          <button class="btn-dark" disabled style="opacity:0.4;cursor:not-allowed">⤓ Descargar PDF</button>
+          <button class="btn-ghost" (click)="show303.set(false)">Cerrar</button>
+          <div class="modal-foot-actions">
+            <button class="btn-outline-sm" (click)="sendToGestor()">📧 Enviar al gestor</button>
+          <button class="btn-dark" (click)="downloadPdf()">⤓ Descargar PDF</button>
         </div>
       </div>
 

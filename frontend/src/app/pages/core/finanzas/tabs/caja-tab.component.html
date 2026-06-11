@@ -1,53 +1,55 @@
 <div class="caja">
 
-  <!-- View selector -->
-  <div class="view-selector-row">
-    <div class="seg-group">
-      @for (v of [['session','Sesión actual'],['preclose','Pre-cierre'],['cancellations','Anulaciones']]; track v[0]) {
-        <button class="seg-btn" [class.active]="view() === v[0]" (click)="view.set($any(v[0]))">{{ v[1] }}</button>
+  @if (facade.loadingCash()) {
+    <div class="kpi-strip">
+      @for (_ of [1,2,3,4,5]; track $index) {
+        <div class="sk" style="height:80px;border-radius:12px;"></div>
       }
     </div>
-  </div>
+    <div class="sk" style="height:200px;border-radius:12px;margin-top:4px;"></div>
 
-  <!-- ── SESIÓN ACTUAL ──────────────────────────────────────────────────── -->
-  @if (view() === 'session') {
-    <!-- Session header card -->
-    <div class="session-card card">
-      <div class="session-header">
-        <div class="session-left">
-          <div class="session-icon">💼</div>
-          <div>
-            <div class="session-title-row">
-              <span class="session-title">Sesión #{{ s().id }}</span>
-              <span class="session-badge">● Abierta</span>
+  } @else {
+
+    <!-- Active session card (only if open) -->
+    @if (s()) {
+      @let session = s()!;
+
+      <div class="session-card card">
+        <div class="session-header">
+          <div class="session-left">
+            <div class="session-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                  <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                </svg>
+              </div>
+            <div>
+              <div class="session-title-row">
+                <span class="session-title">Sesión #{{ session.id }}</span>
+                <span class="session-badge">● Abierta</span>
+              </div>
+              <div class="session-sub">{{ session.operator }} · Apertura {{ session.opened }}</div>
             </div>
-            <div class="session-sub">{{ s().operator }} · Apertura {{ s().opened }}</div>
           </div>
+
         </div>
-        <div class="session-actions">
-          <button class="btn-outline green">+ Entrada</button>
-          <button class="btn-outline red">− Salida</button>
-          <button class="btn-success">🔒 Cerrar caja</button>
+
+        <div class="session-kpis">
+          <div class="session-main-kpi">
+            <div class="skpi-label">Efectivo teórico</div>
+            <div class="skpi-value">{{ fmt(theoretical()) }}</div>
+            <div class="skpi-sub">Pendiente arqueo al cierre</div>
+          </div>
+          @for (b of sessionBreakdown(); track b.label) {
+            <div class="session-kpi">
+              <div class="skpi-label">{{ b.label }}</div>
+              <div class="skpi-val" [style.color]="b.color">{{ b.value }}</div>
+            </div>
+          }
         </div>
       </div>
 
-      <div class="session-kpis">
-        <div class="session-main-kpi">
-          <div class="skpi-label">Efectivo teórico</div>
-          <div class="skpi-value">{{ fmt(theoretical()) }}</div>
-          <div class="skpi-sub">Pendiente arqueo al cierre</div>
-        </div>
-        @for (b of sessionBreakdown(); track b.label) {
-          <div class="session-kpi">
-            <div class="skpi-label">{{ b.label }}</div>
-            <div class="skpi-val" [style.color]="b.color">{{ b.value }}</div>
-          </div>
-        }
-      </div>
-    </div>
-
-    <!-- Movements + History -->
-    <div class="two-col">
+      <!-- Movements (only if session open) -->
       <div class="card">
         <div class="card-header">
           <div>
@@ -76,20 +78,35 @@
             </div>
           }
           @if (filteredMovements().length === 0) {
-            <div class="empty-state">No hay movimientos con este filtro</div>
+            <div class="empty-inner">No hay movimientos en esta sesión</div>
           }
         </div>
       </div>
+    } @else {
+      <div class="card" style="padding:32px;text-align:center;">
+        <div style="margin-bottom:10px;">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+              </svg>
+            </div>
+        <div style="font-weight:600;margin-bottom:4px;">Sin sesión activa</div>
+        <div style="color:#888;font-size:14px;">No hay ninguna sesión de caja abierta en este turno</div>
+      </div>
+    }
 
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Historial de sesiones</div>
-            <div class="card-sub">Últimas {{ facade.cashHistory().length }} sesiones cerradas</div>
-          </div>
-          <button class="btn-ver-todas">Ver todas →</button>
+    <!-- History (always visible) -->
+    <div class="card" style="margin-top:12px;">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Historial de sesiones</div>
+          <div class="card-sub">{{ facade.cashHistory().length }} sesiones cerradas</div>
         </div>
-        <div class="table-wrap">
+      </div>
+      <div class="table-wrap">
+        @if (facade.cashHistory().length === 0) {
+          <div class="empty-inner">No hay sesiones cerradas anteriores</div>
+        } @else {
           <table class="data-table">
             <thead>
               <tr>
@@ -103,142 +120,209 @@
             </thead>
             <tbody>
               @for (h of facade.cashHistory(); track h.id) {
-                <tr class="hist-row">
-                  <td>
-                    <div class="hist-id">#{{ h.id }}</div>
-                    <div class="hist-date">{{ h.opened.slice(0,5) }}</div>
-                  </td>
-                  <td>{{ h.operator }}</td>
-                  <td class="ar mono">{{ fmt(h.sales) }}</td>
-                  <td class="ar mono grey">{{ fmt(h.theoretical) }}</td>
-                  <td class="ar mono bold">{{ fmt(h.counted) }}</td>
-                  <td class="ar">
-                    <span class="diff-chip" [style.color]="diffColor(h.diff)" [style.background]="diffBg(h.diff)">
-                      {{ h.diff === 0 ? '✓ 0,00 €' : (h.diff > 0 ? '+' : '') + fmt(h.diff) }}
-                    </span>
-                  </td>
-                </tr>
-              }
+                  <tr class="hist-row" (click)="openDetail(h.uuid)">
+                    <td>
+                      <div class="hist-id">#{{ h.id }}</div>
+                      <div class="hist-date">{{ h.opened.slice(0,5) }}</div>
+                    </td>
+                    <td>{{ h.operator }}</td>
+                    <td class="ar mono">{{ fmt(h.sales) }}</td>
+                    <td class="ar mono grey">{{ fmt(h.theoretical) }}</td>
+                    <td class="ar mono bold">{{ fmt(h.counted) }}</td>
+                    <td class="ar">
+                      <span class="diff-chip" [style.color]="diffColor(h.diff)" [style.background]="diffBg(h.diff)">
+                        {{ h.diff === 0 ? '✓ 0,00 €' : (h.diff > 0 ? '+' : '') + fmt(h.diff) }}
+                      </span>
+                    </td>
+                  </tr>
+                }
             </tbody>
           </table>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- ── PRE-CIERRE ───────────────────────────────────────────────────────── -->
-  @if (view() === 'preclose') {
-    <div class="preclose-layout">
-      <!-- Mini KPIs -->
-      <div class="preclose-kpis">
-        <div class="preclose-kpi" [class.warn]="facade.preClose.openTablesCount > 0">
-          <div class="pk-val">{{ fmtInt(facade.preClose.openTablesCount) }}</div>
-          <div class="pk-lbl">Mesas abiertas</div>
-          <div class="pk-sub">{{ fmt(facade.preClose.openTablesAmount) }}</div>
-        </div>
-        <div class="preclose-kpi" [class.warn]="facade.preClose.unprintedTickets > 0">
-          <div class="pk-val">{{ fmtInt(facade.preClose.unprintedTickets) }}</div>
-          <div class="pk-lbl">Sin imprimir</div>
-          <div class="pk-sub">{{ fmt(facade.preClose.unprintedAmount) }}</div>
-        </div>
-        <div class="preclose-kpi">
-          <div class="pk-val" style="color:#1a9e5a">{{ fmt(facade.preClose.undeclaredTips) }}</div>
-          <div class="pk-lbl">Propinas</div>
-          <div class="pk-sub">Pendientes declarar</div>
-        </div>
-        <div class="preclose-kpi" [class.warn]="facade.preClose.projectedDiff !== 0">
-          <div class="pk-val" [style.color]="diffColor(facade.preClose.projectedDiff)">{{ fmt(facade.preClose.projectedDiff) }}</div>
-          <div class="pk-lbl">Descuadre est.</div>
-          <div class="pk-sub">Antes de arqueo</div>
-        </div>
-      </div>
-
-      <!-- Checklist -->
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">Checklist de cierre</div>
-            <div class="card-sub">{{ checklistDone() }} de {{ facade.preClose.checklist.length }} pasos completados</div>
-          </div>
-          <div class="progress-circle">
-            <span>{{ checklistDone() }}/{{ facade.preClose.checklist.length }}</span>
-          </div>
-        </div>
-        <div class="checklist">
-          @for (item of facade.preClose.checklist; track item.id) {
-            <div class="checklist-item" [class.done]="item.done" [class.blocking]="item.blocking && !item.done">
-              <div class="check-icon" [class.done]="item.done">{{ item.done ? '✓' : item.blocking ? '!' : '○' }}</div>
-              <span class="check-label">{{ item.label }}</span>
-              @if (item.blocking && !item.done) {
-                <span class="blocking-tag">Bloqueante</span>
-              }
-            </div>
-          }
-        </div>
-        <div class="checklist-footer">
-          <button class="close-caja-btn" [class.disabled]="!canClose()" [disabled]="!canClose()">
-            🔒 Cerrar caja
-            @if (!canClose()) { <span class="disabled-hint">· Resuelve bloqueantes primero</span> }
-          </button>
-        </div>
-      </div>
-    </div>
-  }
-
-  <!-- ── ANULACIONES ──────────────────────────────────────────────────────── -->
-  @if (view() === 'cancellations') {
-    <div class="cancellations">
-      <!-- Category filters -->
-      <div class="cat-filters">
-        @for (cat of ['all','error','queja','fuga','devolucion','cancelacion']; track cat) {
-          <button class="cat-chip" [class.active]="cancelCat() === cat"
-            [style.background]="cancelCat() === cat ? categoryBg(cat) : '#f4f4f4'"
-            [style.color]="cancelCat() === cat ? categoryColor(cat) : '#7a7a7a'"
-            (click)="cancelCat.set(cat)">
-            {{ categoryLabel(cat) }}
-          </button>
         }
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Anulaciones y devoluciones</div>
-          <div class="card-sub">{{ filteredCancellations().length }} registros · {{ fmt(filteredCancellations().reduce(sumAmt, 0)) }} total</div>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Ticket</th>
-                <th>Fecha</th>
-                <th>Zona</th>
-                <th>Motivo</th>
-                <th>Quién</th>
-                <th>Autoriza</th>
-                <th>Categ.</th>
-                <th class="ar">Importe</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (c of filteredCancellations(); track c.id) {
-                <tr>
-                  <td><span class="ticket-id mono">{{ c.id }}</span></td>
-                  <td><span class="grey-text">{{ c.date }}</span></td>
-                  <td>{{ c.zone }}</td>
-                  <td class="reason-cell">{{ c.reason }}</td>
-                  <td>{{ c.who }}</td>
-                  <td>{{ c.authorizedBy }}</td>
-                  <td>
-                    <span class="cat-chip-sm" [style.color]="categoryColor(c.category)" [style.background]="categoryBg(c.category)">{{ categoryLabel(c.category) }}</span>
-                  </td>
-                  <td class="ar"><span class="mono bold red">{{ fmt(c.amount) }}</span></td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   }
 
 </div>
+
+<!-- ── Session detail modal ──────────────────────────────────────────── -->
+@if (modalOpen()) {
+  @let ms = modalSession();
+  @if (ms) {
+    @let item = ms.item;
+    <div class="modal-overlay" (click)="closeDetail()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="modal-hdr">
+          <div>
+            <div class="modal-hdr-top">
+              <span class="modal-hdr-title">Sesión #{{ item.uuid.slice(-6).toUpperCase() }}</span>
+              <span class="status-badge" [class.open]="item.status === 'open'" [class.closing]="item.status === 'closing'" [class.closed]="item.status === 'closed'">
+                ● {{ item.status === 'open' ? 'Abierta' : item.status === 'closing' ? 'Cerrando' : 'Cerrada' }}
+              </span>
+            </div>
+            <div class="modal-hdr-meta">
+              <span class="modal-hdr-operator">{{ item.operator_name ?? '—' }}</span>
+              <span class="modal-hdr-sep">·</span>
+              <span>{{ formatDateTime(item.opened_at) }}</span>
+              @if (item.closed_at) {
+                <span class="modal-hdr-arrow">→</span>
+                <span>{{ formatDateTime(item.closed_at) }}</span>
+              }
+            </div>
+          </div>
+          <button class="modal-close-btn" (click)="closeDetail()">✕</button>
+        </div>
+
+        <!-- Loading -->
+        @if (facade.loadingSessionDetail()) {
+          <div class="modal-body">
+            <div class="sk" style="height:70px;border-radius:12px;"></div>
+            <div class="sk" style="height:44px;border-radius:12px;margin-top:14px;"></div>
+            <div class="sk" style="height:140px;border-radius:12px;margin-top:14px;"></div>
+          </div>
+        } @else {
+          <div class="modal-body">
+
+            <!-- ── Row: summary cards ── -->
+            <div class="m-summary-grid">
+              <div class="m-card m-card--green">
+                <div class="m-card-label">Fondo inicial</div>
+                <div class="m-card-value">{{ fmt(item.initial_amount_cents) }}</div>
+              </div>
+              <div class="m-card m-card--amber">
+                <div class="m-card-label">Ventas totales</div>
+                <div class="m-card-value">{{ fmt(item.gross) }}</div>
+              </div>
+              @if (item.discounts > 0) {
+                <div class="m-card m-card--red">
+                  <div class="m-card-label">Dto.</div>
+                  <div class="m-card-value">{{ fmt(item.discounts) }}</div>
+                </div>
+              }
+              <div class="m-card m-card--dark">
+                <div class="m-card-label">Neto</div>
+                <div class="m-card-value">{{ fmt(item.net) }}</div>
+              </div>
+            </div>
+
+            <!-- ── Payment methods ── -->
+            @if (facade.selectedSessionSummary(); as summary) {
+              <div class="m-pay-row">
+                <div class="m-pay-item">
+                  <div class="m-pay-dot" style="background:#1a9e5a;"></div>
+                  <div>
+                    <div class="m-pay-label">Efectivo</div>
+                    <div class="m-pay-value">{{ fmt(summary.total_cash_payments) }}</div>
+                  </div>
+                </div>
+                <div class="m-pay-item">
+                  <div class="m-pay-dot" style="background:#0077cc;"></div>
+                  <div>
+                    <div class="m-pay-label">Tarjeta</div>
+                    <div class="m-pay-value">{{ fmt(summary.total_card_payments) }}</div>
+                  </div>
+                </div>
+                <div class="m-pay-item">
+                  <div class="m-pay-dot" style="background:#7857d6;"></div>
+                  <div>
+                    <div class="m-pay-label">Bizum</div>
+                    <div class="m-pay-value">{{ fmt(summary.total_bizum_payments) }}</div>
+                  </div>
+                </div>
+                @if (summary.total_other_payments > 0) {
+                  <div class="m-pay-item">
+                    <div class="m-pay-dot" style="background:#888;"></div>
+                    <div>
+                      <div class="m-pay-label">Otros</div>
+                      <div class="m-pay-value">{{ fmt(summary.total_other_payments) }}</div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- ── Counters ── -->
+            <div class="m-counters">
+              <div class="m-counter"><span class="m-counter-num">{{ item.tickets }}</span> tickets</div>
+              <div class="m-counter"><span class="m-counter-num">{{ facade.selectedSessionSummary()?.tickets_count ?? item.tickets }}</span> cobros</div>
+              <div class="m-counter"><span class="m-counter-num">{{ facade.selectedSessionSummary()?.movements_count ?? 0 }}</span> mov.</div>
+              <div class="m-counter"><span class="m-counter-num">#{{ item.z_report_number ?? '—' }}</span> Z</div>
+            </div>
+
+            <!-- ── Movements ── -->
+            @if (facade.selectedSessionSummary(); as summary) {
+              <div class="m-section-label">Movimientos de efectivo</div>
+              <div class="m-mov-filter">
+                @for (f of [['all','Todos'],['in','Entradas'],['out','Salidas']]; track f[0]) {
+                  <button class="m-mov-btn" [class.active]="modalMovFilter() === f[0]" (click)="modalMovFilter.set($any(f[0]))">
+                    @if (f[0] === 'in') { ↑ } @else if (f[0] === 'out') { ↓ } {{ f[1] }}
+                  </button>
+                }
+              </div>
+              <div class="m-mov-list">
+                @for (m of modalFilteredMovements(); track m.id) {
+                  <div class="m-mov-row">
+                    <div class="m-mov-icon" [class.is-in]="m.type === 'in'" [class.is-out]="m.type === 'out'">
+                      {{ m.type === 'in' ? '↑' : '↓' }}
+                    </div>
+                    <div class="m-mov-info">
+                      <span class="m-mov-reason">{{ m.reason }}</span>
+                      <span class="m-mov-time">{{ m.time }}</span>
+                    </div>
+                    <span class="m-mov-amt" [class.is-in]="m.type === 'in'" [class.is-out]="m.type === 'out'">
+                      {{ m.type === 'in' ? '+' : '−' }}{{ fmt(m.amount) }}
+                    </span>
+                  </div>
+                }
+                @if (modalFilteredMovements().length === 0) {
+                  <div class="m-empty">Sin movimientos en este filtro</div>
+                }
+              </div>
+              <div class="m-mov-total">
+                <span>Entradas {{ fmt(summary.total_in_movements) }}</span>
+                <span>·</span>
+                <span>Salidas {{ fmt(summary.total_out_movements) }}</span>
+                <span>·</span>
+                <span>Saldo <strong>{{ fmt(summary.total_in_movements - summary.total_out_movements) }}</strong></span>
+              </div>
+            }
+
+            <!-- ── Arqueo / Discrepancy ── -->
+            @if (item.discrepancy_cents !== null) {
+              <div class="m-arqueo">
+                <div class="m-arqueo-title">Arqueo de caja</div>
+                <div class="m-arqueo-grid">
+                  <div class="m-arq-item">
+                    <div class="m-arq-label">Efectivo teórico</div>
+                    <div class="m-arq-value">{{ fmt(item.expected_amount_cents ?? 0) }}</div>
+                  </div>
+                  <div class="m-arq-item">
+                    <div class="m-arq-label">Efectivo contado</div>
+                    <div class="m-arq-value">{{ fmt(item.final_amount_cents ?? 0) }}</div>
+                  </div>
+                  <div class="m-arq-item m-arq-diff">
+                    <div class="m-arq-label">Diferencia</div>
+                    <div class="m-arq-value" [style.color]="diffColor(item.discrepancy_cents)">
+                      {{ item.discrepancy_cents === 0 ? '✓ Cero' : (item.discrepancy_cents > 0 ? '+' : '') + fmt(item.discrepancy_cents) }}
+                    </div>
+                  </div>
+                </div>
+                @if (item.discrepancy_reason) {
+                  <div class="m-arq-reason">
+                    <span class="m-arq-reason-label">Motivo:</span>
+                    {{ item.discrepancy_reason }}
+                  </div>
+                }
+              </div>
+            }
+
+          </div>
+        }
+      </div>
+    </div>
+  }
+}
+
+

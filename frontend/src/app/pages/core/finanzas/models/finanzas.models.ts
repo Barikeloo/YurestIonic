@@ -186,6 +186,7 @@ export interface CashMovementItem {
 }
 
 export interface CashSessionHistory {
+  uuid: string;
   id: string;
   opened: string;
   closed: string;
@@ -346,6 +347,12 @@ export interface CrossSellItem {
   together: number;
 }
 
+export interface EmployeeTopProduct {
+  name: string;
+  units: number;
+  revenue: number;
+}
+
 export interface EmployeeReportItem {
   user_uuid: string;
   name: string;
@@ -358,7 +365,11 @@ export interface EmployeeReportItem {
   items_sold: number;
   tips: number;
   discounts: number;
+  invitations: number;
   cancellations: number;
+  prev_revenue: number;
+  prev_tickets: number;
+  top_products: EmployeeTopProduct[];
   spark_revenue: number[];
 }
 
@@ -472,4 +483,19 @@ export interface TaxReportResponse {
   tips_card:    number;
   quarterly:    QuarterlyTax;
   restaurant:   RestaurantInfo;
+}
+
+export interface ExportHistoryItem {
+  uuid:        string;
+  title:       string;
+  report_type: string;
+  format:      string;
+  filename:    string;
+  size_bytes:  number;
+  user_name:   string;
+  created_at:  string;
+}
+
+export interface ExportHistoryResponse {
+  items: ExportHistoryItem[];
 }

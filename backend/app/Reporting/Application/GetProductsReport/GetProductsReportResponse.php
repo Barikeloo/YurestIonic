@@ -13,6 +13,8 @@ final readonly class GetProductsReportResponse
         private array $noSales7d,
         private int   $alertCount,
         private array $byZone,
+        private string $periodLabel,
+        private array $restaurant,
     ) {}
 
     public static function create(
@@ -22,6 +24,8 @@ final readonly class GetProductsReportResponse
         array $noSales7d,
         int   $alertCount,
         array $byZone,
+        string $periodLabel,
+        array $restaurant,
     ): self {
         return new self(
             periodRevenue: $periodRevenue,
@@ -30,6 +34,8 @@ final readonly class GetProductsReportResponse
             noSales7d:     $noSales7d,
             alertCount:    $alertCount,
             byZone:        $byZone,
+            periodLabel:   $periodLabel,
+            restaurant:    $restaurant,
         );
     }
 
@@ -42,6 +48,8 @@ final readonly class GetProductsReportResponse
             'no_sales_7d'    => $this->noSales7d,
             'alert_count'    => $this->alertCount,
             'by_zone'        => $this->byZone,
+            'period_label'   => $this->periodLabel,
+            'restaurant'     => $this->restaurant,
         ];
     }
 }

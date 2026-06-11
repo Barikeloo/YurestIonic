@@ -30,6 +30,7 @@ final readonly class ListCashSessionsItemResponse
         public int $net,
         public int $movIn,
         public int $movOut,
+        public ?string $operatorName,
     ) {}
 
     public static function create(
@@ -56,6 +57,7 @@ final readonly class ListCashSessionsItemResponse
         int $net,
         int $movIn,
         int $movOut,
+        ?string $operatorName = null,
     ): self {
         return new self(
             uuid: $uuid,
@@ -81,6 +83,7 @@ final readonly class ListCashSessionsItemResponse
             net: $net,
             movIn: $movIn,
             movOut: $movOut,
+            operatorName: $operatorName,
         );
     }
 
@@ -110,6 +113,7 @@ final readonly class ListCashSessionsItemResponse
             'net' => $this->net,
             'mov_in' => $this->movIn,
             'mov_out' => $this->movOut,
+            'operator_name' => $this->operatorName,
         ];
     }
 }

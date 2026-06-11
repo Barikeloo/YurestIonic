@@ -29,7 +29,9 @@
 
             <!-- Icon + title -->
             <div class="report-top">
-              <div class="report-icon-box" [style.background]="r.color + '15'">{{ r.icon }}</div>
+              <div class="report-icon-box" [style.background]="r.color + '15'" [style.color]="r.color">
+                <app-icon [name]="r.iconName" [size]="22" [strokeWidth]="1.8" />
+              </div>
               <div class="report-head">
                 <div class="report-title-text">{{ r.title }}</div>
                 <div class="report-sub">{{ r.sub }}</div>
@@ -45,8 +47,9 @@
             <!-- Format buttons -->
             <div class="report-actions">
               @for (f of r.formats; track f) {
-                <button class="fmt-btn" [style.background]="r.color" [style.border-color]="r.color">
-                  ⤓ {{ f }}
+                <button class="fmt-btn" [style.background]="r.color" [style.border-color]="r.color"
+                        (click)="$event.stopPropagation(); download(r, f)">
+                  <app-icon name="download" [size]="13" /> {{ f }}
                 </button>
               }
             </div>
@@ -74,22 +77,35 @@
             </tr>
           </thead>
           <tbody>
-            @for (h of history; track h.name) {
+            @for (h of facade.exportHistory(); track h.uuid) {
               <tr>
                 <td class="td-file">
-                  <span class="file-icon">{{ h.format === 'PDF' ? '📄' : '📊' }}</span>
-                  {{ h.name }}
+                  <span class="file-icon" [style.color]="formatBadgeColor(h.format)">
+                    <app-icon [name]="h.format === 'PDF' ? 'file-text' : 'table'" [size]="16" />
+                  </span>
+                  {{ h.title }}
                 </td>
                 <td>
                   <span class="fmt-badge" [style.background]="formatBadgeColor(h.format) + '1a'" [style.color]="formatBadgeColor(h.format)">
                     {{ h.format }}
                   </span>
                 </td>
-                <td class="align-right td-mono">{{ h.size }}</td>
-                <td class="td-muted">{{ h.date }}</td>
-                <td class="td-muted">{{ h.user }}</td>
+                <td class="align-right td-mono">{{ formatSize(h.size_bytes) }}</td>
+                <td class="td-muted">{{ formatDate(h.created_at) }}</td>
+                <td class="td-muted">{{ h.user_name }}</td>
                 <td class="align-right">
-                  <button class="dl-btn">⤓ Descargar</button>
+                  <div class="row-actions">
+                    @if (h.format === 'PDF') {
+                      <button class="dl-btn dl-btn--ghost" (click)="facade.previewExport(h.uuid, h.filename, h.title)"><app-icon name="eye" [size]="13" /> Ver</button>
+                    }
+                    <button class="dl-btn" (click)="facade.downloadExport(h.uuid, h.filename)"><app-icon name="download" [size]="13" /> Descargar</button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6" class="td-muted" style="text-align:center; padding:24px 0;">
+                  Todavía no has generado ninguna exportación. Genera un informe arriba y aparecerá aquí.
                 </td>
               </tr>
             }
@@ -105,7 +121,7 @@
 
     <!-- Banner -->
     <div class="banner-card banner-card--blue">
-      <div class="banner-icon">⇆</div>
+      <div class="banner-icon"><app-icon name="refresh-cw" [size]="20" /></div>
       <div class="banner-body">
         <div class="banner-title" style="color:#0077cc">Envía datos directamente a tu contabilidad</div>
         <div class="banner-sub">En vez de PDFs, conecta Yurest con tu ERP o gestoría. La sincronización es nocturna · sin esfuerzo manual.</div>
@@ -140,7 +156,7 @@
           <div class="intg-features">
             @for (f of it.features; track f) {
               <div class="feature-row">
-                <span class="feature-check" [style.color]="it.color">✓</span>
+                <span class="feature-check" [style.color]="it.color"><app-icon name="check" [size]="13" [strokeWidth]="2.5" /></span>
                 {{ f }}
               </div>
             }
@@ -155,7 +171,7 @@
           @if (it.connected) {
             <div class="intg-actions">
               <button class="sync-btn">Sincronizar ahora</button>
-              <button class="icon-btn">⚙</button>
+              <button class="icon-btn"><app-icon name="settings" [size]="15" /></button>
             </div>
             <div class="sync-status">
               Última sincronización: <strong style="color:#1a9e5a">hace 12 min</strong> · 84 tickets enviados
@@ -178,7 +194,7 @@
 
     <!-- Banner -->
     <div class="banner-card banner-card--green">
-      <div class="banner-icon">⏱</div>
+      <div class="banner-icon"><app-icon name="clock" [size]="20" /></div>
       <div class="banner-body">
         <div class="banner-title" style="color:#1a9e5a">Configura una vez. Recibe el informe siempre.</div>
         <div class="banner-sub">Diario, semanal o mensual. El gerente nunca tiene que volver a entrar al panel.</div>
@@ -225,9 +241,9 @@
                 <td [class.td-muted]="!s.active" [class.td-bold-sm]="s.active">{{ s.next }}</td>
                 <td class="align-right">
                   <div class="row-actions">
-                    <button class="icon-btn">✎</button>
-                    <button class="icon-btn">⤓</button>
-                    <button class="icon-btn icon-btn--danger">×</button>
+                    <button class="icon-btn"><app-icon name="pencil" [size]="15" /></button>
+                    <button class="icon-btn"><app-icon name="download" [size]="15" /></button>
+                    <button class="icon-btn icon-btn--danger"><app-icon name="x" [size]="15" /></button>
                   </div>
                 </td>
               </tr>
@@ -237,6 +253,22 @@
       </div>
     </div>
 
+  }
+
+  <!-- ══ PREVIEW MODAL ═══════════════════════════════════════════════════════ -->
+  @if (facade.preview(); as pv) {
+    <div class="preview-overlay" (click)="facade.closePreview()">
+      <div class="preview-modal" (click)="$event.stopPropagation()">
+        <div class="preview-head">
+          <div class="preview-title">{{ pv.title }}</div>
+          <div class="preview-actions">
+            <button class="dl-btn" (click)="facade.downloadExport(pv.uuid, pv.filename)"><app-icon name="download" [size]="13" /> Descargar</button>
+            <button class="preview-close" (click)="facade.closePreview()" aria-label="Cerrar"><app-icon name="x" [size]="18" /></button>
+          </div>
+        </div>
+        <iframe class="preview-frame" [src]="previewSafeUrl()" title="Previsualización del informe"></iframe>
+      </div>
+    </div>
   }
 
 </div>

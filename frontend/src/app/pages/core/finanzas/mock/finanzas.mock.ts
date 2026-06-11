@@ -307,14 +307,14 @@ export const MOCK_CASH_SESSION = {
 };
 
 export const MOCK_CASH_HISTORY: CashSessionHistory[] = [
-  { id: '134', opened: '13/05 08:02', closed: '13/05 23:58', operator: 'Ana L.',   sales: 218940, theoretical: 116940, counted: 91940, diff: -25000, tickets: 76 },
-  { id: '133', opened: '12/05 08:10', closed: '12/05 23:42', operator: 'María G.', sales: 241280, theoretical: 126280, counted: 126280, diff: 0,     tickets: 79 },
-  { id: '132', opened: '11/05 08:05', closed: '11/05 23:55', operator: 'Carlos R.',sales: 228400, theoretical: 118400, counted: 120100, diff: 1700,  tickets: 75 },
-  { id: '131', opened: '10/05 08:00', closed: '10/05 23:48', operator: 'María G.', sales: 211000, theoretical: 106000, counted: 105200, diff: -800,  tickets: 71 },
-  { id: '130', opened: '09/05 08:12', closed: '09/05 23:52', operator: 'Ana L.',   sales: 195200, theoretical: 100200, counted: 100200, diff: 0,     tickets: 65 },
-  { id: '129', opened: '08/05 08:08', closed: '08/05 23:40', operator: 'María G.', sales: 203100, theoretical: 102100, counted: 101600, diff: -500,  tickets: 70 },
-  { id: '128', opened: '07/05 08:00', closed: '07/05 23:59', operator: 'Carlos R.',sales: 282000, theoretical: 148000, counted: 148000, diff: 0,     tickets: 96 },
-  { id: '127', opened: '06/05 08:04', closed: '06/05 23:50', operator: 'María G.', sales: 247000, theoretical: 128000, counted: 128400, diff: 400,   tickets: 82 },
+  { uuid: '00000134-0000-0000-0000-000000000000', id: '134', opened: '13/05 08:02', closed: '13/05 23:58', operator: 'Ana L.',   sales: 218940, theoretical: 116940, counted: 91940, diff: -25000, tickets: 76 },
+  { uuid: '00000133-0000-0000-0000-000000000000', id: '133', opened: '12/05 08:10', closed: '12/05 23:42', operator: 'María G.', sales: 241280, theoretical: 126280, counted: 126280, diff: 0,     tickets: 79 },
+  { uuid: '00000132-0000-0000-0000-000000000000', id: '132', opened: '11/05 08:05', closed: '11/05 23:55', operator: 'Carlos R.',sales: 228400, theoretical: 118400, counted: 120100, diff: 1700,  tickets: 75 },
+  { uuid: '00000131-0000-0000-0000-000000000000', id: '131', opened: '10/05 08:00', closed: '10/05 23:48', operator: 'María G.', sales: 211000, theoretical: 106000, counted: 105200, diff: -800,  tickets: 71 },
+  { uuid: '00000130-0000-0000-0000-000000000000', id: '130', opened: '09/05 08:12', closed: '09/05 23:52', operator: 'Ana L.',   sales: 195200, theoretical: 100200, counted: 100200, diff: 0,     tickets: 65 },
+  { uuid: '00000129-0000-0000-0000-000000000000', id: '129', opened: '08/05 08:08', closed: '08/05 23:40', operator: 'María G.', sales: 203100, theoretical: 102100, counted: 101600, diff: -500,  tickets: 70 },
+  { uuid: '00000128-0000-0000-0000-000000000000', id: '128', opened: '07/05 08:00', closed: '07/05 23:59', operator: 'Carlos R.',sales: 282000, theoretical: 148000, counted: 148000, diff: 0,     tickets: 96 },
+  { uuid: '00000127-0000-0000-0000-000000000000', id: '127', opened: '06/05 08:04', closed: '06/05 23:50', operator: 'María G.', sales: 247000, theoretical: 128000, counted: 128400, diff: 400,   tickets: 82 },
 ];
 
 export const MOCK_FORECAST: Forecast = {

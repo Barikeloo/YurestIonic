@@ -10,6 +10,7 @@ import type {
   EmployeesReportResponse,
   TaxReportResponse,
   HeatmapRow,
+  ExportHistoryResponse,
 } from '../pages/core/finanzas/models/finanzas.models';
 
 @Injectable({ providedIn: 'root' })
@@ -40,5 +41,29 @@ export class FinanzasService extends BaseApiService {
 
   getTaxes(period: FinanzasPeriod, quarter: string): Observable<TaxReportResponse> {
     return this.get<TaxReportResponse>('/admin/reports/taxes', { period, quarter });
+  }
+
+  downloadTaxPdf(period: FinanzasPeriod, quarter: string): Observable<Blob> {
+    return this.downloadBlob('/admin/reports/taxes/pdf', { period, quarter });
+  }
+
+  sendTaxPdf(period: FinanzasPeriod, quarter: string, email: string): Observable<{ message: string }> {
+    return this.post<{ message: string }>('/admin/reports/taxes/send', { period, quarter, email });
+  }
+
+  downloadReportCsv(type: string, period: FinanzasPeriod): Observable<Blob> {
+    return this.downloadBlob(`/admin/reports/export/${type}`, { period });
+  }
+
+  downloadReportPdf(type: string, period: FinanzasPeriod): Observable<Blob> {
+    return this.downloadBlob(`/admin/reports/${type}/pdf`, { period });
+  }
+
+  getExportHistory(): Observable<ExportHistoryResponse> {
+    return this.get<ExportHistoryResponse>('/admin/reports/exports');
+  }
+
+  downloadExport(uuid: string): Observable<Blob> {
+    return this.downloadBlob(`/admin/reports/exports/${uuid}/download`);
   }
 }

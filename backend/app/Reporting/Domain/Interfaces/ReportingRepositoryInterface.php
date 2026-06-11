@@ -10,6 +10,12 @@ interface ReportingRepositoryInterface
 {
     public function getDashboardData(int $restaurantId, DateRange $range): array;
 
+    public function getRestaurantInfo(int $restaurantId): array;
+
+    public function getFamiliesReport(int $restaurantId, DateRange $range): array;
+
+    public function getCashReport(int $restaurantId, DateRange $range): array;
+
     public function getSalesList(int $restaurantId, DateRange $range, int $page, int $perPage): array;
 
     public function getSaleDetail(int $restaurantId, string $saleUuid): ?array;

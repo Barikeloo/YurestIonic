@@ -493,16 +493,27 @@
     </div>
 
     <!-- Cash status card -->
+    @let session = facade.cashSession();
     <div class="card cash-card" (click)="facade.setTab('caja')">
       <div class="section-head">
         <div>
           <div class="cash-head-labels">
             <span class="kpi-label">Caja actual</span>
-            <span class="badge-green-sm">● Abierta</span>
+            @if (session) {
+              <span class="badge-green-sm">● Abierta</span>
+            } @else {
+              <span class="badge-inactive">Inactiva</span>
+            }
           </div>
-          <div class="section-sub">{{ facade.cashSession().operator }} · desde {{ facade.cashSession().opened }}</div>
+          <div class="section-sub">
+            @if (session) {
+              {{ session.operator }} · desde {{ session.opened }}
+            } @else {
+              Sin sesión activa
+            }
+          </div>
         </div>
-        <button class="outline-btn" (click)="$event.stopPropagation(); facade.setTab('caja')">Cerrar caja →</button>
+        <button class="outline-btn" (click)="$event.stopPropagation(); facade.setTab('caja')">Ir a caja →</button>
       </div>
 
       <div class="cash-total-box">
@@ -510,24 +521,26 @@
         <div class="cash-total-val">{{ fmtNum(facade.cashTheoretical()) }} <span class="cash-unit">€</span></div>
       </div>
 
-      <div class="cash-grid">
-        <div class="cash-stat">
-          <span class="cash-stat-label">Fondo inicial</span>
-          <span class="cash-stat-val">{{ fmt(facade.cashSession().initial) }}</span>
+      @if (session) {
+        <div class="cash-grid">
+          <div class="cash-stat">
+            <span class="cash-stat-label">Fondo inicial</span>
+            <span class="cash-stat-val">{{ fmt(session.initial) }}</span>
+          </div>
+          <div class="cash-stat">
+            <span class="cash-stat-label">Ventas efectivo</span>
+            <span class="cash-stat-val cash-stat-val--green">{{ fmt(session.cashPayments) }}</span>
+          </div>
+          <div class="cash-stat">
+            <span class="cash-stat-label">Entradas</span>
+            <span class="cash-stat-val cash-stat-val--green">+ {{ fmt(session.cashIn) }}</span>
+          </div>
+          <div class="cash-stat">
+            <span class="cash-stat-label">Salidas</span>
+            <span class="cash-stat-val cash-stat-val--red">− {{ fmt(session.cashOut) }}</span>
+          </div>
         </div>
-        <div class="cash-stat">
-          <span class="cash-stat-label">Ventas efectivo</span>
-          <span class="cash-stat-val cash-stat-val--green">{{ fmt(facade.cashSession().cashPayments) }}</span>
-        </div>
-        <div class="cash-stat">
-          <span class="cash-stat-label">Entradas</span>
-          <span class="cash-stat-val cash-stat-val--green">+ {{ fmt(facade.cashSession().cashIn) }}</span>
-        </div>
-        <div class="cash-stat">
-          <span class="cash-stat-label">Salidas</span>
-          <span class="cash-stat-val cash-stat-val--red">− {{ fmt(facade.cashSession().cashOut) }}</span>
-        </div>
-      </div>
+      }
     </div>
 
     <!-- Insights card -->

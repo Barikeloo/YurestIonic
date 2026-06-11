@@ -21,9 +21,6 @@ import {
   MOCK_BY_HOUR_LAST_WEEK,
   MOCK_BY_METHOD,
   MOCK_CANNIBALS,
-  MOCK_CASH_HISTORY,
-  MOCK_CASH_SESSION,
-  MOCK_CANCELLATIONS,
   MOCK_CROSS_SELL,
   MOCK_DEAD_STOCK,
   MOCK_EMPLOYEES,
@@ -33,7 +30,6 @@ import {
   MOCK_OPEN_TABLES,
   MOCK_ORDERS,
   MOCK_PENDING_PAYMENTS,
-  MOCK_PRE_CLOSE,
   MOCK_PRODUCT_RANKING,
   MOCK_PRODUCT_TRENDS,
   MOCK_QUARTERLY,
@@ -64,9 +60,11 @@ import type {
   TaxReportResponse,
   TicketDetail,
   TopProduct,
+  ExportHistoryItem,
 } from '../models/finanzas.models';
 
 interface CashSessionViewData {
+  uuid: string;
   id: string;
   operator: string;
   opened: string;
@@ -145,6 +143,14 @@ export class FinanzasFacade {
   private readonly _activeQ      = signal<Quarter>(currentQuarter());
   private readonly _activeQ$     = toObservable(this._activeQ);
 
+  // ── Export history state ─────────────────────────────────────────────────
+  private readonly _exportHistory = signal<ExportHistoryItem[]>([]);
+  public readonly exportHistory   = this._exportHistory.asReadonly();
+
+  // ── Export preview state ─────────────────────────────────────────────────
+  private readonly _preview = signal<{ url: string; title: string; uuid: string; filename: string } | null>(null);
+  public readonly preview   = this._preview.asReadonly();
+
   // ── Open orders state ────────────────────────────────────────────────────
   private readonly _openOrders       = signal<TpvOrder[]>([]);
   private readonly _openOrdersLoaded = signal(false);
@@ -160,6 +166,12 @@ export class FinanzasFacade {
   private readonly _cashHistoryList   = signal<TpvCashSessionListItem[]>([]);
   private readonly _loadingCash       = signal(false);
 
+  // ── Session detail modal state ──────────────────────────────────────────────
+  private readonly _selectedSessionItem    = signal<TpvCashSessionListItem | null>(null);
+  private readonly _selectedSessionSummary = signal<TpvCashSessionSummary | null>(null);
+  private readonly _selectedSessionMovements = signal<CashMovementItem[]>([]);
+  private readonly _loadingSessionDetail   = signal(false);
+
   // ── Public readonly API ───────────────────────────────────────────────────
   public readonly activeTab      = this._activeTab.asReadonly();
   public readonly period         = this._period.asReadonly();
@@ -174,6 +186,10 @@ export class FinanzasFacade {
   public readonly loadingSales    = this._loadingSales.asReadonly();
   public readonly saleDetailApi    = this._saleDetailApi.asReadonly();
   public readonly loadingDetail    = this._loadingDetail.asReadonly();
+  public readonly selectedSessionItem    = this._selectedSessionItem.asReadonly();
+  public readonly selectedSessionSummary = this._selectedSessionSummary.asReadonly();
+  public readonly selectedSessionMovements = this._selectedSessionMovements.asReadonly();
+  public readonly loadingSessionDetail   = this._loadingSessionDetail.asReadonly();
   public readonly productsReport   = this._productsReport.asReadonly();
   public readonly loadingProducts  = this._loadingProducts.asReadonly();
   public readonly employeesReport  = this._employeesReport.asReadonly();
@@ -196,13 +212,14 @@ export class FinanzasFacade {
 
   public readonly unreadAlerts = this._unreadCount.asReadonly();
 
-  // ── Cash computed (reemplaza mock cuando hay datos reales) ────────────────
-  public readonly cashSession = computed((): CashSessionViewData => {
+  // ── Cash computed ───────────────────────────────────────────────────────────
+  public readonly cashSession = computed((): CashSessionViewData | null => {
     const session = this._activeSessionItem();
     const summary = this._cashSummary();
-    if (!session || !summary) return MOCK_CASH_SESSION;
+    if (!session || !summary) return null;
 
     return {
+      uuid:         session.uuid,
       id:           session.uuid.slice(-6).toUpperCase(),
       operator:     '—',
       opened:       this.formatTime(session.opened_at),
@@ -216,12 +233,13 @@ export class FinanzasFacade {
 
   public readonly cashHistory = computed((): CashSessionHistory[] => {
     const sessions = this._cashHistoryList().filter(s => s.status === 'closed');
-    if (!sessions.length) return MOCK_CASH_HISTORY;
+    if (!sessions.length) return [];
     return sessions.map(s => ({
+      uuid:        s.uuid,
       id:          s.uuid.slice(-6),
       opened:      this.formatDateTime(s.opened_at),
       closed:      s.closed_at ? this.formatDateTime(s.closed_at) : '—',
-      operator:    '—',
+      operator:    s.operator_name ?? '—',
       sales:       s.net,
       theoretical: s.expected_amount_cents ?? 0,
       counted:     s.final_amount_cents ?? 0,
@@ -232,8 +250,7 @@ export class FinanzasFacade {
 
   public readonly cashTheoretical = computed(() => {
     const summary = this._cashSummary();
-    if (summary) return summary.expected_amount;
-    return MOCK_CASH_SESSION.initial + MOCK_BY_METHOD.cash.v + MOCK_CASH_SESSION.cashIn - MOCK_CASH_SESSION.cashOut;
+    return summary ? summary.expected_amount : 0;
   });
 
   // ── Setters ───────────────────────────────────────────────────────────────
@@ -243,11 +260,94 @@ export class FinanzasFacade {
   public setShowCompare(v: boolean): void           { this._showCompare.set(v); }
   public setActiveQ(q: Quarter): void               { this._activeQ.set(q); }
 
+  public downloadTaxPdf(): void {
+    const period = this._period();
+    const quarter = this._activeQ();
+    this.finanzasService.downloadTaxPdf(period, quarter).subscribe(blob => {
+      this.triggerDownload(blob, `modelo303-${quarter}.pdf`);
+      this.loadExportHistory();
+    });
+  }
+
+  public downloadReport(type: string, format: string): void {
+    const period = this._period();
+    const quarter = this._activeQ();
+
+    if (type === 'taxes' && format === 'PDF') {
+      this.finanzasService.downloadTaxPdf(period, quarter).subscribe(blob => {
+        this.triggerDownload(blob, `modelo303-${quarter}.pdf`);
+        this.loadExportHistory();
+      });
+      return;
+    }
+
+    // Report types with a dedicated professional PDF endpoint.
+    const PDF_TYPES = ['daily', 'products', 'families', 'tips', 'cash'];
+    if (format === 'PDF' && PDF_TYPES.includes(type)) {
+      this.finanzasService.downloadReportPdf(type, period).subscribe(blob => {
+        this.triggerDownload(blob, `${type}-${period}.pdf`);
+        this.loadExportHistory();
+      });
+      return;
+    }
+
+    this.finanzasService.downloadReportCsv(type, period).subscribe(blob => {
+      this.triggerDownload(blob, `${type}-${period}.csv`);
+      this.loadExportHistory();
+    });
+  }
+
+  public downloadExport(uuid: string, filename: string): void {
+    this.finanzasService.downloadExport(uuid).subscribe(blob => {
+      this.triggerDownload(blob, filename);
+    });
+  }
+
+  public previewExport(uuid: string, filename: string, title: string): void {
+    this.finanzasService.downloadExport(uuid).subscribe(blob => {
+      this.revokePreview();
+      const url = URL.createObjectURL(blob);
+      this._preview.set({ url, title, uuid, filename });
+    });
+  }
+
+  public closePreview(): void {
+    this.revokePreview();
+    this._preview.set(null);
+  }
+
+  private revokePreview(): void {
+    const current = this._preview();
+    if (current) URL.revokeObjectURL(current.url);
+  }
+
+  private loadExportHistory(): void {
+    this.finanzasService.getExportHistory()
+      .pipe(catchError(() => EMPTY))
+      .subscribe(res => this._exportHistory.set(res.items));
+  }
+
+  private triggerDownload(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  public sendTaxPdf(email: string): void {
+    const period = this._period();
+    const quarter = this._activeQ();
+    this.finanzasService.sendTaxPdf(period, quarter, email).subscribe();
+  }
+
   // ── Init ──────────────────────────────────────────────────────────────────
   public init(): void {
     this.loadAlerts();
     this.loadCashData();
     this.loadOpenOrders();
+    this.loadExportHistory();
     this._periodChanges$
       .pipe(
         switchMap(period => {
@@ -392,6 +492,89 @@ export class FinanzasFacade {
       });
   }
 
+  // ── Cash actions ────────────────────────────────────────────────────────────
+  public registerCashMovement(payload: {
+    cash_session_id: string;
+    type: string;
+    reason_code: string;
+    amount_cents: number;
+    user_id: string;
+    description?: string;
+  }): void {
+    this.tpvService.registerCashMovement(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          const active = this._activeSessionItem();
+          if (active) {
+            this.loadCashData();
+          }
+        },
+      });
+  }
+
+  public startClosingCashSession(cashSessionId: string): void {
+    this.tpvService.startClosingCashSession({ cash_session_id: cashSessionId })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => this.loadCashData(),
+      });
+  }
+
+  public closeCashSession(payload: {
+    cash_session_id: string;
+    closed_by_user_id: string;
+    final_amount_cents: number;
+    discrepancy_reason?: string;
+  }): void {
+    this.tpvService.closeCashSession(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.loadCashData();
+          this._selectedSessionItem.set(null);
+          this._selectedSessionSummary.set(null);
+          this._selectedSessionMovements.set([]);
+        },
+      });
+  }
+
+  // ── Session detail (modal) ──────────────────────────────────────────────────
+  public loadSessionDetail(uuid: string): void {
+    const item = this._cashHistoryList().find(s => s.uuid === uuid) ?? null;
+    this._selectedSessionItem.set(item);
+    this._loadingSessionDetail.set(true);
+    this._selectedSessionSummary.set(null);
+    this._selectedSessionMovements.set([]);
+
+    forkJoin({
+      summary:   this.tpvService.getCashSessionSummary(uuid),
+      movements: this.tpvService.listCashMovements(uuid),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ({ summary, movements }) => {
+          if (this._selectedSessionItem()?.uuid !== uuid) return;
+          this._selectedSessionSummary.set(summary);
+          this._selectedSessionMovements.set(
+            movements.movements.map(m => ({
+              id:     m.uuid,
+              type:   m.type,
+              reason: m.description ?? m.reason_code,
+              amount: m.amount_cents,
+              time:   this.formatTime(m.created_at),
+              user:   '—',
+            }))
+          );
+          this._loadingSessionDetail.set(false);
+        },
+        error: () => {
+          if (this._selectedSessionItem()?.uuid !== uuid) return;
+          this._loadingSessionDetail.set(false);
+        },
+      });
+  }
+
   // ── Sale detail ──────────────────────────────────────────────────────────
   public loadSaleDetail(uuid: string): void {
     this._loadingDetail.set(true);
@@ -510,11 +693,11 @@ export class FinanzasFacade {
     return `hace ${Math.floor(mins / 1440)}d`;
   }
 
-  private formatTime(isoString: string): string {
+  public formatTime(isoString: string): string {
     return new Date(isoString).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
   }
 
-  private formatDateTime(isoString: string): string {
+  public formatDateTime(isoString: string): string {
     const d = new Date(isoString);
     const day   = d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit' });
     const time  = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -551,8 +734,8 @@ export class FinanzasFacade {
       };
     });
   });
-  public readonly cancellations   = MOCK_CANCELLATIONS;
-  public readonly preClose        = MOCK_PRE_CLOSE;
+  public readonly cancellations   = [] as { id: string; date: string; zone: string; amount: number; reason: string; who: string; authorizedBy: string; category: string }[];
+  public readonly preClose        = { openTablesCount: 0, openTablesAmount: 0, unprintedTickets: 0, unprintedAmount: 0, undeclaredTips: 0, projectedDiff: 0, checklist: [] as { id: number; label: string; done: boolean; blocking: boolean }[] };
   public readonly forecast        = MOCK_FORECAST;
   public readonly quarterly       = MOCK_QUARTERLY;
   public readonly taxBreakdown    = MOCK_TAX_BREAKDOWN;

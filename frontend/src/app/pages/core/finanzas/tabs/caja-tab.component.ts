@@ -11,29 +11,53 @@ import { FinanzasFacade } from '../facades/finanzas.facade';
 export class CajaTabComponent {
   protected readonly facade = inject(FinanzasFacade);
 
-  protected readonly view       = signal<'session' | 'preclose' | 'cancellations'>('session');
-  protected readonly movFilter  = signal<'all' | 'in' | 'out'>('all');
-  protected readonly cancelCat  = signal<string>('all');
+  protected readonly movFilter = signal<'all' | 'in' | 'out'>('all');
 
+  protected readonly s          = this.facade.cashSession;
   protected readonly theoretical = this.facade.cashTheoretical;
-  protected readonly s           = this.facade.cashSession;
+
+  // Detail modal
+  protected readonly modalOpen = signal(false);
+  protected readonly modalMovFilter = signal<'all' | 'in' | 'out'>('all');
+
+  // ── Computed ──
 
   protected readonly filteredMovements = computed(() => {
+    const session = this.s();
+    if (!session) return [];
     const f = this.movFilter();
-    return this.s().movements.filter(m => f === 'all' || m.type === f);
+    return session.movements.filter(m => f === 'all' || m.type === f);
   });
 
-  protected readonly filteredCancellations = computed(() => {
-    const cat = this.cancelCat();
-    return this.facade.cancellations.filter(c => cat === 'all' || c.category === cat);
+  protected readonly modalFilteredMovements = computed(() => {
+    const movements = this.facade.selectedSessionMovements();
+    const f = this.modalMovFilter();
+    return movements.filter(m => f === 'all' || m.type === f);
   });
 
-  protected readonly checklistDone = computed(() =>
-    this.facade.preClose.checklist.filter(c => c.done).length
-  );
-  protected readonly canClose = computed(() =>
-    this.facade.preClose.checklist.filter(c => c.blocking && !c.done).length === 0
-  );
+  protected readonly modalSession = computed(() => {
+    const item = this.facade.selectedSessionItem();
+    const summary = this.facade.selectedSessionSummary();
+    if (!item) return null;
+    return {
+      item,
+      summary,
+      movements: this.facade.selectedSessionMovements(),
+    };
+  });
+
+  // ── Detail modal ──
+
+  protected openDetail(uuid: string): void {
+    this.facade.loadSessionDetail(uuid);
+    this.modalOpen.set(true);
+  }
+
+  protected closeDetail(): void {
+    this.modalOpen.set(false);
+  }
+
+  // ── Helpers ──
 
   protected fmt(v: number): string { return this.facade.fmt(v); }
   protected fmtInt(n: number): string { return this.facade.fmtInt(n); }
@@ -48,27 +72,20 @@ export class CajaTabComponent {
     if (Math.abs(diff) < 500) return '#fbf2dc';
     return '#ffecec';
   }
-  protected categoryLabel(cat: string): string {
-    const map: Record<string, string> = { error: 'Error TPV', queja: 'Queja', fuga: 'Fuga', devolucion: 'Devolución', cancelacion: 'Cancelación', all: 'Todas' };
-    return map[cat] || cat;
-  }
-  protected categoryColor(cat: string): string {
-    const map: Record<string, string> = { error: '#0077cc', queja: '#d18a1c', fuga: '#ff4d4d', devolucion: '#7857d6', cancelacion: '#a0a0a0' };
-    return map[cat] || '#a0a0a0';
-  }
-  protected categoryBg(cat: string): string {
-    const map: Record<string, string> = { error: '#e8f0fb', queja: '#fbf2dc', fuga: '#ffecec', devolucion: '#f0e8fd', cancelacion: '#f4f4f4' };
-    return map[cat] || '#f4f4f4';
+
+  protected formatDateTime(dt: string | null): string {
+    if (!dt) return '—';
+    return this.facade.formatDateTime(dt);
   }
 
   protected sessionBreakdown(): { label: string; value: string; color: string }[] {
     const session = this.s();
-    const cashSales = this.facade.cashSummary()?.total_cash_payments ?? this.facade.byMethod.cash.v;
+    const cashSales = this.facade.cashSummary()?.total_cash_payments ?? 0;
     return [
-      { label: 'Fondo inicial',    value: this.fmt(session.initial),              color: '#5a5a5a' },
+      { label: 'Fondo inicial',    value: this.fmt(session?.initial ?? 0),        color: '#5a5a5a' },
       { label: 'Ventas efectivo',  value: this.fmt(cashSales),                    color: '#1a9e5a' },
-      { label: 'Entradas',         value: `+ ${this.fmt(session.cashIn)}`,        color: '#1a9e5a' },
-      { label: 'Salidas',          value: `− ${this.fmt(session.cashOut)}`,       color: '#ff4d4d' },
+      { label: 'Entradas',         value: `+ ${this.fmt(session?.cashIn ?? 0)}`,  color: '#1a9e5a' },
+      { label: 'Salidas',          value: `− ${this.fmt(session?.cashOut ?? 0)}`, color: '#ff4d4d' },
     ];
   }
 

@@ -29,6 +29,8 @@ final readonly class GetProductsReport
             noSales7d:     $result['no_sales_7d'],
             alertCount:    $result['alert_count'],
             byZone:        $result['by_zone'],
+            periodLabel:   $range->label,
+            restaurant:    $this->repository->getRestaurantInfo($command->restaurantId),
         );
     }
 }

@@ -153,6 +153,9 @@ export interface TpvCashSessionSummary {
   expected_amount: number;
   movements_count: number;
   payments_count: number;
+  tickets_count: number;
+  diners_count: number;
+  tips_card: number;
 }
 
 export interface TpvCashSessionListItem {
@@ -179,6 +182,7 @@ export interface TpvCashSessionListItem {
   net: number;
   mov_in: number;
   mov_out: number;
+  operator_name: string | null;
 }
 
 export interface TpvMenuItem {
