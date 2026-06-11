@@ -98,83 +98,70 @@
         </div>
       </div>
 
-      <div class="table-wrap">
-        <table class="rtable">
-          <thead>
-            <tr>
-              <th class="th-num">#</th>
-              <th class="th-product">Producto</th>
-              <th>Familia</th>
-              <th class="th-r">Uds</th>
-              <th class="th-r">Ingresos</th>
-              <th class="th-r">vs anterior</th>
-              <th class="th-r">% periodo</th>
-              <th class="th-r th-trend">Tendencia</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (sorted().length === 0) {
-              <tr>
-                <td colspan="8" class="td-empty">
-                  <div class="table-empty">
-                    <div class="table-empty-icon"><app-icon name="inbox" [size]="30" [strokeWidth]="1.6"/></div>
-                    <div class="table-empty-title">{{ search() ? 'Sin resultados para "' + search() + '"' : 'Sin productos en este periodo' }}</div>
-                    <div class="table-empty-sub">{{ search() ? 'Prueba con otro nombre o familia' : 'No hay líneas de venta registradas para el periodo seleccionado' }}</div>
-                  </div>
-                </td>
-              </tr>
-            } @else {
-              @for (p of sorted(); track p.name; let i = $index) {
-                @let ti = trendInfo(p.trend_spark);
-                <tr class="tr-clickable" (click)="openProduct(p)">
-                  <td class="td-num" [class.td-num--top]="i < 3">{{ i + 1 }}</td>
-                  <td class="td-product">
-                    <div class="product-cell">
-                      <span class="abc-badge" [style.color]="abcColor(p.abc)" [style.background]="abcColor(p.abc) + '18'">{{ p.abc }}</span>
-                      <span class="product-name">{{ p.name }}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="family-cell">
-                      <span class="family-dot" [style.background]="p.family_color"></span>
-                      <span class="family-text">{{ p.family }}</span>
-                    </span>
-                  </td>
-                  <td class="td-r mono">{{ p.units }}</td>
-                  <td class="td-r mono fw7">{{ fmt(p.revenue) }}</td>
-                  <td class="td-r">
-                    <span class="delta-cell mono" [style.color]="deltaColor(p.revDelta)">
-                      {{ deltaArrow(p.revDelta) }} {{ fmtDelta(p.revDelta) }}
-                    </span>
-                  </td>
-                  <td class="td-r">
-                    <div class="pct-cell">
-                      <div class="pct-bar-track"><div class="pct-bar" [style.width.%]="p.pct" [style.background]="p.family_color"></div></div>
-                      <span class="pct-val mono">{{ p.pct.toFixed(1).replace('.', ',') }}%</span>
-                    </div>
-                  </td>
-                  <td class="td-r">
-                    @if (ti) {
-                      <div class="trend-cell">
-                        <svg class="spark" viewBox="0 0 50 20" preserveAspectRatio="none">
-                          <path [attr.d]="sparkArea(p.trend_spark)" [attr.fill]="trendColor(ti.trend)" fill-opacity="0.15"/>
-                          <path [attr.d]="sparkPath(p.trend_spark)" fill="none" [attr.stroke]="trendColor(ti.trend)" stroke-width="1.3"/>
-                        </svg>
-                        @if (ti.delta !== null) {
-                          <span class="trend-arrow mono" [style.color]="trendColor(ti.trend)">{{ trendArrow(ti.trend) }} {{ ti.delta >= 0 ? '+' : '' }}{{ ti.delta.toFixed(1).replace('.', ',') }}%</span>
-                        } @else {
-                          <span class="trend-new">Nuevo</span>
-                        }
-                      </div>
+      <div class="rtable2">
+        <div class="rt-head">
+          <div class="rt-hc">#</div>
+          <div class="rt-hc">Producto</div>
+          <div class="rt-hc">Familia</div>
+          <div class="rt-hc rt-hc--r">Uds</div>
+          <div class="rt-hc rt-hc--r">Ingresos</div>
+          <div class="rt-hc rt-hc--r">vs anterior</div>
+          <div class="rt-hc rt-hc--r">% periodo</div>
+          <div class="rt-hc rt-hc--r">Tendencia</div>
+        </div>
+
+        @if (sorted().length === 0) {
+          <div class="table-empty">
+            <div class="table-empty-icon"><app-icon name="inbox" [size]="30" [strokeWidth]="1.6"/></div>
+            <div class="table-empty-title">{{ search() ? 'Sin resultados para "' + search() + '"' : 'Sin productos en este periodo' }}</div>
+            <div class="table-empty-sub">{{ search() ? 'Prueba con otro nombre o familia' : 'No hay líneas de venta registradas para el periodo seleccionado' }}</div>
+          </div>
+        } @else {
+          <cdk-virtual-scroll-viewport class="rt-vp" itemSize="57" minBufferPx="456" maxBufferPx="912" [style.height.px]="vpHeight()">
+            <div class="rt-row" *cdkVirtualFor="let p of sorted(); let i = index" (click)="openProduct(p)">
+              @let ti = trendInfo(p.trend_spark);
+              <div class="rt-c rt-num" [class.rt-num--top]="i < 3">{{ i + 1 }}</div>
+              <div class="rt-c rt-prod">
+                <span class="abc-badge" [style.color]="abcColor(p.abc)" [style.background]="abcColor(p.abc) + '18'">{{ p.abc }}</span>
+                <span class="product-name">{{ p.name }}</span>
+              </div>
+              <div class="rt-c">
+                <span class="family-cell">
+                  <span class="family-dot" [style.background]="p.family_color"></span>
+                  <span class="family-text">{{ p.family }}</span>
+                </span>
+              </div>
+              <div class="rt-c rt-c--r mono">{{ p.units }}</div>
+              <div class="rt-c rt-c--r mono fw7">{{ fmt(p.revenue) }}</div>
+              <div class="rt-c rt-c--r">
+                <span class="delta-cell mono" [style.color]="deltaColor(p.revDelta)">{{ deltaArrow(p.revDelta) }} {{ fmtDelta(p.revDelta) }}</span>
+              </div>
+              <div class="rt-c rt-c--r">
+                <div class="pct-cell">
+                  <div class="pct-bar-track"><div class="pct-bar" [style.width.%]="p.pct" [style.background]="p.family_color"></div></div>
+                  <span class="pct-val mono">{{ p.pct.toFixed(1).replace('.', ',') }}%</span>
+                </div>
+              </div>
+              <div class="rt-c rt-c--r">
+                @if (ti) {
+                  <div class="trend-cell">
+                    <svg class="spark" viewBox="0 0 50 20" preserveAspectRatio="none">
+                      <path [attr.d]="sparkArea(p.trend_spark)" [attr.fill]="trendColor(ti.trend)" fill-opacity="0.15"/>
+                      <path [attr.d]="sparkPath(p.trend_spark)" fill="none" [attr.stroke]="trendColor(ti.trend)" stroke-width="1.3"/>
+                    </svg>
+                    @if (ti.delta !== null) {
+                      <span class="trend-arrow mono" [style.color]="trendColor(ti.trend)">{{ trendArrow(ti.trend) }} {{ ti.delta >= 0 ? '+' : '' }}{{ ti.delta.toFixed(1).replace('.', ',') }}%</span>
                     } @else {
-                      <span class="rotation-dash mono">—</span>
+                      <span class="trend-new">Nuevo</span>
                     }
-                  </td>
-                </tr>
-              }
-            }
-          </tbody>
-        </table>
+                  </div>
+                } @else {
+                  <span class="rotation-dash mono">—</span>
+                }
+              </div>
+            </div>
+          </cdk-virtual-scroll-viewport>
+        }
       </div>
 
       <div class="table-footer">

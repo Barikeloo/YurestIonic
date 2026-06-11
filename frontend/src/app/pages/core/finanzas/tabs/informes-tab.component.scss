@@ -133,12 +133,13 @@
     font-family: 'DM Sans', sans-serif;
     color: #0d0d0d;
     border-bottom: 1px solid #f4f4f4;
+    vertical-align: middle;
   }
   tbody tr:last-child td { border-bottom: none; }
 }
 .align-right { text-align: right !important; }
-.td-file { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.file-icon { display: inline-flex; align-items: center; }
+.td-file { font-weight: 600; white-space: nowrap; }
+.file-icon { display: inline-flex; align-items: center; vertical-align: middle; margin-right: 8px; }
 .td-mono { font-family: 'DM Mono', monospace !important; color: #5a5a5a; }
 .td-muted { color: #5a5a5a !important; font-size: 14px !important; }
 .td-bold { font-weight: 600; color: #0d0d0d; }
@@ -400,7 +401,8 @@
   .toggle--on & { left: 23px; }
 }
 
-.row-actions { display: inline-flex; gap: 4px; justify-content: flex-end; }
+.row-actions { display: inline-flex; gap: 6px; justify-content: flex-end; }
+.row-actions .dl-btn { min-width: 116px; justify-content: center; }
 
 /* ── Export preview modal ──────────────────────────────────────────── */
 .dl-btn--ghost {

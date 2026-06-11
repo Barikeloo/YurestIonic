@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { SlicePipe } from '@angular/common';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 import { FinanzasFacade } from '../facades/finanzas.facade';
 import { IconComponent, type IconName } from '../../../../shared/components/icon/icon.component';
 import type { ProductReportItem } from '../models/finanzas.models';
@@ -32,7 +33,7 @@ const QMETA: Record<QuadrantKey, { color: string; label: string; icon: IconName;
   templateUrl: './productos-tab.component.html',
   styleUrls: ['./productos-tab.component.scss'],
   standalone: true,
-  imports: [FormsModule, SlicePipe, IconComponent],
+  imports: [FormsModule, SlicePipe, IconComponent, ScrollingModule],
 })
 export class ProductosTabComponent {
   protected readonly facade    = inject(FinanzasFacade);
@@ -111,6 +112,10 @@ export class ProductosTabComponent {
     const key = this.sortKey();
     return [...this.filtered()].sort((a, b) => key === 'units' ? b.units - a.units : b.revenue - a.revenue);
   });
+
+  // Virtual-scroll viewport height: grows with rows, capped (itemSize 57px).
+  protected readonly rankRowH = 57;
+  protected readonly vpHeight = computed(() => Math.min(this.sorted().length * this.rankRowH, 9 * this.rankRowH));
 
   protected readonly totalRevenue    = computed(() => this.enriched().reduce((s, p) => s + p.revenue, 0));
   protected readonly totalUnits      = computed(() => this.enriched().reduce((s, p) => s + p.units,   0));

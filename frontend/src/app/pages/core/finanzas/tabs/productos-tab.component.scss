@@ -32,11 +32,11 @@
 .kpi-sub { font-size: 13px; color: #a0a0a0; margin-top: 3px; }
 
 // legacy rows replaced — kept for skeleton fallback
-.top-row { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px; align-items: start; }
+.top-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
 
 // ── New layout rows ───────────────────────────────────────────────────────────
-.analytics-row     { display: grid; grid-template-columns: minmax(340px, 400px) 1fr 1fr; gap: 16px; align-items: start; }
-.operational-row   { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+.analytics-row     { display: grid; grid-template-columns: minmax(340px, 400px) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.operational-row   { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
 
 @media (max-width: 980px) {
   .analytics-row { grid-template-columns: 1fr 1fr; }
@@ -84,7 +84,7 @@
 }
 
 .vbar-chart { display: flex; align-items: flex-end; gap: 8px; height: 170px; padding-bottom: 4px; }
-.vbar-col   { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+.vbar-col   { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
 .vbar-pct   { font-size: 13px; font-family: 'DM Mono', monospace; font-weight: 700; color: #a0a0a0; margin-bottom: 4px; }
 .vbar-fill  { width: 100%; border-radius: 5px 5px 0 0; min-height: 3px; }
 .vbar-label { font-size: 13px; color: #5a5a5a; font-weight: 600; margin-top: 5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
@@ -264,7 +264,7 @@
 .filter-spacer  { flex: 1; }
 .filter-count   { font-size: 14px; color: #a0a0a0; white-space: nowrap; }
 
-.segment    { display: flex; gap: 3px; background: #f4f4f4; border-radius: 8px; padding: 4px; }
+.segment    { display: flex; flex-wrap: wrap; gap: 3px; row-gap: 4px; max-width: 100%; background: #f4f4f4; border-radius: 8px; padding: 4px; }
 .seg-btn {
   min-height: 40px; padding: 0 14px; border: none; background: transparent; border-radius: 6px;
   font-size: 14px; font-weight: 500; color: #7a7a7a; cursor: pointer;
@@ -1042,3 +1042,48 @@
   color: #a0a0a0;
   flex-shrink: 0;
 }
+
+// ── Ranking: virtual-scroll grid table ───────────────────────────────────────
+.rtable2 { display: flex; flex-direction: column; }
+
+.rt-head, .rt-row {
+  display: grid;
+  grid-template-columns: 42px minmax(140px, 1.6fr) minmax(90px, 1fr) 56px 96px 100px 120px 124px;
+  column-gap: 8px;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.rt-head {
+  padding-top: 12px; padding-bottom: 12px;
+  border-bottom: 1px solid #e8e8e8;
+  background: #fafafa;
+}
+.rt-hc   { font-size: 13px; color: #7a7a7a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+.rt-hc--r { text-align: right; }
+
+.rt-vp {
+  // height is bound inline (rows * itemSize, capped); see component
+  scrollbar-gutter: stable;
+  &::-webkit-scrollbar { width: 8px; }
+  &::-webkit-scrollbar-thumb { background: #d8d8d8; border-radius: 4px; }
+}
+
+.rt-row {
+  height: 57px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #f4f4f4;
+  cursor: pointer;
+  transition: background 0.1s;
+  &:hover { background: #fafafa; }
+  &:hover .product-name { color: #0077cc; text-decoration: underline; text-underline-offset: 3px; }
+}
+
+.rt-c   { min-width: 0; font-size: 16px; color: #3d3d3d; }
+.rt-c--r { text-align: right; }
+.rt-num { font-family: 'DM Mono', monospace; font-weight: 700; color: #a0a0a0; font-size: 14px;
+          &--top { color: #ff4d4d; } }
+.rt-prod { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.rt-prod .product-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rt-row .family-cell { min-width: 0; }
+.rt-row .family-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
