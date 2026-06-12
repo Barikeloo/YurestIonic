@@ -2,83 +2,70 @@
 
 namespace Tests\Unit\Tax\Application;
 
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Tax\Application\UpdateTax\UpdateTax;
 use App\Tax\Application\UpdateTax\UpdateTaxCommand;
 use App\Tax\Application\UpdateTax\UpdateTaxResponse;
 use App\Tax\Domain\Entity\Tax;
+use App\Tax\Domain\Event\TaxUpdated;
 use App\Tax\Domain\Exception\TaxNotFoundException;
 use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
-use App\Tax\Domain\ValueObject\TaxName;
-use App\Tax\Domain\ValueObject\TaxPercentage;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 class UpdateTaxTest extends TestCase
 {
-    protected function tearDown(): void
+    use MockeryPHPUnitIntegration;
+
+    private const TAX_ID = '00000000-0000-4000-8000-000000000000';
+
+    private function existingTax(): Tax
     {
-        Mockery::close();
+        // fromPersistence (not dddCreate) so the entity starts with no recorded
+        // events, mirroring a tax loaded from the repository.
+        return Tax::fromPersistence(
+            id: self::TAX_ID,
+            name: 'IVA General',
+            percentage: 21,
+            createdAt: new \DateTimeImmutable(),
+            updatedAt: new \DateTimeImmutable(),
+        );
     }
 
-    public function test_updates_tax_name(): void
+    public function test_updates_tax_name_and_publishes_event(): void
     {
         $repository = Mockery::mock(TaxRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
+        $tax = $this->existingTax();
 
-        $tax = Tax::dddCreate(TaxName::create('IVA General'), TaxPercentage::create(21));
+        $repository->shouldReceive('findById')->once()->with(self::TAX_ID)->andReturn($tax);
+        $repository->shouldReceive('save')->once();
+        $eventBus->shouldReceive('publish')->once()->with(Mockery::type(TaxUpdated::class));
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with($tax->id()->value())
-            ->andReturn($tax);
+        $useCase = new UpdateTax($repository, $eventBus);
 
-        $repository->shouldReceive('save')
-            ->once();
-
-        $auditRecorder->shouldReceive('record')
-            ->once();
-
-        $useCase = new UpdateTax($repository, $auditRecorder);
-
-        $response = $useCase(new UpdateTaxCommand(
-            id: $tax->id()->value(),
-            name: 'IVA Reducido',
-            restaurantId: '00000000-0000-4000-8000-000000000000',
-        ));
+        $response = $useCase(new UpdateTaxCommand(id: self::TAX_ID, name: 'IVA Reducido'));
 
         $this->assertInstanceOf(UpdateTaxResponse::class, $response);
         $this->assertSame('IVA Reducido', $response->name);
         $this->assertSame(21, $response->percentage);
     }
 
-    public function test_updates_tax_percentage(): void
+    public function test_updates_tax_percentage_and_publishes_event(): void
     {
         $repository = Mockery::mock(TaxRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
+        $tax = $this->existingTax();
 
-        $tax = Tax::dddCreate(TaxName::create('IVA General'), TaxPercentage::create(21));
+        $repository->shouldReceive('findById')->once()->with(self::TAX_ID)->andReturn($tax);
+        $repository->shouldReceive('save')->once();
+        $eventBus->shouldReceive('publish')->once()->with(Mockery::type(TaxUpdated::class));
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with($tax->id()->value())
-            ->andReturn($tax);
+        $useCase = new UpdateTax($repository, $eventBus);
 
-        $repository->shouldReceive('save')
-            ->once();
+        $response = $useCase(new UpdateTaxCommand(id: self::TAX_ID, percentage: 10));
 
-        $auditRecorder->shouldReceive('record')
-            ->once();
-
-        $useCase = new UpdateTax($repository, $auditRecorder);
-
-        $response = $useCase(new UpdateTaxCommand(
-            id: $tax->id()->value(),
-            percentage: 10,
-            restaurantId: '00000000-0000-4000-8000-000000000000',
-        ));
-
-        $this->assertInstanceOf(UpdateTaxResponse::class, $response);
         $this->assertSame('IVA General', $response->name);
         $this->assertSame(10, $response->percentage);
     }
@@ -86,50 +73,33 @@ class UpdateTaxTest extends TestCase
     public function test_throws_exception_when_not_found(): void
     {
         $repository = Mockery::mock(TaxRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with('non-existent-id')
-            ->andReturn(null);
-
+        $repository->shouldReceive('findById')->once()->with('non-existent-id')->andReturn(null);
         $repository->shouldNotReceive('save');
-        $auditRecorder->shouldNotReceive('record');
+        $eventBus->shouldNotReceive('publish');
 
-        $useCase = new UpdateTax($repository, $auditRecorder);
+        $useCase = new UpdateTax($repository, $eventBus);
 
         $this->expectException(TaxNotFoundException::class);
 
-        $useCase(new UpdateTaxCommand(
-            id: 'non-existent-id',
-            name: 'IVA',
-            restaurantId: '00000000-0000-4000-8000-000000000000',
-        ));
+        $useCase(new UpdateTaxCommand(id: 'non-existent-id', name: 'IVA'));
     }
 
-    public function test_skips_audit_when_no_changes(): void
+    public function test_publishes_no_event_when_nothing_changes(): void
     {
         $repository = Mockery::mock(TaxRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
+        $tax = $this->existingTax();
 
-        $tax = Tax::dddCreate(TaxName::create('IVA General'), TaxPercentage::create(21));
+        $repository->shouldReceive('findById')->once()->with(self::TAX_ID)->andReturn($tax);
+        $repository->shouldReceive('save')->once();
+        // No fields provided -> entity records nothing -> publish() called with no events.
+        $eventBus->shouldReceive('publish')->once()->withNoArgs();
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with($tax->id()->value())
-            ->andReturn($tax);
+        $useCase = new UpdateTax($repository, $eventBus);
 
-        $repository->shouldReceive('save')
-            ->once();
-
-        $auditRecorder->shouldNotReceive('record');
-
-        $useCase = new UpdateTax($repository, $auditRecorder);
-
-        $response = $useCase(new UpdateTaxCommand(
-            id: $tax->id()->value(),
-            restaurantId: '00000000-0000-4000-8000-000000000000',
-        ));
+        $response = $useCase(new UpdateTaxCommand(id: self::TAX_ID));
 
         $this->assertInstanceOf(UpdateTaxResponse::class, $response);
     }

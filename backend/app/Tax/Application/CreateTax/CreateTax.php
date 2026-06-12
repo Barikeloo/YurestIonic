@@ -2,10 +2,7 @@
 
 namespace App\Tax\Application\CreateTax;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
-use App\Shared\Domain\ValueObject\Uuid;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Tax\Domain\Entity\Tax;
 use App\Tax\Domain\Exception\TaxNameAlreadyExistsException;
 use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
@@ -16,7 +13,7 @@ class CreateTax
 {
     public function __construct(
         private TaxRepositoryInterface $taxRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(CreateTaxCommand $command): CreateTaxResponse
@@ -31,19 +28,7 @@ class CreateTax
         );
         $this->taxRepository->save($tax);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantId),
-            slug: ActionSlug::create('tax.created'),
-            entityType: 'tax',
-            entityId: $tax->id()->value(),
-            userId: $command->userId !== null ? Uuid::create($command->userId) : null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'tax_name' => $tax->name()->value(),
-                'percentage' => $tax->percentage()->value(),
-            ],
-        ));
+        $this->eventBus->publish(...$tax->pullDomainEvents());
 
         return CreateTaxResponse::create(
             id: $tax->id()->value(),
