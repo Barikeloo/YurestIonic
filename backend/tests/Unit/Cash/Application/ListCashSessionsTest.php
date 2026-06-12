@@ -18,6 +18,7 @@ use App\Sale\Domain\Entity\SalePayment;
 use App\Sale\Domain\ValueObject\PaymentMethod;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\User\Domain\Interfaces\UserRepositoryInterface;
 use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +28,7 @@ class ListCashSessionsTest extends TestCase
     private CashSessionRepositoryInterface&MockInterface $cashSessionRepository;
     private CashMovementRepositoryInterface&MockInterface $cashMovementRepository;
     private SalePaymentRepositoryInterface&MockInterface $salePaymentRepository;
+    private UserRepositoryInterface&MockInterface $userRepository;
     private ListCashSessions $useCase;
 
     protected function setUp(): void
@@ -34,11 +36,14 @@ class ListCashSessionsTest extends TestCase
         $this->cashSessionRepository = Mockery::mock(CashSessionRepositoryInterface::class);
         $this->cashMovementRepository = Mockery::mock(CashMovementRepositoryInterface::class);
         $this->salePaymentRepository = Mockery::mock(SalePaymentRepositoryInterface::class);
+        $this->userRepository = Mockery::mock(UserRepositoryInterface::class);
+        $this->userRepository->shouldReceive('findById')->andReturn(null);
 
         $this->useCase = new ListCashSessions(
             $this->cashSessionRepository,
             $this->cashMovementRepository,
             $this->salePaymentRepository,
+            $this->userRepository,
         );
     }
 
@@ -79,7 +84,7 @@ class ListCashSessionsTest extends TestCase
         $session = $this->createClosedSession();
 
         $this->cashSessionRepository
-            ->shouldReceive('findClosedByRestaurantId')
+            ->shouldReceive('findByRestaurantId')
             ->once()
             ->andReturn([$session]);
 
@@ -123,7 +128,7 @@ class ListCashSessionsTest extends TestCase
         );
 
         $this->cashSessionRepository
-            ->shouldReceive('findClosedByRestaurantId')
+            ->shouldReceive('findByRestaurantId')
             ->once()
             ->andReturn([]);
 
@@ -142,7 +147,7 @@ class ListCashSessionsTest extends TestCase
         $session = $this->createClosedSession();
 
         $this->cashSessionRepository
-            ->shouldReceive('findClosedByRestaurantId')
+            ->shouldReceive('findByRestaurantId')
             ->once()
             ->andReturn([$session]);
 
