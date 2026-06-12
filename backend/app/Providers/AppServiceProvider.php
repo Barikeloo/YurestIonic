@@ -125,6 +125,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Reporting\Domain\Interfaces\ReportExportStorageInterface::class, \App\Reporting\Infrastructure\Persistence\LocalReportExportStorage::class);
         $this->app->bind(\App\Reporting\Application\Shared\ReportFileGeneratorInterface::class, \App\Reporting\Infrastructure\Services\ReportFileGenerator::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
+
+        $this->app->bind(\App\Shared\Application\Context\RequestContextInterface::class, \App\Shared\Infrastructure\Context\HttpRequestContext::class);
+
+        // Synchronous domain event bus. Subscribers are appended as modules adopt it.
+        $this->app->singleton(\App\Shared\Application\Event\EventBusInterface::class, static function ($app): \App\Shared\Infrastructure\Event\InMemorySyncEventBus {
+            return new \App\Shared\Infrastructure\Event\InMemorySyncEventBus(
+                $app->make(\App\Audit\Application\Subscriber\AuditEventSubscriber::class),
+            );
+        });
     }
 
     public function boot(): void {}
