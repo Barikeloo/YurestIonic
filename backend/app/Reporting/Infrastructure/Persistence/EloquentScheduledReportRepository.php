@@ -142,7 +142,7 @@ final class EloquentScheduledReportRepository implements ScheduledReportReposito
             'report_type'          => $row->report_type,
             'format'               => $row->format,
             'frequency'            => $row->frequency,
-            'time'                 => $row->time,
+            'time'                 => substr((string) $row->time, 0, 5),
             'weekday'              => $row->weekday !== null ? (int) $row->weekday : null,
             'day_of_month'         => $row->day_of_month !== null ? (int) $row->day_of_month : null,
             'recipients'           => json_decode($row->recipients, true),

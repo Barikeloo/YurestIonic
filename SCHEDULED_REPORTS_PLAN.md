@@ -104,11 +104,21 @@ Cada uno con Command + (Response si aplica) + excepciones de dominio:
   - **Modal crear/editar** (botón "+ Nueva programación"): selects de tipo de informe, frecuencia (+ weekday/day-of-month condicional), hora, formato, input de destinatarios (varios), activo.
   - Mostrar `next_run_at` formateados y badges de formato/estado (estilos `.fmt-badge`, `.toggle` ya existentes).
 
-## FASE 7 — Verificación
-- [ ] **Tinker**: crear programación → `ListScheduledReports` → `SendScheduledReportNow` (revisar `storage/logs/laravel.log` por el email + adjunto) → `DispatchDueScheduledReports(now)` con una `next_run_at` en el pasado → comprobar `last_run_at`/`next_run_at` recalculados.
-- [ ] `NextRunCalculator`: casos diario/semanal/mensual/trimestral con `now` antes/después de la hora.
-- [ ] **Playwright (1280×800, login barmanolo@gmail.com / 12345678)**: abrir tab Programados, crear una programación en el modal, ver que aparece en la tabla, toggle, editar, "enviar ahora".
-- [x] `tsc --noEmit -p tsconfig.app.json` limpio (ejecutado, sin errores).
+## FASE 7 — Verificación  ✅ COMPLETA
+- [x] **Tests unitarios** (Application): Create/Update/Delete/Toggle/List/SendNow/DispatchDue + `NextRunCalculator` (16 casos diario/semanal/mensual/trimestral con `now` antes/después, clamp fin de mes, saltos de año/trimestre).
+- [x] **Feature tests HTTP** (`ScheduledReportsTest`, 12): los 6 endpoints + auth 401 + validación 422 + aislamiento por restaurante + 404s.
+- [x] **Feature test de generación** (`ReportFileGeneratorTest`): PDF (products/families/cash/tips) + CSV (products/cash/tips) + taxes PDF/CSV. *daily y families-CSV usan `HOUR()` (MySQL) → no corren en SQLite, cubiertos por e2e.*
+- [x] **Playwright e2e** (`e2e/specs/finanzas/scheduled-reports.spec.ts`, proyecto `stateful`): tab Programados → crear en modal → toggle → editar tipo → enviar ahora (genera PDF real) → borrar. 5/5 verde.
+- [x] `tsc --noEmit -p tsconfig.app.json` limpio.
+
+### Bugs reales encontrados y corregidos durante la verificación
+1. `ScheduledReportMail`: `readonly $subject` colisionaba con `Mailable::$subject` → renombrado `mailSubject` (rompía TODO envío).
+2. Acoplamiento de capas: casos de uso dependían de `final ReportFileGenerator` → extraída `ReportFileGeneratorInterface` (puerto) + binding.
+3. Migración `change_time_column_type`: `MODIFY COLUMN` (MySQL) rompía los tests SQLite → guardada por driver.
+4. `time` se devolvía como `HH:MM:SS` (columna TIME) → el edit reenviaba con segundos y fallaba la validación `HH:MM` → normalizado a `HH:MM` en `rowToArray`.
+5. `next_run_at`/`last_run_at` eran `TIMESTAMP` (límite 2038) pero los inactivos usan centinela `9999-12-31` → cambiadas a `dateTime` (+ migración ALTER por driver).
+6. `ReportFileGenerator` PDF: no pasaba `generatedAt` (5 vistas), ni `byZone`/`stockCritical` (products), ni `prevTotal` (families), y tips pasaba `items` en vez de `employees`/`totalTips` → cualquier informe PDF programado fallaba.
+7. `DateRange::lastQuarter()` usaba etiquetas `Q1..Q4` pero `forQuarter` espera `T1..T4` → cualquier informe **trimestral** programado lanzaba excepción.
 
 ---
 

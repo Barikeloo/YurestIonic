@@ -21,8 +21,11 @@ return new class extends Migration
             $table->json('recipients');
             $table->string('name');
             $table->boolean('active')->default(true);
-            $table->timestamp('last_run_at')->nullable();
-            $table->timestamp('next_run_at')->index();
+            // dateTime (not timestamp) so inactive reports can park next_run_at
+            // at the far-future sentinel 9999-12-31, beyond the MySQL TIMESTAMP
+            // 2038 limit.
+            $table->dateTime('last_run_at')->nullable();
+            $table->dateTime('next_run_at')->index();
             $table->uuid('created_by_user_uuid')->nullable();
             $table->timestamps();
             $table->softDeletes();

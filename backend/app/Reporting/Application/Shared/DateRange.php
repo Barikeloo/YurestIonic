@@ -122,19 +122,20 @@ final readonly class DateRange
         $now = new \DateTimeImmutable('now');
         $month = (int) $now->format('n');
 
+        // forQuarter expects T1-T4 labels (see $ranges in forQuarter()).
         $quarterMap = [
-            1 => ['year' => (int) $now->format('Y') - 1, 'quarter' => 'Q4'],
-            2 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q1'],
-            3 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q1'],
-            4 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q1'],
-            5 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q2'],
-            6 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q2'],
-            7 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q2'],
-            8 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q3'],
-            9 => ['year' => (int) $now->format('Y'),     'quarter' => 'Q3'],
-            10 => ['year' => (int) $now->format('Y'),    'quarter' => 'Q3'],
-            11 => ['year' => (int) $now->format('Y'),    'quarter' => 'Q4'],
-            12 => ['year' => (int) $now->format('Y'),    'quarter' => 'Q4'],
+            1 => ['year' => (int) $now->format('Y') - 1, 'quarter' => 'T4'],
+            2 => ['year' => (int) $now->format('Y'),     'quarter' => 'T1'],
+            3 => ['year' => (int) $now->format('Y'),     'quarter' => 'T1'],
+            4 => ['year' => (int) $now->format('Y'),     'quarter' => 'T1'],
+            5 => ['year' => (int) $now->format('Y'),     'quarter' => 'T2'],
+            6 => ['year' => (int) $now->format('Y'),     'quarter' => 'T2'],
+            7 => ['year' => (int) $now->format('Y'),     'quarter' => 'T2'],
+            8 => ['year' => (int) $now->format('Y'),     'quarter' => 'T3'],
+            9 => ['year' => (int) $now->format('Y'),     'quarter' => 'T3'],
+            10 => ['year' => (int) $now->format('Y'),    'quarter' => 'T3'],
+            11 => ['year' => (int) $now->format('Y'),    'quarter' => 'T4'],
+            12 => ['year' => (int) $now->format('Y'),    'quarter' => 'T4'],
         ];
 
         $prev = $quarterMap[$month];
