@@ -63,8 +63,13 @@ Que el módulo Tax **deje de depender del módulo Audit**: en vez de inyectar `A
 - [x] Suite completa en verde: **941 passed**.
 - [ ] Commit(s) en inglés sin co-author.
 
-## FASE 5 — (Opcional, fuera del piloto) Replicar patrón
-- [ ] Documentar "cómo añadir eventos a un módulo" y replicar en el siguiente módulo pequeño (Zone), validando que el patrón escala.
+## FASE 5 — Replicar patrón en Zone  ✅
+- [x] Eventos `ZoneCreated/ZoneUpdated/ZoneDeleted` + entidad `Zone` con `RecordsEvents`.
+- [x] `CreateZone/UpdateZone/DeleteZone` publican por el bus (sin `AuditRecorder`); commands/requests limpios.
+- [x] Tests unit actualizados + `ZoneEntityTest` (eventos) + feature `ZoneAuditEventsTest`.
+- [x] Suite completa en verde: **947 passed**.
+
+> El patrón escala de forma mecánica. Siguientes módulos (Family, Product, etc.) pueden migrarse igual cuando convenga (la mayoría de los 69 casos de uso siguen usando `AuditRecorder` directo, lo cual es válido — se migran incrementalmente).
 
 ---
 

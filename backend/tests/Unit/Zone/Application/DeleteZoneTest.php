@@ -2,73 +2,52 @@
 
 namespace Tests\Unit\Zone\Application;
 
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Zone\Application\DeleteZone\DeleteZone;
 use App\Zone\Application\DeleteZone\DeleteZoneCommand;
 use App\Zone\Domain\Entity\Zone;
+use App\Zone\Domain\Event\ZoneDeleted;
 use App\Zone\Domain\Exception\ZoneNotFoundException;
 use App\Zone\Domain\Interfaces\ZoneRepositoryInterface;
-use App\Zone\Domain\ValueObject\ZoneName;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 class DeleteZoneTest extends TestCase
 {
-    protected function tearDown(): void
-    {
-        Mockery::close();
-    }
+    use MockeryPHPUnitIntegration;
 
-    public function test_deletes_zone(): void
+    private const ZONE_ID = '00000000-0000-4000-8000-000000000000';
+
+    public function test_deletes_zone_and_publishes_event(): void
     {
         $repository = Mockery::mock(ZoneRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $zone = Zone::dddCreate(ZoneName::create('To delete'));
+        $zone = Zone::fromPersistence(self::ZONE_ID, 'To delete', new \DateTimeImmutable(), new \DateTimeImmutable());
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with($zone->id()->value())
-            ->andReturn($zone);
+        $repository->shouldReceive('findById')->once()->with(self::ZONE_ID)->andReturn($zone);
+        $repository->shouldReceive('deleteById')->once()->with(self::ZONE_ID)->andReturnTrue();
+        $eventBus->shouldReceive('publish')->once()->with(Mockery::type(ZoneDeleted::class));
 
-        $repository->shouldReceive('deleteById')
-            ->once()
-            ->with($zone->id()->value())
-            ->andReturnTrue();
+        $useCase = new DeleteZone($repository, $eventBus);
 
-        $auditRecorder->shouldReceive('record')
-            ->once();
-
-        $useCase = new DeleteZone($repository, $auditRecorder);
-
-        $useCase(new DeleteZoneCommand(
-            id: $zone->id()->value(),
-            restaurantId: '00000000-0000-4000-8000-000000000000',
-        ));
-
-        $this->addToAssertionCount(1);
+        $useCase(new DeleteZoneCommand(id: self::ZONE_ID));
     }
 
     public function test_throws_exception_when_not_found(): void
     {
         $repository = Mockery::mock(ZoneRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with('non-existent-id')
-            ->andReturn(null);
-
+        $repository->shouldReceive('findById')->once()->with('non-existent-id')->andReturn(null);
         $repository->shouldNotReceive('deleteById');
-        $auditRecorder->shouldNotReceive('record');
+        $eventBus->shouldNotReceive('publish');
 
-        $useCase = new DeleteZone($repository, $auditRecorder);
+        $useCase = new DeleteZone($repository, $eventBus);
 
         $this->expectException(ZoneNotFoundException::class);
 
-        $useCase(new DeleteZoneCommand(
-            id: 'non-existent-id',
-            restaurantId: '00000000-0000-4000-8000-000000000000',
-        ));
+        $useCase(new DeleteZoneCommand(id: 'non-existent-id'));
     }
 }

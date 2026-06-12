@@ -2,12 +2,18 @@
 
 namespace App\Zone\Domain\Entity;
 
+use App\Shared\Domain\Event\RecordsEvents;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\Zone\Domain\Event\ZoneCreated;
+use App\Zone\Domain\Event\ZoneDeleted;
+use App\Zone\Domain\Event\ZoneUpdated;
 use App\Zone\Domain\ValueObject\ZoneName;
 
 class Zone
 {
+    use RecordsEvents;
+
     private function __construct(
         private Uuid $id,
         private ZoneName $name,
@@ -19,12 +25,19 @@ class Zone
     {
         $now = DomainDateTime::now();
 
-        return new self(
+        $zone = new self(
             id: Uuid::generate(),
             name: $name,
             createdAt: $now,
             updatedAt: $now,
         );
+
+        $zone->recordEvent(new ZoneCreated(
+            zoneId: $zone->id->value(),
+            name: $zone->name->value(),
+        ));
+
+        return $zone;
     }
 
     public static function fromPersistence(
@@ -43,8 +56,24 @@ class Zone
 
     public function rename(ZoneName $name): void
     {
+        $before = ['name' => $this->name->value()];
+
         $this->name = $name;
         $this->touch();
+
+        $this->recordEvent(new ZoneUpdated(
+            zoneId: $this->id->value(),
+            before: $before,
+            after: ['name' => $this->name->value()],
+        ));
+    }
+
+    public function delete(): void
+    {
+        $this->recordEvent(new ZoneDeleted(
+            zoneId: $this->id->value(),
+            name: $this->name->value(),
+        ));
     }
 
     public function id(): Uuid
