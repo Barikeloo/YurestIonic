@@ -2,73 +2,52 @@
 
 namespace Tests\Unit\Family\Application;
 
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Family\Application\DeleteFamily\DeleteFamily;
 use App\Family\Application\DeleteFamily\DeleteFamilyCommand;
 use App\Family\Domain\Entity\Family;
+use App\Family\Domain\Event\FamilyDeleted;
 use App\Family\Domain\Exception\FamilyNotFoundException;
 use App\Family\Domain\Interfaces\FamilyRepositoryInterface;
-use App\Family\Domain\ValueObject\FamilyName;
+use App\Shared\Application\Event\EventBusInterface;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 class DeleteFamilyTest extends TestCase
 {
-    protected function tearDown(): void
-    {
-        Mockery::close();
-    }
+    use MockeryPHPUnitIntegration;
 
-    public function test_deletes_family(): void
+    private const FAMILY_ID = '00000000-0000-4000-8000-000000000000';
+
+    public function test_deletes_family_and_publishes_event(): void
     {
         $repository = Mockery::mock(FamilyRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $family = Family::dddCreate(FamilyName::create('To delete'));
+        $family = Family::fromPersistence(self::FAMILY_ID, 'To delete', true, new \DateTimeImmutable(), new \DateTimeImmutable());
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with($family->id()->value())
-            ->andReturn($family);
+        $repository->shouldReceive('findById')->once()->with(self::FAMILY_ID)->andReturn($family);
+        $repository->shouldReceive('deleteById')->once()->with(self::FAMILY_ID)->andReturnTrue();
+        $eventBus->shouldReceive('publish')->once()->with(Mockery::type(FamilyDeleted::class));
 
-        $repository->shouldReceive('deleteById')
-            ->once()
-            ->with($family->id()->value())
-            ->andReturnTrue();
+        $useCase = new DeleteFamily($repository, $eventBus);
 
-        $auditRecorder->shouldReceive('record')
-            ->once();
-
-        $useCase = new DeleteFamily($repository, $auditRecorder);
-
-        $useCase(new DeleteFamilyCommand(
-            id: $family->id()->value(),
-            restaurantId: '00000000-0000-4000-8000-000000000000',
-        ));
-
-        $this->addToAssertionCount(1);
+        $useCase(new DeleteFamilyCommand(id: self::FAMILY_ID));
     }
 
     public function test_throws_exception_when_not_found(): void
     {
         $repository = Mockery::mock(FamilyRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with('non-existent-id')
-            ->andReturn(null);
-
+        $repository->shouldReceive('findById')->once()->with('non-existent-id')->andReturn(null);
         $repository->shouldNotReceive('deleteById');
-        $auditRecorder->shouldNotReceive('record');
+        $eventBus->shouldNotReceive('publish');
 
-        $useCase = new DeleteFamily($repository, $auditRecorder);
+        $useCase = new DeleteFamily($repository, $eventBus);
 
         $this->expectException(FamilyNotFoundException::class);
 
-        $useCase(new DeleteFamilyCommand(
-            id: 'non-existent-id',
-            restaurantId: '00000000-0000-4000-8000-000000000000',
-        ));
+        $useCase(new DeleteFamilyCommand(id: 'non-existent-id'));
     }
 }

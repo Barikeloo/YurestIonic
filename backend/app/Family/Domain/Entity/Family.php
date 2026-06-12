@@ -2,12 +2,18 @@
 
 namespace App\Family\Domain\Entity;
 
+use App\Family\Domain\Event\FamilyCreated;
+use App\Family\Domain\Event\FamilyDeleted;
+use App\Family\Domain\Event\FamilyUpdated;
 use App\Family\Domain\ValueObject\FamilyName;
+use App\Shared\Domain\Event\RecordsEvents;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 
 class Family
 {
+    use RecordsEvents;
+
     private function __construct(
         private Uuid $id,
         private FamilyName $name,
@@ -20,13 +26,20 @@ class Family
     {
         $now = DomainDateTime::now();
 
-        return new self(
+        $family = new self(
             id: Uuid::generate(),
             name: $name,
             active: true,
             createdAt: $now,
             updatedAt: $now,
         );
+
+        $family->recordEvent(new FamilyCreated(
+            familyId: $family->id->value(),
+            name: $family->name->value(),
+        ));
+
+        return $family;
     }
 
     public static function fromPersistence(
@@ -47,8 +60,24 @@ class Family
 
     public function rename(FamilyName $name): void
     {
+        $before = ['name' => $this->name->value()];
+
         $this->name = $name;
         $this->touch();
+
+        $this->recordEvent(new FamilyUpdated(
+            familyId: $this->id->value(),
+            before: $before,
+            after: ['name' => $this->name->value()],
+        ));
+    }
+
+    public function delete(): void
+    {
+        $this->recordEvent(new FamilyDeleted(
+            familyId: $this->id->value(),
+            name: $this->name->value(),
+        ));
     }
 
     public function activate(): void
