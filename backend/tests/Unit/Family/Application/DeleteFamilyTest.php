@@ -24,7 +24,7 @@ class DeleteFamilyTest extends TestCase
         $repository = Mockery::mock(FamilyRepositoryInterface::class);
         $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $family = Family::fromPersistence(self::FAMILY_ID, 'To delete', true, new \DateTimeImmutable(), new \DateTimeImmutable());
+        $family = Family::fromPersistence(self::FAMILY_ID, 'To delete', null, null, true, new \DateTimeImmutable(), new \DateTimeImmutable());
 
         $repository->shouldReceive('findById')->once()->with(self::FAMILY_ID)->andReturn($family);
         $repository->shouldReceive('deleteById')->once()->with(self::FAMILY_ID)->andReturnTrue();

@@ -17,6 +17,8 @@ class EloquentFamily extends Model
         'restaurant_id',
         'uuid',
         'name',
+        'color',
+        'icon',
         'active',
     ];
 

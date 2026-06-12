@@ -26,6 +26,8 @@ class SetFamilyActiveTest extends TestCase
         $family = Family::fromPersistence(
             id: '00000000-0000-4000-8000-000000000001',
             name: 'Entrantes',
+            color: null,
+            icon: null,
             active: false,
             createdAt: new \DateTimeImmutable('2026-01-01 00:00:00'),
             updatedAt: new \DateTimeImmutable('2026-01-01 00:00:00'),

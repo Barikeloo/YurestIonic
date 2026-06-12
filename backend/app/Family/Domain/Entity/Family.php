@@ -5,6 +5,8 @@ namespace App\Family\Domain\Entity;
 use App\Family\Domain\Event\FamilyCreated;
 use App\Family\Domain\Event\FamilyDeleted;
 use App\Family\Domain\Event\FamilyUpdated;
+use App\Family\Domain\ValueObject\FamilyColor;
+use App\Family\Domain\ValueObject\FamilyIcon;
 use App\Family\Domain\ValueObject\FamilyName;
 use App\Shared\Domain\Event\RecordsEvents;
 use App\Shared\Domain\ValueObject\DomainDateTime;
@@ -17,18 +19,22 @@ class Family
     private function __construct(
         private Uuid $id,
         private FamilyName $name,
+        private ?FamilyColor $color,
+        private ?FamilyIcon $icon,
         private bool $active,
         private DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
     ) {}
 
-    public static function dddCreate(FamilyName $name): self
+    public static function dddCreate(FamilyName $name, ?FamilyColor $color = null, ?FamilyIcon $icon = null): self
     {
         $now = DomainDateTime::now();
 
         $family = new self(
             id: Uuid::generate(),
             name: $name,
+            color: $color,
+            icon: $icon,
             active: true,
             createdAt: $now,
             updatedAt: $now,
@@ -37,6 +43,8 @@ class Family
         $family->recordEvent(new FamilyCreated(
             familyId: $family->id->value(),
             name: $family->name->value(),
+            color: $family->color?->value(),
+            icon: $family->icon?->value(),
         ));
 
         return $family;
@@ -45,6 +53,8 @@ class Family
     public static function fromPersistence(
         string $id,
         string $name,
+        ?string $color,
+        ?string $icon,
         bool $active,
         \DateTimeImmutable $createdAt,
         \DateTimeImmutable $updatedAt,
@@ -52,23 +62,27 @@ class Family
         return new self(
             id: Uuid::create($id),
             name: FamilyName::create($name),
+            color: $color !== null ? FamilyColor::create($color) : null,
+            icon: $icon !== null ? FamilyIcon::create($icon) : null,
             active: $active,
             createdAt: DomainDateTime::create($createdAt),
             updatedAt: DomainDateTime::create($updatedAt),
         );
     }
 
-    public function rename(FamilyName $name): void
+    public function update(FamilyName $name, ?FamilyColor $color, ?FamilyIcon $icon): void
     {
-        $before = ['name' => $this->name->value()];
+        $before = $this->appearanceSnapshot();
 
         $this->name = $name;
+        $this->color = $color;
+        $this->icon = $icon;
         $this->touch();
 
         $this->recordEvent(new FamilyUpdated(
             familyId: $this->id->value(),
             before: $before,
-            after: ['name' => $this->name->value()],
+            after: $this->appearanceSnapshot(),
         ));
     }
 
@@ -106,6 +120,16 @@ class Family
         return $this->name;
     }
 
+    public function color(): ?FamilyColor
+    {
+        return $this->color;
+    }
+
+    public function icon(): ?FamilyIcon
+    {
+        return $this->icon;
+    }
+
     public function isActive(): bool
     {
         return $this->active;
@@ -119,6 +143,18 @@ class Family
     public function updatedAt(): DomainDateTime
     {
         return $this->updatedAt;
+    }
+
+    /**
+     * @return array{name: string, color: ?string, icon: ?string}
+     */
+    private function appearanceSnapshot(): array
+    {
+        return [
+            'name' => $this->name->value(),
+            'color' => $this->color?->value(),
+            'icon' => $this->icon?->value(),
+        ];
     }
 
     private function touch(): void

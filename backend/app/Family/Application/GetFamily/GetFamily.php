@@ -19,6 +19,8 @@ class GetFamily
         return GetFamilyResponse::create(
             id: $family->id()->value(),
             name: $family->name()->value(),
+            color: $family->color()?->value(),
+            icon: $family->icon()?->value(),
             active: $family->isActive(),
             createdAt: $family->createdAt()->format(\DateTimeInterface::ATOM),
             updatedAt: $family->updatedAt()->format(\DateTimeInterface::ATOM),

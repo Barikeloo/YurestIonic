@@ -13,6 +13,8 @@ final readonly class FamilyCreated implements AuditableEvent
     public function __construct(
         private string $familyId,
         private string $name,
+        private ?string $color = null,
+        private ?string $icon = null,
     ) {
         $this->occurredOn = new \DateTimeImmutable();
     }
@@ -39,7 +41,11 @@ final readonly class FamilyCreated implements AuditableEvent
 
     public function auditMetadata(): array
     {
-        return ['family_name' => $this->name];
+        return [
+            'family_name' => $this->name,
+            'color' => $this->color,
+            'icon' => $this->icon,
+        ];
     }
 
     public function auditBefore(): ?array

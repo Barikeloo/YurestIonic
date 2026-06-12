@@ -23,6 +23,8 @@ class EloquentFamilyRepository implements FamilyRepositoryInterface
             [
                 'restaurant_id' => $restaurantId,
                 'name' => $family->name()->value(),
+                'color' => $family->color()?->value(),
+                'icon' => $family->icon()?->value(),
                 'active' => $family->isActive(),
                 'created_at' => $family->createdAt()->value(),
                 'updated_at' => $family->updatedAt()->value(),
@@ -46,6 +48,8 @@ class EloquentFamilyRepository implements FamilyRepositoryInterface
         return Family::fromPersistence(
             $model->uuid,
             $model->name,
+            $model->color,
+            $model->icon,
             (bool) $model->active,
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),
@@ -69,6 +73,8 @@ class EloquentFamilyRepository implements FamilyRepositoryInterface
         return $models->map(static fn (EloquentFamily $model): Family => Family::fromPersistence(
             $model->uuid,
             $model->name,
+            $model->color,
+            $model->icon,
             (bool) $model->active,
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),

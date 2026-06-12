@@ -3,6 +3,7 @@
 namespace App\Family\Infrastructure\Entrypoint\Http\Requests;
 
 use App\Family\Application\CreateFamily\CreateFamilyCommand;
+use App\Family\Domain\ValueObject\FamilyIcon;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -27,6 +28,8 @@ final class CreateFamilyRequest extends FormRequest
                     ->where('restaurant_id', $tenantContext->requireRestaurantId())
                     ->whereNull('deleted_at'),
             ],
+            'color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'icon' => ['nullable', 'string', Rule::in(FamilyIcon::ALLOWED)],
         ];
     }
 
@@ -34,6 +37,8 @@ final class CreateFamilyRequest extends FormRequest
     {
         return new CreateFamilyCommand(
             name: (string) $this->input('name'),
+            color: $this->filled('color') ? (string) $this->input('color') : null,
+            icon: $this->filled('icon') ? (string) $this->input('icon') : null,
         );
     }
 }

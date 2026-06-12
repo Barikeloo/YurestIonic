@@ -22,7 +22,7 @@ class UpdateFamilyTest extends TestCase
 
     private function existingFamily(): Family
     {
-        return Family::fromPersistence(self::FAMILY_ID, 'Original', true, new \DateTimeImmutable(), new \DateTimeImmutable());
+        return Family::fromPersistence(self::FAMILY_ID, 'Original', null, null, true, new \DateTimeImmutable(), new \DateTimeImmutable());
     }
 
     public function test_updates_family_name_and_publishes_event(): void

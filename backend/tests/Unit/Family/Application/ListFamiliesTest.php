@@ -50,6 +50,8 @@ class ListFamiliesTest extends TestCase
         $family1 = Family::fromPersistence(
             id: '00000000-0000-4000-8000-000000000001',
             name: 'Entrantes',
+            color: null,
+            icon: null,
             active: true,
             createdAt: new \DateTimeImmutable('2026-01-01 00:00:00'),
             updatedAt: new \DateTimeImmutable('2026-01-01 00:00:00'),
@@ -57,6 +59,8 @@ class ListFamiliesTest extends TestCase
         $family2 = Family::fromPersistence(
             id: '00000000-0000-4000-8000-000000000002',
             name: 'Postres',
+            color: null,
+            icon: null,
             active: false,
             createdAt: new \DateTimeImmutable('2026-01-01 00:00:00'),
             updatedAt: new \DateTimeImmutable('2026-01-01 00:00:00'),
