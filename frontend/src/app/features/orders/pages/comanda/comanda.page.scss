@@ -152,6 +152,9 @@
 }
 
 .family-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   padding: 0 22px;
   min-height: 48px;
   border-radius: 999px;
@@ -161,15 +164,19 @@
   cursor: pointer;
   background: #F4F4F4;
   border: none;
+  box-shadow: inset 3px 0 0 0 var(--fam-color, transparent);
   font-family: inherit;
   white-space: nowrap;
   transition: all 0.15s;
   touch-action: manipulation;
 
-  &.active { background: #FF4D4D; color: #fff; }
+  &.active { background: #FF4D4D; color: #fff; box-shadow: none; }
   &:hover:not(.active) { background: #E8E8E8; }
   &:active { transform: scale(0.97); }
 }
+
+.family-tab-icon { color: var(--fam-color, currentColor); }
+.family-tab.active .family-tab-icon { color: #fff; }
 
 .products-search {
   padding: 14px 24px;

@@ -16,6 +16,7 @@ import {
   MenuConfigModalComponent,
   MenuConfigResult,
 } from '../../components/menu-config-modal/menu-config-modal.component';
+import { IconComponent } from '../../../../shared/components/icon/icon.component';
 
 const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#E74C3C'];
 
@@ -23,7 +24,7 @@ const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#
   selector: 'app-comanda',
   templateUrl: './comanda.page.html',
   styleUrls: ['./comanda.page.scss'],
-  imports: [FormsModule, FilterByPipe, SearchPipe, ProductConfigModalComponent, MenuConfigModalComponent],
+  imports: [FormsModule, FilterByPipe, SearchPipe, ProductConfigModalComponent, MenuConfigModalComponent, IconComponent],
   providers: [ComandaFacade],
 })
 export class ComandaPage implements OnInit, OnDestroy {

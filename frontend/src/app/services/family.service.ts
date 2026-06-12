@@ -5,6 +5,8 @@ import { BaseApiService } from '../core/services/api/base-api.service';
 export interface FamilyItem {
   id: string;
   name: string;
+  color: string | null;
+  icon: string | null;
   active: boolean;
   created_at: string;
   updated_at: string;
@@ -12,10 +14,14 @@ export interface FamilyItem {
 
 interface CreateFamilyPayload {
   name: string;
+  color?: string | null;
+  icon?: string | null;
 }
 
 interface UpdateFamilyPayload {
   name: string;
+  color?: string | null;
+  icon?: string | null;
 }
 
 @Injectable({

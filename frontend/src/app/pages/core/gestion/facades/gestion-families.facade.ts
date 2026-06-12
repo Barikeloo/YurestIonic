@@ -5,15 +5,19 @@ import { FamilyItem, FamilyService } from '../../../../services/family.service';
 export interface FamilyRow {
   uuid?: string;
   name: string;
+  color: string | null;
+  icon: string | null;
   active: boolean;
 }
 
 export interface FamilyFormData {
   name: string;
+  color: string;
+  icon: string;
   active: boolean;
 }
 
-const EMPTY_FORM: FamilyFormData = { name: '', active: true };
+const EMPTY_FORM: FamilyFormData = { name: '', color: '', icon: '', active: true };
 
 export interface OperationResult {
   ok: boolean;
@@ -53,6 +57,8 @@ export class GestionFamiliesFacade {
       const rows: FamilyRow[] = families.map((family: FamilyItem) => ({
         uuid: family.id,
         name: family.name,
+        color: family.color,
+        icon: family.icon,
         active: family.active,
       }));
 
@@ -130,6 +136,8 @@ export class GestionFamiliesFacade {
       return { ok: false, error: 'Indica el nombre de la familia.' };
     }
 
+    const color = form.color.trim() || null;
+    const icon = form.icon.trim() || null;
     const desiredActive = form.active;
     const selected = this.selectedFamily();
 
@@ -137,7 +145,7 @@ export class GestionFamiliesFacade {
 
     try {
       if (selected?.uuid) {
-        const updated = await firstValueFrom(this.familyService.updateFamily(selected.uuid, { name }));
+        const updated = await firstValueFrom(this.familyService.updateFamily(selected.uuid, { name, color, icon }));
 
         const finalFamily = await firstValueFrom(
           desiredActive
@@ -148,6 +156,8 @@ export class GestionFamiliesFacade {
         this.replaceFamily(selected.uuid, {
           uuid: finalFamily.id,
           name: finalFamily.name,
+          color: finalFamily.color,
+          icon: finalFamily.icon,
           active: finalFamily.active,
         });
 
@@ -156,7 +166,7 @@ export class GestionFamiliesFacade {
         return { ok: true, message: 'Familia actualizada.' };
       }
 
-      const created = await firstValueFrom(this.familyService.createFamily({ name }));
+      const created = await firstValueFrom(this.familyService.createFamily({ name, color, icon }));
       const finalFamily = desiredActive
         ? created
         : await firstValueFrom(this.familyService.deactivateFamily(created.id));
@@ -164,6 +174,8 @@ export class GestionFamiliesFacade {
       const newRow: FamilyRow = {
         uuid: finalFamily.id,
         name: finalFamily.name,
+        color: finalFamily.color,
+        icon: finalFamily.icon,
         active: finalFamily.active,
       };
 
@@ -190,7 +202,12 @@ export class GestionFamiliesFacade {
     const family = this.selectedFamily();
 
     if (family) {
-      this._formData.set({ name: family.name, active: family.active });
+      this._formData.set({
+        name: family.name,
+        color: family.color ?? '',
+        icon: family.icon ?? '',
+        active: family.active,
+      });
     } else {
       this._formData.set({ ...EMPTY_FORM });
     }

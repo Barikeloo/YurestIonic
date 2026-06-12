@@ -834,7 +834,13 @@ export class GestionPage {
           this.familiesFacade.startCreate();
         }
 
-        this.familiesFacade.setForm({ name, active: this.familyForm.active });
+        const currentFamilyForm = this.familiesFacade.formData();
+        this.familiesFacade.setForm({
+          name,
+          color: currentFamilyForm.color,
+          icon: currentFamilyForm.icon,
+          active: this.familyForm.active,
+        });
         this.familiesFacade.save().then((result) => {
           if (result.ok) {
             this.syncFamiliesMirror();

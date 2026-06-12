@@ -8,6 +8,8 @@ import { OrderStatus } from '../../../core/enums/order-status.enum';
 export interface TpvFamilyItem {
   id: string;
   name: string;
+  color: string | null;
+  icon: string | null;
   active: boolean;
 }
 

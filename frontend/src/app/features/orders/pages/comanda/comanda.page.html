@@ -53,8 +53,14 @@
               <button
                 class="family-tab"
                 [class.active]="facade.activeFamilyId() === family.id"
+                [style.--fam-color]="family.color || 'transparent'"
                 (click)="setFamily(family.id)"
-              >{{ family.name }}</button>
+              >
+                @if (family.icon) {
+                  <app-icon class="family-tab-icon" [name]="$any(family.icon)" [size]="16" />
+                }
+                {{ family.name }}
+              </button>
             }
           </div>
           <div class="products-search">

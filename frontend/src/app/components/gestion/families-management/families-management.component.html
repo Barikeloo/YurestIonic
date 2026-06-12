@@ -12,11 +12,14 @@
     <div class="gestion-row-list">
       @for (family of filteredFamilies(); track family; let i = $index) {
         <div
-          class="gestion-row-item"
+          class="gestion-row-item fam-row"
           [class.active]="isSelectedFiltered(i)"
           (click)="onSelectFiltered(i)"
           >
-          <strong>{{ family.name }}</strong><br />Estado: {{ family.active ? 'Activa' : 'Inactiva' }}
+          <span class="fam-chip" [style.background]="family.color || '#e8e8e8'" [style.color]="family.color ? '#fff' : '#999'">
+            @if (family.icon) { <app-icon [name]="$any(family.icon)" [size]="15" /> }
+          </span>
+          <span><strong>{{ family.name }}</strong><br />Estado: {{ family.active ? 'Activa' : 'Inactiva' }}</span>
         </div>
       }
       @if (filteredFamilies().length === 0 && searchTerm().trim() !== '') {
@@ -40,6 +43,26 @@
       <div>
         <label class="form-label" for="mg-family-name">Nombre de la familia</label>
         <input id="mg-family-name" class="form-input" [ngModel]="formData().name" (ngModelChange)="updateForm('name', $event)" name="mg-family-name" placeholder="Ej. Entrantes" required />
+      </div>
+      <div>
+        <label class="form-label">Color</label>
+        <div class="fam-swatches">
+          @for (c of colorOptions; track c) {
+            <button type="button" class="fam-swatch" [class.selected]="formData().color === c" [style.background]="c" (click)="selectColor(c)" [attr.aria-label]="'Color ' + c"></button>
+          }
+          <button type="button" class="fam-swatch fam-swatch--none" [class.selected]="!formData().color" (click)="updateForm('color', '')" aria-label="Sin color">∅</button>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Icono</label>
+        <div class="fam-icons">
+          @for (ic of iconOptions; track ic) {
+            <button type="button" class="fam-icon-btn" [class.selected]="formData().icon === ic" (click)="selectIcon(ic)" [attr.aria-label]="ic">
+              <app-icon [name]="ic" [size]="18" />
+            </button>
+          }
+          <button type="button" class="fam-icon-btn fam-icon-btn--none" [class.selected]="!formData().icon" (click)="updateForm('icon', '')" aria-label="Sin icono">∅</button>
+        </div>
       </div>
       <div class="gestion-form-actions">
         <button class="btn-login btn-login-inline" type="submit" [disabled]="isSaving()">

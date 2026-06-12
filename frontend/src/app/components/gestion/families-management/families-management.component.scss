@@ -213,3 +213,70 @@
 .toggle-label-inline.active {
   color: #1a9e5a;
 }
+
+/* ── Appearance (color + icon) ─────────────────────────────────────────── */
+.fam-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.fam-chip {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fam-swatches,
+.fam-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fam-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.fam-swatch.selected {
+  border-color: var(--gray-900, #222);
+  box-shadow: 0 0 0 2px #fff inset;
+}
+
+.fam-swatch--none {
+  background: #f3f3f3;
+  color: #999;
+  font-size: 14px;
+}
+
+.fam-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  color: var(--gray-600, #555);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fam-icon-btn.selected {
+  border-color: #1a9e5a;
+  color: #1a9e5a;
+  background: #1a9e5a14;
+}
+
+.fam-icon-btn--none {
+  font-size: 14px;
+}
