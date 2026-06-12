@@ -3,6 +3,7 @@
 namespace App\Product\Application\GetProductPhotoUploadContext;
 
 use App\Product\Domain\Exception\ProductNotFoundException;
+use App\Product\Domain\Exception\ProductPhotoUploadTokenAlreadyUsedException;
 use App\Product\Domain\Exception\ProductPhotoUploadTokenExpiredException;
 use App\Product\Domain\Exception\ProductPhotoUploadTokenNotFoundException;
 use App\Product\Domain\Interfaces\ProductPhotoUploadTokenRepositoryInterface;
@@ -25,6 +26,10 @@ class GetProductPhotoUploadContext
 
         if ($token->isExpired()) {
             throw ProductPhotoUploadTokenExpiredException::withToken($command->token);
+        }
+
+        if ($token->isUsed()) {
+            throw ProductPhotoUploadTokenAlreadyUsedException::withToken($command->token);
         }
 
         $product = $this->productRepository->findByIdAndRestaurant(

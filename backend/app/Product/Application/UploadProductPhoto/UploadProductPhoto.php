@@ -6,6 +6,7 @@ use App\Audit\Domain\AuditEventDraft;
 use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Product\Domain\Exception\ProductNotFoundException;
+use App\Product\Domain\Exception\ProductPhotoUploadTokenAlreadyUsedException;
 use App\Product\Domain\Exception\ProductPhotoUploadTokenExpiredException;
 use App\Product\Domain\Exception\ProductPhotoUploadTokenNotFoundException;
 use App\Product\Domain\Interfaces\ProductPhotoStorageInterface;
@@ -31,6 +32,10 @@ class UploadProductPhoto
 
         if ($token->isExpired()) {
             throw ProductPhotoUploadTokenExpiredException::withToken($command->token);
+        }
+
+        if ($token->isUsed()) {
+            throw ProductPhotoUploadTokenAlreadyUsedException::withToken($command->token);
         }
 
         $product = $this->productRepository->findByIdAndRestaurant(
