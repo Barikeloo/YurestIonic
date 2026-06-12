@@ -499,3 +499,45 @@ export interface ExportHistoryItem {
 export interface ExportHistoryResponse {
   items: ExportHistoryItem[];
 }
+
+export interface ScheduledReport {
+  uuid: string;
+  restaurant_id: number;
+  report_type: string;
+  format: string;
+  frequency: string;
+  time: string;
+  weekday: number | null;
+  day_of_month: number | null;
+  recipients: string[];
+  name: string;
+  active: boolean;
+  last_run_at: string | null;
+  next_run_at: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateScheduledReportPayload {
+  report_type: string;
+  format: string;
+  frequency: string;
+  time: string;
+  weekday: number | null;
+  day_of_month: number | null;
+  recipients: string[];
+  name: string;
+  active: boolean;
+}
+
+export interface UpdateScheduledReportPayload {
+  report_type: string;
+  format: string;
+  frequency: string;
+  time: string;
+  weekday: number | null;
+  day_of_month: number | null;
+  recipients: string[];
+  name: string;
+  active: boolean;
+}

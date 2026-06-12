@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { FinanzasFacade } from '../facades/finanzas.facade';
 import { IconComponent } from '../../../../shared/components/icon/icon.component';
 import type { EmployeeReportItem } from '../models/finanzas.models';
@@ -27,6 +27,16 @@ export class EmpleadosTabComponent {
   protected readonly selectedId = signal<string | null>(null);
   protected readonly sortKey    = signal<SortKey>('revenue');
   protected readonly searchTerm = signal('');
+
+  constructor() {
+    effect(() => {
+      const pending = this.facade.pendingSearchFilter();
+      if (pending?.tab === 'empleados') {
+        this.searchTerm.set(pending.term);
+        queueMicrotask(() => this.facade.pendingSearchFilter.set(null));
+      }
+    });
+  }
 
   private get items(): EmployeeReportItem[] {
     return this.facade.employeesReport()?.items ?? [];

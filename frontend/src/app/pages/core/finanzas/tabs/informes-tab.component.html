@@ -199,14 +199,14 @@
         <div class="banner-title" style="color:#1a9e5a">Configura una vez. Recibe el informe siempre.</div>
         <div class="banner-sub">Diario, semanal o mensual. El gerente nunca tiene que volver a entrar al panel.</div>
       </div>
-      <button class="success-btn">+ Nueva programación</button>
+      <button class="success-btn" (click)="openCreateModal()">+ Nueva programación</button>
     </div>
 
     <!-- Scheduled reports table -->
     <div class="card">
       <div class="section-head">
         <div class="section-title">Informes programados</div>
-        <div class="section-sub">{{ activeCount }} activos · {{ scheduledReports.length }} en total</div>
+        <div class="section-sub">{{ activeCount }} activos · {{ facade.scheduledReports().length }} en total</div>
       </div>
       <div class="table-wrap">
         <table class="data-table">
@@ -222,29 +222,34 @@
             </tr>
           </thead>
           <tbody>
-            @for (s of scheduledReports; track s.id) {
+            @for (s of facade.scheduledReports(); track s.uuid) {
               <tr [class.row-inactive]="!s.active">
                 <td>
-                  <!-- Toggle switch -->
-                  <div class="toggle" [class.toggle--on]="s.active" (click)="toggleScheduled(s.id)">
+                  <div class="toggle" [class.toggle--on]="s.active" (click)="facade.toggleScheduledReport(s.uuid)">
                     <div class="toggle-thumb"></div>
                   </div>
                 </td>
-                <td class="td-bold">{{ s.name }}</td>
-                <td class="td-muted">{{ s.when }}</td>
-                <td class="td-mono">{{ s.to }}</td>
+                <td class="td-bold">{{ typeLabel(s.report_type) }}</td>
+                <td class="td-muted">{{ frequencyLabel(s) }}</td>
+                <td class="td-mono">{{ recipientsLabel(s) }}</td>
                 <td>
                   <span class="fmt-badge" [style.background]="formatBadgeColor(s.format) + '1a'" [style.color]="formatBadgeColor(s.format)">
                     {{ s.format }}
                   </span>
                 </td>
-                <td [class.td-muted]="!s.active" [class.td-bold-sm]="s.active">{{ s.next }}</td>
+                <td [class.td-muted]="!s.active" [class.td-bold-sm]="s.active">{{ nextRunLabel(s) }}</td>
                 <td class="align-right">
                   <div class="row-actions">
-                    <button class="icon-btn"><app-icon name="pencil" [size]="15" /></button>
-                    <button class="icon-btn"><app-icon name="download" [size]="15" /></button>
-                    <button class="icon-btn icon-btn--danger"><app-icon name="x" [size]="15" /></button>
+                    <button class="icon-btn" (click)="openEditModal(s)"><app-icon name="pencil" [size]="15" /></button>
+                    <button class="icon-btn" (click)="sendNow(s.uuid)"><app-icon name="download" [size]="15" /></button>
+                    <button class="icon-btn icon-btn--danger" (click)="deleteScheduled(s.uuid)"><app-icon name="x" [size]="15" /></button>
                   </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="td-muted" style="text-align:center; padding:24px 0;">
+                  No hay programaciones. Crea una con el botón "+ Nueva programación".
                 </td>
               </tr>
             }
@@ -267,6 +272,116 @@
           </div>
         </div>
         <iframe class="preview-frame" [src]="previewSafeUrl()" title="Previsualización del informe"></iframe>
+      </div>
+    </div>
+  }
+
+  <!-- ══ CREATE/EDIT MODAL ══════════════════════════════════════════════════ -->
+  @if (modalMode()) {
+    <div class="preview-overlay" (click)="closeModal()">
+      <div class="preview-modal" (click)="$event.stopPropagation()" style="max-width:520px">
+        <div class="preview-head">
+          <div class="preview-title">{{ modalMode() === 'create' ? 'Nueva programación' : 'Editar programación' }}</div>
+          <button class="preview-close" (click)="closeModal()" aria-label="Cerrar"><app-icon name="x" [size]="18" /></button>
+        </div>
+        <div class="modal-body" style="padding:20px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; max-height:60vh">
+
+          <!-- Name -->
+          <div class="field-group">
+            <label class="field-label">Nombre</label>
+            <input class="field-input" type="text" [value]="form.name()" (input)="form.name.set($any($event.target).value)" placeholder="Resumen diario" />
+          </div>
+
+          <!-- Report type -->
+          <div class="field-group">
+            <label class="field-label">Tipo de informe</label>
+            <select class="field-input" [value]="form.reportType()" (change)="form.reportType.set($any($event.target).value)">
+              <option value="daily">Resumen diario</option>
+              <option value="products">Ventas por producto</option>
+              <option value="families">Ventas por familia</option>
+              <option value="cash">Movimientos de caja</option>
+              <option value="tips">Propinas</option>
+              <option value="taxes">Modelo 303</option>
+            </select>
+          </div>
+
+          <!-- Format -->
+          <div class="field-group">
+            <label class="field-label">Formato</label>
+            <select class="field-input" [value]="form.format()" (change)="form.format.set($any($event.target).value)">
+              <option value="PDF">PDF</option>
+              <option value="CSV">CSV</option>
+            </select>
+          </div>
+
+          <!-- Frequency -->
+          <div class="field-group">
+            <label class="field-label">Frecuencia</label>
+            <select class="field-input" [value]="form.frequency()" (change)="form.frequency.set($any($event.target).value)">
+              <option value="daily">Diario</option>
+              <option value="weekly">Semanal</option>
+              <option value="monthly">Mensual</option>
+              <option value="quarterly">Trimestral</option>
+            </select>
+          </div>
+
+          <!-- Time -->
+          <div class="field-group">
+            <label class="field-label">Hora de envío</label>
+            <input class="field-input" type="time" [value]="form.time()" (input)="form.time.set($any($event.target).value)" />
+          </div>
+
+          <!-- Weekday (weekly) -->
+          @if (form.frequency() === 'weekly') {
+            <div class="field-group">
+              <label class="field-label">Día de la semana</label>
+              <select class="field-input" [value]="form.weekday()" (change)="form.weekday.set(+$any($event.target).value)">
+                <option value="1">Lunes</option>
+                <option value="2">Martes</option>
+                <option value="3">Miércoles</option>
+                <option value="4">Jueves</option>
+                <option value="5">Viernes</option>
+                <option value="6">Sábado</option>
+                <option value="7">Domingo</option>
+              </select>
+            </div>
+          }
+
+          <!-- Day of month (monthly) -->
+          @if (form.frequency() === 'monthly') {
+            <div class="field-group">
+              <label class="field-label">Día del mes</label>
+              <input class="field-input" type="number" min="1" max="28" [value]="form.dayOfMonth()" (input)="form.dayOfMonth.set(+$any($event.target).value)" />
+            </div>
+          }
+
+          <!-- Recipients -->
+          <div class="field-group">
+            <label class="field-label">Destinatarios</label>
+            @for (email of form.recipients(); track trackRecipient($index); let i = $index) {
+              <div style="display:flex; gap:6px; margin-bottom:6px">
+                <input class="field-input" type="email" style="flex:1" [value]="email" (input)="updateRecipient(i, $event)" placeholder="email@ejemplo.com" />
+                @if (form.recipients().length > 1) {
+                  <button class="icon-btn icon-btn--danger" style="flex-shrink:0" (click)="removeRecipient(i)"><app-icon name="x" [size]="14" /></button>
+                }
+              </div>
+            }
+            <button class="ghost-btn" style="font-size:12px; padding:4px 0" (click)="addRecipient()">+ Añadir otro</button>
+          </div>
+
+          <!-- Active -->
+          <div class="field-group" style="flex-direction:row; align-items:center; gap:10px">
+            <label class="field-label" style="margin-bottom:0">Activo</label>
+            <div class="toggle" [class.toggle--on]="form.active()" (click)="toggleActive()">
+              <div class="toggle-thumb"></div>
+            </div>
+          </div>
+
+        </div>
+        <div class="preview-actions" style="padding:12px 20px; border-top:1px solid #e8e8e8; justify-content:flex-end">
+          <button class="ghost-btn" (click)="closeModal()">Cancelar</button>
+          <button class="success-btn" (click)="submitModal()">{{ modalMode() === 'create' ? 'Crear' : 'Guardar' }}</button>
+        </div>
       </div>
     </div>
   }

@@ -148,6 +148,10 @@ export class ResumenTabComponent {
     return this.facade.openTables.reduce((s, t) => s + t.current, 0);
   }
 
+  protected capitalize(s: string): string {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
   protected methodEntries(): { key: string; label: string; color: string; v: number; n: number }[] {
     const m = this.facade.byMethod;
     return [

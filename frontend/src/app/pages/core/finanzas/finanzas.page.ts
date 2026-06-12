@@ -1,6 +1,7 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { FinanzasFacade } from './facades/finanzas.facade';
 import { ResumenTabComponent } from './tabs/resumen-tab.component';
 import { VentasTabComponent } from './tabs/ventas-tab.component';
@@ -11,6 +12,14 @@ import { ImpuestosTabComponent } from './tabs/impuestos-tab.component';
 import { InformesTabComponent } from './tabs/informes-tab.component';
 import type { FinanzasTab, FinanzasPeriod } from './models/finanzas.models';
 
+interface SearchResult {
+  id: string;
+  label: string;
+  sub: string;
+  tab: FinanzasTab;
+  icon: string;
+}
+
 @Component({
   selector: 'app-finanzas',
   templateUrl: './finanzas.page.html',
@@ -19,6 +28,7 @@ import type { FinanzasTab, FinanzasPeriod } from './models/finanzas.models';
   providers: [FinanzasFacade],
   imports: [
     DecimalPipe,
+    FormsModule,
     ResumenTabComponent,
     VentasTabComponent,
     ProductosTabComponent,
@@ -33,6 +43,55 @@ export class FinanzasPage implements OnInit {
   private readonly location = inject(Location);
 
   protected readonly alertsOpen = signal(false);
+  protected readonly searchOpen = signal(false);
+  protected readonly searchQuery = signal('');
+  protected readonly searchHighlight = signal(0);
+
+  protected readonly searchResults = computed((): SearchResult[] => {
+    const q = this.searchQuery().toLowerCase().trim();
+    if (!q) return [];
+
+    const results: SearchResult[] = [];
+
+    // Tabs
+    for (const t of this.tabs) {
+      if (t.label.toLowerCase().includes(q)) {
+        results.push({
+          id: `tab-${t.key}`, label: t.label, sub: `Ir a ${t.label}`,
+          tab: t.key, icon: t.icon,
+        });
+      }
+    }
+
+    // Products (from topProducts — always loaded with summary)
+    for (const p of this.facade.topProducts()) {
+      if (p.name.toLowerCase().includes(q)) {
+        results.push({
+          id: `prod-${p.name}`, label: p.name,
+          sub: `${p.family} · ${p.units} uds`,
+          tab: 'productos', icon: '☷',
+        });
+        if (results.length >= 20) break;
+      }
+    }
+
+    // Employees
+    const employees = this.facade.employeesReport();
+    if (employees) {
+      for (const e of employees.items) {
+        if (e.name.toLowerCase().includes(q)) {
+          results.push({
+            id: `emp-${e.name}`, label: e.name,
+            sub: `${e.role} · ${e.tickets} tickets`,
+            tab: 'empleados', icon: '◓',
+          });
+          if (results.length >= 20) break;
+        }
+      }
+    }
+
+    return results.slice(0, 20);
+  });
 
   protected readonly tabs: Array<{ key: FinanzasTab; label: string; icon: string }> = [
     { key: 'resumen',    label: 'Resumen',    icon: '◴' },
@@ -60,6 +119,67 @@ export class FinanzasPage implements OnInit {
 
   ngOnInit(): void {
     this.facade.init();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('keydown', (e: KeyboardEvent) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+          e.preventDefault();
+          this.searchOpen.update(v => !v);
+          if (this.searchOpen()) {
+            this.searchQuery.set('');
+            this.searchHighlight.set(0);
+            setTimeout(() => {
+              const el = document.getElementById('global-search-input');
+              el?.focus();
+            });
+          }
+        }
+        if (e.key === 'Escape' && this.searchOpen()) {
+          this.closeSearch();
+        }
+      });
+    }
+  }
+
+  protected toggleSearch(): void {
+    this.searchOpen.update(v => !v);
+    if (this.searchOpen()) {
+      this.searchQuery.set('');
+      this.searchHighlight.set(0);
+      setTimeout(() => {
+        const el = document.getElementById('global-search-input');
+        el?.focus();
+      });
+    }
+  }
+
+  protected closeSearch(): void {
+    this.searchOpen.set(false);
+    this.searchQuery.set('');
+    this.searchHighlight.set(0);
+  }
+
+  protected onSearchKeydown(e: KeyboardEvent): void {
+    const results = this.searchResults();
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      this.searchHighlight.update(v => Math.min(v + 1, results.length - 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      this.searchHighlight.update(v => Math.max(v - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const idx = this.searchHighlight();
+      if (results[idx]) {
+        this.selectSearchResult(results[idx]);
+      }
+    }
+  }
+
+  protected selectSearchResult(r: SearchResult): void {
+    this.facade.pendingSearchFilter.set({tab: r.tab, term: r.label});
+    this.facade.setTab(r.tab);
+    this.closeSearch();
   }
 
   protected goBack(): void {

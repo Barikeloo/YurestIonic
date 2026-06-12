@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FinanzasFacade } from '../facades/finanzas.facade';
 import { IconComponent, IconName } from '../../../../shared/components/icon/icon.component';
+import type { ScheduledReport, CreateScheduledReportPayload, UpdateScheduledReportPayload } from '../models/finanzas.models';
 
 interface ReportTemplate {
   id: string;
@@ -24,15 +25,7 @@ interface Integration {
   connected: boolean;
 }
 
-interface ScheduledReport {
-  id: number;
-  name: string;
-  when: string;
-  to: string;
-  format: string;
-  active: boolean;
-  next: string;
-}
+type ModalMode = 'create' | 'edit' | null;
 
 @Component({
   selector: 'app-finanzas-informes-tab',
@@ -52,6 +45,21 @@ export class InformesTabComponent {
 
   protected readonly activeSection = signal<'predefinidos' | 'integraciones' | 'programados'>('predefinidos');
   protected readonly lastSelected = signal<string | null>(null);
+  protected readonly modalMode = signal<ModalMode>(null);
+  protected readonly editingReport = signal<ScheduledReport | null>(null);
+
+  // ── Modal form fields ──────────────────────────────────────────────────────
+  protected form = {
+    name: signal(''),
+    reportType: signal('daily'),
+    format: signal('PDF'),
+    frequency: signal('daily'),
+    time: signal('02:00'),
+    weekday: signal<number>(1),
+    dayOfMonth: signal<number>(1),
+    recipients: signal<string[]>(['']),
+    active: signal(true),
+  };
 
   protected readonly templates: ReportTemplate[] = [
     {
@@ -69,13 +77,13 @@ export class InformesTabComponent {
     {
       id: 'families', iconName: 'bar-chart', title: 'Ventas por familia',
       sub: 'Distribución por categoría',
-      color: '#0077cc', formats: ['CSV', 'PDF'],
+      color: '#0077cc', formats: ['PDF', 'CSV'],
       preview: ['Bebidas, Tapas, Raciones', '% sobre total', 'Comparativa periodo anterior'],
     },
     {
       id: 'cash', iconName: 'wallet', title: 'Movimientos de caja',
       sub: 'Entradas, salidas y arqueos',
-      color: '#1a9e5a', formats: ['CSV', 'PDF'],
+      color: '#1a9e5a', formats: ['PDF', 'CSV'],
       preview: ['Movimientos manuales', 'Sesiones cerradas', 'Descuadres con motivo'],
     },
     {
@@ -91,6 +99,116 @@ export class InformesTabComponent {
       preview: ['Propina por empleado', 'Tickets y ventas', '% sobre ventas'],
     },
   ];
+
+  protected readonly activeCount = computed(() => this.facade.scheduledReports().filter(s => s.active).length);
+
+  protected readonly frequencyLabel = (s: ScheduledReport): string => {
+    const freq: Record<string, string> = { daily: 'Diario', weekly: 'Semanal', monthly: 'Mensual', quarterly: 'Trimestral' };
+    const f = freq[s.frequency] ?? s.frequency;
+    if (s.frequency === 'weekly') return `${f} · ${this.weekdayLabel(s.weekday!)} ${s.time}`;
+    if (s.frequency === 'monthly') return `${f} · Día ${s.day_of_month} ${s.time}`;
+    return `${f} · ${s.time}`;
+  };
+
+  protected readonly recipientsLabel = (s: ScheduledReport): string => s.recipients.join(', ');
+
+  protected readonly nextRunLabel = (s: ScheduledReport): string => {
+    if (!s.active) return '—';
+    return this.formatDate(s.next_run_at);
+  };
+
+  protected readonly typeLabel = (type: string): string => {
+    const labels: Record<string, string> = { daily: 'Resumen diario', products: 'Ventas por producto', families: 'Ventas por familia', cash: 'Movimientos de caja', tips: 'Propinas', taxes: 'Modelo 303' };
+    return labels[type] ?? type;
+  };
+
+  protected openCreateModal(): void {
+    this.modalMode.set('create');
+    this.editingReport.set(null);
+    this.form.name.set('');
+    this.form.reportType.set('daily');
+    this.form.format.set('PDF');
+    this.form.frequency.set('daily');
+    this.form.time.set('02:00');
+    this.form.weekday.set(1);
+    this.form.dayOfMonth.set(1);
+    this.form.recipients.set(['']);
+    this.form.active.set(true);
+  }
+
+  protected openEditModal(s: ScheduledReport): void {
+    this.modalMode.set('edit');
+    this.editingReport.set(s);
+    this.form.name.set(s.name);
+    this.form.reportType.set(s.report_type);
+    this.form.format.set(s.format);
+    this.form.frequency.set(s.frequency);
+    this.form.time.set(s.time);
+    this.form.weekday.set(s.weekday ?? 1);
+    this.form.dayOfMonth.set(s.day_of_month ?? 1);
+    this.form.recipients.set(s.recipients.length ? s.recipients : ['']);
+    this.form.active.set(s.active);
+  }
+
+  protected closeModal(): void {
+    this.modalMode.set(null);
+    this.editingReport.set(null);
+  }
+
+  protected updateRecipient(index: number, event: Event): void {
+    const value = (event.target as HTMLInputElement).value;
+    this.form.recipients.update(r => r.map((e, i) => i === index ? value : e));
+  }
+
+  protected addRecipient(): void {
+    this.form.recipients.update(r => [...r, '']);
+  }
+
+  protected removeRecipient(i: number): void {
+    this.form.recipients.update(r => r.filter((_, idx) => idx !== i));
+  }
+
+  protected trackRecipient(_i: number): number { return _i; }
+
+  protected toggleActive(): void {
+    this.form.active.update(a => !a);
+  }
+
+  protected submitModal(): void {
+    const recipients = this.form.recipients().filter(r => r.trim() !== '');
+    if (!recipients.length) return;
+
+    const base = {
+      report_type: this.form.reportType(),
+      format: this.form.format(),
+      frequency: this.form.frequency(),
+      time: this.form.time(),
+      weekday: this.form.frequency() === 'weekly' ? this.form.weekday() : null,
+      day_of_month: this.form.frequency() === 'monthly' ? this.form.dayOfMonth() : null,
+      recipients,
+      name: this.form.name() || this.typeLabel(this.form.reportType()),
+      active: this.form.active(),
+    };
+
+    if (this.modalMode() === 'create') {
+      this.facade.createScheduledReport(base as CreateScheduledReportPayload);
+    } else {
+      const uuid = this.editingReport()!.uuid;
+      this.facade.updateScheduledReport(uuid, base as UpdateScheduledReportPayload);
+    }
+
+    this.closeModal();
+  }
+
+  protected deleteScheduled(uuid: string): void {
+    if (confirm('¿Eliminar esta programación?')) {
+      this.facade.deleteScheduledReport(uuid);
+    }
+  }
+
+  protected sendNow(uuid: string): void {
+    this.facade.sendScheduledReportNow(uuid).subscribe();
+  }
 
   protected formatSize(bytes: number): string {
     if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
@@ -113,24 +231,10 @@ export class InformesTabComponent {
     { id: 'banco',    logo: '€',  name: 'Conciliación bancaria',desc: 'Conecta tu banco',                color: '#0d0d0d', features: ['BBVA, Santander, CaixaBank', 'Cuadre automático tarjeta', 'Detección Bizum'],                                       connected: false },
   ];
 
-  protected scheduledReports: ScheduledReport[] = [
-    { id: 1, name: 'Resumen diario',         when: 'Diario · 02:00',       to: 'contable@latasca.es',     format: 'PDF', active: true,  next: 'Mañana 02:00'     },
-    { id: 2, name: 'Ventas por familia',     when: 'Semanal · Lun 08:00',  to: 'miguel@latasca.es',       format: 'CSV', active: true,  next: 'Lun 20/05 08:00'  },
-    { id: 3, name: 'Modelo 303 trimestral', when: 'Trimestral',            to: 'gestoria@bvasesores.es',  format: 'PDF', active: false, next: '20/07 09:00'       },
-  ];
-
-  protected get activeCount(): number { return this.scheduledReports.filter(s => s.active).length; }
-
   protected selectReport(id: string): void { this.lastSelected.set(id); }
 
   protected download(r: ReportTemplate, format: string): void {
     this.facade.downloadReport(r.id, format);
-  }
-
-  protected toggleScheduled(id: number): void {
-    this.scheduledReports = this.scheduledReports.map(s =>
-      s.id === id ? { ...s, active: !s.active } : s
-    );
   }
 
   protected connectIntegration(id: string): void {
@@ -140,5 +244,9 @@ export class InformesTabComponent {
 
   protected formatBadgeColor(format: string): string {
     return format === 'PDF' ? '#ff4d4d' : '#1a9e5a';
+  }
+
+  private weekdayLabel(d: number): string {
+    return ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'][d - 1] ?? '';
   }
 }

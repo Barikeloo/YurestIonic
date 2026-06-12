@@ -64,6 +64,14 @@ export class ProductosTabComponent {
       this.filterFam.set('all');
       this.search.set('');
     });
+
+    effect(() => {
+      const pending = this.facade.pendingSearchFilter();
+      if (pending?.tab === 'productos') {
+        this.search.set(pending.term);
+        queueMicrotask(() => this.facade.pendingSearchFilter.set(null));
+      }
+    });
   }
 
   // ── Enriched list (ABC + deltas) ──────────────────────────────────────────

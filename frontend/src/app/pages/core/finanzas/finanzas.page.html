@@ -24,7 +24,7 @@
     <div class="topbar-spacer"></div>
 
     <!-- Search -->
-    <button class="topbar-icon-btn">
+    <button class="topbar-icon-btn" (click)="toggleSearch()">
       <span>⌕</span>
       <span class="kbd-hint">⌘K</span>
     </button>
@@ -63,13 +63,48 @@
       }
     </div>
 
-    <!-- Print -->
-    <button class="topbar-icon-btn">🖨</button>
-
     <!-- Avatar -->
     <div class="topbar-avatar">MG</div>
 
   </div>
+
+  <!-- ── Search overlay ──────────────────────────────────────────────────── -->
+  @if (searchOpen()) {
+    <div class="search-overlay" (click)="closeSearch()">
+      <div class="search-panel" (click)="$event.stopPropagation()">
+        <div class="search-input-wrap">
+          <span class="search-panel-icon">⌕</span>
+          <input id="global-search-input" class="search-input"
+                 type="text" placeholder="Buscar productos, empleados, secciones…"
+                 [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); searchHighlight.set(0)"
+                 (keydown)="onSearchKeydown($event)" />
+          @if (searchQuery()) {
+            <button class="search-clear-btn" (click)="searchQuery.set(''); searchHighlight.set(0)">✕</button>
+          }
+          <span class="search-kbd">ESC</span>
+        </div>
+        @if (searchResults().length > 0) {
+          <div class="search-results">
+            @for (r of searchResults(); track r.id; let i = $index) {
+              <button class="search-result-item" [class.highlighted]="searchHighlight() === i"
+                      (click)="selectSearchResult(r)" (mouseenter)="searchHighlight.set(i)">
+                <span class="search-result-icon">{{ r.icon }}</span>
+                <div class="search-result-body">
+                  <span class="search-result-label">{{ r.label }}</span>
+                  <span class="search-result-sub">{{ r.sub }}</span>
+                </div>
+                <span class="search-result-tab">{{ facade.tabLabel(r.tab) }}</span>
+              </button>
+            }
+          </div>
+        } @else if (searchQuery().trim()) {
+          <div class="search-empty">Sin resultados para «{{ searchQuery() }}»</div>
+        } @else {
+          <div class="search-hint">Escribe para buscar productos, empleados o secciones</div>
+        }
+      </div>
+    </div>
+  }
 
   <!-- ── Tab bar ─────────────────────────────────────────────────────────── -->
   <div class="fin-tabbar">

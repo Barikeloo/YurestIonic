@@ -11,6 +11,9 @@ import type {
   TaxReportResponse,
   HeatmapRow,
   ExportHistoryResponse,
+  ScheduledReport,
+  CreateScheduledReportPayload,
+  UpdateScheduledReportPayload,
 } from '../pages/core/finanzas/models/finanzas.models';
 
 @Injectable({ providedIn: 'root' })
@@ -65,5 +68,29 @@ export class FinanzasService extends BaseApiService {
 
   downloadExport(uuid: string): Observable<Blob> {
     return this.downloadBlob(`/admin/reports/exports/${uuid}/download`);
+  }
+
+  getScheduled(): Observable<ScheduledReport[]> {
+    return this.get<ScheduledReport[]>('/admin/reports/scheduled');
+  }
+
+  createScheduled(payload: CreateScheduledReportPayload): Observable<{ uuid: string }> {
+    return this.post<{ uuid: string }>('/admin/reports/scheduled', payload);
+  }
+
+  updateScheduled(uuid: string, payload: UpdateScheduledReportPayload): Observable<void> {
+    return this.put<void>(`/admin/reports/scheduled/${uuid}`, payload);
+  }
+
+  deleteScheduled(uuid: string): Observable<void> {
+    return this.delete<void>(`/admin/reports/scheduled/${uuid}`);
+  }
+
+  toggleScheduled(uuid: string): Observable<{ uuid: string; active: boolean }> {
+    return this.put<{ uuid: string; active: boolean }>(`/admin/reports/scheduled/${uuid}/toggle`);
+  }
+
+  sendScheduledNow(uuid: string): Observable<{ uuid: string; report_name: string }> {
+    return this.post<{ uuid: string; report_name: string }>(`/admin/reports/scheduled/${uuid}/send`);
   }
 }

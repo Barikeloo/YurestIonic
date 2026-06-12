@@ -163,7 +163,7 @@
       </div>
       <div class="kpi-value">{{ fmtNum(s.revenue.v) }} <span class="kpi-unit">€</span></div>
       @if (facade.showCompare()) {
-        <div class="kpi-sub">vs {{ fmt(s.revenue.prev) }} ayer</div>
+        <div class="kpi-sub">vs {{ fmt(s.revenue.prev) }} {{ facade.comparePeriodLabel() }}</div>
       }
       <div class="kpi-spark">
         <svg viewBox="0 0 100 24" preserveAspectRatio="none" class="spark-svg">
@@ -196,7 +196,7 @@
       </div>
       <div class="kpi-value">{{ fmtInt(s.tickets.v) }}</div>
       @if (facade.showCompare()) {
-        <div class="kpi-sub">vs {{ s.tickets.prev }} ayer</div>
+        <div class="kpi-sub">vs {{ s.tickets.prev }} {{ facade.comparePeriodLabel() }}</div>
       }
       <div class="kpi-spark">
         <svg viewBox="0 0 100 24" preserveAspectRatio="none" class="spark-svg">
@@ -228,7 +228,7 @@
       </div>
       <div class="kpi-value">{{ fmtNum(s.avgTicket.v) }} <span class="kpi-unit">€</span></div>
       @if (facade.showCompare()) {
-        <div class="kpi-sub">vs {{ fmt(s.avgTicket.prev) }} ayer</div>
+        <div class="kpi-sub">vs {{ fmt(s.avgTicket.prev) }} {{ facade.comparePeriodLabel() }}</div>
       }
       <div class="kpi-spark">
         <svg viewBox="0 0 100 24" preserveAspectRatio="none" class="spark-svg">
@@ -300,7 +300,7 @@
         </div>
         <div class="chart-legend">
           <span class="legend-item">
-            <span class="legend-ghost"></span>Ayer
+            <span class="legend-ghost"></span>{{ capitalize(facade.comparePeriodLabel()) }}
           </span>
           <span class="legend-item">
             <span class="legend-avg"></span>Media
@@ -377,7 +377,7 @@
             }
             @if (tip.compare && tip.bar.vPrev > 0) {
               <div class="bar-tooltip__prev">
-                Ayer: <span>{{ fmt(tip.bar.vPrev) }}</span>
+                {{ capitalize(facade.comparePeriodLabel()) }}: <span>{{ fmt(tip.bar.vPrev) }}</span>
                 @if (tip.bar.v !== tip.bar.vPrev) {
                   <span [style.color]="tip.bar.v >= tip.bar.vPrev ? '#86efac' : '#fca5a5'">
                     {{ tip.bar.v >= tip.bar.vPrev ? '+' : '' }}{{ fmt(tip.bar.v - tip.bar.vPrev) }}

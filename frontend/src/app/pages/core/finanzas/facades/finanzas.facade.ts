@@ -1,6 +1,6 @@
 import { computed, DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { catchError, combineLatest, EMPTY, forkJoin, switchMap } from 'rxjs';
+import { catchError, combineLatest, EMPTY, forkJoin, Observable, switchMap } from 'rxjs';
 import { AuditAlertApi, AuditAlertService } from '../../../../services/audit-alert.service';
 import { AppContextService } from '../../../../core/services/app-context.service';
 import { FinanzasService } from '../../../../services/finanzas.service';
@@ -61,6 +61,9 @@ import type {
   TicketDetail,
   TopProduct,
   ExportHistoryItem,
+  ScheduledReport,
+  CreateScheduledReportPayload,
+  UpdateScheduledReportPayload,
 } from '../models/finanzas.models';
 
 interface CashSessionViewData {
@@ -147,6 +150,10 @@ export class FinanzasFacade {
   private readonly _exportHistory = signal<ExportHistoryItem[]>([]);
   public readonly exportHistory   = this._exportHistory.asReadonly();
 
+  // ── Scheduled reports state ──────────────────────────────────────────────
+  private readonly _scheduledReports = signal<ScheduledReport[]>([]);
+  public readonly scheduledReports   = this._scheduledReports.asReadonly();
+
   // ── Export preview state ─────────────────────────────────────────────────
   private readonly _preview = signal<{ url: string; title: string; uuid: string; filename: string } | null>(null);
   public readonly preview   = this._preview.asReadonly();
@@ -210,6 +217,16 @@ export class FinanzasFacade {
     return map[this._period()];
   });
 
+  public readonly comparePeriodLabel = computed(() => {
+    const map: Record<FinanzasPeriod, string> = {
+      today:     'ayer',
+      yesterday: 'anteayer',
+      week:      'semana pasada',
+      month:     'mes pasado',
+    };
+    return map[this._period()];
+  });
+
   public readonly unreadAlerts = this._unreadCount.asReadonly();
 
   // ── Cash computed ───────────────────────────────────────────────────────────
@@ -252,6 +269,9 @@ export class FinanzasFacade {
     const summary = this._cashSummary();
     return summary ? summary.expected_amount : 0;
   });
+
+  // ── Global search filter (used by tab components) ──────────────────────────
+  public readonly pendingSearchFilter = signal<{tab: FinanzasTab; term: string} | null>(null);
 
   // ── Setters ───────────────────────────────────────────────────────────────
   public setTab(tab: FinanzasTab): void             { this._activeTab.set(tab); }
@@ -336,6 +356,44 @@ export class FinanzasFacade {
     URL.revokeObjectURL(url);
   }
 
+  public loadScheduledReports(): void {
+    this.finanzasService.getScheduled()
+      .pipe(catchError(() => EMPTY))
+      .subscribe(reports => this._scheduledReports.set(reports));
+  }
+
+  public createScheduledReport(payload: CreateScheduledReportPayload): void {
+    this.finanzasService.createScheduled(payload)
+      .pipe(catchError(() => EMPTY))
+      .subscribe(() => this.loadScheduledReports());
+  }
+
+  public updateScheduledReport(uuid: string, payload: UpdateScheduledReportPayload): void {
+    this.finanzasService.updateScheduled(uuid, payload)
+      .pipe(catchError(() => EMPTY))
+      .subscribe(() => this.loadScheduledReports());
+  }
+
+  public deleteScheduledReport(uuid: string): void {
+    this.finanzasService.deleteScheduled(uuid)
+      .pipe(catchError(() => EMPTY))
+      .subscribe(() => this.loadScheduledReports());
+  }
+
+  public toggleScheduledReport(uuid: string): void {
+    this.finanzasService.toggleScheduled(uuid)
+      .pipe(catchError(() => EMPTY))
+      .subscribe(result => {
+        this._scheduledReports.update(reports =>
+          reports.map(r => r.uuid === uuid ? { ...r, active: result.active } : r)
+        );
+      });
+  }
+
+  public sendScheduledReportNow(uuid: string): Observable<{ uuid: string; report_name: string }> {
+    return this.finanzasService.sendScheduledNow(uuid);
+  }
+
   public sendTaxPdf(email: string): void {
     const period = this._period();
     const quarter = this._activeQ();
@@ -348,6 +406,7 @@ export class FinanzasFacade {
     this.loadCashData();
     this.loadOpenOrders();
     this.loadExportHistory();
+    this.loadScheduledReports();
     this._periodChanges$
       .pipe(
         switchMap(period => {
