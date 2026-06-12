@@ -40,24 +40,22 @@ Roles, PIN, división de cuenta, métodos de pago + mixto, cierre de caja, trasl
 
 ---
 
-## MEJORA 2 — Personalización de familias (color / icono / imagen)
+## MEJORA 2 — Personalización de familias (color / icono)  ✅ COMPLETA
 **Objetivo:** que cada familia tenga distintivos visuales para identificarla rápido en el TPV.
 
-### Decisiones a tomar
-- [ ] Campos: `color` (hex, validado), `icon` (slug de set de iconos existente en el front), `image_url` (opcional). ¿Los tres o empezar por color+icono?
-- [ ] ¿Imagen reutiliza el mecanismo de subida por QR de productos, o subida directa desde backoffice?
+> Decisión: **color + icono** (sin imagen/ficheros). Family migrado antes al bus de eventos (commit `980802a`).
 
-### Fases
-- [ ] **Migración**: añadir `color` (string nullable), `icon` (string nullable), `image_src` (string nullable) a `families`.
-- [ ] **Dominio**: value objects `FamilyColor` (valida hex), `FamilyIcon` (valida contra lista permitida); añadir a la entidad `Family` (constructor/factories/`changeAppearance`).
-- [ ] **Application**: extender `CreateFamily` / `UpdateFamily` (command + validación) para aceptar los nuevos campos; response los incluye.
-- [ ] **Infra/HTTP**: FormRequests (reglas: color hex `regex`, icon `Rule::in`, imagen nullable), repositorio Eloquent (persistir/leer columnas), mapear en `toArray`.
-- [ ] **Frontend backoffice**: formulario de familia con selector de color, picker de icono y (opcional) imagen.
-- [ ] **Frontend TPV**: pintar el distintivo en los botones/grupos de familia.
-- [ ] **Tests**: unit (`CreateFamily`/`UpdateFamily` con/ sin apariencia, validación de color/icono), feature (POST/PUT familia con color+icono → 200 y persistido; color inválido → 422).
+### Hecho
+- [x] **Migración**: `color` (string(7) nullable) + `icon` (string(32) nullable) en `families`.
+- [x] **Dominio**: VOs `FamilyColor` (hex) y `FamilyIcon` (set permitido, espejo del front); entidad `Family` con color/icono en `dddCreate`/`update`/`fromPersistence`; `FamilyUpdated` lleva color/icono en before/after.
+- [x] **Application**: `CreateFamily`/`UpdateFamily` aceptan color/icono; todas las respuestas (get/list/create/update/set-active) los exponen.
+- [x] **Infra/HTTP**: FormRequests validan color (regex hex) e icono (`Rule::in`); repo + modelo persisten/leen las columnas.
+- [x] **Frontend backoffice**: gestión de familias con picker de color (swatches) e icono, y chip de color/icono en la lista.
+- [x] **Frontend TPV**: pestañas de familia con icono y acento de color en la comanda.
+- [x] **Tests**: VOs + entidad (unit) + `FamilyAppearanceTest` (persistencia/normalización/validación end-to-end). Backend **961 passed**, `tsc` limpio.
 
-### Riesgos / notas
-- Validar `color` también en el front. Definir el set cerrado de iconos compartido front↔back.
+### Commits
+- `f899b3b` backend (apariencia) · `2a08a59` frontend (backoffice + TPV)
 
 ---
 
