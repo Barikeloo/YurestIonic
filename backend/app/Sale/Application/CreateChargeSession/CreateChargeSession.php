@@ -4,14 +4,13 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\CreateChargeSession;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Sale\Domain\Entity\ChargeSession;
+use App\Sale\Domain\Event\ChargeSessionCreated;
 use App\Sale\Domain\Exception\InvalidDinerCountException;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class CreateChargeSession
@@ -21,7 +20,7 @@ final class CreateChargeSession
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly OrderLineRepositoryInterface $orderLineRepository,
         private readonly ChargeSessionResponseBuilder $responseBuilder,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(CreateChargeSessionCommand $command): CreateChargeSessionResponse
@@ -68,19 +67,11 @@ final class CreateChargeSession
 
         $this->chargeSessionRepository->save($chargeSession);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $restaurantUuid,
-            slug: ActionSlug::create('sale.charge_session_created'),
-            entityType: 'charge_session',
-            entityId: $chargeSession->id()->value(),
-            userId: Uuid::create($command->openedByUserId),
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'order_id' => $command->orderId,
-                'diners_count' => $finalDinersCount,
-                'total_cents' => $totalCents,
-            ],
+        $this->eventBus->publish(new ChargeSessionCreated(
+            chargeSessionId: $chargeSession->id()->value(),
+            orderId: $command->orderId,
+            dinersCount: $finalDinersCount,
+            totalCents: $totalCents,
         ));
 
         return $this->responseBuilder->build($chargeSession);

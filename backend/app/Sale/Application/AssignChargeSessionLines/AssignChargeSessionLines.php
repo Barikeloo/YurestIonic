@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\AssignChargeSessionLines;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
 use App\Sale\Application\CreateChargeSession\CreateChargeSessionResponse;
 use App\Sale\Domain\Entity\ChargeSessionLineAssignment;
+use App\Sale\Domain\Event\ChargeSessionLinesAssigned;
 use App\Sale\Domain\Exception\ChargeSessionNotActiveException;
 use App\Sale\Domain\Exception\ChargeSessionNotFoundException;
 use App\Sale\Domain\Exception\InvalidDinerCountException;
 use App\Sale\Domain\Interfaces\ChargeSessionLineAssignmentRepositoryInterface;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class AssignChargeSessionLines
@@ -25,7 +24,7 @@ final class AssignChargeSessionLines
         private readonly ChargeSessionLineAssignmentRepositoryInterface $assignmentRepository,
         private readonly OrderLineRepositoryInterface $orderLineRepository,
         private readonly ChargeSessionResponseBuilder $responseBuilder,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(AssignChargeSessionLinesCommand $command): CreateChargeSessionResponse
@@ -83,18 +82,10 @@ final class AssignChargeSessionLines
             $summaryParts[] = "{$diner}:{$count}";
         }
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $session->restaurantId(),
-            slug: ActionSlug::create('sale.lines_assigned'),
-            entityType: 'charge_session',
-            entityId: $session->id()->value(),
-            userId: null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'assignments_summary' => implode(', ', $summaryParts),
-                'total_assigned' => count($command->assignments),
-            ],
+        $this->eventBus->publish(new ChargeSessionLinesAssigned(
+            chargeSessionId: $session->id()->value(),
+            assignmentsSummary: implode(', ', $summaryParts),
+            totalAssigned: count($command->assignments),
         ));
 
         return $this->responseBuilder->build($session);

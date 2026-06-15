@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\RecordChargeSessionPayment;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
 use App\Sale\Application\CreateOrderFinalTicket\CreateOrderFinalTicket;
 use App\Sale\Application\CreateSale\CreateSale;
+use App\Sale\Domain\Event\ChargeSessionPaymentRecorded;
 use App\Sale\Domain\Exception\ChargeSessionHasNoRemainingDebtException;
 use App\Sale\Domain\Exception\ChargeSessionNotActiveException;
 use App\Sale\Domain\Exception\ChargeSessionNotFoundException;
@@ -19,6 +17,7 @@ use App\Sale\Domain\Exception\PaymentAmountExceedsDebtException;
 use App\Sale\Domain\Exception\PaymentAmountMustBePositiveException;
 use App\Sale\Domain\Interfaces\ChargeSessionLineAssignmentRepositoryInterface;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class RecordChargeSessionPayment
@@ -30,7 +29,7 @@ final class RecordChargeSessionPayment
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly CreateOrderFinalTicket $createOrderFinalTicket,
         private readonly ChargeSessionLineAssignmentRepositoryInterface $assignmentRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(RecordChargeSessionPaymentCommand $command): RecordChargeSessionPaymentResponse
@@ -130,25 +129,15 @@ final class RecordChargeSessionPayment
             ($this->createOrderFinalTicket)(
                 orderId: $session->orderId()->value(),
                 closedByUserId: $command->closedByUserId,
-                deviceId: $command->deviceId,
-                ipAddress: $command->ipAddress,
             );
         }
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $session->restaurantId(),
-            slug: ActionSlug::create('sale.payment_recorded'),
-            entityType: 'charge_session',
-            entityId: $session->id()->value(),
-            userId: Uuid::create($command->closedByUserId),
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'payment_method' => $command->paymentMethod,
-                'amount_formatted' => number_format($amountCents / 100, 2).' €',
-                'diner_number' => $command->dinerNumber,
-                'is_session_complete' => $isSessionComplete,
-            ],
+        $this->eventBus->publish(new ChargeSessionPaymentRecorded(
+            chargeSessionId: $session->id()->value(),
+            paymentMethod: $command->paymentMethod,
+            amountFormatted: number_format($amountCents / 100, 2).' €',
+            dinerNumber: $command->dinerNumber,
+            isSessionComplete: $isSessionComplete,
         ));
 
         return RecordChargeSessionPaymentResponse::create(

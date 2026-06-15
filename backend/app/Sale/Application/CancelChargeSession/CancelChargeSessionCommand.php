@@ -10,7 +10,5 @@ final readonly class CancelChargeSessionCommand
         public string $chargeSessionId,
         public string $cancelledByUserId,
         public ?string $reason,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

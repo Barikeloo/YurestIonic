@@ -10,7 +10,5 @@ final readonly class UpdateSaleCommand
         public string $id,
         public string $closedByUserId,
         public int $ticketNumber,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

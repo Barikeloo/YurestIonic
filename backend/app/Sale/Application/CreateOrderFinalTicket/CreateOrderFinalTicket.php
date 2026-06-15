@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\CreateOrderFinalTicket;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Sale\Domain\Entity\OrderFinalTicket;
+use App\Sale\Domain\Event\OrderFinalTicketCreated;
 use App\Sale\Domain\Interfaces\OrderFinalTicketRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class CreateOrderFinalTicket
@@ -23,10 +22,10 @@ final class CreateOrderFinalTicket
         private readonly OrderLineRepositoryInterface $orderLineRepository,
         private readonly SaleRepositoryInterface $saleRepository,
         private readonly SalePaymentRepositoryInterface $salePaymentRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
-    public function __invoke(string $orderId, string $closedByUserId, ?string $deviceId = null, ?string $ipAddress = null): CreateOrderFinalTicketResponse
+    public function __invoke(string $orderId, string $closedByUserId): CreateOrderFinalTicketResponse
     {
         $orderUuid = Uuid::create($orderId);
 
@@ -82,19 +81,11 @@ final class CreateOrderFinalTicket
 
         $this->orderFinalTicketRepository->save($ticket);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $ticket->restaurantId(),
-            slug: ActionSlug::create('sale.final_ticket_created'),
-            entityType: 'order_final_ticket',
-            entityId: $ticket->id()->value(),
-            userId: Uuid::create($closedByUserId),
-            deviceId: $deviceId,
-            ipAddress: $ipAddress,
-            metadata: [
-                'ticket_number' => $ticket->ticketNumber(),
-                'total_formatted' => number_format($totalPaidCents / 100, 2).' €',
-                'order_id' => $orderId,
-            ],
+        $this->eventBus->publish(new OrderFinalTicketCreated(
+            ticketId: $ticket->id()->value(),
+            ticketNumber: $ticket->ticketNumber(),
+            totalFormatted: number_format($totalPaidCents / 100, 2).' €',
+            orderId: $orderId,
         ));
 
         return CreateOrderFinalTicketResponse::fromEntity($ticket);

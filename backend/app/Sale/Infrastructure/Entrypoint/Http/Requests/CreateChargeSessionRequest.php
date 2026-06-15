@@ -20,7 +20,6 @@ final class CreateChargeSessionRequest extends FormRequest
             'order_id' => ['required', 'string', 'uuid'],
             'opened_by_user_id' => ['required', 'string', 'uuid'],
             'diners_count' => ['nullable', 'integer', 'min:1'],
-            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -31,8 +30,6 @@ final class CreateChargeSessionRequest extends FormRequest
             orderId: (string) $this->input('order_id'),
             openedByUserId: (string) $this->input('opened_by_user_id'),
             dinersCount: $this->input('diners_count') ? (int) $this->input('diners_count') : null,
-            deviceId: $this->input('device_id'),
-            ipAddress: $this->ip(),
         );
     }
 }

@@ -20,7 +20,6 @@ final class RefundChargeSessionLineRequest extends FormRequest
             'order_line_id' => ['required', 'string', 'uuid'],
             'refunded_by_user_id' => ['required', 'string', 'uuid'],
             'reason' => ['nullable', 'string', 'max:500'],
-            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -33,8 +32,6 @@ final class RefundChargeSessionLineRequest extends FormRequest
             orderLineId: (string) $this->input('order_line_id'),
             refundedByUserId: (string) $this->input('refunded_by_user_id'),
             reason: is_string($reason) && $reason !== '' ? $reason : null,
-            deviceId: $this->input('device_id'),
-            ipAddress: $this->ip(),
         );
     }
 }

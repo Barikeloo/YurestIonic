@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\CancelChargeSession;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Sale\Application\CreateChargeSession\ChargeSessionResponseBuilder;
+use App\Sale\Domain\Event\ChargeSessionCancelled;
 use App\Sale\Domain\Exception\ChargeSessionNotActiveException;
 use App\Sale\Domain\Exception\ChargeSessionNotFoundException;
 use App\Sale\Domain\Interfaces\ChargeSessionRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class CancelChargeSession
@@ -18,7 +17,7 @@ final class CancelChargeSession
     public function __construct(
         private readonly ChargeSessionRepositoryInterface $chargeSessionRepository,
         private readonly ChargeSessionResponseBuilder $responseBuilder,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(CancelChargeSessionCommand $command): CancelChargeSessionResponse
@@ -48,21 +47,11 @@ final class CancelChargeSession
 
         $this->chargeSessionRepository->save($session);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $session->restaurantId(),
-            slug: ActionSlug::create('sale.charge_session_cancelled'),
-            entityType: 'charge_session',
-            entityId: $session->id()->value(),
-            userId: $userUuid,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            reason: $command->reason,
-            before: ['status' => 'active'],
-            after: ['status' => 'cancelled'],
-            metadata: [
-                'paid_formatted' => $paidCents > 0 ? number_format($paidCents / 100, 2).' €' : null,
-                'paid_diners_count' => count($paidDinerNumbers),
-            ],
+        $this->eventBus->publish(new ChargeSessionCancelled(
+            chargeSessionId: $session->id()->value(),
+            paidFormatted: $paidCents > 0 ? number_format($paidCents / 100, 2).' €' : null,
+            paidDinersCount: count($paidDinerNumbers),
+            reason: $command->reason ?? '',
         ));
 
         return CancelChargeSessionResponse::fromEntity($session, $paidCents, $paidDinerNumbers, $warningMessage);

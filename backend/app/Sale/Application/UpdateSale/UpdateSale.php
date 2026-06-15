@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\UpdateSale;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
+use App\Sale\Domain\Event\SaleClosed;
 use App\Sale\Domain\Exception\SaleAlreadyClosedException;
 use App\Sale\Domain\Exception\SaleMustHaveLinesException;
 use App\Sale\Domain\Exception\SaleNotFoundException;
@@ -14,6 +12,7 @@ use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Sale\Domain\ValueObject\SaleTicketNumber;
 use App\Sale\Domain\ValueObject\SaleTotal;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class UpdateSale
@@ -21,7 +20,7 @@ final class UpdateSale
     public function __construct(
         private readonly SaleRepositoryInterface $saleRepository,
         private readonly SaleLineRepositoryInterface $saleLineRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(UpdateSaleCommand $command): UpdateSaleResponse
@@ -58,24 +57,16 @@ final class UpdateSale
 
         $this->saleRepository->save($sale);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $sale->restaurantId(),
-            slug: ActionSlug::create('sale.closed'),
-            entityType: 'sale',
-            entityId: $sale->id()->value(),
-            userId: Uuid::create($command->closedByUserId),
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            before: $before,
-            after: [
-                'closed_by_user_id' => $sale->closedByUserId()?->value(),
-                'ticket_number' => $sale->ticketNumber()?->value(),
-                'total_cents' => $sale->total()?->value(),
-            ],
-            metadata: [
-                'total_formatted' => number_format($total / 100, 2).' €',
-                'lines_count' => count($saleLines),
-            ],
+        $this->eventBus->publish(new SaleClosed(
+            saleId: $sale->id()->value(),
+            closedByUserIdBefore: $before['closed_by_user_id'],
+            ticketNumberBefore: $before['ticket_number'],
+            totalCentsBefore: $before['total_cents'],
+            closedByUserIdAfter: $sale->closedByUserId()?->value(),
+            ticketNumberAfter: $sale->ticketNumber()?->value(),
+            totalCentsAfter: $sale->total()?->value(),
+            totalFormatted: number_format($total / 100, 2).' €',
+            linesCount: count($saleLines),
         ));
 
         return UpdateSaleResponse::fromSale($sale);

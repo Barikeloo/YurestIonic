@@ -2,9 +2,6 @@
 
 namespace App\Sale\Application\CreateSale;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Domain\Entity\Tip;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
@@ -14,6 +11,8 @@ use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Sale\Application\CreateOrderFinalTicket\CreateOrderFinalTicket;
 use App\Sale\Domain\Entity\Sale;
+use App\Sale\Domain\Event\SaleCreated;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Sale\Domain\Entity\SaleLine;
 use App\Sale\Domain\Entity\SalePayment;
 use App\Sale\Domain\Interfaces\SaleLineRepositoryInterface;
@@ -40,7 +39,7 @@ final class CreateSale
         private readonly TipRepositoryInterface $tipRepository,
         private readonly TransactionManagerInterface $transactionManager,
         private readonly CreateOrderFinalTicket $createOrderFinalTicket,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(
@@ -54,7 +53,6 @@ final class CreateSale
         bool $isPartialPayment = false,
         int $tipCents = 0,
         ?string $chargeSessionId = null,
-        ?string $ipAddress = null,
     ): CreateSaleResponse {
         return $this->transactionManager->run(function () use (
             $restaurantId,
@@ -67,7 +65,6 @@ final class CreateSale
             $isPartialPayment,
             $tipCents,
             $chargeSessionId,
-            $ipAddress,
         ) {
             $restaurantUuid = Uuid::create($restaurantId);
             $orderUuid = Uuid::create($orderId);
@@ -218,22 +215,12 @@ final class CreateSale
                 ($this->createOrderFinalTicket)(
                     orderId: $orderUuid->value(),
                     closedByUserId: $closedByUserId,
-                    deviceId: $deviceId,
-                    ipAddress: $ipAddress,
                 );
             }
 
-            $this->auditRecorder->record(new AuditEventDraft(
-                restaurantId: $restaurantUuid,
-                slug: ActionSlug::create('sale.created'),
-                entityType: 'sale',
-                entityId: $sale->id()->value(),
-                userId: Uuid::create($closedByUserId),
-                deviceId: $deviceId,
-                ipAddress: $ipAddress,
-                metadata: [
-                    'total_formatted' => number_format($sale->total()->value() / 100, 2).' €',
-                ],
+            $this->eventBus->publish(new SaleCreated(
+                saleId: $sale->id()->value(),
+                totalFormatted: number_format($sale->total()->value() / 100, 2).' €',
             ));
 
             return CreateSaleResponse::fromSale($sale);

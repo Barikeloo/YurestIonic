@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Sale\Application\CancelSale;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Domain\Entity\CashMovement;
 use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
 use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
 use App\Cash\Domain\ValueObject\MovementReasonCode;
 use App\Cash\Domain\ValueObject\MovementType;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Sale\Domain\Event\SaleCancelled;
 use App\Sale\Domain\Exception\SaleAlreadyCancelledException;
 use App\Sale\Domain\Exception\SaleNotFoundException;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -26,7 +25,7 @@ final class CancelSale
         private readonly SalePaymentRepositoryInterface $salePaymentRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly CashMovementRepositoryInterface $cashMovementRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(CancelSaleCommand $command): CancelSaleResponse
@@ -82,22 +81,13 @@ final class CancelSale
             }
         }
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $sale->restaurantId(),
-            slug: ActionSlug::create('sale.cancelled'),
-            entityType: 'sale',
-            entityId: $sale->id()->value(),
-            userId: $cancelledByUuid,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            sessionId: $cashSessionId,
+        $this->eventBus->publish(new SaleCancelled(
+            saleId: $sale->id()->value(),
+            orderId: $sale->orderId()->value(),
+            totalCents: $sale->total()->value(),
+            cashRefundedCents: $cashRefundedCents,
+            paymentsRemoved: count($payments),
             reason: $command->reason,
-            metadata: [
-                'order_id' => $sale->orderId()->value(),
-                'total_cents' => $sale->total()->value(),
-                'cash_refunded_cents' => $cashRefundedCents,
-                'payments_removed' => count($payments),
-            ],
         ));
 
         return CancelSaleResponse::create($sale);

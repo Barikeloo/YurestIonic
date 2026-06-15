@@ -36,7 +36,6 @@ final class RecordChargeSessionPaymentRequest extends FormRequest
             deviceId: (string) $this->input('device_id'),
             dinerNumber: $this->input('diner_number') ? (int) $this->input('diner_number') : null,
             amountCents: $this->input('amount_cents') ? (int) $this->input('amount_cents') : null,
-            ipAddress: $this->ip(),
         );
     }
 }

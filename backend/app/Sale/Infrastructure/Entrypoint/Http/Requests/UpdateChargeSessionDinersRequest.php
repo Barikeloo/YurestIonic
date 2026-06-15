@@ -18,7 +18,6 @@ final class UpdateChargeSessionDinersRequest extends FormRequest
     {
         return [
             'diners_count' => ['required', 'integer', 'min:1'],
-            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -27,8 +26,6 @@ final class UpdateChargeSessionDinersRequest extends FormRequest
         return new UpdateChargeSessionDinersCommand(
             chargeSessionId: (string) $this->route('id'),
             newDinersCount: (int) $this->input('diners_count'),
-            deviceId: $this->input('device_id'),
-            ipAddress: $this->ip(),
         );
     }
 }

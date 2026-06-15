@@ -24,7 +24,6 @@ final class AddLineToSaleRequest extends FormRequest
             'quantity' => ['required', 'integer', 'min:1'],
             'price' => ['required', 'integer', 'min:0'],
             'tax_percentage' => ['required', 'integer', 'min:0', 'max:100'],
-            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -38,8 +37,6 @@ final class AddLineToSaleRequest extends FormRequest
             quantity: (int) $this->input('quantity'),
             price: (int) $this->input('price'),
             taxPercentage: (int) $this->input('tax_percentage'),
-            deviceId: $this->input('device_id'),
-            ipAddress: $this->ip(),
         );
     }
 }

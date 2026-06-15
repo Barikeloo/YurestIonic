@@ -11,7 +11,5 @@ final readonly class RefundChargeSessionLineCommand
         public string $orderLineId,
         public string $refundedByUserId,
         public ?string $reason = null,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

@@ -11,7 +11,5 @@ final readonly class CreateChargeSessionCommand
         public string $orderId,
         public string $openedByUserId,
         public ?int $dinersCount,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

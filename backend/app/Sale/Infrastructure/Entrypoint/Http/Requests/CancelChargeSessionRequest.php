@@ -19,7 +19,6 @@ final class CancelChargeSessionRequest extends FormRequest
         return [
             'cancelled_by_user_id' => ['required', 'string', 'uuid'],
             'reason' => ['nullable', 'string', 'max:500'],
-            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -29,8 +28,6 @@ final class CancelChargeSessionRequest extends FormRequest
             chargeSessionId: (string) $this->route('id'),
             cancelledByUserId: (string) $this->input('cancelled_by_user_id'),
             reason: $this->input('reason') ? (string) $this->input('reason') : null,
-            deviceId: $this->input('device_id'),
-            ipAddress: $this->ip(),
         );
     }
 }

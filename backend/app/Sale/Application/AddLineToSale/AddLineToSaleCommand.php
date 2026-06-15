@@ -14,7 +14,5 @@ final readonly class AddLineToSaleCommand
         public int $quantity,
         public int $price,
         public int $taxPercentage,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }
