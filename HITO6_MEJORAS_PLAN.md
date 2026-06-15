@@ -18,25 +18,25 @@ Roles, PIN, división de cuenta, métodos de pago + mixto, cierre de caja, trasl
 
 ---
 
-## MEJORA 1 — Bus de eventos síncrono
+## MEJORA 1 — Bus de eventos síncrono  🟡 EN CURSO
 **Objetivo:** desacoplar efectos secundarios (auditoría, recálculos, notificaciones) de la lógica principal del caso de uso, despachándolos como eventos de dominio dentro del ciclo de la petición.
 
-### Decisiones a tomar (antes de codear)
-- [ ] Caso piloto: empezar por **auditoría** (`AuditRecorder`, hoy inyectado en muchos casos de uso) → convertir en listener de eventos de dominio.
-- [ ] ¿Eventos emitidos por la entidad (recordedEvents) o despachados explícitamente por el caso de uso? (recomendado: el caso de uso despacha tras persistir).
-- [ ] Naming y ubicación: `app/Shared/Domain/Event/` (interfaz + base) y `app/Shared/Application/EventBus/`.
+> Plan detallado y patrón "cómo migrar un módulo": **`MEJORA1_EVENT_BUS_PLAN.md`**.
 
-### Fases
-- [ ] **Dominio compartido**: `DomainEvent` (interfaz/abstract), `EventBusInterface` (`publish(DomainEvent ...$events)`).
-- [ ] **Infra**: `InMemorySyncEventBus` (resuelve listeners del contenedor y los invoca en orden, dentro de la petición). Binding en `AppServiceProvider`.
-- [ ] **Registro de listeners**: mapa evento → listeners (config o provider).
-- [ ] **Piloto auditoría**: emitir p.ej. `SaleOpenedEvent`, `SaleClosedEvent`, `CashSessionClosedEvent`; mover la lógica de `AuditRecorder->record(...)` a listeners. Quitar la inyección directa del recorder en esos casos de uso.
-- [ ] **Tests**: unit del bus (publica → invoca listeners en orden, tolerante o no a fallos), unit de un caso de uso (verifica que publica el evento esperado), feature (la operación sigue dejando el registro de auditoría).
-- [ ] **Doc**: nota de arquitectura (por qué síncrono, dónde se despacha, cómo añadir un listener).
+### Hecho
+- [x] **Núcleo en `Shared`**: `DomainEvent`, `RecordsEvents` (trait de agregado), `EventBusInterface`, `EventSubscriber`, `InMemorySyncEventBus` (síncrono, match por `instanceof`). Commit `6fb7dff`.
+- [x] **Auditoría cross-cutting**: `AuditableEvent` + `RequestContext` (contexto request-scoped aparte) + `AuditEventSubscriber` (traduce cualquier `AuditableEvent` → `AuditEventDraft`). El caso de uso publica `...$entity->pullDomainEvents()` tras persistir.
+- [x] **Módulos migrados**: **Tax** (`a5a37ff`), **Zone** (`0f1488f`), **Family** (`980802a`). Cada uno con eventos created/updated/deleted, tests unit + feature end-to-end de `audit_logs`.
+
+### Pendiente (migración incremental, mismo patrón)
+- [ ] Módulos pequeños CRUD: **Tables**, **Product**, **ProductModifier**, **ProductVariant**, **Restaurant**, **User**, **Menu**.
+- [ ] Módulos grandes (eventos de dominio más ricos): **Sale**, **Order**, **Cash**.
+- [ ] (61 casos de uso siguen con `AuditRecorder` directo — válido; se migran cuando convenga.)
 
 ### Riesgos / notas
-- Mantener el orden determinista de listeners.
-- Decidir transaccionalidad: ¿publicar dentro o fuera de la transacción de BD? (recomendado: tras commit para efectos externos; dentro para los que deban revertirse).
+- Orden determinista de subscribers (según registro en el provider).
+- Transaccionalidad: hoy se publica tras `save()`, síncrono y propagando (igual que antes).
+- `activate`/`deactivate` de Family quedaron **sin auditar** (fiel al comportamiento previo) — ojo al migrar módulos con toggles.
 
 ---
 
