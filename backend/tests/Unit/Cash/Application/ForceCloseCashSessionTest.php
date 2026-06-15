@@ -2,15 +2,14 @@
 
 namespace Tests\Unit\Cash\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Application\ForceCloseCashSession\ForceCloseCashSession;
 use App\Cash\Application\ForceCloseCashSession\ForceCloseCashSessionCommand;
 use App\Cash\Domain\Entity\CashSession;
+use App\Cash\Domain\Event\CashSessionForceClosed;
 use App\Cash\Domain\Exception\CashSessionNotFoundException;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\ValueObject\DeviceId;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 use Mockery;
@@ -20,17 +19,17 @@ use PHPUnit\Framework\TestCase;
 class ForceCloseCashSessionTest extends TestCase
 {
     private CashSessionRepositoryInterface&MockInterface $cashSessionRepository;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    private EventBusInterface&MockInterface $eventBus;
     private ForceCloseCashSession $useCase;
 
     protected function setUp(): void
     {
         $this->cashSessionRepository = Mockery::mock(CashSessionRepositoryInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $this->eventBus = Mockery::mock(EventBusInterface::class);
 
         $this->useCase = new ForceCloseCashSession(
             $this->cashSessionRepository,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
@@ -67,10 +66,10 @@ class ForceCloseCashSessionTest extends TestCase
             ->once()
             ->with($session);
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::type(AuditEventDraft::class));
+            ->with(Mockery::type(CashSessionForceClosed::class));
 
         $response = ($this->useCase)($command);
 
@@ -91,7 +90,7 @@ class ForceCloseCashSessionTest extends TestCase
             ->andReturn(null);
 
         $this->cashSessionRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(CashSessionNotFoundException::class);
 
@@ -121,11 +120,12 @@ class ForceCloseCashSessionTest extends TestCase
             ->shouldReceive('save')
             ->once();
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::on(function (AuditEventDraft $draft): bool {
-                return $draft->slug->equals(ActionSlug::create('caja.force_closed'));
+            ->with(Mockery::on(function (object $event): bool {
+                return $event instanceof CashSessionForceClosed
+                    && $event->auditSlug() === 'caja.force_closed';
             }));
 
         ($this->useCase)($command);

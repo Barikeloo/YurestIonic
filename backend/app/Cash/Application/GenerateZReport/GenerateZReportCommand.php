@@ -9,7 +9,5 @@ final readonly class GenerateZReportCommand
     public function __construct(
         public string $cashSessionId,
         public ?int $finalAmountCents = null,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

@@ -9,7 +9,5 @@ final readonly class ForceCloseCashSessionCommand
     public function __construct(
         public string $cashSessionId,
         public string $closedByUserId,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

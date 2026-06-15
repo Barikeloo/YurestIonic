@@ -2,15 +2,13 @@
 
 namespace Tests\Unit\Cash\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Application\OpenCashSession\OpenCashSession;
 use App\Cash\Application\OpenCashSession\OpenCashSessionCommand;
 use App\Cash\Domain\Entity\CashSession;
+use App\Cash\Domain\Event\CashSessionOpened;
 use App\Cash\Domain\Exception\ActiveCashSessionAlreadyExistsException;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
-use App\Cash\Domain\ValueObject\DeviceId;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 use Mockery;
@@ -20,17 +18,17 @@ use PHPUnit\Framework\TestCase;
 class OpenCashSessionTest extends TestCase
 {
     private CashSessionRepositoryInterface&MockInterface $cashSessionRepository;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    private EventBusInterface&MockInterface $eventBus;
     private OpenCashSession $useCase;
 
     protected function setUp(): void
     {
         $this->cashSessionRepository = Mockery::mock(CashSessionRepositoryInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $this->eventBus = Mockery::mock(EventBusInterface::class);
 
         $this->useCase = new OpenCashSession(
             $this->cashSessionRepository,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
@@ -62,10 +60,10 @@ class OpenCashSessionTest extends TestCase
             ->once()
             ->with(Mockery::type(CashSession::class));
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::type(AuditEventDraft::class));
+            ->with(Mockery::type(CashSessionOpened::class));
 
         $response = ($this->useCase)($command);
 
@@ -101,7 +99,7 @@ class OpenCashSessionTest extends TestCase
             ->andReturn($existingSession);
 
         $this->cashSessionRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(ActiveCashSessionAlreadyExistsException::class);
 
@@ -127,12 +125,10 @@ class OpenCashSessionTest extends TestCase
             ->shouldReceive('save')
             ->once();
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::on(function (AuditEventDraft $draft): bool {
-                return $draft->slug->equals(ActionSlug::create('caja.opened'));
-            }));
+            ->with(Mockery::type(CashSessionOpened::class));
 
         $response = ($this->useCase)($command);
 

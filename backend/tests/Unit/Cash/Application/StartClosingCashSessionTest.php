@@ -2,17 +2,16 @@
 
 namespace Tests\Unit\Cash\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Application\StartClosingCashSession\StartClosingCashSession;
 use App\Cash\Application\StartClosingCashSession\StartClosingCashSessionCommand;
 use App\Cash\Domain\Entity\CashSession;
+use App\Cash\Domain\Event\CashSessionClosingStarted;
 use App\Cash\Domain\Exception\CashSessionNotFoundException;
 use App\Cash\Domain\Exception\OpenOperationsPreventClosingException;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\ValueObject\DeviceId;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\Interfaces\TransactionManagerInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
@@ -25,7 +24,7 @@ class StartClosingCashSessionTest extends TestCase
     private CashSessionRepositoryInterface&MockInterface $cashSessionRepository;
     private OrderRepositoryInterface&MockInterface $orderRepository;
     private TransactionManagerInterface&MockInterface $transactionManager;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    private EventBusInterface&MockInterface $eventBus;
     private StartClosingCashSession $useCase;
 
     protected function setUp(): void
@@ -33,13 +32,13 @@ class StartClosingCashSessionTest extends TestCase
         $this->cashSessionRepository = Mockery::mock(CashSessionRepositoryInterface::class);
         $this->orderRepository = Mockery::mock(OrderRepositoryInterface::class);
         $this->transactionManager = Mockery::mock(TransactionManagerInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $this->eventBus = Mockery::mock(EventBusInterface::class);
 
         $this->useCase = new StartClosingCashSession(
             $this->cashSessionRepository,
             $this->orderRepository,
             $this->transactionManager,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
@@ -84,10 +83,10 @@ class StartClosingCashSessionTest extends TestCase
             ->once()
             ->with($session);
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::type(AuditEventDraft::class));
+            ->with(Mockery::type(CashSessionClosingStarted::class));
 
         $response = ($this->useCase)($command);
 
@@ -113,7 +112,7 @@ class StartClosingCashSessionTest extends TestCase
 
         $this->orderRepository->shouldNotReceive('countActiveByRestaurantId');
         $this->cashSessionRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(CashSessionNotFoundException::class);
 
@@ -153,7 +152,7 @@ class StartClosingCashSessionTest extends TestCase
             ->andReturn(3);
 
         $this->cashSessionRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(OpenOperationsPreventClosingException::class);
 
@@ -191,11 +190,12 @@ class StartClosingCashSessionTest extends TestCase
             ->shouldReceive('save')
             ->once();
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::on(function (AuditEventDraft $draft): bool {
-                return $draft->slug->equals(ActionSlug::create('caja.closing_started'));
+            ->with(Mockery::on(function (object $event): bool {
+                return $event instanceof CashSessionClosingStarted
+                    && $event->auditSlug() === 'caja.closing_started';
             }));
 
         ($this->useCase)($command);

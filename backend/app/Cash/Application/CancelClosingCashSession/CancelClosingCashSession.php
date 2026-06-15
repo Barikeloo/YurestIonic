@@ -4,18 +4,17 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\CancelClosingCashSession;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
+use App\Cash\Domain\Event\CashSessionClosingCancelled;
 use App\Cash\Domain\Exception\CashSessionNotFoundException;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class CancelClosingCashSession
 {
     public function __construct(
         private readonly CashSessionRepositoryInterface $cashSessionRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(CancelClosingCashSessionCommand $command): CancelClosingCashSessionResponse
@@ -27,16 +26,10 @@ final class CancelClosingCashSession
         $cashSession->cancelClosing();
         $this->cashSessionRepository->save($cashSession);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $cashSession->restaurantId(),
-            slug: ActionSlug::create('caja.closing_cancelled'),
-            entityType: 'cash_session',
-            entityId: $cashSession->id()->value(),
-            userId: null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            before: ['status' => $beforeStatus],
-            after: ['status' => $cashSession->status()->value()],
+        $this->eventBus->publish(new CashSessionClosingCancelled(
+            cashSessionId: $cashSession->id()->value(),
+            statusBefore: $beforeStatus,
+            statusAfter: $cashSession->status()->value(),
         ));
 
         return CancelClosingCashSessionResponse::create(

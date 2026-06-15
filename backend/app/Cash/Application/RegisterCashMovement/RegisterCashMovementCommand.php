@@ -14,7 +14,5 @@ final readonly class RegisterCashMovementCommand
         public int $amountCents,
         public string $userId,
         public ?string $description,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

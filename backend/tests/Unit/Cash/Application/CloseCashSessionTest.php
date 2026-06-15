@@ -2,14 +2,12 @@
 
 namespace Tests\Unit\Cash\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Application\CloseCashSession\CloseCashSession;
 use App\Cash\Application\CloseCashSession\CloseCashSessionCommand;
 use App\Cash\Application\GenerateZReport\GenerateZReport;
 use App\Cash\Application\GenerateZReport\GenerateZReportCommand;
 use App\Cash\Domain\Entity\CashSession;
+use App\Cash\Domain\Event\CashSessionClosed;
 use App\Cash\Domain\Exception\CashSessionNotFoundException;
 use App\Cash\Domain\Exception\PendingSalesPreventClosingException;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
@@ -18,9 +16,8 @@ use App\Cash\Domain\ValueObject\ZReportHash;
 use App\Cash\Domain\ValueObject\ZReportNumber;
 use App\Sale\Domain\Entity\Sale;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
-use App\Sale\Domain\ValueObject\SaleStatus;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\Interfaces\TransactionManagerInterface;
-use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 use Mockery;
@@ -33,7 +30,7 @@ class CloseCashSessionTest extends TestCase
     private GenerateZReport&MockInterface $generateZReport;
     private SaleRepositoryInterface&MockInterface $saleRepository;
     private TransactionManagerInterface&MockInterface $transactionManager;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    private EventBusInterface&MockInterface $eventBus;
     private CloseCashSession $useCase;
 
     protected function setUp(): void
@@ -42,14 +39,14 @@ class CloseCashSessionTest extends TestCase
         $this->generateZReport = Mockery::mock(GenerateZReport::class);
         $this->saleRepository = Mockery::mock(SaleRepositoryInterface::class);
         $this->transactionManager = Mockery::mock(TransactionManagerInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $this->eventBus = Mockery::mock(EventBusInterface::class);
 
         $this->useCase = new CloseCashSession(
             $this->cashSessionRepository,
             $this->generateZReport,
             $this->saleRepository,
             $this->transactionManager,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
@@ -138,10 +135,10 @@ class CloseCashSessionTest extends TestCase
             ->once()
             ->with($session);
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::type(AuditEventDraft::class));
+            ->with(Mockery::type(CashSessionClosed::class));
 
         $response = ($this->useCase)($command);
 
@@ -171,7 +168,7 @@ class CloseCashSessionTest extends TestCase
         $this->saleRepository->shouldNotReceive('findByCashSessionId');
         $this->generateZReport->shouldNotReceive('__invoke');
         $this->cashSessionRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(CashSessionNotFoundException::class);
 
@@ -222,7 +219,7 @@ class CloseCashSessionTest extends TestCase
 
         $this->generateZReport->shouldNotReceive('__invoke');
         $this->cashSessionRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(PendingSalesPreventClosingException::class);
 
@@ -269,11 +266,12 @@ class CloseCashSessionTest extends TestCase
             ->shouldReceive('save')
             ->once();
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::on(function (AuditEventDraft $draft): bool {
-                return $draft->slug->equals(ActionSlug::create('caja.closed'));
+            ->with(Mockery::on(function (object $event): bool {
+                return $event instanceof CashSessionClosed
+                    && $event->auditSlug() === 'caja.closed';
             }));
 
         ($this->useCase)($command);

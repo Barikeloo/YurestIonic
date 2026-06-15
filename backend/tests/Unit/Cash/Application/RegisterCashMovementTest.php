@@ -2,18 +2,17 @@
 
 namespace Tests\Unit\Cash\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Application\RegisterCashMovement\RegisterCashMovement;
 use App\Cash\Application\RegisterCashMovement\RegisterCashMovementCommand;
 use App\Cash\Domain\Entity\CashMovement;
 use App\Cash\Domain\Entity\CashSession;
+use App\Cash\Domain\Event\CashMovementRegistered;
 use App\Cash\Domain\Exception\CashSessionNotFoundException;
 use App\Cash\Domain\Exception\CashSessionNotOpenForMovementException;
 use App\Cash\Domain\Interfaces\CashMovementRepositoryInterface;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\ValueObject\DeviceId;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 use Mockery;
@@ -24,19 +23,19 @@ class RegisterCashMovementTest extends TestCase
 {
     private CashMovementRepositoryInterface&MockInterface $movementRepository;
     private CashSessionRepositoryInterface&MockInterface $cashSessionRepository;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    private EventBusInterface&MockInterface $eventBus;
     private RegisterCashMovement $useCase;
 
     protected function setUp(): void
     {
         $this->movementRepository = Mockery::mock(CashMovementRepositoryInterface::class);
         $this->cashSessionRepository = Mockery::mock(CashSessionRepositoryInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $this->eventBus = Mockery::mock(EventBusInterface::class);
 
         $this->useCase = new RegisterCashMovement(
             $this->movementRepository,
             $this->cashSessionRepository,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
@@ -78,10 +77,10 @@ class RegisterCashMovementTest extends TestCase
             ->once()
             ->with(Mockery::type(CashMovement::class));
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::type(AuditEventDraft::class));
+            ->with(Mockery::type(CashMovementRegistered::class));
 
         $response = ($this->useCase)($command);
 
@@ -109,7 +108,7 @@ class RegisterCashMovementTest extends TestCase
             ->andReturn(null);
 
         $this->movementRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(CashSessionNotFoundException::class);
 
@@ -145,7 +144,7 @@ class RegisterCashMovementTest extends TestCase
             ->andReturn($session);
 
         $this->movementRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(CashSessionNotOpenForMovementException::class);
 
@@ -182,11 +181,12 @@ class RegisterCashMovementTest extends TestCase
             ->shouldReceive('save')
             ->once();
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::on(function (AuditEventDraft $draft): bool {
-                return $draft->slug->equals(ActionSlug::create('caja.cash_movement'));
+            ->with(Mockery::on(function (object $event): bool {
+                return $event instanceof CashMovementRegistered
+                    && $event->auditSlug() === 'caja.cash_movement';
             }));
 
         ($this->useCase)($command);

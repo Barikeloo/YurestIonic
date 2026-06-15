@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\GenerateZReport;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Domain\Entity\ZReport;
+use App\Cash\Domain\Event\ZReportGenerated;
 use App\Cash\Domain\Exception\CashSessionCannotGenerateZReportException;
 use App\Cash\Domain\Exception\CashSessionNotFoundException;
 use App\Cash\Domain\Exception\ZReportAlreadyExistsException;
@@ -17,6 +15,7 @@ use App\Cash\Domain\Interfaces\SalePaymentRepositoryInterface;
 use App\Cash\Domain\Interfaces\TipRepositoryInterface;
 use App\Cash\Domain\Interfaces\ZReportRepositoryInterface;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -29,7 +28,7 @@ class GenerateZReport
         private readonly TipRepositoryInterface $tipRepository,
         private readonly ZReportRepositoryInterface $zReportRepository,
         private readonly SaleRepositoryInterface $saleRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(GenerateZReportCommand $command): GenerateZReportResponse
@@ -131,23 +130,15 @@ class GenerateZReport
 
         $this->zReportRepository->save($zReport);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $zReport->restaurantId(),
-            slug: ActionSlug::create('caja.z_report_generated'),
-            entityType: 'z_report',
-            entityId: $zReport->id()->value(),
-            userId: null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'report_number' => $zReport->reportNumber()->value(),
-                'total_sales_formatted' => number_format($zReport->totalSales()->toCents() / 100, 2),
-                'total_cash_formatted' => number_format($zReport->totalCash()->toCents() / 100, 2),
-                'total_card_formatted' => number_format($zReport->totalCard()->toCents() / 100, 2),
-                'sales_count' => $zReport->salesCount(),
-                'cancelled_sales_count' => $zReport->cancelledSalesCount(),
-                'discrepancy_formatted' => number_format($zReport->discrepancy()->toCents() / 100, 2),
-            ],
+        $this->eventBus->publish(new ZReportGenerated(
+            zReportId: $zReport->id()->value(),
+            reportNumber: $zReport->reportNumber()->value(),
+            totalSalesFormatted: number_format($zReport->totalSales()->toCents() / 100, 2),
+            totalCashFormatted: number_format($zReport->totalCash()->toCents() / 100, 2),
+            totalCardFormatted: number_format($zReport->totalCard()->toCents() / 100, 2),
+            salesCount: $zReport->salesCount(),
+            cancelledSalesCount: $zReport->cancelledSalesCount(),
+            discrepancyFormatted: number_format($zReport->discrepancy()->toCents() / 100, 2),
         ));
 
         return GenerateZReportResponse::create($zReport);

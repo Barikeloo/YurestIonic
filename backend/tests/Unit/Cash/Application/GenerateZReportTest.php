@@ -2,12 +2,12 @@
 
 namespace Tests\Unit\Cash\Application;
 
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Cash\Application\GenerateZReport\GenerateZReport;
 use App\Cash\Application\GenerateZReport\GenerateZReportCommand;
 use App\Cash\Domain\Entity\CashMovement;
 use App\Cash\Domain\Entity\CashSession;
 use App\Cash\Domain\Entity\ZReport;
+use App\Cash\Domain\Event\ZReportGenerated;
 use App\Cash\Domain\Exception\CashSessionCannotGenerateZReportException;
 use App\Cash\Domain\Exception\CashSessionNotFoundException;
 use App\Cash\Domain\Exception\ZReportAlreadyExistsException;
@@ -24,7 +24,7 @@ use App\Sale\Domain\Entity\Sale;
 use App\Sale\Domain\Entity\SalePayment;
 use App\Sale\Domain\Interfaces\SaleRepositoryInterface;
 use App\Sale\Domain\ValueObject\PaymentMethod;
-use App\Shared\Domain\ValueObject\DomainDateTime;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 use Mockery;
@@ -39,7 +39,7 @@ class GenerateZReportTest extends TestCase
     private TipRepositoryInterface&MockInterface $tipRepository;
     private ZReportRepositoryInterface&MockInterface $zReportRepository;
     private SaleRepositoryInterface&MockInterface $saleRepository;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    private EventBusInterface&MockInterface $eventBus;
     private GenerateZReport $useCase;
 
     protected function setUp(): void
@@ -50,7 +50,7 @@ class GenerateZReportTest extends TestCase
         $this->tipRepository = Mockery::mock(TipRepositoryInterface::class);
         $this->zReportRepository = Mockery::mock(ZReportRepositoryInterface::class);
         $this->saleRepository = Mockery::mock(SaleRepositoryInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $this->eventBus = Mockery::mock(EventBusInterface::class);
 
         $this->useCase = new GenerateZReport(
             $this->cashSessionRepository,
@@ -59,7 +59,7 @@ class GenerateZReportTest extends TestCase
             $this->tipRepository,
             $this->zReportRepository,
             $this->saleRepository,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
@@ -143,9 +143,10 @@ class GenerateZReportTest extends TestCase
             ->once()
             ->with(Mockery::type(ZReport::class));
 
-        $this->auditRecorder
-            ->shouldReceive('record')
-            ->once();
+        $this->eventBus
+            ->shouldReceive('publish')
+            ->once()
+            ->with(Mockery::type(ZReportGenerated::class));
 
         $response = ($this->useCase)($command);
 
@@ -332,9 +333,10 @@ class GenerateZReportTest extends TestCase
             ->shouldReceive('save')
             ->once();
 
-        $this->auditRecorder
-            ->shouldReceive('record')
-            ->once();
+        $this->eventBus
+            ->shouldReceive('publish')
+            ->once()
+            ->with(Mockery::type(ZReportGenerated::class));
 
         $response = ($this->useCase)($command);
 
@@ -413,9 +415,10 @@ class GenerateZReportTest extends TestCase
             ->shouldReceive('save')
             ->once();
 
-        $this->auditRecorder
-            ->shouldReceive('record')
-            ->once();
+        $this->eventBus
+            ->shouldReceive('publish')
+            ->once()
+            ->with(Mockery::type(ZReportGenerated::class));
 
         $response = ($this->useCase)($command);
 
@@ -496,9 +499,10 @@ class GenerateZReportTest extends TestCase
             ->shouldReceive('save')
             ->once();
 
-        $this->auditRecorder
-            ->shouldReceive('record')
-            ->once();
+        $this->eventBus
+            ->shouldReceive('publish')
+            ->once()
+            ->with(Mockery::type(ZReportGenerated::class));
 
         $response = ($this->useCase)($command);
 

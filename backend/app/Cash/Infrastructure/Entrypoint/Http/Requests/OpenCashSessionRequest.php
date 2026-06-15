@@ -36,7 +36,6 @@ final class OpenCashSessionRequest extends FormRequest
             openedByUserId: (string) $this->input('opened_by_user_id'),
             initialAmountCents: (int) $this->input('initial_amount_cents'),
             notes: $this->input('notes'),
-            ipAddress: $this->ip(),
         );
     }
 }

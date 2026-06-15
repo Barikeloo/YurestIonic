@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Cash\Application\OpenCashSession;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Cash\Domain\Entity\CashSession;
+use App\Cash\Domain\Event\CashSessionOpened;
 use App\Cash\Domain\Exception\ActiveCashSessionAlreadyExistsException;
 use App\Cash\Domain\Interfaces\CashSessionRepositoryInterface;
 use App\Cash\Domain\ValueObject\DeviceId;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Money;
 use App\Shared\Domain\ValueObject\Uuid;
 
@@ -18,7 +17,7 @@ final class OpenCashSession
 {
     public function __construct(
         private readonly CashSessionRepositoryInterface $cashSessionRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(OpenCashSessionCommand $command): OpenCashSessionResponse
@@ -41,17 +40,9 @@ final class OpenCashSession
 
         $this->cashSessionRepository->save($cashSession);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $restaurantUuid,
-            slug: ActionSlug::create('caja.opened'),
-            entityType: 'cash_session',
-            entityId: $cashSession->id()->value(),
-            userId: Uuid::create($command->openedByUserId),
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'opening_float_formatted' => number_format($command->initialAmountCents / 100, 2).' €',
-            ],
+        $this->eventBus->publish(new CashSessionOpened(
+            cashSessionId: $cashSession->id()->value(),
+            openingFloatFormatted: number_format($command->initialAmountCents / 100, 2).' €',
         ));
 
         return OpenCashSessionResponse::create(

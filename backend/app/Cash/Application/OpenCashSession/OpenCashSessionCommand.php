@@ -12,6 +12,5 @@ final readonly class OpenCashSessionCommand
         public string $openedByUserId,
         public int $initialAmountCents,
         public ?string $notes,
-        public ?string $ipAddress = null,
     ) {}
 }
