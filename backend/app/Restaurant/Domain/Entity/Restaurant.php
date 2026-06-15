@@ -2,16 +2,20 @@
 
 namespace App\Restaurant\Domain\Entity;
 
+use App\Restaurant\Domain\Event\RestaurantCreated;
 use App\Restaurant\Domain\ValueObject\RestaurantLegalName;
 use App\Restaurant\Domain\ValueObject\RestaurantName;
 use App\Restaurant\Domain\ValueObject\RestaurantPasswordHash;
 use App\Restaurant\Domain\ValueObject\RestaurantTaxId;
+use App\Shared\Domain\Event\RecordsEvents;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Email;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class Restaurant
 {
+    use RecordsEvents;
+
     private function __construct(
         private readonly Uuid $id,
         private readonly Uuid $uuid,
@@ -33,7 +37,7 @@ final class Restaurant
         Email $email,
         RestaurantPasswordHash $password,
     ): self {
-        return new self(
+        $restaurant = new self(
             id: $id,
             uuid: $id,
             name: $name,
@@ -44,6 +48,13 @@ final class Restaurant
             createdAt: DomainDateTime::now(),
             updatedAt: DomainDateTime::now(),
         );
+
+        $restaurant->recordEvent(new RestaurantCreated(
+            restaurantUuid: $restaurant->uuid->value(),
+            restaurantName: $restaurant->name->value(),
+        ));
+
+        return $restaurant;
     }
 
     public static function fromPersistence(
@@ -100,6 +111,16 @@ final class Restaurant
     {
         $this->password = $password;
         $this->updatedAt = DomainDateTime::now();
+    }
+
+    private function snapshot(): array
+    {
+        return [
+            'name' => $this->name->value(),
+            'legal_name' => $this->legalName?->value(),
+            'tax_id' => $this->taxId?->value(),
+            'email' => $this->email->value(),
+        ];
     }
 
     public function id(): Uuid

@@ -20,7 +20,6 @@ final class UpdateRestaurantRequest extends FormRequest
             'tax_id' => ['sometimes', 'nullable', 'string', 'min:1', 'max:255'],
             'email' => ['sometimes', 'string', 'email'],
             'password' => ['sometimes', 'string', 'min:8'],
-            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -29,11 +28,6 @@ final class UpdateRestaurantRequest extends FormRequest
         $superAdminUuid = $this->session()->get('super_admin_id');
         $authUserUuid = $this->session()->get('auth_user_id');
         $isSuperAdmin = is_string($superAdminUuid) && $superAdminUuid !== '';
-
-        $deviceId = $this->input('device_id');
-        if (! is_string($deviceId) || $deviceId === '') {
-            $deviceId = $this->header('X-Device-Id');
-        }
 
         return new UpdateRestaurantCommand(
             id: $id,
@@ -44,8 +38,6 @@ final class UpdateRestaurantRequest extends FormRequest
             plainPassword: $this->input('password'),
             authUserUuid: is_string($authUserUuid) ? $authUserUuid : null,
             isSuperAdmin: $isSuperAdmin,
-            deviceId: is_string($deviceId) ? $deviceId : null,
-            ipAddress: $this->ip(),
         );
     }
 }

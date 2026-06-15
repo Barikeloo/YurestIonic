@@ -13,7 +13,5 @@ final readonly class UpdateRestaurantCommand
         public ?string $plainPassword,
         public ?string $authUserUuid,
         public bool $isSuperAdmin,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }
