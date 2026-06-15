@@ -4,7 +4,6 @@ namespace App\Product\Application\UpdateProduct;
 
 final readonly class UpdateProductCommand
 {
-
     public function __construct(
         public string $id,
         public string $familyId,
@@ -15,9 +14,5 @@ final readonly class UpdateProductCommand
         public int $stock,
         public bool $active,
         public array $allergens,
-        public string $restaurantId,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
-        public ?string $userId = null,
     ) {}
 }

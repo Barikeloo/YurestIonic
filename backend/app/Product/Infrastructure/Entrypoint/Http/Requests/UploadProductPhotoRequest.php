@@ -21,13 +21,9 @@ final class UploadProductPhotoRequest extends FormRequest
 
     public function toCommand(): UploadProductPhotoCommand
     {
-        $deviceId = $this->header('X-Device-Id');
-
         return new UploadProductPhotoCommand(
             token: (string) $this->route('token'),
             temporaryPath: (string) $this->file('photo')->getRealPath(),
-            deviceId: is_string($deviceId) && $deviceId !== '' ? $deviceId : null,
-            ipAddress: $this->ip(),
         );
     }
 }

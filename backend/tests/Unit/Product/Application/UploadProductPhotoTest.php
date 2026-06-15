@@ -2,11 +2,10 @@
 
 namespace Tests\Unit\Product\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Product\Application\UploadProductPhoto\UploadProductPhoto;
 use App\Product\Application\UploadProductPhoto\UploadProductPhotoCommand;
 use App\Product\Domain\Entity\Product;
+use App\Product\Domain\Event\ProductPhotoUpdated;
 use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Exception\ProductPhotoUploadTokenAlreadyUsedException;
 use App\Product\Domain\Exception\ProductPhotoUploadTokenExpiredException;
@@ -19,47 +18,46 @@ use App\Product\Domain\ValueObject\ProductImageSrc;
 use App\Product\Domain\ValueObject\ProductName;
 use App\Product\Domain\ValueObject\ProductPrice;
 use App\Product\Domain\ValueObject\ProductStock;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
 
 class UploadProductPhotoTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
+
     private ProductPhotoUploadTokenRepositoryInterface&MockInterface $tokenRepo;
     private ProductRepositoryInterface&MockInterface $productRepo;
     private ProductPhotoStorageInterface&MockInterface $storage;
     private ProductPhotoUploadNotifierInterface&MockInterface $notifier;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    private EventBusInterface&MockInterface $eventBus;
     private UploadProductPhoto $useCase;
 
     protected function setUp(): void
     {
-        $this->tokenRepo = Mockery::mock(ProductPhotoUploadTokenRepositoryInterface::class);
+        $this->tokenRepo   = Mockery::mock(ProductPhotoUploadTokenRepositoryInterface::class);
         $this->productRepo = Mockery::mock(ProductRepositoryInterface::class);
-        $this->storage = Mockery::mock(ProductPhotoStorageInterface::class);
-        $this->notifier = Mockery::mock(ProductPhotoUploadNotifierInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
-        $this->useCase = new UploadProductPhoto(
+        $this->storage     = Mockery::mock(ProductPhotoStorageInterface::class);
+        $this->notifier    = Mockery::mock(ProductPhotoUploadNotifierInterface::class);
+        $this->eventBus    = Mockery::mock(EventBusInterface::class);
+        $this->useCase     = new UploadProductPhoto(
             $this->tokenRepo,
             $this->productRepo,
             $this->storage,
             $this->notifier,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
-    protected function tearDown(): void
-    {
-        Mockery::close();
-    }
-
-    public function test_valid_upload_stores_photo_and_returns_url(): void
+    public function test_valid_upload_stores_photo_and_publishes_event(): void
     {
         $restaurantId = Uuid::generate();
-        $productId = Uuid::generate();
-        $token = $this->makeUsableToken($productId, $restaurantId);
-        $product = $this->makeProduct($productId);
+        $productId    = Uuid::generate();
+        $token        = $this->makeUsableToken($productId, $restaurantId);
+        $product      = $this->makeProduct();
 
         $this->tokenRepo->shouldReceive('findByToken')->with('valid')->andReturn($token);
         $this->productRepo->shouldReceive('findByIdAndRestaurant')
@@ -70,16 +68,14 @@ class UploadProductPhotoTest extends TestCase
             ->andReturn('http://cdn.test/products/new.webp');
         $this->productRepo->shouldReceive('save')
             ->once()
-            ->with(Mockery::on(fn(Product $p) => $p->imageSrc()->value() === 'http://cdn.test/products/new.webp'));
+            ->with(Mockery::on(fn (Product $p) => $p->imageSrc()->value() === 'http://cdn.test/products/new.webp'));
         $this->tokenRepo->shouldReceive('markAsUsed')->once()->with($token);
-        $this->auditRecorder->shouldReceive('record')->once()->with(Mockery::type(AuditEventDraft::class));
+        $this->eventBus->shouldReceive('publish')->once()->with(Mockery::type(ProductPhotoUpdated::class));
         $this->notifier->shouldReceive('uploaded')->once()->with($token->token(), $productId->value(), 'http://cdn.test/products/new.webp');
 
         $response = ($this->useCase)(new UploadProductPhotoCommand(
             token: 'valid',
             temporaryPath: '/tmp/photo.jpg',
-            deviceId: 'dev-001',
-            ipAddress: '192.168.1.1',
         ));
 
         $this->assertSame('http://cdn.test/products/new.webp', $response->imageSrc);
@@ -92,10 +88,7 @@ class UploadProductPhotoTest extends TestCase
 
         $this->expectException(ProductPhotoUploadTokenNotFoundException::class);
 
-        ($this->useCase)(new UploadProductPhotoCommand(
-            token: 'unknown',
-            temporaryPath: '/tmp/photo.jpg',
-        ));
+        ($this->useCase)(new UploadProductPhotoCommand(token: 'unknown', temporaryPath: '/tmp/photo.jpg'));
     }
 
     public function test_expired_token_throws_expired(): void
@@ -121,8 +114,8 @@ class UploadProductPhotoTest extends TestCase
     public function test_product_not_found_throws_product_not_found(): void
     {
         $restaurantId = Uuid::generate();
-        $productId = Uuid::generate();
-        $token = $this->makeUsableToken($productId, $restaurantId);
+        $productId    = Uuid::generate();
+        $token        = $this->makeUsableToken($productId, $restaurantId);
 
         $this->tokenRepo->shouldReceive('findByToken')->with('valid')->andReturn($token);
         $this->productRepo->shouldReceive('findByIdAndRestaurant')
@@ -176,9 +169,9 @@ class UploadProductPhotoTest extends TestCase
         );
     }
 
-    private function makeProduct(Uuid $productId): Product
+    private function makeProduct(): Product
     {
-        return Product::dddCreate(
+        $product = Product::dddCreate(
             familyId: Uuid::generate(),
             taxId: Uuid::generate(),
             imageSrc: ProductImageSrc::create('/img.png'),
@@ -186,5 +179,7 @@ class UploadProductPhotoTest extends TestCase
             price: ProductPrice::create(100),
             stock: ProductStock::create(5),
         );
+        $product->pullDomainEvents(); // drain ProductCreated (repo uses fromPersistence in production)
+        return $product;
     }
 }

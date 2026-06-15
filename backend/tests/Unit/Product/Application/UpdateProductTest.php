@@ -2,54 +2,54 @@
 
 namespace Tests\Unit\Product\Application;
 
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Product\Application\UpdateProduct\UpdateProduct;
 use App\Product\Application\UpdateProduct\UpdateProductCommand;
 use App\Product\Application\UpdateProduct\UpdateProductResponse;
 use App\Product\Domain\Entity\Product;
+use App\Product\Domain\Event\ProductPriceChanged;
+use App\Product\Domain\Event\ProductUpdated;
 use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Product\Domain\ValueObject\ProductImageSrc;
 use App\Product\Domain\ValueObject\ProductName;
 use App\Product\Domain\ValueObject\ProductPrice;
 use App\Product\Domain\ValueObject\ProductStock;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 class UpdateProductTest extends TestCase
 {
-    protected function tearDown(): void
+    use MockeryPHPUnitIntegration;
+
+    private function makeProduct(int $price = 100): Product
     {
-        Mockery::close();
+        $product = Product::dddCreate(
+            familyId: Uuid::create('00000000-0000-4000-8000-000000000001'),
+            taxId: Uuid::create('00000000-0000-4000-8000-000000000002'),
+            imageSrc: ProductImageSrc::create('/images/old.png'),
+            name: ProductName::create('Old Name'),
+            price: ProductPrice::create($price),
+            stock: ProductStock::create(1),
+        );
+        $product->pullDomainEvents(); // drain ProductCreated (repo uses fromPersistence in production)
+        return $product;
     }
 
     public function test_updates_product_fields(): void
     {
         $repository = Mockery::mock(ProductRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $product = Product::dddCreate(
-            familyId: Uuid::generate(),
-            taxId: Uuid::generate(),
-            imageSrc: ProductImageSrc::create('/images/old.png'),
-            name: ProductName::create('Old Name'),
-            price: ProductPrice::create(100),
-            stock: ProductStock::create(1),
-        );
+        $product = $this->makeProduct();
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with($product->id()->value())
-            ->andReturn($product);
+        $repository->shouldReceive('findById')->once()->with($product->id()->value())->andReturn($product);
+        $repository->shouldReceive('save')->once();
+        $eventBus->shouldReceive('publish')->once();
 
-        $repository->shouldReceive('save')
-            ->once();
-
-        $auditRecorder->shouldReceive('record')
-            ->once();
-
-        $useCase = new UpdateProduct($repository, $auditRecorder);
+        $useCase = new UpdateProduct($repository, $eventBus);
 
         $response = $useCase(new UpdateProductCommand(
             id: $product->id()->value(),
@@ -61,7 +61,6 @@ class UpdateProductTest extends TestCase
             stock: 5,
             active: false,
             allergens: [],
-            restaurantId: '00000000-0000-4000-8000-000000000000',
         ));
 
         $this->assertInstanceOf(UpdateProductResponse::class, $response);
@@ -69,44 +68,31 @@ class UpdateProductTest extends TestCase
         $this->assertFalse($response->active);
     }
 
-    public function test_records_price_changed_when_price_differs(): void
+    public function test_publishes_ProductUpdated_and_ProductPriceChanged_when_price_differs(): void
     {
         $repository = Mockery::mock(ProductRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $product = Product::dddCreate(
-            familyId: Uuid::generate(),
-            taxId: Uuid::generate(),
-            imageSrc: ProductImageSrc::create(null),
-            name: ProductName::create('Test'),
-            price: ProductPrice::create(100),
-            stock: ProductStock::create(5),
-        );
+        $product = $this->makeProduct(price: 100);
 
-        $repository->shouldReceive('findById')
+        $repository->shouldReceive('findById')->once()->andReturn($product);
+        $repository->shouldReceive('save')->once();
+        $eventBus->shouldReceive('publish')
             ->once()
-            ->with($product->id()->value())
-            ->andReturn($product);
+            ->with(Mockery::type(ProductUpdated::class), Mockery::type(ProductPriceChanged::class));
 
-        $repository->shouldReceive('save')
-            ->once();
-
-        $auditRecorder->shouldReceive('record')
-            ->twice();
-
-        $useCase = new UpdateProduct($repository, $auditRecorder);
+        $useCase = new UpdateProduct($repository, $eventBus);
 
         $useCase(new UpdateProductCommand(
             id: $product->id()->value(),
             familyId: '00000000-0000-4000-8000-000000000001',
             taxId: '00000000-0000-4000-8000-000000000002',
             imageSrc: null,
-            name: 'Test',
+            name: 'New Name',
             price: 200,
-            stock: 5,
+            stock: 1,
             active: true,
             allergens: [],
-            restaurantId: '00000000-0000-4000-8000-000000000000',
         ));
 
         $this->addToAssertionCount(1);
@@ -115,17 +101,13 @@ class UpdateProductTest extends TestCase
     public function test_throws_exception_when_not_found(): void
     {
         $repository = Mockery::mock(ProductRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with('non-existent-id')
-            ->andReturn(null);
-
+        $repository->shouldReceive('findById')->once()->with('non-existent-id')->andReturn(null);
         $repository->shouldNotReceive('save');
-        $auditRecorder->shouldNotReceive('record');
+        $eventBus->shouldNotReceive('publish');
 
-        $useCase = new UpdateProduct($repository, $auditRecorder);
+        $useCase = new UpdateProduct($repository, $eventBus);
 
         $this->expectException(ProductNotFoundException::class);
 
@@ -139,7 +121,6 @@ class UpdateProductTest extends TestCase
             stock: 5,
             active: true,
             allergens: [],
-            restaurantId: '00000000-0000-4000-8000-000000000000',
         ));
     }
 }

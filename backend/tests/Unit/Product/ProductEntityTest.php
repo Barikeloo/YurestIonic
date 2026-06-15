@@ -3,6 +3,13 @@
 namespace Tests\Unit\Product;
 
 use App\Product\Domain\Entity\Product;
+use App\Product\Domain\Event\ProductActivated;
+use App\Product\Domain\Event\ProductCreated;
+use App\Product\Domain\Event\ProductDeactivated;
+use App\Product\Domain\Event\ProductDeleted;
+use App\Product\Domain\Event\ProductPhotoUpdated;
+use App\Product\Domain\Event\ProductPriceChanged;
+use App\Product\Domain\Event\ProductUpdated;
 use App\Product\Domain\Exception\InsufficientStockException;
 use App\Product\Domain\ValueObject\ProductAllergens;
 use App\Product\Domain\ValueObject\ProductImageSrc;
@@ -216,5 +223,209 @@ class ProductEntityTest extends TestCase
 
         $this->assertFalse($product->isActive());
         $this->assertEquals($updatedAt, $product->updatedAt()->value());
+    }
+
+    // --- Domain events ---
+
+    public function test_dddCreate_records_ProductCreated_event(): void
+    {
+        $product = Product::dddCreate(
+            familyId: Uuid::generate(),
+            taxId: Uuid::generate(),
+            imageSrc: ProductImageSrc::create(null),
+            name: ProductName::create('Bebida'),
+            price: ProductPrice::create(150),
+            stock: ProductStock::create(0),
+        );
+
+        $events = $product->pullDomainEvents();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(ProductCreated::class, $events[0]);
+        $this->assertSame($product->id()->value(), $events[0]->auditEntityId());
+        $this->assertSame('product.created', $events[0]->auditSlug());
+    }
+
+    public function test_update_records_ProductUpdated_when_something_changes(): void
+    {
+        $product = Product::dddCreate(
+            familyId: Uuid::generate(),
+            taxId: Uuid::generate(),
+            imageSrc: ProductImageSrc::create(null),
+            name: ProductName::create('Original'),
+            price: ProductPrice::create(500),
+            stock: ProductStock::create(1),
+        );
+        $product->pullDomainEvents();
+
+        $product->update(
+            familyId: $product->familyId(),
+            taxId: $product->taxId(),
+            imageSrc: $product->imageSrc(),
+            name: ProductName::create('Actualizado'),
+            price: $product->price(),
+            stock: $product->stock(),
+            active: $product->isActive(),
+        );
+
+        $events = $product->pullDomainEvents();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(ProductUpdated::class, $events[0]);
+    }
+
+    public function test_update_records_both_ProductUpdated_and_ProductPriceChanged_when_price_changes(): void
+    {
+        $product = Product::dddCreate(
+            familyId: Uuid::generate(),
+            taxId: Uuid::generate(),
+            imageSrc: ProductImageSrc::create(null),
+            name: ProductName::create('Producto'),
+            price: ProductPrice::create(1000),
+            stock: ProductStock::create(1),
+        );
+        $product->pullDomainEvents();
+
+        $product->update(
+            familyId: $product->familyId(),
+            taxId: $product->taxId(),
+            imageSrc: $product->imageSrc(),
+            name: $product->name(),
+            price: ProductPrice::create(2500),
+            stock: $product->stock(),
+            active: $product->isActive(),
+        );
+
+        $events = $product->pullDomainEvents();
+
+        $this->assertCount(2, $events);
+        $this->assertInstanceOf(ProductUpdated::class, $events[0]);
+        $this->assertInstanceOf(ProductPriceChanged::class, $events[1]);
+    }
+
+    public function test_update_emits_no_events_when_nothing_changes(): void
+    {
+        $product = Product::dddCreate(
+            familyId: Uuid::generate(),
+            taxId: Uuid::generate(),
+            imageSrc: ProductImageSrc::create(null),
+            name: ProductName::create('Mismo'),
+            price: ProductPrice::create(300),
+            stock: ProductStock::create(5),
+        );
+        $product->pullDomainEvents();
+
+        $product->update(
+            familyId: $product->familyId(),
+            taxId: $product->taxId(),
+            imageSrc: $product->imageSrc(),
+            name: $product->name(),
+            price: $product->price(),
+            stock: $product->stock(),
+            active: $product->isActive(),
+            allergens: ProductAllergens::empty(),
+        );
+
+        $this->assertEmpty($product->pullDomainEvents());
+    }
+
+    public function test_delete_records_ProductDeleted_event(): void
+    {
+        $product = Product::dddCreate(
+            familyId: Uuid::generate(),
+            taxId: Uuid::generate(),
+            imageSrc: ProductImageSrc::create(null),
+            name: ProductName::create('Borrable'),
+            price: ProductPrice::create(100),
+            stock: ProductStock::create(0),
+        );
+        $product->pullDomainEvents();
+
+        $product->delete();
+
+        $events = $product->pullDomainEvents();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(ProductDeleted::class, $events[0]);
+    }
+
+    public function test_activate_records_ProductActivated_event(): void
+    {
+        $product = Product::dddCreate(
+            familyId: Uuid::generate(),
+            taxId: Uuid::generate(),
+            imageSrc: ProductImageSrc::create(null),
+            name: ProductName::create('Inactivo'),
+            price: ProductPrice::create(100),
+            stock: ProductStock::create(0),
+            active: false,
+        );
+        $product->pullDomainEvents();
+
+        $product->activate();
+
+        $events = $product->pullDomainEvents();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(ProductActivated::class, $events[0]);
+    }
+
+    public function test_activate_emits_no_event_if_already_active(): void
+    {
+        $product = Product::dddCreate(
+            familyId: Uuid::generate(),
+            taxId: Uuid::generate(),
+            imageSrc: ProductImageSrc::create(null),
+            name: ProductName::create('Activo'),
+            price: ProductPrice::create(100),
+            stock: ProductStock::create(0),
+            active: true,
+        );
+        $product->pullDomainEvents();
+
+        $product->activate();
+
+        $this->assertEmpty($product->pullDomainEvents());
+    }
+
+    public function test_deactivate_records_ProductDeactivated_event(): void
+    {
+        $product = Product::dddCreate(
+            familyId: Uuid::generate(),
+            taxId: Uuid::generate(),
+            imageSrc: ProductImageSrc::create(null),
+            name: ProductName::create('Activo'),
+            price: ProductPrice::create(100),
+            stock: ProductStock::create(0),
+            active: true,
+        );
+        $product->pullDomainEvents();
+
+        $product->deactivate();
+
+        $events = $product->pullDomainEvents();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(ProductDeactivated::class, $events[0]);
+    }
+
+    public function test_changeImage_records_ProductPhotoUpdated_event(): void
+    {
+        $product = Product::dddCreate(
+            familyId: Uuid::generate(),
+            taxId: Uuid::generate(),
+            imageSrc: ProductImageSrc::create(null),
+            name: ProductName::create('Con foto'),
+            price: ProductPrice::create(100),
+            stock: ProductStock::create(0),
+        );
+        $product->pullDomainEvents();
+
+        $product->changeImage(ProductImageSrc::create('https://cdn.example.com/img.jpg'));
+
+        $events = $product->pullDomainEvents();
+
+        $this->assertCount(1, $events);
+        $this->assertInstanceOf(ProductPhotoUpdated::class, $events[0]);
     }
 }

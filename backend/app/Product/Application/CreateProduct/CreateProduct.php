@@ -2,9 +2,6 @@
 
 namespace App\Product\Application\CreateProduct;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Product\Domain\Entity\Product;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Product\Domain\ValueObject\ProductAllergens;
@@ -12,13 +9,14 @@ use App\Product\Domain\ValueObject\ProductImageSrc;
 use App\Product\Domain\ValueObject\ProductName;
 use App\Product\Domain\ValueObject\ProductPrice;
 use App\Product\Domain\ValueObject\ProductStock;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 class CreateProduct
 {
     public function __construct(
         private ProductRepositoryInterface $productRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(CreateProductCommand $command): CreateProductResponse
@@ -35,23 +33,7 @@ class CreateProduct
         );
 
         $this->productRepository->save($product);
-
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantId),
-            slug: ActionSlug::create('product.created'),
-            entityType: 'product',
-            entityId: $product->id()->value(),
-            userId: $command->userId !== null ? Uuid::create($command->userId) : null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'product_name' => $product->name()->value(),
-                'price_cents' => $product->price()->value(),
-                'price_formatted' => number_format($product->price()->value() / 100, 2).' €',
-                'family_id' => $product->familyId()->value(),
-                'active' => $product->isActive(),
-            ],
-        ));
+        $this->eventBus->publish(...$product->pullDomainEvents());
 
         return CreateProductResponse::create(
             id: $product->id()->value(),

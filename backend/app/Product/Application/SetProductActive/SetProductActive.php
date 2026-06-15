@@ -2,18 +2,15 @@
 
 namespace App\Product\Application\SetProductActive;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
-use App\Shared\Domain\ValueObject\Uuid;
+use App\Shared\Application\Event\EventBusInterface;
 
 class SetProductActive
 {
     public function __construct(
         private ProductRepositoryInterface $productRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(SetProductActiveCommand $command): SetProductActiveResponse
@@ -28,19 +25,7 @@ class SetProductActive
         }
 
         $this->productRepository->save($product);
-
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantId),
-            slug: ActionSlug::create($command->active ? 'product.activated' : 'product.deactivated'),
-            entityType: 'product',
-            entityId: $command->id,
-            userId: null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'product_name' => $product->name()->value(),
-            ],
-        ));
+        $this->eventBus->publish(...$product->pullDomainEvents());
 
         return SetProductActiveResponse::create(
             id: $product->id()->value(),

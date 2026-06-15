@@ -2,26 +2,24 @@
 
 namespace Tests\Unit\Product\Application;
 
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Product\Application\CreateProduct\CreateProduct;
 use App\Product\Application\CreateProduct\CreateProductCommand;
 use App\Product\Application\CreateProduct\CreateProductResponse;
 use App\Product\Domain\Entity\Product;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 class CreateProductTest extends TestCase
 {
-    protected function tearDown(): void
-    {
-        Mockery::close();
-    }
+    use MockeryPHPUnitIntegration;
 
     public function test_invoke_creates_product_and_saves_it(): void
     {
         $repository = Mockery::mock(ProductRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
         $repository->shouldReceive('save')
             ->once()
@@ -31,10 +29,9 @@ class CreateProductTest extends TestCase
                     && $product->stock()->value() === 10;
             }));
 
-        $auditRecorder->shouldReceive('record')
-            ->once();
+        $eventBus->shouldReceive('publish')->once();
 
-        $useCase = new CreateProduct($repository, $auditRecorder);
+        $useCase = new CreateProduct($repository, $eventBus);
 
         $response = $useCase(new CreateProductCommand(
             familyId: '00000000-0000-4000-8000-000000000001',
@@ -44,7 +41,6 @@ class CreateProductTest extends TestCase
             price: 250,
             stock: 10,
             active: true,
-            restaurantId: '00000000-0000-4000-8000-000000000000',
         ));
 
         $this->assertInstanceOf(CreateProductResponse::class, $response);

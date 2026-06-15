@@ -2,32 +2,28 @@
 
 namespace Tests\Unit\Product\Application;
 
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Product\Application\DeleteProduct\DeleteProduct;
 use App\Product\Application\DeleteProduct\DeleteProductCommand;
 use App\Product\Domain\Entity\Product;
+use App\Product\Domain\Event\ProductDeleted;
 use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Product\Domain\ValueObject\ProductImageSrc;
 use App\Product\Domain\ValueObject\ProductName;
 use App\Product\Domain\ValueObject\ProductPrice;
 use App\Product\Domain\ValueObject\ProductStock;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 class DeleteProductTest extends TestCase
 {
-    protected function tearDown(): void
-    {
-        Mockery::close();
-    }
+    use MockeryPHPUnitIntegration;
 
-    public function test_deletes_product(): void
+    private function makeProduct(): Product
     {
-        $repository = Mockery::mock(ProductRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
-
         $product = Product::dddCreate(
             familyId: Uuid::generate(),
             taxId: Uuid::generate(),
@@ -36,26 +32,24 @@ class DeleteProductTest extends TestCase
             price: ProductPrice::create(250),
             stock: ProductStock::create(10),
         );
+        $product->pullDomainEvents(); // drain ProductCreated (repo uses fromPersistence in production)
+        return $product;
+    }
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with($product->id()->value())
-            ->andReturn($product);
+    public function test_deletes_product_and_publishes_event(): void
+    {
+        $repository = Mockery::mock(ProductRepositoryInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $repository->shouldReceive('deleteById')
-            ->once()
-            ->with($product->id()->value())
-            ->andReturnTrue();
+        $product = $this->makeProduct();
 
-        $auditRecorder->shouldReceive('record')
-            ->once();
+        $repository->shouldReceive('findById')->once()->with($product->id()->value())->andReturn($product);
+        $repository->shouldReceive('deleteById')->once()->with($product->id()->value())->andReturnTrue();
+        $eventBus->shouldReceive('publish')->once()->with(Mockery::type(ProductDeleted::class));
 
-        $useCase = new DeleteProduct($repository, $auditRecorder);
+        $useCase = new DeleteProduct($repository, $eventBus);
 
-        $useCase(new DeleteProductCommand(
-            id: $product->id()->value(),
-            restaurantId: '00000000-0000-4000-8000-000000000000',
-        ));
+        $useCase(new DeleteProductCommand(id: $product->id()->value()));
 
         $this->addToAssertionCount(1);
     }
@@ -63,59 +57,34 @@ class DeleteProductTest extends TestCase
     public function test_throws_exception_when_not_found(): void
     {
         $repository = Mockery::mock(ProductRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with('non-existent-id')
-            ->andReturn(null);
-
+        $repository->shouldReceive('findById')->once()->with('non-existent-id')->andReturn(null);
         $repository->shouldNotReceive('deleteById');
-        $auditRecorder->shouldNotReceive('record');
+        $eventBus->shouldNotReceive('publish');
 
-        $useCase = new DeleteProduct($repository, $auditRecorder);
+        $useCase = new DeleteProduct($repository, $eventBus);
 
         $this->expectException(ProductNotFoundException::class);
 
-        $useCase(new DeleteProductCommand(
-            id: 'non-existent-id',
-            restaurantId: '00000000-0000-4000-8000-000000000000',
-        ));
+        $useCase(new DeleteProductCommand(id: 'non-existent-id'));
     }
 
     public function test_throws_exception_when_delete_fails(): void
     {
         $repository = Mockery::mock(ProductRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
 
-        $product = Product::dddCreate(
-            familyId: Uuid::generate(),
-            taxId: Uuid::generate(),
-            imageSrc: ProductImageSrc::create(null),
-            name: ProductName::create('Coca Cola'),
-            price: ProductPrice::create(250),
-            stock: ProductStock::create(10),
-        );
+        $product = $this->makeProduct();
 
-        $repository->shouldReceive('findById')
-            ->once()
-            ->with($product->id()->value())
-            ->andReturn($product);
+        $repository->shouldReceive('findById')->once()->with($product->id()->value())->andReturn($product);
+        $repository->shouldReceive('deleteById')->once()->with($product->id()->value())->andReturnFalse();
+        $eventBus->shouldNotReceive('publish');
 
-        $repository->shouldReceive('deleteById')
-            ->once()
-            ->with($product->id()->value())
-            ->andReturnFalse();
-
-        $auditRecorder->shouldNotReceive('record');
-
-        $useCase = new DeleteProduct($repository, $auditRecorder);
+        $useCase = new DeleteProduct($repository, $eventBus);
 
         $this->expectException(ProductNotFoundException::class);
 
-        $useCase(new DeleteProductCommand(
-            id: $product->id()->value(),
-            restaurantId: '00000000-0000-4000-8000-000000000000',
-        ));
+        $useCase(new DeleteProductCommand(id: $product->id()->value()));
     }
 }

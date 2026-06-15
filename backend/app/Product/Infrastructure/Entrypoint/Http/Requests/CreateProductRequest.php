@@ -8,6 +8,7 @@ use App\Shared\Infrastructure\Tenant\TenantContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+
 final class CreateProductRequest extends FormRequest
 {
     public function authorize(): bool
@@ -47,14 +48,6 @@ final class CreateProductRequest extends FormRequest
     public function toCommand(): CreateProductCommand
     {
         $allergens = $this->input('allergens', []);
-        $tenantContext = app(TenantContext::class);
-
-        $deviceId = $this->input('device_id');
-        if (! is_string($deviceId) || $deviceId === '') {
-            $deviceId = $this->header('X-Device-Id');
-        }
-
-        $userId = $this->session()->get('auth_user_id');
 
         return new CreateProductCommand(
             familyId: (string) $this->input('family_id'),
@@ -64,11 +57,7 @@ final class CreateProductRequest extends FormRequest
             price: (int) $this->input('price'),
             stock: (int) $this->input('stock'),
             active: (bool) ($this->input('active') ?? true),
-            restaurantId: (string) $tenantContext->restaurantUuid(),
             allergens: is_array($allergens) ? array_values(array_map('strval', $allergens)) : [],
-            userId: is_string($userId) && $userId !== '' ? $userId : null,
-            deviceId: is_string($deviceId) ? $deviceId : null,
-            ipAddress: $this->ip(),
         );
     }
 }

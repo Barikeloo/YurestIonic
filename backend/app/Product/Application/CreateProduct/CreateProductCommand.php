@@ -4,7 +4,6 @@ namespace App\Product\Application\CreateProduct;
 
 final readonly class CreateProductCommand
 {
-
     public function __construct(
         public string $familyId,
         public string $taxId,
@@ -13,10 +12,6 @@ final readonly class CreateProductCommand
         public int $price,
         public int $stock,
         public bool $active,
-        public string $restaurantId,
         public array $allergens = [],
-        public ?string $userId = null,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

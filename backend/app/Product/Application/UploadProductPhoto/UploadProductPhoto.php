@@ -2,9 +2,6 @@
 
 namespace App\Product\Application\UploadProductPhoto;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Exception\ProductPhotoUploadTokenAlreadyUsedException;
 use App\Product\Domain\Exception\ProductPhotoUploadTokenExpiredException;
@@ -14,6 +11,7 @@ use App\Product\Domain\Interfaces\ProductPhotoUploadNotifierInterface;
 use App\Product\Domain\Interfaces\ProductPhotoUploadTokenRepositoryInterface;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\Product\Domain\ValueObject\ProductImageSrc;
+use App\Shared\Application\Event\EventBusInterface;
 
 class UploadProductPhoto
 {
@@ -22,7 +20,7 @@ class UploadProductPhoto
         private ProductRepositoryInterface $productRepository,
         private ProductPhotoStorageInterface $storage,
         private ProductPhotoUploadNotifierInterface $notifier,
-        private AuditRecorderInterface $auditRecorder,
+        private EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(UploadProductPhotoCommand $command): UploadProductPhotoResponse
@@ -56,17 +54,7 @@ class UploadProductPhoto
         $token->markUsed();
         $this->tokenRepository->markAsUsed($token);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $token->restaurantId(),
-            slug: ActionSlug::create('product.photo_updated'),
-            entityType: 'product',
-            entityId: $token->productId()->value(),
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'product_name' => $product->name()->value(),
-            ],
-        ));
+        $this->eventBus->publish(...$product->pullDomainEvents());
 
         $this->notifier->uploaded($token->token(), $token->productId()->value(), $imageUrl);
 
