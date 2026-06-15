@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace App\Order\Application\AddMenuLineToOrder;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Menu\Domain\Entity\Menu;
 use App\Menu\Domain\Entity\MenuSection;
 use App\Menu\Domain\Exception\MenuNotFoundException;
 use App\Menu\Domain\Interfaces\MenuRepositoryInterface;
 use App\Order\Domain\Entity\OrderLine;
+use App\Order\Domain\Event\OrderMenuLineAdded;
 use App\Order\Domain\Exception\OrderIsNotOpenException;
 use App\Order\Domain\Exception\OrderNotFoundException;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
@@ -24,6 +22,7 @@ use App\Product\Domain\Exception\ProductNotActiveException;
 use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\ProductVariant\Infrastructure\Persistence\Models\EloquentProductVariant;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tax\Domain\Exception\TaxNotFoundException;
 use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
@@ -37,7 +36,7 @@ final class AddMenuLineToOrder
         private readonly MenuRepositoryInterface $menuRepository,
         private readonly ProductRepositoryInterface $productRepository,
         private readonly TaxRepositoryInterface $taxRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(AddMenuLineToOrderCommand $command): AddMenuLineToOrderResponse
@@ -100,22 +99,13 @@ final class AddMenuLineToOrder
 
         $this->orderLineRepository->save($orderLine);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantId),
-            slug: ActionSlug::create('order.menu_line_added'),
-            entityType: 'order_line',
-            entityId: $orderLine->id()->value(),
-            userId: Uuid::create($command->userId),
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'order_id' => $command->orderId,
-                'menu_id' => $command->menuId,
-                'menu_name' => $menu->name()->value(),
-                'quantity' => 1,
-                'price_cents' => $totalPrice,
-                'diner_number' => $command->dinerNumber,
-            ],
+        $this->eventBus->publish(new OrderMenuLineAdded(
+            orderUuid: $command->orderId,
+            menuId: $command->menuId,
+            menuName: $menu->name()->value(),
+            quantity: 1,
+            priceCents: $totalPrice,
+            dinerNumber: $command->dinerNumber,
         ));
 
         return AddMenuLineToOrderResponse::create($orderLine);

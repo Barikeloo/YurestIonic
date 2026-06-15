@@ -31,16 +31,9 @@ final class ReopenOrderRequest extends FormRequest
 
     public function toCommand(): ReopenOrderCommand
     {
-        $deviceId = $this->input('device_id');
-        if (! is_string($deviceId) || $deviceId === '') {
-            $deviceId = $this->header('X-Device-Id');
-        }
-
         return new ReopenOrderCommand(
             id: (string) $this->input('id'),
             reopenedByUserId: (string) $this->input('reopened_by_user_id'),
-            deviceId: is_string($deviceId) ? $deviceId : null,
-            ipAddress: $this->ip(),
         );
     }
 }

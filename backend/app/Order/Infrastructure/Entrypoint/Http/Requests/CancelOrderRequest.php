@@ -31,16 +31,9 @@ final class CancelOrderRequest extends FormRequest
 
     public function toCommand(): CancelOrderCommand
     {
-        $deviceId = $this->input('device_id');
-        if (! is_string($deviceId) || $deviceId === '') {
-            $deviceId = $this->header('X-Device-Id');
-        }
-
         return new CancelOrderCommand(
             id: (string) $this->input('id'),
             cancelledByUserId: (string) $this->input('cancelled_by_user_id'),
-            deviceId: is_string($deviceId) ? $deviceId : null,
-            ipAddress: $this->ip(),
         );
     }
 }

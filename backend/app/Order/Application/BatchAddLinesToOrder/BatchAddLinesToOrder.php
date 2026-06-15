@@ -4,15 +4,13 @@ declare(strict_types=1);
 
 namespace App\Order\Application\BatchAddLinesToOrder;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Family\Domain\Exception\FamilyNotActiveException;
 use App\Family\Domain\Exception\FamilyNotFoundException;
 use App\Family\Domain\Interfaces\FamilyRepositoryInterface;
 use App\Menu\Domain\Exception\MenuNotFoundException;
 use App\Menu\Domain\Interfaces\MenuRepositoryInterface;
 use App\Order\Domain\Entity\OrderLine;
+use App\Order\Domain\Event\OrderComandaSent;
 use App\Order\Domain\Exception\OrderIsNotOpenException;
 use App\Order\Domain\Exception\OrderNotFoundException;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
@@ -25,6 +23,7 @@ use App\Product\Domain\Exception\ProductNotActiveException;
 use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\ProductVariant\Infrastructure\Persistence\Models\EloquentProductVariant;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tax\Domain\Exception\TaxNotFoundException;
 use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
@@ -39,7 +38,7 @@ final class BatchAddLinesToOrder
         private readonly TaxRepositoryInterface $taxRepository,
         private readonly FamilyRepositoryInterface $familyRepository,
         private readonly MenuRepositoryInterface $menuRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(BatchAddLinesToOrderCommand $command): BatchAddLinesToOrderResponse
@@ -84,23 +83,14 @@ final class BatchAddLinesToOrder
             ];
         }
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantId),
-            slug: ActionSlug::create('order.comanda_sent'),
-            entityType: 'order',
-            entityId: $command->orderId,
-            userId: Uuid::create($command->userId),
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'order_id' => $command->orderId,
-                'items' => $auditItems,
-                'total_lines' => count($auditItems),
-                'items_summary' => implode(', ', array_map(
-                    static fn (array $item): string => $item['name'],
-                    $auditItems,
-                )),
-            ],
+        $this->eventBus->publish(new OrderComandaSent(
+            orderUuid: $command->orderId,
+            items: $auditItems,
+            totalLines: count($auditItems),
+            itemsSummary: implode(', ', array_map(
+                static fn (array $item): string => $item['name'],
+                $auditItems,
+            )),
         ));
 
         return new BatchAddLinesToOrderResponse(

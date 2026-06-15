@@ -38,6 +38,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
                 'diners' => $order->diners()->value(),
                 'opened_at' => $order->openedAt()?->value(),
                 'closed_at' => $order->closedAt()?->value(),
+                'deleted_at' => $order->deletedAt()?->value(),
             ],
         );
     }
@@ -56,6 +57,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
         $model = $this->model->newQuery()
             ->with(['restaurant', 'table', 'openedByUser', 'closedByUser'])
             ->where('uuid', $uuid->value())
+            ->whereNull('deleted_at')
             ->first();
 
         return $model ? $this->toDomain($model) : null;

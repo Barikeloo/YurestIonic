@@ -22,7 +22,6 @@ final class AddMenuLineToOrderRequest extends FormRequest
             'menu_id' => ['required', 'string', 'uuid'],
             'diner_number' => ['nullable', 'integer', 'min:1'],
             'notes' => ['nullable', 'string', 'max:500'],
-            'device_id' => ['nullable', 'string'],
             'selections' => ['required', 'array', 'min:1'],
             'selections.*.section_id' => ['required', 'string', 'uuid'],
             'selections.*.product_id' => ['required', 'string', 'uuid'],
@@ -67,8 +66,6 @@ final class AddMenuLineToOrderRequest extends FormRequest
             dinerNumber: $this->input('diner_number') !== null ? (int) $this->input('diner_number') : null,
             selections: $selections,
             notes: $this->input('notes') !== null ? (string) $this->input('notes') : null,
-            deviceId: $this->input('device_id'),
-            ipAddress: $this->ip(),
         );
     }
 }

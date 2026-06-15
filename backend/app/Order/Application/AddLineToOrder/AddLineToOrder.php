@@ -2,13 +2,11 @@
 
 namespace App\Order\Application\AddLineToOrder;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Family\Domain\Exception\FamilyNotActiveException;
 use App\Family\Domain\Exception\FamilyNotFoundException;
 use App\Family\Domain\Interfaces\FamilyRepositoryInterface;
 use App\Order\Domain\Entity\OrderLine;
+use App\Order\Domain\Event\OrderLineAdded;
 use App\Order\Domain\Exception\OrderIsNotOpenException;
 use App\Order\Domain\Exception\OrderNotFoundException;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
@@ -21,6 +19,7 @@ use App\Product\Domain\Exception\ProductNotActiveException;
 use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\ProductVariant\Infrastructure\Persistence\Models\EloquentProductVariant;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tax\Domain\Exception\TaxNotFoundException;
 use App\Tax\Domain\Interfaces\TaxRepositoryInterface;
@@ -33,7 +32,7 @@ final class AddLineToOrder
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly TaxRepositoryInterface $taxRepository,
         private readonly FamilyRepositoryInterface $familyRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(AddLineToOrderCommand $command): AddLineToOrderResponse
@@ -116,15 +115,15 @@ final class AddLineToOrder
             $merged = $existing->withAddedQuantity($quantity->value());
             $this->orderLineRepository->save($merged);
 
-            $this->recordLineAdded(
-                command: $command,
-                lineId: $merged->id()->value(),
+            $this->eventBus->publish(new OrderLineAdded(
+                orderUuid: $command->orderId,
+                productId: $command->productId,
                 productName: $product->name()->value(),
                 variantName: $variantName,
                 quantity: $quantity->value(),
-                unitPrice: $price,
+                unitPriceCents: $price,
                 merged: true,
-            );
+            ));
 
             return AddLineToOrderResponse::create($merged);
         }
@@ -146,45 +145,16 @@ final class AddLineToOrder
 
         $this->orderLineRepository->save($orderLine);
 
-        $this->recordLineAdded(
-            command: $command,
-            lineId: $orderLine->id()->value(),
+        $this->eventBus->publish(new OrderLineAdded(
+            orderUuid: $command->orderId,
+            productId: $command->productId,
             productName: $product->name()->value(),
             variantName: $variantName,
             quantity: $quantity->value(),
-            unitPrice: $price,
+            unitPriceCents: $price,
             merged: false,
-        );
+        ));
 
         return AddLineToOrderResponse::create($orderLine);
-    }
-
-    private function recordLineAdded(
-        AddLineToOrderCommand $command,
-        string $lineId,
-        string $productName,
-        ?string $variantName,
-        int $quantity,
-        int $unitPrice,
-        bool $merged,
-    ): void {
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantId),
-            slug: ActionSlug::create('order.line_added'),
-            entityType: 'order_line',
-            entityId: $lineId,
-            userId: Uuid::create($command->userId),
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'order_id' => $command->orderId,
-                'product_id' => $command->productId,
-                'product_name' => $productName,
-                'variant_name' => $variantName,
-                'quantity' => $quantity,
-                'unit_price_cents' => $unitPrice,
-                'merged' => $merged,
-            ],
-        ));
     }
 }

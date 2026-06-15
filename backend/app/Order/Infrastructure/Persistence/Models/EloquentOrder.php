@@ -32,6 +32,7 @@ final class EloquentOrder extends Model
         'diners',
         'opened_at',
         'closed_at',
+        'deleted_at',
     ];
 
     protected $casts = [

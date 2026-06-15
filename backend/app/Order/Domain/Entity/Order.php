@@ -2,14 +2,23 @@
 
 namespace App\Order\Domain\Entity;
 
+use App\Order\Domain\Event\OrderCancelled;
+use App\Order\Domain\Event\OrderCreated;
+use App\Order\Domain\Event\OrderDeleted;
+use App\Order\Domain\Event\OrderDinersUpdated;
+use App\Order\Domain\Event\OrderMarkedToCharge;
+use App\Order\Domain\Event\OrderReopened;
+use App\Order\Domain\Event\OrderTransferred;
 use App\Order\Domain\Exception\OrderNotTransferableException;
 use App\Order\Domain\ValueObject\OrderDiners;
 use App\Order\Domain\ValueObject\OrderStatus;
+use App\Shared\Domain\Event\RecordsEvents;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class Order
 {
+    use RecordsEvents;
     private function __construct(
         private readonly Uuid $id,
         private readonly Uuid $restaurantId,
@@ -33,7 +42,7 @@ final class Order
         Uuid $openedByUserId,
         OrderDiners $diners,
     ): self {
-        return new self(
+        $order = new self(
             id: $id,
             restaurantId: $restaurantId,
             uuid: $id,
@@ -47,6 +56,15 @@ final class Order
             createdAt: DomainDateTime::now(),
             updatedAt: DomainDateTime::now(),
         );
+
+        $order->recordEvent(new OrderCreated(
+            orderUuid: $id->value(),
+            tableUuid: $tableId->value(),
+            diners: $diners->value(),
+            restaurantId: $restaurantId->value(),
+        ));
+
+        return $order;
     }
 
     public static function fromPersistence(
@@ -90,6 +108,11 @@ final class Order
         $this->status = OrderStatus::toCharge();
         $this->closedByUserId = $closedByUserId;
         $this->updatedAt = DomainDateTime::now();
+
+        $this->recordEvent(new OrderMarkedToCharge(
+            orderUuid: $this->uuid->value(),
+            restaurantId: $this->restaurantId->value(),
+        ));
     }
 
     public function close(Uuid $closedByUserId): void
@@ -114,6 +137,11 @@ final class Order
         $this->closedByUserId = $cancelledByUserId;
         $this->closedAt = DomainDateTime::now();
         $this->updatedAt = DomainDateTime::now();
+
+        $this->recordEvent(new OrderCancelled(
+            orderUuid: $this->uuid->value(),
+            restaurantId: $this->restaurantId->value(),
+        ));
     }
 
     public function reopen(Uuid $reopenedByUserId): void
@@ -124,6 +152,11 @@ final class Order
             $this->closedAt = null;
             $this->updatedAt = DomainDateTime::now();
 
+            $this->recordEvent(new OrderReopened(
+                orderUuid: $this->uuid->value(),
+                restaurantId: $this->restaurantId->value(),
+            ));
+
             return;
         }
 
@@ -133,6 +166,11 @@ final class Order
             $this->closedAt = null;
             $this->updatedAt = DomainDateTime::now();
 
+            $this->recordEvent(new OrderReopened(
+                orderUuid: $this->uuid->value(),
+                restaurantId: $this->restaurantId->value(),
+            ));
+
             return;
         }
 
@@ -141,18 +179,59 @@ final class Order
 
     public function updateDiners(OrderDiners $diners): void
     {
+        $beforeDiners = $this->diners->value();
         $this->diners = $diners;
         $this->updatedAt = DomainDateTime::now();
+
+        $this->recordEvent(new OrderDinersUpdated(
+            orderUuid: $this->uuid->value(),
+            beforeDiners: $beforeDiners,
+            afterDiners: $diners->value(),
+        ));
     }
 
     public function transferTo(Uuid $newTableId): void
     {
+        $fromTableId = $this->tableId->value();
+
         if (! $this->status->isOpen() && ! $this->status->isToCharge()) {
             throw OrderNotTransferableException::create();
         }
 
         $this->tableId = $newTableId;
         $this->updatedAt = DomainDateTime::now();
+
+        $this->recordEvent(new OrderTransferred(
+            orderUuid: $this->uuid->value(),
+            fromTableId: $fromTableId,
+            toTableId: $newTableId->value(),
+            restaurantId: $this->restaurantId->value(),
+        ));
+    }
+
+    public function delete(): void
+    {
+        $this->deletedAt = DomainDateTime::now();
+        $this->updatedAt = DomainDateTime::now();
+
+        $this->recordEvent(new OrderDeleted(
+            orderUuid: $this->uuid->value(),
+            before: [
+                'status' => $this->status->value(),
+                'diners' => $this->diners->value(),
+                'table_id' => $this->tableId->value(),
+            ],
+            restaurantId: $this->restaurantId->value(),
+        ));
+    }
+
+    public function snapshot(): array
+    {
+        return [
+            'table_id' => $this->tableId->value(),
+            'status' => $this->status->value(),
+            'diners' => $this->diners->value(),
+        ];
     }
 
     public function id(): Uuid

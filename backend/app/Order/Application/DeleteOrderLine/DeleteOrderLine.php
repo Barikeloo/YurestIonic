@@ -2,15 +2,14 @@
 
 namespace App\Order\Application\DeleteOrderLine;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
+use App\Order\Domain\Event\OrderLineRemoved;
 use App\Order\Domain\Exception\OrderIsNotOpenException;
 use App\Order\Domain\Exception\OrderLineNotFoundException;
 use App\Order\Domain\Exception\OrderNotFoundException;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 final class DeleteOrderLine
@@ -19,7 +18,7 @@ final class DeleteOrderLine
         private readonly OrderLineRepositoryInterface $orderLineRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly ProductRepositoryInterface $productRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(DeleteOrderLineCommand $command): void
@@ -62,23 +61,14 @@ final class DeleteOrderLine
 
         $this->orderLineRepository->delete($line->id());
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $line->restaurantId(),
-            slug: ActionSlug::create('order.line_removed'),
-            entityType: 'order_line',
-            entityId: $line->id()->value(),
-            userId: Uuid::create($command->userId),
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'order_id' => $line->orderId()->value(),
-                'product_id' => $line->productId()?->value(),
-                'product_name' => $productName ?? '—',
-                'variant_name' => $line->variantName(),
-                'quantity' => $line->quantity()->value(),
-                'unit_price_cents' => $line->price()->value(),
-                'is_menu_line' => $line->isMenuLine(),
-            ],
+        $this->eventBus->publish(new OrderLineRemoved(
+            orderUuid: $line->orderId()->value(),
+            productId: $line->productId()?->value() ?? $line->id()->value(),
+            productName: $productName ?? '—',
+            variantName: $line->variantName(),
+            quantity: $line->quantity()->value(),
+            unitPriceCents: $line->price()->value(),
+            isMenuLine: $line->isMenuLine(),
         ));
     }
 }

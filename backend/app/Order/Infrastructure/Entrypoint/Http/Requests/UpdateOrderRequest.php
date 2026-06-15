@@ -19,7 +19,6 @@ final class UpdateOrderRequest extends FormRequest
         return [
             'id' => ['required', 'string', 'uuid'],
             'diners' => ['sometimes', 'integer', 'min:1'],
-            'device_id' => ['nullable', 'string'],
         ];
     }
 
@@ -35,8 +34,6 @@ final class UpdateOrderRequest extends FormRequest
         return new UpdateOrderCommand(
             id: (string) $this->input('id'),
             diners: $this->input('diners') !== null ? (int) $this->input('diners') : null,
-            deviceId: $this->input('device_id'),
-            ipAddress: $this->ip(),
         );
     }
 }

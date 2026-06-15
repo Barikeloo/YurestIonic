@@ -43,11 +43,6 @@ final class AddLineToOrderRequest extends FormRequest
             throw new \RuntimeException('Authenticated user is required.');
         }
 
-        $deviceId = $this->input('device_id');
-        if (! is_string($deviceId) || $deviceId === '') {
-            $deviceId = $this->header('X-Device-Id');
-        }
-
         return new AddLineToOrderCommand(
             restaurantId: $restaurantId,
             orderId: (string) $this->input('order_id'),
@@ -57,8 +52,6 @@ final class AddLineToOrderRequest extends FormRequest
             dinerNumber: $this->input('diner_number') !== null ? (int) $this->input('diner_number') : null,
             variantId: $this->input('variant_id') !== null ? (string) $this->input('variant_id') : null,
             modifiers: $this->input('modifiers') !== null ? $this->input('modifiers') : null,
-            deviceId: is_string($deviceId) ? $deviceId : null,
-            ipAddress: $this->ip(),
         );
     }
 }

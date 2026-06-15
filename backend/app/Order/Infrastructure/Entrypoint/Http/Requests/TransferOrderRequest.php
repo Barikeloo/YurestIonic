@@ -24,17 +24,10 @@ final class TransferOrderRequest extends FormRequest
 
     public function toCommand(): TransferOrderCommand
     {
-        $deviceId = $this->input('device_id');
-        if (! is_string($deviceId) || $deviceId === '') {
-            $deviceId = $this->header('X-Device-Id');
-        }
-
         return new TransferOrderCommand(
             orderId: (string) $this->route('id'),
             toTableId: (string) $this->input('to_table_id'),
             transferredByUserId: (string) $this->input('transferred_by_user_id'),
-            deviceId: is_string($deviceId) ? $deviceId : null,
-            ipAddress: $this->ip(),
         );
     }
 }

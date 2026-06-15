@@ -13,7 +13,5 @@ final readonly class BatchAddLinesToOrderCommand
         public string $userId,
         public array $productLines,
         public array $menuLines,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

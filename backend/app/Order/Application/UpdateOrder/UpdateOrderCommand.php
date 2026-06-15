@@ -9,7 +9,5 @@ final readonly class UpdateOrderCommand
     public function __construct(
         public string $id,
         public ?int $diners,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

@@ -55,7 +55,6 @@ final readonly class ReportFileGenerator implements ReportFileGeneratorInterface
             'taxes' => 'pdf.modelo303',
         };
 
-        // All PDF views render a "generado el" timestamp footer.
         $viewData['generatedAt'] = (new \DateTimeImmutable('now'))->format('d/m/Y H:i');
 
         $pdf = Pdf::loadView($viewName, $viewData);
@@ -146,7 +145,6 @@ final readonly class ReportFileGenerator implements ReportFileGeneratorInterface
     {
         $result = $this->repository->getEmployeesReport($restaurantId, $range);
 
-        // Only employees who actually declared tips, sorted by tips desc.
         $employees = array_values(array_filter($result['items'] ?? [], fn ($e) => (int) ($e['tips'] ?? 0) > 0));
         usort($employees, fn ($a, $b) => ($b['tips'] ?? 0) <=> ($a['tips'] ?? 0));
 

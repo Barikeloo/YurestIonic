@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Order\Domain\Event;
+
+use App\Shared\Domain\Event\AuditableEvent;
+
+final readonly class OrderMarkedToCharge implements AuditableEvent
+{
+    private \DateTimeImmutable $occurredOn;
+
+    public function __construct(
+        private string $orderUuid,
+        private string $restaurantId,
+    ) {
+        $this->occurredOn = new \DateTimeImmutable();
+    }
+
+    public function restaurantId(): string
+    {
+        return $this->restaurantId;
+    }
+
+    public function occurredOn(): \DateTimeImmutable
+    {
+        return $this->occurredOn;
+    }
+
+    public function auditSlug(): string
+    {
+        return 'order.marked_to_charge';
+    }
+
+    public function auditEntityType(): string
+    {
+        return 'order';
+    }
+
+    public function auditEntityId(): string
+    {
+        return $this->orderUuid;
+    }
+
+    public function auditMetadata(): array
+    {
+        return [];
+    }
+
+    public function auditBefore(): ?array
+    {
+        return null;
+    }
+
+    public function auditAfter(): ?array
+    {
+        return null;
+    }
+}

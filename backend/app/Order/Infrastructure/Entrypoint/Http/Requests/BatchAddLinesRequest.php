@@ -46,7 +46,6 @@ final class BatchAddLinesRequest extends FormRequest
 
     public function toCommand(): BatchAddLinesToOrderCommand
     {
-
         $tenantContext = app(TenantContext::class);
 
         return new BatchAddLinesToOrderCommand(
@@ -55,8 +54,6 @@ final class BatchAddLinesRequest extends FormRequest
             userId: (string) ($this->session()->get('auth_user_id') ?? ''),
             productLines: (array) ($this->input('product_lines') ?? []),
             menuLines: (array) ($this->input('menu_lines') ?? []),
-            deviceId: (string) ($this->header('X-Device-Id') ?? ''),
-            ipAddress: (string) ($this->ip() ?? ''),
         );
     }
 }

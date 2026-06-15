@@ -2,15 +2,13 @@
 
 namespace App\Order\Application\TransferOrder;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Order\Domain\Entity\OrderTransfer;
 use App\Order\Domain\Exception\DestinationTableOccupiedException;
 use App\Order\Domain\Exception\OrderNotFoundException;
 use App\Order\Domain\Exception\SameTableTransferException;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderTransferRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\Interfaces\TransactionManagerInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Exception\TableNotFoundException;
@@ -24,7 +22,7 @@ class TransferOrder
         private OrderTransferRepositoryInterface $orderTransferRepository,
         private TableRepositoryInterface $tableRepository,
         private TransactionManagerInterface $transactionManager,
-        private AuditRecorderInterface $auditRecorder,
+        private EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(TransferOrderCommand $command): TransferOrderResponse
@@ -53,6 +51,8 @@ class TransferOrder
             $order->transferTo($toTableId);
             $this->orderRepository->save($order);
 
+            $this->eventBus->publish(...$order->pullDomainEvents());
+
             $newTransfer = OrderTransfer::dddCreate(
                 id: Uuid::generate(),
                 orderId: $order->id(),
@@ -64,20 +64,6 @@ class TransferOrder
 
             return $newTransfer;
         });
-
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: $order->restaurantId(),
-            slug: ActionSlug::create('order.transferred'),
-            entityType: 'order',
-            entityId: $order->id()->value(),
-            userId: Uuid::create($command->transferredByUserId),
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'from_table_id' => $transfer->fromTableId()->value(),
-                'to_table_id' => $transfer->toTableId()->value(),
-            ],
-        ));
 
         return TransferOrderResponse::create(
             transferId: $transfer->id()->value(),

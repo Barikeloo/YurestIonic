@@ -33,16 +33,9 @@ final class DeleteOrderLineRequest extends FormRequest
             throw new \RuntimeException('Authenticated user is required.');
         }
 
-        $deviceId = $this->input('device_id');
-        if (! is_string($deviceId) || $deviceId === '') {
-            $deviceId = $this->header('X-Device-Id');
-        }
-
         return new DeleteOrderLineCommand(
             lineId: (string) $this->input('lineId'),
             userId: $userId,
-            deviceId: is_string($deviceId) ? $deviceId : null,
-            ipAddress: $this->ip(),
         );
     }
 }
