@@ -34,7 +34,6 @@ final class LoginForDeviceLinkRequest extends FormRequest
             email: (string) $this->input('email'),
             password: (string) $this->input('password'),
             deviceId: $deviceId,
-            ipAddress: $this->ip(),
         );
     }
 }

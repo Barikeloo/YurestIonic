@@ -2,10 +2,9 @@
 
 namespace App\User\Application\CreateRestaurantUser;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\User\Domain\Event\UserCreated;
 use App\User\Domain\Exception\PinAlreadyInUseException;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
@@ -15,7 +14,7 @@ class CreateRestaurantUser
     public function __construct(
         private UserRepositoryInterface $userRepository,
         private PasswordHasherInterface $passwordHasher,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(CreateRestaurantUserCommand $command): CreateRestaurantUserResponse
@@ -40,22 +39,14 @@ class CreateRestaurantUser
             $pinHash,
         );
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantUuid),
-            slug: ActionSlug::create('user.created'),
-            entityType: 'user',
-            entityId: $userUuid,
-            userId: $command->actorUserUuid !== null ? Uuid::create($command->actorUserUuid) : null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'user_name' => $command->name,
-                'email' => $command->email,
-                'role' => $command->role,
-                'has_pin' => $pinHash !== null,
-                'actor_type' => $command->actorSuperAdminUuid !== null ? 'super_admin' : 'restaurant_admin',
-                'actor_super_admin_id' => $command->actorSuperAdminUuid,
-            ],
+        $this->eventBus->publish(new UserCreated(
+            userUuid: $userUuid,
+            name: $command->name,
+            email: $command->email,
+            role: $command->role,
+            hasPin: $pinHash !== null,
+            actorSuperAdminUuid: $command->actorSuperAdminUuid,
+            restaurantUuid: $command->restaurantUuid,
         ));
 
         return CreateRestaurantUserResponse::create(

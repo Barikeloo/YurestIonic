@@ -53,7 +53,7 @@ final class AdminDeleteController
         }
 
         try {
-            $response = ($this->deleteRestaurantUser)($request->toCommand($uuid, $userUuid, $authUserUuid, $superAdminUuid));
+            $response = ($this->deleteRestaurantUser)($request->toCommand($uuid, $userUuid, $superAdminUuid));
         } catch (UserNotFoundException $e) {
             return new JsonResponse(['message' => 'User not found.'], 404);
         } catch (\Throwable $e) {

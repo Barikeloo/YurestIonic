@@ -53,7 +53,7 @@ final class AdminPostController
         }
 
         try {
-            $response = ($this->createRestaurantUser)($request->toCommand($uuid, $authUserUuid, $superAdminUuid));
+            $response = ($this->createRestaurantUser)($request->toCommand($uuid, $superAdminUuid));
         } catch (PinAlreadyInUseException $e) {
             return new JsonResponse(['message' => $e->getMessage()], 409);
         } catch (\Throwable $e) {

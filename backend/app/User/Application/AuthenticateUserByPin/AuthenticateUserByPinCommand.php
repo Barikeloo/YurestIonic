@@ -7,8 +7,7 @@ final readonly class AuthenticateUserByPinCommand
     public function __construct(
         public string $userUuid,
         public string $pin,
-        public ?string $restaurantUuid,
-        public ?string $deviceId,
-        public ?string $ipAddress,
+        public ?string $restaurantUuid = null,
+        public ?string $deviceId = null,
     ) {}
 }

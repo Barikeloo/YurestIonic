@@ -2,10 +2,9 @@
 
 namespace App\User\Application\UpdateRestaurantUser;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
-use App\Shared\Domain\ValueObject\Uuid;
+use App\Shared\Application\Event\EventBusInterface;
+use App\User\Domain\Event\UserPasswordChanged;
+use App\User\Domain\Event\UserUpdated;
 use App\User\Domain\Exception\CannotDemoteSelfAdminException;
 use App\User\Domain\Exception\PinAlreadyInUseException;
 use App\User\Domain\Exception\UserNotFoundException;
@@ -18,7 +17,7 @@ class UpdateRestaurantUser
     public function __construct(
         private UserRepositoryInterface $userRepository,
         private PasswordHasherInterface $passwordHasher,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(UpdateRestaurantUserCommand $command): UpdateRestaurantUserResponse
@@ -110,14 +109,8 @@ class UpdateRestaurantUser
         }
 
         if (count($changedFields) > 0) {
-            $this->auditRecorder->record(new AuditEventDraft(
-                restaurantId: Uuid::create($command->restaurantUuid),
-                slug: ActionSlug::create('user.updated'),
-                entityType: 'user',
-                entityId: $command->userUuid,
-                userId: $command->actorUserUuid !== null ? Uuid::create($command->actorUserUuid) : null,
-                deviceId: $command->deviceId,
-                ipAddress: $command->ipAddress,
+            $events = [new UserUpdated(
+                userUuid: $command->userUuid,
                 before: $before,
                 after: $after,
                 metadata: [
@@ -128,19 +121,17 @@ class UpdateRestaurantUser
                     'actor_type' => $command->actorSuperAdminUuid !== null ? 'super_admin' : 'restaurant_admin',
                     'actor_super_admin_id' => $command->actorSuperAdminUuid,
                 ],
-            ));
-        }
+                restaurantUuid: $command->restaurantUuid,
+            )];
 
-        if ($passwordChanged) {
-            $this->auditRecorder->record(new AuditEventDraft(
-                restaurantId: Uuid::create($command->restaurantUuid),
-                slug: ActionSlug::create('auth.password_changed'),
-                entityType: 'user',
-                entityId: $command->userUuid,
-                userId: $command->actorUserUuid !== null ? Uuid::create($command->actorUserUuid) : null,
-                deviceId: $command->deviceId,
-                ipAddress: $command->ipAddress,
-            ));
+            if ($passwordChanged) {
+                $events[] = new UserPasswordChanged(
+                    userUuid: $command->userUuid,
+                    restaurantUuid: $command->restaurantUuid,
+                );
+            }
+
+            $this->eventBus->publish(...$events);
         }
 
         return UpdateRestaurantUserResponse::create($command->userUuid);

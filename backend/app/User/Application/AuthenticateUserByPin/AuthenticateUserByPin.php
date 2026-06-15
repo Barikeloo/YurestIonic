@@ -2,11 +2,10 @@
 
 namespace App\User\Application\AuthenticateUserByPin;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
-use App\Shared\Domain\ValueObject\Uuid;
+use App\Shared\Application\Event\EventBusInterface;
+use App\User\Domain\Event\LoginPinFailed;
+use App\User\Domain\Event\LoginPinSuccessful;
 use App\User\Domain\Exception\InvalidCredentialsException;
 use App\User\Domain\Exception\UserNotFoundException;
 use App\User\Domain\Interfaces\PasswordHasherInterface;
@@ -20,7 +19,7 @@ final class AuthenticateUserByPin
         private readonly RestaurantRepositoryInterface $restaurantRepository,
         private readonly PasswordHasherInterface $passwordHasher,
         private readonly UserQuickAccessRepositoryInterface $userQuickAccessRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(AuthenticateUserByPinCommand $command): AuthenticateUserByPinResponse
@@ -82,14 +81,9 @@ final class AuthenticateUserByPin
             return;
         }
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($restaurantUuid),
-            slug: ActionSlug::create('auth.login_pin_ok'),
-            entityType: 'auth_attempt',
-            entityId: $command->userUuid,
-            userId: Uuid::create($command->userUuid),
-            ipAddress: $command->ipAddress,
-            deviceId: $command->deviceId,
+        $this->eventBus->publish(new LoginPinSuccessful(
+            userUuid: $command->userUuid,
+            restaurantUuid: $restaurantUuid,
         ));
     }
 
@@ -111,14 +105,9 @@ final class AuthenticateUserByPin
             return;
         }
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($restaurantUuid),
-            slug: ActionSlug::create('auth.login_pin_failed'),
-            entityType: 'auth_attempt',
-            entityId: $command->userUuid,
-            userId: Uuid::create($command->userUuid),
-            ipAddress: $command->ipAddress,
-            deviceId: $command->deviceId,
+        $this->eventBus->publish(new LoginPinFailed(
+            userUuid: $command->userUuid,
+            restaurantUuid: $restaurantUuid,
         ));
     }
 }

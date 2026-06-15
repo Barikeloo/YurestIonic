@@ -2,10 +2,8 @@
 
 namespace App\User\Application\DeleteRestaurantUser;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
-use App\Shared\Domain\ValueObject\Uuid;
+use App\Shared\Application\Event\EventBusInterface;
+use App\User\Domain\Event\UserDeleted;
 use App\User\Domain\Exception\UserNotFoundException;
 use App\User\Domain\Interfaces\UserRepositoryInterface;
 
@@ -13,7 +11,7 @@ class DeleteRestaurantUser
 {
     public function __construct(
         private UserRepositoryInterface $userRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(DeleteRestaurantUserCommand $command): DeleteRestaurantUserResponse
@@ -24,8 +22,7 @@ class DeleteRestaurantUser
             throw UserNotFoundException::withId($command->userUuid);
         }
 
-        $userRestaurantId = $user->restaurantId();
-        if ($userRestaurantId === null || $userRestaurantId->value() !== $command->restaurantUuid) {
+        if (! $this->userRepository->userBelongsToRestaurant($command->userUuid, $command->restaurantUuid)) {
             throw UserNotFoundException::withId($command->userUuid);
         }
 
@@ -35,21 +32,13 @@ class DeleteRestaurantUser
 
         $this->userRepository->delete($command->userUuid);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantUuid),
-            slug: ActionSlug::create('user.deleted'),
-            entityType: 'user',
-            entityId: $command->userUuid,
-            userId: $command->actorUserUuid !== null ? Uuid::create($command->actorUserUuid) : null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'user_name' => $deletedUserName,
-                'email' => $deletedUserEmail,
-                'role' => $deletedUserRole,
-                'actor_type' => $command->actorSuperAdminUuid !== null ? 'super_admin' : 'restaurant_admin',
-                'actor_super_admin_id' => $command->actorSuperAdminUuid,
-            ],
+        $this->eventBus->publish(new UserDeleted(
+            userUuid: $command->userUuid,
+            name: $deletedUserName,
+            email: $deletedUserEmail,
+            role: $deletedUserRole,
+            actorSuperAdminUuid: $command->actorSuperAdminUuid,
+            restaurantUuid: $command->restaurantUuid,
         ));
 
         return DeleteRestaurantUserResponse::create($command->userUuid);

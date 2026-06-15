@@ -11,9 +11,6 @@ final readonly class CreateRestaurantUserCommand
         public string $restaurantUuid,
         public string $role = 'operator',
         public ?string $plainPin = null,
-        public ?string $actorUserUuid = null,
         public ?string $actorSuperAdminUuid = null,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

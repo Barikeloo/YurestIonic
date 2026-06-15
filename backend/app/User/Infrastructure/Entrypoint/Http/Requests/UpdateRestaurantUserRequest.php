@@ -29,11 +29,6 @@ final class UpdateRestaurantUserRequest extends FormRequest
         ?string $actorUserUuid,
         ?string $actorSuperAdminUuid,
     ): UpdateRestaurantUserCommand {
-        $deviceId = $this->input('device_id');
-        if (! is_string($deviceId) || $deviceId === '') {
-            $deviceId = $this->header('X-Device-Id');
-        }
-
         return new UpdateRestaurantUserCommand(
             restaurantUuid: $restaurantUuid,
             userUuid: $userUuid,
@@ -44,8 +39,6 @@ final class UpdateRestaurantUserRequest extends FormRequest
             plainPin: $this->input('pin'),
             actorUserUuid: $actorUserUuid,
             actorSuperAdminUuid: $actorSuperAdminUuid,
-            deviceId: is_string($deviceId) ? $deviceId : null,
-            ipAddress: $this->ip(),
         );
     }
 }

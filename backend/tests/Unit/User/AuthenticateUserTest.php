@@ -2,8 +2,8 @@
 
 namespace Tests\Unit\User;
 
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Restaurant\Domain\Interfaces\RestaurantRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\User\Application\AuthenticateUser\AuthenticateUser;
 use App\User\Application\AuthenticateUser\AuthenticateUserCommand;
 use App\User\Application\AuthenticateUser\AuthenticateUserResponse;
@@ -28,7 +28,8 @@ class AuthenticateUserTest extends TestCase
         $restaurantRepository = Mockery::mock(RestaurantRepositoryInterface::class);
         $passwordHasher = Mockery::mock(PasswordHasherInterface::class);
         $userQuickAccessRepository = Mockery::mock(UserQuickAccessRepositoryInterface::class);
-        $auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $eventBus = Mockery::mock(EventBusInterface::class);
+        $eventBus->shouldReceive('publish')->zeroOrMoreTimes();
 
         $hash = '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
 
@@ -60,14 +61,13 @@ class AuthenticateUserTest extends TestCase
             $restaurantRepository,
             $passwordHasher,
             $userQuickAccessRepository,
-            $auditRecorder,
+            $eventBus,
         );
 
         $command = new AuthenticateUserCommand(
             email: 'auth@example.com',
             plainPassword: 'plain-password',
             deviceId: 'device-123',
-            ipAddress: '127.0.0.1',
         );
 
         $response = $authenticateUser($command);

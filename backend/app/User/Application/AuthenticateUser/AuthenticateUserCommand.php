@@ -7,7 +7,6 @@ final readonly class AuthenticateUserCommand
     public function __construct(
         public string $email,
         public string $plainPassword,
-        public ?string $deviceId,
-        public ?string $ipAddress = null,
+        public ?string $deviceId = null,
     ) {}
 }

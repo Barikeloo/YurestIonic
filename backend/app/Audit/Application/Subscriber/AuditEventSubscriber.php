@@ -36,8 +36,16 @@ final readonly class AuditEventSubscriber implements EventSubscriber
         }
 
         $restaurantId = $this->context->restaurantId();
-        if ($restaurantId === null && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $event->auditEntityId())) {
-            $restaurantId = $event->auditEntityId();
+        if ($restaurantId === null) {
+            $metadata = $event->auditMetadata();
+            if (isset($metadata['restaurant_uuid'])) {
+                $restaurantId = $metadata['restaurant_uuid'];
+            } elseif (
+                $event->auditEntityType() === 'restaurant'
+                && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $event->auditEntityId())
+            ) {
+                $restaurantId = $event->auditEntityId();
+            }
         }
         $userId = $this->context->userId();
         $sessionId = $this->context->sessionId();

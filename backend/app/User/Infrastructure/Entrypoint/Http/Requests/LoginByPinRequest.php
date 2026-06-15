@@ -36,7 +36,6 @@ final class LoginByPinRequest extends FormRequest
             pin: (string) $this->input('pin'),
             restaurantUuid: is_string($restaurantUuid) ? $restaurantUuid : null,
             deviceId: is_string($deviceId) ? $deviceId : null,
-            ipAddress: $this->ip(),
         );
     }
 }

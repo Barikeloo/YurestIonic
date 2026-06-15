@@ -14,7 +14,5 @@ final readonly class UpdateRestaurantUserCommand
         public ?string $plainPin = null,
         public ?string $actorUserUuid = null,
         public ?string $actorSuperAdminUuid = null,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }
