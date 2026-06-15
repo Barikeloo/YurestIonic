@@ -129,6 +129,7 @@ final class GetSalesReportTest extends TestCase
         $tenant = $this->createTenantSession('admin');
         $userId = DB::table('users')->where('uuid', $tenant['user_uuid'])->value('id');
 
+        // A sale from yesterday: out of "today", inside "yesterday".
         DB::table('sales')->insert([
             'uuid'             => (string) Str::uuid(),
             'restaurant_id'    => $tenant['restaurant_id'],
@@ -153,10 +154,27 @@ final class GetSalesReportTest extends TestCase
         $this->assertCount(0, $responseToday->json('data'));
         $this->assertCount(1, $responseYesterday->json('data'));
 
+        // A sale at "now" is always inside the current week and never in the
+        // future, so the weekly window has at least one regardless of which
+        // weekday the suite runs on (yesterday can fall in the previous week
+        // on a Monday).
+        DB::table('sales')->insert([
+            'uuid'             => (string) Str::uuid(),
+            'restaurant_id'    => $tenant['restaurant_id'],
+            'ticket_number'    => 11,
+            'status'           => 'closed',
+            'value_date'       => now(),
+            'total'            => 5000,
+            'opened_by_user_id' => $userId,
+            'document_type'    => 'simplified',
+            'created_at'       => now(),
+            'updated_at'       => now(),
+        ]);
+
         $responseWeek = $this->withSession($tenant['session'])
             ->getJson('/api/admin/reports/sales?period=week')
             ->assertStatus(200);
 
-        $this->assertCount(1, $responseWeek->json('data'));
+        $this->assertGreaterThanOrEqual(1, count($responseWeek->json('data')));
     }
 }
