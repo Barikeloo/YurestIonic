@@ -9,9 +9,5 @@ final readonly class SetMenuActiveCommand
     public function __construct(
         public string $id,
         public bool $active,
-        public string $restaurantId,
-        public ?string $userId = null,
-        public ?string $deviceId = null,
-        public ?string $ipAddress = null,
     ) {}
 }

@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Menu\Domain\Entity;
 
+use App\Menu\Domain\Event\MenuActivated;
+use App\Menu\Domain\Event\MenuArchived;
+use App\Menu\Domain\Event\MenuCreated;
+use App\Menu\Domain\Event\MenuDeactivated;
 use App\Menu\Domain\Exception\MenuArchivedException;
 use App\Menu\Domain\Exception\MenuInvalidConfigurationException;
 use App\Menu\Domain\ValueObject\MenuAvailability;
@@ -11,11 +15,13 @@ use App\Menu\Domain\ValueObject\MenuDescription;
 use App\Menu\Domain\ValueObject\MenuName;
 use App\Menu\Domain\ValueObject\MenuPrice;
 use App\Menu\Domain\ValueObject\MenuValidity;
+use App\Shared\Domain\Event\RecordsEvents;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 
 class Menu
 {
+    use RecordsEvents;
 
     private function __construct(
         private Uuid $id,
@@ -47,9 +53,10 @@ class Menu
         }
 
         $now = DomainDateTime::now();
+        $id = Uuid::generate();
 
-        return new self(
-            id: Uuid::generate(),
+        $menu = new self(
+            id: $id,
             taxId: $taxId,
             name: $name,
             description: $description,
@@ -61,6 +68,15 @@ class Menu
             createdAt: $now,
             updatedAt: $now,
         );
+
+        $menu->recordEvent(new MenuCreated(
+            menuUuid: $id->value(),
+            menuName: $name->value(),
+            active: $active,
+            sectionsCount: count($sections),
+        ));
+
+        return $menu;
     }
 
     public static function fromPersistence(
@@ -132,6 +148,11 @@ class Menu
         if (! $this->active) {
             $this->active = true;
             $this->touch();
+
+            $this->recordEvent(new MenuActivated(
+                menuUuid: $this->id->value(),
+                menuName: $this->name->value(),
+            ));
         }
     }
 
@@ -141,6 +162,11 @@ class Menu
         if ($this->active) {
             $this->active = false;
             $this->touch();
+
+            $this->recordEvent(new MenuDeactivated(
+                menuUuid: $this->id->value(),
+                menuName: $this->name->value(),
+            ));
         }
     }
 
@@ -152,6 +178,11 @@ class Menu
         $this->active = false;
         $this->archivedAt = DomainDateTime::now();
         $this->touch();
+
+        $this->recordEvent(new MenuArchived(
+            menuUuid: $this->id->value(),
+            menuName: $this->name->value(),
+        ));
     }
 
     public function isArchived(): bool
@@ -229,6 +260,16 @@ class Menu
     public function archivedAt(): ?DomainDateTime
     {
         return $this->archivedAt;
+    }
+
+    public function snapshot(): array
+    {
+        return [
+            'name' => $this->name->value(),
+            'price' => $this->price->value(),
+            'active' => $this->active,
+            'tax_id' => $this->taxId->value(),
+        ];
     }
 
     private function ensureNotArchived(): void

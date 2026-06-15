@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Menu\Application\CreateMenu;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Menu\Application\Shared\MenuSectionsBuilder;
 use App\Menu\Domain\Entity\Menu;
 use App\Menu\Domain\Interfaces\MenuRepositoryInterface;
@@ -15,13 +12,14 @@ use App\Menu\Domain\ValueObject\MenuDescription;
 use App\Menu\Domain\ValueObject\MenuName;
 use App\Menu\Domain\ValueObject\MenuPrice;
 use App\Menu\Domain\ValueObject\MenuValidity;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 class CreateMenu
 {
     public function __construct(
         private MenuRepositoryInterface $menuRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(CreateMenuCommand $command): CreateMenuResponse
@@ -53,22 +51,7 @@ class CreateMenu
 
         $this->menuRepository->save($menu);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantId),
-            slug: ActionSlug::create('menu.created'),
-            entityType: 'menu',
-            entityId: $menu->id()->value(),
-            userId: $command->userId !== null ? Uuid::create($command->userId) : null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'menu_name' => $menu->name()->value(),
-                'price_cents' => $menu->price()->value(),
-                'price_formatted' => number_format($menu->price()->value() / 100, 2).' €',
-                'sections_count' => count($sections),
-                'active' => $menu->isActive(),
-            ],
-        ));
+        $this->eventBus->publish(...$menu->pullDomainEvents());
 
         return CreateMenuResponse::fromEntity($menu);
     }

@@ -2,13 +2,13 @@
 
 namespace Tests\Unit\Menu\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Menu\Application\ArchiveMenu\ArchiveMenu;
 use App\Menu\Application\ArchiveMenu\ArchiveMenuCommand;
 use App\Menu\Domain\Entity\Menu;
+use App\Menu\Domain\Event\MenuArchived;
 use App\Menu\Domain\Exception\MenuNotFoundException;
 use App\Menu\Domain\Interfaces\MenuRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use Mockery;
 use Mockery\MockInterface;
@@ -20,17 +20,17 @@ class ArchiveMenuTest extends TestCase
     use MenuEntityTestHelper;
 
     private MenuRepositoryInterface&MockInterface $menuRepository;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    private EventBusInterface&MockInterface $eventBus;
     private ArchiveMenu $useCase;
 
     protected function setUp(): void
     {
         $this->menuRepository = Mockery::mock(MenuRepositoryInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $this->eventBus = Mockery::mock(EventBusInterface::class);
 
         $this->useCase = new ArchiveMenu(
             $this->menuRepository,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
@@ -42,20 +42,26 @@ class ArchiveMenuTest extends TestCase
     public function test_archives_menu_successfully(): void
     {
         $menuId = Uuid::generate()->value();
-        $menu = Menu::dddCreate(
-            taxId: Uuid::generate(),
-            name: \App\Menu\Domain\ValueObject\MenuName::create('Para archivar'),
-            description: \App\Menu\Domain\ValueObject\MenuDescription::empty(),
-            price: \App\Menu\Domain\ValueObject\MenuPrice::create(1000),
-            validity: \App\Menu\Domain\ValueObject\MenuValidity::always(),
-            availability: \App\Menu\Domain\ValueObject\MenuAvailability::alwaysAvailable(),
+        $menu = Menu::fromPersistence(
+            id: $menuId,
+            taxId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
+            name: 'Para archivar',
+            description: null,
+            price: 1000,
             active: true,
+            validityFrom: null,
+            validityTo: null,
+            availableDays: 127,
+            availableFromTime: null,
+            availableToTime: null,
             sections: [$this->createSection('Única')],
+            createdAt: new \DateTimeImmutable(),
+            updatedAt: new \DateTimeImmutable(),
+            archivedAt: null,
         );
 
         $command = new ArchiveMenuCommand(
             id: $menuId,
-            restaurantId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
         );
 
         $this->menuRepository
@@ -69,10 +75,10 @@ class ArchiveMenuTest extends TestCase
             ->once()
             ->with(Mockery::on(fn ($m): bool => $m->isArchived()));
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::type(AuditEventDraft::class));
+            ->with(Mockery::type(MenuArchived::class));
 
         ($this->useCase)($command);
 
@@ -83,21 +89,27 @@ class ArchiveMenuTest extends TestCase
     public function test_archives_already_archived_menu_is_noop(): void
     {
         $menuId = Uuid::generate()->value();
-        $menu = Menu::dddCreate(
-            taxId: Uuid::generate(),
-            name: \App\Menu\Domain\ValueObject\MenuName::create('Ya archivado'),
-            description: \App\Menu\Domain\ValueObject\MenuDescription::empty(),
-            price: \App\Menu\Domain\ValueObject\MenuPrice::create(500),
-            validity: \App\Menu\Domain\ValueObject\MenuValidity::always(),
-            availability: \App\Menu\Domain\ValueObject\MenuAvailability::alwaysAvailable(),
+        $menu = Menu::fromPersistence(
+            id: $menuId,
+            taxId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
+            name: 'Ya archivado',
+            description: null,
+            price: 500,
             active: true,
+            validityFrom: null,
+            validityTo: null,
+            availableDays: 127,
+            availableFromTime: null,
+            availableToTime: null,
             sections: [$this->createSection('Única')],
+            createdAt: new \DateTimeImmutable(),
+            updatedAt: new \DateTimeImmutable(),
+            archivedAt: null,
         );
         $menu->archive();
 
         $command = new ArchiveMenuCommand(
             id: $menuId,
-            restaurantId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
         );
 
         $this->menuRepository
@@ -107,7 +119,7 @@ class ArchiveMenuTest extends TestCase
             ->andReturn($menu);
 
         $this->menuRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         ($this->useCase)($command);
 
@@ -120,7 +132,6 @@ class ArchiveMenuTest extends TestCase
 
         $command = new ArchiveMenuCommand(
             id: $menuId,
-            restaurantId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
         );
 
         $this->menuRepository
@@ -130,7 +141,7 @@ class ArchiveMenuTest extends TestCase
             ->andReturn(null);
 
         $this->menuRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(MenuNotFoundException::class);
 

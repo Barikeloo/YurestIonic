@@ -2,16 +2,16 @@
 
 namespace Tests\Unit\Menu\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Menu\Application\Shared\MenuItemInput;
 use App\Menu\Application\Shared\MenuSectionInput;
 use App\Menu\Application\UpdateMenu\UpdateMenu;
 use App\Menu\Application\UpdateMenu\UpdateMenuCommand;
 use App\Menu\Application\UpdateMenu\UpdateMenuResponse;
 use App\Menu\Domain\Entity\Menu;
+use App\Menu\Domain\Event\MenuUpdated;
 use App\Menu\Domain\Exception\MenuNotFoundException;
 use App\Menu\Domain\Interfaces\MenuRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use Mockery;
 use Mockery\MockInterface;
@@ -23,17 +23,17 @@ class UpdateMenuTest extends TestCase
     use MenuEntityTestHelper;
 
     private MenuRepositoryInterface&MockInterface $menuRepository;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    private EventBusInterface&MockInterface $eventBus;
     private UpdateMenu $useCase;
 
     protected function setUp(): void
     {
         $this->menuRepository = Mockery::mock(MenuRepositoryInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $this->eventBus = Mockery::mock(EventBusInterface::class);
 
         $this->useCase = new UpdateMenu(
             $this->menuRepository,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
@@ -45,20 +45,27 @@ class UpdateMenuTest extends TestCase
     public function test_updates_menu_successfully(): void
     {
         $menuId = Uuid::generate()->value();
-        $menu = Menu::dddCreate(
-            taxId: Uuid::generate(),
-            name: \App\Menu\Domain\ValueObject\MenuName::create('Original'),
-            description: \App\Menu\Domain\ValueObject\MenuDescription::create('Original desc'),
-            price: \App\Menu\Domain\ValueObject\MenuPrice::create(1000),
-            validity: \App\Menu\Domain\ValueObject\MenuValidity::always(),
-            availability: \App\Menu\Domain\ValueObject\MenuAvailability::alwaysAvailable(),
+        $menu = Menu::fromPersistence(
+            id: $menuId,
+            taxId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
+            name: 'Original',
+            description: 'Original desc',
+            price: 1000,
             active: true,
+            validityFrom: null,
+            validityTo: null,
+            availableDays: 127,
+            availableFromTime: null,
+            availableToTime: null,
             sections: [$this->createSection('Original section')],
+            createdAt: new \DateTimeImmutable(),
+            updatedAt: new \DateTimeImmutable(),
+            archivedAt: null,
         );
 
         $command = new UpdateMenuCommand(
             id: $menuId,
-            taxId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
+            taxId: 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
             name: 'Actualizado',
             description: 'Nueva descripción',
             price: 2000,
@@ -84,7 +91,6 @@ class UpdateMenuTest extends TestCase
                     ],
                 ),
             ],
-            restaurantId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
         );
 
         $this->menuRepository
@@ -98,10 +104,10 @@ class UpdateMenuTest extends TestCase
             ->once()
             ->with(Mockery::on(fn ($m): bool => $m->name()->value() === 'Actualizado' && !$m->isActive()));
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::type(AuditEventDraft::class));
+            ->with(Mockery::type(MenuUpdated::class));
 
         $response = ($this->useCase)($command);
 
@@ -138,7 +144,6 @@ class UpdateMenuTest extends TestCase
                     ],
                 ),
             ],
-            restaurantId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
         );
 
         $this->menuRepository
@@ -148,7 +153,7 @@ class UpdateMenuTest extends TestCase
             ->andReturn(null);
 
         $this->menuRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(MenuNotFoundException::class);
 

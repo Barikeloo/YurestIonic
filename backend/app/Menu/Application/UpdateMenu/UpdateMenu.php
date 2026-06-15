@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Menu\Application\UpdateMenu;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Menu\Application\Shared\MenuSectionsBuilder;
+use App\Menu\Domain\Event\MenuUpdated;
 use App\Menu\Domain\Exception\MenuNotFoundException;
 use App\Menu\Domain\Interfaces\MenuRepositoryInterface;
 use App\Menu\Domain\ValueObject\MenuAvailability;
@@ -15,13 +13,14 @@ use App\Menu\Domain\ValueObject\MenuDescription;
 use App\Menu\Domain\ValueObject\MenuName;
 use App\Menu\Domain\ValueObject\MenuPrice;
 use App\Menu\Domain\ValueObject\MenuValidity;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 class UpdateMenu
 {
     public function __construct(
         private MenuRepositoryInterface $menuRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(UpdateMenuCommand $command): UpdateMenuResponse
@@ -29,12 +28,7 @@ class UpdateMenu
         $menu = $this->menuRepository->findById($command->id, includeArchived: false)
             ?? throw MenuNotFoundException::withId($command->id);
 
-        $before = [
-            'name' => $menu->name()->value(),
-            'price' => $menu->price()->value(),
-            'active' => $menu->isActive(),
-            'tax_id' => $menu->taxId()->value(),
-        ];
+        $before = $menu->snapshot();
 
         $validity = MenuValidity::create(
             $command->validityFrom !== null ? new \DateTimeImmutable($command->validityFrom) : null,
@@ -62,25 +56,12 @@ class UpdateMenu
 
         $this->menuRepository->save($menu);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantId),
-            slug: ActionSlug::create('menu.updated'),
-            entityType: 'menu',
-            entityId: $command->id,
-            userId: $command->userId !== null ? Uuid::create($command->userId) : null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
+        $this->eventBus->publish(new MenuUpdated(
+            menuUuid: $menu->id()->value(),
+            menuName: $menu->name()->value(),
+            sectionsCount: count($sections),
             before: $before,
-            after: [
-                'name' => $menu->name()->value(),
-                'price' => $menu->price()->value(),
-                'active' => $menu->isActive(),
-                'tax_id' => $menu->taxId()->value(),
-            ],
-            metadata: [
-                'menu_name' => $menu->name()->value(),
-                'sections_count' => count($sections),
-            ],
+            after: $menu->snapshot(),
         ));
 
         return UpdateMenuResponse::fromEntity($menu);

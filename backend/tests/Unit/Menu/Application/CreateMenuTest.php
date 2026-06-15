@@ -2,14 +2,14 @@
 
 namespace Tests\Unit\Menu\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Menu\Application\CreateMenu\CreateMenu;
 use App\Menu\Application\CreateMenu\CreateMenuCommand;
 use App\Menu\Application\CreateMenu\CreateMenuResponse;
 use App\Menu\Application\Shared\MenuItemInput;
 use App\Menu\Application\Shared\MenuSectionInput;
+use App\Menu\Domain\Event\MenuCreated;
 use App\Menu\Domain\Interfaces\MenuRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use Mockery;
 use Mockery\MockInterface;
 use PHPUnit\Framework\TestCase;
@@ -17,17 +17,17 @@ use PHPUnit\Framework\TestCase;
 class CreateMenuTest extends TestCase
 {
     private MenuRepositoryInterface&MockInterface $menuRepository;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    private EventBusInterface&MockInterface $eventBus;
     private CreateMenu $useCase;
 
     protected function setUp(): void
     {
         $this->menuRepository = Mockery::mock(MenuRepositoryInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        $this->eventBus = Mockery::mock(EventBusInterface::class);
 
         $this->useCase = new CreateMenu(
             $this->menuRepository,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
@@ -65,7 +65,6 @@ class CreateMenuTest extends TestCase
                     ],
                 ),
             ],
-            restaurantId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
         );
 
         $this->menuRepository
@@ -73,10 +72,10 @@ class CreateMenuTest extends TestCase
             ->once()
             ->with(Mockery::on(fn ($menu): bool => $menu->name()->value() === 'Menú del día'));
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::type(AuditEventDraft::class));
+            ->with(Mockery::type(MenuCreated::class));
 
         $response = ($this->useCase)($command);
 
@@ -116,15 +115,14 @@ class CreateMenuTest extends TestCase
                     ],
                 ),
             ],
-            restaurantId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
         );
 
         $this->menuRepository
             ->shouldReceive('save')
             ->once();
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once();
 
         $response = ($this->useCase)($command);
@@ -183,18 +181,17 @@ class CreateMenuTest extends TestCase
                     ],
                 ),
             ],
-            restaurantId: 'c0eebc99-9c0b-4ef8-bb6d-6bb9bd380b11',
         );
 
         $this->menuRepository
             ->shouldReceive('save')
             ->once();
 
-        $this->auditRecorder
-            ->shouldReceive('record')
+        $this->eventBus
+            ->shouldReceive('publish')
             ->once()
-            ->with(Mockery::on(function (AuditEventDraft $draft): bool {
-                return $draft->metadata['sections_count'] === 3;
+            ->with(Mockery::on(function (MenuCreated $event): bool {
+                return $event->auditMetadata()['sections_count'] === 3;
             }));
 
         $response = ($this->useCase)($command);
