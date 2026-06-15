@@ -29,6 +29,18 @@ export class EchoService implements OnDestroy {
     return this.echo;
   }
 
+  listen<T>(
+    channelName: string,
+    eventName: string,
+    handler: (data: T) => void,
+  ): void {
+    this.getEcho().channel(channelName).listen(`.${eventName}`, handler);
+  }
+
+  leaveChannel(channelName: string): void {
+    this.echo?.leave(channelName);
+  }
+
   listenOnce<T>(
     channelName: string,
     eventName: string,

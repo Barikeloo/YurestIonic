@@ -132,6 +132,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(\App\Shared\Application\Event\EventBusInterface::class, static function ($app): \App\Shared\Infrastructure\Event\InMemorySyncEventBus {
             return new \App\Shared\Infrastructure\Event\InMemorySyncEventBus(
                 $app->make(\App\Audit\Application\Subscriber\AuditEventSubscriber::class),
+                $app->make(\App\Order\Infrastructure\Broadcasting\TablesBroadcastSubscriber::class),
             );
         });
     }
