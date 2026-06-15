@@ -26,12 +26,12 @@ Roles, PIN, división de cuenta, métodos de pago + mixto, cierre de caja, trasl
 ### Hecho
 - [x] **Núcleo en `Shared`**: `DomainEvent`, `RecordsEvents` (trait de agregado), `EventBusInterface`, `EventSubscriber`, `InMemorySyncEventBus` (síncrono, match por `instanceof`). Commit `6fb7dff`.
 - [x] **Auditoría cross-cutting**: `AuditableEvent` + `RequestContext` (contexto request-scoped aparte) + `AuditEventSubscriber` (traduce cualquier `AuditableEvent` → `AuditEventDraft`). El caso de uso publica `...$entity->pullDomainEvents()` tras persistir.
-- [x] **Módulos migrados**: **Tax** (`a5a37ff`), **Zone** (`0f1488f`), **Family** (`980802a`). Cada uno con eventos created/updated/deleted, tests unit + feature end-to-end de `audit_logs`.
+- [x] **Módulos migrados**: **Tax** (`a5a37ff`), **Zone** (`0f1488f`), **Family** (`980802a`), **Tables** (`b1384e3`, incluye eventos de grupo `TablesMerged`/`TablesUnmerged` publicados por el caso de uso). Cada uno con tests unit + feature end-to-end de `audit_logs`.
 
 ### Pendiente (migración incremental, mismo patrón)
-- [ ] Módulos pequeños CRUD: **Tables**, **Product**, **ProductModifier**, **ProductVariant**, **Restaurant**, **User**, **Menu**.
+- [ ] Módulos pequeños CRUD: **Product**, **ProductModifier**, **ProductVariant**, **Restaurant**, **User**, **Menu**.
 - [ ] Módulos grandes (eventos de dominio más ricos): **Sale**, **Order**, **Cash**.
-- [ ] (61 casos de uso siguen con `AuditRecorder` directo — válido; se migran cuando convenga.)
+- [ ] (~56 casos de uso siguen con `AuditRecorder` directo — válido; se migran cuando convenga.)
 
 ### Riesgos / notas
 - Orden determinista de subscribers (según registro en el provider).
