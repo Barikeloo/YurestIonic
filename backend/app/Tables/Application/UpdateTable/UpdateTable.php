@@ -2,9 +2,7 @@
 
 namespace App\Tables\Application\UpdateTable;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Exception\TableNameAlreadyExistsInZoneException;
 use App\Tables\Domain\Exception\TableNotFoundException;
@@ -15,7 +13,7 @@ class UpdateTable
 {
     public function __construct(
         private TableRepositoryInterface $tableRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(UpdateTableCommand $command): UpdateTableResponse
@@ -29,11 +27,6 @@ class UpdateTable
             throw TableNameAlreadyExistsInZoneException::withName($command->name);
         }
 
-        $before = [
-            'zone_id' => $table->zoneId()->value(),
-            'name' => $table->name()->value(),
-        ];
-
         $table->update(
             $zoneIdVO,
             TableName::create($command->name),
@@ -41,23 +34,7 @@ class UpdateTable
 
         $this->tableRepository->save($table);
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantId),
-            slug: ActionSlug::create('table.updated'),
-            entityType: 'table',
-            entityId: $table->id()->value(),
-            userId: $command->userId !== null ? Uuid::create($command->userId) : null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            before: $before,
-            after: [
-                'zone_id' => $table->zoneId()->value(),
-                'name' => $table->name()->value(),
-            ],
-            metadata: [
-                'table_name' => $table->name()->value(),
-            ],
-        ));
+        $this->eventBus->publish(...$table->pullDomainEvents());
 
         return UpdateTableResponse::create(
             id: $table->id()->value(),

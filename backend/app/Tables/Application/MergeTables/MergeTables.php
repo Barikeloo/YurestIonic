@@ -2,12 +2,11 @@
 
 namespace App\Tables\Application\MergeTables;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\Tables\Domain\Event\TablesMerged;
 use App\Tables\Domain\Exception\MinimumTwoTablesRequiredException;
 use App\Tables\Domain\Exception\TablesNotFoundException;
 use App\Tables\Domain\Exception\TablesNotInSameZoneException;
@@ -20,7 +19,7 @@ final class MergeTables
         private readonly TableRepositoryInterface $tableRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly OrderLineRepositoryInterface $orderLineRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private readonly EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(MergeTablesCommand $command): MergeTablesResponse
@@ -109,22 +108,14 @@ final class MergeTables
             $this->tableRepository->save($table);
         }
 
-        $tableNames = array_map(
-            static fn ($table) => $table->name()->value(),
+        $tableNames = array_values(array_map(
+            static fn ($table): string => $table->name()->value(),
             $allTables
-        );
+        ));
 
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantId),
-            slug: ActionSlug::create('table.merged'),
-            entityType: 'table_group',
-            entityId: $groupId->value(),
-            userId: null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'tables_label' => implode(', ', $tableNames),
-            ],
+        $this->eventBus->publish(new TablesMerged(
+            groupId: $groupId->value(),
+            tableNames: $tableNames,
         ));
 
         return MergeTablesResponse::create(

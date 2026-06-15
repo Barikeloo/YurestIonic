@@ -2,12 +2,18 @@
 
 namespace App\Tables\Domain\Entity;
 
+use App\Shared\Domain\Event\RecordsEvents;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
+use App\Tables\Domain\Event\TableCreated;
+use App\Tables\Domain\Event\TableDeleted;
+use App\Tables\Domain\Event\TableUpdated;
 use App\Tables\Domain\ValueObject\TableName;
 
 class Table
 {
+    use RecordsEvents;
+
     private function __construct(
         private Uuid $id,
         private Uuid $zoneId,
@@ -21,7 +27,7 @@ class Table
     {
         $now = DomainDateTime::now();
 
-        return new self(
+        $table = new self(
             id: Uuid::generate(),
             zoneId: $zoneId,
             name: $name,
@@ -29,6 +35,14 @@ class Table
             createdAt: $now,
             updatedAt: $now,
         );
+
+        $table->recordEvent(new TableCreated(
+            tableId: $table->id->value(),
+            name: $table->name->value(),
+            zoneId: $table->zoneId->value(),
+        ));
+
+        return $table;
     }
 
     public static function fromPersistence(
@@ -51,9 +65,26 @@ class Table
 
     public function update(Uuid $zoneId, TableName $name): void
     {
+        $before = ['zone_id' => $this->zoneId->value(), 'name' => $this->name->value()];
+
         $this->zoneId = $zoneId;
         $this->name = $name;
         $this->touch();
+
+        $this->recordEvent(new TableUpdated(
+            tableId: $this->id->value(),
+            before: $before,
+            after: ['zone_id' => $this->zoneId->value(), 'name' => $this->name->value()],
+        ));
+    }
+
+    public function delete(): void
+    {
+        $this->recordEvent(new TableDeleted(
+            tableId: $this->id->value(),
+            name: $this->name->value(),
+            zoneId: $this->zoneId->value(),
+        ));
     }
 
     public function id(): Uuid
