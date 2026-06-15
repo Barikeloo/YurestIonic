@@ -2,49 +2,61 @@
 
 namespace Tests\Unit\ProductModifier\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\ProductModifier\Application\CreateProductModifier\CreateProductModifier;
 use App\ProductModifier\Application\CreateProductModifier\CreateProductModifierCommand;
 use App\ProductModifier\Application\CreateProductModifier\CreateProductModifierResponse;
 use App\ProductModifier\Domain\Entity\ProductModifier;
+use App\ProductModifier\Domain\Event\ProductModifierCreated;
 use App\ProductModifier\Domain\Interfaces\ProductModifierRepositoryInterface;
+use App\Shared\Application\Event\EventBusInterface;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 class CreateProductModifierTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
+
     private ProductRepositoryInterface&Mockery\MockInterface $productRepository;
     private ProductModifierRepositoryInterface&Mockery\MockInterface $modifierRepository;
-    private AuditRecorderInterface&Mockery\MockInterface $auditRecorder;
+    private EventBusInterface&Mockery\MockInterface $eventBus;
     private CreateProductModifier $useCase;
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->productRepository = Mockery::mock(ProductRepositoryInterface::class);
+        $this->productRepository  = Mockery::mock(ProductRepositoryInterface::class);
         $this->modifierRepository = Mockery::mock(ProductModifierRepositoryInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
-        $this->useCase = new CreateProductModifier(
+        $this->eventBus           = Mockery::mock(EventBusInterface::class);
+        $this->useCase            = new CreateProductModifier(
             $this->productRepository,
             $this->modifierRepository,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
-    protected function tearDown(): void
-    {
-        Mockery::close();
-        parent::tearDown();
-    }
-
-    public function test_invoke_creates_modifier_and_saves_it(): void
+    public function test_invoke_creates_modifier_and_publishes_event(): void
     {
         $productId = '550e8400-e29b-41d4-a716-446655440000';
-        $command = new CreateProductModifierCommand(
+
+        $this->productRepository->shouldReceive('findById')
+            ->once()->with($productId)
+            ->andReturn(Mockery::mock(\App\Product\Domain\Entity\Product::class));
+
+        $this->modifierRepository->shouldReceive('save')
+            ->once()
+            ->with(Mockery::on(fn (ProductModifier $m) =>
+                $m->name()->value() === 'Extra queso' && $m->price()->value() === 200
+            ));
+
+        $this->eventBus->shouldReceive('publish')
+            ->once()
+            ->with(Mockery::type(ProductModifierCreated::class));
+
+        $response = ($this->useCase)(new CreateProductModifierCommand(
             productId: $productId,
             name: 'Extra queso',
             type: 'extra',
@@ -53,34 +65,7 @@ class CreateProductModifierTest extends TestCase
             price: 200,
             active: true,
             sortOrder: 1,
-            restaurantId: '550e8400-e29b-41d4-a716-446655440001',
-            userId: '550e8400-e29b-41d4-a716-446655440002',
-            deviceId: 'device-001',
-            ipAddress: '127.0.0.1',
-        );
-
-        $this->productRepository->shouldReceive('findById')
-            ->once()
-            ->with($productId)
-            ->andReturn(Mockery::mock(\App\Product\Domain\Entity\Product::class));
-
-        $this->modifierRepository->shouldReceive('save')
-            ->once()
-            ->with(Mockery::on(function (ProductModifier $modifier): bool {
-                return $modifier->name()->value() === 'Extra queso'
-                    && $modifier->type()->value() === 'extra'
-                    && $modifier->price()->value() === 200;
-            }));
-
-        $this->auditRecorder->shouldReceive('record')
-            ->once()
-            ->with(Mockery::on(function (AuditEventDraft $draft): bool {
-                return $draft->slug->value() === 'catalog.modifier_created'
-                    && $draft->entityType === 'product_modifier'
-                    && $draft->metadata['modifier_name'] === 'Extra queso';
-            }));
-
-        $response = ($this->useCase)($command);
+        ));
 
         $this->assertInstanceOf(CreateProductModifierResponse::class, $response);
         $this->assertSame('Extra queso', $response->name);
@@ -90,8 +75,18 @@ class CreateProductModifierTest extends TestCase
 
     public function test_invoke_throws_when_product_not_found(): void
     {
-        $command = new CreateProductModifierCommand(
-            productId: '550e8400-e29b-41d4-a716-446655440000',
+        $productId = '550e8400-e29b-41d4-a716-446655440000';
+
+        $this->productRepository->shouldReceive('findById')
+            ->once()->with($productId)->andReturn(null);
+
+        $this->modifierRepository->shouldNotReceive('save');
+        $this->eventBus->shouldNotReceive('publish');
+
+        $this->expectException(ProductNotFoundException::class);
+
+        ($this->useCase)(new CreateProductModifierCommand(
+            productId: $productId,
             name: 'Extra queso',
             type: 'extra',
             isRequired: false,
@@ -99,19 +94,6 @@ class CreateProductModifierTest extends TestCase
             price: 200,
             active: true,
             sortOrder: 0,
-            restaurantId: '550e8400-e29b-41d4-a716-446655440001',
-        );
-
-        $this->productRepository->shouldReceive('findById')
-            ->once()
-            ->with($command->productId)
-            ->andReturn(null);
-
-        $this->modifierRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
-
-        $this->expectException(ProductNotFoundException::class);
-
-        ($this->useCase)($command);
+        ));
     }
 }

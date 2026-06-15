@@ -2,9 +2,6 @@
 
 namespace App\ProductModifier\Application\CreateProductModifier;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\Product\Domain\Exception\ProductNotFoundException;
 use App\Product\Domain\Interfaces\ProductRepositoryInterface;
 use App\ProductModifier\Domain\Entity\ProductModifier;
@@ -13,6 +10,7 @@ use App\ProductModifier\Domain\ValueObject\ModifierName;
 use App\ProductModifier\Domain\ValueObject\ModifierPrice;
 use App\ProductModifier\Domain\ValueObject\ModifierSelectionType;
 use App\ProductModifier\Domain\ValueObject\ModifierType;
+use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Domain\ValueObject\Uuid;
 
 class CreateProductModifier
@@ -20,7 +18,7 @@ class CreateProductModifier
     public function __construct(
         private ProductRepositoryInterface $productRepository,
         private ProductModifierRepositoryInterface $modifierRepository,
-        private readonly AuditRecorderInterface $auditRecorder,
+        private EventBusInterface $eventBus,
     ) {}
 
     public function __invoke(CreateProductModifierCommand $command): CreateProductModifierResponse
@@ -40,23 +38,7 @@ class CreateProductModifier
         );
 
         $this->modifierRepository->save($modifier);
-
-        $this->auditRecorder->record(new AuditEventDraft(
-            restaurantId: Uuid::create($command->restaurantId),
-            slug: ActionSlug::create('catalog.modifier_created'),
-            entityType: 'product_modifier',
-            entityId: $modifier->id()->value(),
-            userId: $command->userId !== null ? Uuid::create($command->userId) : null,
-            deviceId: $command->deviceId,
-            ipAddress: $command->ipAddress,
-            metadata: [
-                'modifier_name' => $modifier->name()->value(),
-                'modifier_type' => $modifier->type()->value(),
-                'price_cents' => $modifier->price()->value(),
-                'price_formatted' => number_format($modifier->price()->value() / 100, 2).' €',
-                'product_id' => $modifier->productId()->value(),
-            ],
-        ));
+        $this->eventBus->publish(...$modifier->pullDomainEvents());
 
         return CreateProductModifierResponse::create(
             id: $modifier->id()->value(),

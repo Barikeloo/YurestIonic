@@ -2,15 +2,20 @@
 
 namespace App\ProductModifier\Domain\Entity;
 
+use App\ProductModifier\Domain\Event\ProductModifierCreated;
+use App\ProductModifier\Domain\Event\ProductModifierDeleted;
+use App\ProductModifier\Domain\Event\ProductModifierUpdated;
 use App\ProductModifier\Domain\ValueObject\ModifierName;
 use App\ProductModifier\Domain\ValueObject\ModifierPrice;
 use App\ProductModifier\Domain\ValueObject\ModifierSelectionType;
 use App\ProductModifier\Domain\ValueObject\ModifierType;
+use App\Shared\Domain\Event\RecordsEvents;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 
 class ProductModifier
 {
+    use RecordsEvents;
     private function __construct(
         private Uuid $id,
         private Uuid $productId,
@@ -46,7 +51,7 @@ class ProductModifier
     ): self {
         $now = DomainDateTime::now();
 
-        return new self(
+        $modifier = new self(
             id: Uuid::generate(),
             productId: $productId,
             name: $name,
@@ -59,6 +64,16 @@ class ProductModifier
             createdAt: $now,
             updatedAt: $now,
         );
+
+        $modifier->recordEvent(new ProductModifierCreated(
+            modifierId: $modifier->id->value(),
+            productId: $modifier->productId->value(),
+            modifierName: $modifier->name->value(),
+            modifierType: $modifier->type->value(),
+            priceCents: $modifier->price->value(),
+        ));
+
+        return $modifier;
     }
 
     public static function fromPersistence(
@@ -100,6 +115,8 @@ class ProductModifier
     ): void {
         self::assertConsistent($type, $isRequired);
 
+        $before = $this->snapshot();
+
         $this->name = $name;
         $this->type = $type;
         $this->isRequired = $isRequired;
@@ -108,6 +125,24 @@ class ProductModifier
         $this->active = $active;
         $this->sortOrder = $sortOrder;
         $this->touch();
+
+        $this->recordEvent(new ProductModifierUpdated(
+            modifierId: $this->id->value(),
+            before: $before,
+            after: $this->snapshot(),
+        ));
+    }
+
+    public function delete(): void
+    {
+        $this->recordEvent(new ProductModifierDeleted(
+            modifierId: $this->id->value(),
+            productId: $this->productId->value(),
+            modifierName: $this->name->value(),
+            modifierType: $this->type->value(),
+            priceCents: $this->price->value(),
+            active: $this->active,
+        ));
     }
 
     public function reorder(int $sortOrder): void
@@ -189,6 +224,22 @@ class ProductModifier
     public function updatedAt(): DomainDateTime
     {
         return $this->updatedAt;
+    }
+
+    /**
+     * @return array{name: string, type: string, is_required: bool, selection_type: string, price: int, active: bool, sort_order: int}
+     */
+    private function snapshot(): array
+    {
+        return [
+            'name'           => $this->name->value(),
+            'type'           => $this->type->value(),
+            'is_required'    => $this->isRequired,
+            'selection_type' => $this->selectionType->value(),
+            'price'          => $this->price->value(),
+            'active'         => $this->active,
+            'sort_order'     => $this->sortOrder,
+        ];
     }
 
     private function touch(): void

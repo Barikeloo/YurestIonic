@@ -2,22 +2,24 @@
 
 namespace Tests\Unit\ProductModifier\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
 use App\ProductModifier\Application\UpdateProductModifier\UpdateProductModifier;
 use App\ProductModifier\Application\UpdateProductModifier\UpdateProductModifierCommand;
 use App\ProductModifier\Application\UpdateProductModifier\UpdateProductModifierResponse;
 use App\ProductModifier\Domain\Entity\ProductModifier;
+use App\ProductModifier\Domain\Event\ProductModifierUpdated;
 use App\ProductModifier\Domain\Exception\ProductModifierNotFoundException;
 use App\ProductModifier\Domain\Interfaces\ProductModifierRepositoryInterface;
-use App\Shared\Domain\ValueObject\Uuid;
+use App\Shared\Application\Event\EventBusInterface;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 class UpdateProductModifierTest extends TestCase
 {
+    use MockeryPHPUnitIntegration;
+
     private ProductModifierRepositoryInterface&Mockery\MockInterface $modifierRepository;
-    private AuditRecorderInterface&Mockery\MockInterface $auditRecorder;
+    private EventBusInterface&Mockery\MockInterface $eventBus;
     private UpdateProductModifier $useCase;
 
     protected function setUp(): void
@@ -25,26 +27,18 @@ class UpdateProductModifierTest extends TestCase
         parent::setUp();
 
         $this->modifierRepository = Mockery::mock(ProductModifierRepositoryInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
-        $this->useCase = new UpdateProductModifier(
+        $this->eventBus           = Mockery::mock(EventBusInterface::class);
+        $this->useCase            = new UpdateProductModifier(
             $this->modifierRepository,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
-    protected function tearDown(): void
+    private function makeModifier(string $id = '550e8400-e29b-41d4-a716-446655440000'): ProductModifier
     {
-        Mockery::close();
-        parent::tearDown();
-    }
-
-    public function test_invoke_updates_modifier_and_saves_it(): void
-    {
-        $modifierId = '550e8400-e29b-41d4-a716-446655440000';
-        $productId = '550e8400-e29b-41d4-a716-446655440001';
-        $existingModifier = ProductModifier::fromPersistence(
-            id: $modifierId,
-            productId: $productId,
+        return ProductModifier::fromPersistence(
+            id: $id,
+            productId: '550e8400-e29b-41d4-a716-446655440001',
             name: 'Patatas fritas',
             type: 'accompaniment',
             isRequired: true,
@@ -55,8 +49,25 @@ class UpdateProductModifierTest extends TestCase
             createdAt: new \DateTimeImmutable('-1 day'),
             updatedAt: new \DateTimeImmutable('-1 day'),
         );
+    }
 
-        $command = new UpdateProductModifierCommand(
+    public function test_updates_modifier_and_publishes_ProductModifierUpdated(): void
+    {
+        $modifierId = '550e8400-e29b-41d4-a716-446655440000';
+        $modifier   = $this->makeModifier($modifierId);
+
+        $this->modifierRepository->shouldReceive('findById')->once()->with($modifierId)->andReturn($modifier);
+        $this->modifierRepository->shouldReceive('save')->once()
+            ->with(Mockery::on(fn (ProductModifier $m) =>
+                $m->name()->value() === 'Aros de cebolla' && $m->price()->value() === 300
+            ));
+        $this->eventBus->shouldReceive('publish')->once()
+            ->with(Mockery::on(fn (ProductModifierUpdated $e) =>
+                $e->auditBefore()['name'] === 'Patatas fritas'
+                && $e->auditAfter()['name'] === 'Aros de cebolla'
+            ));
+
+        $response = ($this->useCase)(new UpdateProductModifierCommand(
             id: $modifierId,
             name: 'Aros de cebolla',
             type: 'extra',
@@ -65,65 +76,30 @@ class UpdateProductModifierTest extends TestCase
             price: 300,
             active: false,
             sortOrder: 2,
-            restaurantId: '550e8400-e29b-41d4-a716-446655440002',
-            userId: '550e8400-e29b-41d4-a716-446655440003',
-            deviceId: 'device-001',
-            ipAddress: '127.0.0.1',
-        );
-
-        $this->modifierRepository->shouldReceive('findById')
-            ->once()
-            ->with($modifierId)
-            ->andReturn($existingModifier);
-
-        $this->modifierRepository->shouldReceive('save')
-            ->once()
-            ->with(Mockery::on(function (ProductModifier $modifier): bool {
-                return $modifier->name()->value() === 'Aros de cebolla'
-                    && $modifier->type()->value() === 'extra'
-                    && $modifier->price()->value() === 300;
-            }));
-
-        $this->auditRecorder->shouldReceive('record')
-            ->once()
-            ->with(Mockery::on(function (AuditEventDraft $draft): bool {
-                return $draft->slug->value() === 'catalog.modifier_updated'
-                    && $draft->before['name'] === 'Patatas fritas'
-                    && $draft->after['name'] === 'Aros de cebolla'
-                    && $draft->metadata['modifier_name'] === 'Aros de cebolla';
-            }));
-
-        $response = ($this->useCase)($command);
+        ));
 
         $this->assertInstanceOf(UpdateProductModifierResponse::class, $response);
         $this->assertSame('Aros de cebolla', $response->name);
         $this->assertSame(300, $response->price);
     }
 
-    public function test_invoke_throws_when_modifier_not_found(): void
+    public function test_throws_when_modifier_not_found(): void
     {
-        $command = new UpdateProductModifierCommand(
-            id: '550e8400-e29b-41d4-a716-446655440000',
-            name: 'Aros de cebolla',
-            type: 'extra',
-            isRequired: false,
-            selectionType: 'multi',
-            price: 300,
-            active: false,
-            sortOrder: 0,
-            restaurantId: '550e8400-e29b-41d4-a716-446655440001',
-        );
-
-        $this->modifierRepository->shouldReceive('findById')
-            ->once()
-            ->with($command->id)
-            ->andReturn(null);
-
+        $this->modifierRepository->shouldReceive('findById')->once()->with('missing')->andReturn(null);
         $this->modifierRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(ProductModifierNotFoundException::class);
 
-        ($this->useCase)($command);
+        ($this->useCase)(new UpdateProductModifierCommand(
+            id: 'missing',
+            name: 'X',
+            type: 'extra',
+            isRequired: false,
+            selectionType: 'multi',
+            price: 0,
+            active: true,
+            sortOrder: 0,
+        ));
     }
 }
