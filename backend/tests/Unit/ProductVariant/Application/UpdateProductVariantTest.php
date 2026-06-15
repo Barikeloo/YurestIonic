@@ -2,157 +2,101 @@
 
 namespace Tests\Unit\ProductVariant\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\ProductVariant\Application\UpdateProductVariant\UpdateProductVariant;
 use App\ProductVariant\Application\UpdateProductVariant\UpdateProductVariantCommand;
+use App\ProductVariant\Application\UpdateProductVariant\UpdateProductVariantResponse;
 use App\ProductVariant\Domain\Entity\ProductVariant;
+use App\ProductVariant\Domain\Event\ProductVariantUpdated;
 use App\ProductVariant\Domain\Exception\ProductVariantNotFoundException;
 use App\ProductVariant\Domain\Interfaces\ProductVariantRepositoryInterface;
-use App\Shared\Domain\ValueObject\Uuid;
+use App\Shared\Application\Event\EventBusInterface;
 use Mockery;
-use Mockery\MockInterface;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 class UpdateProductVariantTest extends TestCase
 {
-    private ProductVariantRepositoryInterface&MockInterface $variantRepository;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    use MockeryPHPUnitIntegration;
+
+    private ProductVariantRepositoryInterface&Mockery\MockInterface $variantRepository;
+    private EventBusInterface&Mockery\MockInterface $eventBus;
     private UpdateProductVariant $useCase;
 
     protected function setUp(): void
     {
-        $this->variantRepository = Mockery::mock(ProductVariantRepositoryInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
+        parent::setUp();
 
-        $this->useCase = new UpdateProductVariant(
+        $this->variantRepository = Mockery::mock(ProductVariantRepositoryInterface::class);
+        $this->eventBus          = Mockery::mock(EventBusInterface::class);
+        $this->useCase           = new UpdateProductVariant(
             $this->variantRepository,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
-    protected function tearDown(): void
+    private function makeVariant(string $id = '550e8400-e29b-41d4-a716-446655440000'): ProductVariant
     {
-        Mockery::close();
+        return ProductVariant::fromPersistence(
+            id: $id,
+            productId: '550e8400-e29b-41d4-a716-446655440001',
+            name: 'Rojo',
+            price: 1500,
+            stock: 10,
+            active: true,
+            sortOrder: 1,
+            createdAt: new \DateTimeImmutable('-1 day'),
+            updatedAt: new \DateTimeImmutable('-1 day'),
+        );
     }
 
-    public function test_updates_variant_successfully(): void
+    public function test_updates_variant_and_publishes_ProductVariantUpdated(): void
     {
-        $variantId = Uuid::generate()->value();
-        $restaurantId = Uuid::generate()->value();
+        $variantId = '550e8400-e29b-41d4-a716-446655440000';
+        $variant   = $this->makeVariant($variantId);
 
-        $command = new UpdateProductVariantCommand(
+        $this->variantRepository->shouldReceive('findById')->once()->with($variantId)->andReturn($variant);
+        $this->variantRepository->shouldReceive('save')->once()
+            ->with(Mockery::on(fn (ProductVariant $v) =>
+                $v->name()->value() === 'Azul' && $v->price()->value() === 2000
+            ));
+        $this->eventBus->shouldReceive('publish')->once()
+            ->with(Mockery::on(fn (ProductVariantUpdated $e) =>
+                $e->auditBefore()['name'] === 'Rojo'
+                && $e->auditAfter()['name'] === 'Azul'
+                && $e->auditEntityId() === $variantId
+            ));
+
+        $response = ($this->useCase)(new UpdateProductVariantCommand(
             id: $variantId,
             name: 'Azul',
             price: 2000,
             stock: 20,
             active: false,
-            sortOrder: 1,
-            restaurantId: $restaurantId,
-        );
+            sortOrder: 2,
+        ));
 
-        $variant = ProductVariant::dddCreate(
-            productId: Uuid::generate(),
-            name: \App\ProductVariant\Domain\ValueObject\VariantName::create('Rojo'),
-            price: \App\ProductVariant\Domain\ValueObject\VariantPrice::create(1500),
-            stock: \App\ProductVariant\Domain\ValueObject\VariantStock::create(10),
-        );
-
-        $this->variantRepository
-            ->shouldReceive('findById')
-            ->once()
-            ->with($variantId)
-            ->andReturn($variant);
-
-        $this->variantRepository
-            ->shouldReceive('save')
-            ->once()
-            ->with($variant);
-
-        $this->auditRecorder
-            ->shouldReceive('record')
-            ->once()
-            ->with(Mockery::type(AuditEventDraft::class));
-
-        $response = ($this->useCase)($command);
-
-        $this->assertIsString($response->id);
+        $this->assertInstanceOf(UpdateProductVariantResponse::class, $response);
         $this->assertSame('Azul', $response->name);
         $this->assertSame(2000, $response->price);
         $this->assertSame(20, $response->stock);
         $this->assertFalse($response->active);
-        $this->assertSame(1, $response->sortOrder);
     }
 
-    public function test_throws_exception_when_variant_not_found(): void
+    public function test_throws_when_variant_not_found(): void
     {
-        $variantId = Uuid::generate()->value();
-
-        $command = new UpdateProductVariantCommand(
-            id: $variantId,
-            name: 'Azul',
-            price: 2000,
-            stock: 20,
-            active: true,
-            sortOrder: 0,
-            restaurantId: Uuid::generate()->value(),
-        );
-
-        $this->variantRepository
-            ->shouldReceive('findById')
-            ->once()
-            ->with($variantId)
-            ->andReturn(null);
-
+        $this->variantRepository->shouldReceive('findById')->once()->with('missing')->andReturn(null);
         $this->variantRepository->shouldNotReceive('save');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(ProductVariantNotFoundException::class);
 
-        ($this->useCase)($command);
-    }
-
-    public function test_records_audit_with_correct_slug(): void
-    {
-        $variantId = Uuid::generate()->value();
-        $restaurantId = Uuid::generate()->value();
-
-        $command = new UpdateProductVariantCommand(
-            id: $variantId,
-            name: 'Azul',
-            price: 2000,
-            stock: 20,
+        ($this->useCase)(new UpdateProductVariantCommand(
+            id: 'missing',
+            name: 'X',
+            price: 0,
+            stock: 0,
             active: true,
             sortOrder: 0,
-            restaurantId: $restaurantId,
-        );
-
-        $variant = ProductVariant::dddCreate(
-            productId: Uuid::generate(),
-            name: \App\ProductVariant\Domain\ValueObject\VariantName::create('Rojo'),
-            price: \App\ProductVariant\Domain\ValueObject\VariantPrice::create(1500),
-            stock: \App\ProductVariant\Domain\ValueObject\VariantStock::create(10),
-        );
-
-        $this->variantRepository
-            ->shouldReceive('findById')
-            ->andReturn($variant);
-
-        $this->variantRepository
-            ->shouldReceive('save')
-            ->once();
-
-        $this->auditRecorder
-            ->shouldReceive('record')
-            ->once()
-            ->with(Mockery::on(function (AuditEventDraft $draft) use ($restaurantId): bool {
-                return $draft->slug->equals(ActionSlug::create('catalog.variant_updated'))
-                    && $draft->restaurantId->value() === $restaurantId;
-            }));
-
-        $response = ($this->useCase)($command);
-
-        $this->assertSame('Azul', $response->name);
+        ));
     }
 }

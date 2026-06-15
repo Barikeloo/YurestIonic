@@ -2,137 +2,79 @@
 
 namespace Tests\Unit\ProductVariant\Application;
 
-use App\Audit\Domain\AuditEventDraft;
-use App\Audit\Domain\Interfaces\AuditRecorderInterface;
-use App\Audit\Domain\ValueObject\ActionSlug;
 use App\ProductVariant\Application\DeleteProductVariant\DeleteProductVariant;
 use App\ProductVariant\Application\DeleteProductVariant\DeleteProductVariantCommand;
 use App\ProductVariant\Domain\Entity\ProductVariant;
+use App\ProductVariant\Domain\Event\ProductVariantDeleted;
 use App\ProductVariant\Domain\Exception\ProductVariantNotFoundException;
 use App\ProductVariant\Domain\Interfaces\ProductVariantRepositoryInterface;
-use App\Shared\Domain\ValueObject\Uuid;
+use App\Shared\Application\Event\EventBusInterface;
 use Mockery;
-use Mockery\MockInterface;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
 
 class DeleteProductVariantTest extends TestCase
 {
-    private ProductVariantRepositoryInterface&MockInterface $variantRepository;
-    private AuditRecorderInterface&MockInterface $auditRecorder;
+    use MockeryPHPUnitIntegration;
+
+    private ProductVariantRepositoryInterface&Mockery\MockInterface $variantRepository;
+    private EventBusInterface&Mockery\MockInterface $eventBus;
     private DeleteProductVariant $useCase;
 
     protected function setUp(): void
     {
+        parent::setUp();
+
         $this->variantRepository = Mockery::mock(ProductVariantRepositoryInterface::class);
-        $this->auditRecorder = Mockery::mock(AuditRecorderInterface::class);
-
-        $this->useCase = new DeleteProductVariant(
+        $this->eventBus          = Mockery::mock(EventBusInterface::class);
+        $this->useCase           = new DeleteProductVariant(
             $this->variantRepository,
-            $this->auditRecorder,
+            $this->eventBus,
         );
     }
 
-    protected function tearDown(): void
+    private function makeVariant(string $id = '550e8400-e29b-41d4-a716-446655440000'): ProductVariant
     {
-        Mockery::close();
+        return ProductVariant::fromPersistence(
+            id: $id,
+            productId: '550e8400-e29b-41d4-a716-446655440001',
+            name: 'Rojo',
+            price: 1500,
+            stock: 10,
+            active: true,
+            sortOrder: 1,
+            createdAt: new \DateTimeImmutable('-1 day'),
+            updatedAt: new \DateTimeImmutable('-1 day'),
+        );
     }
 
-    public function test_deletes_variant_successfully(): void
+    public function test_deletes_variant_and_publishes_ProductVariantDeleted(): void
     {
-        $variantId = Uuid::generate()->value();
-        $restaurantId = Uuid::generate()->value();
+        $variantId = '550e8400-e29b-41d4-a716-446655440000';
+        $variant   = $this->makeVariant($variantId);
 
-        $command = new DeleteProductVariantCommand(
-            id: $variantId,
-            restaurantId: $restaurantId,
-        );
+        $this->variantRepository->shouldReceive('findById')->once()->with($variantId)->andReturn($variant);
+        $this->variantRepository->shouldReceive('deleteById')->once()->with($variantId);
+        $this->eventBus->shouldReceive('publish')->once()
+            ->with(Mockery::on(fn (ProductVariantDeleted $e) =>
+                $e->auditEntityId() === $variantId
+                && $e->auditBefore()['name'] === 'Rojo'
+                && $e->auditBefore()['price'] === 1500
+            ));
 
-        $variant = ProductVariant::dddCreate(
-            productId: Uuid::generate(),
-            name: \App\ProductVariant\Domain\ValueObject\VariantName::create('Rojo'),
-            price: \App\ProductVariant\Domain\ValueObject\VariantPrice::create(1500),
-            stock: \App\ProductVariant\Domain\ValueObject\VariantStock::create(10),
-        );
+        ($this->useCase)(new DeleteProductVariantCommand(id: $variantId));
 
-        $this->variantRepository
-            ->shouldReceive('findById')
-            ->once()
-            ->with($variantId)
-            ->andReturn($variant);
-
-        $this->variantRepository
-            ->shouldReceive('deleteById')
-            ->once()
-            ->with($variantId);
-
-        $this->auditRecorder
-            ->shouldReceive('record')
-            ->once()
-            ->with(Mockery::type(AuditEventDraft::class));
-
-        ($this->useCase)($command);
-
-        $this->assertTrue(true);
+        $this->addToAssertionCount(1);
     }
 
-    public function test_throws_exception_when_variant_not_found(): void
+    public function test_throws_when_variant_not_found(): void
     {
-        $variantId = Uuid::generate()->value();
-
-        $command = new DeleteProductVariantCommand(
-            id: $variantId,
-            restaurantId: Uuid::generate()->value(),
-        );
-
-        $this->variantRepository
-            ->shouldReceive('findById')
-            ->once()
-            ->with($variantId)
-            ->andReturn(null);
-
+        $this->variantRepository->shouldReceive('findById')->once()->with('missing')->andReturn(null);
         $this->variantRepository->shouldNotReceive('deleteById');
-        $this->auditRecorder->shouldNotReceive('record');
+        $this->eventBus->shouldNotReceive('publish');
 
         $this->expectException(ProductVariantNotFoundException::class);
 
-        ($this->useCase)($command);
-    }
-
-    public function test_records_audit_with_correct_slug(): void
-    {
-        $variantId = Uuid::generate()->value();
-        $restaurantId = Uuid::generate()->value();
-
-        $command = new DeleteProductVariantCommand(
-            id: $variantId,
-            restaurantId: $restaurantId,
-        );
-
-        $variant = ProductVariant::dddCreate(
-            productId: Uuid::generate(),
-            name: \App\ProductVariant\Domain\ValueObject\VariantName::create('Rojo'),
-            price: \App\ProductVariant\Domain\ValueObject\VariantPrice::create(1500),
-            stock: \App\ProductVariant\Domain\ValueObject\VariantStock::create(10),
-        );
-
-        $this->variantRepository
-            ->shouldReceive('findById')
-            ->andReturn($variant);
-
-        $this->variantRepository
-            ->shouldReceive('deleteById')
-            ->once();
-
-        $this->auditRecorder
-            ->shouldReceive('record')
-            ->once()
-            ->with(Mockery::on(function (AuditEventDraft $draft) use ($restaurantId): bool {
-                return $draft->slug->equals(ActionSlug::create('catalog.variant_deleted'))
-                    && $draft->restaurantId->value() === $restaurantId;
-            }));
-
-        ($this->useCase)($command);
-
-        $this->assertTrue(true);
+        ($this->useCase)(new DeleteProductVariantCommand(id: 'missing'));
     }
 }

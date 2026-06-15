@@ -3,14 +3,19 @@
 namespace App\ProductVariant\Domain\Entity;
 
 use App\Product\Domain\Exception\InsufficientStockException;
+use App\ProductVariant\Domain\Event\ProductVariantCreated;
+use App\ProductVariant\Domain\Event\ProductVariantDeleted;
+use App\ProductVariant\Domain\Event\ProductVariantUpdated;
 use App\ProductVariant\Domain\ValueObject\VariantName;
 use App\ProductVariant\Domain\ValueObject\VariantPrice;
 use App\ProductVariant\Domain\ValueObject\VariantStock;
+use App\Shared\Domain\Event\RecordsEvents;
 use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 
 class ProductVariant
 {
+    use RecordsEvents;
     private function __construct(
         private Uuid $id,
         private Uuid $productId,
@@ -33,7 +38,7 @@ class ProductVariant
     ): self {
         $now = DomainDateTime::now();
 
-        return new self(
+        $variant = new self(
             id: Uuid::generate(),
             productId: $productId,
             name: $name,
@@ -44,6 +49,16 @@ class ProductVariant
             createdAt: $now,
             updatedAt: $now,
         );
+
+        $variant->recordEvent(new ProductVariantCreated(
+            variantId: $variant->id()->value(),
+            productId: $productId->value(),
+            variantName: $name->value(),
+            priceCents: $price->value(),
+            stock: $stock->value(),
+        ));
+
+        return $variant;
     }
 
     public static function fromPersistence(
@@ -77,12 +92,32 @@ class ProductVariant
         bool $active,
         int $sortOrder,
     ): void {
+        $before = $this->snapshot();
+
         $this->name = $name;
         $this->price = $price;
         $this->stock = $stock;
         $this->active = $active;
         $this->sortOrder = $sortOrder;
         $this->touch();
+
+        $this->recordEvent(new ProductVariantUpdated(
+            variantId: $this->id()->value(),
+            before: $before,
+            after: $this->snapshot(),
+        ));
+    }
+
+    public function delete(): void
+    {
+        $this->recordEvent(new ProductVariantDeleted(
+            variantId: $this->id()->value(),
+            productId: $this->productId()->value(),
+            variantName: $this->name()->value(),
+            priceCents: $this->price()->value(),
+            stock: $this->stock()->value(),
+            active: $this->isActive(),
+        ));
     }
 
     public function activate(): void
@@ -173,5 +208,16 @@ class ProductVariant
     private function touch(): void
     {
         $this->updatedAt = DomainDateTime::now();
+    }
+
+    private function snapshot(): array
+    {
+        return [
+            'name'       => $this->name->value(),
+            'price'      => $this->price->value(),
+            'stock'      => $this->stock->value(),
+            'active'     => $this->active,
+            'sort_order' => $this->sortOrder,
+        ];
     }
 }
