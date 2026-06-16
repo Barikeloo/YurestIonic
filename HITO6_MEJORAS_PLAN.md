@@ -18,25 +18,16 @@ Roles, PIN, división de cuenta, métodos de pago + mixto, cierre de caja, trasl
 
 ---
 
-## MEJORA 1 — Bus de eventos síncrono  🟡 EN CURSO
+## MEJORA 1 — Bus de eventos síncrono  ✅ COMPLETA
 **Objetivo:** desacoplar efectos secundarios (auditoría, recálculos, notificaciones) de la lógica principal del caso de uso, despachándolos como eventos de dominio dentro del ciclo de la petición.
 
-> Plan detallado y patrón "cómo migrar un módulo": **`MEJORA1_EVENT_BUS_PLAN.md`**.
+> Plan detallado y log de migración: **`MEJORA1_EVENT_BUS_PLAN.md`** (renombrado a migration log).
 
 ### Hecho
-- [x] **Núcleo en `Shared`**: `DomainEvent`, `RecordsEvents` (trait de agregado), `EventBusInterface`, `EventSubscriber`, `InMemorySyncEventBus` (síncrono, match por `instanceof`). Commit `6fb7dff`.
-- [x] **Auditoría cross-cutting**: `AuditableEvent` + `RequestContext` (contexto request-scoped aparte) + `AuditEventSubscriber` (traduce cualquier `AuditableEvent` → `AuditEventDraft`). El caso de uso publica `...$entity->pullDomainEvents()` tras persistir.
-- [x] **Módulos migrados**: **Tax** (`a5a37ff`), **Zone** (`0f1488f`), **Family** (`980802a`), **Tables** (`b1384e3`, incluye eventos de grupo `TablesMerged`/`TablesUnmerged` publicados por el caso de uso). Cada uno con tests unit + feature end-to-end de `audit_logs`.
-
-### Pendiente (migración incremental, mismo patrón)
-- [ ] Módulos pequeños CRUD: **Product**, **ProductModifier**, **ProductVariant**, **Restaurant**, **User**, **Menu**.
-- [ ] Módulos grandes (eventos de dominio más ricos): **Sale**, **Order**, **Cash**.
-- [ ] (~56 casos de uso siguen con `AuditRecorder` directo — válido; se migran cuando convenga.)
-
-### Riesgos / notas
-- Orden determinista de subscribers (según registro en el provider).
-- Transaccionalidad: hoy se publica tras `save()`, síncrono y propagando (igual que antes).
-- `activate`/`deactivate` de Family quedaron **sin auditar** (fiel al comportamiento previo) — ojo al migrar módulos con toggles.
+- [x] **Núcleo en `Shared`**: `DomainEvent`, `RecordsEvents`, `EventBusInterface`, `EventSubscriber`, `InMemorySyncEventBus`. Commit `6fb7dff`.
+- [x] **Auditoría cross-cutting**: `AuditableEvent` + `AuditEventSubscriber`. Commit `6fb7dff`.
+- [x] **Todos los módulos migrados**: Tax · Zone · Family · Table · Product · ProductModifier · ProductVariant · Restaurant · User · Menu · Order · Sale · Cash.
+- [x] Suite: **1049/1049** tests passing. Commit final Cash: `6ab18c7`.
 
 ---
 
@@ -59,24 +50,16 @@ Roles, PIN, división de cuenta, métodos de pago + mixto, cierre de caja, trasl
 
 ---
 
-## MEJORA 3 — Tiempo real de mesas (multi-terminal)
+## MEJORA 3 — Tiempo real de mesas (multi-terminal)  ✅ COMPLETA
 **Objetivo:** que el estado de las mesas (libre/ocupada, apertura/cierre/traslado) se sincronice entre terminales sin recargar.
 
-### Decisiones a tomar
-- [ ] Canal por restaurante: `private-restaurant.{restaurantId}.tables` (o similar). Autorización en `routes/channels.php`.
-- [ ] Eventos a emitir: `TableOccupied`, `TableReleased`, `TableTransferred` (mínimo).
-- [ ] ¿Se apoya en la MEJORA 1 (bus de eventos) para emitir? (recomendado: el listener de dominio dispara el broadcast).
+> Plan detallado: **`MEJORA3_REALTIME_TABLES_PLAN.md`**. Commits: `818b6e9`, `358ef04`, `e281e15`, `f32ab74`, `bbdbf35`.
 
-### Fases
-- [ ] **Infra broadcasting**: eventos `ShouldBroadcast` (mirar `Product/Infrastructure/Broadcasting/ProductPhotoUploaded` como referencia) para apertura/cierre/traslado.
-- [ ] **Canal + auth**: definir canal privado por restaurante en `routes/channels.php`.
-- [ ] **Disparo**: emitir el broadcast al abrir/cerrar/trasladar venta (idealmente vía listener de evento de dominio).
-- [ ] **Frontend**: suscripción al canal en la vista de mesas; actualizar el estado en el signal al recibir el evento.
-- [ ] **Tests**: feature con `Event::fake()` (la operación encola el broadcast en el canal correcto con el payload esperado). e2e queda opcional (requiere 2 contextos).
-
-### Riesgos / notas
-- Reverb ya está levantado (contenedor `reverb`). Verificar credenciales/envs de broadcasting en el front.
-- Cuidado con bucles de actualización (no re-emitir al recibir).
+### Hecho
+- [x] Canal público `restaurant.{restaurantId}` via Reverb. Evento broadcast `OrderStatusChanged` (`ShouldBroadcastNow`).
+- [x] `TablesBroadcastSubscriber` registrado en `InMemorySyncEventBus`. Escucha **10 eventos**: Created, Cancelled, Deleted, MarkedToCharge, Reopened, Transferred, LineAdded, LineRemoved, ComandaSent, Invoiced.
+- [x] `MesasFacade`: suscripción al canal en `loadData()`, `reloadOpenOrders()` refresca `_tables` + `_orderLines` + `_selectedTable`.
+- [x] Tests: **12/12 unit** backend · **2/2 e2e** Playwright (abrir mesa, marcar cobrar, cobrar → mesa libre).
 
 ---
 
