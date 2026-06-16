@@ -16,7 +16,7 @@
 | PASO 3 | Registrar subscriber en `AppServiceProvider` | ✅ HECHO |
 | PASO 4 | Extender `EchoService` con `listen()` + `leaveChannel()` | ✅ HECHO |
 | PASO 5 | Actualizar `MesasFacade` con suscripción y recarga parcial | ✅ HECHO |
-| TESTS | `TablesBroadcastSubscriberTest` (backend unit) | ⬜ pendiente |
+| TESTS | `TablesBroadcastSubscriberTest` (backend unit) | ✅ HECHO — 8/8 |
 
 ---
 
