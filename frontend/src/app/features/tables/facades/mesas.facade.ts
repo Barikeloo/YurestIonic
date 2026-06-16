@@ -15,6 +15,11 @@ interface OrderStatusChangedEvent {
   to_table_id?: string;
 }
 
+interface TableStatusChangedEvent {
+  event_type: string;
+  group_id: string;
+}
+
 export interface TableWithStatus extends TpvTableItem {
   occupied: boolean;
   status?: OrderStatus;
@@ -153,6 +158,43 @@ export class MesasFacade implements OnDestroy {
       'order.status_changed',
       () => this.reloadOpenOrders(),
     );
+    this.echoService.listen<TableStatusChangedEvent>(
+      this.restaurantChannelName,
+      'table.status_changed',
+      () => this.reloadTables(),
+    );
+  }
+
+  private async reloadTables(): Promise<void> {
+    const tables = await firstValueFrom(this.tpvService.listTables());
+    const activeOrders = this._openOrders();
+    const orderByTable = new Map(activeOrders.map((o) => [o.table_id, o]));
+    const paidTotals = await this.fetchPaidTotals(activeOrders);
+
+    const enrichedTables: TableWithStatus[] = tables.map((table) => {
+      const order = orderByTable.get(table.id);
+      const total = order?.total ?? 0;
+      const paidTotal = order ? (paidTotals.get(order.id) ?? 0) : 0;
+      return {
+        ...table,
+        occupied: !!order,
+        status: order?.status,
+        order_id: order?.id,
+        diners: order?.diners,
+        opened_at: order?.opened_at,
+        total,
+        remaining_total: Math.max(0, total - paidTotal),
+        merged_table_group_id: table.merged_table_group_id,
+      };
+    });
+
+    this._tables.set(enrichedTables);
+
+    const selectedId = this._selectedTable()?.id;
+    if (selectedId) {
+      const refreshed = enrichedTables.find((t) => t.id === selectedId) ?? null;
+      this._selectedTable.set(refreshed);
+    }
   }
 
   private async reloadOpenOrders(): Promise<void> {

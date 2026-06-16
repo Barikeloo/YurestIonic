@@ -116,6 +116,7 @@ final class MergeTables
         $this->eventBus->publish(new TablesMerged(
             groupId: $groupId->value(),
             tableNames: $tableNames,
+            restaurantId: $command->restaurantId,
         ));
 
         return MergeTablesResponse::create(

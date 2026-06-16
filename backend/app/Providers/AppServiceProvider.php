@@ -132,6 +132,7 @@ class AppServiceProvider extends ServiceProvider
             return new \App\Shared\Infrastructure\Event\InMemorySyncEventBus(
                 $app->make(\App\Audit\Application\Subscriber\AuditEventSubscriber::class),
                 $app->make(\App\Order\Infrastructure\Broadcasting\TablesBroadcastSubscriber::class),
+                $app->make(\App\Tables\Infrastructure\Broadcasting\TablesGroupBroadcastSubscriber::class),
             );
         });
     }

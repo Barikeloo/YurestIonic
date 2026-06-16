@@ -45,6 +45,7 @@ final class UnmergeTables
         $this->eventBus->publish(new TablesUnmerged(
             groupId: $command->groupId,
             tableNames: array_values($tableNames),
+            restaurantId: $command->restaurantId,
         ));
 
         return UnmergeTablesResponse::create(

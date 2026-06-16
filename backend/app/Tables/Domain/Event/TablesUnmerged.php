@@ -18,6 +18,7 @@ final readonly class TablesUnmerged implements AuditableEvent
     public function __construct(
         private string $groupId,
         private array $tableNames,
+        private string $restaurantId,
     ) {
         $this->occurredOn = new \DateTimeImmutable();
     }
@@ -25,6 +26,11 @@ final readonly class TablesUnmerged implements AuditableEvent
     public function occurredOn(): \DateTimeImmutable
     {
         return $this->occurredOn;
+    }
+
+    public function restaurantId(): string
+    {
+        return $this->restaurantId;
     }
 
     public function auditSlug(): string
