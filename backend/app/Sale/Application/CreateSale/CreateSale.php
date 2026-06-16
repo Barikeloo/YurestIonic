@@ -11,6 +11,7 @@ use App\Order\Domain\Interfaces\OrderLineRepositoryInterface;
 use App\Order\Domain\Interfaces\OrderRepositoryInterface;
 use App\Sale\Application\CreateOrderFinalTicket\CreateOrderFinalTicket;
 use App\Sale\Domain\Entity\Sale;
+use App\Order\Domain\Event\OrderInvoiced;
 use App\Sale\Domain\Event\SaleCreated;
 use App\Shared\Application\Event\EventBusInterface;
 use App\Sale\Domain\Entity\SaleLine;
@@ -216,6 +217,11 @@ final class CreateSale
                     orderId: $orderUuid->value(),
                     closedByUserId: $closedByUserId,
                 );
+
+                $this->eventBus->publish(new OrderInvoiced(
+                    orderUuid: $orderId,
+                    restaurantId: $restaurantId,
+                ));
             }
 
             $this->eventBus->publish(new SaleCreated(

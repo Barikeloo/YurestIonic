@@ -18,6 +18,7 @@ final readonly class OrderLineRemoved implements AuditableEvent
         private int $quantity,
         private int $unitPriceCents,
         private bool $isMenuLine,
+        private string $restaurantId,
     ) {
         $this->occurredOn = new \DateTimeImmutable();
     }
@@ -53,6 +54,11 @@ final readonly class OrderLineRemoved implements AuditableEvent
             'unit_price_cents' => $this->unitPriceCents,
             'is_menu_line' => $this->isMenuLine,
         ];
+    }
+
+    public function restaurantId(): string
+    {
+        return $this->restaurantId;
     }
 
     public function auditBefore(): ?array

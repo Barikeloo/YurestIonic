@@ -18,6 +18,7 @@ final readonly class OrderLineAdded implements AuditableEvent
         private int $quantity,
         private int $unitPriceCents,
         private bool $merged,
+        private string $restaurantId,
     ) {
         $this->occurredOn = new \DateTimeImmutable();
     }
@@ -53,6 +54,11 @@ final readonly class OrderLineAdded implements AuditableEvent
             'unit_price_cents' => $this->unitPriceCents,
             'merged' => $this->merged,
         ];
+    }
+
+    public function restaurantId(): string
+    {
+        return $this->restaurantId;
     }
 
     public function auditBefore(): ?array

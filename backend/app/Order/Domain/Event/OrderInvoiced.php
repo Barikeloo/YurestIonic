@@ -6,15 +6,12 @@ namespace App\Order\Domain\Event;
 
 use App\Shared\Domain\Event\AuditableEvent;
 
-final readonly class OrderComandaSent implements AuditableEvent
+final readonly class OrderInvoiced implements AuditableEvent
 {
     private \DateTimeImmutable $occurredOn;
 
     public function __construct(
         private string $orderUuid,
-        private array $items,
-        private int $totalLines,
-        private string $itemsSummary,
         private string $restaurantId,
     ) {
         $this->occurredOn = new \DateTimeImmutable();
@@ -25,9 +22,14 @@ final readonly class OrderComandaSent implements AuditableEvent
         return $this->occurredOn;
     }
 
+    public function restaurantId(): string
+    {
+        return $this->restaurantId;
+    }
+
     public function auditSlug(): string
     {
-        return 'order.comanda_sent';
+        return 'order.invoiced';
     }
 
     public function auditEntityType(): string
@@ -42,17 +44,7 @@ final readonly class OrderComandaSent implements AuditableEvent
 
     public function auditMetadata(): array
     {
-        return [
-            'order_id' => $this->orderUuid,
-            'items' => $this->items,
-            'total_lines' => $this->totalLines,
-            'items_summary' => $this->itemsSummary,
-        ];
-    }
-
-    public function restaurantId(): string
-    {
-        return $this->restaurantId;
+        return ['order_id' => $this->orderUuid];
     }
 
     public function auditBefore(): ?array

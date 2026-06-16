@@ -91,6 +91,7 @@ final class BatchAddLinesToOrder
                 static fn (array $item): string => $item['name'],
                 $auditItems,
             )),
+            restaurantId: $command->restaurantId,
         ));
 
         return new BatchAddLinesToOrderResponse(

@@ -10,13 +10,17 @@
 
 | Paso | Descripción | Estado |
 |------|-------------|--------|
-| PASO 0 | Añadir `restaurantId` a los 6 eventos de dominio de Order + entidad | ✅ HECHO |
+| PASO 0 | Añadir `restaurantId` a los 6 eventos de estado de Order + entidad | ✅ HECHO |
 | PASO 1 | Crear evento de broadcast Laravel `OrderStatusChanged` | ✅ HECHO |
 | PASO 2 | Crear `TablesBroadcastSubscriber` | ✅ HECHO |
 | PASO 3 | Registrar subscriber en `AppServiceProvider` | ✅ HECHO |
 | PASO 4 | Extender `EchoService` con `listen()` + `leaveChannel()` | ✅ HECHO |
 | PASO 5 | Actualizar `MesasFacade` con suscripción y recarga parcial | ✅ HECHO |
-| TESTS | `TablesBroadcastSubscriberTest` (backend unit) | ✅ HECHO — 8/8 |
+| PASO 6 | `restaurantId` en eventos de línea + subscriber ampliado a 10 eventos | ✅ HECHO |
+| PASO 7 | `OrderInvoiced` + `CreateSale` broadcast al cobrar | ✅ HECHO |
+| PASO 8 | `reloadOpenOrders()` recarga también `_orderLines` | ✅ HECHO |
+| TESTS | `TablesBroadcastSubscriberTest` (backend unit) — 12/12 | ✅ HECHO |
+| E2E | `realtime-tables.spec.ts` — 2/2 (abrir, cerrar cuenta, cobrar) | ✅ HECHO |
 
 ---
 
@@ -446,9 +450,23 @@ Sin tests unitarios para la suscripción WebSocket — las actualizaciones de se
 ## Fuera de alcance (posponer)
 
 - **Autenticación de canal privado**: `restaurant.{restaurantId}` es un canal público por ahora. Añadir auth de presencia cuando el aislamiento multi-tenant sea un requisito.
-- **Actualizaciones a nivel de línea**: añadir/eliminar líneas de pedido no dispara broadcast. La cuadrícula de mesas no necesita conteos de líneas.
-- **Tiempo real de merge/unmerge**: los eventos de dominio de Table para fusión de mesas no existen aún. Se añadirán cuando se implemente el plano de salón.
-- **Actualizaciones optimistas**: el frontend actualmente espera a que la mutación HTTP complete antes de llamar a `loadData()`. Con WebSocket, el llamador podría omitir su `loadData()` y confiar en el broadcast. Optimización posterior una vez el broadcast sea estable.
+- **Tiempo real de merge/unmerge**: los eventos de dominio de Table para fusión de mesas no existen aún. Se añadirán cuando se implemente la Mejora 4 (plano de salón).
+- **Actualizaciones optimistas**: el frontend espera a que la mutación HTTP complete antes de llamar a `loadData()`. Con WebSocket, el llamador podría omitir ese `loadData()` y confiar en el broadcast. Optimización posterior.
+
+## Cobertura de eventos — estado final
+
+| Evento de dominio | Disparado por | Broadcast `event_type` | Actualiza B |
+|-------------------|--------------|------------------------|-------------|
+| `OrderCreated` | `CreateOrder` | `order.created` | Mesa → ocupada |
+| `OrderMarkedToCharge` | `MarkOrderToCharge` | `order.marked_to_charge` | Mesa → cobrar |
+| `OrderCancelled` | `CancelOrder` | `order.cancelled` | Mesa → libre |
+| `OrderReopened` | `ReopenOrder` | `order.reopened` | Mesa → ocupada |
+| `OrderTransferred` | `TransferOrder` | `order.transferred` | Mesas origen/destino |
+| `OrderDeleted` | `DeleteOrder` | `order.deleted` | Mesa → libre |
+| `OrderLineAdded` | `AddLineToOrder` | `order.line_added` | Total + líneas en panel |
+| `OrderLineRemoved` | `DeleteOrderLine` | `order.line_removed` | Total + líneas en panel |
+| `OrderComandaSent` | `BatchAddLinesToOrder` | `order.comanda_sent` | Total + líneas en panel |
+| `OrderInvoiced` | `CreateSale` (pago completo) | `order.invoiced` | Mesa → libre |
 - **Deduplicar eventos rápidos**: si dos pedidos cambian consecutivamente, `reloadOpenOrders()` se dispara dos veces. El flag `reloadingOrders` colapsa la segunda llamada. Suficiente para MVP.
 
 ---

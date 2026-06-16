@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace App\Order\Infrastructure\Broadcasting;
 
 use App\Order\Domain\Event\OrderCancelled;
+use App\Order\Domain\Event\OrderComandaSent;
 use App\Order\Domain\Event\OrderCreated;
 use App\Order\Domain\Event\OrderDeleted;
+use App\Order\Domain\Event\OrderInvoiced;
+use App\Order\Domain\Event\OrderLineAdded;
+use App\Order\Domain\Event\OrderLineRemoved;
 use App\Order\Domain\Event\OrderMarkedToCharge;
 use App\Order\Domain\Event\OrderReopened;
 use App\Order\Domain\Event\OrderTransferred;
@@ -24,6 +28,10 @@ final class TablesBroadcastSubscriber implements EventSubscriber
             OrderMarkedToCharge::class,
             OrderReopened::class,
             OrderTransferred::class,
+            OrderLineAdded::class,
+            OrderLineRemoved::class,
+            OrderComandaSent::class,
+            OrderInvoiced::class,
         ];
     }
 
@@ -63,6 +71,26 @@ final class TablesBroadcastSubscriber implements EventSubscriber
                 eventType: 'order.deleted',
                 orderId: $event->auditEntityId(),
                 tableId: $event->auditBefore()['table_id'] ?? null,
+            ),
+            $event instanceof OrderLineAdded => new OrderStatusChanged(
+                restaurantId: $event->restaurantId(),
+                eventType: 'order.line_added',
+                orderId: $event->auditEntityId(),
+            ),
+            $event instanceof OrderLineRemoved => new OrderStatusChanged(
+                restaurantId: $event->restaurantId(),
+                eventType: 'order.line_removed',
+                orderId: $event->auditEntityId(),
+            ),
+            $event instanceof OrderComandaSent => new OrderStatusChanged(
+                restaurantId: $event->restaurantId(),
+                eventType: 'order.comanda_sent',
+                orderId: $event->auditEntityId(),
+            ),
+            $event instanceof OrderInvoiced => new OrderStatusChanged(
+                restaurantId: $event->restaurantId(),
+                eventType: 'order.invoiced',
+                orderId: $event->auditEntityId(),
             ),
             default => null,
         };

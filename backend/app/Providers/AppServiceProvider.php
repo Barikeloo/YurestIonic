@@ -128,7 +128,6 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(\App\Shared\Application\Context\RequestContextInterface::class, \App\Shared\Infrastructure\Context\HttpRequestContext::class);
 
-        // Synchronous domain event bus. Subscribers are appended as modules adopt it.
         $this->app->singleton(\App\Shared\Application\Event\EventBusInterface::class, static function ($app): \App\Shared\Infrastructure\Event\InMemorySyncEventBus {
             return new \App\Shared\Infrastructure\Event\InMemorySyncEventBus(
                 $app->make(\App\Audit\Application\Subscriber\AuditEventSubscriber::class),

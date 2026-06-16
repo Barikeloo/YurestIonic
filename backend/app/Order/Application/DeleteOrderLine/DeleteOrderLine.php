@@ -69,6 +69,7 @@ final class DeleteOrderLine
             quantity: $line->quantity()->value(),
             unitPriceCents: $line->price()->value(),
             isMenuLine: $line->isMenuLine(),
+            restaurantId: $order->restaurantId()->value(),
         ));
     }
 }

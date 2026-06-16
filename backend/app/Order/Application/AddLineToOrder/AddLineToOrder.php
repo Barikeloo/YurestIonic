@@ -123,6 +123,7 @@ final class AddLineToOrder
                 quantity: $quantity->value(),
                 unitPriceCents: $price,
                 merged: true,
+                restaurantId: $command->restaurantId,
             ));
 
             return AddLineToOrderResponse::create($merged);
@@ -153,6 +154,7 @@ final class AddLineToOrder
             quantity: $quantity->value(),
             unitPriceCents: $price,
             merged: false,
+            restaurantId: $command->restaurantId,
         ));
 
         return AddLineToOrderResponse::create($orderLine);

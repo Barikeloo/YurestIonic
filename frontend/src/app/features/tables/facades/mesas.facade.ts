@@ -191,6 +191,13 @@ export class MesasFacade implements OnDestroy {
       if (selectedId) {
         const refreshed = this._tables().find((t) => t.id === selectedId) ?? null;
         this._selectedTable.set(refreshed);
+
+        if (refreshed?.order_id) {
+          const lines = await firstValueFrom(this.tpvService.getOrderLines(refreshed.order_id));
+          this._orderLines.set(lines);
+        } else {
+          this._orderLines.set([]);
+        }
       }
     } finally {
       this.reloadingOrders = false;
