@@ -1,8 +1,8 @@
 # YurestIonic — TPV Profesional para Hostelería
 
-> **Versión:** Demo funcional — Junio 2026  
-> **Stack:** Laravel 12 (backend) + Angular 19 + Ionic (frontend)  
-> **Arquitectura:** DDD + Hexagonal + Multi-tenant  
+> **Versión:** Demo funcional — Junio 2026 (actualizado 16-jun-2026)  
+> **Stack:** Laravel 12 (backend) + Angular 19 + Ionic (frontend) + Laravel Reverb (WebSockets)  
+> **Arquitectura:** DDD + Hexagonal + Multi-tenant + Bus de eventos síncrono  
 > **Licencia:** Propietaria  
 
 ---
@@ -58,13 +58,14 @@
 
 **YurestIonic** es un sistema TPV (Terminal Punto de Venta) completo diseñado para el sector hostelero. Gestiona la operativa diaria de un restaurante desde la configuración del negocio hasta el cierre fiscal del turno, pasando por la toma de pedidos en salón, la división de cuenta por comensales y el cobro con múltiples métodos de pago.
 
-El producto está pensado para desplegarse en tabletas táctiles como dispositivo principal de los camareros, con autenticación por PIN para acceso rápido, sincronización de estado de mesas en tiempo real entre terminales, y una arquitectura backend preparada para escalar horizontalmente a múltiples restaurantes bajo un mismo despliegue (multi-tenancy).
+El producto está pensado para desplegarse en tabletas táctiles como dispositivo principal de los camareros, con autenticación por PIN para acceso rápido, sincronización de estado de mesas en tiempo real entre terminales vía **WebSockets (Laravel Reverb)**, y una arquitectura backend preparada para escalar horizontalmente a múltiples restaurantes bajo un mismo despliegue (multi-tenancy). El backend sigue estrictamente **DDD + Hexagonal** con un **bus de eventos síncrono** que desacopla auditoría, broadcasting y efectos secundarios de la lógica de negocio.
 
 ### Alcance actual
 
-- **Backoffice completo** — Gestión de familias, productos, impuestos, zonas, mesas, usuarios y roles.
+- **Bus de eventos síncrono** — `InMemorySyncEventBus` + `EventSubscriber`; auditoría y broadcasting como efectos secundarios desacoplados de los casos de uso.
+- **Backoffice completo** — Gestión de familias (con color e icono), productos, impuestos, zonas, mesas, usuarios y roles.
 - **Menús (combos / menú del día)** — Editor para definir productos compuestos por secciones con reglas `min/max` de elecciones, suplementos opcionales por item, vigencia por fechas, días de la semana y franja horaria.
-- **Front de venta (TPV)** — Flujo real de mesa → pedido → cobro → cierre, optimizado para táctil.
+- **Front de venta (TPV)** — Flujo real de mesa → pedido → cobro → cierre, optimizado para táctil. **Tiempo real multi-terminal** vía WebSockets: apertura, comanda, cobro, unión/separación de mesas se sincronizan entre dispositivos sin recargar.
 - **División de cuenta** — 3 estrategias: partes iguales, asignación por líneas, por comensal.
 - **Cierre de caja** — Sesiones de turno, movimientos de caja, arqueo y generación de Z-Report con hash de integridad.
 - **Dashboard de finanzas** — Prototipo funcional con métricas de ventas por período, producto estrella y evolución de ingresos.
@@ -154,7 +155,8 @@ Esto crea y arranca los siguientes contenedores:
 
 | Contenedor | Puerto host | Servicio interno |
 |---|---|---|
-| `training_api` | `8000` | Laravel 12 (Nginx + PHP-FPM) |
+| `training_api` | `8000` | Laravel 12 (PHP artisan serve) |
+| `training_reverb` | `8080` | Laravel Reverb (servidor WebSocket) |
 | `training_frontend` | `4200` | Angular dev server |
 | `training_db` | `3406` | MySQL 8 |
 | `training_dbgate` | `9051` | Cliente web DbGate (conexión preconfigurada) |
@@ -220,13 +222,13 @@ docker compose exec api php artisan db:seed
 
 ## 3. Testing
 
-El proyecto se valida con tres suites complementarias: unitarios e integración del backend, tests de frontend, y end-to-end con Playwright contra el stack real (Docker + backend + frontend + MySQL seedeado). En conjunto suman **858 tests verdes** que cubren desde invariantes de dominio hasta el flujo completo TPV y todo el ciclo de retención de auditoría.
+El proyecto se valida con tres suites complementarias: unitarios e integración del backend, tests de frontend, y end-to-end con Playwright contra el stack real (Docker + backend + frontend + MySQL seedeado). En conjunto suman **más de 1.100 tests verdes** que cubren desde invariantes de dominio hasta el flujo completo TPV, tiempo real multi-terminal y todo el ciclo de retención de auditoría.
 
 | Suite | Tests | Cómo correr |
 |---|---|---|
-| Backend (PHPUnit) | **810** (167 de auditoría) | `make test` |
+| Backend (PHPUnit) | **1054** (167 de auditoría + 17 broadcast + 4 merge/unmerge RT) | `make test` |
 | Frontend (Karma/Jasmine) | **29** | `make test-frontend` |
-| E2E (Playwright contra backend real) | **27** | `make test-e2e` |
+| E2E (Playwright contra backend real) | **29** | `make test-e2e` |
 
 ### 3.1 Backend — PHPUnit
 
@@ -236,7 +238,7 @@ docker compose exec api php artisan test --filter=ChargeSessionEntityTest
 docker compose exec api php artisan test --filter=AuditRetentionLifecycleTest
 ```
 
-- 810 tests en verde, 0 deprecation warnings.
+- 1054 tests en verde, 0 deprecation warnings.
 - **Unit**: entidades de dominio, Value Objects, validaciones de invariantes, cálculos (`AmountPerDiner`, hash de integridad del audit log), use cases con mocks (`GetArchivedAuditStats`, `ExportAuditEvents`, `ListAuditEvents`, `ArchiveOldAuditLogs`, `VerifyAuditChain`, `GetLatestVerifyResult`, `GetAuditEvent`, + CRUD `AuditSavedView`) y formatters byte-a-byte (`CsvAuditExportFormatter`, `NdjsonAuditExportFormatter`).
 - **Feature**: endpoints HTTP con base de datos en contenedor, autenticación, permisos, casos non-happy path (404, 409, 422, 403), y el **lifecycle test de retención** (`AuditRetentionLifecycleTest`) que recorre archive → stats → export → verify chain en una sola historia para detectar regresiones en los bordes entre piezas.
 - **Auditoría**: 167 tests específicos que cubren listado con cursor, categorías, severidad, búsqueda, exportación CSV/NDJSON, archivado masivo, estadísticas de retención (incluido el desglose por categoría, top usuarios y anomalías del panel histórico), verificación de cadena SHA-256, persistencia de resultado de verificación, detector de anomalías (auth burst, caja mismatch), alertas y vistas guardadas.
@@ -286,6 +288,7 @@ El plan E2E se desarrolló en 7 fases incrementales (detalle en [`PLAN_E2E.md`](
 | 5 | Auditoría: el admin verifica los eventos generados por el flujo | 1 |
 | 6 | Hardening: Makefile targets + README + troubleshooting | — |
 | 7 | Auditoría — Historico: KPIs, chart, presets, export CSV, deep-link, verify card, categoría y usuario drill-down | 8 |
+| 8 | Tiempo real de mesas: abrir mesa en A → B actualiza sin reload; marcar cobrar + cobrar en A → B refleja cambio de estado en ≤8s | 2 |
 
 Para el detalle de qué hay cubierto y qué no (cobros variantes, modificadores requeridos, split bills, transferencias, etc.) ver [`PLAN_E2E.md`](PLAN_E2E.md). El fixture de auditoría usa `seedAndArchiveRetentionDemo()` definido en `frontend/e2e/support/audit.ts`, que ejecuta `RetentionDemoSeeder` + `audit:archive-old` + `cache:clear`.
 
@@ -382,7 +385,7 @@ Al entrar en http://localhost:4200 verás la pantalla de login. Puedes autentica
 
 Desde el menú lateral, accede a **"Gestión"**. Esta sección está restringida a roles `admin` y `supervisor`.
 
-- **Familias** — Categorías del catálogo. Ej: Bebidas, Entrantes, Carnes. Se pueden activar/desactivar sin borrarlas.
+- **Familias** — Categorías del catálogo. Ej: Bebidas, Entrantes, Carnes. Se pueden activar/desactivar sin borrarlas. Cada familia tiene **color** (hex #RRGGBB) e **icono** (set Material) configurables desde el backoffice; el acento de color y el icono se reflejan en las pestañas del TPV para identificación visual rápida.
 - **Productos** — Alta de artículos con nombre, precio, impuesto, familia, imagen y stock. Cada producto puede tener **modificadores** (ej: "sin cebolla", "doble queso", "extra de salsa") que se registran como notas en la línea de pedido.
 - **Menús** — Productos compuestos por secciones que el comensal personaliza al pedir (combos, menú del día). Ver detalle en [4.9 Editor de Menús](#49-editor-de-menús--combos-y-menú-del-día).
 - **Impuestos** — Configuración de tipos de IVA aplicables.
@@ -402,6 +405,8 @@ Los usuarios con rol `admin` pueden operar y visualizar varios restaurantes desd
 > Esta funcionalidad permite a un administrador gestionar varios locales (multi-tenant) sin cerrar sesión, alternando entre ellos de forma instantánea.
 
 ### 5.4 TPV — Flujo de venta paso a paso
+
+> **Tiempo real multi-terminal:** El estado de las mesas se sincroniza automáticamente entre todos los dispositivos del restaurante vía WebSockets (Laravel Reverb). Cualquier operación —abrir mesa, añadir comanda, marcar para cobrar, cobrar, unir o separar mesas— se refleja en todos los terminales en menos de 2 segundos sin necesidad de recargar la página.
 
 | Paso | Acción | Resultado esperado |
 |---|---|---|
@@ -765,6 +770,7 @@ docker compose exec api php artisan product:delete-expired-photo-upload-tokens
 | **Hito 5 — Informes (Dashboard)** | 75% | 5 de 7 tabs conectados a datos reales (Resumen, Ventas, Productos, Empleados, Caja). Pendiente: Tab Impuestos (desglose IVA / Modelo 303) y Tab Informes (exportación PDF/CSV). |
 | **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor, live tail (auto-off en histórico), exportación CSV/NDJSON, banner contextual al llegar desde histórico, y panel **Histórico** con KPIs de retención, widget de anomalías (incidentes detectados en el corpus), badge de integridad de cadena (5 estados, persistido en servidor), gráfico mensual clickable (drill-down por mes), desglose por categoría con barras horizontales coloreadas, top 5 usuarios con avatares por rol, presets de rango temporal, deep-link contextual. Archivado por antigüedad (90d → `archived_at`, retención legal 6 años, nunca borrado) y toggle "Mostrar histórico" con `include_archived=1`. Solo acceso `admin`. Verificación de cadena con `GET /api/admin/audit-log/verify` y persistencia server-side del resultado vía `GET /api/admin/audit-log/verify/latest`. |
 | **Hito 7 — Mejoras operativas** | 100% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores y subida de foto por QR con optimización server-side. |
+| **Hito 6 — Mejoras arquitectónicas** | 100% | **Bus de eventos síncrono:** `InMemorySyncEventBus` + `EventSubscriber` + `AuditableEvent`; todos los módulos (Order, Sale, Cash, Table, Menu, Family…) migrados a `EventBusInterface`. **Personalización de familias:** color (hex) e icono (set Material) en `Family`; picker en backoffice, acento visual en TPV. **Tiempo real de mesas (Reverb):** canal `restaurant.{id}`, 12 eventos broadcast cubiertos (OrderCreated → OrderInvoiced + TablesMerged/Unmerged), `MesasFacade` con `reloadOpenOrders()` + `reloadTables()`; 2/2 E2E Playwright verificado. |
 
 ### Funcionalidades detalladas
 
@@ -783,6 +789,8 @@ docker compose exec api php artisan product:delete-expired-photo-upload-tokens
 | **Menú** | Snapshot de elecciones | La línea de orden de un menú guarda en JSON el `menu_name`, los `menu_selections` y sus variantes/modificadores, garantizando que los tickets antiguos no se "rompan" al renombrar productos del catálogo. |
 | **Mesa** | Estados visuales | Mesas con 2 estados (libre/ocupada) representados con semáforo de colores en el grid. |
 | **Mesa** | Agrupación | Soporte para unir mesas físicas (campo `merged_table_group_id`) y gestionarlas como una sola unidad de cobro. |
+| **Mesa** | Tiempo real multi-terminal | Canal WebSocket `restaurant.{restaurantId}` vía Laravel Reverb. `MesasFacade` suscrito: `order.status_changed` → `reloadOpenOrders()` (órdenes + líneas), `table.status_changed` → `reloadTables()` (merged_table_group_id). Cobertura: 10 eventos de Order + 2 de Table = 12 eventos totales. |
+| **Familia** | Color e icono | `FamilyColor` (hex #RRGGBB, validación de formato) + `FamilyIcon` (set permitido de 20+ iconos Material). Selector de swatches y chips en backoffice; acento de color e icono en pestañas de familia del TPV. |
 | **Pedido** | Líneas mutables | Incremento, decremento y eliminación de líneas en tiempo real antes del cierre. |
 | **Pedido** | Snapshot fiscal | Al cerrar la venta, las líneas de `Order` se copian a `sales_lines` con el precio e impuesto vigentes en ese momento (inmutabilidad histórica). |
 | **Cobro** | División de cuenta | 3 modos: `equal` (partes iguales), `lines` (asignación tap & place), `diner` (por número de comensal). |
@@ -815,6 +823,7 @@ docker compose exec api php artisan product:delete-expired-photo-upload-tokens
 | **Auditoría** | Toggle histórico | Flag `include_archived=1` en la UI para que el admin vea eventos archivados. Banner informativo con la política de retención. |
 | **Auditoría** | Verificación de cadena con archivados | `GET /api/admin/audit-log/verify` lee también filas archivadas. La cadena SHA-256 sigue siendo íntegra tras archivar. |
 | **Dispositivo** | Identificación única | El interceptor HTTP genera y envía `X-Device-Id` (UUID v4 persistente en `localStorage` o `environment.devDeviceId`). Backend captura device + IP en cada evento de auditoría. |
+| **Bus de eventos** | Síncrono in-process | `InMemorySyncEventBus` despacha `DomainEvent` a todos los `EventSubscriber` registrados en orden. Suscriptores activos: `AuditEventSubscriber` (auditoría cross-cutting), `TablesBroadcastSubscriber` (10 eventos Order → Reverb), `TablesGroupBroadcastSubscriber` (2 eventos Table → Reverb). Las entidades usan el trait `RecordsEvents`; los eventos cross-aggregate los publica directamente el caso de uso. Los eventos de auditoría implementan `AuditableEvent` con before/after/metadata. |
 | **Multi-tenant** | Shard key | `restaurant_id` en todas las tablas. Un solo backend sirve a N restaurantes con aislamiento de datos. |
 | **SuperAdmin** | Gestión de plataforma | Dominio separado para crear restaurantes y gestionar la infraestructura global. |
 | **PDA** | Prototipo de interfaz | Diseño preliminar de la PDA (Punto de Atención Digital) para operadores de sala. Incompleto; se desarrollará en fase posterior. |
@@ -830,15 +839,19 @@ docker compose exec api php artisan product:delete-expired-photo-upload-tokens
 | **Backend** | Laravel | 12.x |
 | **Lenguaje backend** | PHP | 8.3+ |
 | **Base de datos** | MySQL | 8.0 |
+| **WebSockets** | Laravel Reverb | 1.x |
+| **Bus de eventos** | InMemorySyncEventBus (in-process) | — |
 | **Cache/Sesión** | Redis | 7.x (preparado, no obligatorio para demo) |
 | **Frontend** | Angular | 19.x |
 | **Framework UI** | Ionic | 8.x |
 | **Lenguaje frontend** | TypeScript | 5.x |
+| **Cliente WS frontend** | Laravel Echo + Pusher JS | — |
 | **Estilos** | SCSS + CSS Variables | — |
 | **Contenedores** | Docker + Docker Compose | v2 |
-| **Servidor web API** | Nginx + PHP-FPM | — |
+| **Servidor web API** | PHP artisan serve (dev) | — |
 | **Servidor web dev** | Angular CLI dev server | — |
 | **Testing backend** | PHPUnit | 11.x |
+| **Testing E2E** | Playwright | 1.x |
 | **Testing frontend** | Karma + Jasmine | — |
 | **Linting PHP** | Laravel Pint | — |
 | **Procesado de imágenes** | Intervention Image + GD (WebP) | 3.x |
@@ -852,7 +865,9 @@ El backend sigue estrictamente **Domain-Driven Design** con **Arquitectura Hexag
 App/<Dominio>/
 ├── Domain/
 │   ├── Entity/              # Entidades puras con lógica de negocio
-│   │   └── <Entidad>.php    # Método de fábrica dddCreate(), invariantes
+│   │   └── <Entidad>.php    # Método de fábrica dddCreate(), usa trait RecordsEvents
+│   ├── Event/               # Eventos de dominio (implementan DomainEvent o AuditableEvent)
+│   │   └── <Entidad><Accion>.php   # Ej: OrderCreated, TablesMerged
 │   ├── ValueObject/         # VOs inmutables: constructor privado + create()
 │   │   └── <VO>.php         # Validación encapsulada, imposible instanciar estado inválido
 │   ├── Exception/           # Excepciones de dominio (invariantes violadas, reglas de negocio)
@@ -862,10 +877,13 @@ App/<Dominio>/
 │       └── <Repo>Interface.php
 ├── Application/
 │   └── <CasoDeUso>/
-│       ├── <CasoDeUso>.php          # Orquestador puro: sin referencias a Laravel/HTTP
+│       ├── <CasoDeUso>.php          # Orquestador: recibe EventBusInterface, llama eventBus->publish()
 │       ├── <CasoDeUso>Command.php   # DTO de entrada: encapsula los datos que recibe el caso de uso
 │       └── <CasoDeUso>Response.php  # DTO de salida para el controlador
 └── Infrastructure/
+    ├── Broadcasting/        # Suscriptores WS: escuchan DomainEvents y disparan Reverb
+    │   ├── <Dominio>BroadcastSubscriber.php  # Implementa EventSubscriber
+    │   └── <Dominio>StatusChanged.php        # Implementa ShouldBroadcastNow
     ├── Persistence/
     │   ├── Models/            # Eloquent (solo usados desde repositorios)
     │   └── Repositories/    # Implementaciones de las interfaces de dominio
@@ -876,11 +894,39 @@ App/<Dominio>/
             └── <Controller>.php  # Controladores (1 acción = 1 __invoke)
 ```
 
+**Capa `Shared` — contratos del bus de eventos:**
+
+```
+App/Shared/
+├── Domain/Event/
+│   ├── DomainEvent.php          # Interfaz base: occurredOn()
+│   ├── AuditableEvent.php       # Extiende DomainEvent: auditSlug/EntityType/EntityId/Metadata/Before/After
+│   └── RecordsEvents.php        # Trait para entidades: recordEvent(), pullDomainEvents()
+├── Application/Event/
+│   ├── EventBusInterface.php    # publish(DomainEvent ...$events): void
+│   └── EventSubscriber.php      # subscribedTo(): list<class-string>, handle(DomainEvent): void
+└── Infrastructure/Event/
+    └── InMemorySyncEventBus.php # Implementación síncrona: despacha a todos los subscribers en registro
+```
+
+**Flujo del bus de eventos:**
+
+```
+Caso de uso
+  ├── Persiste en repositorio
+  ├── Llama $entidad->pullDomainEvents() (si la entidad usa RecordsEvents)
+  └── $this->eventBus->publish($evento)
+           │
+           ├── AuditEventSubscriber    → inserta fila en audit_logs con hash SHA-256
+           ├── TablesBroadcastSubscriber → event(OrderStatusChanged) → Reverb → canal WS
+           └── TablesGroupBroadcastSubscriber → event(TableStatusChanged) → Reverb → canal WS
+```
+
 ### 7.3 Dominios implementados
 
-| Dominio | Entidades principales | Responsabilidad |
+| Dominio | Entidades / Contratos principales | Responsabilidad |
 |---|---|---|
-| `Shared` | `Uuid`, `DomainDateTime`, `Email` | Value Objects reutilizables entre dominios |
+| `Shared` | `Uuid`, `DomainDateTime`, `Email`, `Money` (VOs); `DomainEvent`, `AuditableEvent`, `RecordsEvents` (eventos); `EventBusInterface`, `EventSubscriber`, `InMemorySyncEventBus` (bus); `TenantContext` (multi-tenant) | Value Objects, contratos del bus de eventos y contexto de tenant compartidos entre dominios |
 | `User` | `User`, `UserName`, `PasswordHash`, `UserRole`, `Pin` | Gestión de empleados del restaurante |
 | `SuperAdmin` | `SuperAdmin`, `Restaurant` (gestión) | Administración de la plataforma multi-tenant |
 | `Restaurant` | `Restaurant`, `RestaurantName` | Datos fiscales y de contacto del negocio |
@@ -911,17 +957,31 @@ App/<Dominio>/
                                   ┌─────────────────────────────────────────────┐
                                   │  Caso de Uso (Application)                    │
                                   │  ├── Recibe Command + RepositoryInterface   │
+                                  │  ├── Recibe EventBusInterface               │
                                   │  ├── Construye VOs con ::create()           │
                                   │  ├── Crea Entidad con ::dddCreate()         │
-                                  │  └── Persiste vía Repositorio (interfaz)   │
+                                  │  ├── Persiste vía Repositorio (interfaz)   │
+                                  │  └── eventBus->publish($evento)            │
                                   └─────────────────────────────────────────────┘
+                                          │                    │
+                                          ▼                    ▼
+                       ┌─────────────────────┐   ┌──────────────────────────┐
+                       │  Repositorio Eloquent│   │  InMemorySyncEventBus    │
+                       │  (Infrastructure)    │   │  ├── AuditEventSubscriber│
+                       │  Entidad ↔ MySQL     │   │  │   → audit_logs (hash) │
+                       └─────────────────────┘   │  ├── TablesBroadcast-    │
+                                                  │  │   Subscriber          │
+                                                  │  │   → Reverb → WS       │
+                                                  │  └── TablesGroupBroadcast│
+                                                  │      Subscriber          │
+                                                  │      → Reverb → WS       │
+                                                  └──────────────────────────┘
                                                            │
-                                                           ▼
+                                                           ▼  (WebSocket)
                                   ┌─────────────────────────────────────────────┐
-                                  │  Repositorio Eloquent (Infrastructure)      │
-                                  │  ├── Implementa RepositoryInterface         │
-                                  │  ├── Traduce Entidad ↔ Modelo Eloquent     │
-                                  │  └── Ejecuta operaciones en MySQL           │
+                                  │  MesasFacade (Angular)                       │
+                                  │  ├── reloadOpenOrders() ← order.status_changed│
+                                  │  └── reloadTables()     ← table.status_changed│
                                   └─────────────────────────────────────────────┘
                                                            │
                                                            ▼
@@ -945,6 +1005,9 @@ App/<Dominio>/
 
 | Decisión | Justificación | Impacto |
 |---|---|---|
+| **Bus de eventos síncrono in-process (`InMemorySyncEventBus`)** | Desacopla efectos secundarios (auditoría, broadcast WebSocket) de la lógica del caso de uso sin introducir colas ni infraestructura de mensajería externa. Los eventos se despachan dentro del mismo ciclo de petición HTTP, garantizando consistencia. | `EventBusInterface` + subscribers modulares: añadir un nuevo efecto secundario es registrar un `EventSubscriber` sin tocar el caso de uso. |
+| **`AuditableEvent` como interfaz diferenciada** | Los eventos auditables llevan `before`/`after`/`metadata` que la auditoría necesita. No todos los eventos requieren auditoría (ej: broadcast-only events). Separar `DomainEvent` base de `AuditableEvent` permite tener eventos ligeros sin overhead de auditoría. | `AuditEventSubscriber` reacciona solo a `AuditableEvent`; los broadcast subscribers reaccionan a todos los eventos relevantes. |
+| **Broadcasting con Reverb sobre el mismo bus** | Los `BroadcastSubscriber` son subscribers más del bus: reciben el evento de dominio y disparan el evento Laravel Broadcast. Así, la lógica de qué canales reciben qué payload está en Infrastructure, no en el dominio. | El canal WebSocket (`restaurant.{id}`) es determinista: siempre llega al restaurante correcto gracias al `restaurantId` que cada evento de dominio lleva. |
 | **Separar `Order` (mutable) y `Sale` (inmutable)** | Los pedidos admiten cambios de líneas, cantidades y cancelaciones. Las ventas son documentos fiscales que no se pueden modificar; toda corrección genera una nota de abono nueva. | Cumplimiento fiscal, trazabilidad histórica. |
 | **`restaurant_id` como shard key** | Todas las tablas incluyen `restaurant_id`. Prepara el sistema para particionamiento horizontal (sharding) si un restaurante crece desproporcionadamente. | Escalabilidad horizontal sin reescritura. |
 | **Login por PIN de 4 dígitos** | En hostelería los camareros comparten tabletas táctiles. Un PIN es más rápido que email+password y reduce errores de tipeo. | UX optimizada para el contexto real de trabajo. |
@@ -988,31 +1051,43 @@ yurestionic/
 ├── backend/
 │   ├── app/
 │   │   ├── Shared/
-│   │   │   └── Domain/ValueObject/        # Uuid, DomainDateTime, Email
-│   │   ├── <Dominio>/                     # User, Order, Sale, Cash...
-│   │   │   ├── Domain/Entity/
-│   │   │   ├── Domain/ValueObject/
-│   │   │   ├── Domain/Interfaces/
-│   │   │   ├── Application/<CasoDeUso>/
+│   │   │   ├── Domain/
+│   │   │   │   ├── ValueObject/           # Uuid, DomainDateTime, Email, Money
+│   │   │   │   └── Event/                 # DomainEvent, AuditableEvent, RecordsEvents (trait)
+│   │   │   ├── Application/Event/         # EventBusInterface, EventSubscriber
+│   │   │   └── Infrastructure/Event/      # InMemorySyncEventBus
+│   │   ├── <Dominio>/                     # User, Order, Sale, Cash, Table, Family, Menu...
+│   │   │   ├── Domain/
+│   │   │   │   ├── Entity/
+│   │   │   │   ├── Event/                 # Eventos del dominio (OrderCreated, TablesMerged…)
+│   │   │   │   ├── ValueObject/
+│   │   │   │   └── Interfaces/
+│   │   │   ├── Application/<CasoDeUso>/   # UC + Command + Response
 │   │   │   └── Infrastructure/
+│   │   │       ├── Broadcasting/          # Subscribers WS + Broadcast events (Reverb)
+│   │   │       │   ├── <X>BroadcastSubscriber.php  # Implementa EventSubscriber
+│   │   │       │   └── <X>StatusChanged.php         # Implementa ShouldBroadcastNow
 │   │   │       ├── Persistence/
 │   │   │       │   ├── Models/
 │   │   │       │   └── Repositories/
 │   │   │       ├── Services/
 │   │   │       └── Entrypoint/Http/
+│   │   ├── Audit/Application/Subscriber/
+│   │   │   └── AuditEventSubscriber.php   # Cross-cutting: audita todos los AuditableEvent
 │   │   └── Providers/
-│   │       └── AppServiceProvider.php      # Binding de interfaces a implementaciones
+│   │       └── AppServiceProvider.php     # Bindings + registro de subscribers en InMemorySyncEventBus
 │   ├── bootstrap/
 │   ├── config/
+│   │   └── reverb.php                     # Configuración del servidor WebSocket
 │   ├── database/
-│   │   ├── migrations/                     # 20+ migraciones con soft deletes y FKs
+│   │   ├── migrations/                    # 20+ migraciones con soft deletes y FKs
 │   │   └── seeders/
-│   │       └── SaonaDemoSeeder.php         # Datos de demo (Bar Manolo)
+│   │       └── SaonaDemoSeeder.php        # Datos de demo (Bar Manolo, 6 empleados, 28 mesas)
 │   ├── routes/
-│   │   └── api/                            # auth.php, tpv.php, admin.php, superadmin.php
+│   │   └── api/                           # auth.php, tpv.php, admin.php, superadmin.php
 │   ├── tests/
-│   │   ├── Unit/                           # Tests de dominio y VOs
-│   │   └── Feature/                        # Tests de integración HTTP
+│   │   ├── Unit/                          # Tests de dominio, VOs, subscribers
+│   │   └── Feature/                       # Tests de integración HTTP
 │   ├── .env.example
 │   ├── composer.json
 │   └── phpunit.xml
@@ -1020,33 +1095,47 @@ yurestionic/
 │   ├── src/app/
 │   │   ├── pages/core/
 │   │   │   ├── login/                      # Pantalla de autenticación (email + PIN)
-│   │   │   ├── mesas/                      # Grid de zonas y mesas con semáforo de estado
-│   │   │   ├── pedidos/                    # Toma de pedido: catálogo + resumen de líneas
-│   │   │   ├── caja/                       # Cobro, split bill, sesiones de caja, Z-Report
+│   │   │   ├── finanzas/                   # Dashboard de finanzas (métricas, gráficas, tabs)
 │   │   │   ├── gestion/                    # Backoffice CRUD completo
-│   │   │   ├── dashboard/                  # Prototipo de finanzas (métricas y gráficas)
-│   │   │   └── registro-auditoria/         # Registro de Auditoría: filtros, live tail, drawer, alertas
-│   │   │       └── facades/
-│   │   │           └── registro-auditoria.facade.ts  # Estado reactivo con Signals
-│   │   ├── features/cash/
-│   │   │   ├── ui/
-│   │   │   │   ├── split-bill-modal/       # Modal de división de cuenta (3 modos)
-│   │   │   │   └── cobrar-modal/         # Teclado numérico de cobro
-│   │   │   ├── services/
-│   │   │   │   ├── charge-session.service.ts
-│   │   │   │   └── tpv.service.ts
-│   │   │   └── facades/
-│   │   │       └── caja-payment.facade.ts  # Estado reactivo con Signals
-│   │   ├── components/                     # Componentes reutilizables (botones, cards, modals)
-│   │   ├── services/                       # Servicios globales (Auth, AuditLog, AuditAlert, Restaurant)
-│   │   │   ├── audit-log.service.ts        # API de auditoría: list, get, saved views CRUD
-│   │   │   └── audit-alert.service.ts      # API de alertas: list, mark read, mark all read
+│   │   │   ├── gestion-menus-editor/       # Editor de menús drag & drop
+│   │   │   └── registro-auditoria/         # Registro de Auditoría + panel Histórico
+│   │   ├── features/
+│   │   │   ├── tables/                     # Todo lo relacionado con mesas
+│   │   │   │   ├── facades/
+│   │   │   │   │   └── mesas.facade.ts     # Estado con Signals + suscripción WS Reverb
+│   │   │   │   ├── pages/                  # Grid de zonas/mesas
+│   │   │   │   └── ui/                     # Mesa card, merge modal
+│   │   │   ├── orders/                     # Comanda / pedido
+│   │   │   │   ├── facades/
+│   │   │   │   │   └── pedido.facade.ts
+│   │   │   │   ├── pages/
+│   │   │   │   └── components/
+│   │   │   └── cash/                       # Caja, cobro, split bill
+│   │   │       ├── facades/
+│   │   │       │   └── caja-payment.facade.ts
+│   │   │       ├── pages/
+│   │   │       ├── services/
+│   │   │       │   ├── charge-session.service.ts
+│   │   │       │   └── tpv.service.ts
+│   │   │       └── ui/
+│   │   │           ├── split-bill-modal/   # Modal de división de cuenta (3 modos)
+│   │   │           └── cobrar-modal/       # Teclado numérico de cobro
+│   │   ├── shared/components/              # Componentes UI reutilizables (btn, card, badge, numpad...)
+│   │   ├── components/                     # Componentes de gestión backoffice
+│   │   ├── services/                       # Servicios globales (Auth, AuditLog, AuditAlert, Table)
 │   │   ├── core/
-│   │   │   └── http/
-│   │   │       └── interceptor.ts          # Prefija API URL, JWT, X-Device-Id, X-Restaurant-Id
-│   │   ├── providers/
-│   │   │   └── interceptor.ts              # Legacy — migrando a core/http/interceptor.ts
+│   │   │   ├── services/
+│   │   │   │   ├── auth.service.ts
+│   │   │   │   └── echo.service.ts         # Wrapper de Laravel Echo para suscripciones WS Reverb
+│   │   │   ├── http/
+│   │   │   │   └── interceptor.ts          # Prefija API URL, JWT, X-Device-Id, X-Restaurant-Id
+│   │   │   └── facades/
 │   │   └── guards/                         # CanActivate por rol (admin, supervisor, operator)
+│   ├── e2e/
+│   │   ├── specs/                          # Tests Playwright por módulo (auth, tpv, cash, audit, finanzas)
+│   │   │   └── tpv/
+│   │   │       └── realtime-tables.spec.ts # Tests tiempo real: 2 tests (abrir mesa + cobrar)
+│   │   └── support/                        # Helpers reutilizables (auth, cash, tpv, audit, fixtures)
 │   ├── src/environments/
 │   ├── angular.json
 │   └── package.json
@@ -1054,7 +1143,7 @@ yurestionic/
 │   ├── CAJA_DESIGN.md                      # Especificación funcional completa del módulo Caja
 │   ├── DOMINIO_TPV.md                      # Reglas de diseño de APIs TPV en hostelería
 │   └── registro-auditoria-plan.md          # Plan técnico de implementación del módulo Auditoría (hitos, decisiones, cobertura)
-├── docker-compose.yml                      # 4 servicios: api, frontend, db, dbgate
+├── docker-compose.yml                      # 5 servicios: api (:8000), reverb (:8080), frontend (:4200), db (:3406), dbgate (:9051)
 ├── Makefile                                # Comandos de desarrollo y operación
 ├── README.md                               # Este documento
 ├── ROADMAP.md                              # Hitos, criterios de evaluación, mejoras
@@ -1097,6 +1186,8 @@ GET|POST       /api/management/zones
 GET|PUT|DELETE /api/management/zones/{uuid}
 GET|POST       /api/management/tables
 GET|PUT|DELETE /api/management/tables/{uuid}
+POST           /api/management/tables/merge          # Unir mesas en grupo (crea merged_table_group_id)
+POST           /api/management/tables/unmerge        # Separar grupo de mesas
 GET|POST       /api/management/users
 GET|PUT|DELETE /api/management/users/{uuid}
 GET|POST       /api/management/menus           # Listar / crear menús del restaurante
@@ -1114,11 +1205,18 @@ GET    /api/tpv/products            # Productos activos
 GET    /api/tpv/menus               # Menús activos disponibles para la comanda
 POST   /api/tpv/orders              # Crear orden (abrir mesa)
 GET    /api/tpv/orders              # Listar órdenes abiertas
-GET    /api/tpv/orders/{id}         # Detalle de orden
-POST   /api/tpv/orders/lines        # Añadir línea de producto a orden
-POST   /api/tpv/orders/menu-lines   # Añadir línea de menú a orden (con sus selecciones)
-PUT    /api/tpv/orders/{id}         # Actualizar orden (comensales, etc.)
-DELETE /api/tpv/orders/{id}         # Cancelar orden
+GET    /api/tpv/orders/{id}              # Detalle de orden
+GET    /api/tpv/orders/{id}/lines        # Líneas de la orden
+GET    /api/tpv/orders/{id}/paid-total   # Total ya pagado de la orden (para split bill)
+POST   /api/tpv/orders/lines              # Añadir línea de producto a orden
+POST   /api/tpv/orders/batch-lines        # Enviar comanda (batch de líneas de una vez)
+POST   /api/tpv/orders/menu-lines         # Añadir línea de menú a orden (con sus selecciones)
+DELETE /api/tpv/orders/lines/{lineId}     # Eliminar línea de orden
+PUT    /api/tpv/orders/{id}               # Actualizar orden (comensales, etc.)
+POST   /api/tpv/orders/{id}/mark-to-charge # Marcar orden para cobrar
+POST   /api/tpv/orders/{id}/reopen        # Reabrir orden marcada para cobrar
+POST   /api/tpv/orders/{id}/transfer      # Trasladar pedido a otra mesa
+DELETE /api/tpv/orders/{id}               # Cancelar orden (eliminar)
 POST   /api/tpv/sales               # Crear venta (cerrar ticket)
 POST   /api/tpv/sales/lines         # Añadir líneas a venta
 POST   /api/tpv/sales/{id}/cancel   # Cancelar venta completa
@@ -1174,16 +1272,22 @@ POST   /api/admin/audit-alerts/{uuid}/read # Marcar una alerta como leída
 ### Backend (nueva feature en un dominio)
 
 ```
-1. Domain/ValueObject/      → Crear VOs necesarios (constructor privado + create())
-2. Domain/Entity/            → Crear entidad con dddCreate() e invariantes
-3. Domain/Exception/         → Crear excepciones para reglas de negocio violadas
-4. Domain/Interfaces/        → Definir contrato del repositorio
-5. Application/<CasoDeUso>/  → Caso de uso + Command + Response
-6. Infrastructure/Persistence/→ Modelo Eloquent + Repositorio concreto
-7. Infrastructure/Services/    → Implementar servicios de dominio (si aplica)
-8. Infrastructure/Entrypoint/  → Controller + Form Request
-9. routes/api/               → Registrar ruta apuntando al controlador
-10. tests/                   → Tests unitarios (dominio) + integración (HTTP)
+1. Domain/ValueObject/       → Crear VOs necesarios (constructor privado + create())
+2. Domain/Event/             → Crear evento de dominio (implements DomainEvent o AuditableEvent)
+3. Domain/Entity/            → Crear entidad con dddCreate() + trait RecordsEvents si aplica
+4. Domain/Exception/         → Crear excepciones para reglas de negocio violadas
+5. Domain/Interfaces/        → Definir contrato del repositorio
+6. Application/<CasoDeUso>/  → Caso de uso (recibe EventBusInterface) + Command + Response
+                               → El UC llama eventBus->publish() o entidad->pullDomainEvents()
+7. Infrastructure/Persistence/→ Modelo Eloquent + Repositorio concreto
+8. Infrastructure/Services/    → Implementar servicios de dominio (si aplica)
+9. Infrastructure/Broadcasting/ → Si el evento debe llegar al frontend vía WS:
+                               →  · Crear <X>StatusChanged (ShouldBroadcastNow)
+                               →  · Crear <X>BroadcastSubscriber (EventSubscriber)
+                               →  · Registrar subscriber en AppServiceProvider
+10. Infrastructure/Entrypoint/ → Controller + Form Request
+11. routes/api/               → Registrar ruta apuntando al controlador
+12. tests/                   → Unit (dominio + subscriber) + Feature (HTTP) + E2E si flujo crítico
 ```
 
 ### Reglas de oro
@@ -1192,7 +1296,9 @@ POST   /api/admin/audit-alerts/{uuid}/read # Marcar una alerta como leída
 - **Persistencia:** El caso de uso recibe `RepositoryInterface` por inyección. La implementación concreta se registra en `AppServiceProvider`.
 - **Validación:** Form Request sanitiza la entrada HTTP → Command DTO la transporta al caso de uso → VO valida el dato de dominio.
 - **Errores:** Excepciones de dominio se mapean a HTTP en el controlador (404 → NotFound, 409 → Conflict, 422 → Validation).
-- **Frontend:** Los servicios (`TpvService`, `ChargeSessionService`) consumen la API. Los `facade` gestionan el estado reactivo con Angular Signals.
+- **Eventos de dominio:** El caso de uso llama `eventBus->publish()`. Los subscribers (auditoría, broadcast) reaccionan sin que el UC sepa quién escucha. No usar eventos de Laravel (`Event::dispatch`) directamente en casos de uso; el bus de dominio es el contrato.
+- **Broadcast a WS:** Solo a través de `*BroadcastSubscriber` en `Infrastructure/Broadcasting/`. El evento de dominio debe llevar `restaurantId` para poder enrutar al canal correcto (`restaurant.{id}`).
+- **Frontend:** Los servicios (`TpvService`, `ChargeSessionService`) consumen la API. Los `facade` gestionan el estado reactivo con Angular Signals. `MesasFacade` mantiene suscripción WebSocket vía `EchoService` para actualizaciones en tiempo real.
 
 ---
 
@@ -1218,24 +1324,30 @@ POST   /api/admin/audit-alerts/{uuid}/read # Marcar una alerta como leída
 
 ## 12. Próximos pasos y roadmap técnico
 
+### Recientemente completado ✅
+
+- **Bus de eventos síncrono** — `InMemorySyncEventBus` con `AuditEventSubscriber` (cross-cutting auditoría) + `TablesBroadcastSubscriber` + `TablesGroupBroadcastSubscriber`. Todos los módulos migrados.
+- **Personalización de familias** — Color (hex) e icono (set Material) en backoffice y TPV.
+- **Tiempo real de mesas (Reverb)** — Canal `restaurant.{id}`, 12 eventos cubiertos, `MesasFacade` con `reloadOpenOrders()` + `reloadTables()`. 2/2 E2E Playwright.
+- **Traslado de mesa** — `OrderTransferred` event, UC `TransferOrder`, endpoint `POST /api/tpv/orders/{id}/transfer`.
+
 ### Corto plazo (1–2 meses)
 
 1. **Dashboard de finanzas — fases pendientes** — Tab Impuestos (desglose IVA por tipo, base imponible y resumen trimestral Modelo 303) y Tab Informes (exportación real a CSV/PDF de los reportes existentes).
 2. **Impresión de tickets** — Integración con impresoras térmicas ESC/POS para ticket de cocina y ticket de cliente.
-3. **WebSockets** — Sincronización en tiempo real del estado de mesas entre múltiples tabletas del mismo restaurante.
+3. **Diseño interactivo del salón** — Editor drag & drop de mesas sobre plano (pos_x, pos_y, width, height). Backoffice para editar layout; TPV en modo solo lectura sobre el plano.
 
 ### Medio plazo (3–6 meses)
 
-4. **Descuentos y promociones** — Descuento por línea (% o importe fijo), descuento global en ticket, cupones y promociones temporales (los menús del día con precio cerrado ya están operativos, ver [4.9](#49-editor-de-menús--combos-y-menú-del-día)).
-5. **Traslado de mesa** — Mover un pedido abierto de una mesa a otra sin perder líneas ni asignaciones.
-6. **Reservas** — Calendario de reservas con nombre, teléfono, número de comensales y asignación automática a mesa.
-7. **Auditoría inmutable** — Tabla `AuditLog` con trazabilidad completa: quién, qué, cuándo, IP, device. Cumplimiento RGPD y fiscal.
+4. **Descuentos y promociones** — Descuento por línea (% o importe fijo), descuento global en ticket, cupones y promociones temporales (los menús del día con precio cerrado ya están operativos).
+5. **Reservas** — Calendario de reservas con nombre, teléfono, número de comensales y asignación automática a mesa.
+6. **Bus de eventos asíncrono** — Mover listeners no críticos (notificaciones push, stock, sincronización de BI) a jobs `ShouldQueue` con Redis/Horizon.
 
 ### Largo plazo (6–12 meses)
 
-8. **Cola offline** — Soporte para cobros sin conexión con sincronización automática al recuperar red.
-9. **App móvil para cliente** — Carta digital, pedido desde mesa (QR), pago split desde el móvil del comensal.
-10. **Integración fiscal** — Adaptadores para TicketBAI (País Vasco) y Veri*Factu (nacional) según normativa.
+7. **Cola offline** — Soporte para cobros sin conexión con sincronización automática al recuperar red.
+8. **App móvil para cliente** — Carta digital, pedido desde mesa (QR), pago split desde el móvil del comensal.
+9. **Integración fiscal** — Adaptadores para TicketBAI (País Vasco) y Veri*Factu (nacional) según normativa.
 
 ---
 
@@ -1256,4 +1368,4 @@ Esta sección es orientativa para cuando se migre de demo a producción real:
 > **Repositorio:** YurestIonic  
 > **Entorno de desarrollo:** Docker Compose con servicios separados para API, frontend, MySQL y DbGate  
 > **Demo local:** http://localhost:4200  
-> **Última actualización:** Junio 2026
+> **Última actualización:** 16 de junio de 2026
