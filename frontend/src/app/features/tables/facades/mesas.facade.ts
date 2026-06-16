@@ -1,10 +1,19 @@
-import { computed, inject, Injectable, Signal, signal } from '@angular/core';
+import { computed, inject, Injectable, OnDestroy, Signal, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
+import { EchoService } from '../../../core/services/echo.service';
 import { ChargeSessionService } from '../../cash/services/charge-session.service';
 import { TpvOrder, TpvOrderLine, TpvService, TpvTableItem, TpvZoneItem } from '../../cash/services/tpv.service';
 import { TableService } from '../../../services/table.service';
 import { OrderStatus } from '../../../core/enums/order-status.enum';
+
+interface OrderStatusChangedEvent {
+  event_type: string;
+  order_id: string;
+  table_id?: string;
+  from_table_id?: string;
+  to_table_id?: string;
+}
 
 export interface TableWithStatus extends TpvTableItem {
   occupied: boolean;
@@ -18,11 +27,15 @@ export interface TableWithStatus extends TpvTableItem {
 }
 
 @Injectable()
-export class MesasFacade {
+export class MesasFacade implements OnDestroy {
   private readonly tpvService = inject(TpvService);
   private readonly authService = inject(AuthService);
+  private readonly echoService = inject(EchoService);
   private readonly chargeSessionService = inject(ChargeSessionService);
   private readonly tableService = inject(TableService);
+
+  private restaurantChannelName: string | null = null;
+  private reloadingOrders = false;
 
   private readonly _zones = signal<TpvZoneItem[]>([]);
   private readonly _tables = signal<TableWithStatus[]>([]);
@@ -121,8 +134,72 @@ export class MesasFacade {
       });
 
       this._tables.set(enrichedTables);
+
+      if (!this.restaurantChannelName) {
+        const currentUser = await firstValueFrom(this.authService.currentUser$);
+        if (currentUser?.restaurantId) {
+          this.subscribeToRestaurantChannel(currentUser.restaurantId);
+        }
+      }
     } finally {
       this._loading.set(false);
+    }
+  }
+
+  private subscribeToRestaurantChannel(restaurantId: string): void {
+    this.restaurantChannelName = `restaurant.${restaurantId}`;
+    this.echoService.listen<OrderStatusChangedEvent>(
+      this.restaurantChannelName,
+      'order.status_changed',
+      () => this.reloadOpenOrders(),
+    );
+  }
+
+  private async reloadOpenOrders(): Promise<void> {
+    if (this.reloadingOrders) return;
+    this.reloadingOrders = true;
+
+    try {
+      const orders = await firstValueFrom(this.tpvService.listOrders());
+      const activeOrders = orders.filter(
+        (o) => o.status === OrderStatus.OPEN || o.status === OrderStatus.TO_CHARGE,
+      );
+      this._openOrders.set(activeOrders);
+
+      const orderByTable = new Map(activeOrders.map((o) => [o.table_id, o]));
+      const paidTotals = await this.fetchPaidTotals(activeOrders);
+
+      this._tables.update((tables) =>
+        tables.map((table) => {
+          const order = orderByTable.get(table.id);
+          const total = order?.total ?? 0;
+          const paidTotal = order ? (paidTotals.get(order.id) ?? 0) : 0;
+          return {
+            ...table,
+            occupied: !!order,
+            status: order?.status,
+            order_id: order?.id,
+            diners: order?.diners,
+            opened_at: order?.opened_at,
+            total,
+            remaining_total: Math.max(0, total - paidTotal),
+          };
+        }),
+      );
+
+      const selectedId = this._selectedTable()?.id;
+      if (selectedId) {
+        const refreshed = this._tables().find((t) => t.id === selectedId) ?? null;
+        this._selectedTable.set(refreshed);
+      }
+    } finally {
+      this.reloadingOrders = false;
+    }
+  }
+
+  public ngOnDestroy(): void {
+    if (this.restaurantChannelName) {
+      this.echoService.leaveChannel(this.restaurantChannelName);
     }
   }
 
