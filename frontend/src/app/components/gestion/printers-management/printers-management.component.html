@@ -18,7 +18,7 @@
       <div class="gestion-empty">No hay impresoras configuradas.</div>
     } @else {
       <div class="gestion-row-list">
-        @for (printer of filteredPrinters(); track printer.uuid; let i = $index) {
+        @for (printer of filteredPrinters(); track printer.uuid ?? i; let i = $index) {
           <div
             class="gestion-row-item"
             [class.active]="isSelected(i)"
