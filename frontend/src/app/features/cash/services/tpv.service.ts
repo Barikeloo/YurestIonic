@@ -451,6 +451,12 @@ export class TpvService {
     });
   }
 
+  public printTicketOnPrinter(orderId: string): Observable<{ message: string }> {
+    return this.http
+      .post<{ message: string }>(`${this.baseUrl}/tpv/orders/${orderId}/print-ticket`, {}, { withCredentials: true })
+      .pipe(catchError((err: HttpErrorResponse) => throwError(() => new Error(err.error?.message ?? 'Error al imprimir.'))));
+  }
+
   public getOrderPreTicketText(orderId: string, width: '58' | '80' = '80'): Observable<string> {
     return this.http.get(`${this.baseUrl}/tpv/orders/${orderId}/pre-ticket`, {
       withCredentials: true,

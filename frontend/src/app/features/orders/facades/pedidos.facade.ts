@@ -425,13 +425,18 @@ export class PedidosFacade {
 
     this._actionInProgress.set('print');
     try {
-      const ticketText = await firstValueFrom(this.tpvService.getFinalTicketText(order.id, '80'));
-
-      this.printWindow('Ticket', order.id.slice(0, 8), ticketText);
-      void this.toastService.presentSuccess('Ticket enviado a impresión.');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'No se pudo obtener el ticket.';
-      void this.toastService.presentError(message);
+      // Try thermal printer first
+      await firstValueFrom(this.tpvService.printTicketOnPrinter(order.id));
+      void this.toastService.presentSuccess('Ticket enviado a la impresora.');
+    } catch {
+      // Thermal failed (TCP error, no printer configured, etc.) → silent fallback to browser
+      try {
+        const ticketText = await firstValueFrom(this.tpvService.getFinalTicketText(order.id, '80'));
+        this.printWindow('Ticket', order.id.slice(0, 8), ticketText);
+        void this.toastService.presentSuccess('Ticket enviado a impresión.');
+      } catch {
+        void this.toastService.presentError('No se pudo imprimir el ticket.');
+      }
     } finally {
       this._actionInProgress.set(null);
     }
