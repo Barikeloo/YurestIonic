@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Reporting\Application\GetHeatmap;
 
-use App\Reporting\Domain\Interfaces\ReportingRepositoryInterface;
+use App\Reporting\Domain\ReadModel\HeatmapReadRepositoryInterface;
 
 final readonly class GetHeatmap
 {
     public function __construct(
-        private ReportingRepositoryInterface $repository,
+        private HeatmapReadRepositoryInterface $repository,
     ) {}
 
     public function __invoke(GetHeatmapCommand $command): GetHeatmapResponse

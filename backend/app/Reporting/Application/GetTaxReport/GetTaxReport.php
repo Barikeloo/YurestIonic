@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Reporting\Application\GetTaxReport;
 
 use App\Reporting\Application\Shared\DateRange;
-use App\Reporting\Domain\Interfaces\ReportingRepositoryInterface;
+use App\Reporting\Domain\ReadModel\TaxReadRepositoryInterface;
 
 final readonly class GetTaxReport
 {
     public function __construct(
-        private ReportingRepositoryInterface $repository,
+        private TaxReadRepositoryInterface $repository,
     ) {}
 
     public function __invoke(GetTaxReportCommand $command): GetTaxReportResponse

@@ -5,21 +5,23 @@ declare(strict_types=1);
 namespace App\Reporting\Application\GetCashReport;
 
 use App\Reporting\Application\Shared\DateRange;
-use App\Reporting\Domain\Interfaces\ReportingRepositoryInterface;
+use App\Reporting\Domain\ReadModel\CashReadRepositoryInterface;
+use App\Reporting\Domain\ReadModel\RestaurantInfoReadRepositoryInterface;
 
 final readonly class GetCashReport
 {
     public function __construct(
-        private ReportingRepositoryInterface $repository,
+        private CashReadRepositoryInterface $cash,
+        private RestaurantInfoReadRepositoryInterface $restaurantInfo,
     ) {}
 
     public function __invoke(GetCashReportCommand $command): GetCashReportResponse
     {
         $range  = DateRange::fromPeriod($command->period);
-        $result = $this->repository->getCashReport($command->restaurantId, $range);
+        $result = $this->cash->getCashReport($command->restaurantId, $range);
 
         return GetCashReportResponse::create(
-            restaurant:       $this->repository->getRestaurantInfo($command->restaurantId),
+            restaurant:       $this->restaurantInfo->getRestaurantInfo($command->restaurantId),
             periodLabel:      $range->label,
             sessions:         $result['sessions'] ?? [],
             movements:        $result['movements'] ?? [],

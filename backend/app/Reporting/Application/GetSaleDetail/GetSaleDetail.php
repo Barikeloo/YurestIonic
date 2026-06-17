@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Reporting\Application\GetSaleDetail;
 
-use App\Reporting\Domain\Interfaces\ReportingRepositoryInterface;
+use App\Reporting\Domain\ReadModel\SalesReadRepositoryInterface;
 
 final readonly class GetSaleDetail
 {
     public function __construct(
-        private ReportingRepositoryInterface $repository,
+        private SalesReadRepositoryInterface $repository,
     ) {}
 
     public function __invoke(GetSaleDetailCommand $command): GetSaleDetailResponse

@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Reporting\Application\GetDashboardSummary;
 
 use App\Reporting\Application\Shared\DateRange;
-use App\Reporting\Domain\Interfaces\ReportingRepositoryInterface;
+use App\Reporting\Domain\ReadModel\DashboardReadRepositoryInterface;
 
 final readonly class GetDashboardSummary
 {
     public function __construct(
-        private ReportingRepositoryInterface $repository,
+        private DashboardReadRepositoryInterface $repository,
     ) {}
 
     public function __invoke(GetDashboardSummaryCommand $command): GetDashboardSummaryResponse

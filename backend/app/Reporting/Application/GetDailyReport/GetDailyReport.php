@@ -5,19 +5,21 @@ declare(strict_types=1);
 namespace App\Reporting\Application\GetDailyReport;
 
 use App\Reporting\Application\Shared\DateRange;
-use App\Reporting\Domain\Interfaces\ReportingRepositoryInterface;
+use App\Reporting\Domain\ReadModel\DashboardReadRepositoryInterface;
+use App\Reporting\Domain\ReadModel\RestaurantInfoReadRepositoryInterface;
 
 final readonly class GetDailyReport
 {
     public function __construct(
-        private ReportingRepositoryInterface $repository,
+        private DashboardReadRepositoryInterface $dashboard,
+        private RestaurantInfoReadRepositoryInterface $restaurantInfo,
     ) {}
 
     public function __invoke(GetDailyReportCommand $command): GetDailyReportResponse
     {
         $range      = DateRange::fromPeriod($command->period);
-        $data       = $this->repository->getDashboardData($command->restaurantId, $range);
-        $restaurant = $this->repository->getRestaurantInfo($command->restaurantId);
+        $data       = $this->dashboard->getDashboardData($command->restaurantId, $range);
+        $restaurant = $this->restaurantInfo->getRestaurantInfo($command->restaurantId);
 
         return GetDailyReportResponse::create(
             restaurant:      $restaurant,

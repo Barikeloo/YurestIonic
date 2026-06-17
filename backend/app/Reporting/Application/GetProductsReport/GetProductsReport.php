@@ -5,19 +5,21 @@ declare(strict_types=1);
 namespace App\Reporting\Application\GetProductsReport;
 
 use App\Reporting\Application\Shared\DateRange;
-use App\Reporting\Domain\Interfaces\ReportingRepositoryInterface;
+use App\Reporting\Domain\ReadModel\ProductsReadRepositoryInterface;
+use App\Reporting\Domain\ReadModel\RestaurantInfoReadRepositoryInterface;
 
 final readonly class GetProductsReport
 {
     public function __construct(
-        private ReportingRepositoryInterface $repository,
+        private ProductsReadRepositoryInterface $products,
+        private RestaurantInfoReadRepositoryInterface $restaurantInfo,
     ) {}
 
     public function __invoke(GetProductsReportCommand $command): GetProductsReportResponse
     {
         $range = DateRange::fromPeriod($command->period);
 
-        $result = $this->repository->getProductsReport(
+        $result = $this->products->getProductsReport(
             restaurantId: $command->restaurantId,
             range:        $range,
         );
@@ -30,7 +32,7 @@ final readonly class GetProductsReport
             alertCount:    $result['alert_count'],
             byZone:        $result['by_zone'],
             periodLabel:   $range->label,
-            restaurant:    $this->repository->getRestaurantInfo($command->restaurantId),
+            restaurant:    $this->restaurantInfo->getRestaurantInfo($command->restaurantId),
         );
     }
 }

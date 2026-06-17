@@ -121,6 +121,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AlertNotifierInterface::class, DbAlertNotifier::class);
         $this->app->bind(ScheduledReportRepositoryInterface::class, EloquentScheduledReportRepository::class);
         $this->app->bind(\App\Reporting\Domain\Interfaces\ReportingRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
+        $this->app->bind(\App\Reporting\Domain\ReadModel\DashboardReadRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
+        $this->app->bind(\App\Reporting\Domain\ReadModel\RestaurantInfoReadRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
+        $this->app->bind(\App\Reporting\Domain\ReadModel\SalesReadRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
+        $this->app->bind(\App\Reporting\Domain\ReadModel\ProductsReadRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
+        $this->app->bind(\App\Reporting\Domain\ReadModel\CashReadRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
+        $this->app->bind(\App\Reporting\Domain\ReadModel\FamiliesReadRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
+        $this->app->bind(\App\Reporting\Domain\ReadModel\TaxReadRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
+        $this->app->bind(\App\Reporting\Domain\ReadModel\EmployeesReadRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
+        $this->app->bind(\App\Reporting\Domain\ReadModel\HeatmapReadRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportingRepository::class);
         $this->app->bind(\App\Reporting\Domain\Interfaces\ReportExportRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportExportRepository::class);
         $this->app->bind(\App\Reporting\Domain\Interfaces\ReportExportStorageInterface::class, \App\Reporting\Infrastructure\Persistence\LocalReportExportStorage::class);
         $this->app->bind(\App\Reporting\Application\Shared\ReportFileGeneratorInterface::class, \App\Reporting\Infrastructure\Services\ReportFileGenerator::class);

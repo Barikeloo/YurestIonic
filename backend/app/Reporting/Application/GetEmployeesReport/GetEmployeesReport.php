@@ -5,19 +5,21 @@ declare(strict_types=1);
 namespace App\Reporting\Application\GetEmployeesReport;
 
 use App\Reporting\Application\Shared\DateRange;
-use App\Reporting\Domain\Interfaces\ReportingRepositoryInterface;
+use App\Reporting\Domain\ReadModel\EmployeesReadRepositoryInterface;
+use App\Reporting\Domain\ReadModel\RestaurantInfoReadRepositoryInterface;
 
 final readonly class GetEmployeesReport
 {
     public function __construct(
-        private ReportingRepositoryInterface $repository,
+        private EmployeesReadRepositoryInterface $employees,
+        private RestaurantInfoReadRepositoryInterface $restaurantInfo,
     ) {}
 
     public function __invoke(GetEmployeesReportCommand $command): GetEmployeesReportResponse
     {
         $range = DateRange::fromPeriod($command->period);
 
-        $result = $this->repository->getEmployeesReport(
+        $result = $this->employees->getEmployeesReport(
             restaurantId: $command->restaurantId,
             range:        $range,
         );
@@ -25,7 +27,7 @@ final readonly class GetEmployeesReport
         return GetEmployeesReportResponse::create(
             items:       $result['items'],
             periodLabel: $range->label,
-            restaurant:  $this->repository->getRestaurantInfo($command->restaurantId),
+            restaurant:  $this->restaurantInfo->getRestaurantInfo($command->restaurantId),
         );
     }
 }
