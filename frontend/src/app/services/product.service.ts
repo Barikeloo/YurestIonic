@@ -93,5 +93,11 @@ export class ProductService extends BaseApiService {
   public generatePhotoUploadToken(id: string): Observable<PhotoUploadTokenResponse> {
     return this.post<PhotoUploadTokenResponse>(`/admin/products/${id}/photo-upload-token`);
   }
+
+  public uploadPhotoDirect(id: string, file: File): Observable<{ product_name: string; image_src: string }> {
+    const body = new FormData();
+    body.append('photo', file);
+    return this.post<{ product_name: string; image_src: string }>(`/admin/products/${id}/photo`, body);
+  }
 }
 

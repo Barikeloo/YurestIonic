@@ -1,4 +1,11 @@
 @if (isOpen) {
+  <input
+    #fileInput
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    class="file-input-hidden"
+    (change)="onFileSelected($event)"
+  />
   <div class="modal-overlay" (click)="onClose()">
     <div class="modal-content" (click)="$event.stopPropagation()">
 
@@ -13,7 +20,7 @@
         <button class="close-btn" type="button" (click)="onClose()" aria-label="Cerrar">✕</button>
       </div>
 
-      <!-- Loading -->
+      <!-- Loading QR -->
       @if (isLoading()) {
         <div class="modal-body modal-body--centered">
           <div class="spinner"></div>
@@ -43,6 +50,47 @@
             Expira en <strong>{{ formatCountdown(secondsLeft()) }}</strong>
           </div>
           <p class="modal-hint">La foto aparecerá aquí automáticamente al subirla.</p>
+          <button class="btn-secondary" type="button" (click)="triggerFileInput()">
+            Subir desde este dispositivo
+          </button>
+        </div>
+      }
+
+      <!-- Crop / zoom -->
+      @if (isCropping()) {
+        <div class="modal-body">
+          <p class="modal-instruction">Arrastra para encuadrar. Usa el slider para hacer zoom.</p>
+          <div
+            class="crop-wrapper"
+            (mousedown)="onCropMouseDown($event)"
+            (mousemove)="onCropMouseMove($event)"
+            (mouseup)="onCropMouseUp()"
+            (mouseleave)="onCropMouseUp()"
+          >
+            <canvas #cropCanvas width="280" height="280" class="crop-canvas"></canvas>
+          </div>
+          <div class="zoom-row">
+            <span class="zoom-label">Zoom</span>
+            <input
+              type="range"
+              min="1"
+              max="5"
+              step="0.05"
+              class="zoom-slider"
+              [value]="cropZoom()"
+              (input)="onZoomChange($event)"
+            />
+          </div>
+          <button class="btn-action" type="button" (click)="confirmCrop()">Usar esta foto</button>
+          <button class="btn-secondary" type="button" (click)="cancelCrop()">Elegir otra imagen</button>
+        </div>
+      }
+
+      <!-- Uploading -->
+      @if (isUploading()) {
+        <div class="modal-body modal-body--centered">
+          <div class="spinner"></div>
+          <p class="modal-hint">Subiendo foto…</p>
         </div>
       }
 

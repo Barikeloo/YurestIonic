@@ -2,6 +2,18 @@ import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AllergenCode, ProductItem, ProductService } from '../../../../services/product.service';
 
+// Backend URLs use APP_URL (LAN IP). Convert to relative path so the Angular
+// dev-server proxy (/storage → http://api:8000) resolves them correctly.
+function normalizeImageSrc(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith('blob:')) return url;
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return url;
+  }
+}
+
 export interface ProductRow {
   uuid?: string;
   family_id: string;
@@ -74,7 +86,7 @@ export class GestionProductsFacade {
         uuid: product.id,
         family_id: product.family_id,
         tax_id: product.tax_id,
-        image_src: product.image_src ?? null,
+        image_src: normalizeImageSrc(product.image_src),
         name: product.name,
         price: product.price,
         stock: product.stock,
@@ -197,7 +209,7 @@ export class GestionProductsFacade {
           uuid: finalProduct.id,
           family_id: finalProduct.family_id,
           tax_id: finalProduct.tax_id,
-          image_src: finalProduct.image_src ?? selected.image_src ?? null,
+          image_src: normalizeImageSrc(finalProduct.image_src) ?? selected.image_src ?? null,
           name: finalProduct.name,
           price: finalProduct.price,
           stock: finalProduct.stock,
@@ -219,7 +231,7 @@ export class GestionProductsFacade {
         uuid: finalProduct.id,
         family_id: finalProduct.family_id,
         tax_id: finalProduct.tax_id,
-        image_src: finalProduct.image_src ?? null,
+        image_src: normalizeImageSrc(finalProduct.image_src),
         name: finalProduct.name,
         price: finalProduct.price,
         stock: finalProduct.stock,

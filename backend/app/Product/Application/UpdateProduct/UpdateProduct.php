@@ -27,7 +27,9 @@ class UpdateProduct
         $product->update(
             familyId: Uuid::create($command->familyId),
             taxId: Uuid::create($command->taxId),
-            imageSrc: ProductImageSrc::create($command->imageSrc),
+            imageSrc: $command->imageSrc !== null
+                ? ProductImageSrc::create($command->imageSrc)
+                : $product->imageSrc(),
             name: ProductName::create($command->name),
             price: ProductPrice::create($command->price),
             stock: ProductStock::create($command->stock),

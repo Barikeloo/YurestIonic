@@ -11,6 +11,16 @@ import {
   TpvTaxItem,
 } from '../../cash/services/tpv.service';
 
+function normalizeImageSrc(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith('blob:')) return url;
+  try {
+    return new URL(url).pathname;
+  } catch {
+    return url;
+  }
+}
+
 export interface SelectedModifier {
   id: string;
   name: string;
@@ -178,7 +188,11 @@ export class ComandaFacade {
       const activeFamilyIds = new Set(activeFamilies.map((family: TpvFamilyItem) => family.id));
 
       this._families.set(activeFamilies);
-      this._products.set(products.filter((product: TpvProductItem) => product.active && activeFamilyIds.has(product.family_id)));
+      this._products.set(
+        products
+          .filter((product: TpvProductItem) => product.active && activeFamilyIds.has(product.family_id))
+          .map((product: TpvProductItem) => ({ ...product, image_src: normalizeImageSrc(product.image_src) })),
+      );
       this._taxes.set(taxes);
       this._menus.set(menus);
 

@@ -19,7 +19,6 @@ class FilesystemProductPhotoStorage implements ProductPhotoStorageInterface
         'image/webp' => 'webp',
     ];
 
-    private const MAX_DIMENSION = 4096;
     private const OUTPUT_EXTENSION = 'webp';
     private const MAX_IMAGE_DIMENSION = 1080;
     private const WEBP_QUALITY = 85;
@@ -39,11 +38,6 @@ class FilesystemProductPhotoStorage implements ProductPhotoStorageInterface
         $mime = (string) $finfo->buffer($contents);
         $extension = self::MIME_EXTENSIONS[$mime] ?? null;
         if ($extension === null) {
-            throw InvalidProductPhotoException::unreadable();
-        }
-
-        [$width, $height] = getimagesizefromstring($contents) ?: [0, 0];
-        if ($width > self::MAX_DIMENSION || $height > self::MAX_DIMENSION) {
             throw InvalidProductPhotoException::unreadable();
         }
 

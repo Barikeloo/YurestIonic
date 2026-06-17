@@ -203,3 +203,66 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+.file-input-hidden {
+  display: none;
+}
+
+.btn-secondary {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--gray-500);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.15s;
+  align-self: center;
+
+  &:hover {
+    color: var(--black);
+  }
+}
+
+.crop-wrapper {
+  align-self: center;
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: grab;
+  border: 1px solid var(--gray-200);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  user-select: none;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.crop-canvas {
+  display: block;
+  width: 280px;
+  height: 280px;
+}
+
+.zoom-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.zoom-label {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--gray-500);
+  flex-shrink: 0;
+}
+
+.zoom-slider {
+  flex: 1;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
