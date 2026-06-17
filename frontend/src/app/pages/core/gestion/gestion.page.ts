@@ -1321,6 +1321,7 @@ export class GestionPage {
                   this.loadProducts();
                   this.loadMenus(true);
                   this.loadZonesAndTables();
+                  this.loadPrinters(true);
                   this.startBackgroundPreload();
                 },
                 error: (error: unknown) => {
@@ -1337,6 +1338,7 @@ export class GestionPage {
               this.loadProducts();
               this.loadMenus(true);
               this.loadZonesAndTables();
+              this.loadPrinters(true);
               this.startBackgroundPreload();
             }
           }
