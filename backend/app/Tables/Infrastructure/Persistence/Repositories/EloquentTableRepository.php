@@ -18,15 +18,22 @@ class EloquentTableRepository implements TableRepositoryInterface
     {
         $zone = EloquentZone::query()->where('uuid', $table->zoneId()->value())->firstOrFail();
 
+        $layout = $table->layout();
+
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $table->id()->value()],
             [
-                'restaurant_id' => $zone->restaurant_id,
-                'zone_id' => $zone->id,
-                'name' => $table->name()->value(),
+                'restaurant_id'         => $zone->restaurant_id,
+                'zone_id'               => $zone->id,
+                'name'                  => $table->name()->value(),
                 'merged_table_group_id' => $table->mergedTableGroupId()?->value(),
-                'created_at' => $table->createdAt()->value(),
-                'updated_at' => $table->updatedAt()->value(),
+                'pos_x'                 => $layout?->posX,
+                'pos_y'                 => $layout?->posY,
+                'width'                 => $layout?->width,
+                'height'                => $layout?->height,
+                'shape'                 => $layout?->shape ?? 'rect',
+                'created_at'            => $table->createdAt()->value(),
+                'updated_at'            => $table->updatedAt()->value(),
             ],
         );
     }
@@ -39,14 +46,7 @@ class EloquentTableRepository implements TableRepositoryInterface
             return null;
         }
 
-        return Table::fromPersistence(
-            id: $model->uuid,
-            zoneId: $model->zone->uuid,
-            name: $model->name,
-            mergedTableGroupId: $model->merged_table_group_id,
-            createdAt: $model->created_at->toDateTimeImmutable(),
-            updatedAt: $model->updated_at->toDateTimeImmutable(),
-        );
+        return $this->hydrate($model);
     }
 
     public function findAll(bool $includeDeleted = false): array
@@ -57,18 +57,9 @@ class EloquentTableRepository implements TableRepositoryInterface
             $query->withTrashed();
         }
 
-        $models = $query->get();
-
-        return $models
-            ->filter(static fn (EloquentTable $model): bool => $model->zone !== null)
-            ->map(static fn (EloquentTable $model): Table => Table::fromPersistence(
-                id: $model->uuid,
-                zoneId: $model->zone->uuid,
-                name: $model->name,
-                mergedTableGroupId: $model->merged_table_group_id,
-                createdAt: $model->created_at->toDateTimeImmutable(),
-                updatedAt: $model->updated_at->toDateTimeImmutable(),
-            ))
+        return $query->get()
+            ->filter(static fn (EloquentTable $m): bool => $m->zone !== null)
+            ->map(fn (EloquentTable $m): Table => $this->hydrate($m))
             ->values()
             ->all();
     }
@@ -103,55 +94,47 @@ class EloquentTableRepository implements TableRepositoryInterface
             return null;
         }
 
-        return Table::fromPersistence(
-            id: $model->uuid,
-            zoneId: $model->zone->uuid,
-            name: $model->name,
-            mergedTableGroupId: $model->merged_table_group_id,
-            createdAt: $model->created_at->toDateTimeImmutable(),
-            updatedAt: $model->updated_at->toDateTimeImmutable(),
-        );
+        return $this->hydrate($model);
     }
 
     public function findByIds(array $ids): array
     {
-        $models = $this->model->newQuery()
+        return $this->model->newQuery()
             ->with('zone')
             ->whereIn('uuid', $ids)
-            ->get();
-
-        return $models
-            ->filter(static fn (EloquentTable $model): bool => $model->zone !== null)
-            ->map(static fn (EloquentTable $model): Table => Table::fromPersistence(
-                id: $model->uuid,
-                zoneId: $model->zone->uuid,
-                name: $model->name,
-                mergedTableGroupId: $model->merged_table_group_id,
-                createdAt: $model->created_at->toDateTimeImmutable(),
-                updatedAt: $model->updated_at->toDateTimeImmutable(),
-            ))
+            ->get()
+            ->filter(static fn (EloquentTable $m): bool => $m->zone !== null)
+            ->map(fn (EloquentTable $m): Table => $this->hydrate($m))
             ->values()
             ->all();
     }
 
     public function findByMergedGroupId(string $groupId): array
     {
-        $models = $this->model->newQuery()
+        return $this->model->newQuery()
             ->with('zone')
             ->where('merged_table_group_id', $groupId)
-            ->get();
-
-        return $models
-            ->filter(static fn (EloquentTable $model): bool => $model->zone !== null)
-            ->map(static fn (EloquentTable $model): Table => Table::fromPersistence(
-                id: $model->uuid,
-                zoneId: $model->zone->uuid,
-                name: $model->name,
-                mergedTableGroupId: $model->merged_table_group_id,
-                createdAt: $model->created_at->toDateTimeImmutable(),
-                updatedAt: $model->updated_at->toDateTimeImmutable(),
-            ))
+            ->get()
+            ->filter(static fn (EloquentTable $m): bool => $m->zone !== null)
+            ->map(fn (EloquentTable $m): Table => $this->hydrate($m))
             ->values()
             ->all();
+    }
+
+    private function hydrate(EloquentTable $model): Table
+    {
+        return Table::fromPersistence(
+            id:                  $model->uuid,
+            zoneId:              $model->zone->uuid,
+            name:                $model->name,
+            mergedTableGroupId:  $model->merged_table_group_id,
+            createdAt:           $model->created_at->toDateTimeImmutable(),
+            updatedAt:           $model->updated_at->toDateTimeImmutable(),
+            posX:                $model->pos_x,
+            posY:                $model->pos_y,
+            width:               $model->width,
+            height:              $model->height,
+            shape:               $model->shape ?? 'rect',
+        );
     }
 }

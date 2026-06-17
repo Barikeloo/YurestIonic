@@ -147,6 +147,7 @@ use App\Tables\Infrastructure\Entrypoint\Http\GetController as TableGetControlle
 use App\Tables\Infrastructure\Entrypoint\Http\MergeTablesController;
 use App\Tables\Infrastructure\Entrypoint\Http\PostController as TablePostController;
 use App\Tables\Infrastructure\Entrypoint\Http\PutController as TablePutController;
+use App\Tables\Infrastructure\Entrypoint\Http\SaveZoneLayoutController;
 use App\Tables\Infrastructure\Entrypoint\Http\UnmergeTablesController;
 use App\Tax\Infrastructure\Entrypoint\Http\DeleteController as TaxDeleteController;
 use App\Tax\Infrastructure\Entrypoint\Http\GetCollectionController as TaxGetCollectionController;
@@ -227,6 +228,7 @@ Route::middleware([
     Route::get('/tpv/orders/{id}/final-ticket', GetOrderFinalTicketController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/final-ticket/print', GetFinalTicketPrintController::class)->whereUuid('id');
     Route::post('/tpv/orders/{id}/print-ticket', PrintTicketController::class)->whereUuid('id');
+    Route::post('/tpv/orders/{id}/print-pre-ticket', \App\Printer\Infrastructure\Entrypoint\Http\PrintPreTicketController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/lines', OrderGetLinesController::class)->whereUuid('id');
     Route::put('/tpv/orders/{id}', OrderPutController::class)->whereUuid('id');
     Route::post('/tpv/orders/{id}/mark-to-charge', MarkOrderToChargeController::class)->whereUuid('id');
@@ -304,6 +306,7 @@ Route::middleware([
     Route::post('/admin/zones', ZonePostController::class);
     Route::put('/admin/zones/{id}', ZonePutController::class)->whereUuid('id');
     Route::delete('/admin/zones/{id}', ZoneDeleteController::class)->whereUuid('id');
+    Route::put('/admin/zones/{id}/layout', SaveZoneLayoutController::class)->whereUuid('id');
 
     Route::get('/admin/tables', TableGetCollectionController::class);
     Route::get('/admin/tables/{id}', TableGetController::class)->whereUuid('id');

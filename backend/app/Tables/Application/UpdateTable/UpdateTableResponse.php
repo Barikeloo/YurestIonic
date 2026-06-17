@@ -5,37 +5,41 @@ namespace App\Tables\Application\UpdateTable;
 final readonly class UpdateTableResponse
 {
     private function __construct(
-        public string $id,
-        public string $zoneId,
-        public string $name,
-        public string $createdAt,
-        public string $updatedAt,
+        public string  $id,
+        public string  $zoneId,
+        public string  $name,
+        public string  $createdAt,
+        public string  $updatedAt,
+        public ?array  $layout,
     ) {}
 
     public static function create(
-        string $id,
-        string $zoneId,
-        string $name,
-        string $createdAt,
-        string $updatedAt,
+        string  $id,
+        string  $zoneId,
+        string  $name,
+        string  $createdAt,
+        string  $updatedAt,
+        ?array  $layout = null,
     ): self {
         return new self(
-            id: $id,
-            zoneId: $zoneId,
-            name: $name,
+            id:        $id,
+            zoneId:    $zoneId,
+            name:      $name,
             createdAt: $createdAt,
             updatedAt: $updatedAt,
+            layout:    $layout,
         );
     }
 
     public function toArray(): array
     {
         return [
-            'id' => $this->id,
-            'zone_id' => $this->zoneId,
-            'name' => $this->name,
+            'id'         => $this->id,
+            'zone_id'    => $this->zoneId,
+            'name'       => $this->name,
             'created_at' => $this->createdAt,
             'updated_at' => $this->updatedAt,
+            'layout'     => $this->layout,
         ];
     }
 }

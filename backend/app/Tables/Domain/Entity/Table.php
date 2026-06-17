@@ -7,7 +7,9 @@ use App\Shared\Domain\ValueObject\DomainDateTime;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Event\TableCreated;
 use App\Tables\Domain\Event\TableDeleted;
+use App\Tables\Domain\Event\TableLayoutUpdated;
 use App\Tables\Domain\Event\TableUpdated;
+use App\Tables\Domain\ValueObject\TableLayout;
 use App\Tables\Domain\ValueObject\TableName;
 
 class Table
@@ -19,6 +21,7 @@ class Table
         private Uuid $zoneId,
         private TableName $name,
         private ?Uuid $mergedTableGroupId,
+        private ?TableLayout $layout,
         private DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
     ) {}
@@ -32,6 +35,7 @@ class Table
             zoneId: $zoneId,
             name: $name,
             mergedTableGroupId: null,
+            layout: null,
             createdAt: $now,
             updatedAt: $now,
         );
@@ -52,12 +56,22 @@ class Table
         ?string $mergedTableGroupId,
         \DateTimeImmutable $createdAt,
         \DateTimeImmutable $updatedAt,
+        ?int $posX = null,
+        ?int $posY = null,
+        ?int $width = null,
+        ?int $height = null,
+        string $shape = 'rect',
     ): self {
+        $layout = ($posX !== null && $posY !== null && $width !== null && $height !== null)
+            ? TableLayout::create($posX, $posY, $width, $height, $shape)
+            : null;
+
         return new self(
             id: Uuid::create($id),
             zoneId: Uuid::create($zoneId),
             name: TableName::create($name),
             mergedTableGroupId: $mergedTableGroupId !== null ? Uuid::create($mergedTableGroupId) : null,
+            layout: $layout,
             createdAt: DomainDateTime::create($createdAt),
             updatedAt: DomainDateTime::create($updatedAt),
         );
@@ -75,6 +89,20 @@ class Table
             tableId: $this->id->value(),
             before: $before,
             after: ['zone_id' => $this->zoneId->value(), 'name' => $this->name->value()],
+        ));
+    }
+
+    public function updateLayout(TableLayout $layout): void
+    {
+        $before = $this->layout?->toArray();
+
+        $this->layout = $layout;
+        $this->touch();
+
+        $this->recordEvent(new TableLayoutUpdated(
+            tableId: $this->id->value(),
+            before: $before,
+            after: $layout->toArray(),
         ));
     }
 
@@ -100,6 +128,11 @@ class Table
     public function name(): TableName
     {
         return $this->name;
+    }
+
+    public function layout(): ?TableLayout
+    {
+        return $this->layout;
     }
 
     public function mergedTableGroupId(): ?Uuid

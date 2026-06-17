@@ -21,6 +21,11 @@ class EloquentTable extends Model
         'zone_id',
         'name',
         'merged_table_group_id',
+        'pos_x',
+        'pos_y',
+        'width',
+        'height',
+        'shape',
     ];
 
     protected function casts(): array
@@ -29,6 +34,10 @@ class EloquentTable extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'deleted_at' => 'datetime',
+            'pos_x'      => 'integer',
+            'pos_y'      => 'integer',
+            'width'      => 'integer',
+            'height'     => 'integer',
         ];
     }
 

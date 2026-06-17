@@ -37,11 +37,12 @@ class UpdateTable
         $this->eventBus->publish(...$table->pullDomainEvents());
 
         return UpdateTableResponse::create(
-            id: $table->id()->value(),
-            zoneId: $table->zoneId()->value(),
-            name: $table->name()->value(),
+            id:        $table->id()->value(),
+            zoneId:    $table->zoneId()->value(),
+            name:      $table->name()->value(),
             createdAt: $table->createdAt()->format(\DateTimeInterface::ATOM),
             updatedAt: $table->updatedAt()->format(\DateTimeInterface::ATOM),
+            layout:    $table->layout()?->toArray(),
         );
     }
 }

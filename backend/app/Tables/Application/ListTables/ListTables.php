@@ -17,12 +17,13 @@ class ListTables
 
         $items = array_map(
             static fn (Table $table): array => ListTablesItemResponse::create(
-                id: $table->id()->value(),
-                zoneId: $table->zoneId()->value(),
-                name: $table->name()->value(),
-                createdAt: $table->createdAt()->format(\DateTimeInterface::ATOM),
-                updatedAt: $table->updatedAt()->format(\DateTimeInterface::ATOM),
+                id:                 $table->id()->value(),
+                zoneId:             $table->zoneId()->value(),
+                name:               $table->name()->value(),
+                createdAt:          $table->createdAt()->format(\DateTimeInterface::ATOM),
+                updatedAt:          $table->updatedAt()->format(\DateTimeInterface::ATOM),
                 mergedTableGroupId: $table->mergedTableGroupId()?->value(),
+                layout:             $table->layout()?->toArray(),
             )->toArray(),
             $tables,
         );
