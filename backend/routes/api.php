@@ -1,5 +1,11 @@
 <?php
 
+use App\Printer\Infrastructure\Entrypoint\Http\CreatePrinterConfigController;
+use App\Printer\Infrastructure\Entrypoint\Http\DeletePrinterConfigController;
+use App\Printer\Infrastructure\Entrypoint\Http\ListPrinterConfigsController;
+use App\Printer\Infrastructure\Entrypoint\Http\PrintTicketController;
+use App\Printer\Infrastructure\Entrypoint\Http\TestPrinterConfigController;
+use App\Printer\Infrastructure\Entrypoint\Http\UpdatePrinterConfigController;
 use App\Audit\Infrastructure\Entrypoint\Http\ExportAuditEventsController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetCashPdfController;
 use App\Reporting\Infrastructure\Entrypoint\Http\GetDailyPdfController;
@@ -220,6 +226,7 @@ Route::middleware([
     Route::get('/tpv/orders/{id}/pre-ticket', GetOrderPreTicketController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/final-ticket', GetOrderFinalTicketController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/final-ticket/print', GetFinalTicketPrintController::class)->whereUuid('id');
+    Route::post('/tpv/orders/{id}/print-ticket', PrintTicketController::class)->whereUuid('id');
     Route::get('/tpv/orders/{id}/lines', OrderGetLinesController::class)->whereUuid('id');
     Route::put('/tpv/orders/{id}', OrderPutController::class)->whereUuid('id');
     Route::post('/tpv/orders/{id}/mark-to-charge', MarkOrderToChargeController::class)->whereUuid('id');
@@ -305,6 +312,12 @@ Route::middleware([
     Route::delete('/admin/tables/{id}', TableDeleteController::class)->whereUuid('id');
     Route::post('/admin/tables/merge', MergeTablesController::class);
     Route::post('/admin/tables/unmerge', UnmergeTablesController::class);
+
+    Route::get('/admin/printers', ListPrinterConfigsController::class);
+    Route::post('/admin/printers', CreatePrinterConfigController::class);
+    Route::put('/admin/printers/{id}', UpdatePrinterConfigController::class)->whereUuid('id');
+    Route::delete('/admin/printers/{id}', DeletePrinterConfigController::class)->whereUuid('id');
+    Route::post('/admin/printers/{id}/test', TestPrinterConfigController::class)->whereUuid('id');
 
     Route::get('/admin/products', ProductGetCollectionController::class);
     Route::get('/admin/products/{id}', ProductGetController::class)->whereUuid('id');

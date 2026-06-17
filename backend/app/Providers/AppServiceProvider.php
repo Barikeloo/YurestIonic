@@ -133,6 +133,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Reporting\Domain\Interfaces\ReportExportRepositoryInterface::class, \App\Reporting\Infrastructure\Persistence\EloquentReportExportRepository::class);
         $this->app->bind(\App\Reporting\Domain\Interfaces\ReportExportStorageInterface::class, \App\Reporting\Infrastructure\Persistence\LocalReportExportStorage::class);
         $this->app->bind(\App\Reporting\Application\Shared\ReportFileGeneratorInterface::class, \App\Reporting\Infrastructure\Services\ReportFileGenerator::class);
+        $this->app->bind(\App\Printer\Domain\Interfaces\PrinterConfigRepositoryInterface::class, \App\Printer\Infrastructure\Persistence\Repositories\EloquentPrinterConfigRepository::class);
+        $this->app->bind(\App\Printer\Domain\Interfaces\PrinterServiceInterface::class, \App\Printer\Infrastructure\Printing\TcpEscPosPrinterService::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
 
         $this->app->bind(\App\Shared\Application\Context\RequestContextInterface::class, \App\Shared\Infrastructure\Context\HttpRequestContext::class);
@@ -142,6 +144,7 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(\App\Audit\Application\Subscriber\AuditEventSubscriber::class),
                 $app->make(\App\Order\Infrastructure\Broadcasting\TablesBroadcastSubscriber::class),
                 $app->make(\App\Tables\Infrastructure\Broadcasting\TablesGroupBroadcastSubscriber::class),
+                $app->make(\App\Printer\Application\Subscriber\PrintOnSaleClosedSubscriber::class),
             );
         });
     }

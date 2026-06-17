@@ -12,6 +12,8 @@ final readonly class SaleClosed implements AuditableEvent
 
     public function __construct(
         private string $saleId,
+        private string $orderId,
+        private string $restaurantUuid,
         private ?string $closedByUserIdBefore,
         private ?int $ticketNumberBefore,
         private ?int $totalCentsBefore,
@@ -37,6 +39,16 @@ final readonly class SaleClosed implements AuditableEvent
     public function auditEntityType(): string
     {
         return 'sale';
+    }
+
+    public function orderId(): string
+    {
+        return $this->orderId;
+    }
+
+    public function restaurantUuid(): string
+    {
+        return $this->restaurantUuid;
     }
 
     public function auditEntityId(): string

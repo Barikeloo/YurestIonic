@@ -59,6 +59,8 @@ final class UpdateSale
 
         $this->eventBus->publish(new SaleClosed(
             saleId: $sale->id()->value(),
+            orderId: $sale->orderId()->value(),
+            restaurantUuid: $sale->restaurantId()->value(),
             closedByUserIdBefore: $before['closed_by_user_id'],
             ticketNumberBefore: $before['ticket_number'],
             totalCentsBefore: $before['total_cents'],
