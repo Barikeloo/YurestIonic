@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Printer\Infrastructure\Entrypoint\Http;
 
-use App\Printer\Application\PrintFinalTicket\PrintFinalTicket;
 use App\Printer\Application\PrintFinalTicket\PrintFinalTicketCommand;
+use App\Printer\Application\PrintFinalTicket\PrintFinalTicketInterface;
 use App\Printer\Domain\Exception\PrinterConnectionException;
 use App\Sale\Domain\Exception\OrderFinalTicketNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -13,7 +13,7 @@ use Illuminate\Http\JsonResponse;
 final class PrintTicketController
 {
     public function __construct(
-        private readonly PrintFinalTicket $printFinalTicket,
+        private readonly PrintFinalTicketInterface $printFinalTicket,
     ) {}
 
     public function __invoke(string $id): JsonResponse

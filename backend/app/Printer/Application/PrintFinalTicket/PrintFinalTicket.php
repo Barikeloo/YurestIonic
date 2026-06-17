@@ -14,7 +14,7 @@ use App\Sale\Domain\Exception\OrderFinalTicketNotFoundException;
 use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Interfaces\TableRepositoryInterface;
 
-final class PrintFinalTicket
+final class PrintFinalTicket implements PrintFinalTicketInterface
 {
     public function __construct(
         private readonly GetFinalTicketPrint $getTicket,

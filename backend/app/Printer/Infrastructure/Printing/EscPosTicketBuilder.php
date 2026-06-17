@@ -16,7 +16,6 @@ final class EscPosTicketBuilder
     private const INIT         = "\x1b\x40";
     private const ALIGN_LEFT   = "\x1b\x61\x00";
     private const ALIGN_CENTER = "\x1b\x61\x01";
-    private const ALIGN_RIGHT  = "\x1b\x61\x02";
     private const BOLD_ON      = "\x1b\x45\x01";
     private const BOLD_OFF     = "\x1b\x45\x00";
     private const DOUBLE_SIZE  = "\x1d\x21\x11"; // double height + width
@@ -51,6 +50,29 @@ final class EscPosTicketBuilder
         return $this->buf;
     }
 
+    /**
+     * Builds a plain-text pre-ticket in ESC/POS format.
+     * The text is expected to be pre-formatted with ASCII dividers.
+     */
+    public function buildPlainText(string $text, int $charWidth): string
+    {
+        $this->width = $charWidth;
+        $this->buf   = '';
+
+        $this->buf .= self::INIT;
+        $this->buf .= self::ALIGN_LEFT;
+
+        $lines = explode("\n", $text);
+        foreach ($lines as $line) {
+            $this->write($this->sanitize($line));
+        }
+
+        $this->buf .= self::FEED_LINES . "\x04";
+        $this->buf .= self::FULL_CUT;
+
+        return $this->buf;
+    }
+
     public function buildTest(string $printerName, int $charWidth): string
     {
         $this->width = $charWidth;
@@ -62,7 +84,7 @@ final class EscPosTicketBuilder
         $this->write('*** TEST DE IMPRESORA ***');
         $this->buf .= self::BOLD_OFF;
         $this->write($this->divider());
-        $this->write($printerName);
+        $this->write($this->sanitize($printerName));
         $this->write(date('d/m/Y H:i:s'));
         $this->write($this->divider());
         $this->write('Impresion correcta');
@@ -358,9 +380,16 @@ final class EscPosTicketBuilder
         return strtr($text, [
             'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u',
             'Á' => 'A', 'É' => 'E', 'Í' => 'I', 'Ó' => 'O', 'Ú' => 'U',
+            'à' => 'a', 'è' => 'e', 'ì' => 'i', 'ò' => 'o', 'ù' => 'u',
+            'À' => 'A', 'È' => 'E', 'Ì' => 'I', 'Ò' => 'O', 'Ù' => 'U',
+            'â' => 'a', 'ê' => 'e', 'î' => 'i', 'ô' => 'o', 'û' => 'u',
+            'Â' => 'A', 'Ê' => 'E', 'Î' => 'I', 'Ô' => 'O', 'Û' => 'U',
+            'ã' => 'a', 'õ' => 'o', 'Ã' => 'A', 'Õ' => 'O',
             'ñ' => 'n', 'Ñ' => 'N',
+            'ç' => 'c', 'Ç' => 'C',
             'ü' => 'u', 'Ü' => 'U',
-            '€' => 'EUR', '·' => '-',
+            '€' => 'EUR', '·' => '-', '…' => '...', '—' => '-', '–' => '-',
+            "\u{00A0}" => ' ',
         ]);
     }
 }

@@ -135,6 +135,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Reporting\Application\Shared\ReportFileGeneratorInterface::class, \App\Reporting\Infrastructure\Services\ReportFileGenerator::class);
         $this->app->bind(\App\Printer\Domain\Interfaces\PrinterConfigRepositoryInterface::class, \App\Printer\Infrastructure\Persistence\Repositories\EloquentPrinterConfigRepository::class);
         $this->app->bind(\App\Printer\Domain\Interfaces\PrinterServiceInterface::class, \App\Printer\Infrastructure\Printing\TcpEscPosPrinterService::class);
+        $this->app->bind(\App\Printer\Application\PrintFinalTicket\PrintFinalTicketInterface::class, \App\Printer\Application\PrintFinalTicket\PrintFinalTicket::class);
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
 
         $this->app->bind(\App\Shared\Application\Context\RequestContextInterface::class, \App\Shared\Infrastructure\Context\HttpRequestContext::class);
