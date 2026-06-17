@@ -23,7 +23,7 @@ class PrinterConfig
         private ?string           $zoneUuid,
     ) {}
 
-    public static function create(
+    public static function dddCreate(
         int               $restaurantId,
         string            $name,
         PrinterIp         $ip,

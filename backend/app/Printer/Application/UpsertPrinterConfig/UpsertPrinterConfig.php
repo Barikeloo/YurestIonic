@@ -37,7 +37,7 @@ final class UpsertPrinterConfig
                 zoneUuid:   $command->zoneUuid,
             );
         } else {
-            $config = PrinterConfig::create(
+            $config = PrinterConfig::dddCreate(
                 restaurantId: $command->restaurantId,
                 name:         $command->name,
                 ip:           $ip,
