@@ -3,7 +3,6 @@
 namespace App\Family\Infrastructure\Entrypoint\Http\Requests;
 
 use App\Family\Application\CreateFamily\CreateFamilyCommand;
-use App\Family\Domain\ValueObject\FamilyIcon;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -29,7 +28,7 @@ final class CreateFamilyRequest extends FormRequest
                     ->whereNull('deleted_at'),
             ],
             'color' => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
-            'icon' => ['nullable', 'string', Rule::in(FamilyIcon::ALLOWED)],
+            'icon' => ['nullable', 'string', 'regex:/^[a-z0-9]+(-[a-z0-9]+)*$/'],
         ];
     }
 

@@ -1,10 +1,13 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { debounceTime, switchMap } from 'rxjs';
 import { GestionFamiliesFacade, FamilyRow, FamilyFormData } from '../../../pages/core/gestion/facades/gestion-families.facade';
 import { ToastService } from '../../../core/services/toast.service';
+import { LucideService } from '../../../core/services/lucide.service';
 import { ToggleComponent } from '../../../shared/components/toggle/toggle.component';
 import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
-import { IconComponent, IconName } from '../../../shared/components/icon/icon.component';
+import { IconComponent } from '../../../shared/components/icon/icon.component';
 
 @Component({
   selector: 'app-families-management',
@@ -16,12 +19,14 @@ import { IconComponent, IconName } from '../../../shared/components/icon/icon.co
 export class FamiliesManagementComponent {
   public readonly facade = input.required<GestionFamiliesFacade>();
   protected readonly toastService = inject(ToastService);
+  private readonly lucide = inject(LucideService);
 
-  // Must mirror the backend FamilyIcon::ALLOWED list.
-  protected readonly iconOptions: IconName[] = [
-    'utensils', 'gem', 'star', 'package', 'inbox', 'coins', 'wallet',
-    'receipt', 'trophy', 'users', 'calendar', 'map', 'bar-chart',
-  ];
+  protected readonly iconSearch = signal('');
+  private readonly iconSearch$ = toObservable(this.iconSearch).pipe(debounceTime(200));
+  protected readonly iconResults = toSignal(
+    this.iconSearch$.pipe(switchMap(q => this.lucide.search(q))),
+    { initialValue: [] }
+  );
 
   protected readonly colorOptions: string[] = [
     '#1a9e5a', '#0077cc', '#d18a1c', '#7857d6',

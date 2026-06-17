@@ -53,12 +53,12 @@ final class FamilyAppearanceTest extends TestCase
             ->assertJsonValidationErrors(['color']);
     }
 
-    public function test_create_rejects_unknown_icon(): void
+    public function test_create_rejects_malformed_icon(): void
     {
         $tenant = $this->createTenantSession('admin');
 
         $this->withSession($tenant['session'])
-            ->postJson('/api/admin/families', ['name' => 'Bebidas', 'icon' => 'rocket'])
+            ->postJson('/api/admin/families', ['name' => 'Bebidas', 'icon' => 'Invalid Icon!'])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['icon']);
     }

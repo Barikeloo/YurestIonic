@@ -141,8 +141,8 @@
 
 .family-tabs {
   display: flex;
-  gap: 8px;
-  padding: 18px 24px;
+  gap: 10px;
+  padding: 12px 24px;
   background: #fff;
   border-bottom: 1px solid #E8E8E8;
   overflow-x: auto;
@@ -154,29 +154,63 @@
 .family-tab {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 22px;
-  min-height: 48px;
-  border-radius: 999px;
-  font-size: 15px;
+  gap: 10px;
+  padding: 8px 16px 8px 8px;
+  min-height: 54px;
+  border-radius: 14px;
+  font-size: 14px;
   font-weight: 600;
-  color: #3D3D3D;
+  color: #0D0D0D;
   cursor: pointer;
-  background: #F4F4F4;
-  border: none;
-  box-shadow: inset 3px 0 0 0 var(--fam-color, transparent);
+  background: color-mix(in srgb, var(--fam-color, #9E9E9E) 10%, #fff);
+  border: 1.5px solid color-mix(in srgb, var(--fam-color, #9E9E9E) 28%, transparent);
   font-family: inherit;
   white-space: nowrap;
-  transition: all 0.15s;
+  transition: background 0.15s, border-color 0.15s, color 0.15s, box-shadow 0.15s, transform 0.1s;
   touch-action: manipulation;
 
-  &.active { background: #FF4D4D; color: #fff; box-shadow: none; }
-  &:hover:not(.active) { background: #E8E8E8; }
+  &.active {
+    background: var(--fam-color, #FF4D4D);
+    border-color: var(--fam-color, #FF4D4D);
+    color: #fff;
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--fam-color, #FF4D4D) 45%, transparent);
+  }
+
+  &:hover:not(.active) {
+    background: color-mix(in srgb, var(--fam-color, #9E9E9E) 20%, #fff);
+    border-color: color-mix(in srgb, var(--fam-color, #9E9E9E) 50%, transparent);
+  }
+
   &:active { transform: scale(0.97); }
 }
 
-.family-tab-icon { color: var(--fam-color, currentColor); }
-.family-tab.active .family-tab-icon { color: #fff; }
+.family-tab-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--fam-color, #9E9E9E) 16%, #fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--fam-color, #5A5A5A);
+  transition: background 0.15s, color 0.15s;
+}
+
+.family-tab.active .family-tab-icon-wrap {
+  background: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
+.family-tab:hover:not(.active) .family-tab-icon-wrap {
+  background: color-mix(in srgb, var(--fam-color, #9E9E9E) 25%, #fff);
+}
+
+.family-tab-letter {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
 
 .products-search {
   padding: 14px 24px;

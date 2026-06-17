@@ -1305,6 +1305,10 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   private printPaymentTicket(saleId: string): void {
+    this.printPaymentTicketText(saleId);
+  }
+
+  private printPaymentTicketText(saleId: string): void {
     this.tpvService.getPaymentTicketText(saleId, '58').pipe(take(1)).subscribe({
       next: (text) => {
         this.lastPaymentTicketText = text;
@@ -1316,6 +1320,17 @@ export class CajaPage implements OnInit, OnDestroy {
   }
 
   private printFinalTicket(orderId: string): void {
+    this.tpvService.printTicketOnPrinter(orderId).pipe(take(1)).subscribe({
+      next: () => {
+        this.lastFinalOrderId = orderId;
+      },
+      error: () => {
+        this.printFinalTicketText(orderId);
+      },
+    });
+  }
+
+  private printFinalTicketText(orderId: string): void {
     this.tpvService.getFinalTicketText(orderId, '58').pipe(take(1)).subscribe({
       next: (text) => {
         this.lastFinalTicketText = text;
@@ -1337,7 +1352,7 @@ export class CajaPage implements OnInit, OnDestroy {
       return;
     }
 
-    console.warn('No payment ticket text available');
+    console.warn('No payment ticket available');
   }
 
   public onPrintFinalClick(): void {

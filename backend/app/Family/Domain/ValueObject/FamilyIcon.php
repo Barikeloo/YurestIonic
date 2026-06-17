@@ -4,26 +4,19 @@ namespace App\Family\Domain\ValueObject;
 
 class FamilyIcon
 {
-    /**
-     * Allowed icon slugs, mirroring the frontend icon set (app-icon).
-     *
-     * @var list<string>
-     */
-    public const ALLOWED = [
-        'utensils', 'gem', 'star', 'package', 'inbox',
-        'coins', 'wallet', 'receipt', 'trophy', 'users', 'calendar',
-        'map', 'bar-chart',
-    ];
-
     private string $value;
 
     private function __construct(string $value)
     {
         $normalized = trim($value);
 
-        if (! in_array($normalized, self::ALLOWED, true)) {
+        if ($normalized === '') {
+            throw new \InvalidArgumentException('Family icon cannot be empty.');
+        }
+
+        if (! preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $normalized)) {
             throw new \InvalidArgumentException(
-                sprintf('Invalid family icon: %s.', $value)
+                sprintf('Invalid family icon format: "%s". Must be a valid Lucide icon slug (lowercase, hyphens only).', $value)
             );
         }
 

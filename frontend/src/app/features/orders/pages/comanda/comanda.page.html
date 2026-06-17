@@ -48,17 +48,31 @@
 
         @if (facade.activeCatalog() === 'products') {
           <div class="family-tabs">
-            <button class="family-tab" [class.active]="facade.activeFamilyId() === null" (click)="setFamily(null)">Todo</button>
+            <button class="family-tab" [class.active]="facade.activeFamilyId() === null" (click)="setFamily(null)">
+              <span class="family-tab-icon-wrap">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+                  <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                </svg>
+              </span>
+              Todo
+            </button>
             @for (family of facade.families(); track family) {
               <button
                 class="family-tab"
                 [class.active]="facade.activeFamilyId() === family.id"
-                [style.--fam-color]="family.color || 'transparent'"
+                [style.--fam-color]="family.color || '#9E9E9E'"
                 (click)="setFamily(family.id)"
               >
-                @if (family.icon) {
-                  <app-icon class="family-tab-icon" [name]="$any(family.icon)" [size]="16" />
-                }
+                <span class="family-tab-icon-wrap">
+                  @if (family.icon) {
+                    <app-icon [name]="$any(family.icon)" [size]="20" />
+                  } @else {
+                    <span class="family-tab-letter">{{ family.name.charAt(0).toUpperCase() }}</span>
+                  }
+                </span>
                 {{ family.name }}
               </button>
             }

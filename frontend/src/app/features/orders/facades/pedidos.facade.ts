@@ -455,13 +455,17 @@ export class PedidosFacade {
 
     this._actionInProgress.set('print');
     try {
-      const ticketText = await firstValueFrom(this.tpvService.getOrderPreTicketText(order.id, '80'));
-
-      this.printWindow('Pre-cuenta', order.id.slice(0, 8), ticketText);
-      void this.toastService.presentSuccess('Pre-cuenta enviada a impresión.');
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'No se pudo obtener la pre-cuenta.';
-      void this.toastService.presentError(message);
+      await firstValueFrom(this.tpvService.printPreTicketOnPrinter(order.id));
+      void this.toastService.presentSuccess('Pre-cuenta enviada a la impresora.');
+    } catch {
+      try {
+        const ticketText = await firstValueFrom(this.tpvService.getOrderPreTicketText(order.id, '80'));
+        this.printWindow('Pre-cuenta', order.id.slice(0, 8), ticketText);
+        void this.toastService.presentSuccess('Pre-cuenta enviada a impresión.');
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'No se pudo obtener la pre-cuenta.';
+        void this.toastService.presentError(message);
+      }
     } finally {
       this._actionInProgress.set(null);
     }
