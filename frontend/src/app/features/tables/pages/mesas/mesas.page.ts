@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PinAuthModalComponent, PinAuthResult } from '../../../../components/pin-auth-modal/pin-auth-modal.component';
 import { PinAuthService } from '../../../../core/services/pin-auth.service';
@@ -13,6 +13,7 @@ import { OrderTransferItem, TpvOrderLine, TpvService } from '../../../cash/servi
 import { firstValueFrom } from 'rxjs';
 import { TransferTableModalComponent } from '../../ui/transfer-table-modal/transfer-table-modal.component';
 import { LineDetailModalComponent } from '../../../../shared/components/line-detail-modal/line-detail-modal.component';
+import { FloorPlanComponent } from '../../ui/floor-plan/floor-plan.component';
 
 const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#E74C3C'];
 
@@ -20,7 +21,7 @@ const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#
   selector: 'app-mesas',
   templateUrl: './mesas.page.html',
   styleUrls: ['./mesas.page.scss'],
-  imports: [PinAuthModalComponent, DinersStatusComponent, FilterByPipe, DragDropModule, TransferTableModalComponent, LineDetailModalComponent],
+  imports: [PinAuthModalComponent, DinersStatusComponent, FilterByPipe, DragDropModule, TransferTableModalComponent, LineDetailModalComponent, FloorPlanComponent],
   providers: [MesasFacade],
 })
 export class MesasPage implements OnInit {
@@ -31,6 +32,23 @@ export class MesasPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly toastService = inject(ToastService);
   private readonly tpvService = inject(TpvService);
+
+  public readonly viewMode = signal<'lista' | 'plano'>(
+    (localStorage.getItem('mesas_view_mode') as 'lista' | 'plano') ?? 'lista'
+  );
+
+  public readonly activeZoneTables = computed<TableWithStatus[]>(() =>
+    this.facade.tables().filter(t => t.zone_id === this.facade.activeZoneId())
+  );
+
+  public setViewMode(mode: 'lista' | 'plano'): void {
+    this.viewMode.set(mode);
+    localStorage.setItem('mesas_view_mode', mode);
+  }
+
+  public onFloorTableSelected(table: TableWithStatus): void {
+    void this.selectTable(table);
+  }
 
   public modalOpen = false;
   public showPinAuthModal = false;
@@ -497,6 +515,7 @@ export class MesasPage implements OnInit {
 
   public enterMergeMode(tableToSelect?: TableWithStatus | null): void {
     this.isMergeMode = true;
+    this.setViewMode('lista');
 
     if (tableToSelect) {
       this.selectedTablesForMerge = [tableToSelect.id];

@@ -1,0 +1,111 @@
+<div class="floor-editor">
+
+  <!-- ── Canvas ─────────────────────────────────────────────────────────── -->
+  <div class="canvas-wrap">
+    <svg #svgCanvas class="floor-canvas"
+         viewBox="0 0 1200 800"
+         preserveAspectRatio="xMidYMid meet"
+         (pointermove)="onSvgPointerMove($event)"
+         (pointerup)="onSvgPointerUp()"
+         (pointerleave)="onSvgPointerUp()">
+
+      <!-- Grid background -->
+      <defs>
+        <pattern id="floor-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e0e0e0" stroke-width="0.6"/>
+        </pattern>
+      </defs>
+      <rect width="1200" height="800" fill="url(#floor-grid)" rx="4"/>
+
+      <!-- Canvas border -->
+      <rect width="1200" height="800" fill="none" stroke="#d0d0d0" stroke-width="1.5" rx="4"/>
+
+      <!-- Placed tables -->
+      @for (table of placedTables(); track table.uuid) {
+        <g
+          class="table-group"
+          [class.is-dragging]="_dragging()?.uuid === table.uuid"
+          [attr.transform]="'translate(' + table.posX + ',' + table.posY + ')'"
+          (pointerdown)="onTablePointerDown($event, table)"
+        >
+          @if (table.shape === 'circle') {
+            <circle
+              [attr.cx]="table.width / 2"
+              [attr.cy]="table.width / 2"
+              [attr.r]="table.width / 2 - 1"
+              class="table-shape"
+            />
+          } @else {
+            <rect
+              [attr.width]="table.width"
+              [attr.height]="table.height"
+              rx="8"
+              class="table-shape"
+            />
+          }
+
+          <!-- Table name -->
+          <text
+            [attr.x]="table.width / 2"
+            [attr.y]="(table.shape === 'circle' ? table.width : table.height) / 2 + 5"
+            class="table-label"
+          >{{ table.name }}</text>
+
+          <!-- Toggle shape btn -->
+          <g
+            class="action-btn"
+            [attr.transform]="'translate(' + (table.width - 22) + ',-22)'"
+            (pointerdown)="$event.stopPropagation()"
+            (click)="onToggleShape(table, $event)"
+          >
+            <rect width="20" height="20" rx="4" class="action-bg"/>
+            <text x="10" y="14" class="action-icon">&#9711;</text>
+          </g>
+
+          <!-- Remove btn -->
+          <g
+            class="action-btn"
+            transform="translate(-22,-22)"
+            (pointerdown)="$event.stopPropagation()"
+            (click)="onRemoveFromCanvas(table, $event)"
+          >
+            <rect width="20" height="20" rx="4" class="action-bg action-bg-remove"/>
+            <text x="10" y="14" class="action-icon">&#215;</text>
+          </g>
+        </g>
+      }
+    </svg>
+  </div>
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+  <div class="floor-sidebar">
+    <div class="sidebar-header">Sin posición</div>
+
+    @if (unpositionedTables().length === 0) {
+      <p class="sidebar-empty">Todas las mesas están en el plano.</p>
+    }
+
+    <div class="unpositioned-list">
+      @for (table of unpositionedTables(); track table.uuid) {
+        <div class="unpositioned-chip">
+          <span class="chip-name">{{ table.name }}</span>
+          <button class="chip-add" (click)="onAddToCanvas(table)" title="Añadir al plano">+</button>
+        </div>
+      }
+    </div>
+
+    <div class="sidebar-tip">
+      Arrastra las mesas para posicionarlas.<br>
+      Pulsa ⊙ para cambiar entre rectángulo y círculo.
+    </div>
+
+    <button
+      class="save-btn"
+      (click)="onSave()"
+      [disabled]="_saving() || placedTables().length === 0"
+    >
+      {{ _saving() ? 'Guardando...' : 'Guardar plano' }}
+    </button>
+  </div>
+
+</div>

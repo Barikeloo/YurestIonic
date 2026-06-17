@@ -1,0 +1,105 @@
+:host {
+  display: block;
+}
+
+.floor-plan-wrap {
+  width: 100%;
+  position: relative;
+}
+
+.floor-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  max-height: 480px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  background: #fafafa;
+}
+
+/* ── Table groups ─────────────────────────────────────────────────────────── */
+
+.table-group {
+  cursor: pointer;
+
+  &:hover .table-shape {
+    opacity: 0.85;
+  }
+}
+
+.table-shape {
+  stroke-width: 2;
+  transition: fill 0.1s, filter 0.15s;
+}
+
+/* Free (default) */
+.table-group.table-free .table-shape {
+  fill: #ffffff;
+  stroke: #c8c8c8;
+}
+
+/* Open (occupied) */
+.table-group.table-open .table-shape {
+  fill: #ffecec;
+  stroke: #ff4d4d;
+}
+
+/* To charge */
+.table-group.table-to-charge .table-shape {
+  fill: #fff3cd;
+  stroke: #e67e22;
+}
+
+/* Selected */
+.table-group.is-selected .table-shape {
+  stroke-width: 3;
+  filter: drop-shadow(0 0 6px rgba(255, 77, 77, 0.4));
+}
+
+/* ── Labels ───────────────────────────────────────────────────────────────── */
+
+.table-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  fill: #1a1a1a;
+  text-anchor: middle;
+  dominant-baseline: auto;
+  pointer-events: none;
+  user-select: none;
+}
+
+.table-cobrar-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  fill: #e67e22;
+  text-anchor: middle;
+  dominant-baseline: auto;
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: 0.04em;
+}
+
+/* ── Footer notices ───────────────────────────────────────────────────────── */
+
+.unpositioned-notice {
+  font-size: 11px;
+  color: #a0a0a0;
+  text-align: center;
+  padding: 6px 0 0;
+  margin: 0;
+}
+
+.empty-floor {
+  text-align: center;
+  padding: 48px 24px;
+  color: #7a7a7a;
+  font-size: 13px;
+  line-height: 1.7;
+
+  p {
+    margin: 0 0 4px;
+  }
+}

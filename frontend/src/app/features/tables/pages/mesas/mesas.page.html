@@ -1,6 +1,6 @@
 <div class="mesas-page">
 
-  <!-- Zone tabs -->
+  <!-- Zone tabs + view toggle -->
   <div class="zone-tabs">
     @for (zone of facade.zones(); track zone) {
       <button
@@ -9,6 +9,32 @@
         (click)="setZone(zone.id)"
       >{{ zone.name }}</button>
     }
+    <div class="view-toggle">
+      <button
+        class="view-btn"
+        [class.active]="viewMode() === 'lista'"
+        [disabled]="isMergeMode"
+        (click)="setViewMode('lista')"
+        title="Vista lista"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+        Lista
+      </button>
+      <button
+        class="view-btn"
+        [class.active]="viewMode() === 'plano'"
+        [disabled]="isMergeMode"
+        (click)="setViewMode('plano')"
+        title="Vista plano"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Plano
+      </button>
+    </div>
   </div>
 
   <!-- Merge mode controls -->
@@ -40,6 +66,14 @@
     <!-- Tables grid -->
     <div class="tables-area">
       <div class="tables-grid-wrap">
+        @if (viewMode() === 'plano') {
+          <app-floor-plan
+            [tables]="activeZoneTables()"
+            [selectedTableId]="facade.selectedTable()?.id ?? null"
+            (tableSelected)="onFloorTableSelected($event)"
+          />
+        } @else {
+
         @if (facade.loading()) {
           <div class="loading-state">Cargando mesas...</div>
         }
@@ -110,6 +144,8 @@
             No hay mesas en esta zona
           </div>
         }
+
+        } <!-- end @else (lista) -->
       </div>
     </div>
 

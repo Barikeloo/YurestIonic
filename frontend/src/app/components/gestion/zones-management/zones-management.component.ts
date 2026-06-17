@@ -3,11 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { GestionZonesFacade, TableRow, ZoneRow, ZoneFormData, TableFormData } from '../../../pages/core/gestion/facades/gestion-zones.facade';
 import { ToastService } from '../../../core/services/toast.service';
 import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
+import { ZoneFloorEditorComponent } from './zone-floor-editor/zone-floor-editor.component';
 
 @Component({
   selector: 'app-zones-management',
   standalone: true,
-  imports: [FormsModule, SearchBarComponent],
+  imports: [FormsModule, SearchBarComponent, ZoneFloorEditorComponent],
   templateUrl: './zones-management.component.html',
   styleUrls: ['./zones-management.component.scss'],
 })
@@ -25,12 +26,21 @@ export class ZonesManagementComponent {
   public readonly isSavingTable = computed(() => this.facade().isSavingTable());
 
   public readonly searchTerm = signal('');
+  public readonly detailTab = signal<'lista' | 'plano'>('lista');
 
   public readonly filteredZones = computed<ZoneRow[]>(() => {
     const term = this.searchTerm().trim().toLowerCase();
     if (!term) return this.zones();
     return this.zones().filter((z) => z.name.toLowerCase().includes(term));
   });
+
+  public readonly selectedZoneTables = computed<TableRow[]>(() =>
+    this.selectedZone()?.tables ?? []
+  );
+
+  public readonly selectedZoneId = computed<string>(() =>
+    this.selectedZone()?.uuid ?? ''
+  );
 
   isZoneSelected(index: number): boolean {
     return this.selectedZoneIndex() === index;
@@ -47,7 +57,10 @@ export class ZonesManagementComponent {
     const target = this.filteredZones()[filteredIndex];
     if (!target) return;
     const realIndex = this.zones().indexOf(target);
-    if (realIndex >= 0) this.facade().selectZone(realIndex);
+    if (realIndex >= 0) {
+      this.facade().selectZone(realIndex);
+      this.detailTab.set('lista');
+    }
   }
 
   onSearchChange(value: string): void {

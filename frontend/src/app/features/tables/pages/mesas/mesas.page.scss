@@ -50,6 +50,53 @@
   }
 }
 
+/* ── View toggle (Lista / Plano) ───────────────────────────────────────────── */
+
+.view-toggle {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding-left: 12px;
+  flex-shrink: 0;
+}
+
+.view-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  color: #7a7a7a;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+  white-space: nowrap;
+
+  svg { flex-shrink: 0; }
+
+  &.active {
+    border-color: #ff4d4d;
+    background: #ffecec;
+    color: #ff4d4d;
+    font-weight: 600;
+  }
+
+  &:hover:not(.active):not(:disabled) {
+    border-color: #ff4d4d;
+    color: #ff4d4d;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
 .merge-mode-bar {
   display: flex;
   align-items: center;

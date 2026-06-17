@@ -199,6 +199,52 @@
   margin-bottom: 10px;
 }
 
+/* ── Detail tabs (Lista / Plano) ─────────────────────────────────────────── */
+
+.detail-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.detail-tab {
+  flex: 1;
+  padding: 8px 0;
+  border: 1.5px solid var(--gray-200);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--gray-600);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s, color 0.12s;
+
+  &:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  &.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+/* ── Floor plan card (full-width, below the two-column grid) ─────────────── */
+
+.mg-floor-card {
+  margin-top: 14px;
+}
+
 @media (max-width: 1024px) {
   .gestion-section-grid {
     grid-template-columns: 1fr;

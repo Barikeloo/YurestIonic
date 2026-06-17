@@ -26,6 +26,7 @@
       }
     </div>
   </div>
+
   <div class="gestion-card">
     <div class="gestion-card-title">Editar zona seleccionada</div>
     <form class="gestion-form" (ngSubmit)="onSubmitZone()">
@@ -46,37 +47,64 @@
 
     <div class="section-divider"></div>
 
-    <div class="gestion-card-title mg-small-gap">Mesas de {{ selectedZone()?.name ?? 'la zona' }}</div>
-    <div class="gestion-row-list mg-table-list">
-      @if (selectedZone()?.tables?.length) {
-        @for (table of selectedZone()!.tables; track table; let i = $index) {
-          <div
-            class="gestion-row-item"
-            [class.active]="isTableSelected(i)"
-            (click)="onSelectTable(i)"
-            >
-            <strong>{{ table.name }}</strong>
-          </div>
-        }
-      } @else {
-        <div class="gestion-row-item">No hay mesas registradas.</div>
-      }
+    <!-- Tab toggle Lista / Plano -->
+    <div class="detail-tabs">
+      <button
+        class="detail-tab"
+        [class.active]="detailTab() === 'lista'"
+        (click)="detailTab.set('lista')"
+      >Lista</button>
+      <button
+        class="detail-tab"
+        [class.active]="detailTab() === 'plano'"
+        (click)="detailTab.set('plano')"
+        [disabled]="!selectedZone()"
+      >Plano</button>
     </div>
 
-    <form class="gestion-form" (ngSubmit)="onSubmitTable()">
-      <div class="gestion-form-actions form-actions-start">
-        <button type="button" class="btn-small" (click)="onCreateTable()">Nueva mesa</button>
-        <button type="button" class="btn-small" (click)="onDeleteTable()">Eliminar mesa</button>
+    @if (detailTab() === 'lista') {
+      <div class="gestion-card-title mg-small-gap">Mesas de {{ selectedZone()?.name ?? 'la zona' }}</div>
+      <div class="gestion-row-list mg-table-list">
+        @if (selectedZone()?.tables?.length) {
+          @for (table of selectedZone()!.tables; track table; let i = $index) {
+            <div
+              class="gestion-row-item"
+              [class.active]="isTableSelected(i)"
+              (click)="onSelectTable(i)"
+              >
+              <strong>{{ table.name }}</strong>
+            </div>
+          }
+        } @else {
+          <div class="gestion-row-item">No hay mesas registradas.</div>
+        }
       </div>
-      <div>
-        <label class="form-label" for="mg-table-name">Nombre de mesa</label>
-        <input id="mg-table-name" class="form-input" [ngModel]="tableFormData().name" (ngModelChange)="updateTableForm('name', $event)" name="mg-table-name" placeholder="Ej. T12" required />
-      </div>
-      <div class="gestion-form-actions">
-        <button class="btn-login btn-login-inline" type="submit" [disabled]="isSavingTable()">
-          {{ isSavingTable() ? 'Guardando...' : 'Guardar mesa' }}
-        </button>
-      </div>
-    </form>
+
+      <form class="gestion-form" (ngSubmit)="onSubmitTable()">
+        <div class="gestion-form-actions form-actions-start">
+          <button type="button" class="btn-small" (click)="onCreateTable()">Nueva mesa</button>
+          <button type="button" class="btn-small" (click)="onDeleteTable()">Eliminar mesa</button>
+        </div>
+        <div>
+          <label class="form-label" for="mg-table-name">Nombre de mesa</label>
+          <input id="mg-table-name" class="form-input" [ngModel]="tableFormData().name" (ngModelChange)="updateTableForm('name', $event)" name="mg-table-name" placeholder="Ej. T12" required />
+        </div>
+        <div class="gestion-form-actions">
+          <button class="btn-login btn-login-inline" type="submit" [disabled]="isSavingTable()">
+            {{ isSavingTable() ? 'Guardando...' : 'Guardar mesa' }}
+          </button>
+        </div>
+      </form>
+    }
   </div>
 </div>
+
+@if (detailTab() === 'plano' && selectedZone()) {
+  <div class="gestion-card mg-floor-card">
+    <div class="gestion-card-title">Plano de {{ selectedZone()!.name }}</div>
+    <app-zone-floor-editor
+      [tables]="selectedZoneTables()"
+      [zoneId]="selectedZoneId()"
+    />
+  </div>
+}

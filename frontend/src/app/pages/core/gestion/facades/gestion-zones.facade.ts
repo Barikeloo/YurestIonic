@@ -1,11 +1,12 @@
 import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { ZoneItem, ZoneService } from '../../../../services/zone.service';
-import { TableItem, TableService } from '../../../../services/table.service';
+import { TableItem, TableLayout, TableService } from '../../../../services/table.service';
 
 export interface TableRow {
   uuid?: string;
   name: string;
+  layout?: TableLayout | null;
 }
 
 export interface ZoneRow {
@@ -89,6 +90,7 @@ export class GestionZonesFacade {
         zoneMap.get(table.zone_id)!.push({
           uuid: table.id,
           name: table.name,
+          layout: table.layout ?? null,
         });
       });
 

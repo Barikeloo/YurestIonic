@@ -49,11 +49,20 @@ export interface TpvZoneItem {
   name: string;
 }
 
+export interface TpvTableLayout {
+  pos_x: number;
+  pos_y: number;
+  width: number;
+  height: number;
+  shape: 'rect' | 'circle';
+}
+
 export interface TpvTableItem {
   id: string;
   name: string;
   zone_id: string;
   merged_table_group_id?: string | null;
+  layout?: TpvTableLayout | null;
 }
 
 export interface TpvTaxItem {
@@ -455,6 +464,12 @@ export class TpvService {
     return this.http
       .post<{ message: string }>(`${this.baseUrl}/tpv/orders/${orderId}/print-ticket`, {}, { withCredentials: true })
       .pipe(catchError((err: HttpErrorResponse) => throwError(() => new Error(err.error?.message ?? 'Error al imprimir.'))));
+  }
+
+  public printPreTicketOnPrinter(orderId: string): Observable<{ message: string }> {
+    return this.http
+      .post<{ message: string }>(`${this.baseUrl}/tpv/orders/${orderId}/print-pre-ticket`, {}, { withCredentials: true })
+      .pipe(catchError((err: HttpErrorResponse) => throwError(() => new Error(err.error?.message ?? 'Error al imprimir pre-cuenta.'))));
   }
 
   public getOrderPreTicketText(orderId: string, width: '58' | '80' = '80'): Observable<string> {

@@ -2,6 +2,14 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseApiService } from '../core/services/api/base-api.service';
 
+export interface TableLayout {
+  pos_x: number;
+  pos_y: number;
+  width: number;
+  height: number;
+  shape: 'rect' | 'circle';
+}
+
 export interface TableItem {
   id: string;
   zone_id: string;
@@ -9,6 +17,7 @@ export interface TableItem {
   created_at: string;
   updated_at: string;
   merged_table_group_id?: string;
+  layout?: TableLayout | null;
 }
 
 interface CreateTablePayload {
