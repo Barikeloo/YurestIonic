@@ -1,0 +1,151 @@
+<div class="gestion-section-grid">
+  <!-- Lista de impresoras -->
+  <div class="gestion-card">
+    <div class="gestion-card-title">Impresoras</div>
+
+    <app-search-bar
+      [value]="searchTerm()"
+      [resultsCount]="filteredPrinters().length"
+      [totalCount]="printers().length"
+      placeholder="Buscar impresora..."
+      ariaLabel="Buscar impresora"
+      (valueChange)="onSearchChange($event)"
+    ></app-search-bar>
+
+    @if (isLoading()) {
+      <div class="gestion-empty">Cargando impresoras...</div>
+    } @else if (printers().length === 0) {
+      <div class="gestion-empty">No hay impresoras configuradas.</div>
+    } @else {
+      <div class="gestion-row-list">
+        @for (printer of filteredPrinters(); track printer.uuid; let i = $index) {
+          <div
+            class="gestion-row-item"
+            [class.active]="isSelected(i)"
+            (click)="onSelectFiltered(i)"
+          >
+            <div class="printer-item-name">
+              <strong>{{ printer.name }}</strong>
+              @if (!printer.enabled) {
+                <span class="printer-badge printer-badge--off">Inactiva</span>
+              } @else if (printer.isDefault) {
+                <span class="printer-badge printer-badge--default">Predeterminada</span>
+              }
+            </div>
+            <div class="printer-item-sub">{{ printer.ip }}:{{ printer.port }} · {{ printer.paperWidth }}mm</div>
+            @if (zoneNameFor(printer.zoneUuid)) {
+              <div class="printer-item-zone">Zona: {{ zoneNameFor(printer.zoneUuid) }}</div>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Formulario de edición -->
+  <div class="gestion-card">
+    <div class="gestion-card-title">{{ selectedPrinter() ? 'Editar impresora' : 'Nueva impresora' }}</div>
+
+    <form class="gestion-form" (ngSubmit)="onSubmit()">
+      <div class="gestion-form-actions form-actions-start">
+        <button type="button" class="btn-small" (click)="onCreatePrinter()">Nueva impresora</button>
+        <button type="button" class="btn-small btn-small--danger" (click)="onDelete()" [disabled]="!selectedPrinter()">Eliminar</button>
+      </div>
+
+      <div>
+        <label class="form-label" for="mg-printer-name">Nombre *</label>
+        <input
+          id="mg-printer-name"
+          class="form-input"
+          [ngModel]="formData().name"
+          (ngModelChange)="updateForm('name', $event)"
+          name="mg-printer-name"
+          placeholder="Ej. Cocina, Barra..."
+          required
+        />
+      </div>
+
+      <div class="gestion-form-grid">
+        <div>
+          <label class="form-label" for="mg-printer-ip">Dirección IP *</label>
+          <input
+            id="mg-printer-ip"
+            class="form-input"
+            [ngModel]="formData().ip"
+            (ngModelChange)="updateForm('ip', $event)"
+            name="mg-printer-ip"
+            placeholder="192.168.1.10"
+            required
+          />
+        </div>
+        <div>
+          <label class="form-label" for="mg-printer-port">Puerto</label>
+          <input
+            id="mg-printer-port"
+            class="form-input"
+            type="number"
+            [ngModel]="formData().port"
+            (ngModelChange)="updateForm('port', +$event)"
+            name="mg-printer-port"
+            min="1"
+            max="65535"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label">Ancho de papel</label>
+        <div class="paper-width-options">
+          <label class="paper-option" [class.selected]="formData().paperWidth === 58" (click)="updateForm('paperWidth', 58)">
+            <span class="paper-radio"></span>58 mm
+          </label>
+          <label class="paper-option" [class.selected]="formData().paperWidth === 80" (click)="updateForm('paperWidth', 80)">
+            <span class="paper-radio"></span>80 mm
+          </label>
+        </div>
+      </div>
+
+      <div>
+        <label class="form-label" for="mg-printer-zone">Zona asignada</label>
+        <select
+          id="mg-printer-zone"
+          class="form-input"
+          [ngModel]="formData().zoneUuid ?? ''"
+          (ngModelChange)="updateForm('zoneUuid', $event || null)"
+          name="mg-printer-zone"
+        >
+          <option value="">Sin zona asignada</option>
+          @for (zone of zones(); track zone.uuid) {
+            <option [value]="zone.uuid">{{ zone.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="toggle-row">
+        <span class="form-label toggle-label">Activa</span>
+        <app-toggle [value]="formData().enabled" (valueChange)="updateForm('enabled', $event)"></app-toggle>
+      </div>
+
+      <div class="toggle-row">
+        <span class="form-label toggle-label">Predeterminada del local</span>
+        <app-toggle [value]="formData().isDefault" (valueChange)="updateForm('isDefault', $event)"></app-toggle>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <div class="gestion-form-actions form-actions-col">
+        <button class="btn-login btn-login-inline" type="submit" [disabled]="isSaving()">
+          {{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}
+        </button>
+        <button
+          class="btn-test"
+          type="button"
+          (click)="onTest()"
+          [disabled]="isTesting() || !selectedPrinter()"
+        >
+          {{ isTesting() ? 'Enviando...' : 'Enviar página de prueba' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

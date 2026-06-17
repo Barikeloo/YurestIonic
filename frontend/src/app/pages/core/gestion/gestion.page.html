@@ -85,6 +85,12 @@
                   @case ('taxes') {
                     <app-taxes-management [facade]="taxesFacade" />
                   }
+                  @case ('printers') {
+                    <app-printers-management
+                      [facade]="printersFacade"
+                      [zones]="zonesFacade.zones()"
+                      />
+                  }
                   @case ('zreports') {
                     <app-zreports-management
                       [reports]="zreportsFacade.reports()"

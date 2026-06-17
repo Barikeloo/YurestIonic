@@ -7,4 +7,5 @@ export enum ManagementEntityKey {
   ZONES = 'zones',
   TAXES = 'taxes',
   ZREPORTS = 'zreports',
+  PRINTERS = 'printers',
 }

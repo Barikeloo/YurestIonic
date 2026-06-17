@@ -18,6 +18,7 @@ import { GestionProductsFacade } from './facades/gestion-products.facade';
 import { GestionMenusFacade } from './facades/gestion-menus.facade';
 import { GestionUsersFacade } from './facades/gestion-users.facade';
 import { GestionZReportsFacade } from './facades/gestion-zreports.facade';
+import { GestionPrintersFacade } from './facades/gestion-printers.facade';
 import { ProductItem, ProductService } from '../../../services/product.service';
 import { RestaurantService } from '../../../services/restaurant.service';
 import { TableItem, TableService } from '../../../services/table.service';
@@ -33,6 +34,7 @@ import { MenusManagementComponent } from '../../../components/gestion/menus-mana
 import { ZonesManagementComponent } from '../../../components/gestion/zones-management/zones-management.component';
 import { TaxesManagementComponent } from '../../../components/gestion/taxes-management/taxes-management.component';
 import { ZReportsManagementComponent, ZReportRow } from '../../../components/gestion/zreports-management/zreports-management.component';
+import { PrintersManagementComponent } from '../../../components/gestion/printers-management/printers-management.component';
 import { ManagementEntityKey } from '../../../core/enums/management-entity-key.enum';
 import { TpvService } from '../../../features/cash/services/tpv.service';
 
@@ -117,9 +119,10 @@ interface ManagementDataRow {
     MenusManagementComponent,
     ZonesManagementComponent,
     TaxesManagementComponent,
-    ZReportsManagementComponent
+    ZReportsManagementComponent,
+    PrintersManagementComponent,
 ],
-  providers: [GestionFamiliesFacade, GestionTaxesFacade, GestionZonesFacade, GestionProductsFacade, GestionMenusFacade, GestionUsersFacade, GestionZReportsFacade],
+  providers: [GestionFamiliesFacade, GestionTaxesFacade, GestionZonesFacade, GestionProductsFacade, GestionMenusFacade, GestionUsersFacade, GestionZReportsFacade, GestionPrintersFacade],
 })
 export class GestionPage {
   protected readonly familiesFacade = inject(GestionFamiliesFacade);
@@ -129,6 +132,7 @@ export class GestionPage {
   protected readonly menusFacade = inject(GestionMenusFacade);
   protected readonly usersFacade = inject(GestionUsersFacade);
   protected readonly zreportsFacade = inject(GestionZReportsFacade);
+  protected readonly printersFacade = inject(GestionPrintersFacade);
   protected readonly toastService = inject(ToastService);
   protected readonly restaurantContextFacade = inject(RestaurantContextFacade);
   protected readonly layoutFacade = inject(AppLayoutFacade);
@@ -157,6 +161,7 @@ export class GestionPage {
     { key: ManagementEntityKey.ZONES, label: 'Zonas y Mesas' },
     { key: ManagementEntityKey.TAXES, label: 'Impuestos' },
     { key: ManagementEntityKey.ZREPORTS, label: 'Z Reports' },
+    { key: ManagementEntityKey.PRINTERS, label: 'Impresoras' },
   ];
 
   public managementState: {
@@ -350,6 +355,17 @@ export class GestionPage {
     }
   }
 
+  private async loadPrinters(silent: boolean = false): Promise<void> {
+    try {
+      await this.printersFacade.load();
+    } catch (error: unknown) {
+      if (!silent) {
+        const message = error instanceof Error ? error.message : 'No se pudieron cargar las impresoras.';
+        this.toastService.presentError(message);
+      }
+    }
+  }
+
   private syncProductsMirror(): void {
     const restaurant = this.selectedRestaurant;
     if (!restaurant) {
@@ -498,6 +514,7 @@ export class GestionPage {
               this.loadProducts();
               this.loadMenus();
               this.loadZonesAndTables();
+              this.loadPrinters();
               this.startBackgroundPreload();
             },
             error: (error: unknown) => {
