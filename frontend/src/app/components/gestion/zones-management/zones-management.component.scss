@@ -199,50 +199,60 @@
   margin-bottom: 10px;
 }
 
-/* ── Detail tabs (Lista / Plano) ─────────────────────────────────────────── */
+/* ── Floor editor link ───────────────────────────────────────────────────── */
 
-.detail-tabs {
+.floor-link-section {
   display: flex;
-  gap: 4px;
-  margin-bottom: 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.detail-tab {
-  flex: 1;
-  padding: 8px 0;
-  border: 1.5px solid var(--gray-200);
-  border-radius: 8px;
+.floor-link-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.floor-link-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--black);
+}
+
+.floor-link-sub {
+  font-size: 11px;
+  color: var(--gray-500);
+}
+
+.btn-floor-editor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--accent);
+  border-radius: 10px;
   background: var(--white);
-  color: var(--gray-600);
+  color: var(--accent);
   font-family: var(--font);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.12s, background 0.12s, color 0.12s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.12s, transform 0.1s;
 
   &:hover:not(:disabled) {
-    border-color: var(--accent);
-    color: var(--accent);
     background: var(--accent-soft);
-  }
-
-  &.active {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-weight: 600;
+    transform: translateX(2px);
   }
 
   &:disabled {
-    opacity: 0.45;
+    border-color: var(--gray-300);
+    color: var(--gray-400);
     cursor: not-allowed;
+    transform: none;
   }
-}
-
-/* ── Floor plan card (full-width, below the two-column grid) ─────────────── */
-
-.mg-floor-card {
-  margin-top: 14px;
 }
 
 @media (max-width: 1024px) {

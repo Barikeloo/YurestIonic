@@ -57,6 +57,10 @@ export class TableService extends BaseApiService {
     return this.get<TableItem[]>('/admin/tables');
   }
 
+  public listTablesByZone(zoneId: string): Observable<TableItem[]> {
+    return this.get<TableItem[]>('/admin/tables', { zone_id: zoneId });
+  }
+
   public createTable(payload: CreateTablePayload): Observable<TableItem> {
     return this.post<TableItem>('/admin/tables', payload);
   }

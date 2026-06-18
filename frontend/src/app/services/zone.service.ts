@@ -27,6 +27,10 @@ export class ZoneService extends BaseApiService {
     return this.get<ZoneItem[]>('/admin/zones');
   }
 
+  public getZone(id: string): Observable<ZoneItem> {
+    return this.get<ZoneItem>(`/admin/zones/${id}`);
+  }
+
   public createZone(payload: CreateZonePayload): Observable<ZoneItem> {
     return this.post<ZoneItem>('/admin/zones', payload);
   }

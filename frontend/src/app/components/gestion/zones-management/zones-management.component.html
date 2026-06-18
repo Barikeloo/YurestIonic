@@ -10,7 +10,7 @@
       (valueChange)="onSearchChange($event)"
     ></app-search-bar>
     <div class="gestion-row-list">
-      @for (zone of filteredZones(); track zone; let i = $index) {
+      @for (zone of filteredZones(); track zone.uuid; let i = $index) {
         <div
           class="gestion-row-item"
           [class.active]="isSelectedFiltered(i)"
@@ -47,64 +47,62 @@
 
     <div class="section-divider"></div>
 
-    <!-- Tab toggle Lista / Plano -->
-    <div class="detail-tabs">
+    <!-- Plano del salón -->
+    <div class="floor-link-section">
+      <div class="floor-link-info">
+        <span class="floor-link-title">Plano del salón</span>
+        <span class="floor-link-sub">Diseña la distribución de mesas</span>
+      </div>
       <button
-        class="detail-tab"
-        [class.active]="detailTab() === 'lista'"
-        (click)="detailTab.set('lista')"
-      >Lista</button>
-      <button
-        class="detail-tab"
-        [class.active]="detailTab() === 'plano'"
-        (click)="detailTab.set('plano')"
+        class="btn-floor-editor"
         [disabled]="!selectedZone()"
-      >Plano</button>
+        (click)="openFloorEditor()"
+        title="{{ selectedZone() ? 'Abrir editor de plano para ' + selectedZone()!.name : 'Selecciona una zona primero' }}"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+          <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+        </svg>
+        Editar plano
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <polyline points="9 18 15 12 9 6"/>
+        </svg>
+      </button>
     </div>
 
-    @if (detailTab() === 'lista') {
-      <div class="gestion-card-title mg-small-gap">Mesas de {{ selectedZone()?.name ?? 'la zona' }}</div>
-      <div class="gestion-row-list mg-table-list">
-        @if (selectedZone()?.tables?.length) {
-          @for (table of selectedZone()!.tables; track table; let i = $index) {
-            <div
-              class="gestion-row-item"
-              [class.active]="isTableSelected(i)"
-              (click)="onSelectTable(i)"
-              >
-              <strong>{{ table.name }}</strong>
-            </div>
-          }
-        } @else {
-          <div class="gestion-row-item">No hay mesas registradas.</div>
-        }
-      </div>
+    <div class="section-divider"></div>
 
-      <form class="gestion-form" (ngSubmit)="onSubmitTable()">
-        <div class="gestion-form-actions form-actions-start">
-          <button type="button" class="btn-small" (click)="onCreateTable()">Nueva mesa</button>
-          <button type="button" class="btn-small" (click)="onDeleteTable()">Eliminar mesa</button>
-        </div>
-        <div>
-          <label class="form-label" for="mg-table-name">Nombre de mesa</label>
-          <input id="mg-table-name" class="form-input" [ngModel]="tableFormData().name" (ngModelChange)="updateTableForm('name', $event)" name="mg-table-name" placeholder="Ej. T12" required />
-        </div>
-        <div class="gestion-form-actions">
-          <button class="btn-login btn-login-inline" type="submit" [disabled]="isSavingTable()">
-            {{ isSavingTable() ? 'Guardando...' : 'Guardar mesa' }}
-          </button>
-        </div>
-      </form>
-    }
+    <div class="gestion-card-title mg-small-gap">Mesas de {{ selectedZone()?.name ?? 'la zona' }}</div>
+    <div class="gestion-row-list mg-table-list">
+      @if (selectedZone()?.tables?.length) {
+        @for (table of selectedZone()!.tables; track table.uuid; let i = $index) {
+          <div
+            class="gestion-row-item"
+            [class.active]="isTableSelected(i)"
+            (click)="onSelectTable(i)"
+            >
+            <strong>{{ table.name }}</strong>
+          </div>
+        }
+      } @else {
+        <div class="gestion-row-item">No hay mesas registradas.</div>
+      }
+    </div>
+
+    <form class="gestion-form" (ngSubmit)="onSubmitTable()">
+      <div class="gestion-form-actions form-actions-start">
+        <button type="button" class="btn-small" (click)="onCreateTable()">Nueva mesa</button>
+        <button type="button" class="btn-small" (click)="onDeleteTable()">Eliminar mesa</button>
+      </div>
+      <div>
+        <label class="form-label" for="mg-table-name">Nombre de mesa</label>
+        <input id="mg-table-name" class="form-input" [ngModel]="tableFormData().name" (ngModelChange)="updateTableForm('name', $event)" name="mg-table-name" placeholder="Ej. T12" required />
+      </div>
+      <div class="gestion-form-actions">
+        <button class="btn-login btn-login-inline" type="submit" [disabled]="isSavingTable()">
+          {{ isSavingTable() ? 'Guardando...' : 'Guardar mesa' }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>
-
-@if (detailTab() === 'plano' && selectedZone()) {
-  <div class="gestion-card mg-floor-card">
-    <div class="gestion-card-title">Plano de {{ selectedZone()!.name }}</div>
-    <app-zone-floor-editor
-      [tables]="selectedZoneTables()"
-      [zoneId]="selectedZoneId()"
-    />
-  </div>
-}

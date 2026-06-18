@@ -14,6 +14,12 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/core/gestion/gestion.page').then((m) => m.GestionPage),
       },
       {
+        path: 'gestion/zones/:zoneId/floor',
+        canActivate: [AuthGuard, RoleGuard],
+        data: { role: 'admin' },
+        loadComponent: () => import('./pages/core/gestion-zones-floor/gestion-zones-floor.page').then((m) => m.GestionZonesFloorPage),
+      },
+      {
         path: 'gestion/menus/nuevo',
         canActivate: [AuthGuard, RoleGuard],
         data: { role: 'admin' },

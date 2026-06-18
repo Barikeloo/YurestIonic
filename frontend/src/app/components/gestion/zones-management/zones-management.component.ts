@@ -1,46 +1,38 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { GestionZonesFacade, TableRow, ZoneRow, ZoneFormData, TableFormData } from '../../../pages/core/gestion/facades/gestion-zones.facade';
+import { Router } from '@angular/router';
+import { GestionZonesFacade, ZoneRow, ZoneFormData, TableFormData } from '../../../pages/core/gestion/facades/gestion-zones.facade';
 import { ToastService } from '../../../core/services/toast.service';
 import { SearchBarComponent } from '../../../shared/components/search-bar/search-bar.component';
-import { ZoneFloorEditorComponent } from './zone-floor-editor/zone-floor-editor.component';
 
 @Component({
   selector: 'app-zones-management',
   standalone: true,
-  imports: [FormsModule, SearchBarComponent, ZoneFloorEditorComponent],
+  imports: [FormsModule, SearchBarComponent],
   templateUrl: './zones-management.component.html',
   styleUrls: ['./zones-management.component.scss'],
 })
 export class ZonesManagementComponent {
   public readonly facade = input.required<GestionZonesFacade>();
   protected readonly toastService = inject(ToastService);
+  private  readonly router        = inject(Router);
 
-  public readonly zones = computed(() => this.facade().zones());
-  public readonly selectedZone = computed(() => this.facade().selectedZone());
-  public readonly selectedZoneIndex = computed(() => this.facade().selectedZoneIndex());
+  public readonly zones              = computed(() => this.facade().zones());
+  public readonly selectedZone       = computed(() => this.facade().selectedZone());
+  public readonly selectedZoneIndex  = computed(() => this.facade().selectedZoneIndex());
   public readonly selectedTableIndex = computed(() => this.facade().selectedTableIndex());
-  public readonly zoneFormData = computed(() => this.facade().zoneFormData());
-  public readonly tableFormData = computed(() => this.facade().tableFormData());
-  public readonly isSavingZone = computed(() => this.facade().isSavingZone());
-  public readonly isSavingTable = computed(() => this.facade().isSavingTable());
+  public readonly zoneFormData       = computed(() => this.facade().zoneFormData());
+  public readonly tableFormData      = computed(() => this.facade().tableFormData());
+  public readonly isSavingZone       = computed(() => this.facade().isSavingZone());
+  public readonly isSavingTable      = computed(() => this.facade().isSavingTable());
 
   public readonly searchTerm = signal('');
-  public readonly detailTab = signal<'lista' | 'plano'>('lista');
 
   public readonly filteredZones = computed<ZoneRow[]>(() => {
     const term = this.searchTerm().trim().toLowerCase();
     if (!term) return this.zones();
     return this.zones().filter((z) => z.name.toLowerCase().includes(term));
   });
-
-  public readonly selectedZoneTables = computed<TableRow[]>(() =>
-    this.selectedZone()?.tables ?? []
-  );
-
-  public readonly selectedZoneId = computed<string>(() =>
-    this.selectedZone()?.uuid ?? ''
-  );
 
   isZoneSelected(index: number): boolean {
     return this.selectedZoneIndex() === index;
@@ -57,10 +49,7 @@ export class ZonesManagementComponent {
     const target = this.filteredZones()[filteredIndex];
     if (!target) return;
     const realIndex = this.zones().indexOf(target);
-    if (realIndex >= 0) {
-      this.facade().selectZone(realIndex);
-      this.detailTab.set('lista');
-    }
+    if (realIndex >= 0) this.facade().selectZone(realIndex);
   }
 
   onSearchChange(value: string): void {
@@ -125,5 +114,10 @@ export class ZonesManagementComponent {
 
   updateTableForm<K extends keyof TableFormData>(key: K, value: TableFormData[K]): void {
     this.facade().updateTableForm(key, value);
+  }
+
+  openFloorEditor(): void {
+    const uuid = this.selectedZone()?.uuid;
+    if (uuid) void this.router.navigate(['/app/gestion/zones', uuid, 'floor']);
   }
 }

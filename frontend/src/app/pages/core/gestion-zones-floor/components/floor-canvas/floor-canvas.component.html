@@ -1,0 +1,146 @@
+<div
+  #canvasWrap
+  class="canvas-wrap"
+  tabindex="0"
+  (keydown)="onKeyDown($event)"
+  (pointerleave)="onCanvasWrapLeave()"
+>
+  <div class="canvas-inner">
+    <svg
+      #svgEl
+      class="floor-svg"
+      [attr.width]="svgW()"
+      [attr.height]="svgH()"
+      viewBox="0 0 1200 800"
+      (pointermove)="onSvgPointerMove($event)"
+      (pointerup)="onSvgPointerUp()"
+      (click)="$event.stopPropagation()"
+    >
+      <defs>
+        <pattern id="fc-dots" width="40" height="40" patternUnits="userSpaceOnUse">
+          <circle cx="0" cy="0" r="1.4" fill="#cacaca"/>
+        </pattern>
+        <filter id="fc-shadow" x="-15%" y="-15%" width="130%" height="130%">
+          <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0000001a"/>
+        </filter>
+        <filter id="fc-glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="#ff4d4d" flood-opacity="0.4"/>
+        </filter>
+      </defs>
+
+      <rect width="1200" height="800" fill="#ffffff"/>
+      <rect width="1200" height="800" fill="url(#fc-dots)"/>
+      <rect width="1200" height="800" fill="none" stroke="#e0e0e0" stroke-width="1.5"/>
+
+      @for (table of placedTables(); track table.id) {
+        @let tx = tableX(table);
+        @let ty = tableY(table);
+        @let tw = tableW(table);
+        @let th = tableH(table);
+        @let isSelected = selectedId() === table.id && !_drag();
+        @let isDragging = _drag()?.id === table.id;
+
+        <g
+          class="table-group"
+          [class.is-selected]="isSelected"
+          [class.is-dragging]="isDragging"
+          [attr.transform]="'translate(' + tx + ',' + ty + ')'"
+          (pointerdown)="onTablePointerDown($event, table)"
+          (pointerup)="onTablePointerUp($event, table)"
+          (pointerenter)="onTablePointerEnter($event, table)"
+          (pointerleave)="onTablePointerLeave()"
+          (dblclick)="onTableDblClick($event, table)"
+        >
+          <!-- Selection ring -->
+          @if (isSelected) {
+            @if (table.shape === 'circle') {
+              <circle [attr.cx]="tw/2" [attr.cy]="tw/2" [attr.r]="tw/2+5" class="select-ring"/>
+            } @else {
+              <rect [attr.x]="-5" [attr.y]="-5" [attr.width]="tw+10" [attr.height]="th+10" rx="14" class="select-ring"/>
+            }
+          }
+
+          <!-- Shape -->
+          @if (table.shape === 'circle') {
+            <circle [attr.cx]="tw/2" [attr.cy]="tw/2" [attr.r]="tw/2-1"
+              class="table-shape"
+              [attr.filter]="isSelected ? 'url(#fc-glow)' : 'url(#fc-shadow)'"/>
+          } @else {
+            <rect [attr.width]="tw" [attr.height]="th" rx="10"
+              class="table-shape"
+              [attr.filter]="isSelected ? 'url(#fc-glow)' : 'url(#fc-shadow)'"/>
+          }
+
+          <!-- Label -->
+          @if (_editing() !== table.id) {
+            <text [attr.x]="centerX(table)" [attr.y]="centerY(table)" text-anchor="middle" class="table-label">
+              {{ table.name }}
+            </text>
+          }
+
+          <!-- Inline edit -->
+          @if (_editing() === table.id) {
+            <foreignObject [attr.x]="4" [attr.y]="centerY(table)-10" [attr.width]="tw-8" height="20">
+              <div xmlns="http://www.w3.org/1999/xhtml">
+                <input class="inline-edit" type="text" [value]="_editVal()" maxlength="20"
+                  (input)="onEditInput($event)"
+                  (keydown)="onEditKeydown($event)"
+                  (blur)="onEditBlur()"
+                  (pointerdown)="$event.stopPropagation()"
+                  (click)="$event.stopPropagation()"/>
+              </div>
+            </foreignObject>
+          }
+
+          <!-- Resize handles -->
+          @if (isSelected && _editing() !== table.id) {
+            @let hw = table.shape === 'circle' ? tw : tw;
+            @let hh = table.shape === 'circle' ? tw : th;
+            <circle [attr.cx]="0"  [attr.cy]="0"  [attr.r]="HANDLE_R" class="resize-handle rh-tl" (pointerdown)="onHandlePointerDown($event, table, 'resize-tl')"/>
+            <circle [attr.cx]="hw" [attr.cy]="0"  [attr.r]="HANDLE_R" class="resize-handle rh-tr" (pointerdown)="onHandlePointerDown($event, table, 'resize-tr')"/>
+            <circle [attr.cx]="0"  [attr.cy]="hh" [attr.r]="HANDLE_R" class="resize-handle rh-bl" (pointerdown)="onHandlePointerDown($event, table, 'resize-bl')"/>
+            <circle [attr.cx]="hw" [attr.cy]="hh" [attr.r]="HANDLE_R" class="resize-handle rh-br" (pointerdown)="onHandlePointerDown($event, table, 'resize-br')"/>
+          }
+        </g>
+      }
+    </svg>
+  </div>
+
+  <!-- ── Floating action menu (above selected table) ─────────────────────── -->
+  @if (floatingMenu(); as menu) {
+    <div class="float-menu" [style.left.px]="menu.cx" [style.top.px]="menu.ty">
+      <button class="fm-btn" title="Editar nombre (doble-click)" (click)="onMenuRename(menu.table); $event.stopPropagation()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+      <div class="fm-sep"></div>
+      <button class="fm-btn" title="{{ menu.table.shape === 'rect' ? 'Cambiar a círculo' : 'Cambiar a rectángulo' }}"
+        (click)="onMenuToggleShape(menu.table); $event.stopPropagation()">
+        @if (menu.table.shape === 'rect') {
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+          </svg>
+        } @else {
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="3"/>
+          </svg>
+        }
+      </button>
+      <div class="fm-sep"></div>
+      <button class="fm-btn fm-btn--danger" title="Quitar del plano" (click)="onMenuRemove(menu.table); $event.stopPropagation()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+          <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+        </svg>
+      </button>
+    </div>
+  }
+
+  <!-- Tooltip -->
+  @if (_tooltip(); as tip) {
+    <div class="canvas-tooltip" [style.left.px]="tip.x" [style.top.px]="tip.y">{{ tip.text }}</div>
+  }
+</div>

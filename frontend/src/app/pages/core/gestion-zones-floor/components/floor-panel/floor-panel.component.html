@@ -1,0 +1,210 @@
+<div class="panel">
+
+  <!-- ══ Nueva mesa ═══════════════════════════════════════════════════════ -->
+  <section class="panel-section">
+    <div class="section-label">Nueva mesa</div>
+
+    <div class="prop-row">
+      <span class="prop-key">Nombre</span>
+      <input
+        class="prop-input"
+        type="text"
+        placeholder="Mesa 1, B-05…"
+        maxlength="20"
+        [ngModel]="newName()"
+        (ngModelChange)="newName.set($event)"
+        (keydown.enter)="onAddTable()"
+      />
+    </div>
+
+    <div class="prop-row">
+      <span class="prop-key">Forma</span>
+      <div class="shape-picker">
+        <button
+          class="shape-chip"
+          [class.active]="newShape() === 'rect'"
+          (click)="setNewShape('rect')"
+          title="Rectángulo"
+        >
+          <svg width="22" height="14" viewBox="0 0 22 14">
+            <rect x="1" y="1" width="20" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+        <button
+          class="shape-chip"
+          [class.active]="newShape() === 'circle'"
+          (click)="setNewShape('circle')"
+          title="Círculo"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="prop-row">
+      <span class="prop-key">Tamaño</span>
+      <div class="size-picker">
+        @for (p of presets; track p) {
+          <button
+            class="size-chip"
+            [class.active]="newPreset() === p"
+            (click)="setNewPreset(p)"
+            [title]="presetLabel(p, newShape())"
+          >
+            <div class="size-chip-preview">
+              @if (newShape() === 'circle') {
+                <svg [attr.width]="presetIconSize(p).w" [attr.height]="presetIconSize(p).h" viewBox="0 0 100 100" style="display:block">
+                  <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="8"/>
+                </svg>
+              } @else {
+                <svg [attr.width]="presetIconSize(p).w" [attr.height]="presetIconSize(p).h" viewBox="0 0 110 80" style="display:block">
+                  <rect x="4" y="4" width="102" height="72" rx="12" fill="none" stroke="currentColor" stroke-width="8"/>
+                </svg>
+              }
+            </div>
+            <span class="size-chip-label">{{ presetLabel(p, newShape()) }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <button class="btn-add" [disabled]="!newName().trim()" (click)="onAddTable()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Añadir al plano
+    </button>
+  </section>
+
+  <!-- ══ Mesa seleccionada ════════════════════════════════════════════════ -->
+  @if (selectedTable(); as t) {
+    <section class="panel-section panel-selected">
+      <div class="selected-header">
+        <div class="selected-indicator"></div>
+        <input
+          class="selected-name-input"
+          type="text"
+          [value]="t.name"
+          maxlength="20"
+          (change)="nameChanged.emit({ id: t.id, name: $any($event.target).value.trim() || t.name })"
+          (keydown.enter)="$any($event.target).blur()"
+        />
+      </div>
+
+      <div class="prop-row">
+        <span class="prop-key">Forma</span>
+        <div class="shape-picker">
+          <button class="shape-chip" [class.active]="t.shape === 'rect'"   (click)="onChangeShape('rect')"   title="Rectángulo">
+            <svg width="22" height="14" viewBox="0 0 22 14">
+              <rect x="1" y="1" width="20" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            </svg>
+          </button>
+          <button class="shape-chip" [class.active]="t.shape === 'circle'" (click)="onChangeShape('circle')" title="Círculo">
+            <svg width="16" height="16" viewBox="0 0 16 16">
+              <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="prop-row">
+        <span class="prop-key">Tamaño</span>
+        <div class="size-picker">
+          @for (p of presets; track p) {
+            <button
+              class="size-chip"
+              [class.active]="currentPreset(t) === p"
+              (click)="onSizePreset(p)"
+              [title]="presetLabel(p, t.shape)"
+            >
+              <div class="size-chip-preview">
+                @if (t.shape === 'circle') {
+                  <svg [attr.width]="presetIconSize(p).w" [attr.height]="presetIconSize(p).h" viewBox="0 0 100 100" style="display:block">
+                    <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" stroke-width="8"/>
+                  </svg>
+                } @else {
+                  <svg [attr.width]="presetIconSize(p).w" [attr.height]="presetIconSize(p).h" viewBox="0 0 110 80" style="display:block">
+                    <rect x="4" y="4" width="102" height="72" rx="12" fill="none" stroke="currentColor" stroke-width="8"/>
+                  </svg>
+                }
+              </div>
+              <span class="size-chip-label">{{ presetLabel(p, t.shape) }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <div class="prop-row">
+        <span class="prop-key">Posición</span>
+        <div class="pos-inputs">
+          <label class="pos-field">
+            <span class="pos-axis">X</span>
+            <input class="pos-input" type="number" [value]="t.posX ?? 0" readonly/>
+          </label>
+          <label class="pos-field">
+            <span class="pos-axis">Y</span>
+            <input class="pos-input" type="number" [value]="t.posY ?? 0" readonly/>
+          </label>
+        </div>
+      </div>
+
+      <!-- Action bar -->
+      <div class="action-bar">
+        <button class="action-btn action-btn--danger" (click)="onRemove()" title="Quitar del plano">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+            <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+          </svg>
+          Quitar del plano
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- ══ Sin posición ══════════════════════════════════════════════════════ -->
+  @if (unpositioned().length > 0) {
+    <section class="panel-section">
+      <div class="section-label">
+        Sin posición
+        <span class="count-badge">{{ unpositioned().length }}</span>
+      </div>
+      <div class="unpos-list">
+        @for (t of unpositioned(); track t.id) {
+          <div class="unpos-chip">
+            <span class="unpos-name">{{ t.name }}</span>
+            <button class="unpos-add" (click)="placeOnCanvas.emit(t.id)" title="Añadir al plano">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+            </button>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <div class="spacer"></div>
+
+  <!-- ══ Zoom + Guardar ════════════════════════════════════════════════════ -->
+  <section class="panel-section panel-footer">
+    <div class="zoom-row">
+      <button class="zoom-btn" (click)="zoomOut.emit()" [disabled]="zoomLevel() <= 0.4">−</button>
+      <button class="zoom-val"  (click)="zoomReset.emit()">{{ zoomPercent() }}%</button>
+      <button class="zoom-btn" (click)="zoomIn.emit()"  [disabled]="zoomLevel() >= 2.0">+</button>
+    </div>
+
+    <button
+      class="btn-save"
+      [class.active]="isDirty()"
+      [disabled]="!isDirty() || isSaving()"
+      (click)="save.emit()"
+    >
+      @if (isDirty()) { <span class="save-dot"></span> }
+      {{ isSaving() ? 'Guardando…' : 'Guardar plano' }}
+    </button>
+  </section>
+
+</div>
