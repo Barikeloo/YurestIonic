@@ -9,9 +9,9 @@ import { OrderStatus } from '../../../../core/enums/order-status.enum';
   styleUrls: ['./floor-plan.component.scss'],
 })
 export class FloorPlanComponent {
-  readonly tables         = input.required<TableWithStatus[]>();
+  readonly tables          = input.required<TableWithStatus[]>();
   readonly selectedTableId = input<string | null>(null);
-  readonly tableSelected  = output<TableWithStatus>();
+  readonly tableSelected   = output<TableWithStatus>();
 
   protected readonly OrderStatus = OrderStatus;
 
@@ -23,13 +23,23 @@ export class FloorPlanComponent {
     this.tables().filter(t => t.layout == null).length
   );
 
-  protected tableStatusClass(table: TableWithStatus): string {
-    if (table.status === OrderStatus.TO_CHARGE) return 'table-to-charge';
-    if (table.occupied) return 'table-open';
-    return 'table-free';
+  protected statusClass(t: TableWithStatus): string {
+    if (t.status === OrderStatus.TO_CHARGE) return 'st-charge';
+    if (t.occupied) return 'st-open';
+    return 'st-free';
   }
 
-  protected onTableClick(table: TableWithStatus): void {
-    this.tableSelected.emit(table);
+  protected centerY(t: TableWithStatus): number {
+    const h = t.layout!.shape === 'circle' ? t.layout!.width : t.layout!.height;
+    return h / 2 + (t.diners ? -4 : 4);
+  }
+
+  protected dinersY(t: TableWithStatus): number {
+    const h = t.layout!.shape === 'circle' ? t.layout!.width : t.layout!.height;
+    return h / 2 + 10;
+  }
+
+  protected onTableClick(t: TableWithStatus): void {
+    this.tableSelected.emit(t);
   }
 }

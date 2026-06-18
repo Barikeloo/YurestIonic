@@ -1,68 +1,114 @@
-<div class="floor-plan-wrap">
-  <svg class="floor-canvas"
-       viewBox="0 0 1200 800"
-       preserveAspectRatio="xMidYMid meet">
-
-    <!-- Grid background -->
-    <defs>
-      <pattern id="fp-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#e8e8e8" stroke-width="0.6"/>
-      </pattern>
-    </defs>
-    <rect width="1200" height="800" fill="url(#fp-grid)" rx="4"/>
-    <rect width="1200" height="800" fill="none" stroke="#d0d0d0" stroke-width="1.5" rx="4"/>
-
-    @for (table of placedTables(); track table.id) {
-      <g
-        class="table-group"
-        [class]="tableStatusClass(table)"
-        [class.is-selected]="selectedTableId() === table.id"
-        [attr.transform]="'translate(' + table.layout!.pos_x + ',' + table.layout!.pos_y + ')'"
-        (click)="onTableClick(table)"
-      >
-        @if (table.layout!.shape === 'circle') {
-          <circle
-            [attr.cx]="table.layout!.width / 2"
-            [attr.cy]="table.layout!.width / 2"
-            [attr.r]="table.layout!.width / 2 - 1"
-            class="table-shape"
-          />
-        } @else {
-          <rect
-            [attr.width]="table.layout!.width"
-            [attr.height]="table.layout!.height"
-            rx="8"
-            class="table-shape"
-          />
-        }
-
-        <text
-          [attr.x]="table.layout!.width / 2"
-          [attr.y]="(table.layout!.shape === 'circle' ? table.layout!.width : table.layout!.height) / 2 + 5"
-          class="table-label"
-        >{{ table.name }}</text>
-
-        @if (table.status === OrderStatus.TO_CHARGE) {
-          <text
-            [attr.x]="table.layout!.width / 2"
-            [attr.y]="(table.layout!.shape === 'circle' ? table.layout!.width : table.layout!.height) / 2 + 19"
-            class="table-cobrar-label"
-          >COBRAR</text>
-        }
-      </g>
-    }
-  </svg>
-
-  @if (unpositionedCount() > 0) {
-    <p class="unpositioned-notice">
-      {{ unpositionedCount() }} mesa{{ unpositionedCount() === 1 ? '' : 's' }} sin posición en el plano
-    </p>
+<div class="fp-wrap">
+  @if (placedTables().length === 0) {
+    <div class="fp-empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      <p>No hay mesas posicionadas en el plano.</p>
+      <p>Ve a <strong>Gestión → Zonas → Editar plano</strong> para diseñar el salón.</p>
+    </div>
   }
 
-  @if (placedTables().length === 0) {
-    <div class="empty-floor">
-      <p>No hay mesas posicionadas en este plano.</p>
-      <p>Ve a <strong>Gestión → Zonas → Plano</strong> para diseñar el salón.</p>
-    </div>
+  @if (placedTables().length > 0) {
+    <svg class="fp-svg"
+         viewBox="0 0 1200 800"
+         preserveAspectRatio="xMidYMid meet">
+
+      <defs>
+        <!-- Subtle dot grid matching editor (40px snap) -->
+        <pattern id="fp-dots" width="40" height="40" patternUnits="userSpaceOnUse">
+          <circle cx="0" cy="0" r="1" fill="#e0e0e0"/>
+        </pattern>
+        <!-- Table shadow -->
+        <filter id="fp-shadow" x="-15%" y="-15%" width="130%" height="130%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00000012"/>
+        </filter>
+        <!-- Selected glow -->
+        <filter id="fp-glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#ff4d4d" flood-opacity="0.35"/>
+        </filter>
+      </defs>
+
+      <!-- Background -->
+      <rect width="1200" height="800" fill="#fff"/>
+      <rect width="1200" height="800" fill="url(#fp-dots)"/>
+      <rect width="1200" height="800" fill="none" stroke="#e8e8e8" stroke-width="1.5"/>
+
+      <!-- Tables -->
+      @for (t of placedTables(); track t.id) {
+        @let lyt = t.layout!;
+        @let sel = selectedTableId() === t.id;
+
+        <g
+          class="fp-table"
+          [class]="statusClass(t)"
+          [class.fp-selected]="sel"
+          [attr.transform]="'translate(' + lyt.pos_x + ',' + lyt.pos_y + ')'"
+          (click)="onTableClick(t)"
+        >
+          <!-- Selection ring -->
+          @if (sel) {
+            @if (lyt.shape === 'circle') {
+              <circle [attr.cx]="lyt.width/2" [attr.cy]="lyt.width/2" [attr.r]="lyt.width/2+6" class="fp-ring"/>
+            } @else {
+              <rect [attr.x]="-6" [attr.y]="-6" [attr.width]="lyt.width+12" [attr.height]="lyt.height+12" rx="14" class="fp-ring"/>
+            }
+          }
+
+          <!-- Shape -->
+          @if (lyt.shape === 'circle') {
+            <circle [attr.cx]="lyt.width/2" [attr.cy]="lyt.width/2" [attr.r]="lyt.width/2-1"
+              class="fp-shape" [attr.filter]="sel ? 'url(#fp-glow)' : 'url(#fp-shadow)'"/>
+          } @else {
+            <rect [attr.width]="lyt.width" [attr.height]="lyt.height" rx="10"
+              class="fp-shape" [attr.filter]="sel ? 'url(#fp-glow)' : 'url(#fp-shadow)'"/>
+          }
+
+          <!-- Table name -->
+          <text
+            [attr.x]="lyt.width / 2"
+            [attr.y]="centerY(t)"
+            text-anchor="middle"
+            dominant-baseline="central"
+            class="fp-name"
+          >{{ t.name }}</text>
+
+          <!-- Diners (occupied tables only) -->
+          @if (t.occupied && t.diners) {
+            <text
+              [attr.x]="lyt.width / 2"
+              [attr.y]="dinersY(t)"
+              text-anchor="middle"
+              dominant-baseline="central"
+              class="fp-diners"
+            >{{ t.diners }} pers.</text>
+          }
+
+          <!-- COBRAR badge -->
+          @if (t.status === OrderStatus.TO_CHARGE) {
+            <rect
+              [attr.x]="lyt.width/2 - 24"
+              [attr.y]="(lyt.shape === 'circle' ? lyt.width : lyt.height) - 18"
+              width="48" height="14" rx="7"
+              class="fp-cobrar-bg"
+            />
+            <text
+              [attr.x]="lyt.width / 2"
+              [attr.y]="(lyt.shape === 'circle' ? lyt.width : lyt.height) - 11"
+              text-anchor="middle"
+              dominant-baseline="central"
+              class="fp-cobrar-label"
+            >COBRAR</text>
+          }
+        </g>
+      }
+    </svg>
+
+    @if (unpositionedCount() > 0) {
+      <p class="fp-unpos-notice">
+        {{ unpositionedCount() }} mesa{{ unpositionedCount() === 1 ? '' : 's' }} sin posición
+      </p>
+    }
   }
 </div>
