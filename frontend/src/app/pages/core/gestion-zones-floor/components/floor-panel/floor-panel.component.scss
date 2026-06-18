@@ -11,23 +11,23 @@
   font-size: 12px;
 
   &::-webkit-scrollbar       { width: 3px; }
-  &::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 2px; }
+  &::-webkit-scrollbar-thumb { background: #e8e8e8; border-radius: 2px; }
 }
 
 /* ── Sections ─────────────────────────────────────────────────────────────── */
 
 .panel-section {
-  padding: 12px 14px;
-  border-bottom: 1px solid #f2f2f2;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 
   &.panel-selected {
-    background: #fffcfc;
-    border-left: 2px solid #ff4d4d;
-    border-bottom-color: #ffe8e8;
-    padding-left: 12px;
+    background: #fffbfb;
+    border-left: 3px solid #ff4d4d;
+    padding-left: 13px;
+    border-bottom-color: #ffe4e4;
   }
 
   &.panel-footer {
@@ -43,9 +43,9 @@
 .section-label {
   font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  color: #aaa;
+  color: #b8b8b8;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -61,39 +61,34 @@
   line-height: 1.5;
 }
 
-/* ── Selected header ──────────────────────────────────────────────────────── */
+/* ── Name input ───────────────────────────────────────────────────────────── */
 
-.selected-header {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 2px;
-}
-
-.selected-indicator {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #ff4d4d;
-  flex-shrink: 0;
-}
-
-.selected-name-input {
-  flex: 1;
-  padding: 3px 6px;
-  border: 1.5px solid transparent;
-  border-radius: 5px;
-  background: transparent;
+.name-field {
+  width: 100%;
+  padding: 9px 11px;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 8px;
   font-family: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: #1a1a1a;
+  background: #fafafa;
   outline: none;
-  min-width: 0;
-  transition: border-color 0.1s, background 0.1s;
+  box-sizing: border-box;
+  transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
 
-  &:hover { border-color: #e0e0e0; background: #f8f8f8; }
-  &:focus { border-color: #ff4d4d; background: #fff; }
+  &::placeholder { color: #c8c8c8; font-weight: 400; }
+  &:hover        { border-color: #d0d0d0; background: #f5f5f5; }
+  &:focus        { border-color: #ff4d4d; background: #fff;
+                   box-shadow: 0 0 0 3px rgba(255, 77, 77, 0.09); }
+
+  &--edit {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0d0d0d;
+    border-color: #e8e8e8;
+    background: #fff;
+  }
 }
 
 /* ── Property row ─────────────────────────────────────────────────────────── */
@@ -102,234 +97,147 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 26px;
 }
 
 .prop-key {
-  width: 52px;
+  width: 48px;
   flex-shrink: 0;
   font-size: 11px;
   font-weight: 500;
-  color: #999;
-}
-
-.prop-input {
-  flex: 1;
-  padding: 5px 8px;
-  border: 1.5px solid #ebebeb;
-  border-radius: 6px;
-  font-family: inherit;
-  font-size: 12px;
-  color: #1a1a1a;
-  background: #fafafa;
-  outline: none;
-  min-width: 0;
-  transition: border-color 0.1s, background 0.1s;
-
-  &:focus { border-color: #ff4d4d; background: #fff; }
-  &::placeholder { color: #ccc; }
+  color: #a0a0a0;
 }
 
 /* ── Shape picker ─────────────────────────────────────────────────────────── */
 
 .shape-picker {
   display: flex;
-  gap: 4px;
+  gap: 5px;
+  flex: 1;
 }
 
 .shape-chip {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 26px;
+  gap: 5px;
+  padding: 6px 6px;
   border: 1.5px solid #e8e8e8;
-  border-radius: 6px;
+  border-radius: 7px;
   background: #fafafa;
-  color: #aaa;
+  color: #a0a0a0;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
   cursor: pointer;
   transition: border-color 0.1s, color 0.1s, background 0.1s;
 
-  &:hover:not(.active) { border-color: #ccc; color: #666; background: #f5f5f5; }
+  &:hover:not(.active) { border-color: #c8c8c8; color: #555; background: #f0f0f0; }
 
   &.active {
     border-color: #ff4d4d;
     background: #ffecec;
     color: #ff4d4d;
+    font-weight: 600;
   }
 }
 
-/* ── Size picker ──────────────────────────────────────────────────────────── */
+/* ── Size segmented control ───────────────────────────────────────────────── */
 
-.size-picker {
-  display: flex;
-  gap: 4px;
-  flex: 1;
-}
-
-.size-chip {
+.size-seg {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 5px 2px 4px;
   border: 1.5px solid #e8e8e8;
-  border-radius: 6px;
-  background: #fafafa;
-  color: #aaa;
-  cursor: pointer;
-  transition: border-color 0.1s, color 0.1s, background 0.1s;
-
-  &:hover:not(.active) { border-color: #ccc; color: #666; background: #f5f5f5; }
-
-  &.active {
-    border-color: #ff4d4d;
-    background: #ffecec;
-    color: #ff4d4d;
-  }
-}
-
-.size-chip-preview {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 16px;
-}
-
-.size-chip-label {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1;
-  color: inherit;
-  white-space: nowrap;
-}
-
-/* ── Position inputs ──────────────────────────────────────────────────────── */
-
-.pos-inputs {
-  display: flex;
-  gap: 4px;
-  flex: 1;
-}
-
-.pos-field {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 0;
-  border: 1.5px solid #e8e8e8;
-  border-radius: 6px;
+  border-radius: 7px;
   overflow: hidden;
   background: #fafafa;
 }
 
-.pos-axis {
-  padding: 0 5px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #bbb;
-  background: #f2f2f2;
-  border-right: 1px solid #e8e8e8;
-  height: 100%;
-  display: flex;
-  align-items: center;
-}
-
-.pos-input {
+.size-seg-btn {
   flex: 1;
-  width: 0;
-  padding: 4px 5px;
+  padding: 6px 0;
   border: none;
+  border-right: 1px solid #e8e8e8;
   background: transparent;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: #555;
-  outline: none;
-  min-width: 0;
-  text-align: right;
-}
-
-/* ── Action bar ───────────────────────────────────────────────────────────── */
-
-.action-bar {
-  display: flex;
-  gap: 4px;
-  margin-top: 2px;
-}
-
-.action-btn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 6px 4px;
-  border: 1.5px solid #e8e8e8;
-  border-radius: 6px;
-  background: #fafafa;
-  color: #888;
+  color: #a0a0a0;
   font-family: inherit;
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 700;
   cursor: pointer;
-  transition: border-color 0.1s, color 0.1s, background 0.1s;
+  transition: background 0.1s, color 0.1s;
 
-  &:hover { border-color: #bbb; color: #333; background: #f0f0f0; }
+  &:last-child { border-right: none; }
+  &:hover:not(.active) { background: #f0f0f0; color: #555; }
 
-  &--danger {
-    color: #cc3300;
-    border-color: #ffd8d0;
-    background: #fff8f6;
-
-    &:hover { border-color: #ff8866; background: #ffe8e0; }
+  &.active {
+    background: #ff4d4d;
+    color: #fff;
   }
 }
 
-/* ── Delete confirm inline ────────────────────────────────────────────────── */
+/* ── Selected state header ────────────────────────────────────────────────── */
 
-.confirm-inline {
-  flex: 1;
+.selected-header {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 8px;
-  border: 1.5px solid #ffc4b8;
-  border-radius: 6px;
-  background: #fff5f2;
-  font-size: 11px;
-  color: #cc3300;
-  font-weight: 500;
-
-  span { flex: 1; }
+  gap: 7px;
 }
 
-.confirm-yes {
-  padding: 2px 8px;
-  border: none;
-  border-radius: 4px;
+.selected-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
   background: #ff4d4d;
-  color: #fff;
-  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.selected-label {
   font-size: 10px;
   font-weight: 700;
-  cursor: pointer;
-  &:hover { background: #ff7070; }
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #ff4d4d;
 }
 
-.confirm-no {
-  padding: 2px 8px;
-  border: 1.5px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
-  color: #888;
+/* ── Remove button ────────────────────────────────────────────────────────── */
+
+.btn-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 7px;
+  border: 1.5px solid #ffd0c8;
+  border-radius: 7px;
+  background: #fff8f6;
+  color: #c03000;
   font-family: inherit;
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
-  &:hover { border-color: #aaa; }
+  transition: border-color 0.12s, background 0.12s;
+
+  &:hover { border-color: #ff9980; background: #ffe8e0; }
+}
+
+/* ── Empty selection hint ─────────────────────────────────────────────────── */
+
+.empty-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 20px;
+  border-bottom: 1px solid #f0f0f0;
+
+  p {
+    margin: 0;
+    font-size: 11px;
+    color: #c0c0c0;
+    text-align: center;
+    line-height: 1.6;
+  }
 }
 
 /* ── Unpositioned list ────────────────────────────────────────────────────── */
@@ -337,20 +245,20 @@
 .unpos-list {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .unpos-chip {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 8px;
+  padding: 7px 7px 7px 10px;
   border: 1.5px solid #efefef;
-  border-radius: 6px;
+  border-radius: 7px;
   background: #fafafa;
-  transition: border-color 0.1s;
+  transition: border-color 0.1s, background 0.1s;
 
-  &:hover { border-color: #ddd; }
+  &:hover { border-color: #ddd; background: #f5f5f5; }
 }
 
 .unpos-name {
@@ -364,54 +272,103 @@
 
 .unpos-add {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   background: #ff4d4d;
   color: #fff;
   cursor: pointer;
-  transition: background 0.1s;
-  &:hover { background: #ff7070; }
+  transition: background 0.1s, transform 0.08s;
+
+  &:hover { background: #e03030; transform: scale(1.06); }
 }
 
-/* ── Footer (zoom + save) ─────────────────────────────────────────────────── */
+/* ── Zoom controls ────────────────────────────────────────────────────────── */
 
 .zoom-row {
   display: flex;
   border: 1.5px solid #e8e8e8;
-  border-radius: 7px;
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .zoom-btn, .zoom-val {
   flex: 1;
-  padding: 5px 0;
+  padding: 7px 0;
   border: none;
   background: #fff;
   color: #666;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   line-height: 1;
   transition: background 0.1s;
+
   &:hover:not(:disabled) { background: #f5f5f5; }
-  &:disabled { color: #ccc; cursor: not-allowed; }
+  &:disabled             { color: #ccc; cursor: not-allowed; }
 }
 
 .zoom-val {
   border-left: 1.5px solid #e8e8e8;
   border-right: 1.5px solid #e8e8e8;
   font-variant-numeric: tabular-nums;
-  text-align: center;
   font-size: 11px;
+  font-weight: 600;
+  color: #888;
+  text-align: center;
 }
 
+/* ── Save button ──────────────────────────────────────────────────────────── */
+
 .btn-save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #ececec;
+  color: #aaa;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: not-allowed;
+  transition: background 0.12s, color 0.12s, transform 0.08s;
+
+  &.active {
+    background: #ff4d4d;
+    color: #fff;
+    cursor: pointer;
+
+    &:hover  { background: #e03030; transform: translateY(-1px); }
+    &:active { transform: translateY(0); }
+  }
+}
+
+.save-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.75);
+  flex-shrink: 0;
+  animation: save-pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes save-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.35; transform: scale(0.75); }
+}
+
+/* ── Add button ───────────────────────────────────────────────────────────── */
+
+.btn-add {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -420,49 +377,15 @@
   padding: 9px;
   border: none;
   border-radius: 8px;
-  background: #e8e8e8;
-  color: #aaa;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: not-allowed;
-  transition: background 0.12s, color 0.12s, transform 0.1s;
-
-  &.active {
-    background: #ff4d4d;
-    color: #fff;
-    cursor: pointer;
-    &:hover { background: #ff7070; transform: translateY(-1px); }
-  }
-}
-
-.save-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.8);
-  flex-shrink: 0;
-}
-
-/* ── Primary add button ───────────────────────────────────────────────────── */
-
-.btn-add {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  width: 100%;
-  padding: 8px;
-  border: none;
-  border-radius: 7px;
   background: #ff4d4d;
   color: #fff;
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.12s, transform 0.1s;
+  transition: background 0.12s, transform 0.08s;
 
-  &:hover:not(:disabled) { background: #ff7070; transform: translateY(-1px); }
-  &:disabled { background: #e0e0e0; color: #bbb; cursor: not-allowed; transform: none; }
+  &:hover:not(:disabled)  { background: #e03030; transform: translateY(-1px); }
+  &:active:not(:disabled) { transform: translateY(0); }
+  &:disabled              { background: #e8e8e8; color: #c0c0c0; cursor: not-allowed; }
 }

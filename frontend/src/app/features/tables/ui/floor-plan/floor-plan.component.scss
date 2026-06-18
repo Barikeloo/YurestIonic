@@ -7,8 +7,6 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: #f0f0f0;
-  border-radius: 10px;
   overflow: hidden;
 }
 
@@ -20,7 +18,6 @@
   height: 100%;
   flex: 1;
   min-height: 0;
-  border-radius: 10px;
 }
 
 /* ── Table groups ───────────────────────────────────────────────────────── */
@@ -31,92 +28,105 @@
   &:hover .fp-shape { opacity: 0.85; }
 }
 
-/* ── Shape fills by status ──────────────────────────────────────────────── */
+/* ── Shape fills by status (matches normal view) ────────────────────────── */
 
 .fp-shape {
-  stroke-width: 1.5;
+  stroke-width: 2;
   transition: fill 0.15s, stroke 0.12s;
 }
 
-/* Free */
+/* Free — white card with light border */
 .fp-table.st-free .fp-shape {
   fill: #ffffff;
-  stroke: #cccccc;
+  stroke: #E8E8E8;
 }
 
-/* Occupied (open order) */
+/* Occupied — dark card */
 .fp-table.st-open .fp-shape {
-  fill: #f0fdf4;
-  stroke: #4ade80;
-  stroke-width: 2;
+  fill: #0D0D0D;
+  stroke: #0D0D0D;
 }
 
-/* To charge */
+/* To charge — blue card */
 .fp-table.st-charge .fp-shape {
-  fill: #fffbeb;
-  stroke: #f59e0b;
-  stroke-width: 2;
+  fill: #1A6FE8;
+  stroke: #1A6FE8;
 }
 
 /* Selected override */
 .fp-table.fp-selected .fp-shape {
-  stroke: #ff4d4d;
-  stroke-width: 2.5;
+  stroke: #FF4D4D;
+  stroke-width: 3;
 }
 
-/* ── Selection ring ─────────────────────────────────────────────────────── */
-
-.fp-ring {
-  fill: none;
-  stroke: #ff4d4d;
-  stroke-width: 2;
-  stroke-dasharray: 6 3;
-  opacity: 0.5;
-  pointer-events: none;
-  animation: fp-dash 10s linear infinite;
+/* Merge-selected — matches normal view merge mode highlight */
+.fp-table.fp-merge-selected .fp-shape {
+  stroke: #FF4D4D;
+  stroke-width: 3;
 }
 
-@keyframes fp-dash { to { stroke-dashoffset: -100; } }
+.fp-table.fp-merge-selected.st-free .fp-shape {
+  fill: rgba(255, 77, 77, 0.05);
+}
+
+/* Drag target hover — green glow like normal view */
+.fp-table.fp-drag-target .fp-shape {
+  stroke: #22C55E;
+  stroke-width: 3;
+}
+
+.fp-table.fp-drag-target.st-free .fp-shape {
+  fill: rgba(34, 197, 94, 0.08);
+}
+
+/* Source table being dragged — dim shape only (avoid SVG text reflow from group opacity) */
+.fp-table.fp-dragging-source .fp-shape {
+  opacity: 0.35;
+}
 
 /* ── Labels ─────────────────────────────────────────────────────────────── */
 
 .fp-name {
   font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  fill: #1a1a1a;
+  fill: #0D0D0D;
   pointer-events: none;
   user-select: none;
 
-  .fp-table.st-open   & { fill: #166534; }
-  .fp-table.st-charge & { fill: #92400e; }
-  .fp-table.fp-selected & { fill: #cc2200; }
+  .fp-table.st-open   & { fill: #ffffff; }
+  .fp-table.st-charge & { fill: #ffffff; }
+}
+
+.fp-merged-name {
+  font-size: 11px;
+  letter-spacing: 0.01em;
 }
 
 .fp-diners {
   font-family: 'DM Sans', sans-serif;
   font-size: 10px;
   font-weight: 500;
-  fill: #6b7280;
+  fill: #A0A0A0;
   pointer-events: none;
   user-select: none;
 
-  .fp-table.st-open   & { fill: #15803d; }
-  .fp-table.st-charge & { fill: #b45309; }
+  .fp-table.st-open   & { fill: rgba(255, 255, 255, 0.75); }
+  .fp-table.st-charge & { fill: rgba(255, 255, 255, 0.75); }
 }
 
-/* ── COBRAR badge ───────────────────────────────────────────────────────── */
+/* ── COBRAR badge (matches normal view pill) ────────────────────────────── */
 
 .fp-cobrar-bg {
-  fill: #f59e0b;
+  fill: rgba(255, 255, 255, 0.18);
 }
 
 .fp-cobrar-label {
   font-family: 'DM Sans', sans-serif;
-  font-size: 8px;
-  font-weight: 800;
-  fill: #fff;
-  letter-spacing: 0.04em;
+  font-size: 9px;
+  font-weight: 700;
+  fill: #ffffff;
+  letter-spacing: 0.08em;
   pointer-events: none;
   user-select: none;
 }
@@ -148,5 +158,4 @@
   color: #9ca3af;
   padding: 6px 0 4px;
   margin: 0;
-  background: #f0f0f0;
 }

@@ -70,7 +70,13 @@
           <app-floor-plan
             [tables]="activeZoneTables()"
             [selectedTableId]="facade.selectedTable()?.id ?? null"
+            [isMergeMode]="isMergeMode"
+            [mergeSelectedTableIds]="selectedTablesForMerge"
+            [dragTargetTableId]="dragTargetId"
+            [draggingSourceTableId]="dragSourceTableId"
+            [mergeAnchorTableIds]="mergeAnchorTableIds"
             (tableSelected)="onFloorTableSelected($event)"
+            (tableDragStarted)="onFloorTableDragStarted($event)"
           />
         } @else {
 

@@ -1,5 +1,7 @@
 <div class="fp-wrap">
-  @if (placedTables().length === 0) {
+  @let hasTables = placedTables().length > 0 || placedMergedGroups().length > 0;
+
+  @if (!hasTables) {
     <div class="fp-empty">
       <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5">
         <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
@@ -10,32 +12,18 @@
     </div>
   }
 
-  @if (placedTables().length > 0) {
+  @if (hasTables) {
     <svg class="fp-svg"
          viewBox="0 0 1200 800"
          preserveAspectRatio="xMidYMid meet">
 
       <defs>
-        <!-- Subtle dot grid matching editor (40px snap) -->
-        <pattern id="fp-dots" width="40" height="40" patternUnits="userSpaceOnUse">
-          <circle cx="0" cy="0" r="1" fill="#e0e0e0"/>
-        </pattern>
-        <!-- Table shadow -->
         <filter id="fp-shadow" x="-15%" y="-15%" width="130%" height="130%">
           <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00000012"/>
         </filter>
-        <!-- Selected glow -->
-        <filter id="fp-glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feDropShadow dx="0" dy="0" stdDeviation="5" flood-color="#ff4d4d" flood-opacity="0.35"/>
-        </filter>
       </defs>
 
-      <!-- Background -->
-      <rect width="1200" height="800" fill="#fff"/>
-      <rect width="1200" height="800" fill="url(#fp-dots)"/>
-      <rect width="1200" height="800" fill="none" stroke="#e8e8e8" stroke-width="1.5"/>
-
-      <!-- Tables -->
+      <!-- Individual tables -->
       @for (t of placedTables(); track t.id) {
         @let lyt = t.layout!;
         @let sel = selectedTableId() === t.id;
@@ -44,37 +32,30 @@
           class="fp-table"
           [class]="statusClass(t)"
           [class.fp-selected]="sel"
+          [class.fp-merge-selected]="isMergeSelected(t)"
+          [class.fp-drag-target]="dragTargetTableId() === t.id"
+          [class.fp-dragging-source]="draggingSourceTableId() === t.id"
+          [attr.data-table-id]="t.id"
           [attr.transform]="'translate(' + lyt.pos_x + ',' + lyt.pos_y + ')'"
+          (pointerdown)="onTablePointerDown($event, t)"
           (click)="onTableClick(t)"
         >
-          <!-- Selection ring -->
-          @if (sel) {
-            @if (lyt.shape === 'circle') {
-              <circle [attr.cx]="lyt.width/2" [attr.cy]="lyt.width/2" [attr.r]="lyt.width/2+6" class="fp-ring"/>
-            } @else {
-              <rect [attr.x]="-6" [attr.y]="-6" [attr.width]="lyt.width+12" [attr.height]="lyt.height+12" rx="14" class="fp-ring"/>
-            }
-          }
-
-          <!-- Shape -->
           @if (lyt.shape === 'circle') {
             <circle [attr.cx]="lyt.width/2" [attr.cy]="lyt.width/2" [attr.r]="lyt.width/2-1"
-              class="fp-shape" [attr.filter]="sel ? 'url(#fp-glow)' : 'url(#fp-shadow)'"/>
+              class="fp-shape" filter="url(#fp-shadow)"/>
           } @else {
-            <rect [attr.width]="lyt.width" [attr.height]="lyt.height" rx="10"
-              class="fp-shape" [attr.filter]="sel ? 'url(#fp-glow)' : 'url(#fp-shadow)'"/>
+            <rect [attr.width]="lyt.width" [attr.height]="lyt.height" rx="18"
+              class="fp-shape" filter="url(#fp-shadow)"/>
           }
 
-          <!-- Table name -->
           <text
             [attr.x]="lyt.width / 2"
-            [attr.y]="centerY(t)"
+            [attr.y]="tableNameY(t)"
             text-anchor="middle"
             dominant-baseline="central"
             class="fp-name"
           >{{ t.name }}</text>
 
-          <!-- Diners (occupied tables only) -->
           @if (t.occupied && t.diners) {
             <text
               [attr.x]="lyt.width / 2"
@@ -85,17 +66,71 @@
             >{{ t.diners }} pers.</text>
           }
 
-          <!-- COBRAR badge -->
           @if (t.status === OrderStatus.TO_CHARGE) {
             <rect
-              [attr.x]="lyt.width/2 - 24"
-              [attr.y]="(lyt.shape === 'circle' ? lyt.width : lyt.height) - 18"
-              width="48" height="14" rx="7"
+              [attr.x]="lyt.width/2 - 26"
+              [attr.y]="(lyt.shape === 'circle' ? lyt.width : lyt.height) - 24"
+              width="52" height="18" rx="9"
               class="fp-cobrar-bg"
             />
             <text
               [attr.x]="lyt.width / 2"
-              [attr.y]="(lyt.shape === 'circle' ? lyt.width : lyt.height) - 11"
+              [attr.y]="(lyt.shape === 'circle' ? lyt.width : lyt.height) - 15"
+              text-anchor="middle"
+              dominant-baseline="central"
+              class="fp-cobrar-label"
+            >COBRAR</text>
+          }
+        </g>
+      }
+
+      <!-- Merged groups: same card as the anchor table, name shows both -->
+      @for (g of placedMergedGroups(); track g.groupId) {
+        @let lyt = g.anchor.layout!;
+        @let h = anchorH(g);
+        @let sel = isGroupSelected(g);
+        @let groupStatus = mergedGroupStatus(g.tables);
+        @let charge = groupHasCharge(g.tables);
+
+        <g
+          class="fp-table fp-merged-group"
+          [class]="groupStatus"
+          [class.fp-selected]="sel"
+          [class.fp-drag-target]="dragTargetTableId() === g.anchor.id"
+          [class.fp-dragging-source]="draggingSourceTableId() === g.anchor.id"
+          [attr.data-table-id]="g.anchor.id"
+          [attr.transform]="'translate(' + lyt.pos_x + ',' + lyt.pos_y + ')'"
+          (pointerdown)="onGroupPointerDown($event, g)"
+          (click)="onGroupClick(g)"
+        >
+          <!-- Same shape as the anchor table -->
+          @if (lyt.shape === 'circle') {
+            <circle [attr.cx]="lyt.width/2" [attr.cy]="lyt.width/2" [attr.r]="lyt.width/2-1"
+              class="fp-shape" filter="url(#fp-shadow)"/>
+          } @else {
+            <rect [attr.width]="lyt.width" [attr.height]="h" rx="18"
+              class="fp-shape" filter="url(#fp-shadow)"/>
+          }
+
+          <!-- Merged name centered -->
+          <text
+            [attr.x]="lyt.width / 2"
+            [attr.y]="h / 2"
+            text-anchor="middle"
+            dominant-baseline="central"
+            class="fp-name fp-merged-name"
+          >{{ mergedGroupName(g.tables) }}</text>
+
+          @if (charge) {
+            <rect
+              [attr.x]="lyt.width/2 - 26"
+              [attr.y]="h - 24"
+              width="52" height="18" rx="9"
+              class="fp-cobrar-bg"
+            />
+            <text
+              [attr.x]="lyt.width / 2"
+              [attr.y]="h - 15"
               text-anchor="middle"
               dominant-baseline="central"
               class="fp-cobrar-label"

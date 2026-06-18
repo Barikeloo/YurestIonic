@@ -47,7 +47,11 @@ export class MesasPage implements OnInit {
   }
 
   public onFloorTableSelected(table: TableWithStatus): void {
-    void this.selectTable(table);
+    if (this.isMergeMode) {
+      this.toggleTableForMerge(table.id);
+    } else {
+      void this.selectTable(table);
+    }
   }
 
   public modalOpen = false;
@@ -84,10 +88,16 @@ export class MesasPage implements OnInit {
 
   public lastTransfer: OrderTransferItem | null = null;
 
+  private static readonly ANCHOR_KEY = 'mesas_merge_anchors';
+
   public isMergeMode = false;
   public selectedTablesForMerge: string[] = [];
   public mergingTables = false;
   public dragTargetId: string | null = null;
+  public dragSourceTableId: string | null = null;
+  public mergeAnchorTableIds: string[] = JSON.parse(
+    localStorage.getItem(MesasPage.ANCHOR_KEY) ?? '[]'
+  );
   private dragSourceTable: TableWithStatus | null = null;
   private dragSourceElement: HTMLElement | null = null;
   private dragPreview: HTMLElement | null = null;
@@ -99,6 +109,7 @@ export class MesasPage implements OnInit {
 
   public async ngOnInit(): Promise<void> {
     await this.facade.loadData();
+    this.pruneAnchors();
 
     const preselectId = this.route.snapshot.queryParams['selectedTableId'] ?? null;
 
@@ -109,6 +120,21 @@ export class MesasPage implements OnInit {
         await this.selectTable(table);
       }
     }
+  }
+
+  private addAnchor(tableId: string): void {
+    if (!this.mergeAnchorTableIds.includes(tableId)) {
+      this.mergeAnchorTableIds = [...this.mergeAnchorTableIds, tableId];
+    }
+    localStorage.setItem(MesasPage.ANCHOR_KEY, JSON.stringify(this.mergeAnchorTableIds));
+  }
+
+  private pruneAnchors(): void {
+    const mergedIds = new Set(
+      this.facade.tables().filter(t => !!t.merged_table_group_id).map(t => t.id)
+    );
+    this.mergeAnchorTableIds = this.mergeAnchorTableIds.filter(id => mergedIds.has(id));
+    localStorage.setItem(MesasPage.ANCHOR_KEY, JSON.stringify(this.mergeAnchorTableIds));
   }
 
   public setZone(zoneId: string): void {
@@ -515,7 +541,6 @@ export class MesasPage implements OnInit {
 
   public enterMergeMode(tableToSelect?: TableWithStatus | null): void {
     this.isMergeMode = true;
-    this.setViewMode('lista');
 
     if (tableToSelect) {
       this.selectedTablesForMerge = [tableToSelect.id];
@@ -556,10 +581,6 @@ export class MesasPage implements OnInit {
     const mesaEl = (event.target as HTMLElement).closest('.mesa') as HTMLElement;
     this.dragSourceElement = mesaEl;
 
-    const rect = mesaEl.getBoundingClientRect();
-    this.dragOffsetX = event.clientX - rect.left;
-    this.dragOffsetY = event.clientY - rect.top;
-
     mesaEl.setPointerCapture(event.pointerId);
 
     const onPointerMove = (e: PointerEvent): void => {
@@ -567,7 +588,7 @@ export class MesasPage implements OnInit {
       const dy = e.clientY - this.dragStartY;
 
       if (!this.dragPreview && (Math.abs(dx) > this.DRAG_THRESHOLD || Math.abs(dy) > this.DRAG_THRESHOLD)) {
-        this.startDragPreview(e.clientX, e.clientY);
+        this.startDragPreview();
       }
 
       if (this.dragPreview) {
@@ -618,28 +639,173 @@ export class MesasPage implements OnInit {
     document.addEventListener('pointerup', onPointerUp);
   }
 
-  private startDragPreview(x: number, y: number): void {
+  public onFloorTableDragStarted(data: { table: TableWithStatus; event: PointerEvent }): void {
+    const { table, event } = data;
+
+    if (event.button !== 0) return;
+    if (this.isMergeMode) return;
+
+    this.dragSourceTable = table;
+    this.dragStartX = event.clientX;
+    this.dragStartY = event.clientY;
+
+    const svgGroup = (event.target as Element).closest('g.fp-table') as SVGElement | null;
+    if (!svgGroup) return;
+
+    this.dragSourceElement = svgGroup as unknown as HTMLElement;
+    this.dragSourceTableId = table.id;
+
+    const onPointerMove = (e: PointerEvent): void => {
+      const dx = e.clientX - this.dragStartX;
+      const dy = e.clientY - this.dragStartY;
+
+      if (!this.dragPreview && (Math.abs(dx) > this.DRAG_THRESHOLD || Math.abs(dy) > this.DRAG_THRESHOLD)) {
+        this.startDragPreview();
+      }
+
+      if (this.dragPreview) {
+        this.moveDragPreview(e.clientX, e.clientY);
+
+        this.dragPreview.style.display = 'none';
+        const elementBelow = document.elementFromPoint(e.clientX, e.clientY);
+        this.dragPreview.style.display = '';
+
+        if (elementBelow) {
+          const targetGroup = (elementBelow as Element).closest('g.fp-table');
+          if (targetGroup) {
+            const targetId = targetGroup.getAttribute('data-table-id');
+            this.dragTargetId = targetId !== table.id ? targetId : null;
+          } else {
+            this.dragTargetId = null;
+          }
+        } else {
+          this.dragTargetId = null;
+        }
+      }
+    };
+
+    const onPointerUp = async (e: PointerEvent): Promise<void> => {
+      this.dragSourceTableId = null;
+
+      document.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('pointerup', onPointerUp);
+
+      if (this.dragPreview) {
+        this.destroyDragPreview();
+
+        if (this.dragTargetId && this.dragTargetId !== table.id) {
+          const targetTable = this.facade.tables().find(t => t.id === this.dragTargetId);
+          if (targetTable) {
+            await this.attemptMerge(table, targetTable);
+          }
+        }
+      }
+
+      this.dragSourceElement = null;
+      this.dragSourceTable = null;
+      this.dragTargetId = null;
+    };
+
+    document.addEventListener('pointermove', onPointerMove);
+    document.addEventListener('pointerup', onPointerUp);
+  }
+
+  private startDragPreview(): void {
     if (!this.dragSourceElement) { return; }
 
     const rect = this.dragSourceElement.getBoundingClientRect();
+    this.dragOffsetX = this.dragStartX - rect.left;
+    this.dragOffsetY = this.dragStartY - rect.top;
 
-    const preview = this.dragSourceElement.cloneNode(true) as HTMLElement;
-    preview.classList.add('mesa-drag-preview');
-    preview.style.position = 'fixed';
-    preview.style.left = `${rect.left}px`;
-    preview.style.top = `${rect.top}px`;
-    preview.style.width = `${rect.width}px`;
-    preview.style.height = `${rect.height}px`;
-    preview.style.zIndex = '9999';
-    preview.style.pointerEvents = 'none';
-    preview.style.margin = '0';
-    preview.style.transform = 'scale(1.08)';
-    preview.style.opacity = '0.95';
+    // SVG elements cannot be cloned into HTML body — create floating card instead
+    let preview: HTMLElement;
+
+    if (this.dragSourceElement.namespaceURI === 'http://www.w3.org/2000/svg') {
+      preview = this.createSvgDragPreviewElement(this.dragSourceTable, rect);
+      preview.style.position = 'fixed';
+      preview.style.left = `${rect.left}px`;
+      preview.style.top = `${rect.top}px`;
+      preview.style.width = `${rect.width}px`;
+      preview.style.height = `${rect.height}px`;
+      preview.style.borderRadius = '18px';
+      preview.style.overflow = 'hidden';
+      preview.style.boxShadow = '0 12px 32px rgba(0,0,0,0.2), 0 0 0 3px rgba(34,197,94,0.35)';
+      preview.style.zIndex = '9999';
+      preview.style.pointerEvents = 'none';
+      preview.style.margin = '0';
+      preview.style.opacity = '0.95';
+    } else {
+      preview = this.dragSourceElement.cloneNode(true) as HTMLElement;
+      preview.classList.add('mesa-drag-preview');
+      preview.style.position = 'fixed';
+      preview.style.left = `${rect.left}px`;
+      preview.style.top = `${rect.top}px`;
+      preview.style.width = `${rect.width}px`;
+      preview.style.height = `${rect.height}px`;
+      preview.style.zIndex = '9999';
+      preview.style.pointerEvents = 'none';
+      preview.style.margin = '0';
+      preview.style.transform = 'scale(1.08)';
+      preview.style.opacity = '0.95';
+    }
 
     document.body.appendChild(preview);
     this.dragPreview = preview;
 
-    this.dragSourceElement.style.opacity = '0.4';
+    // HTML elements use inline opacity; SVG uses CSS class (fp-dragging-source)
+    if (this.dragSourceElement.namespaceURI !== 'http://www.w3.org/2000/svg') {
+      this.dragSourceElement.style.opacity = '0.4';
+    }
+  }
+
+  private createSvgDragPreviewElement(table: TableWithStatus | null, _rect: DOMRect): HTMLElement {
+    const card = document.createElement('div');
+    card.style.position = 'relative';
+
+    if (table?.status === OrderStatus.TO_CHARGE) {
+      card.style.background = '#1A6FE8';
+      card.style.border = '2px solid #1A6FE8';
+    } else if (table?.occupied) {
+      card.style.background = '#0D0D0D';
+      card.style.border = '2px solid #0D0D0D';
+    } else {
+      card.style.background = '#ffffff';
+      card.style.border = '2px solid #E8E8E8';
+    }
+
+    const nameEl = document.createElement('span');
+    nameEl.textContent = table?.name ?? '';
+    nameEl.style.position = 'absolute';
+    nameEl.style.top = '50%';
+    nameEl.style.left = '50%';
+    nameEl.style.transform = 'translate(-50%, -50%)';
+    nameEl.style.fontSize = '14px';
+    nameEl.style.fontWeight = '600';
+    nameEl.style.fontFamily = "'DM Sans', sans-serif";
+    nameEl.style.lineHeight = '1.2';
+    nameEl.style.whiteSpace = 'nowrap';
+    nameEl.style.color = table?.occupied || table?.status === OrderStatus.TO_CHARGE ? '#ffffff' : '#0D0D0D';
+    card.appendChild(nameEl);
+
+    if (table?.status === OrderStatus.TO_CHARGE) {
+      const tag = document.createElement('span');
+      tag.textContent = 'COBRAR';
+      tag.style.position = 'absolute';
+      tag.style.bottom = '10px';
+      tag.style.left = '50%';
+      tag.style.transform = 'translateX(-50%)';
+      tag.style.fontSize = '9px';
+      tag.style.fontWeight = '700';
+      tag.style.letterSpacing = '0.08em';
+      tag.style.color = '#fff';
+      tag.style.padding = '3px 8px';
+      tag.style.borderRadius = '999px';
+      tag.style.background = 'rgba(255, 255, 255, 0.18)';
+      tag.style.whiteSpace = 'nowrap';
+      card.appendChild(tag);
+    }
+
+    return card;
   }
 
   private moveDragPreview(x: number, y: number): void {
@@ -694,8 +860,10 @@ export class MesasPage implements OnInit {
 
     try {
       await this.facade.mergeTables([sourceTable.id, targetTable.id]);
+      this.addAnchor(targetTable.id);
       this.toastService.presentSuccess('Mesas fusionadas correctamente');
       await this.facade.loadData();
+      this.pruneAnchors();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudieron fusionar las mesas.';
       this.toastService.presentError(message);
@@ -719,8 +887,10 @@ export class MesasPage implements OnInit {
 
     try {
       await this.facade.mergeTables(this.selectedTablesForMerge);
+      this.addAnchor(this.selectedTablesForMerge[0]);
       this.toastService.presentSuccess('Mesas fusionadas correctamente');
       await this.facade.loadData();
+      this.pruneAnchors();
       this.exitMergeMode();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudieron fusionar las mesas.';
@@ -735,6 +905,7 @@ export class MesasPage implements OnInit {
       await this.facade.unmergeTables(groupId);
       this.toastService.presentSuccess('Mesas separadas correctamente');
       await this.facade.loadData();
+      this.pruneAnchors();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'No se pudieron separar las mesas.';
       this.toastService.presentError(message);
