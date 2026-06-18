@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { GestionZonesFloorFacade, SizePreset } from './facades/gestion-zones-floor.facade';
+import { HasUnsavedChanges } from '../../../core/guards/can-deactivate.guard';
 import { FloorCanvasComponent } from './components/floor-canvas/floor-canvas.component';
 import { FloorPanelComponent } from './components/floor-panel/floor-panel.component';
 import { ToastService } from '../../../core/services/toast.service';
@@ -13,7 +14,7 @@ import { ToastService } from '../../../core/services/toast.service';
   imports: [FloorCanvasComponent, FloorPanelComponent],
   providers: [GestionZonesFloorFacade],
 })
-export class GestionZonesFloorPage implements OnInit {
+export class GestionZonesFloorPage implements OnInit, HasUnsavedChanges {
   protected readonly facade      = inject(GestionZonesFloorFacade);
   private  readonly route        = inject(ActivatedRoute);
   private  readonly router       = inject(Router);
@@ -35,10 +36,11 @@ export class GestionZonesFloorPage implements OnInit {
     }
   }
 
+  hasUnsavedChanges(): boolean {
+    return this.facade.isDirty();
+  }
+
   goBack(): void {
-    if (this.facade.isDirty()) {
-      if (!confirm('Hay cambios sin guardar. ¿Salir sin guardar?')) return;
-    }
     void this.router.navigate(['/app/gestion']);
   }
 

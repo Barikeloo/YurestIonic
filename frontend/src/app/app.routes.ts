@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { AuthGuard } from './core/guards/auth.guard';
 import { RoleGuard } from './core/guards/role.guard';
+import { canDeactivateGuard } from './core/guards/can-deactivate.guard';
 
 export const routes: Routes = [
   {
@@ -16,6 +17,7 @@ export const routes: Routes = [
       {
         path: 'gestion/zones/:zoneId/floor',
         canActivate: [AuthGuard, RoleGuard],
+        canDeactivate: [canDeactivateGuard],
         data: { role: 'admin' },
         loadComponent: () => import('./pages/core/gestion-zones-floor/gestion-zones-floor.page').then((m) => m.GestionZonesFloorPage),
       },
