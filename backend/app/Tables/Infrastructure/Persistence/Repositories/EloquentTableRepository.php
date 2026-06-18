@@ -49,12 +49,16 @@ class EloquentTableRepository implements TableRepositoryInterface
         return $this->hydrate($model);
     }
 
-    public function findAll(bool $includeDeleted = false): array
+    public function findAll(bool $includeDeleted = false, ?string $zoneId = null): array
     {
         $query = $this->model->newQuery()->with('zone')->orderBy('name');
 
         if ($includeDeleted) {
             $query->withTrashed();
+        }
+
+        if ($zoneId !== null) {
+            $query->whereHas('zone', fn ($q) => $q->where('uuid', $zoneId));
         }
 
         return $query->get()

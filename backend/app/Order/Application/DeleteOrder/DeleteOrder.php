@@ -19,7 +19,6 @@ final class DeleteOrder
     {
         $orderId = Uuid::create($command->id);
         $order = $this->orderRepository->findByUuid($orderId);
- 
         if ($order === null) {
             throw OrderNotFoundException::withId($command->id);
         }

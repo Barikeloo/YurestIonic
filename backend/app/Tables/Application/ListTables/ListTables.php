@@ -13,7 +13,7 @@ class ListTables
 
     public function __invoke(ListTablesCommand $command): ListTablesResponse
     {
-        $tables = $this->tableRepository->findAll($command->includeDeleted ?? false);
+        $tables = $this->tableRepository->findAll($command->includeDeleted ?? false, $command->zoneId);
 
         $items = array_map(
             static fn (Table $table): array => ListTablesItemResponse::create(

@@ -15,7 +15,8 @@ final class ListTablesRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'all' => ['nullable', 'boolean'],
+            'all'     => ['nullable', 'boolean'],
+            'zone_id' => ['nullable', 'uuid'],
         ];
     }
 
@@ -23,6 +24,7 @@ final class ListTablesRequest extends FormRequest
     {
         return new ListTablesCommand(
             includeDeleted: $this->query('all') === 'true',
+            zoneId:         $this->query('zone_id') ?: null,
         );
     }
 }

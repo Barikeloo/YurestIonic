@@ -11,7 +11,7 @@ interface TableRepositoryInterface
 
     public function findById(string $id): ?Table;
 
-    public function findAll(bool $includeDeleted = false): array;
+    public function findAll(bool $includeDeleted = false, ?string $zoneId = null): array;
 
     public function deleteById(string $id): bool;
 
