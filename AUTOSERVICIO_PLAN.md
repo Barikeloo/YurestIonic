@@ -233,11 +233,10 @@ CREATE TABLE loyalty_visits (
 ### 4.2 Modificaciones en tablas existentes
 
 ```sql
--- Alérgenos en productos
-ALTER TABLE products ADD COLUMN allergens JSON NULL;
--- ["gluten","crustaceos","huevo","pescado","cacahuetes","soja",
---  "lacteos","frutos_cascara","apio","mostaza","sesamo",
---  "sulfitos","altramuces","moluscos"]
+-- Alérgenos en productos → ✅ YA EXISTE
+-- Migración 2026_05_15_100000_add_allergens_to_products_table.php ya aplicada.
+-- Columna: products.allergens JSON NULLABLE
+-- Códigos válidos definidos en ProductAllergens::ALLERGENS (14 valores EU)
 
 -- Origen y contexto de guest en order_lines
 ALTER TABLE order_lines ADD COLUMN origin ENUM('tpv','guest') NOT NULL DEFAULT 'tpv';
@@ -758,34 +757,47 @@ Tienes 127 puntos acumulados.
 
 ## 10. Alérgenos
 
-### 10.1 Los 14 alérgenos de la UE (Reglamento 1169/2011)
+> ✅ **Ya implementado en el backend.** No requiere trabajo adicional en backend ni backoffice.
 
-| Código | Nombre ES | Icono |
+### 10.1 Estado actual
+
+Los alérgenos están completamente implementados desde `2026-05-15`:
+
+- **Migración**: `2026_05_15_100000_add_allergens_to_products_table.php` añade `allergens JSON NULLABLE` a `products`.
+- **Value Object**: `App\Product\Domain\ValueObject\ProductAllergens` con validación estricta de los 14 códigos.
+- **Dominio**: `Product::allergens()` expone `ProductAllergens::values()` como `array<string>`.
+- **CRUD**: `CreateProduct`, `UpdateProduct`, `GetProduct`, `ListProducts` ya gestionan alérgenos.
+- **Backoffice Angular**: el formulario de producto ya incluye el selector de alérgenos.
+
+### 10.2 Códigos de alérgenos definidos en `ProductAllergens::ALLERGENS`
+
+| Código backend | Nombre ES | Icono |
 |---|---|---|
 | `gluten` | Gluten (trigo, cebada, centeno...) | 🌾 |
-| `crustaceos` | Crustáceos | 🦀 |
-| `huevo` | Huevo | 🥚 |
-| `pescado` | Pescado | 🐟 |
-| `cacahuetes` | Cacahuetes | 🥜 |
-| `soja` | Soja | 🫘 |
-| `lacteos` | Lácteos | 🥛 |
-| `frutos_cascara` | Frutos de cáscara | 🌰 |
-| `apio` | Apio | 🌿 |
-| `mostaza` | Mostaza | 🌱 |
-| `sesamo` | Sésamo | 🌻 |
-| `sulfitos` | Dióxido de azufre y sulfitos | 🍷 |
-| `altramuces` | Altramuces | 🫛 |
-| `moluscos` | Moluscos | 🦑 |
+| `crustaceans` | Crustáceos | 🦀 |
+| `eggs` | Huevo | 🥚 |
+| `fish` | Pescado | 🐟 |
+| `peanuts` | Cacahuetes | 🥜 |
+| `soy` | Soja | 🫘 |
+| `dairy` | Lácteos | 🥛 |
+| `nuts` | Frutos de cáscara | 🌰 |
+| `celery` | Apio | 🌿 |
+| `mustard` | Mostaza | 🌱 |
+| `sesame` | Sésamo | 🌻 |
+| `sulphites` | Dióxido de azufre y sulfitos | 🍷 |
+| `lupin` | Altramuces | 🫛 |
+| `molluscs` | Moluscos | 🦑 |
 
-### 10.2 En el backoffice (edición de producto)
+### 10.3 Lo único que falta: exposición en el endpoint público
 
-Nueva sección "Alérgenos" con 14 checkboxes con icono y nombre. Guardados como JSON array.
+El endpoint `GET /public/table/{token}/catalog` debe incluir el array `allergens` de cada producto en la respuesta JSON. El campo ya existe en el dominio, solo hay que mapearlo en el Response del caso de uso `GetCatalogForGuest`.
 
-### 10.3 En la carta del comensal
+### 10.4 En la carta del comensal (frontend guest)
 
 - Iconos pequeños de alérgenos debajo de cada producto en la grid.
-- Tap en un icono → tooltip con el nombre completo.
-- **Filtro de alérgenos** en la carta: "Ocultar productos con [selector de alérgenos]". Útil para celíacos, alérgicos, etc.
+- Tap en un icono → tooltip con el nombre completo en español.
+- **Filtro de alérgenos**: "Ocultar productos con [selector]". Útil para celíacos, alérgicos, etc.
+- El pipe `allergen-icon.pipe.ts` mapea el código backend al emoji/icono + nombre ES.
 
 ---
 
@@ -844,9 +856,12 @@ Nueva sección "Alérgenos" con 14 checkboxes con icono y nombre. Guardados como
 - [ ] Evento `CheckRequestedByGuest` → Reverb → TPV
 - [ ] Cleanup job: cancelar `pending` lines en orders cerrados
 
-### Sprint 4 — Alérgenos (backend + backoffice)
-- [ ] ALTER `products`: añadir columna `allergens JSON`
-- [ ] Actualizar CRUD de productos en backoffice Angular con 14 checkboxes
+### Sprint 4 — Alérgenos (✅ backend y backoffice ya implementados)
+- [x] ~~ALTER `products`: columna `allergens JSON`~~ → migración `2026_05_15` ya aplicada
+- [x] ~~CRUD productos con alérgenos~~ → `ProductAllergens` VO + backoffice ya funciona
+- [ ] Exponer `allergens[]` en el endpoint público `GET /public/table/{token}/catalog`
+- [ ] Pipe `allergen-icon.pipe.ts` en guest frontend (código → emoji + nombre ES)
+- [ ] Filtro de alérgenos en la carta del comensal
 
 ### Sprint 5 — Carta digital guest (frontend)
 - [ ] Ruta pública `/s/:token` (sin AuthGuard)
