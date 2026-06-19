@@ -1,6 +1,6 @@
 # YurestIonic — TPV Profesional para Hostelería
 
-> **Versión:** Demo funcional — Junio 2026 (actualizado 16-jun-2026)  
+> **Versión:** Demo funcional — Junio 2026 (actualizado 19-jun-2026)  
 > **Stack:** Laravel 12 (backend) + Angular 19 + Ionic (frontend) + Laravel Reverb (WebSockets)  
 > **Arquitectura:** DDD + Hexagonal + Multi-tenant + Bus de eventos síncrono  
 > **Licencia:** Propietaria  
@@ -39,6 +39,7 @@
     - [5.11 Subida de foto por QR](#511-subida-de-foto-por-qr)
     - [5.13 Vista de plano de mesas (TPV)](#513-vista-de-plano-de-mesas-tpv)
     - [5.14 Editor de plano de sala (Backoffice)](#514-editor-de-plano-de-sala-backoffice)
+    - [5.15 Autoservicio QR — Carta digital para comensales](#515-autoservicio-qr--carta-digital-para-comensales)
 6. [Características implementadas](#6-características-implementadas)
 7. [Arquitectura](#7-arquitectura)
    - [7.1 Stack tecnológico](#71-stack-tecnológico)
@@ -73,6 +74,7 @@ El producto está pensado para desplegarse en tabletas táctiles como dispositiv
 - **Dashboard de finanzas** — Prototipo funcional con métricas de ventas por período, producto estrella y evolución de ingresos.
 - **Registro de Auditoría** — Traza inmutable de todas las operaciones críticas del negocio: 72 eventos instrumentados (auth, pedidos, caja, ventas, catálogo, mesas, configuración, restaurante). Hash SHA-256 encadenado por restaurante, detección de anomalías (ráfaga de PIN fallidos, descuadre de caja), alertas in-app, filtros server-side con paginación por cursor, live tail y vistas guardadas. Solo accesible para `admin`.
 - **Panel de desarrollador (SuperAdmin)** — Gestión de la plataforma multi-tenant: alta de restaurantes, administración de superadmins y control global del sistema.
+- **Módulo Autoservicio QR** *(en desarrollo — Sprint 1 completado)* — Carta digital para comensales: escanean el QR de la mesa con el móvil, abren la mesa ellos mismos, piden por rondas y solicitan la cuenta. El camarero recibe todo en tiempo real en el TPV vía Reverb. Sprint 1 completado: infraestructura de tokens QR, tablas de sesiones guest, endpoint `GET /public/table/{token}` y generación/regeneración de tokens desde el admin. Ver `AUTOSERVICIO_PLAN.md` para el plan completo.
 - **Prototipo PDA** — Diseño preliminar de la interfaz de PDA (Punto de Atención Digital) para operadores. Incompleto; se completará en una fase posterior del proyecto.
 
 ---
@@ -895,6 +897,81 @@ Si intentas salir del editor con cambios sin guardar, el sistema muestra un diá
 
 ---
 
+### 5.15 Autoservicio QR — Carta digital para comensales
+
+> **Estado:** En desarrollo activo — Sprint 1 completado (infraestructura base). La interfaz de comensal y la integración completa con el TPV se implementan en sprints posteriores. Ver [`AUTOSERVICIO_PLAN.md`](AUTOSERVICIO_PLAN.md) para el plan técnico completo.
+
+El módulo de **Autoservicio QR** elimina la fricción del ciclo de pedido: los comensales gestionan toda su experiencia desde el móvil escaneando el código QR de la mesa, sin necesidad de instalar ninguna app.
+
+#### Cómo funciona (visión completa)
+
+```
+Comensal llega → escanea QR de la mesa → abre la mesa él mismo
+  → navega la carta con alérgenos → añade productos al carrito
+  → decide cuándo enviar cada ronda a cocina/barra
+  → el camarero ve todo en el TPV en tiempo real (vía Reverb)
+  → comensal pulsa "Pedir la cuenta" → camarero cobra desde el TPV
+```
+
+#### Modos de identidad del comensal
+
+| Modo | Lo que da | TPV muestra | Puntos/Ofertas |
+|---|---|---|---|
+| **Anónimo** | Nada | "Anónimo" | — |
+| **Solo nombre** | Un nombre libre | "Carlos" | — |
+| **Con cuenta** | Email + contraseña | "Carlos ⭐" | Acumula puntos y accede a ofertas del restaurante |
+
+Las cuentas son **por restaurante** (no cross-platform). El comensal se registra la primera vez y en visitas siguientes hace login al escanear el QR para acumular puntos.
+
+#### Sistema de rondas
+
+El comensal controla cuándo recibe cada parte del pedido. Añade productos al carrito sin prisa y decide cuándo enviarlos:
+
+```
+Añadimos bebidas → "Enviar bebidas ahora" → llegan a la barra
+(tiempo después)
+Añadimos entrantes → "Enviar entrantes cuando estéis listos"
+(comemos entrantes)
+Añadimos platos principales → "Enviar platos"
+(terminamos)
+→ "Pedir la cuenta"
+```
+
+Cada ronda tiene un `idempotency_key` generado en el cliente, por lo que los reintentos por caída de red no crean rondas duplicadas.
+
+#### Estado actual — Sprint 1 completado
+
+| Componente | Estado |
+|---|---|
+| Migraciones (`table_qr_tokens`, `guest_sessions`, `guest_order_rounds`) | ✅ Aplicadas |
+| `products.available` + columnas guest en `order_lines` | ✅ Aplicadas |
+| Dominio `GuestOrder`: entidad `TableQrToken`, VOs, interfaces, eventos | ✅ Implementado |
+| `POST /api/admin/tables/{uuid}/qr-token` (generar/regenerar token) | ✅ Funcional |
+| `GET /public/table/{token}` (estado de mesa + info restaurante) | ✅ Funcional |
+| Auto-creación de QR al crear una mesa (via `GuestOrderTableCreatedSubscriber`) | ✅ Funcional |
+| CORS para rutas `/public/table/*` | ✅ Configurado |
+| Apertura de mesa por el comensal, carta, carrito, rondas, cuenta | 🔄 Próximos sprints |
+| Interfaz Angular del comensal (`/s/{token}`) | 🔄 Próximos sprints |
+| Integración Reverb en TPV (badges "⚡ Guest") | 🔄 Próximos sprints |
+| Sistema de cuentas y fidelización | 🔄 Próximos sprints |
+
+#### Integración con el TPV
+
+Cuando el autoservicio esté completo, el camarero verá en el TPV:
+
+- **Badge "Abierta vía QR · X pax"** en la tarjeta de la mesa.
+- **Lines con badge "⚡ Guest · Carlos · Ronda 1"** al recibir pedidos del comensal.
+- **Alerta roja "Carlos pide la cuenta — Mesa 3"** cuando el comensal solicita cobrar.
+- **Modal QR** en el panel lateral con el QR imprimible, sesiones conectadas en tiempo real y botón regenerar.
+
+#### Variable de entorno necesaria
+
+```env
+GUEST_APP_URL=http://localhost:4201   # URL base de la carta digital del comensal
+```
+
+---
+
 ## 6. Características implementadas
 
 ### Hitos del proyecto
@@ -909,6 +986,7 @@ Si intentas salir del editor con cambios sin guardar, el sistema muestra un diá
 | **Hito 6 — Auditoría y trazabilidad** | 100% | Registro de Auditoría con 72 slugs instrumentados, cadena de hash SHA-256, detección de anomalías, alertas in-app, vistas guardadas, paginación por cursor, live tail (auto-off en histórico), exportación CSV/NDJSON, banner contextual al llegar desde histórico, y panel **Histórico** con KPIs de retención, widget de anomalías (incidentes detectados en el corpus), badge de integridad de cadena (5 estados, persistido en servidor), gráfico mensual clickable (drill-down por mes), desglose por categoría con barras horizontales coloreadas, top 5 usuarios con avatares por rol, presets de rango temporal, deep-link contextual. Archivado por antigüedad (90d → `archived_at`, retención legal 6 años, nunca borrado) y toggle "Mostrar histórico" con `include_archived=1`. Solo acceso `admin`. Verificación de cadena con `GET /api/admin/audit-log/verify` y persistencia server-side del resultado vía `GET /api/admin/audit-log/verify/latest`. |
 | **Hito 7 — Mejoras operativas** | 100% | Roles, PIN, quick access, vinculación de dispositivo, multi-tenancy, productos con modificadores y subida de foto por QR con optimización server-side. |
 | **Hito 6 — Mejoras arquitectónicas** | 100% | **Bus de eventos síncrono:** `InMemorySyncEventBus` + `EventSubscriber` + `AuditableEvent`; todos los módulos (Order, Sale, Cash, Table, Menu, Family…) migrados a `EventBusInterface`. **Personalización de familias:** color (hex) e icono (set Material) en `Family`; picker en backoffice, acento visual en TPV. **Tiempo real de mesas (Reverb):** canal `restaurant.{id}`, 12 eventos broadcast cubiertos (OrderCreated → OrderInvoiced + TablesMerged/Unmerged), `MesasFacade` con `reloadOpenOrders()` + `reloadTables()`; 2/2 E2E Playwright verificado. |
+| **Hito 8 — Autoservicio QR** | 12% (Sprint 1/8) | Carta digital para comensales: escanean QR de mesa → piden por rondas → camarero recibe en TPV vía Reverb. Sprint 1 completado: dominio `GuestOrder`, 5 migraciones, token QR por mesa (generación/regeneración), endpoint público `GET /public/table/{token}`, auto-creación al crear mesa vía evento. Sprints 2–8 pendientes (apertura de mesa, carta, rondas, frontend Angular, Reverb, cuentas de cliente). |
 
 ### Funcionalidades detalladas
 
