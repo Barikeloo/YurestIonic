@@ -60,6 +60,8 @@ use App\Sale\Infrastructure\Persistence\Repositories\EloquentChargeSessionReposi
 use App\Sale\Infrastructure\Persistence\Repositories\EloquentOrderFinalTicketRepository;
 use App\Sale\Infrastructure\Persistence\Repositories\EloquentSaleLineRepository;
 use App\Sale\Infrastructure\Persistence\Repositories\EloquentSaleRepository;
+use App\GuestOrder\Domain\Interfaces\TableQrTokenRepositoryInterface;
+use App\GuestOrder\Infrastructure\Persistence\Repositories\EloquentTableQrTokenRepository;
 use App\Shared\Domain\Interfaces\TransactionManagerInterface;
 use App\Shared\Infrastructure\Persistence\LaravelTransactionManager;
 use App\Shared\Infrastructure\Tenant\TenantContext;
@@ -136,6 +138,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(\App\Printer\Domain\Interfaces\PrinterConfigRepositoryInterface::class, \App\Printer\Infrastructure\Persistence\Repositories\EloquentPrinterConfigRepository::class);
         $this->app->bind(\App\Printer\Domain\Interfaces\PrinterServiceInterface::class, \App\Printer\Infrastructure\Printing\TcpEscPosPrinterService::class);
         $this->app->bind(\App\Printer\Application\PrintFinalTicket\PrintFinalTicketInterface::class, \App\Printer\Application\PrintFinalTicket\PrintFinalTicket::class);
+        $this->app->bind(TableQrTokenRepositoryInterface::class, EloquentTableQrTokenRepository::class);
+        $this->app->bind(\App\GuestOrder\Application\GenerateTableQrToken\GenerateTableQrToken::class, static function ($app): \App\GuestOrder\Application\GenerateTableQrToken\GenerateTableQrToken {
+            return new \App\GuestOrder\Application\GenerateTableQrToken\GenerateTableQrToken(
+                tableRepository: $app->make(\App\Tables\Domain\Interfaces\TableRepositoryInterface::class),
+                tableQrTokenRepository: $app->make(TableQrTokenRepositoryInterface::class),
+                eventBus: $app->make(\App\Shared\Application\Event\EventBusInterface::class),
+                guestAppBaseUrl: (string) env('GUEST_APP_URL', 'http://localhost:4201'),
+            );
+        });
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
 
         $this->app->bind(\App\Shared\Application\Context\RequestContextInterface::class, \App\Shared\Infrastructure\Context\HttpRequestContext::class);
@@ -146,6 +157,7 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(\App\Order\Infrastructure\Broadcasting\TablesBroadcastSubscriber::class),
                 $app->make(\App\Tables\Infrastructure\Broadcasting\TablesGroupBroadcastSubscriber::class),
                 $app->make(\App\Printer\Application\Subscriber\PrintOnSaleClosedSubscriber::class),
+                $app->make(\App\GuestOrder\Infrastructure\Subscriber\GuestOrderTableCreatedSubscriber::class),
             );
         });
     }

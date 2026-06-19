@@ -430,3 +430,19 @@ Route::middleware([
     Route::put('/superadmin/restaurants/{uuid}/users/{userUuid}', UserAdminPutController::class)->whereUuid('uuid')->whereUuid('userUuid');
     Route::delete('/superadmin/restaurants/{uuid}/users/{userUuid}', UserAdminDeleteController::class)->whereUuid('uuid')->whereUuid('userUuid');
 });
+
+// ─── Guest / Autoservicio QR — rutas públicas (sin autenticación) ────────────
+Route::middleware('throttle:30,1')->group(function (): void {
+    Route::get('/public/table/{token}', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\GetTableStatusController::class);
+});
+
+// ─── Guest / Autoservicio QR — rutas de administración ──────────────────────
+Route::middleware([
+    EncryptCookies::class,
+    AddQueuedCookiesToResponse::class,
+    StartSession::class,
+    ResolveTenantContext::class,
+    RequireAdminSession::class,
+])->group(function (): void {
+    Route::post('/admin/tables/{tableId}/qr-token', \App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\GenerateTableQrTokenController::class)->whereUuid('tableId');
+});
