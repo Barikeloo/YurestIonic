@@ -95,7 +95,7 @@
 
           <!-- Resize handles -->
           @if (isSelected && _editing() !== table.id) {
-            @let hw = table.shape === 'circle' ? tw : tw;
+            @let hw = tw;
             @let hh = table.shape === 'circle' ? tw : th;
             <circle [attr.cx]="0"  [attr.cy]="0"  [attr.r]="HANDLE_R" class="resize-handle rh-tl" (pointerdown)="onHandlePointerDown($event, table, 'resize-tl')"/>
             <circle [attr.cx]="hw" [attr.cy]="0"  [attr.r]="HANDLE_R" class="resize-handle rh-tr" (pointerdown)="onHandlePointerDown($event, table, 'resize-tr')"/>

@@ -124,8 +124,8 @@ export class GestionZonesFloorFacade {
     const offset = placed.length * GRID_SNAP * 2;
     const rawX = Math.min(100 + offset, CANVAS_W - t.width);
     const rawY = 100;
-    const posX = snapByCenter(rawX, t.width);
-    const posY = snapByCenter(rawY, t.height);
+    const posX = Math.max(0, Math.min(CANVAS_W - t.width,  snapByCenter(rawX, t.width)));
+    const posY = Math.max(0, Math.min(CANVAS_H - t.height, snapByCenter(rawY, t.height)));
     this.patchTable(id, { posX, posY });
     this._isDirty.set(true);
   }
@@ -139,10 +139,24 @@ export class GestionZonesFloorFacade {
   changeShape(id: string, shape: 'rect' | 'circle'): void {
     const t = this._tables().find(t => t.id === id);
     if (!t) return;
-    // Preserve the current size. Circles must be square: use the larger dimension.
-    const dim = Math.max(t.width, t.height);
-    const newW = shape === 'circle' ? dim : t.width;
-    const newH = shape === 'circle' ? dim : t.height;
+    let newW: number, newH: number;
+    if (shape === 'circle') {
+      // Make square using the largest dimension
+      const dim = Math.max(t.width, t.height);
+      newW = dim; newH = dim;
+    } else {
+      // Circle is always square — find the nearest preset and apply its rect proportions
+      // to avoid ending up with a square rectangle.
+      const presets: SizePreset[] = ['S', 'M', 'L'];
+      let best: SizePreset = 'M';
+      let bestDiff = Infinity;
+      for (const p of presets) {
+        const diff = Math.abs(SIZE_PRESETS[p].circle.w - t.width);
+        if (diff < bestDiff) { bestDiff = diff; best = p; }
+      }
+      newW = SIZE_PRESETS[best].rect.w;
+      newH = SIZE_PRESETS[best].rect.h;
+    }
     this.patchTable(id, { shape, width: newW, height: newH });
     this._isDirty.set(true);
   }

@@ -197,7 +197,9 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     if (drag.kind === 'move') {
       const x = Math.max(0, Math.min(CANVAS_W - t.width,  snapByCenter(pt.x - drag.offsetX, t.width)));
       const y = Math.max(0, Math.min(CANVAS_H - t.height, snapByCenter(pt.y - drag.offsetY, t.height)));
-      this._livePos.set({ x, y, w: t.width, h: t.height });
+      if (!this.overlapsAny(drag.id, x, y, t.width, t.height)) {
+        this._livePos.set({ x, y, w: t.width, h: t.height });
+      }
       return;
     }
 
@@ -256,7 +258,11 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
   // Only terminates an active drag — never deselects.
   protected onCanvasWrapLeave(): void {
     const drag = this._drag();
-    if (!drag) return; // pointer just wandered out, no drag active → do nothing
+    // Only finalize move drags here. Resize drags have setPointerCapture on the SVG,
+    // so their pointerup fires on the SVG regardless of where the pointer is released.
+    // Finalizing resize drags on leave would set _drag=null, causing the subsequent
+    // SVG pointerup to emit canvasClicked() and incorrectly deselect the table.
+    if (!drag || drag.kind !== 'move') return;
     this.finalizeDrag(drag);
   }
 
@@ -345,6 +351,24 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
       top:  Math.max(0, cy - wrap.clientHeight / 2),
       behavior: 'smooth',
     });
+  }
+
+  // ── Collision detection ───────────────────────────────────────────────────
+  /**
+   * Returns true if the rectangle (x, y, w, h) overlaps any placed table
+   * other than the one being dragged. Uses strict AABB — tables may touch
+   * on edges but not overlap pixels.
+   */
+  private overlapsAny(dragId: string, x: number, y: number, w: number, h: number): boolean {
+    for (const t of this.placedTables()) {
+      if (t.id === dragId) continue;
+      const th = t.shape === 'circle' ? t.width : t.height;
+      if (x < t.posX! + t.width && x + w > t.posX! &&
+          y < t.posY! + th       && y + h > t.posY!) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // ── Coord transform ──────────────────────────────────────────────────────
