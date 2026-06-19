@@ -34,6 +34,7 @@
         [tables]="facade.tables()"
         [selectedId]="facade.selectedId()"
         [zoomLevel]="zoomLevel()"
+        [centerOnTableId]="centerOnTableId()"
         (tableClicked)="onTableClicked($event)"
         (canvasClicked)="onCanvasClicked()"
         (tableMoved)="onTableMoved($event)"
@@ -42,17 +43,21 @@
         (tableShapeToggled)="onTableShapeToggled($event)"
         (removeRequested)="onRemoveRequested($event)"
         (zoomChanged)="onZoomChanged($event)"
+        (addTableRequested)="onAddTableRequested()"
       />
 
       <aside class="editor-panel">
         <app-floor-panel
+          [placedTables]="facade.placedTables()"
           [unpositioned]="facade.unpositionedTables()"
           [selectedTable]="facade.selectedTable()"
           [isSaving]="facade.saving()"
           [isDirty]="facade.isDirty()"
           [zoomLevel]="zoomLevel()"
+          (openAddModal)="openAddModal()"
+          (tableSelected)="onTableSelectedFromPanel($event)"
+          (layerOrderChanged)="onLayerOrderChanged($event)"
           (nameChanged)="onTableNameEdited($event)"
-          (addTable)="onAddTable($event)"
           (placeOnCanvas)="onPlaceOnCanvas($event)"
           (removeFromCanvas)="onRemoveFromCanvas($event)"
           (shapeChanged)="onShapeChanged($event)"
@@ -68,3 +73,68 @@
   </div>
 
 </div>
+
+<!-- ── Modal: Nueva mesa ──────────────────────────────────────────────────── -->
+@if (addModalOpen) {
+  <div class="modal-overlay" (click)="closeAddModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+
+      <div class="modal-header">
+        <span class="modal-title">Nueva mesa</span>
+        <button class="modal-close" (click)="closeAddModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <input
+        class="modal-name-input"
+        type="text"
+        placeholder="Ej. Mesa 1, Terraza A…"
+        maxlength="20"
+        [(ngModel)]="addModalName"
+        (keydown.enter)="confirmAddTable()"
+        autofocus
+      />
+
+      <div class="modal-field">
+        <span class="modal-label">Forma</span>
+        <div class="modal-shape-picker">
+          <button class="modal-shape-btn" [class.active]="addModalShape === 'rect'" (click)="addModalShape = 'rect'">
+            <svg width="20" height="13" viewBox="0 0 22 14"><rect x="1" y="1" width="20" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+            Rectángulo
+          </button>
+          <button class="modal-shape-btn" [class.active]="addModalShape === 'circle'" (click)="addModalShape = 'circle'">
+            <svg width="14" height="14" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+            Círculo
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-field">
+        <span class="modal-label">Tamaño</span>
+        <div class="modal-size-seg">
+          @for (p of presets; track p) {
+            <button
+              class="modal-size-btn"
+              [class.active]="addModalPreset === p"
+              (click)="addModalPreset = p"
+            >{{ p }}</button>
+          }
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="modal-btn-cancel" (click)="closeAddModal()">Cancelar</button>
+        <button class="modal-btn-confirm" [disabled]="!addModalName.trim()" (click)="confirmAddTable()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Añadir al plano
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

@@ -37,6 +37,8 @@
    - [5.9 Editor de Menús — Combos y menú del día](#59-editor-de-menús--combos-y-menú-del-día)
     - [5.10 Registro de Auditoría](#510-registro-de-auditoría)
     - [5.11 Subida de foto por QR](#511-subida-de-foto-por-qr)
+    - [5.13 Vista de plano de mesas (TPV)](#513-vista-de-plano-de-mesas-tpv)
+    - [5.14 Editor de plano de sala (Backoffice)](#514-editor-de-plano-de-sala-backoffice)
 6. [Características implementadas](#6-características-implementadas)
 7. [Arquitectura](#7-arquitectura)
    - [7.1 Stack tecnológico](#71-stack-tecnológico)
@@ -710,22 +712,25 @@ El comando acepta `--restaurant-uuid` para restringir el alcance y `--dry-run` p
 
 ---
 
-### 5.11 Subida de foto por QR
+### 5.11 Subida de foto
 
-El sistema permite que los clientes del restaurante **aporten fotos de sus consumiciones** escaneando un código QR. La foto se asocia automáticamente al producto correspondiente mediante un token firmado. El flujo está diseñado para ser usado desde el móvil del cliente sin necesidad de autenticación.
+El sistema ofrece **dos formas** de subir o cambiar la foto de un producto:
 
-#### Flujo completo
+1. **Desde el ordenador (backoffice)** — En la pantalla de edición del producto, el botón "Subir foto" abre el selector de archivos del sistema. Puedes seleccionar cualquier imagen del disco. Esta vía no requiere cámara ni QR. La foto se procesa y asigna inmediatamente.
+2. **Desde el móvil del cliente (vía QR)** — Para que los clientes del restaurante **aporten fotos de sus consumiciones** escaneando un código QR. La foto se asocia automáticamente al producto mediante un token firmado. Flujo diseñado para usarse desde el móvil del cliente sin autenticación.
 
-1. **Generación del token** — El restaurador (admin/supervisor) genera un token de subida desde el backoffice para un producto concreto desde la pantalla de edición del producto → "Subir foto".
+#### Subida por QR desde el móvil — Flujo completo
+
+1. **Generación del token** — El restaurador (admin/supervisor) genera un token de subida desde el backoffice para un producto concreto: edición del producto → "Subir foto" → se genera un QR.
 2. **Impresión del QR** — El sistema muestra un código QR que el restaurador imprime y coloca en la mesa del cliente.
 3. **Escaneo** — El cliente escanea el QR con su móvil (cámara nativa o lector QR).
 4. **Validación** — La landing valida que el token no esté expirado (por defecto 10 minutos). El token es **multi-uso**: puede usarse para subir y cambiar la foto tantas veces como se quiera mientras no haya caducado.
-5. **Captura** — Se abre la cámara del móvil del cliente. El flujo incluye:
+5. **Captura** — El input de tipo `file` con el atributo `capture` despliega la cámara del móvil (el navegador solicita **permiso de cámara** al usuario). El flujo incluye:
    - **Cámara** con disparador y vibración háptica (`navigator.vibrate([12])`) al capturar.
    - **Crop** opcional: si la relación de aspecto de la foto es ≤ 1.15:1, se salta el paso de recorte.
    - El botón "Volver" en el crop regresa a la cámara (no a inicio).
    - **Preview "¿Queda bien?"** — tras el crop, se muestra la foto a tamaño completo antes de subirla. "Repetir foto" vuelve a la cámara; "Subir esta" confirma la subida.
-   - Si la cámara no está disponible, se abre silenciosamente el selector de archivos del dispositivo.
+   - Si la cámara no está disponible, se abre silenciosamente el selector de archivos del dispositivo. Cuando el input se usa desde un ordenador (sin móvil), el botón de cámara del input muestra directamente el selector de archivos.
 6. **Subida** — La foto se envía al backend, donde **se redimensiona** a un máximo de 1080px por lado (`scaleDown`) y **se convierte a WebP** (calidad 85) mediante **Intervention Image**. El archivo original se descarta.
 7. **Resultado** — La foto optimizada se asigna al producto y se muestra en tiempo real en el backoffice del restaurador. La pantalla de éxito ofrece el botón **"Cambiar foto"** para volver a la cámara y subir otra versión con el mismo token activo.
 
@@ -754,6 +759,139 @@ POST /api/public/photo-upload/{token}     # Subir foto (multipart/form-data)
 ```bash
 docker compose exec api php artisan product:delete-expired-photo-upload-tokens
 ```
+
+---
+
+### 5.12 Impresión en impresora térmica
+
+El sistema puede enviar tickets a **impresoras térmicas ESC/POS** conectadas por red TCP/IP, además de la impresión por ventana del navegador.
+
+#### Configuración de impresoras
+
+Accesible desde **Gestión → Impresoras** (solo administradores). Cada impresora tiene:
+
+| Campo | Descripción |
+|---|---|
+| **Nombre** | Nombre identificativo (ej: "Cocina", "Barra") |
+| **IP** | Dirección IP de la impresora en la red local |
+| **Puerto** | Puerto TCP (por defecto 9100) |
+| **Ancho de papel** | 58mm (32 caracteres) o 80mm (48 caracteres) |
+| **Activa** | Si está habilitada para imprimir |
+| **Por defecto** | Impresora que se usará cuando ninguna zona tenga una asignada |
+| **Zona** | Opcional. Asigna la impresora a una zona concreta (Terraza, Salón, Barra). Si no se asigna zona, se usa la impresora por defecto del restaurante. |
+
+#### Flujo de impresión
+
+1. **Pre-cuenta** — Desde el TPV, al pulsar "Imprimir pre-cuenta", se envía a la impresora térmica de la zona de la mesa. Si falla, se abre la ventana de impresión del navegador como alternativa.
+2. **Ticket de pago** — Al registrar un cobro, el ticket de pago se muestra en la ventana de impresión del navegador.
+3. **Ticket final** — Al cerrar la venta, se envía automáticamente el ticket final a la impresora térmica (`PrintOnSaleClosedSubscriber`) y también desde el botón "Imprimir ticket final" en caja. Si la impresora no responde, se abre la ventana de impresión del navegador.
+
+#### Comportamiento multi-zona
+
+Si la mesa pertenece a una zona que tiene una impresora asignada, el ticket se envía a esa impresora. Si la zona no tiene impresora, se usa la impresora marcada como "Por defecto" del restaurante. Si no hay ninguna configurada, se recurre siempre a la ventana de impresión del navegador.
+
+---
+
+### 5.13 Vista de plano de mesas (TPV)
+
+La pantalla de **Mesas** ofrece dos vistas alternativas: la cuadrícula de tarjetas (vista por defecto) y el **plano de sala** en formato SVG escalable. El modo activo se recuerda en `localStorage` entre sesiones.
+
+#### Activar la vista de plano
+
+En la barra superior de la pantalla de Mesas, junto a los tabs de zona, hay un toggle con dos botones: **Lista** (rejilla) y **Plano** (disposición real del salón). Toca **Plano** para activarla.
+
+#### Características del plano de sala
+
+- **Distribución real del salón** — Las mesas aparecen en la posición y con la forma (rectángulo o círculo) que el administrador configuró en el editor de plano. El viewport usa `viewBox="0 0 1200 800"` con `preserveAspectRatio="xMidYMid meet`, ajustándose a cualquier tamaño de pantalla.
+- **Colores de estado** — Cada tarjeta refleja el estado operativo en tiempo real:
+  - Blanco + borde gris — Mesa libre.
+  - Negro — Mesa ocupada con pedido abierto.
+  - Azul — Mesa marcada para cobrar (`TO_CHARGE`).
+- **Nombre y comensales** — Las tarjetas muestran el nombre de la mesa centrado. Si hay comensales sentados, aparece el recuento debajo del nombre.
+- **Badge COBRAR** — Pastilla roja-blanca visible cuando la mesa está pendiente de cobro.
+- **Selección** — Tocar una mesa en el plano la selecciona y muestra el panel lateral con el estado del pedido y las acciones disponibles (igual que en la vista lista).
+- **Juntar mesas (merge) por arrastre** — Fuera del modo merge, arrastra una tarjeta sobre otra para fusionarlas directamente: aparece un clon visual de la mesa arrastrada que sigue el dedo/cursor. Al soltar sobre una mesa destino, se crea un grupo fusionado. La mesa fusionada se muestra en la posición de la mesa destino con el nombre "Mesa A + Mesa B" en 11 px.
+- **Persistencia del ancla de merge** — El ID de la mesa destino (ancla) se persiste en `localStorage` como `mesas_merge_anchors`. Al recargar la página, la tarjeta fusionada sigue apareciendo en la posición correcta. Las anclas obsoletas (grupos ya separados) se limpian automáticamente al cargar.
+- **Mesas sin posición** — Las mesas que aún no tienen coordenadas en el plano no se renderizan (no ocupan espacio). Se muestra un aviso con el recuento al pie del SVG.
+- **Tiempo real** — El estado del plano se actualiza via WebSockets (Laravel Reverb) igual que la vista lista: apertura, comanda, cobro, merge y unmerge se sincronizan entre terminales sin recargar.
+
+#### Drag-to-merge — flujo detallado
+
+1. Mantén presionado sobre una mesa del plano más de 8 px de desplazamiento para iniciar el arrastre.
+2. Aparece un **clon flotante** de la tarjeta (`position: fixed`, tamaño real del elemento SVG en pantalla) que sigue el cursor.
+3. Arrastra sobre cualquier otra mesa hasta que su borde se ilumine en verde (estado `fp-drag-target`).
+4. Suelta para fusionar. El clon desaparece y la tarjeta fusionada aparece inmediatamente en la posición de la mesa destino.
+5. Si sueltas en un espacio vacío, la operación se cancela sin cambios.
+
+---
+
+### 5.14 Editor de plano de sala (Backoffice)
+
+Accesible desde **Gestión → Zonas → [nombre de zona] → Editar plano**. Permite diseñar la distribución visual del salón posicionando, redimensionando y personalizando cada mesa sobre un lienzo SVG.
+
+#### Interfaz del editor
+
+El editor ocupa la pantalla completa y se divide en dos áreas:
+
+- **Lienzo (izquierda)** — Canvas SVG con cuadrícula de puntos (`40 × 40 px`). Aquí se colocan y manipulan las mesas visualmente.
+- **Panel de capas (derecha, 380 px)** — Panel inspirado en Photoshop con lista de capas, controles de edición en acordeón y acciones globales.
+
+#### Lienzo SVG
+
+| Función | Cómo usarla |
+|---|---|
+| **Mover mesa** | Arrastra la mesa con el ratón/dedo. Se engancha al grid (snap 40 px). |
+| **Redimensionar** | Selecciona la mesa → aparecen 4 asas en las esquinas. Arrastra cualquiera para cambiar tamaño (mínimo 40 px). Los círculos mantienen proporciones cuadradas. |
+| **Seleccionar** | Clic sobre una mesa (sin mover) la selecciona y resalta con anillo rojo + glow. |
+| **Deseleccionar** | Clic en el fondo vacío del lienzo. |
+| **Renombrar (inline)** | Doble clic sobre una mesa → aparece input editable superpuesto. Confirma con Enter o pierde el foco. |
+| **Nueva mesa** | Doble clic en el fondo vacío del lienzo → abre el modal de creación. |
+| **Menú flotante** | Con una mesa seleccionada, aparece un menú flotante encima con: Renombrar, Cambiar forma (rect ↔ círculo), Quitar del plano. |
+| **Zoom** | `Ctrl/Cmd + scroll` para acercar/alejar (rango 40 %–200 %). También desde los botones del panel. |
+| **Eliminar** | `Delete` / `Backspace` con una mesa seleccionada → la quita del plano (pasa a "Sin posición"). |
+| **Grid snap** | Todas las posiciones y tamaños se redondean al grid de 40 px para mantener alineación. |
+
+#### Panel de capas
+
+**Header:**
+- Título "Mesas" con el recuento de mesas colocadas.
+- Botón **"+ Nueva"** — abre el modal de creación de mesa. También aparece con doble clic en el lienzo.
+
+**Lista de capas (estilo Photoshop):**
+- Cada mesa colocada en el plano aparece como una fila con:
+  - **Handle de 6 puntos** (⠿) para reordenar con drag & drop. El orden determina el z-index en el SVG.
+  - **Icono de forma** (□ rect / ○ círculo).
+  - **Nombre** de la mesa.
+  - **Chevron** (›) que rota 180° al expandir.
+- **Clic en una fila** → selecciona la mesa Y la cámara del lienzo hace scroll suave hasta centrarla en pantalla. Si ya estaba seleccionada, vuelve a clic para colapsar el acordeón y deseleccionar.
+- **Drag & drop de capas** — CDK DragDrop con animación spring `cubic-bezier(0.34, 1.4, 0.64, 1)` a 420 ms. Eje bloqueado a Y. El reordenado se refleja inmediatamente en el lienzo.
+
+**Acordeón de edición** (aparece deslizándose al seleccionar una fila):
+- **Nombre** — Input de texto editable; se aplica al confirmar con Enter o al perder el foco.
+- **Forma** — Botones "Rect." / "Círculo" con icono SVG. Cambiar forma preserva el tamaño.
+- **Tamaño** — Control segmentado S / M / L (sin dimensiones técnicas; se aplica al instante).
+- **Quitar del plano** — Botón danger. La mesa pasa a "Sin posición" (no se elimina).
+
+**Sección "Sin posición":**
+- Mesas creadas que aún no tienen coordenadas en el plano. Cada chip tiene un botón `+` que las coloca en el lienzo en la primera posición libre.
+
+**Footer:**
+- **Zoom** — Controles `−` / `porcentaje` (click para reset a 100 %) / `+`. Rango 40 %–200 %.
+- **Guardar plano** — Botón desactivado (gris) cuando no hay cambios. Se activa en rojo con un punto pulsante animado cuando hay cambios pendientes. Guarda las posiciones, tamaños y formas de todas las mesas colocadas via `PUT /api/admin/zones/{id}/layout`.
+
+#### Modal "Nueva mesa"
+
+Se abre desde el botón "+ Nueva" del panel o con doble clic en el lienzo. Contiene:
+- Input de nombre con placeholder ("Ej. Mesa 1, Terraza A…") — Enter confirma.
+- Selector de forma: dos botones con icono SVG ("Rectángulo" / "Círculo").
+- Segmented control de tamaño: S / M / L.
+- Botones "Cancelar" y "Añadir al plano".
+
+Al confirmar, la mesa se crea en el backend y se coloca automáticamente en el lienzo en la primera posición disponible (offset progresivo de 80 px por mesa ya colocada).
+
+#### Guarda de cambios sin guardar
+
+Si intentas salir del editor con cambios sin guardar, el sistema muestra un diálogo de confirmación del navegador (`CanDeactivate` guard Angular). Responde "Salir" para descartar o "Quedarse" para volver y guardar.
 
 ---
 
@@ -790,6 +928,16 @@ docker compose exec api php artisan product:delete-expired-photo-upload-tokens
 | **Mesa** | Estados visuales | Mesas con 2 estados (libre/ocupada) representados con semáforo de colores en el grid. |
 | **Mesa** | Agrupación | Soporte para unir mesas físicas (campo `merged_table_group_id`) y gestionarlas como una sola unidad de cobro. |
 | **Mesa** | Tiempo real multi-terminal | Canal WebSocket `restaurant.{restaurantId}` vía Laravel Reverb. `MesasFacade` suscrito: `order.status_changed` → `reloadOpenOrders()` (órdenes + líneas), `table.status_changed` → `reloadTables()` (merged_table_group_id). Cobertura: 10 eventos de Order + 2 de Table = 12 eventos totales. |
+| **Plano TPV** | Vista de plano SVG | Canvas `viewBox="0 0 1200 800"` con `preserveAspectRatio="xMidYMid meet"`. Mesas con colores de estado (blanco/negro/azul), nombre centrado, badge COBRAR y recuento de comensales. Toggle Lista ↔ Plano persistido en `localStorage`. |
+| **Plano TPV** | Drag-to-merge | Arrastre de una mesa sobre otra para fusionarlas directamente desde el plano. Clon flotante de tamaño real (`getBoundingClientRect`) con texto centrado vía `position: absolute`. Ancla de merge persistida en `localStorage` (`mesas_merge_anchors`) para mantener la posición correcta tras recargar. Limpieza automática de anclas obsoletas. |
+| **Plano TPV** | Tarjeta fusionada | Mesa fusionada renderizada en la posición y tamaño de la mesa destino (ancla). Nombre compuesto "Mesa A + Mesa B" en 11 px. El grupo se identifica a través del ancla incluso si las mesas provienen de sesiones anteriores. |
+| **Editor de plano** | Lienzo SVG interactivo | Canvas `1200×800` con cuadrícula de puntos (40 px). Drag para mover (snap al grid), asas de esquina para redimensionar, selección con anillo rojo + glow, menú flotante contextual sobre la mesa seleccionada, inline rename con doble clic, `Delete`/`Backspace` para quitar del plano. |
+| **Editor de plano** | Zoom | `Ctrl/Cmd + scroll` para acercar/alejar. Rango 40 %–200 %. Botones `−` / `%` (reset) / `+` en el panel lateral. Ajuste automático al contenido al cargar (`fit to screen`). |
+| **Editor de plano** | Panel de capas | Panel lateral de 380 px estilo Photoshop. Lista de todas las mesas colocadas con handle drag-and-drop (CDK, animación spring 420 ms `cubic-bezier(0.34,1.4,0.64,1)`, eje Y bloqueado). Clic en fila → selecciona + scroll suave del canvas hasta centrar la mesa. |
+| **Editor de plano** | Acordeón de edición | Al seleccionar una fila del panel, el área de edición se desliza hacia abajo con animación CSS `grid-template-rows: 0fr → 1fr` (240 ms). Contiene: input de nombre, picker de forma, segmented control S/M/L y botón "Quitar del plano". Colapsa al volver a clicar la fila o al deseleccionar en el lienzo. |
+| **Editor de plano** | Modal nueva mesa | Modal flotante con `backdrop-filter: blur` accesible desde el botón "+ Nueva" del panel o con doble clic en el fondo del lienzo. Campos: nombre (Enter confirma), forma (rect/círculo), tamaño (S/M/L). Crea la mesa en el backend y la coloca en el lienzo en la primera posición libre. |
+| **Editor de plano** | Guardar plano | `PUT /api/admin/zones/{id}/layout` con la geometría completa de todas las mesas colocadas. Botón con punto animado pulsante cuando hay cambios sin guardar (`isDirty`). Guard `CanDeactivate` que avisa si intentas salir con cambios pendientes. |
+| **Editor de plano** | Sin posición | Mesas creadas pero sin coordenadas en el plano listadas en sección dedicada. Botón `+` por mesa para colocarla automáticamente en el lienzo. |
 | **Familia** | Color e icono | `FamilyColor` (hex #RRGGBB, validación de formato) + `FamilyIcon` (set permitido de 20+ iconos Material). Selector de swatches y chips en backoffice; acento de color e icono en pestañas de familia del TPV. |
 | **Pedido** | Líneas mutables | Incremento, decremento y eliminación de líneas en tiempo real antes del cierre. |
 | **Pedido** | Snapshot fiscal | Al cerrar la venta, las líneas de `Order` se copian a `sales_lines` con el precio e impuesto vigentes en ese momento (inmutabilidad histórica). |
@@ -817,6 +965,8 @@ docker compose exec api php artisan product:delete-expired-photo-upload-tokens
 | **Auditoría** | Detección de anomalías | Reglas server-side: `auth_failed_burst` (≥3 fallos PIN en 5 min) y `caja_mismatch` (descuadre en cierre). Se marcan en el evento y generan alerta. |
 | **Auditoría** | Alertas in-app | Tabla `audit_alerts` con notificaciones por anomalía. Dropdown con badge de no leídas, navegación directa al evento vinculado, polling 30s. |
 | **Auditoría** | Vistas guardadas | Persistencia de combinaciones de filtros por restaurante (`audit_saved_views`). CRUD completo: crear, listar, aplicar, eliminar. |
+| **Impresión** | Impresora térmica ESC/POS | Integración con impresoras de red TCP (puerto 9100). La configuración por zona permite asignar una impresora distinta a Terraza, Salón o Barra, con fallback a la impresora por defecto del restaurante. Soporta ticket final, pre-cuenta y página de test. Auto-impresión al cierre de venta mediante `PrintOnSaleClosedSubscriber`. |
+| **Impresión** | Impresión multi-zona | Resolución automática: mesa → zona → `printer_config_id` → si no hay, fallback a `is_default=true`. Cada impresora define su ancho de papel (58mm/32 chars o 80mm/48 chars). |
 | **Auditoría** | Live tail | Polling cada 5s para insertar eventos nuevos en la cabecera de la lista sin perder el scroll. |
 | **Auditoría** | Paginación por cursor | Cursor opaco base64 sobre `(created_at DESC, id DESC)` para evitar desplazamiento de páginas ante inserts concurrentes. |
 | **Auditoría** | Archivado por antigüedad | Comando `audit:archive-old` mueve eventos >90 días a `archived_at`. Semanal en scheduler. Emite meta-evento `audit.archived`. Nunca borra. |
@@ -942,6 +1092,8 @@ Caso de uso
 | `Audit` | `AuditLog`, `AuditEventCatalog`, `AnomalyDetector`, `AuditChainHasher` | Traza inmutable de operaciones con hash encadenado y detección de anomalías |
 | `AuditSavedView` | `AuditSavedView` | Persistencia de combinaciones de filtros del Registro de Auditoría |
 | `ChargeSession` | `ChargeSession`, `ChargeSessionPayment`, `AmountPerDiner` | División de cuenta por comensales |
+| `Reporting` | `DashboardReadRepository`, `SalesReadRepository`, `ProductsReadRepository`, `FamiliesReadRepository`, `CashReadRepository`, `EmployeesReadRepository`, `TaxReadRepository`, `HeatmapReadRepository`, `ScheduledReport`, `ReportExport` | Informes y dashboard financiero. Módulo **read-model puro** (CQRS): no tiene entidades de escritura ni emite eventos de dominio. Toda la lógica de negocio se limita a generación de PDF/CSV y programación de informes programados. |
+| `Printer` | `PrinterConfig` (por zona), `EscPosTicketBuilder`, `NetworkPrinterService`, `PrintPreTicket`, `PrintFinalTicket` | Integración con impresoras térmicas ESC/POS por red TCP. Cada zona puede tener su propia IP de impresora (con fallback a la configurada por defecto del restaurante). Soportes: ticket de cocina, pre-cuenta, ticket de pago y ticket final. |
 
 ### 7.4 Flujo de una petición (arquitectura en acción)
 
@@ -1330,12 +1482,12 @@ POST   /api/admin/audit-alerts/{uuid}/read # Marcar una alerta como leída
 - **Personalización de familias** — Color (hex) e icono (set Material) en backoffice y TPV.
 - **Tiempo real de mesas (Reverb)** — Canal `restaurant.{id}`, 12 eventos cubiertos, `MesasFacade` con `reloadOpenOrders()` + `reloadTables()`. 2/2 E2E Playwright.
 - **Traslado de mesa** — `OrderTransferred` event, UC `TransferOrder`, endpoint `POST /api/tpv/orders/{id}/transfer`.
+- **Impresión en impresora térmica** — Integración ESC/POS por TCP. Configuración por zona con fallback a impresora por defecto. Backend: `Printer` dominio con `PrintPreTicket`, `PrintFinalTicket`, `PrintOnSaleClosedSubscriber`. Frontend: Gestión → Impresoras con CRUD y test de conexión. Pre-cuenta, ticket de pago y ticket final con fallback a ventana del navegador.
 
 ### Corto plazo (1–2 meses)
 
 1. **Dashboard de finanzas — fases pendientes** — Tab Impuestos (desglose IVA por tipo, base imponible y resumen trimestral Modelo 303) y Tab Informes (exportación real a CSV/PDF de los reportes existentes).
-2. **Impresión de tickets** — Integración con impresoras térmicas ESC/POS para ticket de cocina y ticket de cliente.
-3. **Diseño interactivo del salón** — Editor drag & drop de mesas sobre plano (pos_x, pos_y, width, height). Backoffice para editar layout; TPV en modo solo lectura sobre el plano.
+2. **Diseño interactivo del salón** — Editor drag & drop de mesas sobre plano (pos_x, pos_y, width, height). Backoffice para editar layout; TPV en modo solo lectura sobre el plano.
 
 ### Medio plazo (3–6 meses)
 
@@ -1368,4 +1520,4 @@ Esta sección es orientativa para cuando se migre de demo a producción real:
 > **Repositorio:** YurestIonic  
 > **Entorno de desarrollo:** Docker Compose con servicios separados para API, frontend, MySQL y DbGate  
 > **Demo local:** http://localhost:4200  
-> **Última actualización:** 16 de junio de 2026
+> **Última actualización:** 17 de junio de 2026

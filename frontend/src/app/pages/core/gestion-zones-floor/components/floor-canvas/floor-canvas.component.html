@@ -15,6 +15,7 @@
       (pointermove)="onSvgPointerMove($event)"
       (pointerup)="onSvgPointerUp()"
       (click)="$event.stopPropagation()"
+      (dblclick)="onCanvasDblClick()"
     >
       <defs>
         <pattern id="fc-dots" width="40" height="40" patternUnits="userSpaceOnUse">

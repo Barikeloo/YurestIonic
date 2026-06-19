@@ -1,140 +1,140 @@
 <div class="panel">
 
-  <!-- ══ Nueva mesa ════════════════════════════════════════════════════════ -->
-  <section class="panel-section">
-    <div class="section-label">Nueva mesa</div>
-
-    <input
-      class="name-field"
-      type="text"
-      placeholder="Ej. Mesa 1, Terraza A…"
-      maxlength="20"
-      [ngModel]="newName()"
-      (ngModelChange)="newName.set($event)"
-      (keydown.enter)="onAddTable()"
-    />
-
-    <div class="prop-row">
-      <span class="prop-key">Forma</span>
-      <div class="shape-picker">
-        <button
-          class="shape-chip"
-          [class.active]="newShape() === 'rect'"
-          (click)="setNewShape('rect')"
-          title="Rectángulo"
-        >
-          <svg width="16" height="11" viewBox="0 0 22 14">
-            <rect x="1" y="1" width="20" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
-          </svg>
-          Rect.
-        </button>
-        <button
-          class="shape-chip"
-          [class.active]="newShape() === 'circle'"
-          (click)="setNewShape('circle')"
-          title="Círculo"
-        >
-          <svg width="13" height="13" viewBox="0 0 16 16">
-            <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/>
-          </svg>
-          Círculo
-        </button>
-      </div>
-    </div>
-
-    <div class="prop-row">
-      <span class="prop-key">Tamaño</span>
-      <div class="size-seg">
-        @for (p of presets; track p) {
-          <button
-            class="size-seg-btn"
-            [class.active]="newPreset() === p"
-            (click)="setNewPreset(p)"
-            [title]="presetLabel(p, newShape())"
-          >{{ p }}</button>
-        }
-      </div>
-    </div>
-
-    <button class="btn-add" [disabled]="!newName().trim()" (click)="onAddTable()">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+  <!-- ══ Header ════════════════════════════════════════════════════════════ -->
+  <div class="panel-header">
+    <span class="panel-title">Mesas</span>
+    <span class="panel-count">{{ placedTables().length }}</span>
+    <div class="header-spacer"></div>
+    <button class="btn-add-layer" (click)="openAddModal.emit()" title="Nueva mesa (o doble clic en el plano)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
         <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
       </svg>
-      Añadir al plano
+      Nueva
     </button>
-  </section>
+  </div>
 
-  <!-- ══ Mesa seleccionada ══════════════════════════════════════════════════ -->
-  @if (selectedTable(); as t) {
-    <section class="panel-section panel-selected">
-      <div class="selected-header">
-        <span class="selected-dot"></span>
-        <span class="selected-label">Mesa seleccionada</span>
+  <!-- ══ Layers list ═══════════════════════════════════════════════════════ -->
+  <div
+    class="layers-list"
+    cdkDropList
+    [cdkDropListData]="placedTables()"
+    (cdkDropListDropped)="onLayerDrop($event)"
+  >
+    @if (placedTables().length === 0) {
+      <div class="layers-empty">
+        <p>Doble clic en el plano<br>o pulsa <strong>Nueva</strong> para añadir</p>
       </div>
+    }
 
-      <input
-        class="name-field name-field--edit"
-        type="text"
-        [value]="t.name"
-        maxlength="20"
-        (change)="nameChanged.emit({ id: t.id, name: $any($event.target).value.trim() || t.name })"
-        (keydown.enter)="$any($event.target).blur()"
-      />
+    @for (t of placedTables(); track t.id) {
+      @let isSelected = selectedTable()?.id === t.id;
 
-      <div class="prop-row">
-        <span class="prop-key">Forma</span>
-        <div class="shape-picker">
-          <button class="shape-chip" [class.active]="t.shape === 'rect'"   (click)="onChangeShape('rect')"   title="Rectángulo">
-            <svg width="16" height="11" viewBox="0 0 22 14"><rect x="1" y="1" width="20" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
-            Rect.
-          </button>
-          <button class="shape-chip" [class.active]="t.shape === 'circle'" (click)="onChangeShape('circle')" title="Círculo">
-            <svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
-            Círculo
-          </button>
+      <!-- Wrapper: cdkDrag engloba la fila + el panel expandido -->
+      <div cdkDrag cdkDragLockAxis="y" class="layer-item">
+
+        <!-- ── Fila de capa ── -->
+        <div
+          class="layer-row"
+          [class.layer-row--selected]="isSelected"
+          (click)="tableSelected.emit(isSelected ? null : t.id)"
+        >
+          <div class="layer-drag-handle" cdkDragHandle title="Arrastrar para reordenar">
+            <svg width="10" height="14" viewBox="0 0 10 14" fill="currentColor">
+              <circle cx="3" cy="2"  r="1.3"/><circle cx="7" cy="2"  r="1.3"/>
+              <circle cx="3" cy="7"  r="1.3"/><circle cx="7" cy="7"  r="1.3"/>
+              <circle cx="3" cy="12" r="1.3"/><circle cx="7" cy="12" r="1.3"/>
+            </svg>
+          </div>
+
+          <div class="layer-shape-icon">
+            @if (t.shape === 'circle') {
+              <svg width="14" height="14" viewBox="0 0 16 16">
+                <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              </svg>
+            } @else {
+              <svg width="16" height="12" viewBox="0 0 20 14">
+                <rect x="1" y="1" width="18" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/>
+              </svg>
+            }
+          </div>
+
+          <span class="layer-name">{{ t.name }}</span>
+
+          <svg
+            class="layer-chevron"
+            [class.layer-chevron--open]="isSelected"
+            width="12" height="12" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          >
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
         </div>
-      </div>
 
-      <div class="prop-row">
-        <span class="prop-key">Tamaño</span>
-        <div class="size-seg">
-          @for (p of presets; track p) {
-            <button
-              class="size-seg-btn"
-              [class.active]="currentPreset(t) === p"
-              (click)="onSizePreset(p)"
-              [title]="presetLabel(p, t.shape)"
-            >{{ p }}</button>
-          }
+        <!-- ── Panel expandible (acordeón) ── -->
+        <div class="layer-expand" [class.layer-expand--open]="isSelected">
+          <div class="layer-expand-inner">
+            <div class="layer-edit">
+
+              <input
+                class="name-field"
+                type="text"
+                [value]="t.name"
+                maxlength="20"
+                (click)="$event.stopPropagation()"
+                (change)="nameChanged.emit({ id: t.id, name: $any($event.target).value.trim() || t.name })"
+                (keydown.enter)="$any($event.target).blur()"
+              />
+
+              <div class="prop-row">
+                <span class="prop-key">Forma</span>
+                <div class="shape-picker">
+                  <button class="shape-chip" [class.active]="t.shape === 'rect'"   (click)="onChangeShape('rect')"   title="Rectángulo">
+                    <svg width="16" height="11" viewBox="0 0 22 14"><rect x="1" y="1" width="20" height="12" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                    Rect.
+                  </button>
+                  <button class="shape-chip" [class.active]="t.shape === 'circle'" (click)="onChangeShape('circle')" title="Círculo">
+                    <svg width="13" height="13" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
+                    Círculo
+                  </button>
+                </div>
+              </div>
+
+              <div class="prop-row">
+                <span class="prop-key">Tamaño</span>
+                <div class="size-seg">
+                  @for (p of presets; track p) {
+                    <button
+                      class="size-seg-btn"
+                      [class.active]="currentPreset(t) === p"
+                      (click)="onSizePreset(p)"
+                      [title]="presetLabel(p, t.shape)"
+                    >{{ p }}</button>
+                  }
+                </div>
+              </div>
+
+              <button class="btn-remove" (click)="onRemove()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                  <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+                </svg>
+                Quitar del plano
+              </button>
+
+            </div>
+          </div>
         </div>
+
+        <!-- Placeholder CDK -->
+        <div *cdkDragPlaceholder class="layer-drag-placeholder"></div>
       </div>
-
-      <button class="btn-remove" (click)="onRemove()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-          <polyline points="3 6 5 6 21 6"/>
-          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-          <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
-        </svg>
-        Quitar del plano
-      </button>
-    </section>
-  }
-
-  @if (!selectedTable()) {
-    <div class="empty-selection">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#d8d8d8" stroke-width="1.4" stroke-linecap="round">
-        <rect x="3" y="3" width="7" height="7" rx="1.5"/>
-        <rect x="14" y="3" width="7" height="7" rx="1.5"/>
-        <rect x="3" y="14" width="7" height="7" rx="1.5"/>
-        <rect x="14" y="14" width="7" height="7" rx="1.5"/>
-      </svg>
-      <p>Haz clic en una mesa del plano para editarla</p>
-    </div>
-  }
+    }
+  </div>
 
   <!-- ══ Sin posición ══════════════════════════════════════════════════════ -->
   @if (unpositioned().length > 0) {
-    <section class="panel-section">
+    <div class="panel-section">
       <div class="section-label">
         Sin posición
         <span class="count-badge">{{ unpositioned().length }}</span>
@@ -151,13 +151,13 @@
           </div>
         }
       </div>
-    </section>
+    </div>
   }
 
   <div class="spacer"></div>
 
   <!-- ══ Zoom + Guardar ════════════════════════════════════════════════════ -->
-  <section class="panel-section panel-footer">
+  <div class="panel-footer">
     <div class="zoom-row">
       <button class="zoom-btn" (click)="zoomOut.emit()" [disabled]="zoomLevel() <= 0.4">−</button>
       <button class="zoom-val"  (click)="zoomReset.emit()">{{ zoomPercent() }}%</button>
@@ -173,6 +173,6 @@
       @if (isDirty()) { <span class="save-dot"></span> }
       {{ isSaving() ? 'Guardando…' : 'Guardar plano' }}
     </button>
-  </section>
+  </div>
 
 </div>

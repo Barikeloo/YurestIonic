@@ -5,6 +5,7 @@ import {
   OnDestroy,
   ViewChild,
   computed,
+  effect,
   input,
   output,
   signal,
@@ -43,20 +44,22 @@ function snapByCenter(raw: number, size: number): number { return snap(raw + siz
 })
 export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
   // ── Inputs ──────────────────────────────────────────────────────────────
-  readonly tables     = input.required<LocalTable[]>();
-  readonly selectedId = input<string | null>(null);
-  readonly zoomLevel  = input<number>(1);
+  readonly tables           = input.required<LocalTable[]>();
+  readonly selectedId       = input<string | null>(null);
+  readonly zoomLevel        = input<number>(1);
+  readonly centerOnTableId  = input<string | null>(null);
 
   // ── Outputs ─────────────────────────────────────────────────────────────
-  readonly tableClicked        = output<string>();
-  readonly canvasClicked       = output<void>();
-  readonly tableMoved          = output<{ id: string; x: number; y: number }>();
-  readonly tableResized        = output<{ id: string; posX: number; posY: number; width: number; height: number }>();
-  readonly tableNameEdited     = output<{ id: string; name: string }>();
-  readonly tableShapeToggled   = output<string>();
+  readonly tableClicked         = output<string>();
+  readonly canvasClicked        = output<void>();
+  readonly tableMoved           = output<{ id: string; x: number; y: number }>();
+  readonly tableResized         = output<{ id: string; posX: number; posY: number; width: number; height: number }>();
+  readonly tableNameEdited      = output<{ id: string; name: string }>();
+  readonly tableShapeToggled    = output<string>();
   readonly tableDeleteRequested = output<string>();
-  readonly removeRequested     = output<string>();
-  readonly zoomChanged         = output<number>();
+  readonly removeRequested      = output<string>();
+  readonly zoomChanged          = output<number>();
+  readonly addTableRequested    = output<void>();
 
   @ViewChild('svgEl')      svgRef!:  ElementRef<SVGSVGElement>;
   @ViewChild('canvasWrap') wrapRef!: ElementRef<HTMLDivElement>;
@@ -87,6 +90,14 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
   });
 
   private wheelHandler!: (e: WheelEvent) => void;
+
+  constructor() {
+    effect(() => {
+      const id = this.centerOnTableId();
+      if (!id) return;
+      requestAnimationFrame(() => this.scrollToTable(id));
+    });
+  }
 
   // ── Lifecycle ────────────────────────────────────────────────────────────
   ngAfterViewInit(): void {
@@ -313,6 +324,27 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     if (this._editing()) return;
     const id = this.selectedId();
     if (id) { e.preventDefault(); this.removeRequested.emit(id); }
+  }
+
+  // ── Canvas double-click → request add table ───────────────────────────────
+  protected onCanvasDblClick(): void {
+    this.addTableRequested.emit();
+  }
+
+  // ── Center canvas on a specific table ─────────────────────────────────────
+  private scrollToTable(id: string): void {
+    if (!this.wrapRef) return;
+    const t = this.placedTables().find(t => t.id === id);
+    if (!t) return;
+    const zoom = this.zoomLevel();
+    const wrap = this.wrapRef.nativeElement;
+    const cx = (t.posX! + this.tableW(t) / 2) * zoom + CANVAS_INNER_PAD;
+    const cy = (t.posY! + this.tableH(t) / 2) * zoom + CANVAS_INNER_PAD;
+    wrap.scrollTo({
+      left: Math.max(0, cx - wrap.clientWidth  / 2),
+      top:  Math.max(0, cy - wrap.clientHeight / 2),
+      behavior: 'smooth',
+    });
   }
 
   // ── Coord transform ──────────────────────────────────────────────────────

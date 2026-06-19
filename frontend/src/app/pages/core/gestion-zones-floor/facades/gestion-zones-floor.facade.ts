@@ -176,6 +176,17 @@ export class GestionZonesFloorFacade {
     this._isDirty.set(true);
   }
 
+  reorderTables(orderedIds: string[]): void {
+    const idSet = new Set(orderedIds);
+    this._tables.update(list => {
+      const map      = new Map(list.map(t => [t.id, t]));
+      const reordered = orderedIds.map(id => map.get(id)!).filter(Boolean);
+      const rest      = list.filter(t => !idSet.has(t.id));  // unpositioned tables
+      return [...reordered, ...rest];
+    });
+    this._isDirty.set(true);
+  }
+
   async deleteTable(id: string): Promise<void> {
     await firstValueFrom(this.tableService.deleteTable(id));
     this._tables.update(list => list.filter(t => t.id !== id));

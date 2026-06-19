@@ -1,49 +1,53 @@
-import { Component, computed, input, output, signal } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { CdkDragDrop, CdkDropList, CdkDrag, CdkDragHandle, CdkDragPlaceholder, moveItemInArray } from '@angular/cdk/drag-drop';
 import { LocalTable, SIZE_PRESETS, SizePreset } from '../../facades/gestion-zones-floor.facade';
 
 @Component({
   selector: 'app-floor-panel',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, CdkDropList, CdkDrag, CdkDragHandle, CdkDragPlaceholder],
   templateUrl: './floor-panel.component.html',
   styleUrls: ['./floor-panel.component.scss'],
 })
 export class FloorPanelComponent {
+  // ── Inputs ──────────────────────────────────────────────────────────────
+  readonly placedTables  = input.required<LocalTable[]>();
   readonly unpositioned  = input.required<LocalTable[]>();
   readonly selectedTable = input<LocalTable | null>(null);
   readonly isSaving      = input<boolean>(false);
   readonly isDirty       = input<boolean>(false);
   readonly zoomLevel     = input<number>(1);
 
-  readonly addTable         = output<{ name: string; shape: 'rect' | 'circle'; preset: SizePreset }>();
-  readonly placeOnCanvas    = output<string>();
-  readonly removeFromCanvas = output<string>();
-  readonly nameChanged      = output<{ id: string; name: string }>();
-  readonly shapeChanged     = output<{ id: string; shape: 'rect' | 'circle' }>();
-  readonly sizeChanged      = output<{ id: string; preset: SizePreset }>();
-  readonly zoomIn           = output<void>();
-  readonly zoomOut          = output<void>();
-  readonly zoomReset        = output<void>();
-  readonly save             = output<void>();
-
-  protected newName   = signal('');
-  protected newShape  = signal<'rect' | 'circle'>('rect');
-  protected newPreset = signal<SizePreset>('M');
+  // ── Outputs ─────────────────────────────────────────────────────────────
+  readonly openAddModal      = output<void>();
+  readonly tableSelected     = output<string | null>();
+  readonly layerOrderChanged = output<string[]>();
+  readonly placeOnCanvas     = output<string>();
+  readonly removeFromCanvas  = output<string>();
+  readonly nameChanged       = output<{ id: string; name: string }>();
+  readonly shapeChanged      = output<{ id: string; shape: 'rect' | 'circle' }>();
+  readonly sizeChanged       = output<{ id: string; preset: SizePreset }>();
+  readonly zoomIn            = output<void>();
+  readonly zoomOut           = output<void>();
+  readonly zoomReset         = output<void>();
+  readonly save              = output<void>();
 
   protected readonly zoomPercent = computed(() => Math.round(this.zoomLevel() * 100));
   protected readonly presets: SizePreset[] = ['S', 'M', 'L'];
 
+  // ── Layer drag & drop ────────────────────────────────────────────────────
+  protected onLayerDrop(event: CdkDragDrop<LocalTable[]>): void {
+    if (event.previousIndex === event.currentIndex) return;
+    const ids = this.placedTables().map(t => t.id);
+    moveItemInArray(ids, event.previousIndex, event.currentIndex);
+    this.layerOrderChanged.emit(ids);
+  }
+
+  // ── Size/shape helpers ───────────────────────────────────────────────────
   protected presetLabel(preset: SizePreset, shape: 'rect' | 'circle'): string {
     const s = SIZE_PRESETS[preset][shape];
     return shape === 'circle' ? `ø${s.w}` : `${s.w}×${s.h}`;
-  }
-
-  protected presetIconSize(preset: SizePreset): { w: number; h: number } {
-    const scale = { S: 0.14, M: 0.18, L: 0.22 };
-    const k = scale[preset];
-    const s = SIZE_PRESETS[preset]['rect'];
-    return { w: Math.round(s.w * k), h: Math.round(s.h * k) };
   }
 
   protected currentPreset(t: LocalTable): SizePreset {
@@ -54,16 +58,7 @@ export class FloorPanelComponent {
     return 'M';
   }
 
-  protected onAddTable(): void {
-    const name = this.newName().trim();
-    if (!name) return;
-    this.addTable.emit({ name, shape: this.newShape(), preset: this.newPreset() });
-    this.newName.set('');
-  }
-
-  protected setNewShape(s: 'rect' | 'circle'): void { this.newShape.set(s); }
-  protected setNewPreset(p: SizePreset): void        { this.newPreset.set(p); }
-
+  // ── Selected table actions ────────────────────────────────────────────────
   protected onChangeShape(shape: 'rect' | 'circle'): void {
     const t = this.selectedTable();
     if (!t || t.shape === shape) return;
