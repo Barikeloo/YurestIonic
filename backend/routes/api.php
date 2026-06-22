@@ -445,6 +445,7 @@ Route::middleware('throttle:30,1')->group(function (): void {
     Route::post('/public/table/{token}/cart/submit-round', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\SubmitGuestRoundController::class);
     Route::get('/public/table/{token}/my-orders', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\GetGuestOrdersHistoryController::class);
     Route::post('/public/table/{token}/request-check', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\RequestCheckController::class);
+    Route::delete('/public/table/{token}/cart/line/{lineId}', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\DeletePendingLineController::class)->whereUuid('lineId');
 });
 
 // ─── Guest / Autoservicio QR — rutas de administración ──────────────────────

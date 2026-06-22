@@ -86,6 +86,24 @@ final class EloquentGuestOrderLineRepository implements GuestOrderLineRepository
             ]);
     }
 
+    public function findPendingLineByIdAndSession(string $lineUuid, string $sessionUuid): ?CartLineData
+    {
+        $row = DB::table('order_lines')
+            ->where('uuid', $lineUuid)
+            ->where('guest_session_id', $sessionUuid)
+            ->whereNull('deleted_at')
+            ->first();
+
+        return $row !== null ? $this->hydrateCartLine($row) : null;
+    }
+
+    public function deleteLine(string $lineUuid): void
+    {
+        DB::table('order_lines')
+            ->where('uuid', $lineUuid)
+            ->update(['deleted_at' => now(), 'updated_at' => now()]);
+    }
+
     private function resolveProductLine(
         GuestLineInput $line,
         int $orderId,

@@ -35,6 +35,7 @@ export type GuestScreen =
 
 const CATALOG_CACHE_PREFIX = 'catalog_';
 const CATALOG_POLL_MS = 60_000;
+const TABLE_STATUS_POLL_MS = 15_000;
 
 @Injectable()
 export class GuestOrderFacade {
@@ -44,6 +45,7 @@ export class GuestOrderFacade {
 
   private readonly destroy$ = new Subject<void>();
   private catalogPollTimer: ReturnType<typeof setInterval> | null = null;
+  private statusPollTimer: ReturnType<typeof setInterval> | null = null;
 
   private readonly _screen = signal<GuestScreen>('loading');
   private readonly _qrToken = signal('');
@@ -198,6 +200,7 @@ export class GuestOrderFacade {
           localStorage.setItem(cacheKey, JSON.stringify(catalog));
           onDone();
           this.startCatalogPolling(token, cacheKey);
+          this.startStatusPolling(token);
         },
         error: () => onDone(),
       });
@@ -424,6 +427,51 @@ export class GuestOrderFacade {
       });
   }
 
+  deleteLine(localId: string): void {
+    const token = this._qrToken();
+    const sessionToken = this._sessionToken();
+    const line = this.cart.cart().find((l) => l.localId === localId);
+    if (!line) return;
+
+    if (line.backendLineId && sessionToken) {
+      this.api
+        .deletePendingLine(token, sessionToken, line.backendLineId)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: () => {
+            this.cart.removeLocalLine(localId);
+            this.cart.persist(token);
+          },
+          error: () => {
+            this.cart.removeLocalLine(localId);
+            this.cart.persist(token);
+          },
+        });
+    } else {
+      this.cart.removeLocalLine(localId);
+      this.cart.persist(token);
+    }
+  }
+
+  private startStatusPolling(token: string): void {
+    if (this.statusPollTimer) return;
+    this.statusPollTimer = setInterval(() => {
+      const currentStatus = this._tableStatus()?.order_status;
+      if (currentStatus === 'to_charge' || this._screen() === 'table-status') return;
+
+      this.api
+        .getTableStatus(token)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe((status) => {
+          const prev = this._tableStatus()?.order_status;
+          this._tableStatus.set(status);
+          if (prev !== 'to_charge' && status.order_status === 'to_charge') {
+            this._errorMessage.set('La cuenta está siendo procesada. El camarero viene en breve.');
+          }
+        });
+    }, TABLE_STATUS_POLL_MS);
+  }
+
   navigateBack(): void {
     const current = this._screen();
     if (current === 'product-detail' || current === 'menu-config') {
@@ -475,9 +523,8 @@ export class GuestOrderFacade {
   ngOnDestroy(): void {
     window.removeEventListener('online', this.onOnline);
     window.removeEventListener('offline', this.onOffline);
-    if (this.catalogPollTimer) {
-      clearInterval(this.catalogPollTimer);
-    }
+    if (this.catalogPollTimer) clearInterval(this.catalogPollTimer);
+    if (this.statusPollTimer) clearInterval(this.statusPollTimer);
     this.destroy$.next();
     this.destroy$.complete();
   }

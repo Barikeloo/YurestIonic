@@ -23,4 +23,8 @@ interface GuestOrderLineRepositoryInterface
     public function getAllLinesBySession(string $sessionUuid): array;
 
     public function markLinesAsSent(array $lineUuids, string $roundUuid): void;
+
+  public function findPendingLineByIdAndSession(string $lineUuid, string $sessionUuid): ?CartLineData;
+
+  public function deleteLine(string $lineUuid): void;
 }

@@ -106,4 +106,11 @@ export class GuestOrderApiService {
       { headers: this.guestHeaders(sessionToken) },
     );
   }
+
+  deletePendingLine(token: string, sessionToken: string, lineId: string): Observable<{ line_id: string }> {
+    return this.http.delete<{ line_id: string }>(
+      this.url(token, `/cart/line/${lineId}`),
+      { headers: this.guestHeaders(sessionToken) },
+    );
+  }
 }

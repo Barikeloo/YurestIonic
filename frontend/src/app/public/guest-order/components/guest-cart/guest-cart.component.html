@@ -50,6 +50,12 @@
           @if (!line.backendLineId) {
             <span class="gc-syncing">⟳</span>
           }
+
+          <button
+            class="gc-delete-btn"
+            (click)="deleteLine(line.localId, $event)"
+            title="Eliminar"
+          >×</button>
         </button>
       }
     </div>

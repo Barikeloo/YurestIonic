@@ -52,6 +52,12 @@ export class GuestCartComponent {
     this.selectedIds.set(new Set());
   }
 
+  deleteLine(localId: string, event: Event): void {
+    event.stopPropagation();
+    this.selectedIds.update((s) => { const n = new Set(s); n.delete(localId); return n; });
+    this.facade.deleteLine(localId);
+  }
+
   submitRound(): void {
     const lines = this.selectedLines();
     if (lines.length === 0) return;
