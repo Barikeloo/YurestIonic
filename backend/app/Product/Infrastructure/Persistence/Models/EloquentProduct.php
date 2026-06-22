@@ -3,10 +3,13 @@
 namespace App\Product\Infrastructure\Persistence\Models;
 
 use App\Family\Infrastructure\Persistence\Models\EloquentFamily;
+use App\ProductModifier\Infrastructure\Persistence\Models\EloquentProductModifier;
+use App\ProductVariant\Infrastructure\Persistence\Models\EloquentProductVariant;
 use App\Shared\Infrastructure\Persistence\Concerns\HasTenantScope;
 use App\Tax\Infrastructure\Persistence\Models\EloquentTax;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EloquentProduct extends Model
@@ -55,5 +58,15 @@ class EloquentProduct extends Model
     public function tax(): BelongsTo
     {
         return $this->belongsTo(EloquentTax::class, 'tax_id');
+    }
+
+    public function variants(): HasMany
+    {
+        return $this->hasMany(EloquentProductVariant::class, 'product_id')->orderBy('sort_order');
+    }
+
+    public function modifiers(): HasMany
+    {
+        return $this->hasMany(EloquentProductModifier::class, 'product_id')->orderBy('sort_order');
     }
 }

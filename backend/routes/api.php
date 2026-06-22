@@ -437,6 +437,8 @@ Route::middleware('throttle:30,1')->group(function (): void {
     Route::post('/public/table/{token}/open', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\OpenTableByGuestController::class);
     Route::post('/public/table/{token}/session', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\JoinGuestSessionController::class);
     Route::get('/public/table/{token}/session/validate', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\ValidateGuestSessionController::class);
+    Route::get('/public/table/{token}/catalog', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\GetCatalogForGuestController::class);
+    Route::get('/public/table/{token}/catalog/version', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\GetCatalogVersionController::class);
 });
 
 // ─── Guest / Autoservicio QR — rutas de administración ──────────────────────
