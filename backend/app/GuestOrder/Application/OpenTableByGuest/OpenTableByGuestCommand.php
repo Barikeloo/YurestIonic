@@ -12,5 +12,6 @@ final readonly class OpenTableByGuestCommand
         public int $dinersCount,
         public string $identityMode,
         public ?string $guestName,
+        public ?string $customerAuthToken = null,
     ) {}
 }

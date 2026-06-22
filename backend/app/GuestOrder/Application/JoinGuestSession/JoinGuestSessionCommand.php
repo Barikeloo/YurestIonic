@@ -11,5 +11,6 @@ final readonly class JoinGuestSessionCommand
         public string $sessionToken,
         public string $identityMode,
         public ?string $guestName,
+        public ?string $customerAuthToken = null,
     ) {}
 }

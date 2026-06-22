@@ -27,6 +27,13 @@ final class EloquentGuestSessionRepository implements GuestSessionRepositoryInte
             $orderId = EloquentOrder::query()->where('uuid', $session->orderId()->value())->value('id');
         }
 
+        $customerAccountInternalId = null;
+        if ($session->customerAccountId() !== null) {
+            $customerAccountInternalId = \Illuminate\Support\Facades\DB::table('customer_accounts')
+                ->where('uuid', $session->customerAccountId())
+                ->value('id');
+        }
+
         $this->model->newQuery()->updateOrCreate(
             ['uuid' => $session->id()->value()],
             [
@@ -38,6 +45,7 @@ final class EloquentGuestSessionRepository implements GuestSessionRepositoryInte
                 'guest_name'          => $session->guestName(),
                 'opened_table'        => $session->openedTable(),
                 'diners_count'        => $session->dinersCount(),
+                'customer_account_id' => $customerAccountInternalId,
                 'check_requested_at'  => $session->checkRequestedAt()?->value(),
                 'expires_at'          => $session->expiresAt()->value(),
                 'created_at'          => $session->createdAt()->value(),
@@ -66,6 +74,13 @@ final class EloquentGuestSessionRepository implements GuestSessionRepositoryInte
             $orderUuid = EloquentOrder::query()->where('id', $model->order_id)->value('uuid');
         }
 
+        $customerAccountUuid = null;
+        if ($model->customer_account_id !== null) {
+            $customerAccountUuid = \Illuminate\Support\Facades\DB::table('customer_accounts')
+                ->where('id', $model->customer_account_id)
+                ->value('uuid');
+        }
+
         return GuestSession::fromPersistence(
             id: $model->uuid,
             tableQrTokenId: $qrTokenUuid,
@@ -76,6 +91,7 @@ final class EloquentGuestSessionRepository implements GuestSessionRepositoryInte
             guestName: $model->guest_name,
             openedTable: (bool) $model->opened_table,
             dinersCount: $model->diners_count,
+            customerAccountId: $customerAccountUuid,
             checkRequestedAt: $model->check_requested_at?->toDateTimeImmutable(),
             createdAt: $model->created_at->toDateTimeImmutable(),
             updatedAt: $model->updated_at->toDateTimeImmutable(),

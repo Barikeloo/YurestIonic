@@ -25,7 +25,8 @@ final class OpenTableByGuestRequest extends FormRequest
                 IdentityMode::NAMED,
                 IdentityMode::REGISTERED,
             ])],
-            'guest_name'     => ['nullable', 'string', 'max:100'],
+            'guest_name'           => ['nullable', 'string', 'max:100'],
+            'customer_auth_token'  => ['nullable', 'string', 'size:64'],
         ];
     }
 
@@ -37,6 +38,7 @@ final class OpenTableByGuestRequest extends FormRequest
             dinersCount: (int) $this->input('diners_count'),
             identityMode: (string) $this->input('identity_mode'),
             guestName: $this->input('guest_name'),
+            customerAuthToken: $this->input('customer_auth_token'),
         );
     }
 }

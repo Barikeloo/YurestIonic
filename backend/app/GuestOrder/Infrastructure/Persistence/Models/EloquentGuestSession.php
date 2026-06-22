@@ -21,6 +21,7 @@ class EloquentGuestSession extends Model
         'guest_name',
         'opened_table',
         'diners_count',
+        'customer_account_id',
         'check_requested_at',
         'expires_at',
     ];

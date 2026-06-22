@@ -8,6 +8,7 @@ use App\GuestOrder\Domain\Entity\GuestSession;
 use App\GuestOrder\Domain\Exception\TableAlreadyOpenException;
 use App\GuestOrder\Domain\Exception\TableQrTokenNotFoundException;
 use App\GuestOrder\Domain\Exception\TableToChargeException;
+use App\GuestOrder\Domain\Interfaces\CustomerAccountRepositoryInterface;
 use App\GuestOrder\Domain\Interfaces\GuestSessionRepositoryInterface;
 use App\GuestOrder\Domain\Interfaces\TableQrTokenRepositoryInterface;
 use App\GuestOrder\Domain\ValueObject\GuestSessionToken;
@@ -24,6 +25,7 @@ final class OpenTableByGuest
         private readonly TableQrTokenRepositoryInterface $tableQrTokenRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly GuestSessionRepositoryInterface $guestSessionRepository,
+        private readonly CustomerAccountRepositoryInterface $customerAccountRepository,
         private readonly EventBusInterface $eventBus,
     ) {}
 
@@ -43,6 +45,18 @@ final class OpenTableByGuest
             throw TableAlreadyOpenException::forToken($command->token);
         }
 
+        $customerAccountId = null;
+        $guestName         = $command->guestName;
+
+        if ($command->customerAuthToken !== null) {
+            $account = $this->customerAccountRepository->findByAuthToken($command->customerAuthToken);
+            if ($account !== null) {
+                $customerAccountId = $account->id()->value();
+                $guestName         = $account->name();
+                $this->customerAccountRepository->invalidateAuthToken($command->customerAuthToken);
+            }
+        }
+
         $order = Order::dddCreate(
             id: Uuid::generate(),
             restaurantId: $qrToken->restaurantId(),
@@ -59,8 +73,9 @@ final class OpenTableByGuest
             orderId: $order->id(),
             sessionToken: GuestSessionToken::create($command->sessionToken),
             identityMode: IdentityMode::create($command->identityMode),
-            guestName: $command->guestName,
+            guestName: $guestName,
             dinersCount: $command->dinersCount,
+            customerAccountId: $customerAccountId,
         );
 
         $this->guestSessionRepository->save($session);

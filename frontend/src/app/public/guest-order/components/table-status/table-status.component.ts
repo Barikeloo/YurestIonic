@@ -68,6 +68,7 @@ export class TableStatusComponent {
       dinersCount: this.dinersCount(),
       identityMode: mode,
       guestName: mode !== 'anonymous' ? (this.guestName() || undefined) : undefined,
+      customerAuthToken: mode === 'registered' ? this.facade.takePendingCustomerAuthToken() : undefined,
     });
   }
 
@@ -77,6 +78,7 @@ export class TableStatusComponent {
     this.facade.joinSession({
       identityMode: mode,
       guestName: mode !== 'anonymous' ? (this.guestName() || undefined) : undefined,
+      customerAuthToken: mode === 'registered' ? this.facade.takePendingCustomerAuthToken() : undefined,
     });
   }
 

@@ -8,6 +8,7 @@ use App\GuestOrder\Domain\Entity\GuestSession;
 use App\GuestOrder\Domain\Exception\TableNotOpenException;
 use App\GuestOrder\Domain\Exception\TableQrTokenNotFoundException;
 use App\GuestOrder\Domain\Exception\TableToChargeException;
+use App\GuestOrder\Domain\Interfaces\CustomerAccountRepositoryInterface;
 use App\GuestOrder\Domain\Interfaces\GuestSessionRepositoryInterface;
 use App\GuestOrder\Domain\Interfaces\TableQrTokenRepositoryInterface;
 use App\GuestOrder\Domain\ValueObject\GuestSessionToken;
@@ -21,6 +22,7 @@ final class JoinGuestSession
         private readonly TableQrTokenRepositoryInterface $tableQrTokenRepository,
         private readonly OrderRepositoryInterface $orderRepository,
         private readonly GuestSessionRepositoryInterface $guestSessionRepository,
+        private readonly CustomerAccountRepositoryInterface $customerAccountRepository,
         private readonly EventBusInterface $eventBus,
     ) {}
 
@@ -36,13 +38,26 @@ final class JoinGuestSession
             throw TableToChargeException::create();
         }
 
+        $customerAccountId = null;
+        $guestName         = $command->guestName;
+
+        if ($command->customerAuthToken !== null) {
+            $account = $this->customerAccountRepository->findByAuthToken($command->customerAuthToken);
+            if ($account !== null) {
+                $customerAccountId = $account->id()->value();
+                $guestName         = $account->name();
+                $this->customerAccountRepository->invalidateAuthToken($command->customerAuthToken);
+            }
+        }
+
         $session = GuestSession::dddCreateAsJoiner(
             tableQrTokenId: $qrToken->id(),
             restaurantId: $qrToken->restaurantId(),
             orderId: $order->id(),
             sessionToken: GuestSessionToken::create($command->sessionToken),
             identityMode: IdentityMode::create($command->identityMode),
-            guestName: $command->guestName,
+            guestName: $guestName,
+            customerAccountId: $customerAccountId,
         );
 
         $this->guestSessionRepository->save($session);

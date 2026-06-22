@@ -63,6 +63,7 @@ export class GuestOrderFacade {
   private readonly _isLoading = signal(false);
   private readonly _errorMessage = signal<string | null>(null);
   private readonly _customerData = signal<CustomerData | null>(null);
+  private _pendingCustomerAuthToken: string | null = null;
 
   readonly screen = this._screen.asReadonly();
   readonly qrToken = this._qrToken.asReadonly();
@@ -225,7 +226,7 @@ export class GuestOrderFacade {
     }, CATALOG_POLL_MS);
   }
 
-  openTable(form: { dinersCount: number; identityMode: IdentityMode; guestName?: string }): void {
+  openTable(form: { dinersCount: number; identityMode: IdentityMode; guestName?: string; customerAuthToken?: string }): void {
     const token = this._qrToken();
     const sessionToken = this.sessionService.generateSessionToken();
     const body: OpenTableBody = {
@@ -233,6 +234,7 @@ export class GuestOrderFacade {
       diners_count: form.dinersCount,
       identity_mode: form.identityMode,
       guest_name: form.guestName,
+      customer_auth_token: form.customerAuthToken,
     };
 
     this._isLoading.set(true);
@@ -258,13 +260,14 @@ export class GuestOrderFacade {
       });
   }
 
-  joinSession(form: { identityMode: IdentityMode; guestName?: string }): void {
+  joinSession(form: { identityMode: IdentityMode; guestName?: string; customerAuthToken?: string }): void {
     const token = this._qrToken();
     const sessionToken = this.sessionService.generateSessionToken();
     const body: JoinSessionBody = {
       session_token: sessionToken,
       identity_mode: form.identityMode,
       guest_name: form.guestName,
+      customer_auth_token: form.customerAuthToken,
     };
 
     this._isLoading.set(true);
@@ -440,6 +443,7 @@ export class GuestOrderFacade {
       .subscribe({
         next: (res) => {
           this._customerData.set(res.customer);
+          this._pendingCustomerAuthToken = res.customer_auth_token;
           this._isLoading.set(false);
         },
         error: (err) => {
@@ -464,6 +468,7 @@ export class GuestOrderFacade {
       .subscribe({
         next: (res) => {
           this._customerData.set(res.customer);
+          this._pendingCustomerAuthToken = res.customer_auth_token;
           this._isLoading.set(false);
         },
         error: () => {
@@ -473,8 +478,10 @@ export class GuestOrderFacade {
       });
   }
 
-  getCustomerAuthToken(): string | null {
-    return this._customerData() ? sessionStorage.getItem(`customer_auth_${this._qrToken()}`) : null;
+  takePendingCustomerAuthToken(): string | undefined {
+    const token = this._pendingCustomerAuthToken ?? undefined;
+    this._pendingCustomerAuthToken = null;
+    return token;
   }
 
   deleteLine(localId: string): void {

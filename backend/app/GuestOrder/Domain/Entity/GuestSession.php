@@ -26,6 +26,7 @@ class GuestSession
         private readonly ?string $guestName,
         private readonly bool $openedTable,
         private readonly ?int $dinersCount,
+        private readonly ?string $customerAccountId,
         private ?DomainDateTime $checkRequestedAt,
         private readonly DomainDateTime $createdAt,
         private DomainDateTime $updatedAt,
@@ -40,6 +41,7 @@ class GuestSession
         IdentityMode $identityMode,
         ?string $guestName,
         int $dinersCount,
+        ?string $customerAccountId = null,
     ): self {
         $now    = DomainDateTime::now();
         $expiry = DomainDateTime::create(
@@ -56,6 +58,7 @@ class GuestSession
             guestName: $guestName,
             openedTable: true,
             dinersCount: $dinersCount,
+            customerAccountId: $customerAccountId,
             checkRequestedAt: null,
             createdAt: $now,
             updatedAt: $now,
@@ -81,6 +84,7 @@ class GuestSession
         GuestSessionToken $sessionToken,
         IdentityMode $identityMode,
         ?string $guestName,
+        ?string $customerAccountId = null,
     ): self {
         $now    = DomainDateTime::now();
         $expiry = DomainDateTime::create(
@@ -97,6 +101,7 @@ class GuestSession
             guestName: $guestName,
             openedTable: false,
             dinersCount: null,
+            customerAccountId: $customerAccountId,
             checkRequestedAt: null,
             createdAt: $now,
             updatedAt: $now,
@@ -124,6 +129,7 @@ class GuestSession
         ?string $guestName,
         bool $openedTable,
         ?int $dinersCount,
+        ?string $customerAccountId,
         ?\DateTimeImmutable $checkRequestedAt,
         \DateTimeImmutable $createdAt,
         \DateTimeImmutable $updatedAt,
@@ -139,6 +145,7 @@ class GuestSession
             guestName: $guestName,
             openedTable: $openedTable,
             dinersCount: $dinersCount,
+            customerAccountId: $customerAccountId,
             checkRequestedAt: $checkRequestedAt !== null ? DomainDateTime::create($checkRequestedAt) : null,
             createdAt: DomainDateTime::create($createdAt),
             updatedAt: DomainDateTime::create($updatedAt),
@@ -171,6 +178,7 @@ class GuestSession
     public function guestName(): ?string { return $this->guestName; }
     public function openedTable(): bool { return $this->openedTable; }
     public function dinersCount(): ?int { return $this->dinersCount; }
+    public function customerAccountId(): ?string { return $this->customerAccountId; }
     public function checkRequestedAt(): ?DomainDateTime { return $this->checkRequestedAt; }
     public function createdAt(): DomainDateTime { return $this->createdAt; }
     public function updatedAt(): DomainDateTime { return $this->updatedAt; }
