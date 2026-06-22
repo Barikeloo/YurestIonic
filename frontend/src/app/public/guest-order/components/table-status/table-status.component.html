@@ -42,9 +42,44 @@
           </div>
         }
 
+        @if (facade.customerData(); as cd) {
+          <div class="ts-welcome-back">
+            <span class="ts-welcome-icon">⭐</span>
+            <div>
+              <p class="ts-welcome-name">¡Hola de nuevo, {{ cd.name }}!</p>
+              <p class="ts-welcome-pts">{{ cd.points }} puntos acumulados</p>
+            </div>
+          </div>
+        }
+
+        @if (showLoginForm()) {
+          <div class="ts-auth-form">
+            <p class="ts-auth-title">Inicia sesión</p>
+            <input class="ts-input" type="email" placeholder="Email" [value]="loginEmail()" (input)="loginEmail.set($any($event.target).value)" />
+            <input class="ts-input" type="password" placeholder="Contraseña" [value]="loginPassword()" (input)="loginPassword.set($any($event.target).value)" />
+            <button class="ts-auth-submit" [disabled]="facade.isLoading()" (click)="submitLogin()">
+              {{ facade.isLoading() ? 'Entrando…' : 'Entrar →' }}
+            </button>
+            <button class="ts-auth-switch" (click)="switchToRegister()">¿No tienes cuenta? Crear cuenta</button>
+          </div>
+        }
+
+        @if (showRegisterForm()) {
+          <div class="ts-auth-form">
+            <p class="ts-auth-title">Crear cuenta</p>
+            <input class="ts-input" type="text" placeholder="Tu nombre" [value]="registerName()" (input)="registerName.set($any($event.target).value)" maxlength="100" />
+            <input class="ts-input" type="email" placeholder="Email" [value]="registerEmail()" (input)="registerEmail.set($any($event.target).value)" />
+            <input class="ts-input" type="password" placeholder="Contraseña (mín. 8 caracteres)" [value]="registerPassword()" (input)="registerPassword.set($any($event.target).value)" />
+            <button class="ts-auth-submit" [disabled]="facade.isLoading()" (click)="submitRegister()">
+              {{ facade.isLoading() ? 'Creando…' : 'Crear cuenta →' }}
+            </button>
+            <button class="ts-auth-switch" (click)="switchToLogin()">¿Ya tienes cuenta? Iniciar sesión</button>
+          </div>
+        }
+
         <button
           class="ts-cta"
-          [disabled]="!identityMode() || facade.isLoading()"
+          [disabled]="!identityMode() || facade.isLoading() || (identityMode() === 'registered' && !facade.customerData())"
           (click)="openTable()"
         >
           @if (facade.isLoading()) {
@@ -81,9 +116,44 @@
           </div>
         }
 
+        @if (facade.customerData(); as cd) {
+          <div class="ts-welcome-back">
+            <span class="ts-welcome-icon">⭐</span>
+            <div>
+              <p class="ts-welcome-name">¡Hola de nuevo, {{ cd.name }}!</p>
+              <p class="ts-welcome-pts">{{ cd.points }} puntos acumulados</p>
+            </div>
+          </div>
+        }
+
+        @if (showLoginForm()) {
+          <div class="ts-auth-form">
+            <p class="ts-auth-title">Inicia sesión</p>
+            <input class="ts-input" type="email" placeholder="Email" [value]="loginEmail()" (input)="loginEmail.set($any($event.target).value)" />
+            <input class="ts-input" type="password" placeholder="Contraseña" [value]="loginPassword()" (input)="loginPassword.set($any($event.target).value)" />
+            <button class="ts-auth-submit" [disabled]="facade.isLoading()" (click)="submitLogin()">
+              {{ facade.isLoading() ? 'Entrando…' : 'Entrar →' }}
+            </button>
+            <button class="ts-auth-switch" (click)="switchToRegister()">¿No tienes cuenta? Crear cuenta</button>
+          </div>
+        }
+
+        @if (showRegisterForm()) {
+          <div class="ts-auth-form">
+            <p class="ts-auth-title">Crear cuenta</p>
+            <input class="ts-input" type="text" placeholder="Tu nombre" [value]="registerName()" (input)="registerName.set($any($event.target).value)" maxlength="100" />
+            <input class="ts-input" type="email" placeholder="Email" [value]="registerEmail()" (input)="registerEmail.set($any($event.target).value)" />
+            <input class="ts-input" type="password" placeholder="Contraseña (mín. 8 caracteres)" [value]="registerPassword()" (input)="registerPassword.set($any($event.target).value)" />
+            <button class="ts-auth-submit" [disabled]="facade.isLoading()" (click)="submitRegister()">
+              {{ facade.isLoading() ? 'Creando…' : 'Crear cuenta →' }}
+            </button>
+            <button class="ts-auth-switch" (click)="switchToLogin()">¿Ya tienes cuenta? Iniciar sesión</button>
+          </div>
+        }
+
         <button
           class="ts-cta"
-          [disabled]="!identityMode() || facade.isLoading()"
+          [disabled]="!identityMode() || facade.isLoading() || (identityMode() === 'registered' && !facade.customerData())"
           (click)="joinSession()"
         >
           @if (facade.isLoading()) {

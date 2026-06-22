@@ -19,6 +19,13 @@ export class TableStatusComponent {
   protected readonly identityMode = signal<IdentityMode | null>(null);
   protected readonly guestName = signal('');
   protected readonly showNameInput = signal(false);
+  protected readonly showLoginForm = signal(false);
+  protected readonly showRegisterForm = signal(false);
+  protected readonly loginEmail = signal('');
+  protected readonly loginPassword = signal('');
+  protected readonly registerName = signal('');
+  protected readonly registerEmail = signal('');
+  protected readonly registerPassword = signal('');
 
   setDiners(n: number): void {
     this.dinersCount.set(n);
@@ -27,9 +34,31 @@ export class TableStatusComponent {
   selectIdentity(mode: IdentityMode): void {
     this.identityMode.set(mode);
     this.showNameInput.set(mode === 'named');
-    if (mode === 'anonymous') {
-      this.guestName.set('');
-    }
+    this.showLoginForm.set(mode === 'registered' && !this.facade.customerData());
+    this.showRegisterForm.set(false);
+    if (mode === 'anonymous') this.guestName.set('');
+  }
+
+  switchToRegister(): void {
+    this.showLoginForm.set(false);
+    this.showRegisterForm.set(true);
+  }
+
+  switchToLogin(): void {
+    this.showRegisterForm.set(false);
+    this.showLoginForm.set(true);
+  }
+
+  submitLogin(): void {
+    this.facade.loginAccount({ email: this.loginEmail(), password: this.loginPassword() });
+  }
+
+  submitRegister(): void {
+    this.facade.registerAccount({
+      name: this.registerName(),
+      email: this.registerEmail(),
+      password: this.registerPassword(),
+    });
   }
 
   openTable(): void {

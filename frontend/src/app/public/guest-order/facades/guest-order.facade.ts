@@ -4,6 +4,7 @@ import { GuestOrderApiService } from '../services/guest-order-api.service';
 import { GuestSessionService } from '../services/guest-session.service';
 import { GuestCartService } from '../services/guest-cart.service';
 import {
+  CustomerData,
   TableStatusResponse,
   IdentityMode,
   OpenTableBody,
@@ -61,6 +62,7 @@ export class GuestOrderFacade {
   private readonly _identityMode = signal<IdentityMode>('anonymous');
   private readonly _isLoading = signal(false);
   private readonly _errorMessage = signal<string | null>(null);
+  private readonly _customerData = signal<CustomerData | null>(null);
 
   readonly screen = this._screen.asReadonly();
   readonly qrToken = this._qrToken.asReadonly();
@@ -76,6 +78,7 @@ export class GuestOrderFacade {
   readonly identityMode = this._identityMode.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
   readonly errorMessage = this._errorMessage.asReadonly();
+  readonly customerData = this._customerData.asReadonly();
 
   readonly orderStatus = computed((): OrderStatus => this._tableStatus()?.order_status ?? 'none');
   readonly restaurantName = computed(() => this._tableStatus()?.restaurant.name ?? '');
@@ -425,6 +428,53 @@ export class GuestOrderFacade {
           this._errorMessage.set('No se pudo enviar la solicitud. Inténtalo de nuevo.');
         },
       });
+  }
+
+  registerAccount(form: { name: string; email: string; password: string }): void {
+    const token = this._qrToken();
+    this._isLoading.set(true);
+    this._errorMessage.set(null);
+    this.api
+      .registerCustomer(token, form)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this._customerData.set(res.customer);
+          this._isLoading.set(false);
+        },
+        error: (err) => {
+          this._isLoading.set(false);
+          const code = err?.error?.error?.code;
+          this._errorMessage.set(
+            code === 'EMAIL_ALREADY_REGISTERED'
+              ? 'Este email ya está registrado. Inicia sesión.'
+              : 'Error al crear la cuenta. Inténtalo de nuevo.',
+          );
+        },
+      });
+  }
+
+  loginAccount(form: { email: string; password: string }): void {
+    const token = this._qrToken();
+    this._isLoading.set(true);
+    this._errorMessage.set(null);
+    this.api
+      .loginCustomer(token, form)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (res) => {
+          this._customerData.set(res.customer);
+          this._isLoading.set(false);
+        },
+        error: () => {
+          this._isLoading.set(false);
+          this._errorMessage.set('Email o contraseña incorrectos.');
+        },
+      });
+  }
+
+  getCustomerAuthToken(): string | null {
+    return this._customerData() ? sessionStorage.getItem(`customer_auth_${this._qrToken()}`) : null;
   }
 
   deleteLine(localId: string): void {

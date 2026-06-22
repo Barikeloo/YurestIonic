@@ -60,7 +60,9 @@ use App\Sale\Infrastructure\Persistence\Repositories\EloquentChargeSessionReposi
 use App\Sale\Infrastructure\Persistence\Repositories\EloquentOrderFinalTicketRepository;
 use App\Sale\Infrastructure\Persistence\Repositories\EloquentSaleLineRepository;
 use App\Sale\Infrastructure\Persistence\Repositories\EloquentSaleRepository;
+use App\GuestOrder\Domain\Interfaces\CustomerAccountRepositoryInterface;
 use App\GuestOrder\Domain\Interfaces\GuestCatalogRepositoryInterface;
+use App\GuestOrder\Infrastructure\Persistence\Repositories\EloquentCustomerAccountRepository;
 use App\GuestOrder\Domain\Interfaces\GuestOrderLineRepositoryInterface;
 use App\GuestOrder\Domain\Interfaces\GuestOrderRoundRepositoryInterface;
 use App\GuestOrder\Domain\Interfaces\GuestSessionRepositoryInterface;
@@ -149,6 +151,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TableQrTokenRepositoryInterface::class, EloquentTableQrTokenRepository::class);
         $this->app->bind(GuestSessionRepositoryInterface::class, EloquentGuestSessionRepository::class);
         $this->app->bind(GuestCatalogRepositoryInterface::class, EloquentGuestCatalogRepository::class);
+        $this->app->bind(CustomerAccountRepositoryInterface::class, EloquentCustomerAccountRepository::class);
         $this->app->bind(GuestOrderLineRepositoryInterface::class, EloquentGuestOrderLineRepository::class);
         $this->app->bind(GuestOrderRoundRepositoryInterface::class, EloquentGuestOrderRoundRepository::class);
         $this->app->when(\App\GuestOrder\Application\GenerateTableQrToken\GenerateTableQrToken::class)

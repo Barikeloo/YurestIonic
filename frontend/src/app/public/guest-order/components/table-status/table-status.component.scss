@@ -132,6 +132,79 @@
   }
 }
 
+.ts-welcome-back {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #fff8e1, #fff3cd);
+  border: 1.5px solid #ffe082;
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+
+.ts-welcome-icon { font-size: 28px; }
+
+.ts-welcome-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+}
+
+.ts-welcome-pts {
+  font-size: 13px;
+  color: #f57f17;
+  margin: 0;
+  font-weight: 600;
+}
+
+.ts-auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 14px;
+  border: 1.5px solid #eee;
+}
+
+.ts-auth-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #555;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ts-auth-submit {
+  height: 46px;
+  background: var(--guest-primary, #ff4d4d);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  margin-top: 2px;
+
+  &:disabled { opacity: 0.4; }
+  &:not(:disabled):hover { opacity: 0.9; }
+}
+
+.ts-auth-switch {
+  background: none;
+  border: none;
+  color: var(--guest-primary, #ff4d4d);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  padding: 2px;
+  text-decoration: underline;
+}
+
 .ts-closed-icon {
   font-size: 48px;
   margin-bottom: 8px;

@@ -3,6 +3,7 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import {
+  CustomerData,
   TableStatusResponse,
   OpenTableBody,
   JoinSessionBody,
@@ -104,6 +105,20 @@ export class GuestOrderApiService {
       this.url(token, '/request-check'),
       {},
       { headers: this.guestHeaders(sessionToken) },
+    );
+  }
+
+  registerCustomer(token: string, body: { name: string; email: string; password: string }): Observable<{ customer: CustomerData; customer_auth_token: string }> {
+    return this.http.post<{ customer: CustomerData; customer_auth_token: string }>(
+      this.url(token, '/auth/register'),
+      body,
+    );
+  }
+
+  loginCustomer(token: string, body: { email: string; password: string }): Observable<{ customer: CustomerData; customer_auth_token: string }> {
+    return this.http.post<{ customer: CustomerData; customer_auth_token: string }>(
+      this.url(token, '/auth/login'),
+      body,
     );
   }
 

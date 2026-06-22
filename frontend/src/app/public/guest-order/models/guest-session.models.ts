@@ -1,5 +1,22 @@
 export type IdentityMode = 'anonymous' | 'named' | 'registered';
 
+export interface CustomerOffer {
+  id: string;
+  title: string;
+  discount_type: 'percent' | 'fixed_cents' | 'points_multiplier';
+  discount_value: number;
+}
+
+export interface CustomerData {
+  id: string;
+  name: string;
+  email: string;
+  points: number;
+  visits_count: number;
+  last_visit_at: string | null;
+  active_offers: CustomerOffer[];
+}
+
 export type OrderStatus = 'none' | 'open' | 'to_charge';
 
 export interface TableStatusResponse {
