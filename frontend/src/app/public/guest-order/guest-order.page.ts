@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { GuestOrderFacade } from './facades/guest-order.facade';
 import { GuestCartService } from './services/guest-cart.service';
 import { TableStatusComponent } from './components/table-status/table-status.component';
+import { CatalogComponent } from './components/catalog/catalog.component';
 
 @Component({
   selector: 'app-guest-order',
@@ -11,7 +12,7 @@ import { TableStatusComponent } from './components/table-status/table-status.com
   styleUrls: ['./guest-order.page.scss'],
   standalone: true,
   providers: [GuestOrderFacade, GuestCartService],
-  imports: [CommonModule, TableStatusComponent],
+  imports: [CommonModule, TableStatusComponent, CatalogComponent],
 })
 export class GuestOrderPage implements OnInit, OnDestroy {
   protected readonly facade = inject(GuestOrderFacade);
