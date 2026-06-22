@@ -9,6 +9,7 @@ import { ProductDetailComponent } from './components/product-detail/product-deta
 import { GuestCartComponent } from './components/guest-cart/guest-cart.component';
 import { RoundConfirmedComponent } from './components/round-confirmed/round-confirmed.component';
 import { OrderHistoryComponent } from './components/order-history/order-history.component';
+import { MenuConfiguratorComponent } from './components/menu-configurator/menu-configurator.component';
 
 @Component({
   selector: 'app-guest-order',
@@ -24,6 +25,7 @@ import { OrderHistoryComponent } from './components/order-history/order-history.
     GuestCartComponent,
     RoundConfirmedComponent,
     OrderHistoryComponent,
+    MenuConfiguratorComponent,
   ],
 })
 export class GuestOrderPage implements OnInit, OnDestroy {

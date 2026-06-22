@@ -1,0 +1,94 @@
+<div class="mc-host">
+
+  <header class="mc-header">
+    <button class="mc-back" (click)="facade.navigateBack()">← Volver</button>
+  </header>
+
+  @if (menu(); as m) {
+
+    <div class="mc-title-block">
+      <h1 class="mc-name">{{ m.name }}</h1>
+      @if (m.description) {
+        <p class="mc-desc">{{ m.description }}</p>
+      }
+      <p class="mc-base-price">Desde {{ m.price_cents / 100 | number:'1.2-2' }}€</p>
+    </div>
+
+    @for (section of m.sections; track section.id) {
+      <section class="mc-section" [class.mc-section--error]="sectionErrors().has(section.id)">
+
+        <div class="mc-section-header">
+          <div class="mc-section-meta">
+            <h2 class="mc-section-name">{{ section.name }}</h2>
+            <span class="mc-section-rule">{{ selectionLabel(section) }}</span>
+          </div>
+          <span class="mc-section-count" [class.mc-section-count--ok]="selectedCount(section.id) >= section.min_choices">
+            {{ selectedCount(section.id) }}/{{ section.max_choices }}
+          </span>
+        </div>
+
+        @if (sectionErrors().has(section.id)) {
+          <p class="mc-section-error">{{ sectionErrors().get(section.id) }}</p>
+        }
+
+        <div class="mc-items">
+          @for (item of section.items; track item.id) {
+            <button
+              class="mc-item"
+              [class.mc-item--selected]="isSelected(section.id, item.id)"
+              [class.mc-item--radio]="section.max_choices === 1"
+              (click)="toggleItem(section, item)"
+            >
+              <div class="mc-item-indicator">
+                @if (section.max_choices === 1) {
+                  <div class="mc-radio" [class.mc-radio--on]="isSelected(section.id, item.id)"></div>
+                } @else {
+                  <div class="mc-checkbox" [class.mc-checkbox--on]="isSelected(section.id, item.id)">
+                    @if (isSelected(section.id, item.id)) { ✓ }
+                  </div>
+                }
+              </div>
+
+              <div class="mc-item-info">
+                <span class="mc-item-name">{{ item.product_name }}</span>
+                @if (item.variant_name) {
+                  <span class="mc-item-variant">{{ item.variant_name }}</span>
+                }
+              </div>
+
+              @if (item.extra_price_cents > 0) {
+                <span class="mc-item-extra">+{{ item.extra_price_cents / 100 | number:'1.2-2' }}€</span>
+              }
+            </button>
+          }
+        </div>
+
+      </section>
+    }
+
+    <div class="mc-footer">
+      <div class="mc-qty-row">
+        <span class="mc-qty-label">Cantidad</span>
+        <div class="mc-stepper">
+          <button class="mc-step" (click)="setQuantity(quantity() - 1)" [disabled]="quantity() <= 1">−</button>
+          <span class="mc-step-val">{{ quantity() }}</span>
+          <button class="mc-step" (click)="setQuantity(quantity() + 1)" [disabled]="quantity() >= 99">+</button>
+        </div>
+      </div>
+
+      <button
+        class="mc-add-btn"
+        [disabled]="!canAdd()"
+        (click)="addToCart()"
+      >
+        @if (canAdd()) {
+          Añadir · {{ totalPrice() / 100 | number:'1.2-2' }}€
+        } @else {
+          Completa las secciones obligatorias
+        }
+      </button>
+    </div>
+
+  }
+
+</div>
