@@ -23,15 +23,15 @@
   }
 
   @if (facade.screen() === 'cart') {
-    <p style="padding:24px">cart — próximamente</p>
+    <app-guest-cart />
   }
 
   @if (facade.screen() === 'round-sent') {
-    <p style="padding:24px">round-sent — próximamente</p>
+    <app-round-confirmed />
   }
 
   @if (facade.screen() === 'history') {
-    <p style="padding:24px">history — próximamente</p>
+    <app-order-history />
   }
 
 </div>

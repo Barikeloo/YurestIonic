@@ -1,0 +1,89 @@
+<div class="gc-host">
+
+  <header class="gc-header">
+    <button class="gc-back" (click)="facade.goToCatalog()">← Carta</button>
+    <h1 class="gc-title">Tu carrito</h1>
+    <span class="gc-count">{{ pendingLines().length }} ítem{{ pendingLines().length !== 1 ? 's' : '' }}</span>
+  </header>
+
+  @if (facade.cart.isOffline()) {
+    <div class="gc-offline-banner">
+      ⚠️ Sin conexión. Tu carrito está guardado. Lo enviaremos cuando recuperes internet.
+    </div>
+  }
+
+  @if (pendingLines().length === 0) {
+    <div class="gc-empty">
+      <p class="gc-empty-icon">🛒</p>
+      <p class="gc-empty-text">Tu carrito está vacío.</p>
+      <button class="gc-browse-btn" (click)="facade.goToCatalog()">Ver la carta</button>
+    </div>
+  } @else {
+
+    <div class="gc-instruction">
+      <p>Marca lo que quieres recibir ahora. Lo demás lo envías cuando quieras.</p>
+    </div>
+
+    <div class="gc-actions-row">
+      <button class="gc-sel-btn" (click)="selectAll()">Seleccionar todo</button>
+      <button class="gc-sel-btn" (click)="clearAll()">Limpiar selección</button>
+    </div>
+
+    <div class="gc-lines">
+      @for (line of pendingLines(); track line.localId) {
+        <button
+          class="gc-line"
+          [class.gc-line--selected]="isSelected(line.localId)"
+          [class.gc-line--syncing]="!line.backendLineId"
+          (click)="toggleLine(line.localId)"
+        >
+          <div class="gc-line-check">
+            @if (isSelected(line.localId)) { ✓ }
+          </div>
+          <div class="gc-line-info">
+            <span class="gc-line-name">{{ formatLine(line) }}</span>
+            <span class="gc-line-qty">× {{ line.quantity }}</span>
+          </div>
+          <span class="gc-line-price">
+            {{ (line.unitPrice * line.quantity) / 100 | number:'1.2-2' }}€
+          </span>
+          @if (!line.backendLineId) {
+            <span class="gc-syncing">⟳</span>
+          }
+        </button>
+      }
+    </div>
+
+    @if (selectedLines().length > 0) {
+      <div class="gc-round-section">
+        <p class="gc-round-title">Ronda seleccionada · {{ selectedLines().length }} ítem{{ selectedLines().length !== 1 ? 's' : '' }} · {{ selectedTotal() / 100 | number:'1.2-2' }}€</p>
+        <input
+          class="gc-label-input"
+          type="text"
+          placeholder="Etiqueta opcional (ej: Bebidas, Entrantes…)"
+          [value]="roundLabel()"
+          (input)="roundLabel.set($any($event.target).value)"
+          maxlength="100"
+        />
+      </div>
+    }
+
+  }
+
+  <div class="gc-footer">
+    <button
+      class="gc-submit-btn"
+      [disabled]="!canSubmit()"
+      (click)="submitRound()"
+    >
+      @if (facade.isLoading()) {
+        Enviando…
+      } @else if (selectedLines().length > 0) {
+        Enviar esta ronda ({{ selectedLines().length }}) →
+      } @else {
+        Selecciona ítems para enviar
+      }
+    </button>
+  </div>
+
+</div>

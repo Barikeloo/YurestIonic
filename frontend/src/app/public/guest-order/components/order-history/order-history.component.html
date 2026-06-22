@@ -1,0 +1,86 @@
+<div class="oh-host">
+
+  <header class="oh-header">
+    <button class="oh-back" (click)="facade.goToCatalog()">← Carta</button>
+    <h1 class="oh-title">Mis pedidos</h1>
+  </header>
+
+  @if (facade.orderHistory(); as history) {
+
+    @if (history.rounds.length === 0 && history.pending_lines.length === 0) {
+      <div class="oh-empty">
+        <p class="oh-empty-icon">📋</p>
+        <p>Aún no has pedido nada.</p>
+        <button class="oh-browse-btn" (click)="facade.goToCatalog()">Ver la carta</button>
+      </div>
+    }
+
+    @for (round of history.rounds; track round.round_id) {
+      <div class="oh-round">
+        <div class="oh-round-header">
+          <span class="oh-round-num">Ronda {{ round.round_number }}</span>
+          @if (round.label) { <span class="oh-round-label">{{ round.label }}</span> }
+          <span class="oh-round-time">{{ round.submitted_at | date:'HH:mm' }}</span>
+        </div>
+        @for (line of round.lines; track line.id) {
+          <div class="oh-line">
+            <span class="oh-line-name">{{ line.product_name ?? line.menu_name }}</span>
+            <span class="oh-line-qty">× {{ line.quantity }}</span>
+            <span class="oh-line-price">{{ (line.unit_price * line.quantity) / 100 | number:'1.2-2' }}€</span>
+          </div>
+        }
+      </div>
+    }
+
+    @if (history.pending_lines.length > 0) {
+      <div class="oh-pending-section">
+        <p class="oh-pending-title">⏳ Carrito pendiente</p>
+        @for (line of history.pending_lines; track line.id) {
+          <div class="oh-line oh-line--pending">
+            <span class="oh-line-name">{{ line.product_name ?? line.menu_name }}</span>
+            <span class="oh-line-qty">× {{ line.quantity }}</span>
+            <span class="oh-line-price">{{ (line.unit_price * line.quantity) / 100 | number:'1.2-2' }}€</span>
+          </div>
+        }
+        <button class="oh-send-btn" (click)="facade.goToCart()">Enviar ahora →</button>
+      </div>
+    }
+
+    @if (history.rounds.length > 0 || history.pending_lines.length > 0) {
+      <div class="oh-totals">
+        <div class="oh-total-row">
+          <span>Total enviado</span>
+          <span class="oh-total-val">{{ history.total_sent_cents / 100 | number:'1.2-2' }}€</span>
+        </div>
+        @if (history.total_pending_cents > 0) {
+          <div class="oh-total-row oh-total-row--pending">
+            <span>Pendiente de enviar</span>
+            <span>{{ history.total_pending_cents / 100 | number:'1.2-2' }}€</span>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="oh-check-section">
+      @if (checkRequested()) {
+        <div class="oh-check-sent">
+          🧾 El camarero viene a cobrar en breve.
+        </div>
+      } @else {
+        <button
+          class="oh-check-btn"
+          [disabled]="facade.isLoading()"
+          (click)="requestCheck()"
+        >
+          🧾 Pedir la cuenta
+        </button>
+      }
+    </div>
+
+  } @else {
+    <div class="oh-loading">
+      <div class="oh-spinner"></div>
+    </div>
+  }
+
+</div>
