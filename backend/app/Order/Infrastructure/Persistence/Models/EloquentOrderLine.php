@@ -41,6 +41,11 @@ final class EloquentOrderLine extends Model
         'is_invitation',
         'price_override_cents',
         'notes',
+        'origin',
+        'send_status',
+        'guest_session_id',
+        'guest_name',
+        'guest_round_id',
     ];
 
     protected function casts(): array

@@ -26,6 +26,7 @@ export interface TableWithStatus extends TpvTableItem {
   order_id?: string;
   diners?: number;
   opened_at?: string;
+  opened_by_user_id?: string | null;
   total?: number;
   remaining_total?: number;
   merged_table_group_id?: string | null;
@@ -132,6 +133,7 @@ export class MesasFacade implements OnDestroy {
           order_id: order?.id,
           diners: order?.diners,
           opened_at: order?.opened_at,
+          opened_by_user_id: order?.opened_by_user_id ?? null,
           total,
           remaining_total: remainingTotal,
           merged_table_group_id: table.merged_table_group_id,
@@ -244,6 +246,15 @@ export class MesasFacade implements OnDestroy {
     } finally {
       this.reloadingOrders = false;
     }
+  }
+
+  public async reloadLines(): Promise<void> {
+    const selected = this._selectedTable();
+    if (!selected?.order_id) return;
+    try {
+      const lines = await firstValueFrom(this.tpvService.getOrderLines(selected.order_id));
+      this._orderLines.set(lines);
+    } catch (_) { }
   }
 
   public ngOnDestroy(): void {

@@ -1345,3 +1345,72 @@ app-diners-status {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   }
 }
+
+/* ── Sprint 6: Guest / Autoservicio QR ─────────────────────────────── */
+
+.order-line--guest {
+  border-left: 3px solid #ff9800;
+}
+
+.order-line--pending {
+  opacity: 0.65;
+}
+
+.order-line-guest-badge {
+  font-size: 11px;
+  color: #e65100;
+  font-weight: 600;
+  margin-top: 2px;
+
+  em { font-style: normal; color: #aaa; }
+}
+
+.panel-qr-btn {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: none;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: background 0.15s;
+
+  &:hover { background: #bbdefb; }
+}
+
+.guest-opened-badge {
+  color: #e65100;
+  font-weight: 700;
+  font-size: 11px;
+}
+
+.guest-check-alert {
+  background: #fff3e0;
+  border: 1.5px solid #ff9800;
+  border-radius: 10px;
+  margin: 8px 12px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e65100;
+  animation: pulse-alert 1.5s ease-in-out infinite;
+}
+
+.guest-check-dismiss {
+  background: none;
+  border: none;
+  color: #e65100;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+@keyframes pulse-alert {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 152, 0, 0); }
+}

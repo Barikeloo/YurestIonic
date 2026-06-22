@@ -179,6 +179,11 @@
               <circle cx="12" cy="19" r="2"/>
             </svg>
           </button>
+          <button
+            class="panel-qr-btn"
+            title="QR Autoservicio"
+            (click)="openQrModal(selectedTable)"
+          >📲 QR</button>
           <div class="order-table-info">
             <div>
               <div class="order-table-name">{{ selectedTable.name }} · {{ getZoneName(selectedTable.zone_id) }}</div>
@@ -186,6 +191,9 @@
                 @if (selectedTable.occupied) {
                   {{ formatTime(selectedTable.opened_at) }}@if (selectedTable.diners) {
                   · {{ selectedTable.diners }} comensales
+                }
+                @if (isGuestOpenedTable(selectedTable)) {
+                  · <span class="guest-opened-badge">⚡ Abierta vía QR</span>
                 }
               }
               @if (!selectedTable.occupied) {
@@ -212,10 +220,21 @@
             <div class="order-empty-msg">Sin líneas</div>
           }
           @for (line of facade.orderLines(); track line) {
-            <div class="order-line order-line-clickable" (click)="openLineDetail(line)">
+            <div
+              class="order-line order-line-clickable"
+              [class.order-line--guest]="line.origin === 'guest'"
+              [class.order-line--pending]="line.origin === 'guest' && line.send_status === 'pending'"
+              (click)="openLineDetail(line)"
+            >
               <div class="order-line-qty">{{ line.quantity }}</div>
               <div class="order-line-info">
                 <div class="order-line-name">{{ lineDisplayName(line) }}</div>
+                @if (line.origin === 'guest') {
+                  <div class="order-line-guest-badge">
+                    ⚡ {{ line.guest_name ?? 'Guest' }}
+                    @if (line.send_status === 'pending') { · <em>pendiente</em> }
+                  </div>
+                }
                 @if (isMenuLine(line)) {
                   @if (menuLineSelectionsLabel(line); as selectionsText) {
                     <div class="order-line-meta">
@@ -246,6 +265,13 @@
           }
         }
       </div>
+      @if (checkRequestedAlert()) {
+        <div class="guest-check-alert">
+          <span>🧾 <strong>{{ checkRequestedAlert()!.guestName ?? 'Un comensal' }}</strong> pide la cuenta</span>
+          <button class="guest-check-dismiss" (click)="dismissCheckAlert()">✕</button>
+        </div>
+      }
+
       @if (selectedTable.occupied && facade.orderLines().length > 0) {
         @let total = selectedTable.total ?? facade.linesTotal();
         @let remaining = selectedTable.remaining_total ?? 0;
@@ -605,3 +631,11 @@
   (closeModal)="closeTransferModal()"
   (confirmTransfer)="onConfirmTransfer($event)"
 ></app-transfer-table-modal>
+
+@if (qrModalTable()) {
+  <app-qr-token-modal
+    [tableId]="qrModalTable()!.id"
+    [tableName]="qrModalTable()!.name"
+    (close)="closeQrModal()"
+  />
+}

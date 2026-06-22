@@ -26,7 +26,7 @@ final class OrderLine
         private readonly ?Uuid $menuId,
         private readonly ?string $menuName,
         private readonly ?array $menuSelections,
-        private readonly Uuid $userId,
+        private readonly ?Uuid $userId,
         private readonly OrderLineQuantity $quantity,
         private readonly OrderLinePrice $price,
         private readonly OrderLineTaxPercentage $taxPercentage,
@@ -40,6 +40,10 @@ final class OrderLine
         private readonly DomainDateTime $createdAt,
         private readonly DomainDateTime $updatedAt,
         private readonly ?DomainDateTime $deletedAt = null,
+        private readonly string $origin = 'tpv',
+        private readonly ?string $guestName = null,
+        private readonly ?string $sendStatus = null,
+        private readonly ?string $guestRoundId = null,
     ) {}
 
     public static function dddCreate(
@@ -144,7 +148,7 @@ final class OrderLine
         ?string $menuId,
         ?string $menuName,
         ?array $menuSelections,
-        string $userId,
+        ?string $userId,
         int $quantity,
         int $price,
         int $taxPercentage,
@@ -158,6 +162,10 @@ final class OrderLine
         \DateTimeImmutable $createdAt,
         \DateTimeImmutable $updatedAt,
         ?\DateTimeImmutable $deletedAt = null,
+        string $origin = 'tpv',
+        ?string $guestName = null,
+        ?string $sendStatus = null,
+        ?string $guestRoundId = null,
     ): self {
         return new self(
             id: Uuid::create($id),
@@ -171,7 +179,7 @@ final class OrderLine
             menuId: $menuId !== null ? Uuid::create($menuId) : null,
             menuName: $menuName,
             menuSelections: $menuSelections,
-            userId: Uuid::create($userId),
+            userId: $userId !== null ? Uuid::create($userId) : null,
             quantity: OrderLineQuantity::create($quantity),
             price: OrderLinePrice::create($price),
             taxPercentage: OrderLineTaxPercentage::create($taxPercentage),
@@ -185,6 +193,10 @@ final class OrderLine
             createdAt: DomainDateTime::create($createdAt),
             updatedAt: DomainDateTime::create($updatedAt),
             deletedAt: $deletedAt !== null ? DomainDateTime::create($deletedAt) : null,
+            origin: $origin,
+            guestName: $guestName,
+            sendStatus: $sendStatus,
+            guestRoundId: $guestRoundId,
         );
     }
 
@@ -248,9 +260,29 @@ final class OrderLine
         return $this->modifiers;
     }
 
-    public function userId(): Uuid
+    public function userId(): ?Uuid
     {
         return $this->userId;
+    }
+
+    public function origin(): string
+    {
+        return $this->origin;
+    }
+
+    public function guestName(): ?string
+    {
+        return $this->guestName;
+    }
+
+    public function sendStatus(): ?string
+    {
+        return $this->sendStatus;
+    }
+
+    public function guestRoundId(): ?string
+    {
+        return $this->guestRoundId;
     }
 
     public function quantity(): OrderLineQuantity

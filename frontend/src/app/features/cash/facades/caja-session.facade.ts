@@ -7,7 +7,7 @@ import { CashSessionStatusService } from '../../../core/services/cash-session-st
 
 export interface LastClosedData {
   id: string;
-  opened_by_user_id: string;
+  opened_by_user_id: string | null;
   closed_by_user_id: string | null;
   opened_at: string;
   closed_at: string | null;
@@ -22,14 +22,14 @@ export interface LastClosedData {
 
 export interface OrphanSessionData {
   id: string;
-  opened_by_user_id: string;
+  opened_by_user_id: string | null;
   opened_at: string;
   device_id: string;
 }
 
 export interface OpenSessionPayload {
   device_id: string;
-  opened_by_user_id: string;
+  opened_by_user_id: string | null;
   initial_amount_cents: number;
   notes?: string;
 }

@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PinAuthModalComponent, PinAuthResult } from '../../../../components/pin-auth-modal/pin-auth-modal.component';
 import { PinAuthService } from '../../../../core/services/pin-auth.service';
@@ -14,6 +14,10 @@ import { firstValueFrom } from 'rxjs';
 import { TransferTableModalComponent } from '../../ui/transfer-table-modal/transfer-table-modal.component';
 import { LineDetailModalComponent } from '../../../../shared/components/line-detail-modal/line-detail-modal.component';
 import { FloorPlanComponent } from '../../ui/floor-plan/floor-plan.component';
+import { QrTokenModalComponent } from '../../ui/qr-token-modal/qr-token-modal.component';
+import { EchoService } from '../../../../core/services/echo.service';
+import { AuthService } from '../../../../core/services/auth.service';
+import { CommonModule } from '@angular/common';
 
 const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#E74C3C'];
 
@@ -21,10 +25,10 @@ const AVATAR_COLORS = ['#E8440A', '#1A6FE8', '#1A9E5A', '#9B59B6', '#F39C12', '#
   selector: 'app-mesas',
   templateUrl: './mesas.page.html',
   styleUrls: ['./mesas.page.scss'],
-  imports: [PinAuthModalComponent, DinersStatusComponent, FilterByPipe, DragDropModule, TransferTableModalComponent, LineDetailModalComponent, FloorPlanComponent],
+  imports: [CommonModule, PinAuthModalComponent, DinersStatusComponent, FilterByPipe, DragDropModule, TransferTableModalComponent, LineDetailModalComponent, FloorPlanComponent, QrTokenModalComponent],
   providers: [MesasFacade],
 })
-export class MesasPage implements OnInit {
+export class MesasPage implements OnInit, OnDestroy {
   protected readonly facade = inject(MesasFacade);
   protected readonly OrderStatus = OrderStatus;
   private readonly pinAuthService = inject(PinAuthService);
@@ -32,6 +36,8 @@ export class MesasPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly toastService = inject(ToastService);
   private readonly tpvService = inject(TpvService);
+  private readonly echoService = inject(EchoService);
+  private readonly authService = inject(AuthService);
 
   public readonly viewMode = signal<'lista' | 'plano'>(
     (localStorage.getItem('mesas_view_mode') as 'lista' | 'plano') ?? 'lista'
@@ -107,9 +113,56 @@ export class MesasPage implements OnInit {
   private dragOffsetY = 0;
   private readonly DRAG_THRESHOLD = 8;
 
+  public qrModalTable = signal<TableWithStatus | null>(null);
+  public readonly checkRequestedAlert = signal<{ guestName: string | null; orderId: string } | null>(null);
+  private guestChannelName: string | null = null;
+
+  public openQrModal(table: TableWithStatus): void {
+    this.qrModalTable.set(table);
+  }
+
+  public closeQrModal(): void {
+    this.qrModalTable.set(null);
+  }
+
+  public isGuestOpenedTable(table: TableWithStatus): boolean {
+    return !!table.occupied && !table.opened_by_user_id;
+  }
+
+  public dismissCheckAlert(): void {
+    this.checkRequestedAlert.set(null);
+  }
+
+  private subscribeToGuestEvents(restaurantId: string): void {
+    this.guestChannelName = `restaurant.${restaurantId}`;
+    this.echoService.listen<{ order_id: string; guest_name: string | null }>(
+      this.guestChannelName,
+      'guest.check_requested',
+      (data) => {
+        this.checkRequestedAlert.set({ guestName: data.guest_name, orderId: data.order_id });
+        void this.facade.reloadLines();
+      },
+    );
+    this.echoService.listen(
+      this.guestChannelName,
+      'guest.round_submitted',
+      () => void this.facade.reloadLines(),
+    );
+  }
+
+  public ngOnDestroy(): void {
+    if (this.guestChannelName) {
+      this.echoService.leaveChannel(this.guestChannelName);
+    }
+  }
+
   public async ngOnInit(): Promise<void> {
     await this.facade.loadData();
     this.pruneAnchors();
+
+    firstValueFrom(this.authService.currentUser$)
+      .then((user) => { if (user?.restaurantId) this.subscribeToGuestEvents(user.restaurantId); })
+      .catch(() => {});
 
     const preselectId = this.route.snapshot.queryParams['selectedTableId'] ?? null;
 

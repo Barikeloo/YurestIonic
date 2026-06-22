@@ -511,7 +511,7 @@ export class CajaPage implements OnInit, OnDestroy {
       type: data.type,
       reason_code: data.reasonCode,
       amount_cents: data.amountCents,
-      user_id: this.activeSession()!.opened_by_user_id,
+      user_id: this.activeSession()!.opened_by_user_id ?? '',
       description: data.description,
     }).pipe(takeUntil(this.destroy$)).subscribe({
       next: () => {
@@ -610,7 +610,7 @@ export class CajaPage implements OnInit, OnDestroy {
     if (!this.activeSession()) return;
     this.sessionFacade.closeSession({
       cash_session_id: this.activeSession()!.uuid,
-      closed_by_user_id: this.activeSession()!.opened_by_user_id,
+      closed_by_user_id: this.activeSession()!.opened_by_user_id ?? '',
       final_amount_cents: data.countedAmount,
       discrepancy_reason: data.discrepancyReason,
     }).pipe(takeUntil(this.destroy$)).subscribe({

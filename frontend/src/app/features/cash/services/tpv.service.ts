@@ -77,7 +77,7 @@ export interface TpvOrder {
   status: OrderStatus;
   diners: number;
   opened_at: string;
-  opened_by_user_id: string;
+  opened_by_user_id: string | null;
   closed_at?: string | null;
   closed_by_user_id?: string | null;
   total: number;
@@ -108,12 +108,16 @@ export interface TpvOrderLine {
   menu_id?: string | null;
   menu_name?: string | null;
   menu_selections?: TpvOrderLineMenuSelection[] | null;
+  origin?: 'tpv' | 'guest';
+  guest_name?: string | null;
+  send_status?: 'pending' | 'sent' | null;
+  guest_round_id?: string | null;
 }
 
 export interface TpvSale {
   id: string;
   order_id: string;
-  opened_by_user_id: string;
+  opened_by_user_id: string | null;
   closed_by_user_id: string | null;
   ticket_number: number | null;
   value_date: string;
@@ -125,7 +129,7 @@ export interface TpvCashSession {
   uuid: string;
   restaurant_id: string;
   device_id: string;
-  opened_by_user_id: string;
+  opened_by_user_id: string | null;
   closed_by_user_id: string | null;
   opened_at: string;
   closed_at: string | null;
@@ -172,7 +176,7 @@ export interface TpvCashSessionSummary {
 export interface TpvCashSessionListItem {
   uuid: string;
   device_id: string;
-  opened_by_user_id: string;
+  opened_by_user_id: string | null;
   closed_by_user_id: string | null;
   opened_at: string;
   closed_at: string | null;
@@ -306,6 +310,12 @@ export class TpvService {
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
+  public generateTableQrToken(tableId: string): Observable<unknown> {
+    return this.http
+      .post<unknown>(`${this.baseUrl}/admin/tables/${tableId}/qr-token`, {}, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
   public listTables(): Observable<TpvTableItem[]> {
     return this.http
       .get<TpvTableItem[]>(`${this.baseUrl}/tpv/tables`, { withCredentials: true })
@@ -321,7 +331,7 @@ export class TpvService {
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
-  public createOrder(payload: { table_id: string; opened_by_user_id: string; diners: number }): Observable<TpvOrder> {
+  public createOrder(payload: { table_id: string; opened_by_user_id: string | null; diners: number }): Observable<TpvOrder> {
     return this.http
       .post<TpvOrder>(`${this.baseUrl}/tpv/orders`, payload, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
@@ -485,7 +495,7 @@ export class TpvService {
 
   public createSale(payload: {
     order_id: string;
-    opened_by_user_id: string;
+    opened_by_user_id: string | null;
     closed_by_user_id: string;
     device_id: string;
     payments: Array<{ method: string; amount_cents: number; metadata?: Record<string, unknown> }>;
@@ -555,7 +565,7 @@ export class TpvService {
 
   public openCashSession(payload: {
     device_id: string;
-    opened_by_user_id: string;
+    opened_by_user_id: string | null;
     initial_amount_cents: number;
     notes?: string;
   }): Observable<TpvCashSession> {
@@ -582,7 +592,7 @@ export class TpvService {
   public getLastClosedCashSession(): Observable<{
     last_closed: {
       id: string;
-      opened_by_user_id: string;
+      opened_by_user_id: string | null;
       closed_by_user_id: string | null;
       opened_at: string;
       closed_at: string | null;
@@ -596,7 +606,7 @@ export class TpvService {
     } | null;
     orphan_session: {
       id: string;
-      opened_by_user_id: string;
+      opened_by_user_id: string | null;
       opened_at: string;
       device_id: string;
     } | null;
@@ -605,7 +615,7 @@ export class TpvService {
       .get<{
         last_closed: {
           id: string;
-          opened_by_user_id: string;
+          opened_by_user_id: string | null;
           closed_by_user_id: string | null;
           opened_at: string;
           closed_at: string | null;
@@ -619,7 +629,7 @@ export class TpvService {
         } | null;
         orphan_session: {
           id: string;
-          opened_by_user_id: string;
+          opened_by_user_id: string | null;
           opened_at: string;
           device_id: string;
         } | null;

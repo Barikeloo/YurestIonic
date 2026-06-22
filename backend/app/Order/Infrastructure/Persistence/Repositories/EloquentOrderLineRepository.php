@@ -113,7 +113,9 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
         $productUuid = $model->product_id !== null
             ? EloquentProduct::query()->where('id', $model->product_id)->value('uuid')
             : null;
-        $userUuid = EloquentUser::query()->where('id', $model->user_id)->value('uuid');
+        $userUuid = $model->user_id !== null
+            ? EloquentUser::query()->where('id', $model->user_id)->value('uuid')
+            : null;
 
         return OrderLine::fromPersistence(
             $model->uuid,
@@ -141,6 +143,10 @@ final class EloquentOrderLineRepository implements OrderLineRepositoryInterface
             $model->created_at->toDateTimeImmutable(),
             $model->updated_at->toDateTimeImmutable(),
             $model->deleted_at?->toDateTimeImmutable(),
+            $model->origin ?? 'tpv',
+            $model->guest_name ?? null,
+            $model->send_status ?? null,
+            $model->guest_round_id ?? null,
         );
     }
 }

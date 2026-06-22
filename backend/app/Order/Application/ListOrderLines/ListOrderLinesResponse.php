@@ -20,12 +20,16 @@ final class ListOrderLinesResponse
         public readonly ?string $menu_id,
         public readonly ?string $menu_name,
         public readonly ?array $menu_selections,
-        public readonly string $user_id,
+        public readonly ?string $user_id,
         public readonly int $quantity,
         public readonly int $price,
         public readonly int $tax_percentage,
         public readonly string $created_at,
         public readonly string $updated_at,
+        public readonly string $origin = 'tpv',
+        public readonly ?string $guest_name = null,
+        public readonly ?string $send_status = null,
+        public readonly ?string $guest_round_id = null,
     ) {}
 
     public static function create(OrderLine $orderLine, ?string $productName = null): self
@@ -43,12 +47,16 @@ final class ListOrderLinesResponse
             menu_id: $orderLine->menuId()?->value(),
             menu_name: $orderLine->menuName(),
             menu_selections: $orderLine->menuSelections(),
-            user_id: $orderLine->userId()->value(),
+            user_id: $orderLine->userId()?->value(),
             quantity: $orderLine->quantity()->value(),
             price: $orderLine->price()->value(),
             tax_percentage: $orderLine->taxPercentage()->value(),
             created_at: $orderLine->createdAt()->format('Y-m-d H:i:s'),
             updated_at: $orderLine->updatedAt()->format('Y-m-d H:i:s'),
+            origin: $orderLine->origin(),
+            guest_name: $orderLine->guestName(),
+            send_status: $orderLine->sendStatus(),
+            guest_round_id: $orderLine->guestRoundId(),
         );
     }
 
@@ -71,8 +79,12 @@ final class ListOrderLinesResponse
             'quantity' => $this->quantity,
             'price' => $this->price,
             'tax_percentage' => $this->tax_percentage,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at'     => $this->created_at,
+            'updated_at'     => $this->updated_at,
+            'origin'         => $this->origin,
+            'guest_name'     => $this->guest_name,
+            'send_status'    => $this->send_status,
+            'guest_round_id' => $this->guest_round_id,
         ];
     }
 }

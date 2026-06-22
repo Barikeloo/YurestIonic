@@ -575,7 +575,7 @@ export class PedidosFacade {
       order.id,
       order.id.slice(0, 8),
       this.getTableName(order.table_id),
-      this.getUserName(order.opened_by_user_id),
+      this.getUserName(order.opened_by_user_id ?? undefined),
       totalEuros,
       totalEuros.replace('.', ','),
       order.diners != null ? order.diners.toString() : '',
