@@ -61,9 +61,13 @@ use App\Sale\Infrastructure\Persistence\Repositories\EloquentOrderFinalTicketRep
 use App\Sale\Infrastructure\Persistence\Repositories\EloquentSaleLineRepository;
 use App\Sale\Infrastructure\Persistence\Repositories\EloquentSaleRepository;
 use App\GuestOrder\Domain\Interfaces\GuestCatalogRepositoryInterface;
+use App\GuestOrder\Domain\Interfaces\GuestOrderLineRepositoryInterface;
+use App\GuestOrder\Domain\Interfaces\GuestOrderRoundRepositoryInterface;
 use App\GuestOrder\Domain\Interfaces\GuestSessionRepositoryInterface;
 use App\GuestOrder\Domain\Interfaces\TableQrTokenRepositoryInterface;
 use App\GuestOrder\Infrastructure\Persistence\Repositories\EloquentGuestCatalogRepository;
+use App\GuestOrder\Infrastructure\Persistence\Repositories\EloquentGuestOrderLineRepository;
+use App\GuestOrder\Infrastructure\Persistence\Repositories\EloquentGuestOrderRoundRepository;
 use App\GuestOrder\Infrastructure\Persistence\Repositories\EloquentGuestSessionRepository;
 use App\GuestOrder\Infrastructure\Persistence\Repositories\EloquentTableQrTokenRepository;
 use App\Shared\Domain\Interfaces\TransactionManagerInterface;
@@ -145,6 +149,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(TableQrTokenRepositoryInterface::class, EloquentTableQrTokenRepository::class);
         $this->app->bind(GuestSessionRepositoryInterface::class, EloquentGuestSessionRepository::class);
         $this->app->bind(GuestCatalogRepositoryInterface::class, EloquentGuestCatalogRepository::class);
+        $this->app->bind(GuestOrderLineRepositoryInterface::class, EloquentGuestOrderLineRepository::class);
+        $this->app->bind(GuestOrderRoundRepositoryInterface::class, EloquentGuestOrderRoundRepository::class);
         $this->app->when(\App\GuestOrder\Application\GenerateTableQrToken\GenerateTableQrToken::class)
             ->needs('$guestAppBaseUrl')
             ->give(static fn () => (string) env('GUEST_APP_URL', 'http://localhost:4201'));

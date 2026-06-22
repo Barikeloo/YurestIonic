@@ -439,6 +439,11 @@ Route::middleware('throttle:30,1')->group(function (): void {
     Route::get('/public/table/{token}/session/validate', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\ValidateGuestSessionController::class);
     Route::get('/public/table/{token}/catalog', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\GetCatalogForGuestController::class);
     Route::get('/public/table/{token}/catalog/version', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\GetCatalogVersionController::class);
+    Route::post('/public/table/{token}/cart/save', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\SavePendingLinesController::class);
+    Route::get('/public/table/{token}/cart', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\GetGuestCartController::class);
+    Route::post('/public/table/{token}/cart/submit-round', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\SubmitGuestRoundController::class);
+    Route::get('/public/table/{token}/my-orders', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\GetGuestOrdersHistoryController::class);
+    Route::post('/public/table/{token}/request-check', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\RequestCheckController::class);
 });
 
 // ─── Guest / Autoservicio QR — rutas de administración ──────────────────────
