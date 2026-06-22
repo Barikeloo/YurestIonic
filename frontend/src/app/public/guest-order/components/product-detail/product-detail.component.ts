@@ -41,6 +41,10 @@ export class ProductDetailComponent {
 
   protected readonly totalPrice = computed(() => this.unitPrice() * this.quantity());
 
+  protected readonly hasRequiredMods = computed(() =>
+    (this.product()?.modifiers ?? []).some((m) => m.is_required),
+  );
+
   protected readonly canAdd = computed(() => {
     const p = this.product();
     if (!p) return false;

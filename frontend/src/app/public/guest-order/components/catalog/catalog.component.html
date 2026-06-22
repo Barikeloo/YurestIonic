@@ -9,26 +9,24 @@
           @if (facade.guestName()) { · {{ facade.guestName() }} }
         </span>
       </div>
-      <button class="cat-history-btn" (click)="facade.goToHistory()">
-        📋
-      </button>
+      <button class="cat-history-btn" (click)="facade.goToHistory()" title="Mis pedidos">📋</button>
     </div>
-  </header>
 
-  <nav class="cat-tabs" role="tablist">
-    @for (tab of tabs(); track tab.id) {
-      <button
-        class="cat-tab"
-        [class.cat-tab--active]="activeTabId() === tab.id"
-        [style.--tab-color]="tab.color || 'var(--guest-primary, #ff4d4d)'"
-        role="tab"
-        (click)="selectTab(tab.id)"
-      >
-        @if (tab.icon) { <span class="cat-tab-icon">{{ tab.icon }}</span> }
-        {{ tab.label }}
-      </button>
-    }
-  </nav>
+    <nav class="cat-tabs" role="tablist">
+      @for (tab of tabs(); track tab.id) {
+        <button
+          class="cat-tab"
+          [class.cat-tab--active]="activeTabId() === tab.id"
+          [style.--tab-color]="tab.color || 'var(--guest-primary, #ff4d4d)'"
+          role="tab"
+          (click)="selectTab(tab.id)"
+        >
+          @if (tab.icon) { <span class="cat-tab-icon">{{ tab.icon }}</span> }
+          {{ tab.label }}
+        </button>
+      }
+    </nav>
+  </header>
 
   <main class="cat-content">
     @if (facade.catalog() === null) {
@@ -45,7 +43,11 @@
         }
       </div>
     } @else if (activeFamily()) {
-      <div class="cat-grid">
+      <div class="cat-section-header">
+        <h2 class="cat-section-name">{{ activeFamily()!.name }}</h2>
+        <span class="cat-section-count">{{ activeFamily()!.products.length }} productos</span>
+      </div>
+      <div class="cat-list">
         @for (product of activeFamily()!.products; track product.id) {
           <app-product-card [product]="product" (select)="onSelectProduct($event)" />
         } @empty {
@@ -58,7 +60,7 @@
   @if (facade.cart.itemCount() > 0) {
     <button class="cat-fab" (click)="facade.goToCart()">
       <span class="cat-fab-icon">🛒</span>
-      <span class="cat-fab-count">{{ facade.cart.itemCount() }}</span>
+      <span class="cat-fab-badge">{{ facade.cart.itemCount() }}</span>
       <span class="cat-fab-label">Ver carrito</span>
       <span class="cat-fab-total">{{ facade.cart.cartTotal() / 100 | number:'1.2-2' }}€</span>
     </button>

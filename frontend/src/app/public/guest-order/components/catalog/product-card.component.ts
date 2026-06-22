@@ -9,68 +9,134 @@ import { AllergenIconPipe, AllergenNamePipe } from '../../pipes/allergen-icon.pi
   imports: [CommonModule, AllergenIconPipe, AllergenNamePipe],
   template: `
     <button
-      class="pc-card"
-      [class.pc-unavailable]="!product().available"
+      class="pc"
+      [class.pc--unavailable]="!product().available"
       (click)="select.emit(product())"
     >
+      <div class="pc-info">
+        <p class="pc-name">{{ product().name }}</p>
+
+        @if (product().allergens.length > 0) {
+          <p class="pc-allergens">
+            @for (a of product().allergens; track a) {
+              <span [title]="a | allergenName">{{ a | allergenIcon }}</span>
+            }
+          </p>
+        }
+
+        <p class="pc-price">
+          {{ product().price_cents / 100 | number:'1.2-2' }}€
+          @if (product().variants.length > 0) {
+            <span class="pc-from">desde</span>
+          }
+        </p>
+
+        @if (!product().available) {
+          <span class="pc-badge-unavail">Agotado</span>
+        } @else if (product().variants.length > 0 || product().modifiers.length > 0) {
+          <span class="pc-badge-custom">Personalizable</span>
+        }
+      </div>
+
       <div class="pc-photo">
         @if (product().photo_url) {
           <img [src]="product().photo_url" [alt]="product().name" loading="lazy" />
         } @else {
-          <div class="pc-photo-placeholder">🍽️</div>
+          <div class="pc-no-photo">🍽️</div>
         }
-        @if (!product().available) {
-          <div class="pc-agotado">Agotado</div>
-        }
-      </div>
-
-      <div class="pc-body">
-        <span class="pc-name">{{ product().name }}</span>
-        <span class="pc-price">{{ product().price_cents / 100 | number:'1.2-2' }}€</span>
-
-        @if (product().allergens.length > 0) {
-          <div class="pc-allergens">
-            @for (a of product().allergens; track a) {
-              <span class="pc-allergen" [title]="a | allergenName">{{ a | allergenIcon }}</span>
-            }
-          </div>
+        @if (product().available) {
+          <div class="pc-add-badge">+</div>
         }
       </div>
-
-      <div class="pc-add" [class.pc-add--disabled]="!product().available">+</div>
     </button>
   `,
   styles: [`
-    .pc-card {
+    .pc {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      background: #fff;
+      border: none;
+      border-bottom: 1px solid #f2f2f2;
+      padding: 14px 16px;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s;
+
+      &:hover:not(.pc--unavailable) { background: #fafafa; }
+      &--unavailable { opacity: 0.55; cursor: default; }
+      &:active:not(.pc--unavailable) { background: #f5f5f5; }
+    }
+
+    .pc-info {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      background: #fff;
-      border-radius: 14px;
-      border: 1.5px solid #f0f0f0;
-      overflow: hidden;
-      cursor: pointer;
-      transition: box-shadow 0.15s, transform 0.1s;
-      text-align: left;
-      padding: 0;
-      width: 100%;
+      gap: 3px;
+      min-width: 0;
+    }
 
-      &:hover:not(.pc-unavailable) {
-        box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-        transform: translateY(-1px);
-      }
+    .pc-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111;
+      margin: 0;
+      line-height: 1.35;
+    }
 
-      &.pc-unavailable {
-        opacity: 0.55;
-        cursor: default;
-      }
+    .pc-allergens {
+      font-size: 14px;
+      margin: 0;
+      display: flex;
+      gap: 3px;
+      flex-wrap: wrap;
+    }
+
+    .pc-price {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+      margin: 4px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pc-from {
+      font-size: 12px;
+      font-weight: 400;
+      color: #aaa;
+    }
+
+    .pc-badge-custom, .pc-badge-unavail {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 20px;
+      padding: 2px 8px;
+      width: fit-content;
+      margin-top: 2px;
+    }
+
+    .pc-badge-custom {
+      background: #fff3e0;
+      color: #e65100;
+    }
+
+    .pc-badge-unavail {
+      background: #f5f5f5;
+      color: #999;
     }
 
     .pc-photo {
       position: relative;
-      width: 100%;
-      aspect-ratio: 4/3;
-      background: #f5f5f5;
+      width: 90px;
+      height: 90px;
+      border-radius: 12px;
       overflow: hidden;
+      flex-shrink: 0;
+      background: #f5f5f5;
 
       img {
         width: 100%;
@@ -79,7 +145,7 @@ import { AllergenIconPipe, AllergenNamePipe } from '../../pipes/allergen-icon.pi
       }
     }
 
-    .pc-photo-placeholder {
+    .pc-no-photo {
       width: 100%;
       height: 100%;
       display: flex;
@@ -88,70 +154,21 @@ import { AllergenIconPipe, AllergenNamePipe } from '../../pipes/allergen-icon.pi
       font-size: 32px;
     }
 
-    .pc-agotado {
+    .pc-add-badge {
       position: absolute;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
-      color: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-    }
-
-    .pc-body {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      padding: 10px 10px 4px;
-      flex: 1;
-    }
-
-    .pc-name {
-      font-size: 14px;
-      font-weight: 600;
-      color: #111;
-      line-height: 1.3;
-    }
-
-    .pc-price {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--guest-primary, #ff4d4d);
-    }
-
-    .pc-allergens {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 2px;
-      margin-top: 2px;
-    }
-
-    .pc-allergen {
-      font-size: 13px;
-      cursor: help;
-    }
-
-    .pc-add {
-      margin: 6px 10px 10px;
-      height: 36px;
+      bottom: 6px;
+      right: 6px;
+      width: 28px;
+      height: 28px;
       background: var(--guest-primary, #ff4d4d);
       color: #fff;
-      border-radius: 8px;
+      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 300;
-      transition: opacity 0.15s;
-
-      &--disabled {
-        opacity: 0.35;
-        background: #aaa;
-      }
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
   `],
 })
