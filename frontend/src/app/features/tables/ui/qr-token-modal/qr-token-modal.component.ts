@@ -1,8 +1,18 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import {
+  AfterViewChecked,
+  Component,
+  ElementRef,
+  inject,
+  input,
+  output,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TpvService } from '../../../cash/services/tpv.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, switchMap } from 'rxjs';
+import QRCode from 'qrcode';
 
 interface QrTokenData {
   token: string;
@@ -27,18 +37,16 @@ interface QrTokenData {
         } @else if (tokenData()) {
           <div class="qr-body">
             <div class="qr-image-wrap">
-              <img
-                class="qr-img"
-                [src]="qrImageUrl()"
-                alt="Código QR autoservicio"
-              />
+              <canvas #qrCanvas></canvas>
             </div>
 
             <p class="qr-url">{{ tokenData()!.url }}</p>
 
             @if ((tokenData()!.active_sessions_count ?? 0) > 0) {
               <p class="qr-sessions">
-                👥 {{ tokenData()!.active_sessions_count }} comensal{{ (tokenData()!.active_sessions_count ?? 0) !== 1 ? 'es' : '' }} conectado{{ (tokenData()!.active_sessions_count ?? 0) !== 1 ? 's' : '' }}
+                👥 {{ tokenData()!.active_sessions_count }}
+                comensal{{ (tokenData()!.active_sessions_count ?? 0) !== 1 ? 'es' : '' }}
+                conectado{{ (tokenData()!.active_sessions_count ?? 0) !== 1 ? 's' : '' }}
               </p>
             }
 
@@ -97,10 +105,9 @@ interface QrTokenData {
       border: 2px solid #f0f0f0;
       border-radius: 14px;
       padding: 12px;
-      width: 220px; height: 220px;
       display: flex; align-items: center; justify-content: center;
     }
-    .qr-img { width: 100%; height: 100%; object-fit: contain; }
+    canvas { display: block; border-radius: 6px; }
     .qr-url {
       font-size: 12px; color: #888;
       word-break: break-all; text-align: center; margin: 0;
@@ -119,10 +126,12 @@ interface QrTokenData {
     .qr-btn--regen { background: #e3f2fd; color: #1565c0; }
   `],
 })
-export class QrTokenModalComponent {
+export class QrTokenModalComponent implements AfterViewChecked {
   readonly tableId = input.required<string>();
   readonly tableName = input<string>('Mesa');
   readonly close = output<void>();
+
+  @ViewChild('qrCanvas') qrCanvas?: ElementRef<HTMLCanvasElement>;
 
   private readonly tpvService = inject(TpvService);
 
@@ -131,13 +140,7 @@ export class QrTokenModalComponent {
   readonly error = signal<string | null>(null);
   readonly copied = signal(false);
 
-  readonly qrImageUrl = computed(() => {
-    const data = this.tokenData();
-    if (!data) return '';
-    const encoded = encodeURIComponent(data.url);
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encoded}`;
-  });
-
+  private pendingRender = false;
   private readonly regenerate$ = new Subject<void>();
 
   constructor() {
@@ -150,6 +153,7 @@ export class QrTokenModalComponent {
         next: (data) => {
           this.loading.set(false);
           this.tokenData.set(data as QrTokenData);
+          this.pendingRender = true;
         },
         error: () => {
           this.loading.set(false);
@@ -158,6 +162,20 @@ export class QrTokenModalComponent {
       });
 
     this.regenerate$.next();
+  }
+
+  ngAfterViewChecked(): void {
+    if (this.pendingRender && this.qrCanvas?.nativeElement) {
+      this.pendingRender = false;
+      const url = this.tokenData()?.url;
+      if (url) {
+        QRCode.toCanvas(this.qrCanvas.nativeElement, url, {
+          width: 200,
+          margin: 2,
+          color: { dark: '#000000', light: '#ffffff' },
+        });
+      }
+    }
   }
 
   copyUrl(): void {
@@ -171,6 +189,7 @@ export class QrTokenModalComponent {
 
   regenerate(): void {
     this.loading.set(true);
+    this.tokenData.set(null);
     this.regenerate$.next();
   }
 }
