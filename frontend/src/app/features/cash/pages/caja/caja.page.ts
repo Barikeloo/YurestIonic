@@ -34,7 +34,7 @@ import { ToastService } from '../../../../core/services/toast.service';
 
 interface LastClosedData {
   id: string;
-  opened_by_user_id: string;
+  opened_by_user_id: string | null;
   closed_by_user_id: string | null;
   opened_at: string;
   closed_at: string | null;
