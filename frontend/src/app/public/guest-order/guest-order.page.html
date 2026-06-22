@@ -1,36 +1,37 @@
 <div class="guest-order-host">
-  @if (facade.isLoading()) {
+
+  @if (facade.screen() === 'loading') {
     <div class="guest-loading">
       <div class="guest-spinner"></div>
     </div>
   }
 
-  @switch (facade.screen()) {
-    @case ('table-status') {
-      <p>table-status — próximamente</p>
-    }
-    @case ('catalog') {
-      <p>catalog — próximamente</p>
-    }
-    @case ('product-detail') {
-      <p>product-detail — próximamente</p>
-    }
-    @case ('menu-config') {
-      <p>menu-config — próximamente</p>
-    }
-    @case ('cart') {
-      <p>cart — próximamente</p>
-    }
-    @case ('round-sent') {
-      <p>round-sent — próximamente</p>
-    }
-    @case ('history') {
-      <p>history — próximamente</p>
-    }
-    @default {
-      <div class="guest-loading">
-        <div class="guest-spinner"></div>
-      </div>
-    }
+  @if (facade.screen() === 'table-status') {
+    <app-table-status />
   }
+
+  @if (facade.screen() === 'catalog') {
+    <p style="padding:24px">catalog — próximamente</p>
+  }
+
+  @if (facade.screen() === 'product-detail') {
+    <p style="padding:24px">product-detail — próximamente</p>
+  }
+
+  @if (facade.screen() === 'menu-config') {
+    <p style="padding:24px">menu-config — próximamente</p>
+  }
+
+  @if (facade.screen() === 'cart') {
+    <p style="padding:24px">cart — próximamente</p>
+  }
+
+  @if (facade.screen() === 'round-sent') {
+    <p style="padding:24px">round-sent — próximamente</p>
+  }
+
+  @if (facade.screen() === 'history') {
+    <p style="padding:24px">history — próximamente</p>
+  }
+
 </div>

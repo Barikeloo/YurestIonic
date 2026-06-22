@@ -1,0 +1,114 @@
+<div class="ts-wrapper">
+
+  <div class="ts-header">
+    <div class="ts-restaurant">{{ facade.restaurantName() }}</div>
+    <h1 class="ts-table">{{ facade.tableName() }}</h1>
+  </div>
+
+  @if (facade.errorMessage()) {
+    <div class="ts-error">{{ facade.errorMessage() }}</div>
+  }
+
+  @switch (facade.orderStatus()) {
+
+    @case ('none') {
+      <div class="ts-card">
+        <p class="ts-greeting">¡Bienvenidos!</p>
+        <p class="ts-sub">¿Cuántas personas sois?</p>
+        <app-diners-stepper
+          [value]="dinersCount()"
+          (valueChange)="setDiners($event)"
+        />
+
+        <div class="ts-divider"></div>
+
+        <app-identity-selector
+          [selected]="identityMode()"
+          (selectMode)="selectIdentity($event)"
+        />
+
+        @if (showNameInput()) {
+          <div class="ts-name-field">
+            <label class="ts-label">Tu nombre</label>
+            <input
+              class="ts-input"
+              type="text"
+              placeholder="Ej. Carlos"
+              [value]="guestName()"
+              (input)="guestName.set($any($event.target).value)"
+              maxlength="100"
+              autocomplete="off"
+            />
+          </div>
+        }
+
+        <button
+          class="ts-cta"
+          [disabled]="!identityMode() || facade.isLoading()"
+          (click)="openTable()"
+        >
+          @if (facade.isLoading()) {
+            Abriendo…
+          } @else {
+            Abrir mesa y empezar a pedir →
+          }
+        </button>
+      </div>
+    }
+
+    @case ('open') {
+      <div class="ts-card">
+        <p class="ts-greeting">¡Únete a {{ facade.tableName() }}!</p>
+        <p class="ts-sub">La mesa ya está abierta. Elige cómo entrar:</p>
+
+        <app-identity-selector
+          [selected]="identityMode()"
+          (selectMode)="selectIdentity($event)"
+        />
+
+        @if (showNameInput()) {
+          <div class="ts-name-field">
+            <label class="ts-label">Tu nombre</label>
+            <input
+              class="ts-input"
+              type="text"
+              placeholder="Ej. María"
+              [value]="guestName()"
+              (input)="guestName.set($any($event.target).value)"
+              maxlength="100"
+              autocomplete="off"
+            />
+          </div>
+        }
+
+        <button
+          class="ts-cta"
+          [disabled]="!identityMode() || facade.isLoading()"
+          (click)="joinSession()"
+        >
+          @if (facade.isLoading()) {
+            Uniéndome…
+          } @else {
+            Unirme y ver la carta →
+          }
+        </button>
+      </div>
+    }
+
+    @case ('to_charge') {
+      <div class="ts-card ts-card--closed">
+        <div class="ts-closed-icon">🧾</div>
+        <p class="ts-greeting">Esta mesa está siendo cerrada.</p>
+        <p class="ts-sub">Consulta a tu camarero si necesitas algo.</p>
+      </div>
+    }
+
+    @default {
+      <div class="ts-card ts-card--loading">
+        <div class="ts-mini-spinner"></div>
+      </div>
+    }
+
+  }
+
+</div>

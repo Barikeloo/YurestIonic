@@ -1,7 +1,9 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, effect, inject, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { GuestOrderFacade } from './facades/guest-order.facade';
 import { GuestCartService } from './services/guest-cart.service';
+import { TableStatusComponent } from './components/table-status/table-status.component';
 
 @Component({
   selector: 'app-guest-order',
@@ -9,11 +11,20 @@ import { GuestCartService } from './services/guest-cart.service';
   styleUrls: ['./guest-order.page.scss'],
   standalone: true,
   providers: [GuestOrderFacade, GuestCartService],
-  imports: [],
+  imports: [CommonModule, TableStatusComponent],
 })
 export class GuestOrderPage implements OnInit, OnDestroy {
   protected readonly facade = inject(GuestOrderFacade);
   private readonly route = inject(ActivatedRoute);
+
+  constructor() {
+    effect(() => {
+      const color = this.facade.tableStatus()?.restaurant.primary_color;
+      if (color) {
+        document.documentElement.style.setProperty('--guest-primary', color);
+      }
+    });
+  }
 
   ngOnInit(): void {
     const token = this.route.snapshot.paramMap.get('token') ?? '';
