@@ -1,0 +1,104 @@
+<div class="pd-host">
+
+  <header class="pd-header">
+    <button class="pd-back" (click)="facade.navigateBack()">← Volver</button>
+  </header>
+
+  @if (product(); as p) {
+
+    <div class="pd-photo">
+      @if (p.photo_url) {
+        <img [src]="p.photo_url" [alt]="p.name" />
+      } @else {
+        <div class="pd-photo-placeholder">🍽️</div>
+      }
+    </div>
+
+    <div class="pd-body">
+      <h1 class="pd-name">{{ p.name }}</h1>
+      <p class="pd-base-price">{{ p.price_cents / 100 | number:'1.2-2' }}€</p>
+
+      @if (p.allergens.length > 0) {
+        <div class="pd-allergens">
+          @for (a of p.allergens; track a) {
+            <span class="pd-allergen" [title]="a | allergenName">
+              {{ a | allergenIcon }} {{ a | allergenName }}
+            </span>
+          }
+        </div>
+      }
+
+      @if (p.variants.length > 0) {
+        <section class="pd-section">
+          <h2 class="pd-section-title">Elige una opción</h2>
+          <div class="pd-options">
+            @for (v of p.variants; track v.id) {
+              <button
+                class="pd-option"
+                [class.pd-option--selected]="selectedVariant()?.id === v.id"
+                (click)="selectVariant(v)"
+              >
+                <span class="pd-option-name">{{ v.name }}</span>
+                <span class="pd-option-price">{{ v.price_cents / 100 | number:'1.2-2' }}€</span>
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      @if (p.modifiers.length > 0) {
+        <section class="pd-section">
+          <h2 class="pd-section-title">Modificadores</h2>
+          <div class="pd-modifiers">
+            @for (m of p.modifiers; track m.id) {
+              <button
+                class="pd-modifier"
+                [class.pd-modifier--selected]="isModifierSelected(m.id)"
+                (click)="toggleModifier(m)"
+              >
+                <span class="pd-mod-check">{{ isModifierSelected(m.id) ? '✓' : '' }}</span>
+                <span class="pd-mod-name">
+                  {{ m.name }}
+                  @if (m.is_required) { <span class="pd-mod-req">requerido</span> }
+                </span>
+                @if (m.price_cents > 0) {
+                  <span class="pd-mod-price">+{{ m.price_cents / 100 | number:'1.2-2' }}€</span>
+                }
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      <section class="pd-section">
+        <h2 class="pd-section-title">Nota (opcional)</h2>
+        <textarea
+          class="pd-notes"
+          placeholder="Ej: sin cebolla, extra picante…"
+          rows="2"
+          [value]="notes()"
+          (input)="notes.set($any($event.target).value)"
+          maxlength="255"
+        ></textarea>
+      </section>
+
+      <div class="pd-footer">
+        <app-diners-stepper
+          [value]="quantity()"
+          (valueChange)="setQuantity($event)"
+        />
+
+        <button
+          class="pd-add-btn"
+          [disabled]="!canAdd()"
+          (click)="addToCart()"
+        >
+          Añadir · {{ totalPrice() / 100 | number:'1.2-2' }}€
+        </button>
+      </div>
+
+    </div>
+
+  }
+
+</div>

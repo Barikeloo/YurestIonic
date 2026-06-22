@@ -5,6 +5,7 @@ import { GuestOrderFacade } from './facades/guest-order.facade';
 import { GuestCartService } from './services/guest-cart.service';
 import { TableStatusComponent } from './components/table-status/table-status.component';
 import { CatalogComponent } from './components/catalog/catalog.component';
+import { ProductDetailComponent } from './components/product-detail/product-detail.component';
 
 @Component({
   selector: 'app-guest-order',
@@ -12,7 +13,7 @@ import { CatalogComponent } from './components/catalog/catalog.component';
   styleUrls: ['./guest-order.page.scss'],
   standalone: true,
   providers: [GuestOrderFacade, GuestCartService],
-  imports: [CommonModule, TableStatusComponent, CatalogComponent],
+  imports: [CommonModule, TableStatusComponent, CatalogComponent, ProductDetailComponent],
 })
 export class GuestOrderPage implements OnInit, OnDestroy {
   protected readonly facade = inject(GuestOrderFacade);

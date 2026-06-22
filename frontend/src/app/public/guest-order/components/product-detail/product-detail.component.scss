@@ -1,0 +1,255 @@
+.pd-host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: #f8f8f8;
+}
+
+.pd-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(248,248,248,0.92);
+  backdrop-filter: blur(8px);
+  padding: 12px 16px;
+}
+
+.pd-back {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--guest-primary, #ff4d4d);
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.pd-photo {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background: #f0f0f0;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.pd-photo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 56px;
+}
+
+.pd-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 20px 16px 120px;
+}
+
+.pd-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111;
+  margin: 0 0 4px;
+}
+
+.pd-base-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--guest-primary, #ff4d4d);
+  margin: 0 0 12px;
+}
+
+.pd-allergens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+}
+
+.pd-allergen {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff3cd;
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 13px;
+  color: #856404;
+}
+
+.pd-section {
+  border-top: 1px solid #eee;
+  padding: 16px 0;
+
+  &:last-of-type { border-bottom: 1px solid #eee; }
+}
+
+.pd-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 12px;
+}
+
+.pd-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pd-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #e0e0e0;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &--selected {
+    border-color: var(--guest-primary, #ff4d4d);
+    background: color-mix(in srgb, var(--guest-primary, #ff4d4d) 8%, white);
+  }
+}
+
+.pd-option-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: #111;
+}
+
+.pd-option-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #555;
+}
+
+.pd-modifiers {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pd-modifier {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #e0e0e0;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &--selected {
+    border-color: var(--guest-primary, #ff4d4d);
+    background: color-mix(in srgb, var(--guest-primary, #ff4d4d) 8%, white);
+  }
+}
+
+.pd-mod-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1.5px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: var(--guest-primary, #ff4d4d);
+  flex-shrink: 0;
+
+  .pd-modifier--selected & {
+    border-color: var(--guest-primary, #ff4d4d);
+    background: var(--guest-primary, #ff4d4d);
+    color: #fff;
+  }
+}
+
+.pd-mod-name {
+  flex: 1;
+  font-size: 15px;
+  color: #111;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pd-mod-req {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--guest-primary, #ff4d4d);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pd-mod-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.pd-notes {
+  width: 100%;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 15px;
+  color: #111;
+  background: #fff;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+
+  &:focus { border-color: var(--guest-primary, #ff4d4d); }
+}
+
+.pd-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 1px solid #eee;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 20;
+}
+
+.pd-add-btn {
+  flex: 1;
+  height: 52px;
+  background: var(--guest-primary, #ff4d4d);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  &:not(:disabled):hover { opacity: 0.9; }
+}
