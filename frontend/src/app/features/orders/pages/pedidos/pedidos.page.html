@@ -138,7 +138,7 @@
                 <div class="pedido-main">
                   <div class="pedido-main-title">{{ getTableName(order.table_id) }}</div>
                   <div class="pedido-main-sub">
-                    {{ order.diners }} comensal{{ order.diners !== 1 ? 'es' : '' }} · {{ getUserName(order.opened_by_user_id) }}
+                    {{ order.diners }} comensal{{ order.diners !== 1 ? 'es' : '' }} · {{ getUserName(order.opened_by_user_id ?? undefined) }}
                   </div>
                 </div>
                 <div class="pedido-meta" [class]="timeColor(order.opened_at)">
