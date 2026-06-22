@@ -165,6 +165,7 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(\App\Tables\Infrastructure\Broadcasting\TablesGroupBroadcastSubscriber::class),
                 $app->make(\App\Printer\Application\Subscriber\PrintOnSaleClosedSubscriber::class),
                 $app->make(\App\GuestOrder\Infrastructure\Subscriber\GuestOrderTableCreatedSubscriber::class),
+                $app->make(\App\GuestOrder\Infrastructure\Subscriber\CatalogVersionIncrementSubscriber::class),
             );
         });
     }

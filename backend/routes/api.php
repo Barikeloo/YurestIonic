@@ -329,6 +329,7 @@ Route::middleware([
     Route::delete('/admin/products/{id}', ProductDeleteController::class)->whereUuid('id');
     Route::patch('/admin/products/{id}/activate', ProductActivateController::class)->whereUuid('id');
     Route::patch('/admin/products/{id}/deactivate', ProductDeactivateController::class)->whereUuid('id');
+    Route::patch('/admin/products/{id}/availability', \App\Product\Infrastructure\Entrypoint\Http\UpdateProductAvailabilityController::class)->whereUuid('id');
     Route::post('/admin/products/{id}/photo-upload-token', GeneratePhotoUploadTokenController::class)->whereUuid('id');
     Route::post('/admin/products/{id}/photo', DirectProductPhotoUploadController::class)->whereUuid('id');
     Route::get('/admin/products/{id}/variants', ListProductVariantsController::class)->whereUuid('id');
