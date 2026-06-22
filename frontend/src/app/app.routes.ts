@@ -102,10 +102,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/core/home/home.page').then((m) => m.HomePage),
   },
   {
-
     path: 'u/foto/:token',
     loadComponent: () =>
       import('./pages/public/photo-upload/photo-upload.page').then((m) => m.PhotoUploadPage),
+  },
+  {
+    path: 's/:token',
+    loadComponent: () =>
+      import('./public/guest-order/guest-order.page').then((m) => m.GuestOrderPage),
   },
   {
     path: '',

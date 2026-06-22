@@ -1,0 +1,36 @@
+<div class="guest-order-host">
+  @if (facade.isLoading()) {
+    <div class="guest-loading">
+      <div class="guest-spinner"></div>
+    </div>
+  }
+
+  @switch (facade.screen()) {
+    @case ('table-status') {
+      <p>table-status — próximamente</p>
+    }
+    @case ('catalog') {
+      <p>catalog — próximamente</p>
+    }
+    @case ('product-detail') {
+      <p>product-detail — próximamente</p>
+    }
+    @case ('menu-config') {
+      <p>menu-config — próximamente</p>
+    }
+    @case ('cart') {
+      <p>cart — próximamente</p>
+    }
+    @case ('round-sent') {
+      <p>round-sent — próximamente</p>
+    }
+    @case ('history') {
+      <p>history — próximamente</p>
+    }
+    @default {
+      <div class="guest-loading">
+        <div class="guest-spinner"></div>
+      </div>
+    }
+  }
+</div>

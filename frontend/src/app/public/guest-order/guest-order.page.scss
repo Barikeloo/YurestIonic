@@ -1,0 +1,25 @@
+.guest-order-host {
+  min-height: 100dvh;
+  background: #f8f8f8;
+  font-family: var(--ion-font-family, system-ui, sans-serif);
+}
+
+.guest-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+}
+
+.guest-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e0e0e0;
+  border-top-color: var(--guest-primary, #ff4d4d);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
