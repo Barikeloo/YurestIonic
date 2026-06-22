@@ -4,17 +4,18 @@ declare(strict_types=1);
 
 namespace App\GuestOrder\Infrastructure\Subscriber;
 
-use App\GuestOrder\Application\GenerateTableQrToken\GenerateTableQrToken;
-use App\GuestOrder\Application\GenerateTableQrToken\GenerateTableQrTokenCommand;
+use App\GuestOrder\Domain\Entity\TableQrToken;
+use App\GuestOrder\Domain\Interfaces\TableQrTokenRepositoryInterface;
 use App\Shared\Application\Event\EventSubscriber;
 use App\Shared\Domain\Event\DomainEvent;
+use App\Shared\Domain\ValueObject\Uuid;
 use App\Tables\Domain\Event\TableCreated;
 use Illuminate\Support\Facades\DB;
 
 final class GuestOrderTableCreatedSubscriber implements EventSubscriber
 {
     public function __construct(
-        private readonly GenerateTableQrToken $generateTableQrToken,
+        private readonly TableQrTokenRepositoryInterface $tableQrTokenRepository,
     ) {}
 
     public function subscribedTo(): array
@@ -30,7 +31,12 @@ final class GuestOrderTableCreatedSubscriber implements EventSubscriber
 
         $tableId = $event->auditEntityId();
 
-        // Direct query to avoid HasTenantScope on EloquentZone (no tenant context in event handlers)
+        // Skip if a token already exists (idempotent)
+        if ($this->tableQrTokenRepository->findByTableId($tableId) !== null) {
+            return;
+        }
+
+        // Direct query to bypass HasTenantScope on EloquentZone (no tenant context in event handlers)
         $row = DB::table('tables')
             ->join('zones', 'zones.id', '=', 'tables.zone_id')
             ->join('restaurants', 'restaurants.id', '=', 'zones.restaurant_id')
@@ -43,9 +49,14 @@ final class GuestOrderTableCreatedSubscriber implements EventSubscriber
             return;
         }
 
-        ($this->generateTableQrToken)(new GenerateTableQrTokenCommand(
-            tableId: $tableId,
-            restaurantId: $row->restaurant_uuid,
-        ));
+        $qrToken = TableQrToken::dddCreate(
+            tableId: Uuid::create($tableId),
+            restaurantId: Uuid::create($row->restaurant_uuid),
+        );
+
+        $this->tableQrTokenRepository->save($qrToken);
+        // Events from dddCreate are not published — auto-creation on table create
+        // is a side effect that does not need to be broadcast.
+        $qrToken->pullDomainEvents();
     }
 }

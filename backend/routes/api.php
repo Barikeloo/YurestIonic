@@ -434,6 +434,7 @@ Route::middleware([
 // ─── Guest / Autoservicio QR — rutas públicas (sin autenticación) ────────────
 Route::middleware('throttle:30,1')->group(function (): void {
     Route::get('/public/table/{token}', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\GetTableStatusController::class);
+    Route::post('/public/table/{token}/open', \App\GuestOrder\Infrastructure\Entrypoint\Http\Public\OpenTableByGuestController::class);
 });
 
 // ─── Guest / Autoservicio QR — rutas de administración ──────────────────────

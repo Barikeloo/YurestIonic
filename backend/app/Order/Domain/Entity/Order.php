@@ -25,7 +25,7 @@ final class Order
         private readonly Uuid $uuid,
         private OrderStatus $status,
         private Uuid $tableId,
-        private readonly Uuid $openedByUserId,
+        private readonly ?Uuid $openedByUserId,
         private ?Uuid $closedByUserId,
         private OrderDiners $diners,
         private readonly ?DomainDateTime $openedAt,
@@ -39,7 +39,7 @@ final class Order
         Uuid $id,
         Uuid $restaurantId,
         Uuid $tableId,
-        Uuid $openedByUserId,
+        ?Uuid $openedByUserId,
         OrderDiners $diners,
     ): self {
         $order = new self(
@@ -73,7 +73,7 @@ final class Order
         string $uuid,
         string $status,
         string $tableId,
-        string $openedByUserId,
+        ?string $openedByUserId,
         ?string $closedByUserId,
         int $diners,
         ?\DateTimeImmutable $openedAt,
@@ -88,7 +88,7 @@ final class Order
             uuid: Uuid::create($uuid),
             status: OrderStatus::create($status),
             tableId: Uuid::create($tableId),
-            openedByUserId: Uuid::create($openedByUserId),
+            openedByUserId: $openedByUserId !== null ? Uuid::create($openedByUserId) : null,
             closedByUserId: $closedByUserId !== null ? Uuid::create($closedByUserId) : null,
             diners: OrderDiners::create($diners),
             openedAt: $openedAt !== null ? DomainDateTime::create($openedAt) : null,
@@ -259,7 +259,7 @@ final class Order
         return $this->tableId;
     }
 
-    public function openedByUserId(): Uuid
+    public function openedByUserId(): ?Uuid
     {
         return $this->openedByUserId;
     }

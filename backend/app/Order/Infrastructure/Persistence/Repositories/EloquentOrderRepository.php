@@ -22,7 +22,9 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
     {
         $restaurantId = EloquentRestaurant::query()->where('uuid', $order->restaurantId()->value())->value('id');
         $tableId = EloquentTable::query()->where('uuid', $order->tableId()->value())->value('id');
-        $openedByUserId = EloquentUser::query()->where('uuid', $order->openedByUserId()->value())->value('id');
+        $openedByUserId = $order->openedByUserId() !== null
+            ? EloquentUser::query()->where('uuid', $order->openedByUserId()->value())->value('id')
+            : null;
         $closedByUserId = $order->closedByUserId() !== null
             ? EloquentUser::query()->where('uuid', $order->closedByUserId()->value())->value('id')
             : null;
@@ -120,7 +122,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
     {
         $restaurantUuid = $model->restaurant?->uuid ?? '';
         $tableUuid = $model->table?->uuid ?? '';
-        $openedByUserUuid = $model->openedByUser?->uuid ?? '';
+        $openedByUserUuid = $model->openedByUser?->uuid ?? null;
         $closedByUserUuid = $model->closedByUser?->uuid ?? null;
 
         return Order::fromPersistence(
