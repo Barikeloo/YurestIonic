@@ -87,13 +87,14 @@ final class EloquentTableQrTokenRepository implements TableQrTokenRepositoryInte
             return null;
         }
 
+        $now                 = now()->toDateTimeString();
         $activeSessionsCount = (int) DB::selectOne("
             SELECT COUNT(gs.id) AS cnt
             FROM guest_sessions gs
             INNER JOIN table_qr_tokens tqt ON tqt.id = gs.table_qr_token_id
             WHERE tqt.token = ?
-              AND gs.expires_at > NOW()
-        ", [$token])?->cnt ?? 0;
+              AND gs.expires_at > ?
+        ", [$token, $now])?->cnt ?? 0;
 
         $orderStatus = match ($row->order_status) {
             'open'      => 'open',

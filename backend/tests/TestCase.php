@@ -63,6 +63,76 @@ abstract class TestCase extends BaseTestCase
         ];
     }
 
+    protected function createGuestOrderFixture(array $tenant): array
+    {
+        $taxId = (int) DB::table('taxes')->insertGetId([
+            'restaurant_id' => $tenant['restaurant_id'],
+            'uuid'          => (string) Str::uuid(),
+            'name'          => 'IVA Test',
+            'percentage'    => 10,
+            'created_at'    => now(),
+            'updated_at'    => now(),
+        ]);
+
+        $zoneId = (int) DB::table('zones')->insertGetId([
+            'restaurant_id' => $tenant['restaurant_id'],
+            'uuid'          => (string) Str::uuid(),
+            'name'          => 'Terraza Test',
+            'created_at'    => now(),
+            'updated_at'    => now(),
+        ]);
+
+        $tableUuid = (string) Str::uuid();
+        $tableId   = (int) DB::table('tables')->insertGetId([
+            'restaurant_id' => $tenant['restaurant_id'],
+            'zone_id'       => $zoneId,
+            'uuid'          => $tableUuid,
+            'name'          => 'Mesa Test',
+            'created_at'    => now(),
+            'updated_at'    => now(),
+        ]);
+
+        $qrToken = bin2hex(random_bytes(32));
+        DB::table('table_qr_tokens')->insert([
+            'uuid'            => (string) Str::uuid(),
+            'table_id'        => $tableId,
+            'restaurant_id'   => $tenant['restaurant_id'],
+            'token'           => $qrToken,
+            'catalog_version' => 1,
+            'created_at'      => now(),
+            'updated_at'      => now(),
+        ]);
+
+        $familyId = (int) DB::table('families')->insertGetId([
+            'restaurant_id' => $tenant['restaurant_id'],
+            'uuid'          => (string) Str::uuid(),
+            'name'          => 'Bebidas Test',
+            'active'        => true,
+            'created_at'    => now(),
+            'updated_at'    => now(),
+        ]);
+
+        DB::table('products')->insert([
+            'restaurant_id' => $tenant['restaurant_id'],
+            'family_id'     => $familyId,
+            'tax_id'        => $taxId,
+            'uuid'          => (string) Str::uuid(),
+            'name'          => 'Agua Test',
+            'price'         => 150,
+            'stock'         => 100,
+            'active'        => true,
+            'available'     => true,
+            'created_at'    => now(),
+            'updated_at'    => now(),
+        ]);
+
+        return [
+            'token'    => $qrToken,
+            'table_id' => $tableId,
+            'tax_id'   => $taxId,
+        ];
+    }
+
     protected function createCashSessionForTests(array $tenant, string $deviceId = 'test-device-001'): void
     {
         DB::table('cash_sessions')->insert([
