@@ -222,19 +222,16 @@
           @for (line of facade.orderLines(); track line) {
             <div
               class="order-line order-line-clickable"
-              [class.order-line--guest]="line.origin === 'guest'"
-              [class.order-line--pending]="line.origin === 'guest' && line.send_status === 'pending'"
               (click)="openLineDetail(line)"
             >
               <div class="order-line-qty">{{ line.quantity }}</div>
               <div class="order-line-info">
-                <div class="order-line-name">{{ lineDisplayName(line) }}</div>
-                @if (line.origin === 'guest') {
-                  <div class="order-line-guest-badge">
-                    ⚡ {{ line.guest_name ?? 'Guest' }}
-                    @if (line.send_status === 'pending') { · <em>pendiente</em> }
-                  </div>
-                }
+                <div class="order-line-name">
+                  {{ lineDisplayName(line) }}
+                  @if (line.origin === 'guest') {
+                    <span class="order-line-qr-chip">QR</span>
+                  }
+                </div>
                 @if (isMenuLine(line)) {
                   @if (menuLineSelectionsLabel(line); as selectionsText) {
                     <div class="order-line-meta">

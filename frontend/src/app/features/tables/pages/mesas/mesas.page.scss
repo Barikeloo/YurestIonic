@@ -1348,21 +1348,18 @@ app-diners-status {
 
 /* ── Sprint 6: Guest / Autoservicio QR ─────────────────────────────── */
 
-.order-line--guest {
-  border-left: 3px solid #ff9800;
-}
-
-.order-line--pending {
-  opacity: 0.65;
-}
-
-.order-line-guest-badge {
-  font-size: 11px;
+.order-line-qr-chip {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: #fff3e0;
   color: #e65100;
-  font-weight: 600;
-  margin-top: 2px;
-
-  em { font-style: normal; color: #aaa; }
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 5px;
+  vertical-align: middle;
+  line-height: 1.6;
 }
 
 .panel-qr-btn {
