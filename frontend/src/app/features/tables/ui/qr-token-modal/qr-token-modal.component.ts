@@ -4,6 +4,7 @@ import {
   ElementRef,
   inject,
   input,
+  OnInit,
   output,
   signal,
   ViewChild,
@@ -126,7 +127,7 @@ interface QrTokenData {
     .qr-btn--regen { background: #e3f2fd; color: #1565c0; }
   `],
 })
-export class QrTokenModalComponent implements AfterViewChecked {
+export class QrTokenModalComponent implements OnInit, AfterViewChecked {
   readonly tableId = input.required<string>();
   readonly tableName = input<string>('Mesa');
   readonly close = output<void>();
@@ -160,7 +161,9 @@ export class QrTokenModalComponent implements AfterViewChecked {
           this.error.set('Error al generar el QR. Inténtalo de nuevo.');
         },
       });
+  }
 
+  ngOnInit(): void {
     this.regenerate$.next();
   }
 
