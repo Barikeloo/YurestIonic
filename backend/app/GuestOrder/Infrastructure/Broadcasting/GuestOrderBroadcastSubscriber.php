@@ -31,19 +31,42 @@ final class GuestOrderBroadcastSubscriber implements EventSubscriber
                 orderId: $event->orderId(),
                 tableId: $event->tableQrTokenId(),
             )),
-            $event instanceof GuestRoundSubmitted => event(new OrderStatusChanged(
-                restaurantId: $event->restaurantId(),
-                eventType: 'guest.round_submitted',
-                orderId: $event->orderId(),
-            )),
-            $event instanceof CheckRequestedByGuest => event(new GuestCheckRequestedBroadcast(
-                restaurantId: $event->restaurantId(),
-                orderId: $event->orderId(),
-                tableId: $event->tableId(),
-                guestName: $event->guestName(),
-                requestedAt: $event->requestedAt(),
-            )),
+            $event instanceof GuestRoundSubmitted => $this->handleRoundSubmitted($event),
+            $event instanceof CheckRequestedByGuest => $this->handleCheckRequested($event),
             default => null,
         };
+    }
+
+    private function handleRoundSubmitted(GuestRoundSubmitted $event): void
+    {
+        event(new OrderStatusChanged(
+            restaurantId: $event->restaurantId(),
+            eventType: 'guest.round_submitted',
+            orderId: $event->orderId(),
+        ));
+
+        event(new GuestOrderActivityBroadcast(
+            orderId: $event->orderId(),
+            eventType: 'round_submitted',
+            guestName: $event->guestName(),
+            roundNumber: $event->roundNumber(),
+        ));
+    }
+
+    private function handleCheckRequested(CheckRequestedByGuest $event): void
+    {
+        event(new GuestCheckRequestedBroadcast(
+            restaurantId: $event->restaurantId(),
+            orderId: $event->orderId(),
+            tableId: $event->tableId(),
+            guestName: $event->guestName(),
+            requestedAt: $event->requestedAt(),
+        ));
+
+        event(new GuestOrderActivityBroadcast(
+            orderId: $event->orderId(),
+            eventType: 'check_requested',
+            guestName: $event->guestName(),
+        ));
     }
 }

@@ -46,6 +46,7 @@ final class ValidateGuestSession
             identityMode: $session->identityMode()->value(),
             orderStatus: $orderStatus,
             expiresAt: $session->expiresAt()->format(\DateTimeInterface::ATOM),
+            orderId: $order?->id()->value(),
         );
     }
 }

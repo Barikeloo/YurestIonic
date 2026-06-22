@@ -12,6 +12,7 @@ final readonly class ValidateGuestSessionResponse
         public ?string $identityMode,
         public ?string $orderStatus,
         public ?string $expiresAt,
+        public ?string $orderId = null,
     ) {}
 
     public static function valid(
@@ -19,6 +20,7 @@ final readonly class ValidateGuestSessionResponse
         string $identityMode,
         string $orderStatus,
         string $expiresAt,
+        ?string $orderId = null,
     ): self {
         return new self(
             valid: true,
@@ -26,6 +28,7 @@ final readonly class ValidateGuestSessionResponse
             identityMode: $identityMode,
             orderStatus: $orderStatus,
             expiresAt: $expiresAt,
+            orderId: $orderId,
         );
     }
 
@@ -48,6 +51,7 @@ final readonly class ValidateGuestSessionResponse
             'identity_mode'  => $this->identityMode,
             'order_status'   => $this->orderStatus,
             'expires_at'     => $this->expiresAt,
+            'order_id'       => $this->orderId,
         ];
     }
 }

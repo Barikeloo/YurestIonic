@@ -3,6 +3,7 @@ import { Subject, takeUntil } from 'rxjs';
 import { GuestOrderApiService } from '../services/guest-order-api.service';
 import { GuestSessionService } from '../services/guest-session.service';
 import { GuestCartService } from '../services/guest-cart.service';
+import { GuestReverbService } from '../services/guest-reverb.service';
 import {
   CustomerData,
   TableStatusResponse,
@@ -42,6 +43,7 @@ const TABLE_STATUS_POLL_MS = 15_000;
 export class GuestOrderFacade {
   private readonly api = inject(GuestOrderApiService);
   private readonly sessionService = inject(GuestSessionService);
+  private readonly reverbService = inject(GuestReverbService);
   readonly cart = inject(GuestCartService);
 
   private readonly destroy$ = new Subject<void>();
@@ -110,6 +112,10 @@ export class GuestOrderFacade {
               this._guestName.set(res.guest_name);
               if (res.identity_mode) {
                 this._identityMode.set(res.identity_mode);
+              }
+              if (res.order_status === 'open' || res.order_status === 'to_charge') {
+                const orderId = (res as any).order_id;
+                if (orderId) this.subscribeToOrderActivity(orderId);
               }
               this.loadTableStatusAndCatalog(token);
             } else {
@@ -248,6 +254,7 @@ export class GuestOrderFacade {
           this._guestName.set(res.guest_name);
           this._identityMode.set(res.identity_mode);
           this.sessionService.saveSessionToken(token, res.session_token);
+          this.subscribeToOrderActivity(res.order_id);
           this.loadCatalog(token, () => {
             this._isLoading.set(false);
             this._screen.set('catalog');
@@ -281,6 +288,7 @@ export class GuestOrderFacade {
           this._guestName.set(res.guest_name);
           this._identityMode.set(res.identity_mode);
           this.sessionService.saveSessionToken(token, res.session_token);
+          this.subscribeToOrderActivity(res.order_id);
           this.loadCatalog(token, () => {
             this._isLoading.set(false);
             this._screen.set('catalog');
@@ -510,6 +518,19 @@ export class GuestOrderFacade {
     }
   }
 
+  private subscribeToOrderActivity(orderId: string): void {
+    this.reverbService.subscribeToOrder(orderId, (data) => {
+      if (data.event_type === 'round_submitted') {
+        if (this._screen() === 'history') {
+          this.goToHistory();
+        }
+      }
+      if (data.event_type === 'check_requested') {
+        this._errorMessage.set('El camarero está preparando tu cuenta.');
+      }
+    });
+  }
+
   private startStatusPolling(token: string): void {
     if (this.statusPollTimer) return;
     this.statusPollTimer = setInterval(() => {
@@ -582,6 +603,7 @@ export class GuestOrderFacade {
     window.removeEventListener('offline', this.onOffline);
     if (this.catalogPollTimer) clearInterval(this.catalogPollTimer);
     if (this.statusPollTimer) clearInterval(this.statusPollTimer);
+    this.reverbService.unsubscribe();
     this.destroy$.next();
     this.destroy$.complete();
   }
