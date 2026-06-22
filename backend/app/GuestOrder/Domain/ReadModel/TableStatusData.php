@@ -12,7 +12,7 @@ final readonly class TableStatusData
         public ?string $restaurantPrimaryColor,
         public string $tableName,
         public string $zoneName,
-        public string $orderStatus,        // 'none' | 'open' | 'to_charge'
+        public string $orderStatus,
         public int $activeSessionsCount,
     ) {}
 }

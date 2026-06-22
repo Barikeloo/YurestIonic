@@ -31,12 +31,10 @@ final class GuestOrderTableCreatedSubscriber implements EventSubscriber
 
         $tableId = $event->auditEntityId();
 
-        // Skip if a token already exists (idempotent)
         if ($this->tableQrTokenRepository->findByTableId($tableId) !== null) {
             return;
         }
 
-        // Direct query to bypass HasTenantScope on EloquentZone (no tenant context in event handlers)
         $row = DB::table('tables')
             ->join('zones', 'zones.id', '=', 'tables.zone_id')
             ->join('restaurants', 'restaurants.id', '=', 'zones.restaurant_id')
@@ -55,8 +53,6 @@ final class GuestOrderTableCreatedSubscriber implements EventSubscriber
         );
 
         $this->tableQrTokenRepository->save($qrToken);
-        // Events from dddCreate are not published — auto-creation on table create
-        // is a side effect that does not need to be broadcast.
         $qrToken->pullDomainEvents();
     }
 }
