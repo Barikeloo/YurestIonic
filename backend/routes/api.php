@@ -213,6 +213,7 @@ Route::middleware([
     Route::get('/tpv/tables', TableGetCollectionController::class);
     Route::post('/tpv/tables/merge', MergeTablesController::class);
     Route::post('/tpv/tables/unmerge', UnmergeTablesController::class);
+    Route::post('/tpv/tables/{tableId}/qr-token', \App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\GenerateTableQrTokenController::class)->whereUuid('tableId');
     Route::get('/tpv/taxes', TaxGetCollectionController::class);
 
     Route::post('/tpv/orders', OrderPostController::class);

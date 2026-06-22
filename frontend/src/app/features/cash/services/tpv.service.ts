@@ -312,7 +312,7 @@ export class TpvService {
 
   public generateTableQrToken(tableId: string): Observable<unknown> {
     return this.http
-      .post<unknown>(`${this.baseUrl}/admin/tables/${tableId}/qr-token`, {}, { withCredentials: true })
+      .post<unknown>(`${this.baseUrl}/tpv/tables/${tableId}/qr-token`, {}, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
