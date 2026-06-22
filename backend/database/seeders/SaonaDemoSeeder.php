@@ -65,6 +65,12 @@ class SaonaDemoSeeder extends Seeder
         }
 
         DB::table('user_quick_accesses')->where('restaurant_id', $restaurantId)->delete();
+        if (DB::getSchemaBuilder()->hasTable('table_qr_tokens')) {
+            DB::table('table_qr_tokens')->where('restaurant_id', $restaurantId)->delete();
+        }
+        if (DB::getSchemaBuilder()->hasTable('guest_sessions')) {
+            DB::table('guest_sessions')->where('restaurant_id', $restaurantId)->delete();
+        }
         DB::table('tables')->where('restaurant_id', $restaurantId)->delete();
         DB::table('zones')->where('restaurant_id', $restaurantId)->delete();
 
@@ -1372,6 +1378,8 @@ class SaonaDemoSeeder extends Seeder
             'Reservado' => ['R1', 'R2'],
         ];
 
+        $hasQrTokens = DB::getSchemaBuilder()->hasTable('table_qr_tokens');
+
         foreach ($layout as $zoneName => $tables) {
             foreach ($tables as $tableName) {
                 DB::table('tables')->updateOrInsert(
@@ -1384,6 +1392,25 @@ class SaonaDemoSeeder extends Seeder
                         'deleted_at' => null,
                     ],
                 );
+
+                if ($hasQrTokens) {
+                    $tableId = DB::table('tables')
+                        ->where('restaurant_id', $restaurantId)
+                        ->where('name', $tableName)
+                        ->value('id');
+
+                    DB::table('table_qr_tokens')->updateOrInsert(
+                        ['table_id' => $tableId],
+                        [
+                            'uuid'            => (string) Str::uuid(),
+                            'restaurant_id'   => $restaurantId,
+                            'token'           => bin2hex(random_bytes(32)),
+                            'catalog_version' => 1,
+                            'created_at'      => $now,
+                            'updated_at'      => $now,
+                        ],
+                    );
+                }
             }
         }
     }
