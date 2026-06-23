@@ -310,7 +310,13 @@ export class TpvService {
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
   }
 
-  public generateTableQrToken(tableId: string): Observable<unknown> {
+  public getTableQrToken(tableId: string): Observable<unknown> {
+    return this.http
+      .get<unknown>(`${this.baseUrl}/tpv/tables/${tableId}/qr-token`, { withCredentials: true })
+      .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));
+  }
+
+  public regenerateTableQrToken(tableId: string): Observable<unknown> {
     return this.http
       .post<unknown>(`${this.baseUrl}/tpv/tables/${tableId}/qr-token`, {}, { withCredentials: true })
       .pipe(catchError((error: HttpErrorResponse) => throwError(() => new Error(this.extractErrorMessage(error)))));

@@ -156,7 +156,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(GuestOrderRoundRepositoryInterface::class, EloquentGuestOrderRoundRepository::class);
         $this->app->when(\App\GuestOrder\Application\GenerateTableQrToken\GenerateTableQrToken::class)
             ->needs('$guestAppBaseUrl')
-            ->give(static fn () => (string) env('GUEST_APP_URL', 'http://localhost:4201'));
+            ->give(static fn () => (string) env('GUEST_APP_URL', 'http://localhost:4200'));
+        $this->app->when(\App\GuestOrder\Application\GetTableQrToken\GetTableQrToken::class)
+            ->needs('$guestAppBaseUrl')
+            ->give(static fn () => (string) env('GUEST_APP_URL', 'http://localhost:4200'));
         $this->app->singleton(TenantContext::class, static fn (): TenantContext => new TenantContext);
 
         $this->app->bind(\App\Shared\Application\Context\RequestContextInterface::class, \App\Shared\Infrastructure\Context\HttpRequestContext::class);

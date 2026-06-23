@@ -142,12 +142,16 @@ export class QrTokenModalComponent implements OnInit, AfterViewChecked {
   readonly copied = signal(false);
 
   private pendingRender = false;
-  private readonly regenerate$ = new Subject<void>();
+  private readonly load$ = new Subject<'get' | 'post'>();
 
   constructor() {
-    this.regenerate$
+    this.load$
       .pipe(
-        switchMap(() => this.tpvService.generateTableQrToken(this.tableId())),
+        switchMap((action) =>
+          action === 'post'
+            ? this.tpvService.regenerateTableQrToken(this.tableId())
+            : this.tpvService.getTableQrToken(this.tableId()),
+        ),
         takeUntilDestroyed(),
       )
       .subscribe({
@@ -158,13 +162,13 @@ export class QrTokenModalComponent implements OnInit, AfterViewChecked {
         },
         error: () => {
           this.loading.set(false);
-          this.error.set('Error al generar el QR. Inténtalo de nuevo.');
+          this.error.set('Error al cargar el QR. Inténtalo de nuevo.');
         },
       });
   }
 
   ngOnInit(): void {
-    this.regenerate$.next();
+    this.load$.next('get');
   }
 
   ngAfterViewChecked(): void {
@@ -193,6 +197,6 @@ export class QrTokenModalComponent implements OnInit, AfterViewChecked {
   regenerate(): void {
     this.loading.set(true);
     this.tokenData.set(null);
-    this.regenerate$.next();
+    this.load$.next('post');
   }
 }

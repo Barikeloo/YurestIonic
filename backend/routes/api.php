@@ -213,6 +213,7 @@ Route::middleware([
     Route::get('/tpv/tables', TableGetCollectionController::class);
     Route::post('/tpv/tables/merge', MergeTablesController::class);
     Route::post('/tpv/tables/unmerge', UnmergeTablesController::class);
+    Route::get('/tpv/tables/{tableId}/qr-token', \App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\GetTableQrTokenController::class)->whereUuid('tableId');
     Route::post('/tpv/tables/{tableId}/qr-token', \App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\GenerateTableQrTokenController::class)->whereUuid('tableId');
     Route::get('/tpv/taxes', TaxGetCollectionController::class);
 
@@ -459,5 +460,6 @@ Route::middleware([
     ResolveTenantContext::class,
     RequireAdminSession::class,
 ])->group(function (): void {
+    Route::get('/admin/tables/{tableId}/qr-token', \App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\GetTableQrTokenController::class)->whereUuid('tableId');
     Route::post('/admin/tables/{tableId}/qr-token', \App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\GenerateTableQrTokenController::class)->whereUuid('tableId');
 });
