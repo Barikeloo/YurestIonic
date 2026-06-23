@@ -100,6 +100,9 @@
                       (refresh)="loadZReports()"
                       />
                   }
+                  @case ('loyalty') {
+                    <app-loyalty-management />
+                  }
                   @default {
                     <div class="gestion-empty">Selecciona una entidad para comenzar.</div>
                   }

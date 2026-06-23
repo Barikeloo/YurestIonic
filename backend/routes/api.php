@@ -462,4 +462,8 @@ Route::middleware([
 ])->group(function (): void {
     Route::get('/admin/tables/{tableId}/qr-token', \App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\GetTableQrTokenController::class)->whereUuid('tableId');
     Route::post('/admin/tables/{tableId}/qr-token', \App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\GenerateTableQrTokenController::class)->whereUuid('tableId');
+
+    Route::get('/admin/loyalty/stats', [\App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\LoyaltyController::class, 'stats']);
+    Route::get('/admin/loyalty/customers', [\App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\LoyaltyController::class, 'customers']);
+    Route::get('/admin/loyalty/customers/{uuid}', [\App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\LoyaltyController::class, 'customerDetail'])->whereUuid('uuid');
 });

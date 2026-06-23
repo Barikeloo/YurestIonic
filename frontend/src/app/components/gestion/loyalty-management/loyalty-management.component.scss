@@ -1,0 +1,382 @@
+.loyalty-root {
+  padding: 0 0 40px;
+}
+
+.loy-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 28px;
+}
+
+.loy-stat-card {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &--highlight {
+    background: linear-gradient(135deg, #fff5f5, #fff);
+    border-color: #ffcccc;
+  }
+}
+
+.loy-stat-val {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111;
+}
+
+.loy-stat-label {
+  font-size: 12px;
+  color: #888;
+  font-weight: 500;
+}
+
+.loy-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 12px;
+}
+
+.loy-top {
+  margin-bottom: 28px;
+}
+
+.loy-top-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.loy-top-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+  transition: background 0.1s;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: #fafafa; }
+}
+
+.loy-top-rank {
+  font-size: 12px;
+  font-weight: 800;
+  color: #bbb;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.loy-top-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.loy-top-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.loy-top-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loy-top-email {
+  font-size: 12px;
+  color: #aaa;
+}
+
+.loy-top-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.loy-top-pts {
+  font-size: 12px;
+  font-weight: 700;
+  color: #e65100;
+}
+
+.loy-top-spent {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.loy-customers-section {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.loy-customers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.loy-search {
+  height: 34px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  outline: none;
+  min-width: 200px;
+  transition: border-color 0.15s;
+
+  &:focus { border-color: #999; }
+}
+
+.loy-table {}
+
+.loy-table-head {
+  display: grid;
+  grid-template-columns: 2fr 80px 60px 90px 110px;
+  padding: 8px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.loy-table-row {
+  display: grid;
+  grid-template-columns: 2fr 80px 60px 90px 110px;
+  padding: 10px 16px;
+  align-items: center;
+  border-bottom: 1px solid #f8f8f8;
+  cursor: pointer;
+  transition: background 0.1s;
+  font-size: 13px;
+  color: #444;
+
+  &:last-child { border-bottom: none; }
+  &:hover { background: #fafafa; }
+}
+
+.loy-table-customer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.loy-avatar-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 800;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.loy-table-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loy-table-email {
+  font-size: 11px;
+  color: #aaa;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loy-pts-badge {
+  display: inline-flex;
+  align-items: center;
+  background: #fff3e0;
+  color: #e65100;
+  border-radius: 20px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.loy-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px;
+  border-top: 1px solid #f0f0f0;
+
+  button {
+    background: #f5f5f5;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 14px;
+
+    &:disabled { opacity: 0.4; cursor: default; }
+    &:not(:disabled):hover { background: #ebebeb; }
+  }
+
+  span { font-size: 13px; color: #555; }
+}
+
+.loy-loading {
+  padding: 40px;
+  text-align: center;
+  color: #aaa;
+  font-size: 14px;
+}
+
+.loy-empty {
+  padding: 40px;
+  text-align: center;
+  color: #bbb;
+  font-size: 14px;
+  margin: 0;
+}
+
+.loy-detail {}
+
+.loy-back-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0 0 16px;
+  display: block;
+
+  &:hover { color: #111; }
+}
+
+.loy-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 20px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.loy-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff4d4d, #ff8c00);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.loy-detail-info { display: flex; flex-direction: column; gap: 2px; }
+
+.loy-detail-name { font-size: 20px; font-weight: 800; color: #111; margin: 0; }
+.loy-detail-email { font-size: 14px; color: #888; margin: 0; }
+.loy-detail-since { font-size: 12px; color: #bbb; margin: 0; }
+
+.loy-detail-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.loy-kpi {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  &--primary { border-color: #ffcccc; background: #fff5f5; }
+}
+
+.loy-kpi-val { font-size: 18px; font-weight: 800; color: #111; }
+.loy-kpi-label { font-size: 11px; color: #aaa; text-transform: uppercase; letter-spacing: 0.04em; }
+
+.loy-visits-table {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.loy-visits-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 8px 16px;
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+.loy-visits-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #444;
+  border-bottom: 1px solid #f8f8f8;
+
+  &:last-child { border-bottom: none; }
+}

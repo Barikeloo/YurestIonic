@@ -1,0 +1,166 @@
+<div class="loyalty-root">
+
+  @if (facade.selectedCustomer(); as customer) {
+    <div class="loy-detail">
+      <button class="loy-back-btn" (click)="facade.closeDetail()">← Volver a clientes</button>
+
+      <div class="loy-detail-header">
+        <div class="loy-avatar">{{ customer.name.charAt(0).toUpperCase() }}</div>
+        <div class="loy-detail-info">
+          <h2 class="loy-detail-name">{{ customer.name }}</h2>
+          <p class="loy-detail-email">{{ customer.email }}</p>
+          <p class="loy-detail-since">Cliente desde {{ formatDate(customer.created_at) }}</p>
+        </div>
+      </div>
+
+      <div class="loy-detail-kpis">
+        <div class="loy-kpi loy-kpi--primary">
+          <span class="loy-kpi-val">{{ customer.points }}</span>
+          <span class="loy-kpi-label">Puntos</span>
+        </div>
+        <div class="loy-kpi">
+          <span class="loy-kpi-val">{{ customer.visits_count }}</span>
+          <span class="loy-kpi-label">Visitas</span>
+        </div>
+        <div class="loy-kpi">
+          <span class="loy-kpi-val">{{ formatCents(customer.total_spent_cents) }}</span>
+          <span class="loy-kpi-label">Total gastado</span>
+        </div>
+        <div class="loy-kpi">
+          <span class="loy-kpi-val">{{ formatDate(customer.last_visit_at) }}</span>
+          <span class="loy-kpi-label">Última visita</span>
+        </div>
+      </div>
+
+      <h3 class="loy-section-title">Historial de visitas</h3>
+
+      @if (facade.loadingDetail()) {
+        <div class="loy-loading">Cargando…</div>
+      } @else if (customer.visits.length === 0) {
+        <p class="loy-empty">Sin visitas registradas aún.</p>
+      } @else {
+        <div class="loy-visits-table">
+          <div class="loy-visits-head">
+            <span>Fecha</span>
+            <span>Consumo</span>
+            <span>Puntos ganados</span>
+          </div>
+          @for (visit of customer.visits; track visit.id) {
+            <div class="loy-visits-row">
+              <span>{{ formatDate(visit.visited_at) }}</span>
+              <span>{{ formatCents(visit.amount_cents) }}</span>
+              <span class="loy-pts-badge">+{{ visit.points_earned }} pts</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+
+    @if (facade.stats(); as stats) {
+      <div class="loy-stats-grid">
+        <div class="loy-stat-card loy-stat-card--highlight">
+          <span class="loy-stat-val">{{ stats.total_customers }}</span>
+          <span class="loy-stat-label">Clientes registrados</span>
+        </div>
+        <div class="loy-stat-card">
+          <span class="loy-stat-val">{{ stats.visits_last_30_days }}</span>
+          <span class="loy-stat-label">Visitas (30 días)</span>
+        </div>
+        <div class="loy-stat-card">
+          <span class="loy-stat-val">{{ facade.retentionRate() }}%</span>
+          <span class="loy-stat-label">Tasa de retención</span>
+        </div>
+        <div class="loy-stat-card">
+          <span class="loy-stat-val">{{ formatCents(stats.avg_ticket_cents) }}</span>
+          <span class="loy-stat-label">Ticket medio cliente</span>
+        </div>
+        <div class="loy-stat-card">
+          <span class="loy-stat-val">{{ stats.total_points_outstanding }}</span>
+          <span class="loy-stat-label">Puntos activos</span>
+        </div>
+        <div class="loy-stat-card">
+          <span class="loy-stat-val">{{ formatCents(stats.total_spent_cents) }}</span>
+          <span class="loy-stat-label">Total facturado (clientes)</span>
+        </div>
+      </div>
+
+      @if (stats.top_customers.length > 0) {
+        <div class="loy-top">
+          <h3 class="loy-section-title">Top clientes por consumo</h3>
+          <div class="loy-top-list">
+            @for (c of stats.top_customers; track c.id; let i = $index) {
+              <div class="loy-top-row" (click)="selectCustomer(c)">
+                <span class="loy-top-rank">#{{ i + 1 }}</span>
+                <div class="loy-top-avatar">{{ c.name.charAt(0).toUpperCase() }}</div>
+                <div class="loy-top-info">
+                  <span class="loy-top-name">{{ c.name }}</span>
+                  <span class="loy-top-email">{{ c.email }}</span>
+                </div>
+                <div class="loy-top-meta">
+                  <span class="loy-top-pts">{{ c.points }} pts</span>
+                  <span class="loy-top-spent">{{ formatCents(c.total_spent_cents) }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    }
+
+    <div class="loy-customers-section">
+      <div class="loy-customers-header">
+        <h3 class="loy-section-title">Todos los clientes</h3>
+        <input
+          class="loy-search"
+          type="search"
+          placeholder="Buscar por nombre o email…"
+          (input)="onSearch($event)"
+        />
+      </div>
+
+      @if (facade.loading()) {
+        <div class="loy-loading">Cargando clientes…</div>
+      } @else if (facade.customers(); as list) {
+        @if (list.data.length === 0) {
+          <p class="loy-empty">No se encontraron clientes.</p>
+        } @else {
+          <div class="loy-table">
+            <div class="loy-table-head">
+              <span>Cliente</span>
+              <span>Puntos</span>
+              <span>Visitas</span>
+              <span>Total</span>
+              <span>Última visita</span>
+            </div>
+            @for (c of list.data; track c.id) {
+              <div class="loy-table-row" (click)="selectCustomer(c)">
+                <div class="loy-table-customer">
+                  <div class="loy-avatar-sm">{{ c.name.charAt(0).toUpperCase() }}</div>
+                  <div>
+                    <p class="loy-table-name">{{ c.name }}</p>
+                    <p class="loy-table-email">{{ c.email }}</p>
+                  </div>
+                </div>
+                <span class="loy-pts-badge">{{ c.points }} pts</span>
+                <span>{{ c.visits_count }}</span>
+                <span>{{ formatCents(c.total_spent_cents) }}</span>
+                <span>{{ formatDate(c.last_visit_at) }}</span>
+              </div>
+            }
+          </div>
+
+          @if (list.pages > 1) {
+            <div class="loy-pagination">
+              <button [disabled]="facade.page() <= 1" (click)="facade.setPage(facade.page() - 1)">←</button>
+              <span>{{ facade.page() }} / {{ list.pages }}</span>
+              <button [disabled]="facade.page() >= list.pages" (click)="facade.setPage(facade.page() + 1)">→</button>
+            </div>
+          }
+        }
+      }
+    </div>
+
+  }
+
+</div>

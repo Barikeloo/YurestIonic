@@ -19,6 +19,7 @@ import { GestionMenusFacade } from './facades/gestion-menus.facade';
 import { GestionUsersFacade } from './facades/gestion-users.facade';
 import { GestionZReportsFacade } from './facades/gestion-zreports.facade';
 import { GestionPrintersFacade } from './facades/gestion-printers.facade';
+import { GestionLoyaltyFacade } from './facades/gestion-loyalty.facade';
 import { ProductItem, ProductService } from '../../../services/product.service';
 import { RestaurantService } from '../../../services/restaurant.service';
 import { TableItem, TableService } from '../../../services/table.service';
@@ -35,6 +36,7 @@ import { ZonesManagementComponent } from '../../../components/gestion/zones-mana
 import { TaxesManagementComponent } from '../../../components/gestion/taxes-management/taxes-management.component';
 import { ZReportsManagementComponent, ZReportRow } from '../../../components/gestion/zreports-management/zreports-management.component';
 import { PrintersManagementComponent } from '../../../components/gestion/printers-management/printers-management.component';
+import { LoyaltyManagementComponent } from '../../../components/gestion/loyalty-management/loyalty-management.component';
 import { ManagementEntityKey } from '../../../core/enums/management-entity-key.enum';
 import { TpvService } from '../../../features/cash/services/tpv.service';
 
@@ -121,8 +123,9 @@ interface ManagementDataRow {
     TaxesManagementComponent,
     ZReportsManagementComponent,
     PrintersManagementComponent,
+    LoyaltyManagementComponent,
 ],
-  providers: [GestionFamiliesFacade, GestionTaxesFacade, GestionZonesFacade, GestionProductsFacade, GestionMenusFacade, GestionUsersFacade, GestionZReportsFacade, GestionPrintersFacade],
+  providers: [GestionFamiliesFacade, GestionTaxesFacade, GestionZonesFacade, GestionProductsFacade, GestionMenusFacade, GestionUsersFacade, GestionZReportsFacade, GestionPrintersFacade, GestionLoyaltyFacade],
 })
 export class GestionPage {
   protected readonly familiesFacade = inject(GestionFamiliesFacade);
@@ -133,6 +136,7 @@ export class GestionPage {
   protected readonly usersFacade = inject(GestionUsersFacade);
   protected readonly zreportsFacade = inject(GestionZReportsFacade);
   protected readonly printersFacade = inject(GestionPrintersFacade);
+  protected readonly loyaltyFacade = inject(GestionLoyaltyFacade);
   protected readonly toastService = inject(ToastService);
   protected readonly restaurantContextFacade = inject(RestaurantContextFacade);
   protected readonly layoutFacade = inject(AppLayoutFacade);
@@ -162,6 +166,7 @@ export class GestionPage {
     { key: ManagementEntityKey.TAXES, label: 'Impuestos' },
     { key: ManagementEntityKey.ZREPORTS, label: 'Z Reports' },
     { key: ManagementEntityKey.PRINTERS, label: 'Impresoras' },
+    { key: ManagementEntityKey.LOYALTY, label: 'Fidelización' },
   ];
 
   public managementState: {
