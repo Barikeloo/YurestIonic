@@ -155,6 +155,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(GuestCatalogRepositoryInterface::class, EloquentGuestCatalogRepository::class);
         $this->app->bind(CustomerAccountRepositoryInterface::class, EloquentCustomerAccountRepository::class);
         $this->app->bind(LoyaltyReadRepositoryInterface::class, EloquentLoyaltyReadRepository::class);
+        $this->app->bind(\App\GuestOrder\Domain\Interfaces\CustomerOfferRepositoryInterface::class, \App\GuestOrder\Infrastructure\Persistence\Repositories\EloquentCustomerOfferRepository::class);
         $this->app->bind(GuestOrderLineRepositoryInterface::class, EloquentGuestOrderLineRepository::class);
         $this->app->bind(GuestOrderRoundRepositoryInterface::class, EloquentGuestOrderRoundRepository::class);
         $this->app->when(\App\GuestOrder\Application\GenerateTableQrToken\GenerateTableQrToken::class)

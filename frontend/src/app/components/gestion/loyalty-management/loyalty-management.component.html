@@ -1,5 +1,12 @@
 <div class="loy-root">
 
+  @if (!facade.selectedCustomer()) {
+    <div class="loy-tabs">
+      <button class="loy-tab" [class.loy-tab--active]="facade.tab() === 'customers'" (click)="facade.setTab('customers')">Clientes</button>
+      <button class="loy-tab" [class.loy-tab--active]="facade.tab() === 'offers'" (click)="facade.setTab('offers')">Ofertas</button>
+    </div>
+  }
+
   @if (facade.selectedCustomer(); as customer) {
 
     <div class="loy-detail-layout">
@@ -72,6 +79,121 @@
     </div>
 
   } @else {
+
+    @if (facade.tab() === 'offers') {
+      <div class="loy-offers-wrap">
+        <div class="loy-offers-header">
+          <p class="loy-section-label" style="padding:0;border:none">Ofertas activas para clientes registrados</p>
+          @if (!showNewOfferForm()) {
+            <button class="loy-btn-primary" (click)="openNewOfferForm()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+              Nueva oferta
+            </button>
+          }
+        </div>
+
+        @if (showNewOfferForm()) {
+          <div class="loy-offer-form-card">
+            <p class="loy-form-title">Nueva oferta</p>
+            <div class="loy-form-grid">
+              <div class="loy-field loy-field--full">
+                <label class="loy-label">Título</label>
+                <input class="loy-input" type="text" placeholder="Ej: 10% en tu próxima visita"
+                  [value]="offerForm().title" (input)="setOfferField('title', $any($event.target).value)" />
+              </div>
+              <div class="loy-field">
+                <label class="loy-label">Tipo de descuento</label>
+                <select class="loy-input" [value]="offerForm().discount_type"
+                  (change)="setOfferField('discount_type', $any($event.target).value)">
+                  <option value="percent">Porcentaje (%)</option>
+                  <option value="fixed_cents">Importe fijo (€)</option>
+                  <option value="points_multiplier">Multiplicador de puntos</option>
+                </select>
+              </div>
+              <div class="loy-field">
+                <label class="loy-label">
+                  @if (offerForm().discount_type === 'percent') { Porcentaje }
+                  @else if (offerForm().discount_type === 'fixed_cents') { Importe (céntimos) }
+                  @else { Multiplicador (×10, ej: 20 = ×2) }
+                </label>
+                <input class="loy-input" type="number" min="1"
+                  [value]="offerForm().discount_value"
+                  (input)="setOfferField('discount_value', +$any($event.target).value)" />
+              </div>
+              <div class="loy-field">
+                <label class="loy-label">Puntos mínimos requeridos</label>
+                <input class="loy-input" type="number" min="0" placeholder="0"
+                  [value]="offerForm().min_points ?? 0"
+                  (input)="setOfferField('min_points', +$any($event.target).value)" />
+              </div>
+              <div class="loy-field">
+                <label class="loy-label">Válida desde (opcional)</label>
+                <input class="loy-input" type="date"
+                  [value]="offerForm().valid_from ?? ''"
+                  (input)="setOfferField('valid_from', $any($event.target).value || null)" />
+              </div>
+              <div class="loy-field">
+                <label class="loy-label">Válida hasta (opcional)</label>
+                <input class="loy-input" type="date"
+                  [value]="offerForm().valid_until ?? ''"
+                  (input)="setOfferField('valid_until', $any($event.target).value || null)" />
+              </div>
+            </div>
+            <div class="loy-form-actions">
+              <button class="loy-btn-ghost" (click)="cancelOffer()">Cancelar</button>
+              <button class="loy-btn-primary" [disabled]="!offerForm().title || !offerForm().discount_value" (click)="saveOffer()">
+                Crear oferta
+              </button>
+            </div>
+          </div>
+        }
+
+        @for (offer of facade.offers(); track offer.id) {
+          <div class="loy-offer-card" [class.loy-offer-card--inactive]="!offer.active">
+            <div class="loy-offer-main">
+              <div class="loy-offer-badge" [class.loy-offer-badge--inactive]="!offer.active">
+                {{ facade.discountLabel(offer) }}
+              </div>
+              <div class="loy-offer-info">
+                <p class="loy-offer-title">{{ offer.title }}</p>
+                @if (offer.description) {
+                  <p class="loy-offer-desc">{{ offer.description }}</p>
+                }
+                <div class="loy-offer-meta">
+                  @if (offer.min_points > 0) {
+                    <span>Mín. {{ offer.min_points }} pts</span>
+                  }
+                  @if (offer.valid_until) {
+                    <span>Hasta {{ formatDate(offer.valid_until) }}</span>
+                  }
+                  @if (!offer.valid_from && !offer.valid_until && offer.min_points === 0) {
+                    <span>Sin restricciones</span>
+                  }
+                </div>
+              </div>
+            </div>
+            <div class="loy-offer-actions">
+              <label class="loy-toggle" [title]="offer.active ? 'Desactivar' : 'Activar'">
+                <input type="checkbox" [checked]="offer.active" (change)="facade.toggleOfferActive(offer)" />
+                <span class="loy-toggle-track"></span>
+              </label>
+              <button class="loy-btn-icon loy-btn-icon--danger" title="Eliminar" (click)="facade.deleteOffer(offer.id)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          @if (!showNewOfferForm()) {
+            <div class="loy-empty">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gray-300)" stroke-width="1.5"><polyline points="20 12 20 22 4 22 4 12"/><rect width="20" height="5" x="2" y="7"/><line x1="12" x2="12" y1="22" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>
+              No hay ofertas creadas aún. Crea la primera para fidelizar a tus clientes.
+            </div>
+          }
+        }
+      </div>
+    }
+
+    @if (facade.tab() === 'customers') {
 
     @if (facade.stats(); as stats) {
       <div class="loy-stats-row">
@@ -214,6 +336,8 @@
         }
       }
     </div>
+
+    }
 
   }
 

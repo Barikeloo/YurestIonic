@@ -60,4 +60,45 @@ export class LoyaltyService extends BaseApiService {
   getCustomer(uuid: string): Observable<LoyaltyCustomerDetail> {
     return this.get<LoyaltyCustomerDetail>(`/admin/loyalty/customers/${uuid}`);
   }
+
+  getOffers(): Observable<LoyaltyOffer[]> {
+    return this.get<LoyaltyOffer[]>('/admin/loyalty/offers');
+  }
+
+  createOffer(data: LoyaltyOfferForm): Observable<LoyaltyOffer> {
+    return this.post<LoyaltyOffer>('/admin/loyalty/offers', data);
+  }
+
+  updateOffer(uuid: string, data: Partial<LoyaltyOfferForm> & { active?: boolean }): Observable<LoyaltyOffer> {
+    return this.patch<LoyaltyOffer>(`/admin/loyalty/offers/${uuid}`, data);
+  }
+
+  deleteOffer(uuid: string): Observable<void> {
+    return this.delete<void>(`/admin/loyalty/offers/${uuid}`);
+  }
+}
+
+export type DiscountType = 'percent' | 'fixed_cents' | 'points_multiplier';
+
+export interface LoyaltyOffer {
+  id: string;
+  title: string;
+  description: string | null;
+  discount_type: DiscountType;
+  discount_value: number;
+  min_points: number;
+  valid_from: string | null;
+  valid_until: string | null;
+  active: boolean;
+  created_at: string;
+}
+
+export interface LoyaltyOfferForm {
+  title: string;
+  description?: string;
+  discount_type: DiscountType;
+  discount_value: number;
+  min_points?: number;
+  valid_from?: string | null;
+  valid_until?: string | null;
 }

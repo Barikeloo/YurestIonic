@@ -464,6 +464,10 @@ Route::middleware([
     Route::post('/admin/tables/{tableId}/qr-token', \App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\GenerateTableQrTokenController::class)->whereUuid('tableId');
 
     Route::get('/admin/loyalty/stats', [\App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\LoyaltyController::class, 'stats']);
+    Route::get('/admin/loyalty/offers', [\App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\OffersController::class, 'index']);
+    Route::post('/admin/loyalty/offers', [\App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\OffersController::class, 'store']);
+    Route::patch('/admin/loyalty/offers/{uuid}', [\App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\OffersController::class, 'update'])->whereUuid('uuid');
+    Route::delete('/admin/loyalty/offers/{uuid}', [\App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\OffersController::class, 'destroy'])->whereUuid('uuid');
     Route::get('/admin/loyalty/customers', [\App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\LoyaltyController::class, 'customers']);
     Route::get('/admin/loyalty/customers/{uuid}', [\App\GuestOrder\Infrastructure\Entrypoint\Http\Admin\LoyaltyController::class, 'customerDetail'])->whereUuid('uuid');
 });
