@@ -8,6 +8,7 @@ use App\GuestOrder\Application\GetLoyaltyStats\GetLoyaltyStats;
 use App\GuestOrder\Application\GetLoyaltyStats\GetLoyaltyStatsCommand;
 use App\GuestOrder\Application\ListCustomerAccounts\ListCustomerAccounts;
 use App\GuestOrder\Application\ListCustomerAccounts\ListCustomerAccountsCommand;
+use App\GuestOrder\Domain\Interfaces\LoyaltyReadRepositoryInterface;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,13 +18,12 @@ final class LoyaltyController
     public function __construct(
         private readonly ListCustomerAccounts $listCustomerAccounts,
         private readonly GetLoyaltyStats $getLoyaltyStats,
+        private readonly LoyaltyReadRepositoryInterface $loyaltyReadRepository,
     ) {}
 
     public function customers(Request $request): JsonResponse
     {
-        $tenantContext  = app(TenantContext::class);
-        $restaurantId   = $tenantContext->restaurantUuid();
-
+        $restaurantId = $this->requireRestaurantId();
         if ($restaurantId === null) {
             return new JsonResponse(['message' => 'Tenant context required.'], 401);
         }
@@ -45,59 +45,23 @@ final class LoyaltyController
 
     public function customerDetail(string $customerUuid): JsonResponse
     {
-        $tenantContext = app(TenantContext::class);
-        $restaurantId  = $tenantContext->restaurantUuid();
-
+        $restaurantId = $this->requireRestaurantId();
         if ($restaurantId === null) {
             return new JsonResponse(['message' => 'Tenant context required.'], 401);
         }
 
-        $restaurantInternalId = \Illuminate\Support\Facades\DB::table('restaurants')
-            ->where('uuid', $restaurantId)
-            ->value('id');
+        $detail = $this->loyaltyReadRepository->getCustomerDetail($customerUuid, $restaurantId);
 
-        $account = \Illuminate\Support\Facades\DB::table('customer_accounts')
-            ->where('uuid', $customerUuid)
-            ->where('restaurant_id', $restaurantInternalId)
-            ->select(['id', 'uuid', 'name', 'email', 'points', 'total_spent_cents', 'visits_count', 'last_visit_at', 'created_at'])
-            ->first();
-
-        if ($account === null) {
+        if ($detail === null) {
             return new JsonResponse(['message' => 'Customer not found.'], 404);
         }
 
-        $visits = \Illuminate\Support\Facades\DB::table('customer_visits')
-            ->where('customer_account_id', $account->id)
-            ->orderByDesc('visited_at')
-            ->limit(20)
-            ->select(['uuid', 'order_id', 'points_earned', 'amount_cents', 'visited_at'])
-            ->get()
-            ->map(fn ($v) => [
-                'id'            => $v->uuid,
-                'order_id'      => $v->order_id,
-                'points_earned' => (int) $v->points_earned,
-                'amount_cents'  => (int) $v->amount_cents,
-                'visited_at'    => $v->visited_at,
-            ])->all();
-
-        return new JsonResponse([
-            'id'                => $account->uuid,
-            'name'              => $account->name,
-            'email'             => $account->email,
-            'points'            => (int) $account->points,
-            'total_spent_cents' => (int) $account->total_spent_cents,
-            'visits_count'      => (int) $account->visits_count,
-            'last_visit_at'     => $account->last_visit_at,
-            'created_at'        => $account->created_at,
-            'visits'            => $visits,
-        ], 200);
+        return new JsonResponse($detail, 200);
     }
 
     public function stats(): JsonResponse
     {
-        $tenantContext = app(TenantContext::class);
-        $restaurantId  = $tenantContext->restaurantUuid();
-
+        $restaurantId = $this->requireRestaurantId();
         if ($restaurantId === null) {
             return new JsonResponse(['message' => 'Tenant context required.'], 401);
         }
@@ -110,5 +74,10 @@ final class LoyaltyController
         }
 
         return new JsonResponse($stats, 200);
+    }
+
+    private function requireRestaurantId(): ?string
+    {
+        return app(TenantContext::class)->restaurantUuid();
     }
 }
