@@ -67,6 +67,10 @@ export class GuestOrderFacade {
   private readonly _customerData = signal<CustomerData | null>(null);
   private _pendingCustomerAuthToken: string | null = null;
 
+  private readonly _activityToast = signal<{ message: string; id: number } | null>(null);
+  private readonly _unreadRounds = signal(0);
+  private toastTimer: ReturnType<typeof setTimeout> | null = null;
+
   readonly screen = this._screen.asReadonly();
   readonly qrToken = this._qrToken.asReadonly();
   readonly sessionToken = this._sessionToken.asReadonly();
@@ -81,6 +85,8 @@ export class GuestOrderFacade {
   readonly identityMode = this._identityMode.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
   readonly errorMessage = this._errorMessage.asReadonly();
+  readonly activityToast = this._activityToast.asReadonly();
+  readonly unreadRounds = this._unreadRounds.asReadonly();
   readonly customerData = this._customerData.asReadonly();
 
   readonly orderStatus = computed((): OrderStatus => this._tableStatus()?.order_status ?? 'none');
@@ -531,14 +537,34 @@ export class GuestOrderFacade {
   private subscribeToOrderActivity(orderId: string): void {
     this.reverbService.subscribeToOrder(orderId, (data) => {
       if (data.event_type === 'round_submitted') {
+        const name = data.guest_name ?? 'Alguien';
+        const round = data.round_number ? ` (ronda ${data.round_number})` : '';
+        this.showActivityToast(`${name} envió un pedido${round}`);
+
+        this._unreadRounds.update((n) => n + 1);
+
         if (this._screen() === 'history') {
           this.goToHistory();
         }
       }
+
       if (data.event_type === 'check_requested') {
-        this._errorMessage.set('El camarero está preparando tu cuenta.');
+        this.showActivityToast('La cuenta está siendo procesada');
+        this._tableStatus.update((s) =>
+          s ? { ...s, order_status: 'to_charge' as const } : s,
+        );
       }
     });
+  }
+
+  clearUnreadRounds(): void {
+    this._unreadRounds.set(0);
+  }
+
+  private showActivityToast(message: string): void {
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this._activityToast.set({ message, id: Date.now() });
+    this.toastTimer = setTimeout(() => this._activityToast.set(null), 4000);
   }
 
   private startStatusPolling(token: string): void {
@@ -613,6 +639,7 @@ export class GuestOrderFacade {
     window.removeEventListener('offline', this.onOffline);
     if (this.catalogPollTimer) clearInterval(this.catalogPollTimer);
     if (this.statusPollTimer) clearInterval(this.statusPollTimer);
+    if (this.toastTimer) clearTimeout(this.toastTimer);
     this.reverbService.unsubscribe();
     this.destroy$.next();
     this.destroy$.complete();

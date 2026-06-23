@@ -9,8 +9,11 @@
           @if (facade.guestName()) { · {{ facade.guestName() }} }
         </span>
       </div>
-      <button class="cat-history-btn" (click)="facade.goToHistory()" title="Mis pedidos">
+      <button class="cat-history-btn" (click)="onGoToHistory()" title="Mis pedidos">
         <app-guest-icon name="clipboard" [size]="20" />
+        @if (facade.unreadRounds() > 0) {
+          <span class="cat-history-badge">{{ facade.unreadRounds() }}</span>
+        }
       </button>
     </div>
 

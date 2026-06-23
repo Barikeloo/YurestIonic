@@ -67,4 +67,9 @@ export class CatalogComponent implements OnInit {
   onSelectMenu(menu: MenuCatalogItem): void {
     this.facade.openMenuConfig(menu);
   }
+
+  onGoToHistory(): void {
+    this.facade.clearUnreadRounds();
+    this.facade.goToHistory();
+  }
 }

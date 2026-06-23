@@ -1,5 +1,12 @@
 <div class="guest-order-host">
 
+  @if (facade.activityToast(); as toast) {
+    <div class="go-activity-toast">
+      <span class="go-toast-dot"></span>
+      {{ toast.message }}
+    </div>
+  }
+
   @if (facade.screen() === 'loading') {
     <div class="guest-loading">
       <div class="guest-spinner"></div>
