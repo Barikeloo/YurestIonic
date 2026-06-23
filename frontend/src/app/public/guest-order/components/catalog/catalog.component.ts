@@ -1,7 +1,12 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GuestOrderFacade } from '../../facades/guest-order.facade';
-import { FamilyCatalogItem, MenuCatalogItem, ProductCatalogItem } from '../../models/guest-catalog.models';
+import {
+  ALLERGEN_LABELS,
+  FamilyCatalogItem,
+  MenuCatalogItem,
+  ProductCatalogItem,
+} from '../../models/guest-catalog.models';
 import { GuestIconComponent } from '../ui/guest-icon.component';
 import { ProductCardComponent } from './product-card.component';
 import { MenuCardComponent } from './menu-card.component';
@@ -25,6 +30,12 @@ export class CatalogComponent implements OnInit {
   protected readonly facade = inject(GuestOrderFacade);
 
   protected readonly activeTabId = signal<string | null>(null);
+  protected readonly blockedAllergens = signal<Set<string>>(new Set());
+  protected readonly showAllergenPanel = signal(false);
+
+  protected readonly allergenOptions = Object.entries(ALLERGEN_LABELS).map(
+    ([code, { name }]) => ({ code, name }),
+  );
 
   protected readonly tabs = computed((): CatalogTab[] => {
     const catalog = this.facade.catalog();
@@ -44,11 +55,25 @@ export class CatalogComponent implements OnInit {
     return this.facade.catalog()?.families.find((f) => f.id === id) ?? null;
   });
 
-  protected readonly showMenus = computed(() => this.activeTabId() === '__menus__');
-
-  protected readonly menus = computed((): MenuCatalogItem[] => {
-    return this.facade.catalog()?.menus ?? [];
+  protected readonly filteredProducts = computed((): ProductCatalogItem[] => {
+    const family = this.activeFamily();
+    if (!family) return [];
+    const blocked = this.blockedAllergens();
+    if (blocked.size === 0) return family.products;
+    return family.products.filter(
+      (p) => !p.allergens.some((a) => blocked.has(a)),
+    );
   });
+
+  protected readonly hiddenCount = computed((): number => {
+    const family = this.activeFamily();
+    if (!family || this.blockedAllergens().size === 0) return 0;
+    return family.products.length - this.filteredProducts().length;
+  });
+
+  protected readonly showMenus = computed(() => this.activeTabId() === '__menus__');
+  protected readonly menus = computed((): MenuCatalogItem[] => this.facade.catalog()?.menus ?? []);
+  protected readonly activeFilterCount = computed(() => this.blockedAllergens().size);
 
   ngOnInit(): void {
     const first = this.tabs()[0];
@@ -57,6 +82,23 @@ export class CatalogComponent implements OnInit {
 
   selectTab(id: string): void {
     this.activeTabId.set(id);
+  }
+
+  toggleAllergen(code: string): void {
+    this.blockedAllergens.update((set) => {
+      const next = new Set(set);
+      if (next.has(code)) next.delete(code);
+      else next.add(code);
+      return next;
+    });
+  }
+
+  isBlocked(code: string): boolean {
+    return this.blockedAllergens().has(code);
+  }
+
+  clearFilters(): void {
+    this.blockedAllergens.set(new Set());
   }
 
   onSelectProduct(product: ProductCatalogItem): void {

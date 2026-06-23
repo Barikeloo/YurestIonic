@@ -9,13 +9,51 @@
           @if (facade.guestName()) { · {{ facade.guestName() }} }
         </span>
       </div>
-      <button class="cat-history-btn" (click)="onGoToHistory()" title="Mis pedidos">
-        <app-guest-icon name="clipboard" [size]="20" />
-        @if (facade.unreadRounds() > 0) {
-          <span class="cat-history-badge">{{ facade.unreadRounds() }}</span>
-        }
-      </button>
+      <div class="cat-header-actions">
+        <button
+          class="cat-filter-btn"
+          [class.cat-filter-btn--active]="activeFilterCount() > 0"
+          (click)="showAllergenPanel.set(!showAllergenPanel())"
+          title="Filtrar alérgenos"
+        >
+          <app-guest-icon name="ban" [size]="17" />
+          @if (activeFilterCount() > 0) {
+            <span class="cat-filter-badge">{{ activeFilterCount() }}</span>
+          }
+        </button>
+        <button class="cat-history-btn" (click)="onGoToHistory()" title="Mis pedidos">
+          <app-guest-icon name="clipboard" [size]="20" />
+          @if (facade.unreadRounds() > 0) {
+            <span class="cat-history-badge">{{ facade.unreadRounds() }}</span>
+          }
+        </button>
+      </div>
     </div>
+
+    @if (showAllergenPanel()) {
+      <div class="cat-allergen-panel">
+        <p class="cat-allergen-title">Ocultar productos con:</p>
+        <div class="cat-allergen-chips">
+          @for (a of allergenOptions; track a.code) {
+            <button
+              class="cat-allergen-chip"
+              [class.cat-allergen-chip--blocked]="isBlocked(a.code)"
+              (click)="toggleAllergen(a.code)"
+            >
+              @if (isBlocked(a.code)) {
+                <app-guest-icon name="x-mark" [size]="11" />
+              }
+              {{ a.name }}
+            </button>
+          }
+        </div>
+        @if (activeFilterCount() > 0) {
+          <button class="cat-allergen-clear" (click)="clearFilters()">
+            Limpiar filtros
+          </button>
+        }
+      </div>
+    }
 
     <nav class="cat-tabs" role="tablist">
       @for (tab of tabs(); track tab.id) {
@@ -48,15 +86,24 @@
         }
       </div>
     } @else if (activeFamily()) {
-      <div class="cat-section-header">
-        <h2 class="cat-section-name">{{ activeFamily()!.name }}</h2>
-        <span class="cat-section-count">{{ activeFamily()!.products.length }} productos</span>
-      </div>
-      <div class="cat-list">
-        @for (product of activeFamily()!.products; track product.id) {
+
+      @if (hiddenCount() > 0) {
+        <div class="cat-filter-notice">
+          <app-guest-icon name="ban" [size]="14" />
+          {{ hiddenCount() }} producto{{ hiddenCount() !== 1 ? 's' : '' }} oculto{{ hiddenCount() !== 1 ? 's' : '' }} por tus filtros de alérgenos
+          <button class="cat-filter-notice-clear" (click)="clearFilters()">Quitar filtros</button>
+        </div>
+      }
+
+      <div class="cat-grid">
+        @for (product of filteredProducts(); track product.id) {
           <app-product-card [product]="product" (select)="onSelectProduct($event)" />
         } @empty {
-          <p class="cat-empty">No hay productos en esta familia.</p>
+          <div class="cat-empty-filter">
+            <app-guest-icon name="ban" [size]="32" />
+            <p>Ningún producto de esta familia encaja con tus filtros.</p>
+            <button class="cat-filter-notice-clear" (click)="clearFilters()">Quitar filtros</button>
+          </div>
         }
       </div>
     }
