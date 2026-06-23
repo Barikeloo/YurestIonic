@@ -5,265 +5,93 @@
     <h1 class="ts-table">{{ facade.tableName() }}</h1>
   </div>
 
+  @if (facade.errorMessage()) {
+    <div class="ts-error">{{ facade.errorMessage() }}</div>
+  }
+
   @switch (facade.orderStatus()) {
 
     @case ('none') {
       <div class="ts-card">
+        <p class="ts-greeting">¡Bienvenidos!</p>
+        <p class="ts-sub">¿Cuántas personas sois?</p>
+        <app-diners-stepper
+          [value]="dinersCount()"
+          (valueChange)="setDiners($event)"
+        />
 
-        @if (facade.errorMessage()) {
-          <div class="ts-error">{{ facade.errorMessage() }}</div>
+        <div class="ts-divider"></div>
+
+        <app-identity-selector
+          [selected]="identityMode()"
+          (selectMode)="selectIdentity($event)"
+        />
+
+        @if (showNameInput()) {
+          <div class="ts-name-field">
+            <label class="ts-label">Tu nombre</label>
+            <input
+              class="ts-input"
+              type="text"
+              placeholder="Ej. Carlos"
+              [value]="guestName()"
+              (input)="guestName.set($any($event.target).value)"
+              maxlength="100"
+              autocomplete="off"
+            />
+          </div>
         }
 
-        @if (isIdentityStep()) {
-          <p class="ts-greeting">¡Bienvenidos!</p>
-          <p class="ts-sub">¿Cuántas personas sois?</p>
-          <app-diners-stepper [value]="dinersCount()" (valueChange)="setDiners($event)" />
-
-          <div class="ts-divider"></div>
-          <app-identity-selector [selected]="identityMode()" (selectMode)="selectIdentity($event)" />
-
-          @if (identityMode() === 'named') {
-            <div class="ts-name-field">
-              <label class="ts-label">Tu nombre</label>
-              <input class="ts-input" type="text" placeholder="Ej. Carlos"
-                [value]="guestName()" (input)="guestName.set($any($event.target).value)"
-                maxlength="100" autocomplete="off" />
-            </div>
+        <button
+          class="ts-cta"
+          [disabled]="!identityMode() || facade.isLoading()"
+          (click)="openTable()"
+        >
+          @if (facade.isLoading()) {
+            Abriendo…
+          } @else {
+            Abrir mesa y empezar a pedir →
           }
-
-          @if (identityMode() && identityMode() !== 'registered') {
-            <button class="ts-cta" [disabled]="facade.isLoading()" (click)="openTable()">
-              @if (facade.isLoading()) { Abriendo… } @else { Abrir mesa y empezar a pedir → }
-            </button>
-          }
-        }
-
-        @if (isLoginStep()) {
-          <button class="ts-back-btn" (click)="backToIdentity()">
-            <app-guest-icon name="arrow-left" [size]="16" /> Volver
-          </button>
-          <div class="ts-auth-header">
-            <div class="ts-auth-icon"><app-guest-icon name="user" [size]="36" /></div>
-            <h2 class="ts-auth-heading">Inicia sesión</h2>
-            <p class="ts-auth-sub">Acumula puntos y accede a tus ofertas</p>
-          </div>
-          <div class="ts-auth-fields">
-            <div class="ts-field-group">
-              <label class="ts-label">Email</label>
-              <input class="ts-input" type="email" placeholder="tu@email.com"
-                [value]="loginEmail()" (input)="loginEmail.set($any($event.target).value)"
-                autocomplete="email" />
-            </div>
-            <div class="ts-field-group">
-              <label class="ts-label">Contraseña</label>
-              <input class="ts-input" type="password" placeholder="••••••••"
-                [value]="loginPassword()" (input)="loginPassword.set($any($event.target).value)"
-                autocomplete="current-password" />
-            </div>
-            <button class="ts-cta" [disabled]="facade.isLoading()" (click)="submitLogin()">
-              @if (facade.isLoading()) { Entrando… } @else { Entrar con mi cuenta }
-            </button>
-            <button class="ts-link-btn" (click)="switchToRegister()">
-              ¿No tienes cuenta? <strong>Créala gratis</strong>
-            </button>
-          </div>
-        }
-
-        @if (isRegisterStep()) {
-          <button class="ts-back-btn" (click)="switchToLogin()">
-            <app-guest-icon name="arrow-left" [size]="16" /> Volver al login
-          </button>
-          <div class="ts-auth-header">
-            <div class="ts-auth-icon"><app-guest-icon name="sparkles" [size]="36" /></div>
-            <h2 class="ts-auth-heading">Crear cuenta</h2>
-            <p class="ts-auth-sub">Gana puntos en cada visita y accede a ofertas exclusivas</p>
-          </div>
-          <div class="ts-auth-fields">
-            <div class="ts-field-group">
-              <label class="ts-label">Nombre</label>
-              <input class="ts-input" type="text" placeholder="Tu nombre"
-                [value]="registerName()" (input)="registerName.set($any($event.target).value)"
-                maxlength="100" autocomplete="name" />
-            </div>
-            <div class="ts-field-group">
-              <label class="ts-label">Email</label>
-              <input class="ts-input" type="email" placeholder="tu@email.com"
-                [value]="registerEmail()" (input)="registerEmail.set($any($event.target).value)"
-                autocomplete="email" />
-            </div>
-            <div class="ts-field-group">
-              <label class="ts-label">Contraseña</label>
-              <input class="ts-input" type="password" placeholder="Mínimo 8 caracteres"
-                [value]="registerPassword()" (input)="registerPassword.set($any($event.target).value)"
-                autocomplete="new-password" />
-            </div>
-            <button class="ts-cta" [disabled]="facade.isLoading()" (click)="submitRegister()">
-              @if (facade.isLoading()) { Creando cuenta… } @else { Crear cuenta }
-            </button>
-            <button class="ts-link-btn" (click)="switchToLogin()">
-              ¿Ya tienes cuenta? <strong>Inicia sesión</strong>
-            </button>
-          </div>
-        }
-
-        @if (isConfirmedStep()) {
-          @if (facade.customerData(); as cd) {
-            <div class="ts-confirmed">
-              <div class="ts-confirmed-avatar">{{ cd.name.charAt(0).toUpperCase() }}</div>
-              <div class="ts-confirmed-info">
-                <h2 class="ts-confirmed-name">
-                  @if (cd.visits_count > 0) { ¡Hola de nuevo, {{ cd.name }}! }
-                  @else { ¡Bienvenido, {{ cd.name }}! }
-                </h2>
-                <p class="ts-confirmed-pts">
-                  @if (cd.visits_count > 0) {
-                    <span class="ts-pts-row"><app-guest-icon name="star" [size]="13" /> {{ cd.points }} puntos · {{ cd.visits_count }} {{ cd.visits_count === 1 ? 'visita' : 'visitas' }}</span>
-                  } @else {
-                    <span class="ts-pts-row"><app-guest-icon name="sparkles" [size]="13" /> Ganarás puntos con esta visita</span>
-                  }
-                </p>
-                @if (cd.active_offers.length > 0) {
-                  <div class="ts-confirmed-offers">
-                    @for (offer of cd.active_offers; track offer.id) {
-                      <span class="ts-offer-chip"><app-guest-icon name="gift" [size]="12" /> {{ offer.title }}</span>
-                    }
-                  </div>
-                }
-              </div>
-              <button class="ts-back-link" (click)="backToIdentity()">Cambiar cuenta</button>
-            </div>
-          }
-          <button class="ts-cta" [disabled]="facade.isLoading()" (click)="openTable()">
-            @if (facade.isLoading()) { Abriendo… } @else { Abrir mesa y empezar a pedir → }
-          </button>
-        }
-
+        </button>
       </div>
     }
 
     @case ('open') {
       <div class="ts-card">
+        <p class="ts-greeting">¡Únete a {{ facade.tableName() }}!</p>
+        <p class="ts-sub">La mesa ya está abierta. Elige cómo entrar:</p>
 
-        @if (facade.errorMessage()) {
-          <div class="ts-error">{{ facade.errorMessage() }}</div>
+        <app-identity-selector
+          [selected]="identityMode()"
+          (selectMode)="selectIdentity($event)"
+        />
+
+        @if (showNameInput()) {
+          <div class="ts-name-field">
+            <label class="ts-label">Tu nombre</label>
+            <input
+              class="ts-input"
+              type="text"
+              placeholder="Ej. María"
+              [value]="guestName()"
+              (input)="guestName.set($any($event.target).value)"
+              maxlength="100"
+              autocomplete="off"
+            />
+          </div>
         }
 
-        @if (isIdentityStep()) {
-          <p class="ts-greeting">¡Únete a {{ facade.tableName() }}!</p>
-          <p class="ts-sub">La mesa ya está abierta. Elige cómo entrar:</p>
-          <app-identity-selector [selected]="identityMode()" (selectMode)="selectIdentity($event)" />
-
-          @if (identityMode() === 'named') {
-            <div class="ts-name-field">
-              <label class="ts-label">Tu nombre</label>
-              <input class="ts-input" type="text" placeholder="Ej. María"
-                [value]="guestName()" (input)="guestName.set($any($event.target).value)"
-                maxlength="100" autocomplete="off" />
-            </div>
+        <button
+          class="ts-cta"
+          [disabled]="!identityMode() || facade.isLoading()"
+          (click)="joinSession()"
+        >
+          @if (facade.isLoading()) {
+            Uniéndome…
+          } @else {
+            Unirme y ver la carta →
           }
-
-          @if (identityMode() && identityMode() !== 'registered') {
-            <button class="ts-cta" [disabled]="facade.isLoading()" (click)="joinSession()">
-              @if (facade.isLoading()) { Uniéndome… } @else { Unirme y ver la carta → }
-            </button>
-          }
-        }
-
-        @if (isLoginStep()) {
-          <button class="ts-back-btn" (click)="backToIdentity()">
-            <app-guest-icon name="arrow-left" [size]="16" /> Volver
-          </button>
-          <div class="ts-auth-header">
-            <div class="ts-auth-icon"><app-guest-icon name="user" [size]="36" /></div>
-            <h2 class="ts-auth-heading">Inicia sesión</h2>
-            <p class="ts-auth-sub">Acumula puntos y accede a tus ofertas</p>
-          </div>
-          <div class="ts-auth-fields">
-            <div class="ts-field-group">
-              <label class="ts-label">Email</label>
-              <input class="ts-input" type="email" placeholder="tu@email.com"
-                [value]="loginEmail()" (input)="loginEmail.set($any($event.target).value)" />
-            </div>
-            <div class="ts-field-group">
-              <label class="ts-label">Contraseña</label>
-              <input class="ts-input" type="password" placeholder="••••••••"
-                [value]="loginPassword()" (input)="loginPassword.set($any($event.target).value)" />
-            </div>
-            <button class="ts-cta" [disabled]="facade.isLoading()" (click)="submitLogin()">
-              @if (facade.isLoading()) { Entrando… } @else { Entrar con mi cuenta }
-            </button>
-            <button class="ts-link-btn" (click)="switchToRegister()">
-              ¿No tienes cuenta? <strong>Créala gratis</strong>
-            </button>
-          </div>
-        }
-
-        @if (isRegisterStep()) {
-          <button class="ts-back-btn" (click)="switchToLogin()">
-            <app-guest-icon name="arrow-left" [size]="16" /> Volver al login
-          </button>
-          <div class="ts-auth-header">
-            <div class="ts-auth-icon"><app-guest-icon name="sparkles" [size]="36" /></div>
-            <h2 class="ts-auth-heading">Crear cuenta</h2>
-            <p class="ts-auth-sub">Gana puntos en cada visita</p>
-          </div>
-          <div class="ts-auth-fields">
-            <div class="ts-field-group">
-              <label class="ts-label">Nombre</label>
-              <input class="ts-input" type="text" placeholder="Tu nombre"
-                [value]="registerName()" (input)="registerName.set($any($event.target).value)" maxlength="100" />
-            </div>
-            <div class="ts-field-group">
-              <label class="ts-label">Email</label>
-              <input class="ts-input" type="email" placeholder="tu@email.com"
-                [value]="registerEmail()" (input)="registerEmail.set($any($event.target).value)" />
-            </div>
-            <div class="ts-field-group">
-              <label class="ts-label">Contraseña</label>
-              <input class="ts-input" type="password" placeholder="Mínimo 8 caracteres"
-                [value]="registerPassword()" (input)="registerPassword.set($any($event.target).value)" />
-            </div>
-            <button class="ts-cta" [disabled]="facade.isLoading()" (click)="submitRegister()">
-              @if (facade.isLoading()) { Creando cuenta… } @else { Crear cuenta }
-            </button>
-            <button class="ts-link-btn" (click)="switchToLogin()">
-              ¿Ya tienes cuenta? <strong>Inicia sesión</strong>
-            </button>
-          </div>
-        }
-
-        @if (isConfirmedStep()) {
-          @if (facade.customerData(); as cd) {
-            <div class="ts-confirmed">
-              <div class="ts-confirmed-avatar">{{ cd.name.charAt(0).toUpperCase() }}</div>
-              <div class="ts-confirmed-info">
-                <h2 class="ts-confirmed-name">
-                  @if (cd.visits_count > 0) { ¡Hola de nuevo, {{ cd.name }}! }
-                  @else { ¡Bienvenido, {{ cd.name }}! }
-                </h2>
-                <p class="ts-confirmed-pts">
-                  @if (cd.visits_count > 0) {
-                    <span class="ts-pts-row"><app-guest-icon name="star" [size]="13" /> {{ cd.points }} puntos · {{ cd.visits_count }} {{ cd.visits_count === 1 ? 'visita' : 'visitas' }}</span>
-                  } @else {
-                    <span class="ts-pts-row"><app-guest-icon name="sparkles" [size]="13" /> Ganarás puntos con esta visita</span>
-                  }
-                </p>
-                @if (cd.active_offers.length > 0) {
-                  <div class="ts-confirmed-offers">
-                    @for (offer of cd.active_offers; track offer.id) {
-                      <span class="ts-offer-chip"><app-guest-icon name="gift" [size]="12" /> {{ offer.title }}</span>
-                    }
-                  </div>
-                }
-              </div>
-              <button class="ts-back-link" (click)="backToIdentity()">Cambiar cuenta</button>
-            </div>
-          }
-          <button class="ts-cta" [disabled]="facade.isLoading()" (click)="joinSession()">
-            @if (facade.isLoading()) { Uniéndome… } @else { Unirme y ver la carta → }
-          </button>
-        }
-
+        </button>
       </div>
     }
 

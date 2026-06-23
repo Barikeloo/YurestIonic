@@ -1,8 +1,8 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GuestOrderFacade } from '../../facades/guest-order.facade';
-import { GuestIconComponent } from '../ui/guest-icon.component';
 import { CartLine } from '../../models/guest-cart.models';
+import { GuestIconComponent } from '../ui/guest-icon.component';
 
 @Component({
   selector: 'app-guest-cart',

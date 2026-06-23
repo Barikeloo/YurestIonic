@@ -1,15 +1,14 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MenuCatalogItem } from '../../models/guest-catalog.models';
-import { GuestIconComponent } from '../ui/guest-icon.component';
 
 @Component({
   selector: 'app-menu-card',
   standalone: true,
-  imports: [CommonModule, GuestIconComponent],
+  imports: [CommonModule],
   template: `
     <button class="mc-card" (click)="select.emit(menu())">
-      <div class="mc-icon"><app-guest-icon name="fork-knife" [size]="26" /></div>
+      <div class="mc-icon">🍽️</div>
       <div class="mc-body">
         <span class="mc-name">{{ menu().name }}</span>
         @if (menu().description) {

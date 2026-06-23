@@ -1,7 +1,18 @@
+:host {
+  --radius: 16px;
+  --radius-sm: 10px;
+  --surface: #ffffff;
+  --surface-2: #f7f7f7;
+  --border: #efefef;
+  --text: #111111;
+  --text-2: #777777;
+  --text-3: #aaaaaa;
+}
+
 .guest-order-host {
   min-height: 100dvh;
-  background: #f8f8f8;
-  font-family: var(--ion-font-family, system-ui, sans-serif);
+  background: var(--surface-2, #f7f7f7);
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .guest-loading {

@@ -60,9 +60,7 @@ export class CatalogComponent implements OnInit {
     if (!family) return [];
     const blocked = this.blockedAllergens();
     if (blocked.size === 0) return family.products;
-    return family.products.filter(
-      (p) => !p.allergens.some((a) => blocked.has(a)),
-    );
+    return family.products.filter((p) => !p.allergens.some((a) => blocked.has(a)));
   });
 
   protected readonly hiddenCount = computed((): number => {

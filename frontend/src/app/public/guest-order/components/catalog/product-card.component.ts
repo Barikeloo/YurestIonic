@@ -45,8 +45,12 @@ import { GuestIconComponent } from '../ui/guest-icon.component';
         } @else {
           <div class="pc-no-photo"><app-guest-icon name="fork-knife" [size]="28" /></div>
         }
-        @if (product().available) {
-          <div class="pc-add-badge"><app-guest-icon name="plus" [size]="16" /></div>
+        @if (!product().available) {
+          <div class="pc-unavail-overlay">
+            <span class="pc-unavail-pill">Agotado</span>
+          </div>
+        } @else {
+          <div class="pc-add-badge"><app-guest-icon name="plus" [size]="14" /></div>
         }
       </div>
     </button>
@@ -55,7 +59,7 @@ import { GuestIconComponent } from '../ui/guest-icon.component';
     .pc {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 14px;
       width: 100%;
       background: #fff;
       border: none;
@@ -64,9 +68,10 @@ import { GuestIconComponent } from '../ui/guest-icon.component';
       cursor: pointer;
       text-align: left;
       transition: background 0.12s;
+      font-family: system-ui, -apple-system, sans-serif;
 
       &:hover:not(.pc--unavailable) { background: #fafafa; }
-      &--unavailable { opacity: 0.55; cursor: default; }
+      &--unavailable { cursor: default; }
       &:active:not(.pc--unavailable) { background: #f5f5f5; }
     }
 
@@ -81,7 +86,7 @@ import { GuestIconComponent } from '../ui/guest-icon.component';
     .pc-name {
       font-size: 15px;
       font-weight: 600;
-      color: #111;
+      color: #111111;
       margin: 0;
       line-height: 1.35;
     }
@@ -95,9 +100,9 @@ import { GuestIconComponent } from '../ui/guest-icon.component';
     }
 
     .pc-price {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
-      color: #111;
+      color: #111111;
       margin: 4px 0 0;
       display: flex;
       align-items: center;
@@ -107,7 +112,7 @@ import { GuestIconComponent } from '../ui/guest-icon.component';
     .pc-from {
       font-size: 12px;
       font-weight: 400;
-      color: #aaa;
+      color: #aaaaaa;
     }
 
     .pc-badge-custom, .pc-badge-unavail {
@@ -132,9 +137,9 @@ import { GuestIconComponent } from '../ui/guest-icon.component';
 
     .pc-photo {
       position: relative;
-      width: 90px;
-      height: 90px;
-      border-radius: 12px;
+      width: 96px;
+      height: 96px;
+      border-radius: 14px;
       overflow: hidden;
       flex-shrink: 0;
       background: #f5f5f5;
@@ -152,7 +157,27 @@ import { GuestIconComponent } from '../ui/guest-icon.component';
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
+      color: #cccccc;
+    }
+
+    .pc-unavail-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.20);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .pc-unavail-pill {
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      border-radius: 20px;
+      padding: 3px 9px;
+      text-transform: uppercase;
     }
 
     .pc-add-badge {
@@ -167,9 +192,7 @@ import { GuestIconComponent } from '../ui/guest-icon.component';
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      font-weight: 300;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.22);
     }
   `],
 })

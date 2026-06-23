@@ -2,13 +2,13 @@
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  background: #f8f8f8;
-  padding-bottom: 88px;
+  background: #f7f7f7;
+  padding-bottom: 96px;
 }
 
 .cat-header {
   background: #fff;
-  box-shadow: 0 1px 0 #f0f0f0;
+  box-shadow: 0 1px 0 #efefef;
   position: sticky;
   top: 0;
   z-index: 20;
@@ -18,7 +18,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px 10px;
+  padding: 12px 16px 8px;
 }
 
 .cat-meta {
@@ -29,15 +29,17 @@
 
 .cat-rest {
   font-size: 11px;
-  color: #aaa;
+  color: #aaaaaa;
   text-transform: uppercase;
   letter-spacing: 0.07em;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .cat-table {
   font-size: 17px;
   font-weight: 800;
-  color: #111;
+  color: #111111;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .cat-header-actions {
@@ -57,6 +59,9 @@
   display: flex;
   align-items: center;
   color: #666;
+  min-height: 40px;
+  min-width: 40px;
+  justify-content: center;
 
   &:hover { background: #ebebeb; }
 
@@ -93,23 +98,26 @@
   position: relative;
   display: flex;
   align-items: center;
+  min-height: 40px;
+  min-width: 40px;
+  justify-content: center;
 
   &:hover { background: #ebebeb; }
 }
 
 .cat-allergen-panel {
   padding: 12px 16px 14px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid #efefef;
   background: #fffbf7;
 }
 
 .cat-allergen-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  color: #888;
+  color: #aaaaaa;
   margin: 0 0 10px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
 }
 
 .cat-allergen-chips {
@@ -185,7 +193,7 @@
   align-items: center;
   gap: 10px;
   padding: 48px 16px;
-  color: #aaa;
+  color: #aaaaaa;
   font-size: 14px;
   text-align: center;
 }
@@ -215,42 +223,43 @@
 
 .cat-tabs {
   display: flex;
-  gap: 4px;
+  gap: 2px;
   overflow-x: auto;
-  padding: 0 12px 12px;
+  padding: 0 12px 0;
   scrollbar-width: none;
+  border-bottom: 1px solid #efefef;
   &::-webkit-scrollbar { display: none; }
 }
 
 .cat-tab {
   flex-shrink: 0;
-  padding: 7px 16px;
-  border-radius: 20px;
-  border: 1.5px solid transparent;
-  background: #f5f5f5;
+  padding: 10px 14px;
+  border-radius: 0;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
   font-size: 13px;
   font-weight: 600;
-  color: #777;
+  color: #777777;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: color 0.15s, border-color 0.15s;
   display: flex;
   align-items: center;
   gap: 5px;
   white-space: nowrap;
+  margin-bottom: -1px;
 
   &--active {
-    background: color-mix(in srgb, var(--tab-color) 12%, white);
-    border-color: var(--tab-color);
-    color: var(--tab-color);
+    color: var(--tab-color, var(--guest-primary, #ff4d4d));
+    border-bottom-color: var(--tab-color, var(--guest-primary, #ff4d4d));
   }
 
   &:hover:not(.cat-tab--active) {
-    background: #ebebeb;
     color: #444;
   }
 }
 
-.cat-tab-icon { font-size: 15px; }
+.cat-tab-icon { font-size: 13px; }
 
 .cat-content {
   flex: 1;
@@ -266,16 +275,20 @@
 .cat-section-name {
   font-size: 18px;
   font-weight: 800;
-  color: #111;
+  color: #111111;
   margin: 0;
 }
 
 .cat-section-count {
   font-size: 13px;
-  color: #bbb;
+  color: #bbbbbb;
 }
 
 .cat-list {
+  background: #fff;
+}
+
+.cat-grid {
   background: #fff;
 }
 
@@ -287,7 +300,7 @@
 }
 
 .cat-empty {
-  color: #aaa;
+  color: #aaaaaa;
   font-size: 14px;
   text-align: center;
   padding: 40px 0;
@@ -300,7 +313,7 @@
   justify-content: center;
   padding: 80px 0;
   gap: 16px;
-  color: #aaa;
+  color: #aaaaaa;
   font-size: 14px;
 }
 
@@ -323,7 +336,7 @@
   background: var(--guest-primary, #ff4d4d);
   color: #fff;
   border: none;
-  border-radius: 16px;
+  border-radius: 28px;
   padding: 0 20px;
   height: 58px;
   display: flex;
@@ -332,14 +345,14 @@
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+  box-shadow: 0 6px 32px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12);
   z-index: 30;
   animation: fab-in 0.25s ease-out;
   transition: transform 0.12s, box-shadow 0.12s;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 28px rgba(0,0,0,0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 36px rgba(0,0,0,0.28);
   }
 
   &:active { transform: scale(0.98); }
@@ -350,7 +363,11 @@
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-.cat-fab-icon { font-size: 22px; }
+.cat-fab-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
 
 .cat-fab-badge {
   background: rgba(255,255,255,0.25);

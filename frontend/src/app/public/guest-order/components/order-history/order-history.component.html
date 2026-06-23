@@ -1,7 +1,9 @@
 <div class="oh-host">
 
   <header class="oh-header">
-    <button class="oh-back" (click)="facade.goToCatalog()">← Carta</button>
+    <button class="oh-back" (click)="facade.goToCatalog()">
+      <app-guest-icon name="arrow-left" [size]="18" />
+    </button>
     <h1 class="oh-title">Mis pedidos</h1>
   </header>
 
@@ -15,26 +17,31 @@
       </div>
     }
 
-    @for (round of history.rounds; track round.round_id) {
-      <div class="oh-round">
-        <div class="oh-round-header">
-          <span class="oh-round-num">Ronda {{ round.round_number }}</span>
-          @if (round.label) { <span class="oh-round-label">{{ round.label }}</span> }
-          <span class="oh-round-time">{{ round.submitted_at | date:'HH:mm' }}</span>
-        </div>
-        @for (line of round.lines; track line.id) {
-          <div class="oh-line">
-            <span class="oh-line-name">{{ line.product_name ?? line.menu_name }}</span>
-            <span class="oh-line-qty">× {{ line.quantity }}</span>
-            <span class="oh-line-price">{{ (line.unit_price * line.quantity) / 100 | number:'1.2-2' }}€</span>
+    <div class="oh-timeline">
+      @for (round of history.rounds; track round.round_id) {
+        <div class="oh-round">
+          <div class="oh-round-dot"></div>
+          <div class="oh-round-body">
+            <div class="oh-round-header">
+              <span class="oh-round-num">Ronda {{ round.round_number }}</span>
+              @if (round.label) { <span class="oh-round-label">{{ round.label }}</span> }
+              <span class="oh-round-time">{{ round.submitted_at | date:'HH:mm' }}</span>
+            </div>
+            @for (line of round.lines; track line.id) {
+              <div class="oh-line">
+                <span class="oh-line-name">{{ line.product_name ?? line.menu_name }}</span>
+                <span class="oh-line-qty">× {{ line.quantity }}</span>
+                <span class="oh-line-price">{{ (line.unit_price * line.quantity) / 100 | number:'1.2-2' }}€</span>
+              </div>
+            }
           </div>
-        }
-      </div>
-    }
+        </div>
+      }
+    </div>
 
     @if (history.pending_lines.length > 0) {
       <div class="oh-pending-section">
-        <p class="oh-pending-title" style="display:flex;align-items:center;gap:6px"><app-guest-icon name="clock" [size]="14" /> Carrito pendiente</p>
+        <p class="oh-pending-title"><app-guest-icon name="clock" [size]="13" /> Carrito pendiente</p>
         @for (line of history.pending_lines; track line.id) {
           <div class="oh-line oh-line--pending">
             <span class="oh-line-name">{{ line.product_name ?? line.menu_name }}</span>
@@ -60,6 +67,8 @@
         }
       </div>
     }
+
+    <div class="oh-check-spacer"></div>
 
     <div class="oh-check-section">
       @if (checkRequested()) {
