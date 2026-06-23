@@ -441,7 +441,15 @@ export class GuestOrderFacade {
       });
   }
 
-  registerAccount(form: { name: string; email: string; password: string }): void {
+  clearError(): void {
+    this._errorMessage.set(null);
+  }
+
+  clearCustomerData(): void {
+    this._customerData.set(null);
+  }
+
+  registerAccount(form: { name: string; email: string; password: string; onSuccess?: () => void }): void {
     const token = this._qrToken();
     this._isLoading.set(true);
     this._errorMessage.set(null);
@@ -453,6 +461,7 @@ export class GuestOrderFacade {
           this._customerData.set(res.customer);
           this._pendingCustomerAuthToken = res.customer_auth_token;
           this._isLoading.set(false);
+          form.onSuccess?.();
         },
         error: (err) => {
           this._isLoading.set(false);
@@ -466,7 +475,7 @@ export class GuestOrderFacade {
       });
   }
 
-  loginAccount(form: { email: string; password: string }): void {
+  loginAccount(form: { email: string; password: string; onSuccess?: () => void }): void {
     const token = this._qrToken();
     this._isLoading.set(true);
     this._errorMessage.set(null);
@@ -478,6 +487,7 @@ export class GuestOrderFacade {
           this._customerData.set(res.customer);
           this._pendingCustomerAuthToken = res.customer_auth_token;
           this._isLoading.set(false);
+          form.onSuccess?.();
         },
         error: () => {
           this._isLoading.set(false);

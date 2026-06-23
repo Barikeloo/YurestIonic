@@ -132,77 +132,147 @@
   }
 }
 
-.ts-welcome-back {
+.ts-back-btn {
+  background: none;
+  border: none;
+  color: var(--guest-primary, #ff4d4d);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  background: linear-gradient(135deg, #fff8e1, #fff3cd);
-  border: 1.5px solid #ffe082;
-  border-radius: 12px;
-  padding: 12px 14px;
+  gap: 4px;
+  align-self: flex-start;
 }
 
-.ts-welcome-icon { font-size: 28px; }
+.ts-auth-header {
+  text-align: center;
+  padding: 8px 0 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
 
-.ts-welcome-name {
-  font-size: 15px;
-  font-weight: 700;
+.ts-auth-icon {
+  font-size: 44px;
+  line-height: 1;
+}
+
+.ts-auth-heading {
+  font-size: 22px;
+  font-weight: 800;
   color: #111;
   margin: 0;
 }
 
-.ts-welcome-pts {
-  font-size: 13px;
-  color: #f57f17;
+.ts-auth-sub {
+  font-size: 14px;
+  color: #888;
   margin: 0;
-  font-weight: 600;
 }
 
-.ts-auth-form {
+.ts-auth-fields {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  background: #fafafa;
-  border-radius: 12px;
-  padding: 14px;
-  border: 1.5px solid #eee;
+  gap: 12px;
+  margin-top: 8px;
 }
 
-.ts-auth-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: #555;
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.ts-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
-.ts-auth-submit {
-  height: 46px;
-  background: var(--guest-primary, #ff4d4d);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  margin-top: 2px;
-
-  &:disabled { opacity: 0.4; }
-  &:not(:disabled):hover { opacity: 0.9; }
-}
-
-.ts-auth-switch {
+.ts-link-btn {
   background: none;
   border: none;
-  color: var(--guest-primary, #ff4d4d);
+  color: #888;
   font-size: 13px;
-  font-weight: 600;
   cursor: pointer;
   text-align: center;
-  padding: 2px;
+  padding: 4px;
+
+  strong { color: var(--guest-primary, #ff4d4d); }
+}
+
+.ts-confirmed {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #fff8e1 0%, #fffde7 100%);
+  border: 1.5px solid #ffe082;
+  border-radius: 16px;
+  padding: 20px 16px;
+  text-align: center;
+  position: relative;
+}
+
+.ts-confirmed-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--guest-primary, #ff4d4d);
+  color: #fff;
+  font-size: 28px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(255,77,77,0.3);
+}
+
+.ts-confirmed-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ts-confirmed-name {
+  font-size: 19px;
+  font-weight: 800;
+  color: #111;
+  margin: 0;
+}
+
+.ts-confirmed-pts {
+  font-size: 14px;
+  color: #e65100;
+  font-weight: 600;
+  margin: 0;
+}
+
+.ts-confirmed-offers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.ts-offer-chip {
+  background: #fff9c4;
+  border: 1px solid #f9a825;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #e65100;
+}
+
+.ts-back-link {
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 12px;
+  cursor: pointer;
   text-decoration: underline;
+  padding: 0;
+  margin-top: 4px;
 }
 
 .ts-closed-icon {
