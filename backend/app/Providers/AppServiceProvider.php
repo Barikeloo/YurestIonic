@@ -170,6 +170,7 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(\App\GuestOrder\Infrastructure\Subscriber\GuestOrderTableCreatedSubscriber::class),
                 $app->make(\App\GuestOrder\Infrastructure\Subscriber\CatalogVersionIncrementSubscriber::class),
                 $app->make(\App\GuestOrder\Infrastructure\Broadcasting\GuestOrderBroadcastSubscriber::class),
+                $app->make(\App\GuestOrder\Infrastructure\Subscriber\LoyaltyPointsSubscriber::class),
             );
         });
     }
