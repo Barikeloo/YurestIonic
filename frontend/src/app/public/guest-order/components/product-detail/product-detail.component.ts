@@ -8,11 +8,12 @@ import {
 import { AddToCartSpec, CartLineModifier } from '../../models/guest-cart.models';
 import { AllergenIconPipe, AllergenNamePipe } from '../../pipes/allergen-icon.pipe';
 import { DinersStepperComponent } from '../table-status/diners-stepper.component';
+import { GuestIconComponent } from '../ui/guest-icon.component';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, AllergenIconPipe, AllergenNamePipe, DinersStepperComponent],
+  imports: [CommonModule, AllergenIconPipe, AllergenNamePipe, DinersStepperComponent, GuestIconComponent],
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.scss'],
 })

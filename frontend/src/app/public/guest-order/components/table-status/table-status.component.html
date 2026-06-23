@@ -39,9 +39,11 @@
         }
 
         @if (isLoginStep()) {
-          <button class="ts-back-btn" (click)="backToIdentity()">← Volver</button>
+          <button class="ts-back-btn" (click)="backToIdentity()">
+            <app-guest-icon name="arrow-left" [size]="16" /> Volver
+          </button>
           <div class="ts-auth-header">
-            <div class="ts-auth-icon">👤</div>
+            <div class="ts-auth-icon"><app-guest-icon name="user" [size]="36" /></div>
             <h2 class="ts-auth-heading">Inicia sesión</h2>
             <p class="ts-auth-sub">Acumula puntos y accede a tus ofertas</p>
           </div>
@@ -68,9 +70,11 @@
         }
 
         @if (isRegisterStep()) {
-          <button class="ts-back-btn" (click)="switchToLogin()">← Volver al login</button>
+          <button class="ts-back-btn" (click)="switchToLogin()">
+            <app-guest-icon name="arrow-left" [size]="16" /> Volver al login
+          </button>
           <div class="ts-auth-header">
-            <div class="ts-auth-icon">✨</div>
+            <div class="ts-auth-icon"><app-guest-icon name="sparkles" [size]="36" /></div>
             <h2 class="ts-auth-heading">Crear cuenta</h2>
             <p class="ts-auth-sub">Gana puntos en cada visita y accede a ofertas exclusivas</p>
           </div>
@@ -113,15 +117,15 @@
                 </h2>
                 <p class="ts-confirmed-pts">
                   @if (cd.visits_count > 0) {
-                    ⭐ {{ cd.points }} puntos acumulados · {{ cd.visits_count }} {{ cd.visits_count === 1 ? 'visita' : 'visitas' }}
+                    <span class="ts-pts-row"><app-guest-icon name="star" [size]="13" /> {{ cd.points }} puntos · {{ cd.visits_count }} {{ cd.visits_count === 1 ? 'visita' : 'visitas' }}</span>
                   } @else {
-                    🎉 Cuenta creada — ganarás puntos con esta visita
+                    <span class="ts-pts-row"><app-guest-icon name="sparkles" [size]="13" /> Ganarás puntos con esta visita</span>
                   }
                 </p>
                 @if (cd.active_offers.length > 0) {
                   <div class="ts-confirmed-offers">
                     @for (offer of cd.active_offers; track offer.id) {
-                      <span class="ts-offer-chip">🎁 {{ offer.title }}</span>
+                      <span class="ts-offer-chip"><app-guest-icon name="gift" [size]="12" /> {{ offer.title }}</span>
                     }
                   </div>
                 }
@@ -166,9 +170,11 @@
         }
 
         @if (isLoginStep()) {
-          <button class="ts-back-btn" (click)="backToIdentity()">← Volver</button>
+          <button class="ts-back-btn" (click)="backToIdentity()">
+            <app-guest-icon name="arrow-left" [size]="16" /> Volver
+          </button>
           <div class="ts-auth-header">
-            <div class="ts-auth-icon">👤</div>
+            <div class="ts-auth-icon"><app-guest-icon name="user" [size]="36" /></div>
             <h2 class="ts-auth-heading">Inicia sesión</h2>
             <p class="ts-auth-sub">Acumula puntos y accede a tus ofertas</p>
           </div>
@@ -193,9 +199,11 @@
         }
 
         @if (isRegisterStep()) {
-          <button class="ts-back-btn" (click)="switchToLogin()">← Volver al login</button>
+          <button class="ts-back-btn" (click)="switchToLogin()">
+            <app-guest-icon name="arrow-left" [size]="16" /> Volver al login
+          </button>
           <div class="ts-auth-header">
-            <div class="ts-auth-icon">✨</div>
+            <div class="ts-auth-icon"><app-guest-icon name="sparkles" [size]="36" /></div>
             <h2 class="ts-auth-heading">Crear cuenta</h2>
             <p class="ts-auth-sub">Gana puntos en cada visita</p>
           </div>
@@ -235,15 +243,15 @@
                 </h2>
                 <p class="ts-confirmed-pts">
                   @if (cd.visits_count > 0) {
-                    ⭐ {{ cd.points }} puntos · {{ cd.visits_count }} {{ cd.visits_count === 1 ? 'visita' : 'visitas' }}
+                    <span class="ts-pts-row"><app-guest-icon name="star" [size]="13" /> {{ cd.points }} puntos · {{ cd.visits_count }} {{ cd.visits_count === 1 ? 'visita' : 'visitas' }}</span>
                   } @else {
-                    🎉 Ganarás puntos con esta visita
+                    <span class="ts-pts-row"><app-guest-icon name="sparkles" [size]="13" /> Ganarás puntos con esta visita</span>
                   }
                 </p>
                 @if (cd.active_offers.length > 0) {
                   <div class="ts-confirmed-offers">
                     @for (offer of cd.active_offers; track offer.id) {
-                      <span class="ts-offer-chip">🎁 {{ offer.title }}</span>
+                      <span class="ts-offer-chip"><app-guest-icon name="gift" [size]="12" /> {{ offer.title }}</span>
                     }
                   </div>
                 }
@@ -261,7 +269,7 @@
 
     @case ('to_charge') {
       <div class="ts-card ts-card--closed">
-        <div class="ts-closed-icon">🧾</div>
+        <div class="ts-closed-icon"><app-guest-icon name="receipt" [size]="48" /></div>
         <p class="ts-greeting">Esta mesa está siendo cerrada.</p>
         <p class="ts-sub">Consulta a tu camarero si necesitas algo.</p>
       </div>

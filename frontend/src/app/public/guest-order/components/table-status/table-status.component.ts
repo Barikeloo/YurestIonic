@@ -4,13 +4,14 @@ import { GuestOrderFacade } from '../../facades/guest-order.facade';
 import { IdentityMode } from '../../models/guest-session.models';
 import { DinersStepperComponent } from './diners-stepper.component';
 import { IdentitySelectorComponent } from './identity-selector.component';
+import { GuestIconComponent } from '../ui/guest-icon.component';
 
 type AuthStep = 'identity' | 'login' | 'register' | 'confirmed';
 
 @Component({
   selector: 'app-table-status',
   standalone: true,
-  imports: [CommonModule, DinersStepperComponent, IdentitySelectorComponent],
+  imports: [CommonModule, DinersStepperComponent, IdentitySelectorComponent, GuestIconComponent],
   templateUrl: './table-status.component.html',
   styleUrls: ['./table-status.component.scss'],
 })

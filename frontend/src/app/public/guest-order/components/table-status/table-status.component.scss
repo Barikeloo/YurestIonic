@@ -246,6 +246,12 @@
   margin: 0;
 }
 
+.ts-pts-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .ts-confirmed-offers {
   display: flex;
   flex-wrap: wrap;

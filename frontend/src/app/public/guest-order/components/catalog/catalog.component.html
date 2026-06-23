@@ -9,7 +9,9 @@
           @if (facade.guestName()) { · {{ facade.guestName() }} }
         </span>
       </div>
-      <button class="cat-history-btn" (click)="facade.goToHistory()" title="Mis pedidos">📋</button>
+      <button class="cat-history-btn" (click)="facade.goToHistory()" title="Mis pedidos">
+        <app-guest-icon name="clipboard" [size]="20" />
+      </button>
     </div>
 
     <nav class="cat-tabs" role="tablist">
@@ -59,7 +61,7 @@
 
   @if (facade.cart.itemCount() > 0) {
     <button class="cat-fab" (click)="facade.goToCart()">
-      <span class="cat-fab-icon">🛒</span>
+      <span class="cat-fab-icon"><app-guest-icon name="cart" [size]="22" /></span>
       <span class="cat-fab-badge">{{ facade.cart.itemCount() }}</span>
       <span class="cat-fab-label">Ver carrito</span>
       <span class="cat-fab-total">{{ facade.cart.cartTotal() / 100 | number:'1.2-2' }}€</span>

@@ -14,7 +14,7 @@
 
   @if (pendingLines().length === 0) {
     <div class="gc-empty">
-      <p class="gc-empty-icon">🛒</p>
+      <div class="gc-empty-icon"><app-guest-icon name="cart" [size]="48" /></div>
       <p class="gc-empty-text">Tu carrito está vacío.</p>
       <button class="gc-browse-btn" (click)="facade.goToCatalog()">Ver la carta</button>
     </div>

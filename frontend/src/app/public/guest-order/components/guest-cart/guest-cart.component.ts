@@ -1,12 +1,13 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GuestOrderFacade } from '../../facades/guest-order.facade';
+import { GuestIconComponent } from '../ui/guest-icon.component';
 import { CartLine } from '../../models/guest-cart.models';
 
 @Component({
   selector: 'app-guest-cart',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, GuestIconComponent],
   templateUrl: './guest-cart.component.html',
   styleUrls: ['./guest-cart.component.scss'],
 })

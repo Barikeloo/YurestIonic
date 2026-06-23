@@ -9,7 +9,7 @@
 
     @if (history.rounds.length === 0 && history.pending_lines.length === 0) {
       <div class="oh-empty">
-        <p class="oh-empty-icon">📋</p>
+        <div class="oh-empty-icon"><app-guest-icon name="clipboard" [size]="48" /></div>
         <p>Aún no has pedido nada.</p>
         <button class="oh-browse-btn" (click)="facade.goToCatalog()">Ver la carta</button>
       </div>
@@ -34,7 +34,7 @@
 
     @if (history.pending_lines.length > 0) {
       <div class="oh-pending-section">
-        <p class="oh-pending-title">⏳ Carrito pendiente</p>
+        <p class="oh-pending-title" style="display:flex;align-items:center;gap:6px"><app-guest-icon name="clock" [size]="14" /> Carrito pendiente</p>
         @for (line of history.pending_lines; track line.id) {
           <div class="oh-line oh-line--pending">
             <span class="oh-line-name">{{ line.product_name ?? line.menu_name }}</span>
@@ -64,7 +64,7 @@
     <div class="oh-check-section">
       @if (checkRequested()) {
         <div class="oh-check-sent">
-          🧾 El camarero viene a cobrar en breve.
+          <app-guest-icon name="receipt" [size]="18" /> El camarero viene a cobrar en breve.
         </div>
       } @else {
         <button
@@ -72,7 +72,7 @@
           [disabled]="facade.isLoading()"
           (click)="requestCheck()"
         >
-          🧾 Pedir la cuenta
+          <app-guest-icon name="receipt" [size]="18" /> Pedir la cuenta
         </button>
       }
     </div>

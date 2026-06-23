@@ -2,6 +2,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GuestOrderFacade } from '../../facades/guest-order.facade';
 import { FamilyCatalogItem, MenuCatalogItem, ProductCatalogItem } from '../../models/guest-catalog.models';
+import { GuestIconComponent } from '../ui/guest-icon.component';
 import { ProductCardComponent } from './product-card.component';
 import { MenuCardComponent } from './menu-card.component';
 
@@ -16,7 +17,7 @@ interface CatalogTab {
 @Component({
   selector: 'app-catalog',
   standalone: true,
-  imports: [CommonModule, ProductCardComponent, MenuCardComponent],
+  imports: [CommonModule, ProductCardComponent, MenuCardComponent, GuestIconComponent],
   templateUrl: './catalog.component.html',
   styleUrls: ['./catalog.component.scss'],
 })

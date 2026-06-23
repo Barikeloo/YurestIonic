@@ -4,7 +4,7 @@
     @if (product()?.photo_url) {
       <img class="pd-hero-img" [src]="product()!.photo_url" [alt]="product()!.name" />
     } @else {
-      <div class="pd-hero-empty">🍽️</div>
+      <div class="pd-hero-empty"><app-guest-icon name="fork-knife" [size]="56" /></div>
     }
     <div class="pd-hero-gradient"></div>
     <button class="pd-back-btn" (click)="facade.navigateBack()">

@@ -1,15 +1,16 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GuestOrderFacade } from '../../facades/guest-order.facade';
+import { GuestIconComponent } from '../ui/guest-icon.component';
 
 @Component({
   selector: 'app-round-confirmed',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, GuestIconComponent],
   template: `
     <div class="rc-host">
       <div class="rc-card">
-        <div class="rc-icon">✅</div>
+        <div class="rc-icon"><app-guest-icon name="check-circle" [size]="56" /></div>
         <h1 class="rc-title">¡Tu pedido está en camino!</h1>
 
         @if (facade.lastRound(); as round) {

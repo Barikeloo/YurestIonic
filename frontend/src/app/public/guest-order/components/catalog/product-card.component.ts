@@ -2,11 +2,12 @@ import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProductCatalogItem } from '../../models/guest-catalog.models';
 import { AllergenIconPipe, AllergenNamePipe } from '../../pipes/allergen-icon.pipe';
+import { GuestIconComponent } from '../ui/guest-icon.component';
 
 @Component({
   selector: 'app-product-card',
   standalone: true,
-  imports: [CommonModule, AllergenIconPipe, AllergenNamePipe],
+  imports: [CommonModule, AllergenIconPipe, AllergenNamePipe, GuestIconComponent],
   template: `
     <button
       class="pc"
@@ -42,10 +43,10 @@ import { AllergenIconPipe, AllergenNamePipe } from '../../pipes/allergen-icon.pi
         @if (product().photo_url) {
           <img [src]="product().photo_url" [alt]="product().name" loading="lazy" />
         } @else {
-          <div class="pc-no-photo">🍽️</div>
+          <div class="pc-no-photo"><app-guest-icon name="fork-knife" [size]="28" /></div>
         }
         @if (product().available) {
-          <div class="pc-add-badge">+</div>
+          <div class="pc-add-badge"><app-guest-icon name="plus" [size]="16" /></div>
         }
       </div>
     </button>

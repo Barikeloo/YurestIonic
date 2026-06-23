@@ -1,11 +1,12 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GuestOrderFacade } from '../../facades/guest-order.facade';
+import { GuestIconComponent } from '../ui/guest-icon.component';
 
 @Component({
   selector: 'app-order-history',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, GuestIconComponent],
   templateUrl: './order-history.component.html',
   styleUrls: ['./order-history.component.scss'],
 })
