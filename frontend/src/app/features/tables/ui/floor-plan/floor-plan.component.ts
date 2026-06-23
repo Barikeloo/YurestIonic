@@ -47,7 +47,6 @@ export class FloorPlanComponent {
     const result: MergedGroupInfo[] = [];
     for (const [groupId, tables] of groups) {
       if (tables.length < 2) continue;
-      // Use the explicitly tracked target table as anchor; fallback to first
       const anchor = tables.find(t => anchorIds.has(t.id)) ?? tables[0];
       result.push({ groupId, tables, anchor });
     }

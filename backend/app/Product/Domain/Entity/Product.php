@@ -273,9 +273,6 @@ class Product
         return $this->updatedAt;
     }
 
-    /**
-     * @return array{name: string, price_cents: int, family_id: string, tax_id: string, active: bool, allergens: array, image_src: ?string}
-     */
     private function snapshot(): array
     {
         return [

@@ -18,9 +18,6 @@ final readonly class ReportFileGenerator implements ReportFileGeneratorInterface
         private ReportingRepositoryInterface $repository,
     ) {}
 
-    /**
-     * @return array{filename: string, mimeType: string, contents: string}
-     */
     public function generate(int $restaurantId, string $type, string $format, DateRange $range, ?string $quarter = null, ?int $year = null): array
     {
         if ($format === 'PDF') {
@@ -30,9 +27,6 @@ final readonly class ReportFileGenerator implements ReportFileGeneratorInterface
         return $this->generateCsv($restaurantId, $type, $range, $quarter, $year);
     }
 
-    /**
-     * @return array{filename: string, mimeType: string, contents: string}
-     */
     private function generatePdf(int $restaurantId, string $type, DateRange $range, ?string $quarter, ?int $year): array
     {
         $restaurant = $this->repository->getRestaurantInfo($restaurantId);
@@ -184,9 +178,6 @@ final readonly class ReportFileGenerator implements ReportFileGeneratorInterface
         ];
     }
 
-    /**
-     * @return array{filename: string, mimeType: string, contents: string}
-     */
     private function generateCsv(int $restaurantId, string $type, DateRange $range, ?string $quarter, ?int $year): array
     {
         $baseName = match ($type) {

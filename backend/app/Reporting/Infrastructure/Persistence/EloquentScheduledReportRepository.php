@@ -130,9 +130,6 @@ final class EloquentScheduledReportRepository implements ScheduledReportReposito
             ]);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     private function rowToArray(object $row): array
     {
         return [

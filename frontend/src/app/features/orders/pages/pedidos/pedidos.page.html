@@ -6,9 +6,9 @@
 
   @if (!facade.loading()) {
     <div class="pedidos-layout">
-      <!-- Left column -->
+      
       <section class="pedidos-left">
-        <!-- Tabs -->
+        
         <div class="pedidos-tabs">
           <button class="pedidos-tab" [class.active]="facade.activeTab() === 'all'" (click)="setTab('all')">Todo el turno</button>
           <button class="pedidos-tab" [class.active]="facade.activeTab() === OrderStatus.OPEN" (click)="setTab(OrderStatus.OPEN)">Activos</button>
@@ -16,7 +16,7 @@
           <button class="pedidos-tab" [class.active]="facade.activeTab() === OrderStatus.INVOICED" (click)="setTab(OrderStatus.INVOICED)">Cerrados hoy</button>
           <button class="pedidos-tab" [class.active]="facade.activeTab() === OrderStatus.CANCELLED" (click)="setTab(OrderStatus.CANCELLED)">Cancelados</button>
         </div>
-        <!-- KPIs -->
+        
         <div class="summary-strip">
           <div class="kpi-card">
             <div class="kpi-label">Abiertos</div>
@@ -35,14 +35,14 @@
             <div class="kpi-value">{{ formatCents(facade.kpiTicketMedium()) }}</div>
           </div>
         </div>
-        <!-- Refresh indicator -->
+        
         @if (facade.refreshLabel()) {
           <div class="refresh-indicator">
             <span class="refresh-dot"></span>
             Actualizado {{ facade.refreshLabel() }}
           </div>
         }
-        <!-- Smart filter chips -->
+        
         <div class="pedidos-chips">
           @for (chip of chips; track chip.id) {
             @let count = facade.chipCounts()[chip.id];
@@ -83,7 +83,7 @@
             </button>
           }
         </div>
-        <!-- Toolbar -->
+        
         <div class="pedidos-toolbar">
           <select
             class="pedidos-input"
@@ -120,7 +120,7 @@
           />
           <button class="btn-reset" (click)="resetFilters()" title="Limpiar filtros">↺</button>
         </div>
-        <!-- List -->
+        
         <div class="pedidos-list-wrap">
           <div class="pedidos-list-head">
             <div>Mesa</div>
@@ -165,7 +165,7 @@
           </div>
         </div>
       </section>
-      <!-- Right: detail panel -->
+      
       <aside class="pedido-detail">
         @if (!facade.selectedOrder()) {
           <div class="pedido-detail-empty">
@@ -212,7 +212,7 @@
           </div>
           @let busy = facade.actionInProgress();
           <div class="pedido-detail-actions">
-            <!-- ── Primary CTA ─────────────────────────── -->
+            
             @if (selectedOrder.status === OrderStatus.OPEN) {
               <button
                 class="action-primary"
@@ -240,7 +240,6 @@
               </button>
             }
 
-            <!-- ── Secondary actions ───────────────────── -->
             <div class="action-grid">
               @if (selectedOrder.status !== OrderStatus.CANCELLED) {
                 <button
@@ -315,7 +314,6 @@
               </button>
             </div>
 
-            <!-- ── Danger zone ─────────────────────────── -->
             @if (selectedOrder.status === OrderStatus.OPEN && permissions.canCancelOrders()) {
               <button
                 class="action-danger"

@@ -10,10 +10,6 @@ final readonly class FamilyUpdated implements AuditableEvent
 {
     private \DateTimeImmutable $occurredOn;
 
-    /**
-     * @param array{name: string, color: ?string, icon: ?string} $before
-     * @param array{name: string, color: ?string, icon: ?string} $after
-     */
     public function __construct(
         private string $familyId,
         private array $before,

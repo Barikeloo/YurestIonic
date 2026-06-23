@@ -1,6 +1,5 @@
 <div class="panel">
 
-  <!-- ══ Header ════════════════════════════════════════════════════════════ -->
   <div class="panel-header">
     <span class="panel-title">Mesas</span>
     <span class="panel-count">{{ placedTables().length }}</span>
@@ -13,7 +12,6 @@
     </button>
   </div>
 
-  <!-- ══ Layers list ═══════════════════════════════════════════════════════ -->
   <div
     class="layers-list"
     cdkDropList
@@ -29,10 +27,8 @@
     @for (t of placedTables(); track t.id) {
       @let isSelected = selectedTable()?.id === t.id;
 
-      <!-- Wrapper: cdkDrag engloba la fila + el panel expandido -->
       <div cdkDrag cdkDragLockAxis="y" class="layer-item">
 
-        <!-- ── Fila de capa ── -->
         <div
           class="layer-row"
           [class.layer-row--selected]="isSelected"
@@ -70,7 +66,6 @@
           </svg>
         </div>
 
-        <!-- ── Panel expandible (acordeón) ── -->
         <div class="layer-expand" [class.layer-expand--open]="isSelected">
           <div class="layer-expand-inner">
             <div class="layer-edit">
@@ -126,13 +121,11 @@
           </div>
         </div>
 
-        <!-- Placeholder CDK -->
         <div *cdkDragPlaceholder class="layer-drag-placeholder"></div>
       </div>
     }
   </div>
 
-  <!-- ══ Sin posición ══════════════════════════════════════════════════════ -->
   @if (unpositioned().length > 0) {
     <div class="panel-section">
       <div class="section-label">
@@ -156,7 +149,6 @@
 
   <div class="spacer"></div>
 
-  <!-- ══ Zoom + Guardar ════════════════════════════════════════════════════ -->
   <div class="panel-footer">
     <div class="zoom-row">
       <button class="zoom-btn" (click)="zoomOut.emit()" [disabled]="zoomLevel() <= 0.4">−</button>

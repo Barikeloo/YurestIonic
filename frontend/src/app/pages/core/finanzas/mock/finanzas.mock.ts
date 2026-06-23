@@ -248,7 +248,6 @@ export const MOCK_PRODUCT_TRENDS: Record<string, ProductTrend> = {
   'Coca-Cola':           { trend: 'down', delta: -12.0, spark: mkSpark(42,  'down')},
 };
 
-// ─── Mesas abiertas ────────────────────────────────────────────────────────────
 export const MOCK_OPEN_TABLES: OpenTable[] = [
   { id: 'M-5',  zone: 'Mesa 5',    diners: 5, opened: '21:38', minutesOpen:  60, current:  8240, waiter: 'Carlos R.', state: 'eating',   lastEvent: 'Cafés pedidos 22:18'    },
   { id: 'M-8',  zone: 'Mesa 8',    diners: 4, opened: '21:12', minutesOpen:  86, current: 12480, waiter: 'María G.',  state: 'paying',   lastEvent: 'Cuenta pedida 22:30',   },

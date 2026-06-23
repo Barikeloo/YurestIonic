@@ -135,7 +135,6 @@ const SPANISH_MAP: Record<string, string[]> = {
   basico: ['circle', 'square'],
 };
 
-// Pre-built normalized map for fast partial-match Spanish search
 const SPANISH_NORMALIZED: Array<{ key: string; names: Set<string> }> = Object.entries(SPANISH_MAP).map(
   ([key, names]) => ({ key: NORMALIZE(key), names: new Set(names) })
 );

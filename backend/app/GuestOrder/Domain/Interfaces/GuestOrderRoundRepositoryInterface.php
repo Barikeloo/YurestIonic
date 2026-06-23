@@ -15,6 +15,5 @@ interface GuestOrderRoundRepositoryInterface
 
     public function getNextRoundNumber(string $sessionUuid): int;
 
-    /** @return RoundData[] */
     public function getRoundsWithLinesBySession(string $sessionUuid): array;
 }

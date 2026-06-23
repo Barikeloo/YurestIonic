@@ -233,7 +233,6 @@ export class HistoricoFacade {
     return Math.round(total / months);
   });
 
-  // Export URLs always carry include_archived=1: the histórico panel
 
   public readonly csvExportUrl = computed<string>(() => this.service.buildExportUrl('csv', {
     includeArchived: true,

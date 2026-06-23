@@ -1,22 +1,22 @@
-<!-- Wrapper interno del modal (sin overlay - el overlay lo maneja el padre) -->
+
 @if (isOpen) {
   <div class="modal-box standalone">
     <button class="modal-close-btn" (click)="onClose()">✕</button>
     <div class="modal-title">Dividir cuenta — {{ tableLabel }}</div>
-    <!-- Loading state -->
+    
     @if (isLoading) {
       <div class="loading-state">
         <span>Cargando sesión de cobro...</span>
       </div>
     }
-    <!-- Error state -->
+    
     @if (error) {
       <div class="error-state">
         <span>{{ error }}</span>
         <button (click)="loadChargeSession()">Reintentar</button>
       </div>
     }
-    <!-- Session completed state -->
+    
     @if (isSessionCompleted) {
       <div class="completed-state">
         <div class="completed-icon">✓</div>
@@ -25,7 +25,7 @@
         <button class="btn-confirm" (click)="onClose()">Cerrar</button>
       </div>
     }
-    <!-- Progress indicator -->
+    
     @if (chargeSession && !isSessionCompleted && !isLoading) {
       <div class="progress-bar">
         <div class="progress-track">
@@ -34,7 +34,7 @@
         <div class="progress-text">{{ chargeSession.paid_diner_numbers.length }} de {{ chargeSession.diners_count }} comensales pagados</div>
       </div>
     }
-    <!-- Mode selector — solo visible cuando la sesión está cargada -->
+    
     @if (!isLoading && !error && !isSessionCompleted) {
       <div class="mode-selector">
         <button
@@ -68,12 +68,12 @@
         </div>
       }
     }
-    <!-- Contenido principal — solo visible cuando la sesión está cargada -->
+    
     @if (!isLoading && !error && !isSessionCompleted) {
       <div class="modal-content-split">
-        <!-- Contenido principal (izquierda) -->
+        
         <div class="modal-content-main">
-          <!-- Partes iguales -->
+          
           @if (mode === 'equal') {
             <div class="equal-mode">
               <div class="parts-control">
@@ -141,10 +141,10 @@
               </div>
             </div>
           }
-          <!-- Por líneas -->
+          
           @if (mode === 'lines') {
             <div class="lines-mode-v2">
-              <!-- Progreso global -->
+              
               <div class="lines-progress">
                 <div class="lines-progress-bar">
                   <div class="lines-progress-fill" [style.width.%]="assignmentProgress"></div>
@@ -156,7 +156,6 @@
                 </div>
               </div>
 
-              <!-- Hint contextual -->
               @if (selectedLineId) {
                 <div class="lines-hint selected">
                   Toca el comensal al que asignar la línea seleccionada.
@@ -172,7 +171,6 @@
                 </div>
               }
 
-              <!-- Pool de líneas sin asignar -->
               @if (unassignedLines.length > 0) {
                 <div class="lines-pool">
                   <div class="section-label">Líneas por asignar ({{ unassignedLines.length }})</div>
@@ -199,7 +197,6 @@
                 </div>
               }
 
-              <!-- Grid de comensales -->
               <div class="section-label">Comensales</div>
               <div class="diner-grid">
                 @for (n of allDinerNumbers; track n) {
@@ -280,10 +277,10 @@
               </div>
             </div>
           }
-          <!-- Por comensal (card-first) -->
+          
           @if (mode === 'diner') {
             <div class="diner-mode-v2">
-              <!-- Cabecera con instrucción y total pendiente -->
+              
               <div class="diner-v2-header">
                 <div class="diner-v2-hint">
                   @if (activeDinerNumber === null) {
@@ -297,7 +294,6 @@
                 </div>
               </div>
 
-              <!-- Grid de comensales -->
               <div class="section-label">Comensales</div>
               <div class="diner-v2-grid">
                 @for (n of allDinerNumbers; track n) {
@@ -326,7 +322,6 @@
                 }
               </div>
 
-              <!-- Lista de líneas de la mesa -->
               <div class="section-label">Líneas de la mesa</div>
               <div class="diner-v2-lines" [class.no-active]="activeDinerNumber === null">
                 @for (line of assignedLines; track line.id) {
@@ -357,7 +352,6 @@
                 }
               </div>
 
-              <!-- CTA — Cobrar al comensal activo -->
               @if (activeDinerNumber !== null) {
                 <div class="diner-v2-footer" [style.--diner-color]="dinerColor(activeDinerNumber)">
                   <div class="diner-v2-footer-info">

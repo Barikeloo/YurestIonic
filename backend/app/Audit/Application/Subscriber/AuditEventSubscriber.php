@@ -13,10 +13,6 @@ use App\Shared\Domain\Event\AuditableEvent;
 use App\Shared\Domain\Event\DomainEvent;
 use App\Shared\Domain\ValueObject\Uuid;
 
-/**
- * Turns any AuditableEvent into an audit record, combining the event's domain
- * data with the request-scoped context (who/where).
- */
 final readonly class AuditEventSubscriber implements EventSubscriber
 {
     public function __construct(

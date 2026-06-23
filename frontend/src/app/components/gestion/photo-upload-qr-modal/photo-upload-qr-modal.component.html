@@ -9,7 +9,6 @@
   <div class="modal-overlay" (click)="onClose()">
     <div class="modal-content" (click)="$event.stopPropagation()">
 
-      <!-- Header -->
       <div class="modal-header">
         <div class="modal-title">
           Añadir foto
@@ -20,7 +19,6 @@
         <button class="close-btn" type="button" (click)="onClose()" aria-label="Cerrar">✕</button>
       </div>
 
-      <!-- Loading QR -->
       @if (isLoading()) {
         <div class="modal-body modal-body--centered">
           <div class="spinner"></div>
@@ -28,7 +26,6 @@
         </div>
       }
 
-      <!-- Error -->
       @if (hasError()) {
         <div class="modal-body modal-body--centered">
           <div class="state-icon state-icon--error">✕</div>
@@ -37,7 +34,6 @@
         </div>
       }
 
-      <!-- QR ready -->
       @if (isReady()) {
         <div class="modal-body">
           <p class="modal-instruction">
@@ -56,7 +52,6 @@
         </div>
       }
 
-      <!-- Crop / zoom -->
       @if (isCropping()) {
         <div class="modal-body">
           <p class="modal-instruction">Arrastra para encuadrar. Usa el slider para hacer zoom.</p>
@@ -86,7 +81,6 @@
         </div>
       }
 
-      <!-- Uploading -->
       @if (isUploading()) {
         <div class="modal-body modal-body--centered">
           <div class="spinner"></div>
@@ -94,7 +88,6 @@
         </div>
       }
 
-      <!-- Uploaded -->
       @if (isUploaded()) {
         <div class="modal-body modal-body--centered">
           <div class="state-icon state-icon--success">✓</div>
@@ -106,7 +99,6 @@
         </div>
       }
 
-      <!-- Expired -->
       @if (isExpired()) {
         <div class="modal-body modal-body--centered">
           <div class="state-icon state-icon--warning">⏱</div>

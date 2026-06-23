@@ -10,10 +10,6 @@ final readonly class ZoneUpdated implements AuditableEvent
 {
     private \DateTimeImmutable $occurredOn;
 
-    /**
-     * @param array{name: string} $before
-     * @param array{name: string} $after
-     */
     public function __construct(
         private string $zoneId,
         private array $before,

@@ -15,9 +15,6 @@ final class ScheduledReportMail extends Mailable
 {
     use Queueable, SerializesModels;
 
-    /**
-     * @param string[] $recipients
-     */
     public function __construct(
         private readonly array   $recipients,
         private readonly string  $mailSubject,

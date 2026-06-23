@@ -73,7 +73,6 @@ final class EloquentPrinterConfigRepository implements PrinterConfigRepositoryIn
         $printerId = EloquentPrinterConfig::where('uuid', $config->id()->value())->value('id');
 
         if ($printerId !== null) {
-            // Clear any zone currently pointing to this printer
             DB::table('zones')->where('printer_config_id', $printerId)->update(['printer_config_id' => null]);
 
             if ($config->zoneUuid() !== null) {

@@ -1,7 +1,7 @@
 @if (isOpen) {
   <div class="wizard-overlay">
     <div class="wizard-content">
-      <!-- Header -->
+      
       <div class="wizard-header">
         <div class="header-left">
           <button class="back-btn" (click)="onClose()">←</button>
@@ -27,9 +27,9 @@
         </div>
         <div class="header-spacer"></div>
       </div>
-      <!-- Body -->
+      
       <div class="wizard-body">
-        <!-- Paso 1: Contar -->
+        
         @if (step === 1) {
           <div class="step-content step-1">
             <div class="step-1-info">Arqueo ciego — No ves el teórico hasta confirmar</div>
@@ -40,7 +40,7 @@
             </div>
           </div>
         }
-        <!-- Paso 2: Justificar -->
+        
         @if (step === 2) {
           <div class="step-content step-2">
             <div class="step-2-title">Descuadre detectado</div>
@@ -89,7 +89,7 @@
             </div>
           </div>
         }
-        <!-- Paso 3: Revisar Z -->
+        
         @if (step === 3) {
           <div class="step-content step-3">
             <div class="step-3-title">Informe Z — Revisa antes de confirmar</div>
@@ -154,7 +154,7 @@
           </div>
         }
       </div>
-      <!-- Footer -->
+      
       <div class="wizard-footer">
         <app-btn variant="gray" (click)="step === 1 ? onClose() : goPrevious()">
           {{ step === 1 ? 'Cancelar' : '← Anterior' }}

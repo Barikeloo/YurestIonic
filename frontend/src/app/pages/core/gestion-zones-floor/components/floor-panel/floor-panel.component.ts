@@ -11,7 +11,6 @@ import { LocalTable, SIZE_PRESETS, SizePreset } from '../../facades/gestion-zone
   styleUrls: ['./floor-panel.component.scss'],
 })
 export class FloorPanelComponent {
-  // ── Inputs ──────────────────────────────────────────────────────────────
   readonly placedTables  = input.required<LocalTable[]>();
   readonly unpositioned  = input.required<LocalTable[]>();
   readonly selectedTable = input<LocalTable | null>(null);
@@ -19,7 +18,6 @@ export class FloorPanelComponent {
   readonly isDirty       = input<boolean>(false);
   readonly zoomLevel     = input<number>(1);
 
-  // ── Outputs ─────────────────────────────────────────────────────────────
   readonly openAddModal      = output<void>();
   readonly tableSelected     = output<string | null>();
   readonly layerOrderChanged = output<string[]>();
@@ -36,7 +34,6 @@ export class FloorPanelComponent {
   protected readonly zoomPercent = computed(() => Math.round(this.zoomLevel() * 100));
   protected readonly presets: SizePreset[] = ['S', 'M', 'L'];
 
-  // ── Layer drag & drop ────────────────────────────────────────────────────
   protected onLayerDrop(event: CdkDragDrop<LocalTable[]>): void {
     if (event.previousIndex === event.currentIndex) return;
     const ids = this.placedTables().map(t => t.id);
@@ -44,7 +41,6 @@ export class FloorPanelComponent {
     this.layerOrderChanged.emit(ids);
   }
 
-  // ── Size/shape helpers ───────────────────────────────────────────────────
   protected presetLabel(preset: SizePreset, shape: 'rect' | 'circle'): string {
     const s = SIZE_PRESETS[preset][shape];
     return shape === 'circle' ? `ø${s.w}` : `${s.w}×${s.h}`;
@@ -58,7 +54,6 @@ export class FloorPanelComponent {
     return 'M';
   }
 
-  // ── Selected table actions ────────────────────────────────────────────────
   protected onChangeShape(shape: 'rect' | 'circle'): void {
     const t = this.selectedTable();
     if (!t || t.shape === shape) return;

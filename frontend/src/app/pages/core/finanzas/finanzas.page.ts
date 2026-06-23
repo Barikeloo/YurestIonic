@@ -53,7 +53,6 @@ export class FinanzasPage implements OnInit {
 
     const results: SearchResult[] = [];
 
-    // Tabs
     for (const t of this.tabs) {
       if (t.label.toLowerCase().includes(q)) {
         results.push({
@@ -63,7 +62,6 @@ export class FinanzasPage implements OnInit {
       }
     }
 
-    // Products (from topProducts — always loaded with summary)
     for (const p of this.facade.topProducts()) {
       if (p.name.toLowerCase().includes(q)) {
         results.push({
@@ -75,7 +73,6 @@ export class FinanzasPage implements OnInit {
       }
     }
 
-    // Employees
     const employees = this.facade.employeesReport();
     if (employees) {
       for (const e of employees.items) {

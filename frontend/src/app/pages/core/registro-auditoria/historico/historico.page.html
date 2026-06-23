@@ -1,6 +1,5 @@
 <div class="historico-page" (click)="closeExportMenu(); closeRangeMenu()">
 
-  <!-- Page head -->
   <div class="page-head">
     <div class="page-title-row">
       <button class="back-btn" (click)="goBackToRegistro()" title="Volver al registro">
@@ -25,7 +24,6 @@
         <span class="last-updated">Actualizado a las {{ formatLastUpdated(updated) }}</span>
       }
 
-      <!-- Date-range dropdown -->
       <div class="range-dropdown" (click)="$event.stopPropagation()">
         <button
           class="btn-ghost"
@@ -92,7 +90,6 @@
         Recargar
       </button>
 
-      <!-- Export dropdown -->
       <div class="export-dropdown" (click)="$event.stopPropagation()">
         <button
           class="btn-ghost"
@@ -145,7 +142,6 @@
     </div>
   </div>
 
-  <!-- Active range banner -->
   @if (hasActiveRange()) {
     <div class="active-range-banner">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -163,7 +159,6 @@
     </div>
   }
 
-  <!-- Error state -->
   @if (loadError(); as err) {
     <div class="error-banner">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -174,7 +169,6 @@
     </div>
   }
 
-  <!-- Loading skeleton -->
   @if (isLoading() && !stats()) {
     <div class="kpi-grid">
       @for (_ of [1,2,3,4]; track $index) {
@@ -188,7 +182,6 @@
     <div class="chart-card skeleton-chart"><div class="skel skel-chart"></div></div>
   }
 
-  <!-- Empty state -->
   @if (!isLoading() && !hasData() && !loadError()) {
     <div class="empty-state">
       <div class="empty-illustration">
@@ -218,10 +211,8 @@
     </div>
   }
 
-  <!-- Stats body -->
   @if (!isLoading() && hasData()) {
 
-    <!-- KPI cards -->
     <div class="kpi-grid">
 
       <div class="kpi-card kpi-primary">
@@ -269,7 +260,6 @@
 
     </div>
 
-    <!-- ── Chain verification ───────────────────────────────────── -->
     <div
       class="verify-card"
       [attr.data-state]="verifyState()"
@@ -345,7 +335,6 @@
       </div>
     </div>
 
-    <!-- ── Anomaly widget ────────────────────────────────────────── -->
     @if (anomalies().length > 0) {
       <div class="anomaly-card">
         <div class="anomaly-head">
@@ -373,7 +362,6 @@
       </div>
     }
 
-    <!-- Monthly distribution chart -->
     <div class="chart-card">
       <div class="chart-head">
         <div>
@@ -410,11 +398,9 @@
       </div>
     </div>
 
-    <!-- ── Breakdown row: by category + top users ──────────────── -->
     @if (categoriesBreakdown().length > 0 || topUsers().length > 0) {
       <div class="breakdown-row">
 
-        <!-- By category -->
         <div class="breakdown-card">
           <div class="breakdown-head">
             <div>
@@ -447,7 +433,6 @@
           }
         </div>
 
-        <!-- Top users -->
         <div class="breakdown-card">
           <div class="breakdown-head">
             <div>
@@ -487,7 +472,6 @@
       </div>
     }
 
-    <!-- Footer call-to-action -->
     <div class="cta-card">
       <div class="cta-text">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">

@@ -1,6 +1,5 @@
 <div class="audit-page" (click)="closeDropdowns()">
 
-  <!-- ── Page head ─────────────────────────────────────────────── -->
   <div class="page-head">
     <div class="page-title-row">
       <h1 class="page-title">
@@ -12,7 +11,7 @@
       <div class="page-subtitle">Histórico de eventos del sistema · solo lectura</div>
     </div>
     <div class="page-head-actions">
-      <!-- Saved views -->
+      
       <div class="saved-views" (click)="$event.stopPropagation()">
         <button class="saved-views-trigger" (click)="savedViewsOpen.set(!savedViewsOpen())">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -56,7 +55,7 @@
           </div>
         }
       </div>
-      <!-- Alerts bell -->
+      
       <div class="alert-bell-wrap" (click)="$event.stopPropagation()">
         <button class="btn-ghost bell" [class.has-alerts]="unreadAlertCount() > 0" (click)="toggleAlerts()" title="Alertas críticas">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -168,35 +167,34 @@
           </div>
         }
       </div>
-      <!-- Live tail toggle (hidden in histórico mode — archived rows are immutable) -->
+      
       @if (!fromHistorico()) {
         <button class="btn-ghost live" [class.on]="liveTail()" (click)="toggleLiveTail()" title="Live tail">
           <span class="live-dot"></span>
           Live tail
         </button>
       }
-      <!-- Histórico -->
+      
       <button class="btn-ghost" (click)="goToHistorico()" title="Panel de histórico archivado">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><line x1="10" y1="12" x2="14" y2="12"/>
         </svg>
         Histórico
       </button>
-      <!-- Export -->
+      
       <button class="btn-ghost" (click)="exportData()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
         Exportar
       </button>
-      <!-- Back -->
+      
       <button class="btn-ghost" (click)="goBack()">
         ← Gestión
       </button>
     </div>
   </div>
 
-  <!-- ── Category Tabs ──────────────────────────────────────────── -->
   <div class="audit-tabs">
     @for (tab of TABS; track tab.id) {
       <button class="audit-tab" [class.active]="activeTab() === tab.id" (click)="selectTab(tab.id)">
@@ -206,7 +204,6 @@
     }
   </div>
 
-  <!-- ── Historico mode banner ──────────────────────────────────── -->
   @if (fromHistorico()) {
     <div class="historico-banner" role="status">
       <div class="historico-banner-icon">
@@ -225,15 +222,12 @@
     </div>
   }
 
-  <!-- ── Main Layout ────────────────────────────────────────────── -->
   <div class="audit-layout">
 
-    <!-- Left column -->
     <section class="audit-left">
 
-      <!-- KPI strip -->
       <div class="summary-strip">
-        <!-- Eventos hoy -->
+        
         <div class="kpi-card">
           <div class="kpi-label">Eventos hoy</div>
           <div class="kpi-value">{{ kpiTotal.toLocaleString('es-ES') }}</div>
@@ -248,7 +242,7 @@
             <path [attr.d]="buildSparklinePath().line" fill="none" stroke="#1A6FE8" stroke-width="1.5"/>
           </svg>
         </div>
-        <!-- Críticos -->
+        
         <div class="kpi-card">
           <div class="kpi-label">Críticos</div>
           <div class="kpi-value" [class.danger]="kpiCritical > 0">
@@ -258,12 +252,12 @@
             }
           </div>
         </div>
-        <!-- Usuarios activos -->
+        
         <div class="kpi-card">
           <div class="kpi-label">Usuarios activos</div>
           <div class="kpi-value">{{ kpiUsers }}</div>
         </div>
-        <!-- Última actividad -->
+        
         <div class="kpi-card">
           <div class="kpi-label">Última actividad</div>
           <div class="kpi-value" style="font-size:22px">
@@ -273,7 +267,6 @@
         </div>
       </div>
 
-      <!-- Refresh row -->
       <div class="refresh-row">
         @if (liveTail()) {
           <span class="refresh-indicator">
@@ -290,7 +283,6 @@
         </span>
       </div>
 
-      <!-- Waterfall -->
       @if (buildWaterfallData().length > 0) {
         <div class="waterfall">
           <div class="waterfall-head">
@@ -326,7 +318,6 @@
         </div>
       }
 
-      <!-- Smart filter chips -->
       <div class="audit-chips">
         @for (chip of CHIPS; track chip.id) {
           <button
@@ -401,9 +392,8 @@
         }
       </div>
 
-      <!-- Toolbar -->
       <div class="audit-toolbar">
-        <!-- Category -->
+        
         <select class="audit-input" [value]="filterCategory()" (change)="filterCategory.set($any($event.target).value)">
           <option value="all">Todas las categorías</option>
           <option value="order">Pedidos</option>
@@ -415,7 +405,7 @@
           <option value="config">Config.</option>
           <option value="system">Sistema</option>
         </select>
-        <!-- Severity -->
+        
         <select class="audit-input" [value]="filterSeverity()" (change)="filterSeverity.set($any($event.target).value)">
           <option value="all">Toda severidad</option>
           <option value="info">Info</option>
@@ -424,27 +414,27 @@
           <option value="critical">Critical</option>
           <option value="success">Success</option>
         </select>
-        <!-- User -->
+        
         <select class="audit-input" [value]="filterUser()" (change)="filterUser.set($any($event.target).value)">
           <option value="all">Todos los usuarios</option>
           @for (u of usersDropdownOptions(); track u.uuid) {
             <option [value]="u.uuid">{{ u.name }}</option>
           }
         </select>
-        <!-- Device -->
+        
         <select class="audit-input" [value]="filterDevice()" (change)="filterDevice.set($any($event.target).value)">
           <option value="all">Dispositivo</option>
           @for (d of devicesDropdownOptions(); track d) {
             <option [value]="d">{{ d }}</option>
           }
         </select>
-        <!-- Date range -->
+        
         <div class="input-date-range">
           <input class="audit-input" type="date" [value]="dateFrom()" (change)="dateFrom.set($any($event.target).value)" />
           <span class="dash">→</span>
           <input class="audit-input" type="date" [value]="dateTo()" (change)="dateTo.set($any($event.target).value)" />
         </div>
-        <!-- Search -->
+        
         <div class="input-search">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
@@ -457,11 +447,10 @@
             placeholder="Buscar eventos..."
           />
         </div>
-        <!-- Reset -->
+        
         <button class="btn-reset" (click)="resetFilters()" title="Limpiar filtros">↺</button>
       </div>
 
-      <!-- Include archived toggle -->
       <div class="include-archived-row">
         <label class="include-archived-toggle">
           <span class="include-archived-label">Mostrar histórico</span>
@@ -485,7 +474,6 @@
         </button>
       </div>
 
-      <!-- Event list -->
       <div class="audit-list-wrap">
         <div class="audit-list-head">
           <div>Hora</div>
@@ -517,12 +505,12 @@
         } @else {
           <div class="audit-list">
             @for (group of grouped; track group.key) {
-              <!-- Day header -->
+              
               <div class="day-header">
                 {{ group.label }}
                 <span class="day-count">{{ group.events.length }} eventos</span>
               </div>
-              <!-- Event rows -->
+              
               @for (evt of group.events; track evt.id) {
                 <div
                   class="event-row"
@@ -530,12 +518,12 @@
                   [class.active]="selectedId() === evt.id"
                   (click)="selectEvent(evt.id)"
                 >
-                  <!-- Time -->
+                  
                   <div class="event-time">{{ formatTimeHM(evt.ts) }}</div>
-                  <!-- Category pill -->
+                  
                   <div class="event-cat">
                     <span class="cat-pill" [style.background]="CATEGORIES[evt.cat].bg" [style.color]="CATEGORIES[evt.cat].color">
-                      <!-- Cat icon -->
+                      
                       <ng-container [ngSwitch]="evt.cat">
                         <svg *ngSwitchCase="'order'" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                           <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
@@ -578,7 +566,7 @@
                       {{ CATEGORIES[evt.cat].label }}
                     </span>
                   </div>
-                  <!-- Action + entity -->
+                  
                   <div class="event-body">
                     <div class="event-action">
                       {{ evt.action }}
@@ -609,7 +597,7 @@
                       }
                     </div>
                   </div>
-                  <!-- User + severity -->
+                  
                   <div class="event-user">
                     <span class="sev-dot" [class]="getSevClass(evt.sev)"></span>
                     <div class="avatar" [style.background]="evt.user.color">{{ evt.user.initials }}</div>
@@ -618,7 +606,7 @@
                       <div class="event-user-device">{{ evt.device }}</div>
                     </div>
                   </div>
-                  <!-- Chevron -->
+                  
                   <div class="event-chevron">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <polyline points="9 18 15 12 9 6"/>
@@ -630,7 +618,6 @@
           </div>
         }
 
-        <!-- Audit-of-audit footer -->
         <div class="audit-of-audit">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M2 12C2 6.5 6.5 2 12 2a10 10 0 0 1 8 4"/>
@@ -650,7 +637,6 @@
           <span class="aoa-ref">aoa-ref-2026-1142</span>
         </div>
 
-        <!-- Paginación por cursor -->
         @if (hasMore()) {
           <div class="audit-list-pagination">
             <button
@@ -684,12 +670,11 @@
       </div>
     </section>
 
-    <!-- ── Detail panel ────────────────────────────────────────── -->
     <div class="audit-detail">
       @if (!selected) {
         <div class="detail-empty">Selecciona un evento para ver su detalle completo.</div>
       } @else {
-        <!-- Header -->
+        
         <div class="detail-head">
           <div class="detail-cat-icon" [style.background]="CATEGORIES[selected.cat].bg" [style.color]="CATEGORIES[selected.cat].color">
             <ng-container [ngSwitch]="selected.cat">
@@ -746,7 +731,7 @@
               }
             </div>
           </div>
-          <!-- Permalink + copy -->
+          
           <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
             <button class="icon-btn" title="Copiar enlace al evento" (click)="copyToClipboard('https://tpv.yurest.app/audit/' + selected.id)">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -762,10 +747,8 @@
           </div>
         </div>
 
-        <!-- Body -->
         <div class="detail-body">
 
-          <!-- Quién -->
           <div class="detail-section">
             <div class="detail-section-label">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -806,7 +789,6 @@
             </div>
           </div>
 
-          <!-- Qué cambió (diff) -->
           @if (selected.diff && selected.diff.length > 0) {
             <div class="detail-section">
               <div class="detail-section-label">
@@ -833,7 +815,6 @@
             </div>
           }
 
-          <!-- Inline diff -->
           @if (selected.inline) {
             <div class="detail-section">
               <div class="detail-section-label">Qué cambió</div>
@@ -846,7 +827,6 @@
             </div>
           }
 
-          <!-- Contexto -->
           <div class="detail-section">
             <div class="detail-section-label">Contexto</div>
             <div class="context-prose">{{ selected.summary }}</div>
@@ -855,7 +835,7 @@
                 Motivo: {{ selected.reason }}
               </div>
             }
-            <!-- JSON payload colapsable -->
+            
             <div class="json-block">
               <div class="json-head" [class.open]="jsonOpen()" (click)="jsonOpen.set(!jsonOpen())">
                 PAYLOAD JSON
@@ -869,7 +849,6 @@
             </div>
           </div>
 
-          <!-- Integridad hash -->
           <div class="detail-section">
             <div class="detail-section-label">Integridad</div>
             <div class="hash-row">
@@ -889,7 +868,6 @@
             </div>
           </div>
 
-          <!-- Eventos relacionados -->
           @if (relatedTimeline.length > 1) {
             <div class="detail-section">
               <div class="detail-section-label">Eventos relacionados</div>
@@ -915,7 +893,6 @@
           }
         </div>
 
-        <!-- Footer -->
         <div class="detail-footer">
           <div class="detail-footer-row">
             <button class="action-secondary" (click)="showToast('Abriendo entidad relacionada...')">
@@ -945,7 +922,6 @@
     </div>
   </div>
 
-  <!-- ── Toast ─────────────────────────────────────────────────── -->
   <app-save-view-modal
     [isOpen]="saveViewModalOpen()"
     (close)="saveViewModalOpen.set(false)"

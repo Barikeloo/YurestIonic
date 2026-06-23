@@ -384,7 +384,6 @@ export class PedidosPage implements OnInit, OnDestroy {
   public lineSubtitle(line: TpvOrderLine): string | null {
     const parts: string[] = [];
 
-    // Menu selections
     if (line.menu_selections?.length) {
       for (const sel of line.menu_selections) {
         let selText = sel.product_name;
@@ -399,7 +398,6 @@ export class PedidosPage implements OnInit, OnDestroy {
       }
     }
 
-    // Direct modifiers (non-menu lines)
     if (line.modifiers?.length) {
       const modNames = line.modifiers.map((m: { name: string }) => m.name).join(', ');
       parts.push(modNames);
@@ -474,7 +472,6 @@ export class PedidosPage implements OnInit, OnDestroy {
     );
   }
 
-  // ── Line detail modal ──────────────────────────
   public openLineDetail(line: TpvOrderLine): void {
     this.selectedLine.set(line);
     this.detailModalOpen.set(true);

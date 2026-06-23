@@ -37,7 +37,6 @@
 
   } @else {
 
-    <!-- ── KPI strip ─────────────────────────────────────────────────────── -->
     <div class="kpi-strip">
       <div class="kpi-card kpi-card--accent-red">
         <div class="kpi-label">Ingresos productos</div>
@@ -65,7 +64,6 @@
       </div>
     </div>
 
-    <!-- ── Tabla ranking (card única con filtros integrados) ─────────────── -->
     <div class="card table-card">
 
       <div class="table-card-head">
@@ -170,11 +168,8 @@
       </div>
     </div>
 
-    <!-- ── Analytics row: matriz (izq) · familia + cross-sell (dcha) ──────── -->
-    <!-- Analytics row: matriz (pequeña) + familia + cross-sell ──────────── -->
     <div class="analytics-row">
 
-      <!-- Ingeniería de menú -->
       <div class="card">
         <div class="section-header">
           <div>
@@ -199,31 +194,25 @@
                 </filter>
               </defs>
 
-              <!-- Quadrant fills -->
               <rect [attr.x]="matrixMedX()" y="20" [attr.width]="280-matrixMedX()" [attr.height]="matrixMedY()-20" fill="#1a9e5a" fill-opacity="0.06"/>
               <rect x="40" y="20" [attr.width]="matrixMedX()-40" [attr.height]="matrixMedY()-20" fill="#0077cc" fill-opacity="0.06"/>
               <rect [attr.x]="matrixMedX()" [attr.y]="matrixMedY()" [attr.width]="280-matrixMedX()" [attr.height]="260-matrixMedY()" fill="#d18a1c" fill-opacity="0.06"/>
               <rect x="40" [attr.y]="matrixMedY()" [attr.width]="matrixMedX()-40" [attr.height]="260-matrixMedY()" fill="#9b9b9b" fill-opacity="0.04"/>
 
-              <!-- Median dividers -->
               <line [attr.x1]="matrixMedX()" [attr.x2]="matrixMedX()" y1="20" y2="260" stroke="#dcdcdc" stroke-width="1" stroke-dasharray="3 4"/>
               <line x1="40" x2="280" [attr.y1]="matrixMedY()" [attr.y2]="matrixMedY()" stroke="#dcdcdc" stroke-width="1" stroke-dasharray="3 4"/>
 
-              <!-- Axes -->
               <line x1="40" x2="280" y1="260" y2="260" stroke="#e8e8e8" stroke-width="1.5"/>
               <line x1="40" y1="20" x2="40" y2="260" stroke="#e8e8e8" stroke-width="1.5"/>
 
-              <!-- Quadrant corner labels -->
               <text x="274" y="33" text-anchor="end"   font-size="9" font-weight="700" fill="#1a9e5a" fill-opacity="0.65" font-family="DM Sans, sans-serif">Estrella</text>
               <text x="46"  y="33" text-anchor="start" font-size="9" font-weight="700" fill="#0077cc" fill-opacity="0.65" font-family="DM Sans, sans-serif">Enigma</text>
               <text x="274" y="252" text-anchor="end"   font-size="9" font-weight="700" fill="#d18a1c" fill-opacity="0.7" font-family="DM Sans, sans-serif">Caballo</text>
               <text x="46"  y="252" text-anchor="start" font-size="9" font-weight="700" fill="#9b9b9b" fill-opacity="0.8" font-family="DM Sans, sans-serif">Perro</text>
 
-              <!-- Axis labels -->
               <text x="160" y="286" text-anchor="middle" font-size="8.5" fill="#bcbcbc" font-family="DM Sans, sans-serif" letter-spacing="0.3">Unidades vendidas →</text>
               <text x="14" y="140" text-anchor="middle" font-size="8.5" fill="#bcbcbc" font-family="DM Sans, sans-serif" transform="rotate(-90,14,140)">Ingresos ↑</text>
 
-              <!-- Product dots -->
               @for (pt of matrixPoints(); track pt.name) {
                 @let isHov = matrixHovered()?.name === pt.name;
                 <circle
@@ -320,7 +309,6 @@
 
     </div>
 
-    <!-- ── Operational row: zonas · stock crítico · sin ventas ───────────── -->
     <div class="operational-row">
 
       <div class="card">
@@ -392,7 +380,6 @@
 
 </div>
 
-<!-- ── Product detail modal ──────────────────────────────────────────────── -->
 @if (selected(); as p) {
   @let ti = trendInfo(p.trend_spark);
   @let sq = selectedQuadrant();

@@ -10,10 +10,6 @@ final readonly class TableLayoutUpdated implements AuditableEvent
 {
     private \DateTimeImmutable $occurredOn;
 
-    /**
-     * @param array{pos_x: int, pos_y: int, width: int, height: int, shape: string}|null $before
-     * @param array{pos_x: int, pos_y: int, width: int, height: int, shape: string}      $after
-     */
     public function __construct(
         private string $tableId,
         private ?array $before,

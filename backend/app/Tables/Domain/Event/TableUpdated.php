@@ -10,10 +10,6 @@ final readonly class TableUpdated implements AuditableEvent
 {
     private \DateTimeImmutable $occurredOn;
 
-    /**
-     * @param array{zone_id: string, name: string} $before
-     * @param array{zone_id: string, name: string} $after
-     */
     public function __construct(
         private string $tableId,
         private array $before,

@@ -34,7 +34,6 @@ final readonly class GetTipsPdfController
 
             $data = $response->toArray();
 
-            // Only employees who actually declared tips, sorted by tips desc.
             $employees = array_values(array_filter($data['items'], fn ($e) => (int) ($e['tips'] ?? 0) > 0));
             usort($employees, fn ($a, $b) => ($b['tips'] ?? 0) <=> ($a['tips'] ?? 0));
 

@@ -24,7 +24,6 @@ final class SaveZoneLayout
             foreach ($command->tables as $dto) {
                 $table = $this->tableRepository->findById($dto->uuid);
 
-                // Skip tables that don't exist or belong to a different zone
                 if ($table === null || $table->zoneId()->value() !== $command->zoneId) {
                     continue;
                 }

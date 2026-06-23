@@ -280,7 +280,6 @@ export type FinanzasPeriod = 'today' | 'yesterday' | 'week' | 'month';
 export type FinanzasTab = 'resumen' | 'ventas' | 'productos' | 'empleados' | 'caja' | 'impuestos' | 'informes';
 export type ResumenVariant = 'A' | 'B' | 'C';
 
-// ── API response types (Fase 2+) ──────────────────────────────────────────
 
 export interface KpiApiMetric {
   v: number;

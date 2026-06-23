@@ -425,7 +425,6 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
     return Math.round((this.assignedTotal / total) * 100);
   }
 
-  /** Todos los comensales — incluye los ya pagados (se pintan en estado ✓). */
   public get allDinerNumbers(): number[] {
     const count = this.chargeSession?.diners_count ?? this.diners;
     return Array.from({ length: count }, (_, i) => i + 1);
@@ -722,7 +721,6 @@ export class SplitBillModalComponent implements OnChanges, OnInit, OnDestroy {
 
   public get isSessionCompleted(): boolean {
     if (!this.chargeSession) return false;
-    // La sesión está completa SOLO cuando no queda nada por pagar.
 
     return this.chargeSession.remaining_cents <= 0;
   }

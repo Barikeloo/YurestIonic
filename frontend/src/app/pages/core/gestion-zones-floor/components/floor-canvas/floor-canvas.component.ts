@@ -18,8 +18,8 @@ const CANVAS_H        = 800;
 const FIT_PAD         = 40;
 const MIN_SIZE        = GRID_SNAP;
 const HANDLE_R        = 6;
-const DRAG_THRESHOLD  = 5;   // SVG units before a pointerdown is considered a drag
-const CANVAS_INNER_PAD = 24; // matches .canvas-inner padding
+const DRAG_THRESHOLD  = 5;
+const CANVAS_INNER_PAD = 24;
 
 type DragKind = 'move' | 'resize-tl' | 'resize-tr' | 'resize-bl' | 'resize-br';
 
@@ -43,13 +43,11 @@ function snapByCenter(raw: number, size: number): number { return snap(raw + siz
   styleUrls: ['./floor-canvas.component.scss'],
 })
 export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
-  // ── Inputs ──────────────────────────────────────────────────────────────
   readonly tables           = input.required<LocalTable[]>();
   readonly selectedId       = input<string | null>(null);
   readonly zoomLevel        = input<number>(1);
   readonly centerOnTableId  = input<string | null>(null);
 
-  // ── Outputs ─────────────────────────────────────────────────────────────
   readonly tableClicked         = output<string>();
   readonly canvasClicked        = output<void>();
   readonly tableMoved           = output<{ id: string; x: number; y: number }>();
@@ -64,7 +62,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
   @ViewChild('svgEl')      svgRef!:  ElementRef<SVGSVGElement>;
   @ViewChild('canvasWrap') wrapRef!: ElementRef<HTMLDivElement>;
 
-  // ── Internal state ───────────────────────────────────────────────────────
   protected readonly _drag     = signal<DragState | null>(null);
   protected readonly _livePos  = signal<{ x: number; y: number; w: number; h: number } | null>(null);
   protected readonly _editing  = signal<string | null>(null);
@@ -76,7 +73,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
   protected readonly placedTables = computed(() => this.tables().filter(t => t.posX !== null));
   protected readonly HANDLE_R = HANDLE_R;
 
-  // Floating menu: position above the selected table in screen coords
   protected readonly floatingMenu = computed(() => {
     const id = this.selectedId();
     if (!id || this._drag()) return null;
@@ -99,7 +95,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  // ── Lifecycle ────────────────────────────────────────────────────────────
   ngAfterViewInit(): void {
     const wrap = this.wrapRef.nativeElement;
     const availW = wrap.clientWidth - FIT_PAD;
@@ -122,7 +117,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     this.wrapRef?.nativeElement.removeEventListener('wheel', this.wheelHandler);
   }
 
-  // ── Live geometry helpers ─────────────────────────────────────────────────
   protected tableX(t: LocalTable): number {
     const d = this._drag();
     return d?.id === t.id ? (this._livePos()?.x ?? t.posX!) : t.posX!;
@@ -145,7 +139,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     return base + 4;
   }
 
-  // ── Pointer: table move ──────────────────────────────────────────────────
   protected onTablePointerDown(e: PointerEvent, t: LocalTable): void {
     if (this._editing()) return;
     e.stopPropagation();
@@ -159,10 +152,8 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     });
     this._livePos.set({ x: t.posX!, y: t.posY!, w: t.width, h: t.height });
     this._tooltip.set(null);
-    // NO setPointerCapture — handled by threshold in pointerup
   }
 
-  // ── Pointer: resize handles ───────────────────────────────────────────────
   protected onHandlePointerDown(e: PointerEvent, t: LocalTable, corner: string): void {
     e.stopPropagation();
     const pt = this.toSvg(e);
@@ -173,10 +164,9 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
       moved: false,
     });
     this._livePos.set({ x: t.posX!, y: t.posY!, w: t.width, h: t.height });
-    this.svgRef.nativeElement.setPointerCapture(e.pointerId); // capture only for resize
+    this.svgRef.nativeElement.setPointerCapture(e.pointerId);
   }
 
-  // ── Pointer: move ──────────────────────────────────────────────────────────
   protected onSvgPointerMove(e: PointerEvent): void {
     const drag = this._drag();
     if (!drag) return;
@@ -186,7 +176,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     const dx  = pt.x - drag.startPt.x;
     const dy  = pt.y - drag.startPt.y;
 
-    // Mark as moved once threshold exceeded
     if (!drag.moved && (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD)) {
       this._drag.update(d => d ? { ...d, moved: true } : null);
     }
@@ -203,7 +192,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // Resize
     const isCircle = t.shape === 'circle';
     let newW = g.width, newH = g.height, newX = g.posX, newY = g.posY;
     switch (drag.kind) {
@@ -234,19 +222,16 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     this._livePos.set({ x: newX, y: newY, w: newW, h: newH });
   }
 
-  // ── Pointer: table up (fires when pointer releases over the table <g>) ────
   protected onTablePointerUp(e: PointerEvent, t: LocalTable): void {
     const drag = this._drag();
     if (!drag || drag.id !== t.id || drag.kind !== 'move') return;
-    e.stopPropagation(); // prevent SVG background up from also firing
+    e.stopPropagation();
     this.finalizeDrag(drag);
   }
 
-  // ── Pointer: SVG background up (drag ended outside table, or resize) ──────
   protected onSvgPointerUp(): void {
     const drag = this._drag();
     if (!drag) {
-      // Background click — deselect
       if (this._editing()) { this.commitEdit(); return; }
       this.canvasClicked.emit();
       return;
@@ -254,14 +239,8 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     this.finalizeDrag(drag);
   }
 
-  // Fires when pointer leaves the whole canvas-wrap (including float-menu area).
-  // Only terminates an active drag — never deselects.
   protected onCanvasWrapLeave(): void {
     const drag = this._drag();
-    // Only finalize move drags here. Resize drags have setPointerCapture on the SVG,
-    // so their pointerup fires on the SVG regardless of where the pointer is released.
-    // Finalizing resize drags on leave would set _drag=null, causing the subsequent
-    // SVG pointerup to emit canvasClicked() and incorrectly deselect the table.
     if (!drag || drag.kind !== 'move') return;
     this.finalizeDrag(drag);
   }
@@ -269,7 +248,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
   private finalizeDrag(drag: DragState): void {
     const pos = this._livePos();
     if (!drag.moved) {
-      // Threshold not reached → treat as a simple click (select)
       this.tableClicked.emit(drag.id);
     } else if (drag.kind === 'move') {
       if (pos) this.tableMoved.emit({ id: drag.id, x: pos.x, y: pos.y });
@@ -280,7 +258,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     this._livePos.set(null);
   }
 
-  // ── Inline name editing ──────────────────────────────────────────────────
   protected onTableDblClick(e: MouseEvent, t: LocalTable): void {
     e.stopPropagation();
     this.startEdit(t.id, t.name);
@@ -309,13 +286,11 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     this._editing.set(null);
   }
 
-  // ── Floating menu actions ─────────────────────────────────────────────────
   protected onMenuRename(t: LocalTable): void   { this.startEdit(t.id, t.name); }
   protected onMenuToggleShape(t: LocalTable): void { this.tableShapeToggled.emit(t.id); }
   protected onMenuRemove(t: LocalTable): void   { this.removeRequested.emit(t.id); }
   protected onMenuDelete(t: LocalTable): void   { this.tableDeleteRequested.emit(t.id); }
 
-  // ── Tooltip ──────────────────────────────────────────────────────────────
   protected onTablePointerEnter(e: PointerEvent, t: LocalTable): void {
     if (this._drag()) return;
     const rect = this.wrapRef.nativeElement.getBoundingClientRect();
@@ -324,7 +299,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
   }
   protected onTablePointerLeave(): void { this._tooltip.set(null); }
 
-  // ── Keyboard ─────────────────────────────────────────────────────────────
   protected onKeyDown(e: KeyboardEvent): void {
     if (e.key !== 'Delete' && e.key !== 'Backspace') return;
     if (this._editing()) return;
@@ -332,12 +306,10 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     if (id) { e.preventDefault(); this.removeRequested.emit(id); }
   }
 
-  // ── Canvas double-click → request add table ───────────────────────────────
   protected onCanvasDblClick(): void {
     this.addTableRequested.emit();
   }
 
-  // ── Center canvas on a specific table ─────────────────────────────────────
   private scrollToTable(id: string): void {
     if (!this.wrapRef) return;
     const t = this.placedTables().find(t => t.id === id);
@@ -353,12 +325,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     });
   }
 
-  // ── Collision detection ───────────────────────────────────────────────────
-  /**
-   * Returns true if the rectangle (x, y, w, h) overlaps any placed table
-   * other than the one being dragged. Uses strict AABB — tables may touch
-   * on edges but not overlap pixels.
-   */
   private overlapsAny(dragId: string, x: number, y: number, w: number, h: number): boolean {
     for (const t of this.placedTables()) {
       if (t.id === dragId) continue;
@@ -371,7 +337,6 @@ export class FloorCanvasComponent implements AfterViewInit, OnDestroy {
     return false;
   }
 
-  // ── Coord transform ──────────────────────────────────────────────────────
   private toSvg(e: PointerEvent): { x: number; y: number } {
     const svg = this.svgRef.nativeElement;
     const pt  = svg.createSVGPoint();

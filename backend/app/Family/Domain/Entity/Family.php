@@ -145,9 +145,6 @@ class Family
         return $this->updatedAt;
     }
 
-    /**
-     * @return array{name: string, color: ?string, icon: ?string}
-     */
     private function appearanceSnapshot(): array
     {
         return [

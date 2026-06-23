@@ -1,5 +1,5 @@
 <div class="caja-container">
-  <!-- Status badge and actions -->
+  
   <div class="status-bar">
     <div class="status-badge" [class.open]="state() === 'activa'">
       <span>{{ state() === 'activa' ? '● ABIERTA' : '○ CERRADA' }}</span>
@@ -11,14 +11,12 @@
     </div>
   </div>
 
-  <!-- Loading state -->
   @if (loading()) {
     <div class="loading-state">
       <p>Cargando...</p>
     </div>
   }
 
-  <!-- Error al abrir caja -->
   @if (openCashError) {
     <div class="open-cash-error-banner">
       <span>{{ openCashError }}</span>
@@ -26,7 +24,6 @@
     </div>
   }
 
-  <!-- Modal de autenticación PIN -->
   <app-pin-auth-modal
     [isOpen]="showPinAuthModal"
     [title]="'Abrir caja'"
@@ -35,7 +32,6 @@
     (authenticated)="onPinAuthenticated($event)"
   ></app-pin-auth-modal>
 
-  <!-- Modal de autenticación PIN - Cobrar mesa -->
   <app-pin-auth-modal
     [isOpen]="showPinAuthModalForCobrarMesa"
     [title]="'Cobrar mesa'"
@@ -44,7 +40,6 @@
     (authenticated)="onPinAuthenticatedForCobrarMesa($event)"
   ></app-pin-auth-modal>
 
-  <!-- Modal de apertura -->
   <app-open-cash-modal
     [isOpen]="showOpenModal"
     [currentUserId]="currentUser?.id ?? null"
@@ -52,14 +47,12 @@
     (openCash)="onOpenCash($event)"
   ></app-open-cash-modal>
 
-  <!-- Modal de movimiento manual -->
   <app-cash-movement-modal
     [isOpen]="showMovementModal"
     (closeModal)="showMovementModal = false"
     (registerMovement)="onRegisterMovement($event)"
   ></app-cash-movement-modal>
 
-  <!-- Modal de cobro -->
   <app-cobrar-modal
     [isOpen]="showCobrarModal"
     [total]="currentPaymentAmount || selectedTable?.total || 0"
@@ -74,7 +67,6 @@
     (splitBill)="onSplitBill()"
   ></app-cobrar-modal>
 
-  <!-- Modal de dividir cuenta con DinersStatus a la derecha -->
   @if (showSplitModal) {
     <div class="split-modal-with-sidebar">
       <app-split-bill-modal
@@ -109,7 +101,6 @@
     </div>
   }
 
-  <!-- Animación de confirmación de pago -->
   <app-payment-success
     [isOpen]="showPaymentSuccess"
     [paymentTicketText]="lastPaymentTicketText"
@@ -120,7 +111,6 @@
     (complete)="onPaymentSuccessComplete()"
   ></app-payment-success>
 
-  <!-- Wizard de cierre (a pantalla completa, se monta sobre todo) -->
   <app-closing-wizard
     [isOpen]="showWizard"
     restaurantName="La Tasca de Miguel"
@@ -131,11 +121,10 @@
     (completeClosing)="onCompleteClosing($event)"
   ></app-closing-wizard>
 
-  <!-- Estado: Pre-apertura -->
   @if (!loading() && state() === 'pre-apertura') {
     <div class="pre-apertura">
       <div class="pre-apertura-content">
-        <!-- Banner sesión huérfana -->
+        
         @if (orphanSession()) {
           <div class="orphan-session-card">
             <app-card [padding]="16" [clickable]="false" [style.background]="'var(--accent-soft)'" [style.border]="'1.5px solid var(--accent)'">
@@ -147,7 +136,7 @@
             </app-card>
           </div>
         }
-        <!-- Card último cierre -->
+        
         <app-card [padding]="20" class="last-closure-card">
           <div class="closure-label">
             Último cierre · Z #{{ lastClosed()?.z_report_number ?? '-' }}
@@ -200,11 +189,10 @@
     </div>
   }
 
-  <!-- Estado: Activa -->
   @if (!loading() && state() === 'activa') {
     <div class="activa">
       <div class="dashboard-grid">
-        <!-- Card hero verde con efectivo teórico -->
+        
         <div class="hero-card">
           <div class="hero-label">Efectivo en caja · teórico</div>
           <div class="hero-value">
@@ -220,7 +208,7 @@
             <app-btn size="sm" variant="outline" color="rgba(255,255,255,0.9)" (click)="onOpenMovementModal()">− Salida</app-btn>
           </div>
         </div>
-        <!-- KPIs -->
+        
         <div class="kpi-column">
           <app-kpi-card
             label="Ventas netas"
@@ -239,12 +227,12 @@
           ></app-kpi-card>
         </div>
       </div>
-      <!-- Mesas con cuenta pendiente -->
+      
       <app-mesas-abiertas
         [mesas]="pendingTables"
         (cobrar)="onCobrarMesa($event)"
       ></app-mesas-abiertas>
-      <!-- Grid: Desglose por método y Movimientos -->
+      
       <div class="dashboard-bottom-grid">
         <app-method-bar [methods]="paymentMethods"></app-method-bar>
         <app-movimientos-list
@@ -254,7 +242,6 @@
     </div>
   }
 
-  <!-- Estado: Histórico -->
   @if (!loading() && state() === 'historico') {
     <div class="historico">
       <div class="historico-header">

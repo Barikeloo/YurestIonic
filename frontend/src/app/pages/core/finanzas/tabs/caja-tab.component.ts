@@ -16,11 +16,9 @@ export class CajaTabComponent {
   protected readonly s          = this.facade.cashSession;
   protected readonly theoretical = this.facade.cashTheoretical;
 
-  // Detail modal
   protected readonly modalOpen = signal(false);
   protected readonly modalMovFilter = signal<'all' | 'in' | 'out'>('all');
 
-  // ── Computed ──
 
   protected readonly filteredMovements = computed(() => {
     const session = this.s();
@@ -46,7 +44,6 @@ export class CajaTabComponent {
     };
   });
 
-  // ── Detail modal ──
 
   protected openDetail(uuid: string): void {
     this.facade.loadSessionDetail(uuid);
@@ -57,7 +54,6 @@ export class CajaTabComponent {
     this.modalOpen.set(false);
   }
 
-  // ── Helpers ──
 
   protected fmt(v: number): string { return this.facade.fmt(v); }
   protected fmtInt(n: number): string { return this.facade.fmtInt(n); }

@@ -2,8 +2,6 @@ import { computed, inject, Injectable, Signal, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { AllergenCode, ProductItem, ProductService } from '../../../../services/product.service';
 
-// Backend URLs use APP_URL (LAN IP). Convert to relative path so the Angular
-// dev-server proxy (/storage → http://api:8000) resolves them correctly.
 function normalizeImageSrc(url: string | null | undefined): string | null {
   if (!url) return null;
   if (url.startsWith('blob:')) return url;

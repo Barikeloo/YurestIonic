@@ -48,7 +48,6 @@ export class InformesTabComponent {
   protected readonly modalMode = signal<ModalMode>(null);
   protected readonly editingReport = signal<ScheduledReport | null>(null);
 
-  // ── Modal form fields ──────────────────────────────────────────────────────
   protected form = {
     name: signal(''),
     reportType: signal('daily'),

@@ -6,15 +6,10 @@ namespace App\Tables\Domain\Event;
 
 use App\Shared\Domain\Event\AuditableEvent;
 
-/**
- * Group-level event: a merged group of tables was split apart. Published
- * directly by the use case (it spans several aggregates, not one).
- */
 final readonly class TablesUnmerged implements AuditableEvent
 {
     private \DateTimeImmutable $occurredOn;
 
-    /** @param list<string> $tableNames */
     public function __construct(
         private string $groupId,
         private array $tableNames,

@@ -74,7 +74,7 @@
           <input id="mg-product-stock" type="number" class="form-input" [ngModel]="formData().stock" (ngModelChange)="updateForm('stock', +$event)" name="mg-product-stock" placeholder="0" required />
         </div>
       </div>
-      <!-- Foto del producto -->
+      
       <div class="product-photo-row">
         <div class="product-photo-thumb" [class.has-photo]="selectedProduct()?.image_src"
              [class.clickable]="selectedProduct()?.image_src"

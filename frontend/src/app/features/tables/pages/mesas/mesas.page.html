@@ -1,6 +1,5 @@
 <div class="mesas-page">
 
-  <!-- Zone tabs + view toggle -->
   <div class="zone-tabs">
     @for (zone of facade.zones(); track zone) {
       <button
@@ -37,7 +36,6 @@
     </div>
   </div>
 
-  <!-- Merge mode controls -->
   @if (isMergeMode) {
     <div class="merge-mode-bar">
       <div class="merge-mode-info">
@@ -60,10 +58,8 @@
     </div>
   }
 
-  <!-- Main layout -->
   <div class="main-layout">
 
-    <!-- Tables grid -->
     <div class="tables-area">
       <div class="tables-grid-wrap">
         @if (viewMode() === 'plano') {
@@ -151,11 +147,10 @@
           </div>
         }
 
-        } <!-- end @else (lista) -->
+        } 
       </div>
     </div>
 
-    <!-- Side panel -->
     <div class="order-panel">
 
       @if (!facade.selectedTable()) {
@@ -355,7 +350,6 @@
 
 </div>
 
-<!-- ── Modal apertura de mesa ───────────────── -->
 <div class="modal-overlay" [class.open]="modalOpen" (click)="closeModal()">
   <div class="modal-box" (click)="$event.stopPropagation()">
 
@@ -368,7 +362,6 @@
       </div>
     }
 
-    <!-- Comensales -->
     <div class="modal-section-label">Comensales</div>
 
     <div class="diners-stepper">
@@ -409,7 +402,6 @@
   </div>
 </div>
 
-<!-- ── Modal cerrar cuenta ──────────────────── -->
 <div class="modal-overlay" [class.open]="closeAccountModalOpen" (click)="closeCloseAccountModal()">
   <div class="modal-box" (click)="$event.stopPropagation()">
 
@@ -443,7 +435,6 @@
   (close)="closeLineDetail()"
 />
 
-<!-- Modal de autenticación PIN - Abrir mesa -->
 <app-pin-auth-modal
   [isOpen]="showPinAuthModal"
   [title]="'Abrir mesa'"
@@ -452,7 +443,6 @@
   (authenticated)="onPinAuthenticated($event)"
 ></app-pin-auth-modal>
 
-<!-- Modal de autenticación PIN - Cerrar cuenta -->
 <app-pin-auth-modal
   [isOpen]="showPinAuthModalForCloseAccount"
   [title]="'Cerrar cuenta'"
@@ -461,7 +451,6 @@
   (authenticated)="onPinAuthenticatedForCloseAccount($event)"
 ></app-pin-auth-modal>
 
-<!-- Modal de autenticación PIN - Cobrar -->
 <app-pin-auth-modal
   [isOpen]="showPinAuthModalForCharge"
   [title]="'Cobrar'"
@@ -470,7 +459,6 @@
   (authenticated)="onPinAuthenticatedForCharge($event)"
 ></app-pin-auth-modal>
 
-<!-- ── Menú de opciones de mesa ──────────────────── -->
 @if (tableMenuOpen && tableMenuTable) {
   <div
     class="table-menu-dropdown"
@@ -527,7 +515,6 @@
   </div>
 }
 
-<!-- Overlay para cerrar menú al hacer click fuera -->
 @if (tableMenuOpen) {
   <div
     class="table-menu-overlay"
@@ -535,7 +522,6 @@
   ></div>
 }
 
-<!-- ── Modal editar comensales ─────────────────── -->
 <div class="modal-overlay" [class.open]="editDinersModalOpen" (click)="closeEditDinersModal()">
   <div class="modal-box" (click)="$event.stopPropagation()">
 
@@ -548,10 +534,8 @@
       </div>
     }
 
-    <!-- Comensales -->
     <div class="modal-section-label">Número de comensales</div>
 
-    <!-- Indicador de carga -->
     @if (editDinersCheckingChargeSession) {
       <div class="diners-loading">
         <span class="spinner"></span>
@@ -559,7 +543,6 @@
       </div>
     }
 
-    <!-- Advertencia de validación -->
     @if (dinersValidationMessage) {
       <div class="diners-warning">
         {{ dinersValidationMessage }}
@@ -609,7 +592,6 @@
   </div>
 </div>
 
-<!-- Transfer account modal -->
 <app-transfer-table-modal
   [isOpen]="transferModalOpen"
   [sourceTableId]="transferSourceTable?.id ?? null"

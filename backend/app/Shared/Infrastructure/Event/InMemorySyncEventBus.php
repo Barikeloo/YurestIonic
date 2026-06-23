@@ -8,13 +8,8 @@ use App\Shared\Application\Event\EventBusInterface;
 use App\Shared\Application\Event\EventSubscriber;
 use App\Shared\Domain\Event\DomainEvent;
 
-/**
- * Synchronous, in-process event bus: every published event is dispatched to the
- * matching subscribers within the current request, in registration order.
- */
 final class InMemorySyncEventBus implements EventBusInterface
 {
-    /** @var list<EventSubscriber> */
     private array $subscribers;
 
     public function __construct(EventSubscriber ...$subscribers)

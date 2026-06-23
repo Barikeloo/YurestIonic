@@ -1,7 +1,7 @@
 <div class="resumen-tab">
 
   @if (facade.loadingSummary()) {
-    <!-- ── Skeleton: KPI row ──────────────────────────────────────────────── -->
+    
     <div class="kpi-row">
       @for (_ of [1,2,3,4,5]; track $index) {
         <div class="kpi-card" style="pointer-events:none">
@@ -16,7 +16,6 @@
       }
     </div>
 
-    <!-- ── Skeleton: charts row ──────────────────────────────────────────── -->
     <div class="charts-grid">
       <div class="card">
         <div class="sk-sect">
@@ -52,7 +51,6 @@
       </div>
     </div>
 
-    <!-- ── Skeleton: mid row ─────────────────────────────────────────────── -->
     <div class="mid-row">
       <div class="card">
         <div class="sk-sect">
@@ -103,7 +101,6 @@
       </div>
     </div>
 
-    <!-- ── Skeleton: ops row ─────────────────────────────────────────────── -->
     <div class="ops-row">
       <div class="card">
         <div class="sk-head">
@@ -145,10 +142,8 @@
     </div>
   } @else {
 
-    <!-- ── KPI row ──────────────────────────────────────────────────────────── -->
     <div class="kpi-row">
 
-    <!-- Ingresos totales -->
     <div class="kpi-card" (click)="facade.setTab('ventas')">
       <div class="kpi-head">
         <span class="kpi-label">Ingresos totales</span>
@@ -181,7 +176,6 @@
       <div class="kpi-accent" style="background:#ff4d4d"></div>
     </div>
 
-    <!-- Tickets -->
     <div class="kpi-card" (click)="facade.setTab('ventas')">
       <div class="kpi-head">
         <span class="kpi-label">Tickets</span>
@@ -213,7 +207,6 @@
       </div>
     </div>
 
-    <!-- Ticket medio -->
     <div class="kpi-card" (click)="facade.setTab('ventas')">
       <div class="kpi-head">
         <span class="kpi-label">Ticket medio</span>
@@ -245,7 +238,6 @@
       </div>
     </div>
 
-    <!-- Productos vendidos -->
     <div class="kpi-card" (click)="facade.setTab('productos')">
       <div class="kpi-head">
         <span class="kpi-label">Productos vendidos</span>
@@ -275,7 +267,6 @@
       </div>
     </div>
 
-    <!-- Caja actual -->
     <div class="kpi-card" (click)="facade.setTab('caja')">
       <div class="kpi-head">
         <span class="kpi-label">Caja actual</span>
@@ -288,10 +279,8 @@
 
   </div>
 
-  <!-- ── Charts row: bar chart + top products ──────────────────────────────── -->
   <div class="charts-grid">
 
-    <!-- Bar chart card -->
     <div class="card">
       <div class="section-head">
         <div>
@@ -397,7 +386,6 @@
       </div>
     </div>
 
-    <!-- Top products card -->
     <div class="card">
       <div class="section-head">
         <div>
@@ -428,10 +416,8 @@
 
   </div>
 
-  <!-- ── Middle row: donut + cash + insights ───────────────────────────────── -->
   <div class="mid-row">
 
-    <!-- Donut chart card -->
     <div class="card">
       <div class="section-head">
         <div>
@@ -492,7 +478,6 @@
       </div>
     </div>
 
-    <!-- Cash status card -->
     @let session = facade.cashSession();
     <div class="card cash-card" (click)="facade.setTab('caja')">
       <div class="section-head">
@@ -543,7 +528,6 @@
       }
     </div>
 
-    <!-- Insights card -->
     <div class="card">
       <div class="section-title" style="margin-bottom:10px">Insights del día</div>
       <div class="insights-list">
@@ -560,10 +544,8 @@
 
   </div>
 
-  <!-- ── Operational row ───────────────────────────────────────────────────── -->
   <div class="ops-row">
 
-    <!-- Forecast card — oculto en MVP (sin modelo ML) -->
     @if (false) {
     <div class="card card--blue">
       <div class="section-head">
@@ -594,7 +576,6 @@
     </div>
     }
 
-    <!-- Open tables card -->
     <div class="card">
       <div class="section-head">
         <div>
@@ -635,7 +616,6 @@
       </div>
     </div>
 
-    <!-- Pending payments card -->
     @if (facade.pendingPayments().length > 0) {
       <div class="card card--amber">
         <div class="section-head">

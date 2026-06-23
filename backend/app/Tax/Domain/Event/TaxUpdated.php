@@ -10,11 +10,6 @@ final readonly class TaxUpdated implements AuditableEvent
 {
     private \DateTimeImmutable $occurredOn;
 
-    /**
-     * @param array{name: string, percentage: int} $before
-     * @param array{name: string, percentage: int} $after
-     * @param list<string>                          $changedFields
-     */
     public function __construct(
         private string $taxId,
         private array $before,

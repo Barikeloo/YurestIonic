@@ -127,7 +127,6 @@ export class GestionMenusEditorPage implements OnInit {
   );
   public readonly priceEuros = computed(() => (this.header().price / 100).toFixed(2));
 
-  /** Productos visibles en el sidebar tras aplicar filtros de familia y búsqueda. */
   public readonly filteredCatalog = computed<CatalogProduct[]>(() => {
     const term = this.catalogSearch().trim().toLowerCase();
     const familyId = this.catalogFamilyFilter();
@@ -420,9 +419,6 @@ export class GestionMenusEditorPage implements OnInit {
     return `${(cents / 100).toFixed(2).replace('.', ',')}€`;
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Submit / Cancel
-  // ──────────────────────────────────────────────────────────────────────────
 
   public async onSave(): Promise<void> {
     const errors = this.validate();
@@ -460,9 +456,6 @@ export class GestionMenusEditorPage implements OnInit {
     this.router.navigateByUrl('/app/gestion');
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Internals
-  // ──────────────────────────────────────────────────────────────────────────
 
   private toProductOptions(products: ProductItem[]): MenuProductOption[] {
     return products.map((p) => ({
@@ -483,9 +476,6 @@ export class GestionMenusEditorPage implements OnInit {
     }));
   }
 
-  // ──────────────────────────────────────────────────────────────────────────
-  // Catalog sidebar
-  // ──────────────────────────────────────────────────────────────────────────
 
   public onCatalogSearchChange(value: string): void {
     this.catalogSearch.set(value);
@@ -531,7 +521,6 @@ export class GestionMenusEditorPage implements OnInit {
     this.sections.set(sections);
     this.productSearchByItem.set({});
 
-    // Pre-cargar variantes de los productos ya añadidos al menú para que el selector funcione al abrir.
     const productIds = new Set<string>();
     sections.forEach((s) => s.items.forEach((it) => productIds.add(it.productId)));
     productIds.forEach((id) => void this.ensureVariantsLoaded(id));

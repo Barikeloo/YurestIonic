@@ -29,7 +29,6 @@ class UpdateTax
         );
         $this->taxRepository->save($tax);
 
-        // No events recorded when nothing actually changed -> no audit.
         $this->eventBus->publish(...$tax->pullDomainEvents());
 
         return UpdateTaxResponse::create(

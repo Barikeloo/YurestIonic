@@ -42,7 +42,6 @@ export class EmpleadosTabComponent {
     return this.facade.employeesReport()?.items ?? [];
   }
 
-  // ── Team aggregates ────────────────────────────────────────────────────────
   protected readonly totalRevenue  = computed(() => this.items.reduce((s, e) => s + e.revenue, 0));
   protected readonly totalTickets  = computed(() => this.items.reduce((s, e) => s + e.tickets, 0));
   protected readonly totalTips      = computed(() => this.items.reduce((s, e) => s + e.tips, 0));
@@ -66,7 +65,6 @@ export class EmpleadosTabComponent {
     return r > 0 ? (this.totalDiscount() / r) * 100 : 0;
   });
 
-  // ── Enriched list (rank by revenue, ratios, deltas) ───────────────────────
   protected readonly enriched = computed((): Enriched[] => {
     const byRevenue = [...this.items].sort((a, b) => b.revenue - a.revenue);
     const rankMap = new Map<string, number>();
@@ -107,7 +105,6 @@ export class EmpleadosTabComponent {
     return this.teamTipsPct().toFixed(1).replace('.', ',');
   }
 
-  // ── Benchmark vs team (higher is better) ──────────────────────────────────
   protected benchColor(value: number, mean: number): string {
     if (mean <= 0) return '#7a7a7a';
     if (value >= mean)        return '#1a9e5a';
@@ -124,7 +121,6 @@ export class EmpleadosTabComponent {
     return team > 0 && e.discPct > team * 1.5 && e.discounts > 0;
   }
 
-  // ── Delta (vs previous period) ────────────────────────────────────────────
   protected deltaColor(v: number | null): string {
     if (v === null) return '#0077cc';
     return v > 2 ? '#1a9e5a' : v < -2 ? '#ff4d4d' : '#7a7a7a';
@@ -138,7 +134,6 @@ export class EmpleadosTabComponent {
     return `${v >= 0 ? '+' : ''}${v.toFixed(1).replace('.', ',')}%`;
   }
 
-  // ── Spark / format helpers ────────────────────────────────────────────────
   protected sparkPath(data: number[]): string   { return this.facade.sparklinePath(data, 100, 28); }
   protected sparkArea(data: number[]): string   { return this.facade.sparklineArea(data, 100, 28); }
   protected sparkPathLg(data: number[]): string { return this.facade.sparklinePath(data, 100, 60); }

@@ -122,7 +122,6 @@ final readonly class DateRange
         $now = new \DateTimeImmutable('now');
         $month = (int) $now->format('n');
 
-        // forQuarter expects T1-T4 labels (see $ranges in forQuarter()).
         $quarterMap = [
             1 => ['year' => (int) $now->format('Y') - 1, 'quarter' => 'T4'],
             2 => ['year' => (int) $now->format('Y'),     'quarter' => 'T1'],

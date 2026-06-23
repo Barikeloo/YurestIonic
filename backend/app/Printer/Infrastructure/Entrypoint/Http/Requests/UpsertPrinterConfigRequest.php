@@ -25,7 +25,6 @@ final class UpsertPrinterConfigRequest extends FormRequest
 
     public function toCommand(?string $uuid = null): UpsertPrinterConfigCommand
     {
-        /** @var TenantContext $tenant */
         $tenant = app(TenantContext::class);
 
         return new UpsertPrinterConfigCommand(

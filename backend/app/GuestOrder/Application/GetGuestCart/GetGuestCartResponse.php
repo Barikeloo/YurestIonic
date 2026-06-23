@@ -13,7 +13,6 @@ final readonly class GetGuestCartResponse
         public int $totalCents,
     ) {}
 
-    /** @param CartLineData[] $lines */
     public static function create(array $lines): self
     {
         $total = array_reduce($lines, fn (int $carry, CartLineData $l): int => $carry + ($l->unitPrice * $l->quantity), 0);

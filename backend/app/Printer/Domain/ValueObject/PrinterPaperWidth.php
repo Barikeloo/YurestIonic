@@ -8,7 +8,6 @@ final readonly class PrinterPaperWidth
 {
     private const ALLOWED = [58, 80];
 
-    // Characters per line for each paper width
     private const CHAR_WIDTH = [58 => 32, 80 => 48];
 
     private function __construct(private int $mm) {}

@@ -1,20 +1,20 @@
 @if (isOpen) {
   <div class="pin-auth-overlay" (click)="onClose()">
     <div class="pin-auth-content" (click)="$event.stopPropagation()">
-      <!-- Estado normal: Teclado PIN -->
+      
       @if (!showSuccess) {
         <div class="pin-auth-body">
           <div class="pin-auth-header">
             <div class="pin-auth-title">{{ title }}</div>
             <div class="pin-auth-subtitle">{{ subtitle }}</div>
           </div>
-          <!-- Display de PIN -->
+          
           <div class="pin-display">
             @for (d of pinDots; track d) {
               <span class="pin-dot" [class.filled]="d"></span>
             }
           </div>
-          <!-- Teclado numérico -->
+          
           <div class="pin-keypad">
             <button class="key" (click)="pinPress('1')" [disabled]="isVerifying">1</button>
             <button class="key" (click)="pinPress('2')" [disabled]="isVerifying">2</button>
@@ -29,13 +29,13 @@
             <button class="key" (click)="pinPress('0')" [disabled]="isVerifying">0</button>
             <button class="key key-clear" (click)="clearPin()" [disabled]="isVerifying">C</button>
           </div>
-          <!-- Botón cancelar -->
+          
           <button class="btn-cancel" (click)="onClose()" [disabled]="isVerifying">
             Cancelar
           </button>
         </div>
       }
-      <!-- Estado éxito: Animación autenticado -->
+      
       @if (showSuccess) {
         <div class="success-container">
           <div class="success-circle">

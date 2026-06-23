@@ -7,10 +7,6 @@ namespace App\Shared\Infrastructure\Context;
 use App\Shared\Application\Context\RequestContextInterface;
 use App\Shared\Infrastructure\Tenant\TenantContext;
 
-/**
- * Reads request-scoped context from the current HTTP request and session.
- * Degrades to null outside HTTP (console/cron), so it never breaks there.
- */
 final readonly class HttpRequestContext implements RequestContextInterface
 {
     public function __construct(

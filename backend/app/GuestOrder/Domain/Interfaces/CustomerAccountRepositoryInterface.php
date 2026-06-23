@@ -20,6 +20,5 @@ interface CustomerAccountRepositoryInterface
 
     public function invalidateAuthToken(string $token): void;
 
-    /** @return array<array{id:string, title:string, discount_type:string, discount_value:int, min_points:int}> */
     public function getActiveOffers(string $restaurantId, int $customerPoints): array;
 }

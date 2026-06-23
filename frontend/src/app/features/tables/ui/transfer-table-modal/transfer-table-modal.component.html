@@ -1,13 +1,12 @@
 @if (isOpen) {
   <div class="transfer-modal-overlay" (click)="onClose()">
     <div class="transfer-modal-box" (click)="$event.stopPropagation()">
-      <!-- Header -->
+      
       <div class="transfer-modal-header">
         <div class="transfer-modal-title">Traspasar cuenta — {{ sourceTableName }}</div>
         <button type="button" class="transfer-modal-close" [disabled]="isLoading" (click)="onClose()">✕</button>
       </div>
 
-      <!-- Avisos -->
       <div class="transfer-modal-notices">
         @if (hasPartialPayments) {
           <div class="transfer-notice warning">
@@ -27,7 +26,6 @@
         }
       </div>
 
-      <!-- Lista por zona -->
       <div class="transfer-modal-body">
         @if (getZonesWithTables().length === 0) {
           <div class="transfer-empty">No hay otras mesas disponibles.</div>
@@ -60,7 +58,6 @@
         }
       </div>
 
-      <!-- Footer -->
       <div class="transfer-modal-footer">
         <button type="button" class="transfer-btn-secondary" [disabled]="isLoading" (click)="onClose()">
           Cancelar

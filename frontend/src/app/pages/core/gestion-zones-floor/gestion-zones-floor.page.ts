@@ -24,7 +24,6 @@ export class GestionZonesFloorPage implements OnInit, HasUnsavedChanges {
   protected readonly zoomLevel       = signal<number>(1);
   protected readonly centerOnTableId = signal<string | null>(null);
 
-  // ── Add-table modal ───────────────────────────────────────────────────────
   protected addModalOpen    = false;
   protected addModalName    = '';
   protected addModalShape: 'rect' | 'circle' = 'rect';
@@ -49,14 +48,12 @@ export class GestionZonesFloorPage implements OnInit, HasUnsavedChanges {
 
   goBack(): void { void this.router.navigate(['/app/gestion']); }
 
-  // ── Save ──────────────────────────────────────────────────────────────────
   async onSave(): Promise<void> {
     const ok = await this.facade.save();
     if (ok) this.toastService.presentSuccess('Plano guardado.');
     else    this.toastService.presentError('No se pudo guardar el plano.');
   }
 
-  // ── Canvas events ─────────────────────────────────────────────────────────
   onTableClicked(id: string): void    { this.facade.selectTable(id); }
   onCanvasClicked(): void             { this.facade.selectTable(null); }
   onTableMoved(ev: { id: string; x: number; y: number }): void {
@@ -74,10 +71,8 @@ export class GestionZonesFloorPage implements OnInit, HasUnsavedChanges {
   }
   onZoomChanged(zoom: number): void { this.zoomLevel.set(zoom); }
 
-  // Canvas double-click → open add modal
   onAddTableRequested(): void { this.openAddModal(); }
 
-  // ── Panel events ──────────────────────────────────────────────────────────
   onPlaceOnCanvas(id: string): void    { this.facade.placeOnCanvas(id); }
   onRemoveFromCanvas(id: string): void { this.facade.removeFromCanvas(id); }
   onShapeChanged(ev: { id: string; shape: 'rect' | 'circle' }): void {
@@ -88,7 +83,6 @@ export class GestionZonesFloorPage implements OnInit, HasUnsavedChanges {
   }
   onLayerOrderChanged(ids: string[]): void { this.facade.reorderTables(ids); }
 
-  // Select from layers list + center canvas on it
   onTableSelectedFromPanel(id: string | null): void {
     this.facade.selectTable(id);
     if (id) {
@@ -97,12 +91,10 @@ export class GestionZonesFloorPage implements OnInit, HasUnsavedChanges {
     }
   }
 
-  // ── Zoom ──────────────────────────────────────────────────────────────────
   zoomIn():    void { this.onZoomChanged(Math.min(2.0, Math.round((this.zoomLevel() + 0.1) * 10) / 10)); }
   zoomOut():   void { this.onZoomChanged(Math.max(0.4, Math.round((this.zoomLevel() - 0.1) * 10) / 10)); }
   zoomReset(): void { this.onZoomChanged(1); }
 
-  // ── Add-table modal ───────────────────────────────────────────────────────
   openAddModal(): void {
     this.addModalName   = '';
     this.addModalShape  = 'rect';

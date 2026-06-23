@@ -388,7 +388,6 @@ export class MesasPage implements OnInit, OnDestroy {
     this.tableMenuTable = null;
   }
 
-  // ----- Edit-diners flow -----
   public async onEditDiners(): Promise<void> {
     const menuTable = this.tableMenuTable;
     this.closeTableMenu();
@@ -770,7 +769,6 @@ export class MesasPage implements OnInit, OnDestroy {
     this.dragOffsetX = this.dragStartX - rect.left;
     this.dragOffsetY = this.dragStartY - rect.top;
 
-    // SVG elements cannot be cloned into HTML body — create floating card instead
     let preview: HTMLElement;
 
     if (this.dragSourceElement.namespaceURI === 'http://www.w3.org/2000/svg') {
@@ -805,7 +803,6 @@ export class MesasPage implements OnInit, OnDestroy {
     document.body.appendChild(preview);
     this.dragPreview = preview;
 
-    // HTML elements use inline opacity; SVG uses CSS class (fp-dragging-source)
     if (this.dragSourceElement.namespaceURI !== 'http://www.w3.org/2000/svg') {
       this.dragSourceElement.style.opacity = '0.4';
     }
@@ -1051,7 +1048,6 @@ export class MesasPage implements OnInit, OnDestroy {
   }
 
   public getMergedTableStatus(mergedTables: TableWithStatus[]): OrderStatus | undefined {
-    // Priorizar TO_CHARGE sobre OPEN
     const toChargeTable = mergedTables.find(t => t.status === OrderStatus.TO_CHARGE);
     if (toChargeTable) {
       return toChargeTable.status;
@@ -1069,7 +1065,6 @@ export class MesasPage implements OnInit, OnDestroy {
     return mergedTables.some(t => t.occupied);
   }
 
-  // ----- Private helpers -----
   private openOpenTableModal(): void {
     this.modalOpen = true;
     this.diners = 1;

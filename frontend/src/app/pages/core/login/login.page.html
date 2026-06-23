@@ -9,7 +9,6 @@
       </div>
     </div>
 
-    <!-- Estado 1: Dispositivo NO vinculado - Formulario email/contraseña -->
     @if (!facade.linkedRestaurant()) {
       <div class="login-body">
         <section class="email-panel full-width">
@@ -65,7 +64,6 @@
       </div>
     }
 
-    <!-- Estado 2: Dispositivo vinculado - Vista lista de empleados -->
     @if (facade.linkedRestaurant() && !showPinPanel && !showEmailForm) {
       <div class="login-body employee-view">
         <section class="employee-list-panel">
@@ -124,7 +122,6 @@
       </div>
     }
 
-    <!-- Estado 3: Dispositivo vinculado - Panel PIN -->
     @if (facade.linkedRestaurant() && showPinPanel && selectedEmployee) {
       <div class="login-body pin-view">
         <section class="pin-panel">
@@ -163,7 +160,6 @@
       </div>
     }
 
-    <!-- Estado 4: Dispositivo vinculado - Formulario email/contraseña -->
     @if (facade.linkedRestaurant() && showEmailForm) {
       <div class="login-body email-view">
         <section class="email-panel full-width">

@@ -64,7 +64,6 @@ export class ResumenTabComponent {
     return { cx: W, cy: H - 2 - ((last - min) / range) * (H - 4) };
   }
 
-  // ── BarChart ───────────────────────────────────────────────────────────────
 
   protected readonly CHART_PAD = 2;
 
@@ -115,7 +114,6 @@ export class ResumenTabComponent {
     return { leftPct, bar, compare: this.facade.showCompare() };
   }
 
-  // ── Donut ──────────────────────────────────────────────────────────────────
   protected readonly donutSize      = 140;
   protected readonly donutThickness = 22;
 
@@ -168,7 +166,6 @@ export class ResumenTabComponent {
     return (f.closed / f.projection) * 100;
   }
 
-  // ── Pending payments ───────────────────────────────────────────────────────
   protected get pendingTotal(): number {
     return this.facade.pendingPayments().reduce((s, p) => s + p.total, 0);
   }

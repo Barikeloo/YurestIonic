@@ -1,7 +1,7 @@
 <div class="ventas">
 
   @if (showSkeleton()) {
-    <!-- ── Skeleton: chart + totals ─────────────────────────────────────────── -->
+    
     <div class="ventas-top-grid">
       <div class="card">
         <div class="card-header">
@@ -28,7 +28,6 @@
       </div>
     </div>
 
-    <!-- ── Skeleton: filters ────────────────────────────────────────────────── -->
     <div class="card filters-card" style="pointer-events:none">
       <div class="filters-row">
         <div class="search-wrap">
@@ -47,7 +46,6 @@
       </div>
     </div>
 
-    <!-- ── Skeleton: table ──────────────────────────────────────────────────── -->
     <div class="card table-card" style="pointer-events:none">
       <div class="table-wrap">
         <table class="data-table">
@@ -71,17 +69,14 @@
       </div>
     </div>
 
-    <!-- ── Skeleton: pagination ─────────────────────────────────────────────── -->
     <div class="pagination-row">
       <span class="sk" style="width:120px;height:12px;display:inline-block;border-radius:4px"></span>
     </div>
 
   } @else {
 
-    <!-- ── Top: gráfico + totales del filtro ──────────────────────────────────── -->
     <div class="ventas-top-grid">
 
-      <!-- Chart card -->
       <div class="card">
         <div class="card-header">
           <div>
@@ -150,7 +145,6 @@
         }
       </div>
 
-      <!-- Totales del filtro card -->
       <div class="card totales-card">
         <div class="card-header">
           <div>
@@ -182,7 +176,6 @@
 
     </div>
 
-    <!-- ── Filters card ────────────────────────────────────────────────────────── -->
     <div class="card filters-card">
       <div class="filters-row">
 
@@ -231,7 +224,6 @@
       </div>
     </div>
 
-    <!-- ── Tabla ───────────────────────────────────────────────────────────────── -->
     @if (filteredOrders().length === 0) {
       <div class="card">
         <div class="empty-state">
@@ -303,7 +295,6 @@
         </div>
       </div>
 
-      <!-- Paginación -->
       <div class="pagination-row">
         <span class="pagination-info">
           Mostrando <strong>{{ filteredOrders().length }}</strong> de <strong>{{ totalCount() }}</strong> tickets del día
@@ -322,14 +313,12 @@
 
 </div>
 
-<!-- ── Modal de detalle de ticket ─────────────────────────────────────────── -->
 @if (selectedTicket()) {
   @let ticket = selectedTicket()!;
   @let detail = facade.ticketDetail();
   <div class="modal-overlay" (click)="closeTicket()">
     <div class="modal-box" (click)="$event.stopPropagation()">
 
-      <!-- Header -->
       <div class="modal-header">
         <div class="modal-header-left">
           <div class="modal-id-box" [class.modal-id-box--cancelled]="ticket.status === 'cancelled'">
@@ -353,10 +342,8 @@
         <button class="modal-close" (click)="closeTicket()">×</button>
       </div>
 
-      <!-- Body -->
       <div class="modal-body">
 
-        <!-- Izquierda: líneas del pedido -->
         <div class="modal-lines">
           <div class="modal-section-label">Líneas del pedido</div>
           <div class="lines-table-wrap">
@@ -390,10 +377,8 @@
           }
         </div>
 
-        <!-- Derecha: totales, pagos, desglose IVA -->
         <div class="modal-right">
 
-          <!-- Total card -->
           <div class="modal-total-card">
             <div class="modal-section-label">Total</div>
             <div class="total-rows">
@@ -416,7 +401,6 @@
             </div>
           </div>
 
-          <!-- Métodos de pago -->
           <div class="modal-section">
             <div class="modal-section-label">Pago</div>
             <div class="payments-list">
@@ -438,7 +422,6 @@
             </div>
           </div>
 
-          <!-- Desglose IVA -->
           <div class="modal-section">
             <div class="modal-section-label">Desglose IVA</div>
             <div class="tax-table">
@@ -455,7 +438,6 @@
         </div>
       </div>
 
-      <!-- Footer -->
       <div class="modal-footer">
         <div class="modal-footer-left">
           <button class="modal-btn modal-btn--outline" (click)="printTicket()">🖨 Imprimir ticket</button>

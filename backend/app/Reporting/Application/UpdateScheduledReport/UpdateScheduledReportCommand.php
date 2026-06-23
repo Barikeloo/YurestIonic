@@ -6,9 +6,6 @@ namespace App\Reporting\Application\UpdateScheduledReport;
 
 final readonly class UpdateScheduledReportCommand
 {
-    /**
-     * @param string[] $recipients
-     */
     public function __construct(
         public int     $restaurantId,
         public string  $uuid,

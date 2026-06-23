@@ -108,7 +108,6 @@ export class PedidosFacade {
     const currentUserId = this._currentUserId();
     let result = this._orders().slice();
 
-    // Chip overrides on status / user
     let statusOverride: string | null = null;
     let userOverride: string | null = null;
     let extraPredicate: ((order: TpvOrder) => boolean) | null = null;
@@ -135,7 +134,6 @@ export class PedidosFacade {
         typeof order.remaining_total === 'number' && order.remaining_total > 0;
     }
 
-    // Status: chip override beats tab + manual filter
     if (statusOverride) {
       result = result.filter((order) => order.status === statusOverride);
     } else {
@@ -147,7 +145,6 @@ export class PedidosFacade {
       }
     }
 
-    // User: chip override beats manual filter
     const effectiveUser = userOverride ?? filters.user;
     if (effectiveUser !== 'all') {
       result = result.filter((order) => order.opened_by_user_id === effectiveUser);
@@ -301,7 +298,6 @@ export class PedidosFacade {
 
       this._lastRefreshedAt.set(new Date());
     } catch {
-      // Si falla el refresh individual, caemos al refresh completo
       await this.loadData(orderId);
     }
   }
@@ -425,11 +421,9 @@ export class PedidosFacade {
 
     this._actionInProgress.set('print');
     try {
-      // Try thermal printer first
       await firstValueFrom(this.tpvService.printTicketOnPrinter(order.id));
       void this.toastService.presentSuccess('Ticket enviado a la impresora.');
     } catch {
-      // Thermal failed (TCP error, no printer configured, etc.) → silent fallback to browser
       try {
         const ticketText = await firstValueFrom(this.tpvService.getFinalTicketText(order.id, '80'));
         this.printWindow('Ticket', order.id.slice(0, 8), ticketText);

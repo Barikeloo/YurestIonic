@@ -280,7 +280,7 @@ final readonly class ExportReportController
     private function buildCsv(array $rows): string
     {
         $handle = fopen('php://temp', 'r+');
-        fwrite($handle, "\xEF\xBB\xBF"); // BOM for Excel compat
+        fwrite($handle, "\xEF\xBB\xBF");
 
         foreach ($rows as $row) {
             fputcsv($handle, $row, ';');

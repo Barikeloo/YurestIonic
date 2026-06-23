@@ -1,9 +1,7 @@
 <div class="finanzas-shell" (click)="closeAllDropdowns()">
 
-  <!-- ── Top bar ─────────────────────────────────────────────────────────── -->
   <div class="fin-topbar" (click)="$event.stopPropagation()">
 
-    <!-- Back + restaurant name -->
     <button class="topbar-back" (click)="goBack()">← Gestión</button>
     <div class="topbar-sep"></div>
     <span class="topbar-restaurant">{{ facade.restaurantName() }}</span>
@@ -12,7 +10,6 @@
     <span class="fin-label">FINANZAS</span>
     <div class="topbar-sep"></div>
 
-    <!-- Period selector -->
     <div class="period-group">
       @for (p of periods; track p.key) {
         <button class="period-btn" [class.active]="facade.period() === p.key" (click)="facade.setPeriod(p.key)">
@@ -23,13 +20,11 @@
 
     <div class="topbar-spacer"></div>
 
-    <!-- Search -->
     <button class="topbar-icon-btn" (click)="toggleSearch()">
       <span>⌕</span>
       <span class="kbd-hint">⌘K</span>
     </button>
 
-    <!-- Alerts bell -->
     <div style="position:relative">
       <button class="alerts-btn" [class.open]="alertsOpen()" (click)="toggleAlerts(); $event.stopPropagation()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -63,12 +58,10 @@
       }
     </div>
 
-    <!-- Avatar -->
     <div class="topbar-avatar">MG</div>
 
   </div>
 
-  <!-- ── Search overlay ──────────────────────────────────────────────────── -->
   @if (searchOpen()) {
     <div class="search-overlay" (click)="closeSearch()">
       <div class="search-panel" (click)="$event.stopPropagation()">
@@ -106,7 +99,6 @@
     </div>
   }
 
-  <!-- ── Tab bar ─────────────────────────────────────────────────────────── -->
   <div class="fin-tabbar">
     @for (t of tabs; track t.key) {
       <button class="tab-btn" [class.active]="facade.activeTab() === t.key" (click)="facade.setTab(t.key)">
@@ -116,7 +108,6 @@
     }
   </div>
 
-  <!-- ── Content ─────────────────────────────────────────────────────────── -->
   <div class="fin-content">
     @if (facade.activeTab() === 'resumen')   { <app-finanzas-resumen-tab />   }
     @if (facade.activeTab() === 'ventas')    { <app-finanzas-ventas-tab />    }

@@ -8,11 +8,6 @@ use App\Reporting\Application\RecordReportExport\RecordReportExport;
 use App\Reporting\Application\RecordReportExport\RecordReportExportCommand;
 use Illuminate\Http\Request;
 
-/**
- * Thin HTTP-adjacent helper that records a generated export. Reads the
- * authenticated user from the session and delegates to the use case.
- * Failures are swallowed: logging an export must never break the download.
- */
 final readonly class ReportExportRecorder
 {
     public function __construct(private RecordReportExport $useCase) {}

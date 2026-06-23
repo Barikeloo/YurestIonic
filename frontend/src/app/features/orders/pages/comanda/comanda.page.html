@@ -1,6 +1,5 @@
 <div class="pedidos-page">
 
-  <!-- Top bar -->
   <div class="comanda-topbar">
     <button class="btn-back" (click)="goBack()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -95,7 +94,7 @@
                   [disabled]="isOutOfStock(product)"
                   (click)="addToCart(product)"
                   >
-                  <!-- Cabecera visual: foto o placeholder con inicial -->
+                  
                   <div class="product-visual">
                     @if (product.image_src) {
                       <img [src]="product.image_src" [alt]="product.name" />
@@ -296,7 +295,6 @@
   (closeModal)="onMenuConfigClose()"
 ></app-menu-config-modal>
 
-<!-- Modal detalle de línea -->
 <div class="modal-overlay" [class.open]="detailModalOpen" (click)="closeLineDetail()">
   @if (selectedLine; as line) {
     <div class="modal-box line-detail-box" (click)="$event.stopPropagation()">

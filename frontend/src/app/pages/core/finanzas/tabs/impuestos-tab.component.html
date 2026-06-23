@@ -2,7 +2,6 @@
 
   @if (!facade.taxReport() && facade.loadingTaxes()) {
 
-    <!-- ── Skeleton: top row ──────────────────────────────────────────────── -->
     <div class="top-row">
       <div class="card">
         <div class="sk sk--label" style="width:55%;margin-bottom:16px"></div>
@@ -37,7 +36,6 @@
       </div>
     </div>
 
-    <!-- ── Skeleton: m303 card ────────────────────────────────────────────── -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
         <div style="display:flex;align-items:center;gap:12px">
@@ -66,10 +64,8 @@
 
   } @else {
 
-    <!-- ── Top row: 1.4fr 1fr ─────────────────────────────────────────────── -->
     <div class="top-row">
 
-      <!-- Desglose por tramo de IVA -->
       <div class="card">
         <div class="section-header">
           <div class="card-title">Desglose por tramo de IVA</div>
@@ -104,7 +100,6 @@
               </div>
             }
 
-            <!-- Dark total row -->
             <div class="vat-row vat-row--total">
               <div class="rate-badge rate-badge--total">Total</div>
               <div class="row-mid"></div>
@@ -121,7 +116,6 @@
         </div>
       </div>
 
-      <!-- Resumen periodo -->
       <div class="card">
         <div class="section-header">
           <div class="card-title">Resumen periodo</div>
@@ -158,10 +152,8 @@
 
     </div>
 
-    <!-- ── Modelo 303 card ────────────────────────────────────────────────── -->
     <div class="m303-card">
 
-      <!-- Header -->
       <div class="m303-head">
         <div class="m303-head-l">
           <div class="m303-icon mono">303</div>
@@ -177,7 +169,6 @@
         </div>
       </div>
 
-      <!-- Quarter progress row -->
       <div class="m303-progress-row">
         <span class="m303-q-label">Trimestre</span>
         <span class="m303-q-period">{{ q()?.period ?? '—' }}</span>
@@ -188,7 +179,7 @@
       </div>
 
       @if (facade.loadingTaxes()) {
-        <!-- Quarter reload spinner — no full skeleton, just the rate grid shimmers in place -->
+        
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
           @for (_ of [1,2,3]; track $index) {
             <div class="rate-card">
@@ -203,7 +194,6 @@
         <div class="sk" style="height:60px;border-radius:12px;margin-top:18px"></div>
       } @else {
 
-        <!-- 3-col rate cards -->
         @if (m303Rates().length === 0) {
           <div class="empty-breakdown" style="padding:32px 0">
             <span class="empty-breakdown-icon">📊</span>
@@ -244,7 +234,6 @@
           </div>
         }
 
-        <!-- Dark total bar -->
         <div class="m303-total-bar">
           <div>
             <div class="m303-total-lbl">Cuota IVA a ingresar (acumulado trimestre)</div>
@@ -264,12 +253,10 @@
 
 </div>
 
-<!-- ── Modelo 303 Modal ───────────────────────────────────────────────────── -->
 @if (show303()) {
   <div class="modal-backdrop" (click)="show303.set(false)">
     <div class="modal-panel" (click)="$event.stopPropagation()">
 
-      <!-- Modal header -->
       <div class="modal-head">
         <div class="modal-head-l">
           <div class="m303-icon mono">303</div>
@@ -281,11 +268,9 @@
         <button class="modal-close-btn" (click)="show303.set(false)">×</button>
       </div>
 
-      <!-- PDF preview body -->
       <div class="modal-body">
         <div class="pdf-preview">
 
-          <!-- PDF header -->
           <div class="pdf-head">
             <div>
               <div class="pdf-agency">Agencia Tributaria</div>
@@ -295,7 +280,6 @@
             <div class="pdf-borrador-badge">BORRADOR</div>
           </div>
 
-          <!-- Company fields -->
           <div class="pdf-fields-grid">
             <div class="pdf-field">
               <div class="pdf-field-lbl">Razón social</div>
@@ -315,7 +299,6 @@
             </div>
           </div>
 
-          <!-- IVA devengado section -->
           <div class="pdf-section-head">IVA DEVENGADO</div>
           <table class="pdf-table">
             <thead>
@@ -355,7 +338,6 @@
             </tbody>
           </table>
 
-          <!-- Resultado section -->
           <div class="pdf-section-head">RESULTADO</div>
           <div class="pdf-resultado">
             <div class="pdf-resultado-l">
@@ -365,7 +347,6 @@
             <div class="pdf-resultado-val mono red">{{ fmt(qTotalTax()) }}</div>
           </div>
 
-          <!-- Disclaimer -->
           <div class="pdf-disclaimer">
             Documento generado automáticamente desde Yurest a partir de las operaciones registradas en el trimestre. Debe ser revisado por su asesor fiscal antes de la presentación. Esta versión es un borrador y no tiene validez como autoliquidación oficial.
           </div>
@@ -373,7 +354,6 @@
         </div>
       </div>
 
-      <!-- Modal footer -->
       <div class="modal-foot">
           <button class="btn-ghost" (click)="show303.set(false)">Cerrar</button>
           <div class="modal-foot-actions">

@@ -23,7 +23,6 @@
         </filter>
       </defs>
 
-      <!-- Individual tables -->
       @for (t of placedTables(); track t.id) {
         @let lyt = t.layout!;
         @let sel = selectedTableId() === t.id;
@@ -84,7 +83,6 @@
         </g>
       }
 
-      <!-- Merged groups: same card as the anchor table, name shows both -->
       @for (g of placedMergedGroups(); track g.groupId) {
         @let lyt = g.anchor.layout!;
         @let h = anchorH(g);
@@ -103,7 +101,7 @@
           (pointerdown)="onGroupPointerDown($event, g)"
           (click)="onGroupClick(g)"
         >
-          <!-- Same shape as the anchor table -->
+          
           @if (lyt.shape === 'circle') {
             <circle [attr.cx]="lyt.width/2" [attr.cy]="lyt.width/2" [attr.r]="lyt.width/2-1"
               class="fp-shape" filter="url(#fp-shadow)"/>
@@ -112,7 +110,6 @@
               class="fp-shape" filter="url(#fp-shadow)"/>
           }
 
-          <!-- Merged name centered -->
           <text
             [attr.x]="lyt.width / 2"
             [attr.y]="h / 2"

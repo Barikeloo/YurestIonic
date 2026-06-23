@@ -670,7 +670,7 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
 
         $result = [];
         foreach ($dayNames as $dow => $label) {
-            if ($dow === 1) continue; // skip Sunday as index 1 — start with Monday
+            if ($dow === 1) continue;
 
             $cells = [];
             foreach ($hours as $h) {
@@ -684,7 +684,6 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
             $result[] = ['day' => $label, 'hours' => $cells];
         }
 
-        // Add Sunday at the end
         if (isset($dayNames[1])) {
             $cells = [];
             foreach ($hours as $h) {
@@ -823,7 +822,6 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
 
         $productIds = $rows->pluck('product_id')->all();
 
-        // ── Previous period comparison ────────────────────────────────────────
         $prevFrom = $range->prevFrom->format('Y-m-d H:i:s');
         $prevTo   = $range->prevTo->format('Y-m-d H:i:s');
 
@@ -842,7 +840,6 @@ final class EloquentReportingRepository implements ReportingRepositoryInterface
             ->get()
             ->keyBy('product_id');
 
-        // ── Cross-sell pairs ──────────────────────────────────────────────────
         $crossSell = DB::table('sales_lines as sl1')
             ->join('sales_lines as sl2', 'sl1.sale_id', '=', 'sl2.sale_id')
             ->join('products as p1', 'p1.id', '=', 'sl1.product_id')

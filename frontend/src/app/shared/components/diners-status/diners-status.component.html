@@ -1,11 +1,10 @@
 <div class="diners-status-container" [class.compact]="compact">
-  <!-- Header -->
+  
   <div class="diners-status-header">
     <span class="diners-status-title">Comensales</span>
     <span class="diners-status-badge">{{ diners }} total · {{ paidDiners.length }} pagado · {{ remainingDiners }} pend.</span>
   </div>
 
-  <!-- Resumen de montos -->
   <div class="amounts-summary">
     <div class="amount-row">
       <span class="amount-label">Total cuenta:</span>
@@ -21,7 +20,6 @@
     </div>
   </div>
 
-  <!-- Por comensal -->
   @if (diners > 0 && total > 0) {
     <div class="per-diner-section">
       <div class="per-diner-header">
@@ -31,7 +29,6 @@
     </div>
   }
 
-  <!-- Grid de comensales -->
   @if (diners > 0) {
     <div class="diners-grid">
       @for (diner of getDinerPayments(); track diner.number) {
@@ -54,7 +51,6 @@
     </div>
   }
 
-  <!-- Mensaje si no hay comensales -->
   @if (diners === 0) {
     <div class="no-diners-msg">
       No hay comensales registrados

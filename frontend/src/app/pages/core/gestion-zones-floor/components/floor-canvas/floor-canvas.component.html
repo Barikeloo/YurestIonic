@@ -52,7 +52,7 @@
           (pointerleave)="onTablePointerLeave()"
           (dblclick)="onTableDblClick($event, table)"
         >
-          <!-- Selection ring -->
+          
           @if (isSelected) {
             @if (table.shape === 'circle') {
               <circle [attr.cx]="tw/2" [attr.cy]="tw/2" [attr.r]="tw/2+5" class="select-ring"/>
@@ -61,7 +61,6 @@
             }
           }
 
-          <!-- Shape -->
           @if (table.shape === 'circle') {
             <circle [attr.cx]="tw/2" [attr.cy]="tw/2" [attr.r]="tw/2-1"
               class="table-shape"
@@ -72,14 +71,12 @@
               [attr.filter]="isSelected ? 'url(#fc-glow)' : 'url(#fc-shadow)'"/>
           }
 
-          <!-- Label -->
           @if (_editing() !== table.id) {
             <text [attr.x]="centerX(table)" [attr.y]="centerY(table)" text-anchor="middle" class="table-label">
               {{ table.name }}
             </text>
           }
 
-          <!-- Inline edit -->
           @if (_editing() === table.id) {
             <foreignObject [attr.x]="4" [attr.y]="centerY(table)-10" [attr.width]="tw-8" height="20">
               <div xmlns="http://www.w3.org/1999/xhtml">
@@ -93,7 +90,6 @@
             </foreignObject>
           }
 
-          <!-- Resize handles -->
           @if (isSelected && _editing() !== table.id) {
             @let hw = tw;
             @let hh = table.shape === 'circle' ? tw : th;
@@ -107,7 +103,6 @@
     </svg>
   </div>
 
-  <!-- ── Floating action menu (above selected table) ─────────────────────── -->
   @if (floatingMenu(); as menu) {
     <div class="float-menu" [style.left.px]="menu.cx" [style.top.px]="menu.ty">
       <button class="fm-btn" title="Editar nombre (doble-click)" (click)="onMenuRename(menu.table); $event.stopPropagation()">
@@ -140,7 +135,6 @@
     </div>
   }
 
-  <!-- Tooltip -->
   @if (_tooltip(); as tip) {
     <div class="canvas-tooltip" [style.left.px]="tip.x" [style.top.px]="tip.y">{{ tip.text }}</div>
   }

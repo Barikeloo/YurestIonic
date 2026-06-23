@@ -1512,9 +1512,6 @@ export class CajaPage implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Actualizar el total pendiente de una mesa en la lista pendingTables
-   */
   private updatePendingTableTotal(orderId: string, newTotalCents: number): void {
     const currentTables = this.pendingTables;
     const updatedTables = currentTables.map((table) =>

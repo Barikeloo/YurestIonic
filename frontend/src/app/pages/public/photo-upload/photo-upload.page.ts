@@ -253,7 +253,6 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
     return new Promise((resolve) => c.toBlob((b) => resolve(b), 'image/jpeg', 0.9));
   }
 
-  // ── Gallery sheet ────────────────────────────────────────
   protected goGallery(): void { this.sheetOpen.set(true); }
   protected closeSheet(): void { this.sheetOpen.set(false); }
 
@@ -287,17 +286,14 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
     });
   }
 
-  // ── Upload actions ───────────────────────────────────────
   protected uploadCancel(): void { this.facade.cancelUpload(); this.facade.setState('preview'); }
 
-  // ── Success / Error / Expired actions ───────────────────
   protected okAgain(): void { this.isSuccessPulse.set(false); this.pendingBlob = null; this.goCamera(); }
   protected errRetry(): void { if (this.pendingBlob) this.facade.upload(this.pendingBlob); }
   protected errRestart(): void { this.facade.setState('ready'); }
   protected expRetry(): void { this.facade.setState('ready'); }
   protected usedRetry(): void { this.facade.setState('ready'); }
 
-  // ── Feedback ─────────────────────────────────────────────
   private buzz(): void { navigator.vibrate?.([24, 40, 24]); }
 
   private chime(): void {
@@ -317,7 +313,7 @@ export class PhotoUploadPage implements OnInit, OnDestroy {
         o.connect(g).connect(ctx.destination);
         o.start(now + t); o.stop(now + t + 0.3);
       });
-    } catch { /* audio not available */ }
+    } catch {}
   }
 
   protected onImgError(e: Event): void {

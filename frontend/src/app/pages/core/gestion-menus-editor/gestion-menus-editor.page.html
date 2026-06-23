@@ -1,5 +1,5 @@
 <div class="editor-page">
-  <!-- Top bar sticky con back + acciones -->
+  
   <header class="editor-page__topbar">
     <div class="editor-page__back">
       <button type="button" class="btn-back" (click)="onCancel()" aria-label="Volver">
@@ -30,7 +30,7 @@
     <div class="editor-page__loading">Cargando editor…</div>
   } @else {
     <div class="editor-page__split">
-      <!-- ═══ SIDEBAR CATÁLOGO ═══════════════════════════════════════ -->
+      
       <aside class="catalog-sidebar" aria-label="Catálogo de productos">
         <div class="catalog-sidebar__header">
           <h2 class="catalog-sidebar__title">Catálogo</h2>
@@ -106,7 +106,6 @@
         </ul>
       </aside>
 
-      <!-- ═══ COLUMNA CONFIGURACIÓN ════════════════════════════════ -->
       <aside class="config-column" aria-label="Configuración del menú">
         <div class="config-column__inner">
           <div class="config-column__heading-row">
@@ -114,7 +113,6 @@
             <span class="config-column__heading-hint">Datos generales y disponibilidad</span>
           </div>
 
-      <!-- ── HEADER ────────────────────────────────────────────────── -->
       <section class="editor-section">
         <h2 class="editor-section__title">Datos generales</h2>
 
@@ -187,7 +185,6 @@
         </div>
       </section>
 
-      <!-- ── DISPONIBILIDAD ───────────────────────────────────────── -->
       <section class="editor-section">
         <h2 class="editor-section__title">Disponibilidad</h2>
 
@@ -258,7 +255,6 @@
         </div>
       </aside>
 
-      <!-- ═══ COLUMNA SECCIONES ════════════════════════════════════ -->
       <main class="sections-column" aria-label="Secciones del menú">
         <div class="sections-column__inner">
           <div class="editor-page__title-row">

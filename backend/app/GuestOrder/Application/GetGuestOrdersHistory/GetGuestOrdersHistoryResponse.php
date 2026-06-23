@@ -16,7 +16,6 @@ final readonly class GetGuestOrdersHistoryResponse
         public int $totalPendingCents,
     ) {}
 
-    /** @param RoundData[] $rounds @param CartLineData[] $pendingLines */
     public static function create(array $rounds, array $pendingLines): self
     {
         $sent    = 0;

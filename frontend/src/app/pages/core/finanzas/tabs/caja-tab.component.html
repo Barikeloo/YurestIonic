@@ -10,7 +10,6 @@
 
   } @else {
 
-    <!-- Active session card (only if open) -->
     @if (s()) {
       @let session = s()!;
 
@@ -48,7 +47,6 @@
         </div>
       </div>
 
-      <!-- Movements (only if session open) -->
       <div class="card">
         <div class="card-header">
           <div>
@@ -89,7 +87,6 @@
       </div>
     }
 
-    <!-- History (always visible) -->
     <div class="card" style="margin-top:12px;">
       <div class="card-header">
         <div>
@@ -139,7 +136,6 @@
 
 </div>
 
-<!-- ── Session detail modal ──────────────────────────────────────────── -->
 @if (modalOpen()) {
   @let ms = modalSession();
   @if (ms) {
@@ -147,7 +143,6 @@
     <div class="modal-overlay" (click)="closeDetail()">
       <div class="modal-card" (click)="$event.stopPropagation()">
 
-        <!-- Header -->
         <div class="modal-hdr">
           <div>
             <div class="modal-hdr-top">
@@ -169,7 +164,6 @@
           <button class="modal-close-btn" (click)="closeDetail()">✕</button>
         </div>
 
-        <!-- Loading -->
         @if (facade.loadingSessionDetail()) {
           <div class="modal-body">
             <div class="sk" style="height:70px;border-radius:12px;"></div>
@@ -179,7 +173,6 @@
         } @else {
           <div class="modal-body">
 
-            <!-- ── Row: summary cards ── -->
             <div class="m-summary-grid">
               <div class="m-card m-card--green">
                 <div class="m-card-label">Fondo inicial</div>
@@ -201,7 +194,6 @@
               </div>
             </div>
 
-            <!-- ── Payment methods ── -->
             @if (facade.selectedSessionSummary(); as summary) {
               <div class="m-pay-row">
                 <div class="m-pay-item">
@@ -237,7 +229,6 @@
               </div>
             }
 
-            <!-- ── Counters ── -->
             <div class="m-counters">
               <div class="m-counter"><span class="m-counter-num">{{ item.tickets }}</span> tickets</div>
               <div class="m-counter"><span class="m-counter-num">{{ facade.selectedSessionSummary()?.tickets_count ?? item.tickets }}</span> cobros</div>
@@ -245,7 +236,6 @@
               <div class="m-counter"><span class="m-counter-num">#{{ item.z_report_number ?? '—' }}</span> Z</div>
             </div>
 
-            <!-- ── Movements ── -->
             @if (facade.selectedSessionSummary(); as summary) {
               <div class="m-section-label">Movimientos de efectivo</div>
               <div class="m-mov-filter">
@@ -283,7 +273,6 @@
               </div>
             }
 
-            <!-- ── Arqueo / Discrepancy ── -->
             @if (item.discrepancy_cents !== null) {
               <div class="m-arqueo">
                 <div class="m-arqueo-title">Arqueo de caja</div>
@@ -318,4 +307,3 @@
     </div>
   }
 }
-

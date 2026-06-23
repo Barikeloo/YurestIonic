@@ -113,7 +113,6 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
     }
   }
 
-  // ── File input ────────────────────────────────────────────
 
   protected triggerFileInput(): void {
     this.fileInput?.nativeElement.click();
@@ -138,7 +137,6 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
       this._cropOffsetX.set(0);
       this._cropOffsetY.set(0);
       this.state.set('cropping');
-      // _cropEffect fires reactively when Angular sets the ViewChild via cropCanvasRef setter
     };
     img.onerror = () => {
       this.cleanupCrop();
@@ -147,7 +145,6 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
     img.src = url;
   }
 
-  // ── Crop / zoom ───────────────────────────────────────────
 
   protected onZoomChange(event: Event): void {
     this.cropZoom.set(Number((event.target as HTMLInputElement).value));
@@ -269,7 +266,6 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
     this.isDragging = false;
   }
 
-  // ── QR flow ───────────────────────────────────────────────
 
   private async tryOpen(): Promise<void> {
     const cached = this.productId ? this.tokenCacheService.get(this.productId) : undefined;
@@ -373,7 +369,6 @@ export class PhotoUploadQrModalComponent implements OnChanges, OnDestroy {
     this.stopCountdown();
   }
 
-  // ── Effects ───────────────────────────────────────────────
 
   readonly _qrEffect = effect(() => {
     const trigger = this.qrRenderTrigger();

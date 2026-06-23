@@ -6,15 +6,10 @@ namespace App\Tables\Domain\Event;
 
 use App\Shared\Domain\Event\AuditableEvent;
 
-/**
- * Group-level event: a set of tables was merged into a single group. Published
- * directly by the use case (it spans several aggregates, not one).
- */
 final readonly class TablesMerged implements AuditableEvent
 {
     private \DateTimeImmutable $occurredOn;
 
-    /** @param list<string> $tableNames */
     public function __construct(
         private string $groupId,
         private array $tableNames,

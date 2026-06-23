@@ -105,81 +105,64 @@ export class FinanzasFacade {
 
   private readonly _restaurantCtx = toSignal(this.appContext.activeRestaurant$, { initialValue: null });
 
-  // ── UI state ──────────────────────────────────────────────────────────────
   private readonly _activeTab      = signal<FinanzasTab>('resumen');
   private readonly _period         = signal<FinanzasPeriod>('today');
   private readonly _resumenVariant = signal<ResumenVariant>('A');
   private readonly _showCompare    = signal(true);
 
-  // ── Alerts state ─────────────────────────────────────────────────────────
   private readonly _alerts        = signal<FinanzasAlert[]>([]);
   private readonly _unreadCount   = signal(0);
   private readonly _loadingAlerts = signal(false);
 
-  // ── Summary state ────────────────────────────────────────────────────────
   private readonly _summaryApi      = signal<DashboardSummaryResponse | null>(null);
   private readonly _loadingSummary  = signal(true);
   private readonly _periodChanges$  = toObservable(this._period);
 
-  // ── Heatmap state ────────────────────────────────────────────────────────
   private readonly _heatmapApi = signal<HeatmapRow[] | null>(null);
 
-  // ── Sales report state ──────────────────────────────────────────────────
   private readonly _salesReport   = signal<SalesReportResponse | null>(null);
   private readonly _loadingSales  = signal(true);
 
-  // ── Sale detail state ───────────────────────────────────────────────────
   private readonly _saleDetailApi = signal<SaleDetailResponse | null>(null);
   private readonly _loadingDetail = signal(false);
 
-  // ── Products report state ────────────────────────────────────────────────
   private readonly _productsReport   = signal<ProductsReportResponse | null>(null);
   private readonly _loadingProducts  = signal(false);
 
-  // ── Employees report state ───────────────────────────────────────────────
   private readonly _employeesReport  = signal<EmployeesReportResponse | null>(null);
   private readonly _loadingEmployees = signal(false);
 
-  // ── Tax report state ─────────────────────────────────────────────────────
   private readonly _taxReport    = signal<TaxReportResponse | null>(null);
   private readonly _loadingTaxes = signal(false);
   private readonly _activeQ      = signal<Quarter>(currentQuarter());
   private readonly _activeQ$     = toObservable(this._activeQ);
 
-  // ── Export history state ─────────────────────────────────────────────────
   private readonly _exportHistory = signal<ExportHistoryItem[]>([]);
   public readonly exportHistory   = this._exportHistory.asReadonly();
 
-  // ── Scheduled reports state ──────────────────────────────────────────────
   private readonly _scheduledReports = signal<ScheduledReport[]>([]);
   public readonly scheduledReports   = this._scheduledReports.asReadonly();
 
-  // ── Export preview state ─────────────────────────────────────────────────
   private readonly _preview = signal<{ url: string; title: string; uuid: string; filename: string } | null>(null);
   public readonly preview   = this._preview.asReadonly();
 
-  // ── Open orders state ────────────────────────────────────────────────────
   private readonly _openOrders       = signal<TpvOrder[]>([]);
   private readonly _openOrdersLoaded = signal(false);
 
-  // ── Table / Zone state ────────────────────────────────────────────────────
   private readonly _tables = signal<TpvTableItem[]>([]);
   private readonly _zones  = signal<TpvZoneItem[]>([]);
 
-  // ── Cash state ────────────────────────────────────────────────────────────
   private readonly _activeSessionItem = signal<TpvCashSessionListItem | null>(null);
   private readonly _cashSummary       = signal<TpvCashSessionSummary | null>(null);
   private readonly _cashMovementsList = signal<CashMovementItem[]>([]);
   private readonly _cashHistoryList   = signal<TpvCashSessionListItem[]>([]);
   private readonly _loadingCash       = signal(false);
 
-  // ── Session detail modal state ──────────────────────────────────────────────
   private readonly _selectedSessionItem    = signal<TpvCashSessionListItem | null>(null);
   private readonly _selectedSessionSummary = signal<TpvCashSessionSummary | null>(null);
   private readonly _selectedSessionMovements = signal<CashMovementItem[]>([]);
   private readonly _loadingSessionDetail   = signal(false);
 
-  // ── Public readonly API ───────────────────────────────────────────────────
   public readonly activeTab      = this._activeTab.asReadonly();
   public readonly period         = this._period.asReadonly();
   public readonly resumenVariant = this._resumenVariant.asReadonly();
@@ -229,7 +212,6 @@ export class FinanzasFacade {
 
   public readonly unreadAlerts = this._unreadCount.asReadonly();
 
-  // ── Cash computed ───────────────────────────────────────────────────────────
   public readonly cashSession = computed((): CashSessionViewData | null => {
     const session = this._activeSessionItem();
     const summary = this._cashSummary();
@@ -270,10 +252,8 @@ export class FinanzasFacade {
     return summary ? summary.expected_amount : 0;
   });
 
-  // ── Global search filter (used by tab components) ──────────────────────────
   public readonly pendingSearchFilter = signal<{tab: FinanzasTab; term: string} | null>(null);
 
-  // ── Setters ───────────────────────────────────────────────────────────────
   public setTab(tab: FinanzasTab): void             { this._activeTab.set(tab); }
   public setPeriod(p: FinanzasPeriod): void         { this._period.set(p); }
   public setResumenVariant(v: ResumenVariant): void { this._resumenVariant.set(v); }
@@ -301,7 +281,6 @@ export class FinanzasFacade {
       return;
     }
 
-    // Report types with a dedicated professional PDF endpoint.
     const PDF_TYPES = ['daily', 'products', 'families', 'tips', 'cash'];
     if (format === 'PDF' && PDF_TYPES.includes(type)) {
       this.finanzasService.downloadReportPdf(type, period).subscribe(blob => {
@@ -400,7 +379,6 @@ export class FinanzasFacade {
     this.finanzasService.sendTaxPdf(period, quarter, email).subscribe();
   }
 
-  // ── Init ──────────────────────────────────────────────────────────────────
   public init(): void {
     this.loadAlerts();
     this.loadCashData();
@@ -487,7 +465,6 @@ export class FinanzasFacade {
       .subscribe(res => this._heatmapApi.set(res.data));
   }
 
-  // ── Alerts ────────────────────────────────────────────────────────────────
   public loadAlerts(): void {
     this._loadingAlerts.set(true);
     this.auditAlertService.listAlerts()
@@ -508,7 +485,6 @@ export class FinanzasFacade {
       .subscribe(() => this.loadAlerts());
   }
 
-  // ── Cash ──────────────────────────────────────────────────────────────────
   public loadCashData(): void {
     this._loadingCash.set(true);
 
@@ -551,7 +527,6 @@ export class FinanzasFacade {
       });
   }
 
-  // ── Cash actions ────────────────────────────────────────────────────────────
   public registerCashMovement(payload: {
     cash_session_id: string;
     type: string;
@@ -598,7 +573,6 @@ export class FinanzasFacade {
       });
   }
 
-  // ── Session detail (modal) ──────────────────────────────────────────────────
   public loadSessionDetail(uuid: string): void {
     const item = this._cashHistoryList().find(s => s.uuid === uuid) ?? null;
     this._selectedSessionItem.set(item);
@@ -634,7 +608,6 @@ export class FinanzasFacade {
       });
   }
 
-  // ── Sale detail ──────────────────────────────────────────────────────────
   public loadSaleDetail(uuid: string): void {
     this._loadingDetail.set(true);
     this.finanzasService.getSaleDetail(uuid)
@@ -648,7 +621,6 @@ export class FinanzasFacade {
       });
   }
 
-  // ── Products report ──────────────────────────────────────────────────────
   public loadProducts(): void {
     this._loadingProducts.set(true);
     this.finanzasService.getProducts(this._period())
@@ -662,7 +634,6 @@ export class FinanzasFacade {
       });
   }
 
-  // ── Open orders ───────────────────────────────────────────────────────────
   public loadOpenOrders(): void {
     this.tpvService.listOrders()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -717,7 +688,6 @@ export class FinanzasFacade {
       });
   }
 
-  // ── Private helpers ───────────────────────────────────────────────────────
   private mapApiAlert(a: AuditAlertApi): FinanzasAlert {
     return {
       id:    a.uuid,
@@ -763,7 +733,6 @@ export class FinanzasFacade {
     return `${day} ${time}`;
   }
 
-  // ── Mock data (reemplazados fase a fase) ──────────────────────────────────
   public readonly meta            = MOCK_META;
   public readonly byHourLastWeek  = MOCK_BY_HOUR_LAST_WEEK;
   public readonly heatmap = computed((): HeatmapRow[] => {
@@ -837,7 +806,6 @@ export class FinanzasFacade {
   public readonly zonesLayout     = MOCK_ZONES_LAYOUT;
   public readonly cannibals       = MOCK_CANNIBALS;
 
-  // ── Summary getters (real data when loaded, mock fallback) ────────────────
   public get summary() {
     const api = this._summaryApi();
     if (!api) return MOCK_SUMMARY;
@@ -908,10 +876,8 @@ export class FinanzasFacade {
     };
   }
 
-  // ── Computed helpers ──────────────────────────────────────────────────────
   public readonly totalRevenue = computed(() => this.summary.revenue.v);
 
-  // ── Format helpers ────────────────────────────────────────────────────────
   public fmt(cents: number): string {
     return (cents / 100).toLocaleString('es-ES', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 });
   }
@@ -1009,7 +975,6 @@ export class FinanzasFacade {
     const result: Insight[] = [];
     const { kpis, by_hour, by_family, top_products, by_payment_method } = api;
 
-    // Peak hour
     if (by_hour.length) {
       const peak = by_hour.reduce((a, b) => a.v >= b.v ? a : b);
       result.push({
@@ -1019,7 +984,6 @@ export class FinanzasFacade {
       });
     }
 
-    // Top category
     if (by_family.length) {
       const top = by_family[0];
       const total = by_family.reduce((s, f) => s + f.v, 0);
@@ -1031,7 +995,6 @@ export class FinanzasFacade {
       });
     }
 
-    // Top product
     if (top_products.length) {
       const top = top_products[0];
       result.push({
@@ -1041,7 +1004,6 @@ export class FinanzasFacade {
       });
     }
 
-    // Revenue vs prev
     const { revenue, tickets, avg_ticket } = kpis;
     if (revenue.delta_pct !== 0) {
       const dir = revenue.delta_pct > 0 ? 'por encima' : 'por debajo';
@@ -1053,7 +1015,6 @@ export class FinanzasFacade {
       });
     }
 
-    // Ticket medio insight
     if (avg_ticket.delta_pct !== 0) {
       const dir = avg_ticket.delta_pct > 0 ? 'sube' : 'baja';
       result.push({
@@ -1063,7 +1024,6 @@ export class FinanzasFacade {
       });
     }
 
-    // Payment method diversity
     if (by_payment_method) {
       const methods = [
         { key: 'card', label: 'Tarjeta' },

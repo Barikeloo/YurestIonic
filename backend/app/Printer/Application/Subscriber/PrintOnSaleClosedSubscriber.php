@@ -25,7 +25,6 @@ final class PrintOnSaleClosedSubscriber implements EventSubscriber
 
     public function handle(DomainEvent $event): void
     {
-        /** @var SaleClosed $event */
         try {
             ($this->printFinalTicket)(new PrintFinalTicketCommand($event->orderId()));
         } catch (\Throwable $e) {

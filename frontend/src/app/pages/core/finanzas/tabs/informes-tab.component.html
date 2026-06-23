@@ -1,6 +1,5 @@
 <div class="informes">
 
-  <!-- ── Segment selector ────────────────────────────────────────────────── -->
   <div class="seg-row">
     <div class="seg-group">
       @for (s of [['predefinidos','Predefinidos'],['integraciones','Integraciones'],['programados','Programados']]; track s[0]) {
@@ -9,10 +8,8 @@
     </div>
   </div>
 
-  <!-- ══ PREDEFINIDOS ══════════════════════════════════════════════════════ -->
   @if (activeSection() === 'predefinidos') {
 
-    <!-- Report cards -->
     <div class="card">
       <div class="section-head">
         <div class="section-title">Informes predefinidos</div>
@@ -27,7 +24,6 @@
                [style.background]="lastSelected() === r.id ? r.color + '08' : '#fff'"
                (click)="selectReport(r.id)">
 
-            <!-- Icon + title -->
             <div class="report-top">
               <div class="report-icon-box" [style.background]="r.color + '15'" [style.color]="r.color">
                 <app-icon [name]="r.iconName" [size]="22" [strokeWidth]="1.8" />
@@ -38,13 +34,11 @@
               </div>
             </div>
 
-            <!-- Preview items -->
             <div class="report-preview">
               <span class="preview-label">Incluye</span>
               {{ r.preview.join(' · ') }}
             </div>
 
-            <!-- Format buttons -->
             <div class="report-actions">
               @for (f of r.formats; track f) {
                 <button class="fmt-btn" [style.background]="r.color" [style.border-color]="r.color"
@@ -58,7 +52,6 @@
       </div>
     </div>
 
-    <!-- Export history -->
     <div class="card">
       <div class="section-head">
         <div class="section-title">Historial de exportaciones</div>
@@ -116,10 +109,8 @@
 
   }
 
-  <!-- ══ INTEGRACIONES ═════════════════════════════════════════════════════ -->
   @if (activeSection() === 'integraciones') {
 
-    <!-- Banner -->
     <div class="banner-card banner-card--blue">
       <div class="banner-icon"><app-icon name="refresh-cw" [size]="20" /></div>
       <div class="banner-body">
@@ -129,21 +120,18 @@
       <button class="ghost-btn" style="color:#0077cc">¿Cómo funciona? →</button>
     </div>
 
-    <!-- Integration cards grid -->
     <div class="intg-grid">
       @for (it of integrations; track it.id) {
         <div class="intg-card"
              [style.border-color]="it.connected ? it.color : '#e8e8e8'"
              [style.background]="it.connected ? it.color + '06' : '#fff'">
 
-          <!-- Connected badge -->
           @if (it.connected) {
             <div class="conn-badge-abs" style="background:#1a9e5a">
               <span class="conn-dot"></span>Conectado
             </div>
           }
 
-          <!-- Logo + name -->
           <div class="intg-header">
             <div class="intg-logo" [style.background]="it.color">{{ it.logo }}</div>
             <div>
@@ -152,7 +140,6 @@
             </div>
           </div>
 
-          <!-- Feature list -->
           <div class="intg-features">
             @for (f of it.features; track f) {
               <div class="feature-row">
@@ -162,12 +149,10 @@
             }
           </div>
 
-          <!-- Plan badge -->
           @if (it.plan) {
             <div class="plan-badge">Disponible en plan {{ it.plan }}</div>
           }
 
-          <!-- Actions -->
           @if (it.connected) {
             <div class="intg-actions">
               <button class="sync-btn">Sincronizar ahora</button>
@@ -189,10 +174,8 @@
 
   }
 
-  <!-- ══ PROGRAMADOS ════════════════════════════════════════════════════════ -->
   @if (activeSection() === 'programados') {
 
-    <!-- Banner -->
     <div class="banner-card banner-card--green">
       <div class="banner-icon"><app-icon name="clock" [size]="20" /></div>
       <div class="banner-body">
@@ -202,7 +185,6 @@
       <button class="success-btn" (click)="openCreateModal()">+ Nueva programación</button>
     </div>
 
-    <!-- Scheduled reports table -->
     <div class="card">
       <div class="section-head">
         <div class="section-title">Informes programados</div>
@@ -260,7 +242,6 @@
 
   }
 
-  <!-- ══ PREVIEW MODAL ═══════════════════════════════════════════════════════ -->
   @if (facade.preview(); as pv) {
     <div class="preview-overlay" (click)="facade.closePreview()">
       <div class="preview-modal" (click)="$event.stopPropagation()">
@@ -276,7 +257,6 @@
     </div>
   }
 
-  <!-- ══ CREATE/EDIT MODAL ══════════════════════════════════════════════════ -->
   @if (modalMode()) {
     <div class="preview-overlay" (click)="closeModal()">
       <div class="preview-modal" (click)="$event.stopPropagation()" style="max-width:520px">
@@ -286,13 +266,11 @@
         </div>
         <div class="modal-body" style="padding:20px; display:flex; flex-direction:column; gap:14px; overflow-y:auto; max-height:60vh">
 
-          <!-- Name -->
           <div class="field-group">
             <label class="field-label">Nombre</label>
             <input class="field-input" type="text" [value]="form.name()" (input)="form.name.set($any($event.target).value)" placeholder="Resumen diario" />
           </div>
 
-          <!-- Report type -->
           <div class="field-group">
             <label class="field-label">Tipo de informe</label>
             <select class="field-input" [value]="form.reportType()" (change)="form.reportType.set($any($event.target).value)">
@@ -305,7 +283,6 @@
             </select>
           </div>
 
-          <!-- Format -->
           <div class="field-group">
             <label class="field-label">Formato</label>
             <select class="field-input" [value]="form.format()" (change)="form.format.set($any($event.target).value)">
@@ -314,7 +291,6 @@
             </select>
           </div>
 
-          <!-- Frequency -->
           <div class="field-group">
             <label class="field-label">Frecuencia</label>
             <select class="field-input" [value]="form.frequency()" (change)="form.frequency.set($any($event.target).value)">
@@ -325,13 +301,11 @@
             </select>
           </div>
 
-          <!-- Time -->
           <div class="field-group">
             <label class="field-label">Hora de envío</label>
             <input class="field-input" type="time" [value]="form.time()" (input)="form.time.set($any($event.target).value)" />
           </div>
 
-          <!-- Weekday (weekly) -->
           @if (form.frequency() === 'weekly') {
             <div class="field-group">
               <label class="field-label">Día de la semana</label>
@@ -347,7 +321,6 @@
             </div>
           }
 
-          <!-- Day of month (monthly) -->
           @if (form.frequency() === 'monthly') {
             <div class="field-group">
               <label class="field-label">Día del mes</label>
@@ -355,7 +328,6 @@
             </div>
           }
 
-          <!-- Recipients -->
           <div class="field-group">
             <label class="field-label">Destinatarios</label>
             @for (email of form.recipients(); track trackRecipient($index); let i = $index) {
@@ -369,7 +341,6 @@
             <button class="ghost-btn" style="font-size:12px; padding:4px 0" (click)="addRecipient()">+ Añadir otro</button>
           </div>
 
-          <!-- Active -->
           <div class="field-group" style="flex-direction:row; align-items:center; gap:10px">
             <label class="field-label" style="margin-bottom:0">Activo</label>
             <div class="toggle" [class.toggle--on]="form.active()" (click)="toggleActive()">

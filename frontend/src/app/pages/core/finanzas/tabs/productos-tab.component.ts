@@ -41,18 +41,15 @@ export class ProductosTabComponent {
   protected readonly showCostCols  = false;
   protected readonly showStockCols = false;
 
-  // ── UI state ─────────────────────────────────────────────────────────────
   protected readonly filterFam = signal('all');
   protected readonly sortKey   = signal<SortKey>('revenue');
   protected readonly search    = signal('');
   protected readonly selected  = signal<Enriched | null>(null);
 
-  // ── Chart hover ───────────────────────────────────────────────────────────
   protected readonly hoveredDay = signal<number | null>(null);
   protected readonly tipX       = signal(0);
   protected readonly tipY       = signal(0);
 
-  // ── Matrix hover ──────────────────────────────────────────────────────────
   protected readonly matrixHovered   = signal<MatrixPoint | null>(null);
   protected readonly matrixTipX      = signal(0);
   protected readonly matrixTipY      = signal(0);
@@ -74,7 +71,6 @@ export class ProductosTabComponent {
     });
   }
 
-  // ── Enriched list (ABC + deltas) ──────────────────────────────────────────
   protected readonly enriched = computed((): Enriched[] => {
     const items = this.facade.productsReport()?.items;
     if (!items?.length) return [];
@@ -121,7 +117,6 @@ export class ProductosTabComponent {
     return [...this.filtered()].sort((a, b) => key === 'units' ? b.units - a.units : b.revenue - a.revenue);
   });
 
-  // Virtual-scroll viewport height: grows with rows, capped (itemSize 57px).
   protected readonly rankRowH = 57;
   protected readonly vpHeight = computed(() => Math.min(this.sorted().length * this.rankRowH, 9 * this.rankRowH));
 
@@ -130,7 +125,6 @@ export class ProductosTabComponent {
   protected readonly familyCount     = computed(() => new Set(this.enriched().map(p => p.family)).size);
   protected readonly filteredRevenue = computed(() => this.filtered().reduce((s, p) => s + p.revenue, 0));
 
-  // ── Matrix — viewBox 0 0 300 300, square plot x:40–280, y:20–260 ─────────
   protected readonly matrixPoints = computed((): MatrixPoint[] => {
     const items = this.enriched();
     if (items.length < 2) return [];
@@ -187,7 +181,6 @@ export class ProductosTabComponent {
     return s.length % 2 === 0 ? (s[m - 1] + s[m]) / 2 : s[m];
   }
 
-  // ── ABC / Delta helpers ───────────────────────────────────────────────────
   protected abcColor(abc: 'A' | 'B' | 'C'): string {
     return abc === 'A' ? '#1a9e5a' : abc === 'B' ? '#d18a1c' : '#9b9b9b';
   }
@@ -207,7 +200,6 @@ export class ProductosTabComponent {
     return `${v >= 0 ? '+' : ''}${v.toFixed(1).replace('.', ',')}%`;
   }
 
-  // ── Product modal ──────────────────────────────────────────────────────────
   protected openProduct(p: Enriched): void {
     this.selected.set(p);
     this.hoveredDay.set(null);
@@ -245,7 +237,6 @@ export class ProductosTabComponent {
     return pad + (1 - data[i] / Math.max(...data, 1)) * (H - 2 * pad);
   }
 
-  // ── SVG chart helpers ─────────────────────────────────────────────────────
   protected chartDates(): string[] {
     const today = new Date();
     return Array.from({ length: 14 }, (_, i) => {
@@ -288,7 +279,6 @@ export class ProductosTabComponent {
     }));
   }
 
-  // ── Trend (spark) ─────────────────────────────────────────────────────────
   protected trendInfo(spark: number[]): { trend: string; delta: number | null } | null {
     if (!spark || spark.length < 7) return null;
     const recent = spark.slice(-3).reduce((a, b) => a + b, 0) / 3;
@@ -308,7 +298,6 @@ export class ProductosTabComponent {
     return Math.max(...this.facade.byFamily.map(f => f.v), 1);
   }
 
-  // ── CSV ───────────────────────────────────────────────────────────────────
   protected exportCsv(): void {
     const rows   = this.sorted();
     const period = this.facade.periodLabel();

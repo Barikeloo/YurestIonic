@@ -30,7 +30,6 @@ final class PrintFinalTicket implements PrintFinalTicketInterface
         try {
             $response = ($this->getTicket)(new GetFinalTicketPrintCommand($command->orderId));
         } catch (OrderFinalTicketNotFoundException) {
-            // Ticket not ready yet — skip silently
             return;
         }
 
@@ -55,7 +54,6 @@ final class PrintFinalTicket implements PrintFinalTicketInterface
     private function resolvePrinter(
         \App\Sale\Application\GetFinalTicketPrint\GetFinalTicketPrintResponse $response,
     ): ?\App\Printer\Domain\Entity\PrinterConfig {
-        // Try zone-assigned printer first
         $tableId = $response->table['id'] ?? null;
         if ($tableId !== null) {
             $table = $this->tableRepository->findById($tableId);
@@ -67,7 +65,6 @@ final class PrintFinalTicket implements PrintFinalTicketInterface
             }
         }
 
-        // Fallback to restaurant-level default printer
         $restaurantUuid = $response->restaurant['id'] ?? null;
         if ($restaurantUuid === null) {
             return null;

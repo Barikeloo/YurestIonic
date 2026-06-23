@@ -10,10 +10,6 @@ final readonly class ProductModifierUpdated implements AuditableEvent
 {
     private \DateTimeImmutable $occurredOn;
 
-    /**
-     * @param array{name: string, type: string, is_required: bool, selection_type: string, price: int, active: bool, sort_order: int} $before
-     * @param array{name: string, type: string, is_required: bool, selection_type: string, price: int, active: bool, sort_order: int} $after
-     */
     public function __construct(
         private string $modifierId,
         private array $before,

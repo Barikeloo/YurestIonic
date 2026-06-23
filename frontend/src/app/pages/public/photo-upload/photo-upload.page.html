@@ -1,13 +1,11 @@
 <div class="app">
 
-  <!-- ======================== VALIDANDO ======================== -->
   <section class="screen center-screen" [class.active]="facade.state() === 'validating'" aria-live="polite">
     <div class="spinner"></div>
     <h2 class="state-title">Preparando…</h2>
     <p class="state-text">Comprobando el enlace</p>
   </section>
 
-  <!-- ======================== INICIO ======================== -->
   <section class="screen" [class.active]="facade.state() === 'ready'">
     <div class="topbar">
       <div class="brand">
@@ -66,7 +64,6 @@
     </div>
   </section>
 
-  <!-- ======================== CÁMARA ======================== -->
   <section class="screen dark" [class.active]="facade.state() === 'camera'">
     <div class="cam-stage">
       <video #camVideo playsinline muted autoplay></video>
@@ -99,7 +96,6 @@
     <input type="file" accept="image/*" capture="environment" hidden #camFileInput (change)="onFileChange($event)" />
   </section>
 
-  <!-- ======================== RECORTE ======================== -->
   <section class="screen crop-screen" [class.active]="facade.state() === 'crop'">
     <div class="crop-head">
       <button class="round-btn" (click)="cropBack()" aria-label="Volver">
@@ -138,7 +134,6 @@
     </div>
   </section>
 
-  <!-- ======================== PREVIEW ======================== -->
   <section class="screen crop-screen" [class.active]="facade.state() === 'preview'">
     <div class="crop-head">
       <button class="round-btn" (click)="previewRetry()" aria-label="Repetir foto">
@@ -166,7 +161,6 @@
     </div>
   </section>
 
-  <!-- ======================== SUBIENDO ======================== -->
   <section class="screen center-screen" [class.active]="facade.state() === 'uploading'" aria-live="polite">
     <div class="upload-photo">
       @if (finalImageSrc()) {
@@ -190,7 +184,6 @@
     <button class="btn-text" (click)="uploadCancel()" style="margin-top:18px">Cancelar</button>
   </section>
 
-  <!-- ======================== ÉXITO ======================== -->
   <section class="screen center-screen" [class.active]="facade.state() === 'success'" aria-live="polite">
     <div class="badge ok" [class.pulse]="isSuccessPulse()">
       <svg viewBox="0 0 24 24" fill="none"><path class="check-path" d="m5 13 4.2 4.2L19 7.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -210,7 +203,6 @@
     </div>
   </section>
 
-  <!-- ======================== ERROR ======================== -->
   <section class="screen center-screen" [class.active]="facade.state() === 'error'" aria-live="polite">
     <div class="badge err">
       <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.9"/><path d="M12 7.5v5.5M12 16h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
@@ -226,7 +218,6 @@
     </div>
   </section>
 
-  <!-- ======================== CADUCADO ======================== -->
   <section class="screen center-screen" [class.active]="facade.state() === 'expired'" aria-live="polite">
     <div class="badge wait">
       <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="13" r="8.5" stroke="currentColor" stroke-width="1.8"/><path d="M12 8.5V13l3 1.8M9 2h6" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
@@ -238,7 +229,6 @@
     </div>
   </section>
 
-  <!-- ======================== YA USADO ======================== -->
   <section class="screen center-screen" [class.active]="facade.state() === 'used'" aria-live="polite">
     <div class="badge wait">
       <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="m5 13 4 4L19 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -250,7 +240,6 @@
     </div>
   </section>
 
-  <!-- ======================== SHEET GALERÍA ======================== -->
   <div class="sheet-backdrop" [class.open]="sheetOpen()" (click)="closeSheet()">
     <div class="sheet" (click)="$event.stopPropagation()">
       <div class="grip"></div>

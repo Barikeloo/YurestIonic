@@ -4,25 +4,18 @@ declare(strict_types=1);
 
 namespace App\Printer\Infrastructure\Printing;
 
-/**
- * Builds an ESC/POS byte string from ticket data.
- *
- * Compatible with any standard ESC/POS printer (Epson TM series, Star TSP series, etc.)
- * Encoding: CP437 — standard ASCII + common Latin characters.
- */
 final class EscPosTicketBuilder
 {
-    // ── ESC/POS command constants ─────────────────────────────
     private const INIT         = "\x1b\x40";
     private const ALIGN_LEFT   = "\x1b\x61\x00";
     private const ALIGN_CENTER = "\x1b\x61\x01";
     private const BOLD_ON      = "\x1b\x45\x01";
     private const BOLD_OFF     = "\x1b\x45\x00";
-    private const DOUBLE_SIZE  = "\x1d\x21\x11"; // double height + width
+    private const DOUBLE_SIZE  = "\x1d\x21\x11";
     private const NORMAL_SIZE  = "\x1d\x21\x00";
     private const LF           = "\x0a";
     private const FULL_CUT     = "\x1d\x56\x00";
-    private const FEED_LINES   = "\x1b\x64";     // + n lines byte
+    private const FEED_LINES   = "\x1b\x64";
 
     private int $width;
     private string $buf = '';
@@ -43,17 +36,12 @@ final class EscPosTicketBuilder
         $this->printPayments($ticketData['payments_snapshot'] ?? []);
         $this->printFooter();
 
-        // Feed 4 lines before cut
         $this->buf .= self::FEED_LINES . "\x04";
         $this->buf .= self::FULL_CUT;
 
         return $this->buf;
     }
 
-    /**
-     * Builds a plain-text pre-ticket in ESC/POS format.
-     * The text is expected to be pre-formatted with ASCII dividers.
-     */
     public function buildPlainText(string $text, int $charWidth): string
     {
         $this->width = $charWidth;
@@ -94,7 +82,6 @@ final class EscPosTicketBuilder
         return $this->buf;
     }
 
-    // ── Private helpers ───────────────────────────────────────
 
     private function printRestaurantHeader(?array $restaurant): void
     {
@@ -197,13 +184,11 @@ final class EscPosTicketBuilder
                 $this->padL($this->formatCents($total), 9)
             );
 
-            // Variant
             $variant = isset($line['variant_name']) ? trim((string) $line['variant_name']) : '';
             if ($variant !== '') {
                 $this->write('   ' . $this->truncate('· ' . $this->sanitize($variant), $this->width - 3));
             }
 
-            // Modifiers
             foreach ($line['modifiers'] ?? [] as $mod) {
                 $modName = isset($mod['name']) ? trim($this->sanitize((string) $mod['name'])) : '';
                 if ($modName !== '') {
@@ -278,7 +263,6 @@ final class EscPosTicketBuilder
         $this->write($this->doubleDivider());
     }
 
-    // ── Formatting utilities ──────────────────────────────────
 
     private function write(string $line): void
     {
@@ -372,9 +356,6 @@ final class EscPosTicketBuilder
         };
     }
 
-    /**
-     * Replaces non-ASCII characters with CP437-safe equivalents for Spanish text.
-     */
     private function sanitize(string $text): string
     {
         return strtr($text, [

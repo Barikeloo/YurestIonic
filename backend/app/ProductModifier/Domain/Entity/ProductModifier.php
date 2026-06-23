@@ -226,9 +226,6 @@ class ProductModifier
         return $this->updatedAt;
     }
 
-    /**
-     * @return array{name: string, type: string, is_required: bool, selection_type: string, price: int, active: bool, sort_order: int}
-     */
     private function snapshot(): array
     {
         return [

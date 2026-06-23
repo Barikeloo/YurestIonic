@@ -2,7 +2,6 @@
   <div class="modal-overlay" (click)="onClose()">
     <div class="modal-content" [class.wide]="isWide" (click)="$event.stopPropagation()">
 
-      <!-- Header -->
       <header class="modal-header">
         <div class="header-meta">
           <span class="header-table">{{ tableLabel }}</span>
@@ -19,13 +18,10 @@
         </button>
       </header>
 
-      <!-- LAYOUT (responsive: 1 col compact, 2 cols when side panel open) -->
       <div class="modal-layout" [class.split]="isWide">
 
-        <!-- ======================= MAIN PANE ======================= -->
         <div class="main-pane">
 
-          <!-- HERO -->
           <section class="hero">
             <div class="hero-amount">
               <span class="hero-int">{{ formatCents(effectiveAmount).split(',')[0] }}</span><span class="hero-sep">,</span><span class="hero-dec">{{ formatCents(effectiveAmount).split(',')[1] }}</span><span class="hero-currency">€</span>
@@ -56,7 +52,6 @@
             }
           </section>
 
-          <!-- MÉTODOS -->
           <section class="methods">
             <div
               class="methods-segment"
@@ -149,10 +144,8 @@
             }
           </section>
 
-          <!-- CONTEXTO POR MÉTODO (slots con expansión animada) -->
           <section class="context">
 
-            <!-- EFECTIVO -->
             <div class="ctx-slot" [class.active]="method === PaymentMethod.CASH">
               <div class="ctx-inner">
                 <div class="ctx-stack">
@@ -189,7 +182,6 @@
               </div>
             </div>
 
-            <!-- TARJETA -->
             <div class="ctx-slot" [class.active]="method === PaymentMethod.CARD">
               <div class="ctx-inner">
                 <div class="info-block">
@@ -205,7 +197,6 @@
               </div>
             </div>
 
-            <!-- BIZUM -->
             <div class="ctx-slot" [class.active]="method === PaymentMethod.BIZUM">
               <div class="ctx-inner">
                 <div class="info-block">
@@ -221,7 +212,6 @@
               </div>
             </div>
 
-            <!-- INVITACIÓN -->
             <div class="ctx-slot" [class.active]="method === PaymentMethod.INVITATION">
               <div class="ctx-inner">
                 <div class="info-block warning">
@@ -240,7 +230,6 @@
               </div>
             </div>
 
-            <!-- MIXTO -->
             <div class="ctx-slot" [class.active]="method === PaymentMethod.MIXED">
               <div class="ctx-inner">
                 <div class="info-block">
@@ -250,7 +239,6 @@
             </div>
           </section>
 
-          <!-- CHIPS DE OPCIONES (mutex) -->
           <section class="action-chips">
             <button
               type="button"
@@ -312,7 +300,6 @@
           </section>
         </div>
 
-        <!-- ======================= SIDE PANE ======================= -->
         <aside class="side-pane" [class.open]="isWide" aria-hidden="false">
           <div class="side-inner">
             <div class="side-header">
@@ -321,7 +308,6 @@
 
             <div class="side-body">
 
-              <!-- DETALLE -->
               <div class="side-slot" [class.active]="sideOption === 'detail'">
                 <div class="side-slot-inner">
                   <ul class="detail-list">
@@ -381,7 +367,6 @@
                 </div>
               </div>
 
-              <!-- PARCIAL (numpad) -->
               <div class="side-slot" [class.active]="sideOption === 'partial'">
                 <div class="side-slot-inner">
                   <div class="cash-input-row">
@@ -395,7 +380,6 @@
                 </div>
               </div>
 
-              <!-- PROPINA -->
               <div class="side-slot" [class.active]="sideOption === 'tip'">
                 <div class="side-slot-inner">
                   <div class="tip-presets">
@@ -417,7 +401,6 @@
                 </div>
               </div>
 
-              <!-- FACTURA -->
               <div class="side-slot" [class.active]="sideOption === 'fiscal'">
                 <div class="side-slot-inner">
                   <input class="fiscal-input" placeholder="NIF / CIF" [(ngModel)]="fiscalNif" />
@@ -432,7 +415,6 @@
 
       </div>
 
-      <!-- Sticky footer -->
       <footer class="modal-footer">
         <app-btn
           variant="success"

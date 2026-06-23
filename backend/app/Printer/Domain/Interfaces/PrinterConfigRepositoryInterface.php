@@ -14,7 +14,6 @@ interface PrinterConfigRepositoryInterface
 
     public function findDefaultForRestaurant(int $restaurantId): ?PrinterConfig;
 
-    /** @return list<PrinterConfig> */
     public function findAllForRestaurant(int $restaurantId): array;
 
     public function save(PrinterConfig $config): void;

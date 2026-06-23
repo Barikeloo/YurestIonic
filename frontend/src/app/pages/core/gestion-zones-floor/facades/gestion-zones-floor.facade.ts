@@ -42,7 +42,6 @@ function fromTableItem(t: TableItem): LocalTable {
   let   w     = l?.width  ?? SIZE_PRESETS.M[shape].w;
   let   h     = l?.height ?? SIZE_PRESETS.M[shape].h;
 
-  // Circles must be square — old editor saved them with rect dimensions
   if (shape === 'circle') {
     const dim = Math.max(w, h);
     w = dim;
@@ -141,12 +140,9 @@ export class GestionZonesFloorFacade {
     if (!t) return;
     let newW: number, newH: number;
     if (shape === 'circle') {
-      // Make square using the largest dimension
       const dim = Math.max(t.width, t.height);
       newW = dim; newH = dim;
     } else {
-      // Circle is always square — find the nearest preset and apply its rect proportions
-      // to avoid ending up with a square rectangle.
       const presets: SizePreset[] = ['S', 'M', 'L'];
       let best: SizePreset = 'M';
       let bestDiff = Infinity;
@@ -195,7 +191,7 @@ export class GestionZonesFloorFacade {
     this._tables.update(list => {
       const map      = new Map(list.map(t => [t.id, t]));
       const reordered = orderedIds.map(id => map.get(id)!).filter(Boolean);
-      const rest      = list.filter(t => !idSet.has(t.id));  // unpositioned tables
+      const rest      = list.filter(t => !idSet.has(t.id));
       return [...reordered, ...rest];
     });
     this._isDirty.set(true);

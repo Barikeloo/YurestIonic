@@ -161,7 +161,6 @@ function chipMatches(chipId: string, evt: AuditEvent): boolean {
   providers: [RegistroAuditoriaFacade],
 })
 export class RegistroAuditoriaPage implements OnInit, OnDestroy {
-  // ── Constants ──────────────────────────────────────────────
   readonly TABS = TABS;
   readonly CHIPS = CHIPS;
   readonly CATEGORIES = CATEGORIES;
@@ -170,7 +169,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   readonly ANOMALIES = ANOMALIES;
   readonly anomalyMeta = anomalyMeta;
 
-  // ── Facade proxy: data signals ─────────────────────────────
   get events() { return this.facade.events; }
   get isLoading() { return this.facade.isLoading; }
   get isLoadingMore() { return this.facade.isLoadingMore; }
@@ -193,7 +191,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
   readonly unreadAlerts = computed<AuditAlertApi[]>(() => this.alerts().filter(a => !a.read_at));
   readonly readAlerts = computed<AuditAlertApi[]>(() => this.alerts().filter(a => !!a.read_at));
 
-  // ── Local UI / filter signals ────────────────────────────────
   readonly activeTab = signal('all');
   readonly activeChip = signal<string | null>(null);
   readonly filterCategory = signal('all');
@@ -216,7 +213,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
 
   private searchDebounceTimer?: ReturnType<typeof setTimeout>;
 
-  // ── Computed: users & devices dropdowns ───────────────────────
   readonly usersDropdownOptions = computed<Array<{ uuid: string; name: string }>>(() => {
     const dir = this.usersDirectory();
     return Object.entries(dir)
@@ -232,12 +228,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     return Array.from(set).sort();
   });
 
-  // ── Computed: server filters ───────────────────────────────
-  // Tab category is purposely NOT included here: tabs are a client-side
-  // navigation tool and must not trigger a server reload, otherwise the
-  // event list narrows to the tab's category and the counters of the
-  // other tabs collapse to 0 (they read from the in-memory list).
-  // The explicit category dropdown stays server-side for heavy filtering.
   readonly serverFilters = computed<ListAuditEventsFilters>(() => {
     const dropdownCategory = this.filterCategory();
     const category = dropdownCategory !== 'all' ? dropdownCategory : null;
@@ -263,7 +253,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     return filters;
   });
 
-  // ── Presentation getters ───────────────────────────────────
   get filtered(): AuditEvent[] {
     const tab = TABS.find(t => t.id === this.activeTab());
     const tabCategory = tab?.cat ?? null;
@@ -347,26 +336,16 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
       this.facade.loadInitial(filters);
     });
 
-    // Reactive subscription: fires on every URL change, even if Ionic's
-    // router outlet reuses this component (which it does when navigating
-    // back from the histórico panel or from other pages).
     this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((params) => {
-      // Make sure the users directory is loaded even when Ionic reuses
-      // this page (ngOnInit doesn't refire). The facade no-ops if the
-      // directory is already populated.
       this.facade.loadUsersDirectory();
 
       if (params.get('historico') === '1') {
         this.fromHistorico.set(true);
         this.facade.setIncludeArchived(true);
-        // Live tail polls every 5s without filter context and would
-        // pollute the archived view with recent events. Archived rows
-        // are immutable by definition, so live tail has no purpose here.
         this.facade.setLiveTail(false);
         this.dateFrom.set(params.get('dateFrom') ?? '');
         this.dateTo.set(params.get('dateTo') ?? '');
 
-        // Optional scope from breakdown drill-downs in the histórico panel.
         const category = params.get('category');
         const userId = params.get('userId');
         this.filterCategory.set(category ?? 'all');
@@ -399,7 +378,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     if (this.searchDebounceTimer) clearTimeout(this.searchDebounceTimer);
   }
 
-  // ── Actions ───────────────────────────────────────────────────
   goBack(): void { this.router.navigateByUrl('/app/gestion'); }
 
   goToHistorico(): void { this.router.navigateByUrl('/registro-auditoria/historico'); }
@@ -544,7 +522,6 @@ export class RegistroAuditoriaPage implements OnInit, OnDestroy {
     this.facade.loadMore(this.serverFilters());
   }
 
-  // ── Helpers for template ──────────────────────────────────────
   formatTimeHM = formatTimeHM;
   formatTimestampAbsolute = formatTimestampAbsolute;
   formatRelative = formatRelative;
